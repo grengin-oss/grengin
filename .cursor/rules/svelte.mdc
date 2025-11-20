@@ -1,0 +1,51 @@
+---
+description: This rule provides comprehensive best practices and coding standards for Svelte development with a focus on using the newer Svelte 5 over the older, but more common Svelte 4.
+globs: ["**/*.{svelte,ts}"]
+---
+# Svelte 5 - Do/Don't
+
+This project uses the newer Svelte 5 instead of the more common Svelte 4.
+
+Version 5 comes with an overhauled syntax and reactivity system. While it may look different at first, you'll soon notice many similarities. This guide goes over the changes in detail and shows you how to upgrade. Along with it, we also provide information on _why_ we did these changes.
+
+## Reactivity (runes)
+- **Do**
+  - Use `$state` for reactive state, `$derived` for pure derivations, and `$effect` for side-effects. `$effect` runs after DOM updates and does **not** run during SSR.
+- **Don’t**
+  - Rely on implicit top-level `let` reactivity or `$:` statements. Replace with `$state`, `$derived`, `$effect`.
+
+## Props
+- **Do**
+  - Declare props via `$props()` with destructuring/renaming/defaults/rest:  
+    `let { class: klass = '', id, ...rest } = $props();`
+- **Don’t**
+  - Use `export let`, `$$props`, or `$$restProps` in new code.
+
+## DOM events
+- **Do**
+  - Use property handlers (`onclick`, `oninput`, …) instead of `on:`.
+  - Use `onclickcapture={...}` for capture. If you truly need to control `passive`, attach the listener in an **action**.
+  - When spreading props, place local handlers **after** the spread to avoid being overwritten.
+- **Don’t**
+  - Use `on:` modifiers (e.g., `|once`, `|preventDefault`) with property handlers; implement the behavior in the handler or a small wrapper.
+  - Duplicate the same event attribute on one element; compose multiple calls inside one handler.
+
+## Component → parent communication
+- **Do**
+  - Accept **callback props** and call them with arguments instead of dispatching custom events. (e.g., `let { save }: { save?: (x: T) => void } = $props(); save?.(x)`)
+- **Don’t**
+  - Use `createEventDispatcher`; it’s deprecated in Svelte 5 — prefer callback props (or `$host()` for advanced cases).
+
+## Bubbling / forwarding
+- **Do**
+  - Bubble DOM events by accepting the corresponding prop and passing it through:  
+    `let { onclick } = $props(); <button {onclick}>…</button>`
+  - For bulk forwarding, spread `$props()` onto the element; override locals after the spread if needed.
+- **Don’t**
+  - Forward with `<button on:click>` in new code.
+
+## Composition (snippets, not slots)
+- **Do**
+  - Use **snippets** and `{@render ...}`; default content via a `children` prop: `{@render children?.()}`.
+- **Don’t**
+  - Use `<slot>`/named slots in new code (slots are deprecated in Svelte 5 in favor of snippets).

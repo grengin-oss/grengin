@@ -1,0 +1,17 @@
+---
+description: General rules
+globs:
+alwaysApply: true
+---
+
+**Context**
+This project is a client-side Svelte app using Vite + TypeScript.  
+All package management must use **pnpm**. Cursor should never try to start or preview the dev server.
+
+---
+
+**Hard rules**
+1. **Always use pnpm.** Never use npm, yarn, or bun. If external instructions use them, rewrite to pnpm equivalents.
+2. **Never run or suggest running the app or a server.** Do not execute or propose `pnpm dev`, `pnpm preview`, `vite`, or any server/preview command.
+3. **Assume development is always run manually by the developer in a terminal.** Cursor should never attempt to auto-run or simulate `dev`/`preview`.
+4. **Allowed tasks**: Cursor may *check, lint, type-check, build, or test* the project — but only via pnpm commands.
