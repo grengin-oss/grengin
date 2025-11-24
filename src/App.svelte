@@ -115,7 +115,7 @@
   .mobile-header {
     display: none;
     align-items: center;
-    padding: 1.25rem;
+    padding: var(--space-xl);
     background: var(--bg-primary);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
@@ -124,7 +124,7 @@
 
   .mobile-header-content {
     flex: 1;
-    margin-left: 1rem;
+    margin-left: var(--space-lg);
   }
 
   .header-title {
@@ -141,7 +141,7 @@
     justify-content: center;
     width: 3rem;
     height: 3rem;
-    padding: 0.5rem;
+    padding: var(--space-sm);
     border: none;
     background: rgba(var(--glass-tint), 0.06);
     backdrop-filter: blur(0.75rem);
@@ -226,13 +226,13 @@
 
   @media (max-width: 480px) {
     .mobile-header {
-      padding: 1rem;
+      padding: var(--space-lg);
     }
 
     .mobile-logo-btn {
       width: 2.75rem;
       height: 2.75rem;
-      padding: 0.45rem;
+      padding: var(--space-sm);
     }
 
     .mobile-overlay {

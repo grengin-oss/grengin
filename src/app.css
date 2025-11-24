@@ -48,6 +48,15 @@
   --radius-lg: 1.25rem;
   --radius-xl: 1.5rem;
 
+  /* Spacing system - consistent padding/margins */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1rem;
+  --space-xl: 1.25rem;
+  --space-2xl: 1.5rem;
+  --space-3xl: 2rem;
+
   /* Adaptive shadows */
   --glass-shadow-light: 0 0.5rem 2.5rem rgba(0, 0, 0, 0.08);
   --glass-shadow-dark: 0 0.5rem 2.5rem rgba(0, 0, 0, 0.25);

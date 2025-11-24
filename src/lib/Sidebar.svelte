@@ -9,6 +9,7 @@
 
   let showUserMenu = $state(false);
   let userMenuElement: HTMLElement;
+  let userCollapsed = $state(false);
 
   const menuItems = [
     { id: 'chat', label: 'Chat', icon: '💬' },
@@ -29,6 +30,7 @@
 
   function toggleSidebar() {
     isCollapsed = !isCollapsed;
+    userCollapsed = isCollapsed;
     onsidebarToggle?.(isCollapsed);
   }
 
@@ -49,9 +51,19 @@
   function getUserInitials(): string {
     return 'GU';
   }
+
+  function handleResize() {
+    if (window.innerWidth > 1024 && isCollapsed && !userCollapsed) {
+      isCollapsed = false;
+      onsidebarToggle?.(isCollapsed);
+    } else if (window.innerWidth <= 1024 && !isCollapsed && !userCollapsed) {
+      isCollapsed = true;
+      onsidebarToggle?.(isCollapsed);
+    }
+  }
 </script>
 
-<svelte:window onclick={handleClickOutside} />
+<svelte:window onclick={handleClickOutside} onresize={handleResize} />
 
 <aside class="sidebar" class:collapsed={isCollapsed}>
   <div class="sidebar-header">
@@ -111,10 +123,9 @@
         {#if !isCollapsed}
           <div class="user-info">
             <span class="user-name">Grengin User</span>
-            <span class="user-email">user@grengin.com</span>
           </div>
           <svg class="dropdown-arrow" class:rotated={showUserMenu} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6,9 12,15 18,9"/>
+            <polyline points="6,15 12,9 18,15"/>
           </svg>
         {/if}
       </button>
@@ -161,22 +172,22 @@
   }
 
   .sidebar-header {
-    padding: 2rem 1.25rem;
+    padding: var(--space-3xl) var(--space-xl);
   }
 
   .collapsed .sidebar-header {
-    padding: 1.5rem 0;
+    padding: var(--space-2xl) 0;
   }
 
   .sidebar-brand {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--space-lg);
   }
 
   .collapsed .sidebar-brand {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-sm);
     align-items: center;
     justify-content: center;
   }
@@ -218,13 +229,13 @@
   }
 
   .burger-icon {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 1.5rem;
+    height: 1.5rem;
   }
 
   /* Brand logo - shown when sidebar is expanded */
   .brand-logo {
-    height: 2.5rem;
+    height: 1.8rem;
     width: auto;
     max-width: 100%;
     object-fit: contain;
@@ -237,7 +248,7 @@
     justify-content: center;
     width: calc(100% - 1.5rem);
     margin: 0 0.75rem;
-    height: 4rem;
+    height: 3rem;
     padding: 0.75rem;
     border: none;
     background: rgba(var(--glass-tint), 0.06);
@@ -277,16 +288,16 @@
 
   .sidebar-nav {
     flex: 1;
-    padding: 1rem 0;
+    padding: var(--space-lg) 0;
   }
 
   .sidebar-item {
-    width: calc(100% - 1.5rem);
-    margin: 0 0.75rem;
+    width: calc(100% - var(--space-2xl));
+    margin: 0 var(--space-md);
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.875rem 1.25rem;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-lg);
     border: none;
     background: transparent;
     color: var(--text-primary);
@@ -295,7 +306,7 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: left;
     border-radius: var(--radius-md);
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-sm);
   }
 
   .sidebar-item:hover {
@@ -326,10 +337,10 @@
   }
 
   .sidebar-icon {
-    font-size: 1.25rem;
-    width: 1.75rem;
+    font-size: 1.125rem;
+    height: 1.75rem;
     display: flex;
-    justify-content: center;
+    align-items: center;
     flex-shrink: 0;
   }
 
@@ -342,13 +353,22 @@
   .collapsed .sidebar-label {
     opacity: 0;
     pointer-events: none;
+    position: absolute;
+    width: 0;
+  }
+
+  .collapsed .sidebar-item {
+    justify-content: center;
+    padding: var(--space-sm);
+    width: calc(100% - 1.5rem);
+    margin: 0 0.75rem;
   }
 
   .sidebar-footer {
-    padding: 1rem 1.25rem;
+    padding: var(--space-sm) 0;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-xs);
   }
 
   .user-menu-container {
@@ -356,23 +376,23 @@
   }
 
   .user-menu-trigger {
-    padding: 0.875rem 1.25rem;
-    margin: 0;
-    width: 100%;
+    padding: var(--space-sm) var(--space-lg);
+    margin: 0 var(--space-md);
+    width: calc(100% - var(--space-2xl));
     background: transparent;
     border-radius: var(--radius-md);
     justify-content: flex-start;
-    gap: 1rem;
+    gap: var(--space-md);
   }
 
   .collapsed .user-menu-trigger {
     justify-content: center;
-    padding: 0.875rem;
+    padding: var(--space-sm);
   }
 
   .user-avatar {
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 1.75rem;
+    height: 1.75rem;
     border-radius: 50%;
     overflow: hidden;
     display: flex;
@@ -383,9 +403,9 @@
   }
 
   .user-initials {
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
     text-transform: uppercase;
   }
 
@@ -399,19 +419,9 @@
   }
 
   .user-name {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-
-  .user-email {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
     color: var(--text-secondary);
-    opacity: 0.8;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -432,30 +442,28 @@
 
   .user-menu-dropdown {
     position: fixed;
-    bottom: 2rem;
-    left: 1.5rem;
-    min-width: 220px;
-    background: rgba(var(--glass-tint), 0.08);
+    bottom: 3.5rem;
+    left: var(--space-md);
+    min-width: 180px;
+    background: rgba(var(--glass-tint), 0.06);
     backdrop-filter: blur(1.5rem);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 12px 40px rgba(0, 0, 0, 0.18);
+      0 8px 24px rgba(0, 0, 0, 0.12);
     overflow: hidden;
     animation: slideUpFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 10001;
-    transform: translateY(-100%);
   }
 
   @keyframes slideUpFade {
     from {
       opacity: 0;
-      transform: translateY(-95%);
+      transform: translateY(0.5rem);
     }
     to {
       opacity: 1;
-      transform: translateY(-100%);
+      transform: translateY(0);
     }
   }
 
@@ -463,12 +471,12 @@
     width: 100%;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.875rem 1.25rem;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-lg);
     background: transparent;
     border: none;
-    color: var(--text-primary);
-    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
     cursor: pointer;
     transition: all 0.25s ease;
     text-align: left;
@@ -485,16 +493,16 @@
   }
 
   .menu-item-icon {
-    width: 1.125rem;
-    height: 1.125rem;
+    height: 1.25rem;
+    width: 1.25rem;
     display: flex;
     align-items: center;
-    justify-content: center;
     flex-shrink: 0;
+    font-size: 0.875rem;
   }
 
   .menu-item-label {
-    font-weight: 600;
+    font-weight: 500;
   }
 
   /* Mobile responsiveness */
@@ -512,7 +520,7 @@
     }
 
     .user-menu-dropdown {
-      left: 1rem;
+      left: var(--space-md);
     }
   }
 
@@ -532,7 +540,7 @@
     }
 
     .user-menu-dropdown {
-      left: 0.75rem;
+      left: var(--space-md);
     }
   }
 </style>
