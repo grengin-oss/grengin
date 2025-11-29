@@ -1,0 +1,29 @@
+{
+  "summary": {
+    "total_cost": 1250.75,
+    "total_requests": 2500,
+    "total_tokens": 1250000,
+    "input_tokens": 875000,
+    "output_tokens": 375000,
+    "period_start": "2024-01-01T00:00:00Z",
+    "period_end": "2024-01-15T10:30:00Z"
+  },
+  "by_user": [
+    { "dimension": "admin@grengin.com", "cost": 500.00, "requests": 1000, "tokens": 500000, "percentage": 40.0 },
+    { "dimension": "user@grengin.com", "cost": 375.50, "requests": 750, "tokens": 375000, "percentage": 30.0 }
+  ],
+  "by_department": [
+    { "dimension": "Engineering", "cost": 750.00, "requests": 1500, "tokens": 750000, "percentage": 60.0 },
+    { "dimension": "Marketing", "cost": 500.75, "requests": 1000, "tokens": 500000, "percentage": 40.0 }
+  ],
+  "by_model": [
+    { "dimension": "claude-sonnet-4-5", "cost": 600.00, "requests": 1200, "tokens": 600000, "percentage": 48.0 },
+    { "dimension": "gpt-5.1", "cost": 400.50, "requests": 800, "tokens": 400000, "percentage": 32.0 },
+    { "dimension": "gemini-pro", "cost": 250.25, "requests": 500, "tokens": 250000, "percentage": 20.0 }
+  ],
+  "by_provider": [
+    { "dimension": "anthropic", "cost": 600.00, "requests": 1200, "tokens": 600000, "percentage": 48.0 },
+    { "dimension": "openai", "cost": 400.50, "requests": 800, "tokens": 400000, "percentage": 32.0 },
+    { "dimension": "google", "cost": 250.25, "requests": 500, "tokens": 250000, "percentage": 20.0 }
+  ]
+}

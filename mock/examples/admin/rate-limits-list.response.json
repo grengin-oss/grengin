@@ -1,0 +1,26 @@
+[
+  {
+    "id": "rl-001",
+    "scope": "organization",
+    "scope_id": null,
+    "requests_per_minute": 100,
+    "requests_per_hour": 1000,
+    "requests_per_day": 10000,
+    "tokens_per_day": 1000000,
+    "is_active": true,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": "rl-002",
+    "scope": "user",
+    "scope_id": null,
+    "requests_per_minute": 20,
+    "requests_per_hour": 200,
+    "requests_per_day": 2000,
+    "tokens_per_day": 100000,
+    "is_active": true,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  }
+]

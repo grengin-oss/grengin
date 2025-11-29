@@ -1,0 +1,13 @@
+{
+  "active_users": 18,
+  "total_users": 25,
+  "total_conversations": 450,
+  "total_messages": 2500,
+  "avg_messages_per_conversation": 5.5,
+  "avg_requests_per_user": 100,
+  "most_used_models": [
+    { "model": "claude-sonnet-4-5", "requests": 1200, "percentage": 48.0 },
+    { "model": "gpt-5.1", "requests": 800, "percentage": 32.0 },
+    { "model": "gemini-pro", "requests": 500, "percentage": 20.0 }
+  ]
+}

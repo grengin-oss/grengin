@@ -1,0 +1,29 @@
+{
+  "conversations": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "title": "Business Growth Strategy Discussion",
+      "archived": false,
+      "archived_at": null,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T14:45:00Z"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "title": "Q1 Marketing Campaign Analysis",
+      "archived": false,
+      "archived_at": null,
+      "created_at": "2024-01-14T09:00:00Z",
+      "updated_at": "2024-01-14T16:30:00Z"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440003",
+      "title": "Customer Segmentation Research",
+      "archived": true,
+      "archived_at": "2024-01-10T12:00:00Z",
+      "created_at": "2024-01-08T11:15:00Z",
+      "updated_at": "2024-01-10T12:00:00Z"
+    }
+  ],
+  "total": 3
+}

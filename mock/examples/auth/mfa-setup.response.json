@@ -1,0 +1,17 @@
+{
+  "secret": "JBSWY3DPEHPK3PXP",
+  "qr_code_url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVU...",
+  "otpauth_url": "otpauth://totp/Grengin:admin@grengin.com?secret=JBSWY3DPEHPK3PXP&issuer=Grengin",
+  "recovery_codes": [
+    "ABCD-EFGH-1234",
+    "IJKL-MNOP-5678",
+    "QRST-UVWX-9012",
+    "YZAB-CDEF-3456",
+    "GHIJ-KLMN-7890",
+    "OPQR-STUV-1234",
+    "WXYZ-ABCD-5678",
+    "EFGH-IJKL-9012",
+    "MNOP-QRST-3456",
+    "UVWX-YZAB-7890"
+  ]
+}

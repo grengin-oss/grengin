@@ -1,0 +1,39 @@
+{
+  "users": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "sub": "auth0|abc123def456",
+      "email": "admin@grengin.com",
+      "name": "Admin User",
+      "picture": "https://ui-avatars.com/api/?name=Admin+User",
+      "role": "admin",
+      "status": "active",
+      "department": "Engineering",
+      "is_super_admin": true,
+      "has_password": true,
+      "mfa_enabled": true,
+      "last_login_at": "2024-01-15T08:00:00Z",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-15T08:00:00Z"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "sub": "auth0|def456ghi789",
+      "email": "user@grengin.com",
+      "name": "Regular User",
+      "picture": "https://ui-avatars.com/api/?name=Regular+User",
+      "role": "user",
+      "status": "active",
+      "department": "Marketing",
+      "is_super_admin": false,
+      "has_password": true,
+      "mfa_enabled": false,
+      "last_login_at": "2024-01-14T14:30:00Z",
+      "created_at": "2024-01-05T00:00:00Z",
+      "updated_at": "2024-01-14T14:30:00Z"
+    }
+  ],
+  "total": 2,
+  "limit": 20,
+  "offset": 0
+}

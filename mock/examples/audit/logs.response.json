@@ -1,0 +1,55 @@
+{
+  "logs": [
+    {
+      "id": "audit-001",
+      "action": "user.login",
+      "user_id": "550e8400-e29b-41d4-a716-446655440001",
+      "user_email": "admin@grengin.com",
+      "resource_type": null,
+      "resource_id": null,
+      "details": { "method": "password", "mfa_used": true },
+      "ip_address": "192.168.1.100",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+      "timestamp": "2024-01-15T08:00:00Z"
+    },
+    {
+      "id": "audit-002",
+      "action": "chat.created",
+      "user_id": "550e8400-e29b-41d4-a716-446655440001",
+      "user_email": "admin@grengin.com",
+      "resource_type": "conversation",
+      "resource_id": "550e8400-e29b-41d4-a716-446655440001",
+      "details": { "model": "claude-sonnet-4-5" },
+      "ip_address": "192.168.1.100",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+      "timestamp": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": "audit-003",
+      "action": "file.uploaded",
+      "user_id": "550e8400-e29b-41d4-a716-446655440001",
+      "user_email": "admin@grengin.com",
+      "resource_type": "file",
+      "resource_id": "file-001",
+      "details": { "filename": "business-plan.pdf", "size": 524288 },
+      "ip_address": "192.168.1.100",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+      "timestamp": "2024-01-15T10:35:00Z"
+    },
+    {
+      "id": "audit-004",
+      "action": "admin.user_created",
+      "user_id": "550e8400-e29b-41d4-a716-446655440001",
+      "user_email": "admin@grengin.com",
+      "resource_type": "user",
+      "resource_id": "550e8400-e29b-41d4-a716-446655440002",
+      "details": { "new_user_email": "user@grengin.com", "role": "user" },
+      "ip_address": "192.168.1.100",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+      "timestamp": "2024-01-05T14:00:00Z"
+    }
+  ],
+  "total": 4,
+  "limit": 50,
+  "offset": 0
+}

@@ -1,0 +1,4 @@
+{
+  "auth_url": "https://accounts.google.com/o/oauth2/auth?client_id=mock-client-id&redirect_uri=http://localhost:3000/auth/google/callback&response_type=code&scope=openid%20email%20profile&state=mock-state-xyz789",
+  "state": "mock-state-xyz789"
+}

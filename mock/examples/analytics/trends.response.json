@@ -1,0 +1,17 @@
+[
+  { "date": "2024-01-01", "cost": 75.50, "requests": 150, "tokens": 75000 },
+  { "date": "2024-01-02", "cost": 82.30, "requests": 165, "tokens": 82000 },
+  { "date": "2024-01-03", "cost": 91.20, "requests": 180, "tokens": 91000 },
+  { "date": "2024-01-04", "cost": 78.90, "requests": 158, "tokens": 79000 },
+  { "date": "2024-01-05", "cost": 95.40, "requests": 190, "tokens": 95000 },
+  { "date": "2024-01-06", "cost": 45.20, "requests": 90, "tokens": 45000 },
+  { "date": "2024-01-07", "cost": 38.60, "requests": 77, "tokens": 39000 },
+  { "date": "2024-01-08", "cost": 88.75, "requests": 178, "tokens": 89000 },
+  { "date": "2024-01-09", "cost": 92.10, "requests": 184, "tokens": 92000 },
+  { "date": "2024-01-10", "cost": 85.40, "requests": 171, "tokens": 85000 },
+  { "date": "2024-01-11", "cost": 98.20, "requests": 196, "tokens": 98000 },
+  { "date": "2024-01-12", "cost": 102.50, "requests": 205, "tokens": 103000 },
+  { "date": "2024-01-13", "cost": 52.80, "requests": 106, "tokens": 53000 },
+  { "date": "2024-01-14", "cost": 48.30, "requests": 97, "tokens": 48000 },
+  { "date": "2024-01-15", "cost": 75.60, "requests": 151, "tokens": 76000 }
+]

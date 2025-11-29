@@ -1,0 +1,9 @@
+{
+  "budget_id": "budget-001",
+  "limit_amount": 100.00,
+  "current_spend": 45.50,
+  "percentage_used": 45.5,
+  "remaining": 54.50,
+  "period_end": "2024-01-31T23:59:59Z",
+  "status": "ok"
+}

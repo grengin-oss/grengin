@@ -1,0 +1,14 @@
+{
+  "id": "org-001",
+  "name": "Grengin Demo",
+  "domain": "grengin.com",
+  "allowed_domains": ["grengin.com", "example.com"],
+  "settings": {
+    "default_model": "claude-sonnet-4-5",
+    "default_provider": "anthropic",
+    "require_mfa": false,
+    "data_retention_days": 90
+  },
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-15T08:00:00Z"
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "budget-001",
+    "scope": "organization",
+    "scope_id": null,
+    "limit_amount": 5000.00,
+    "period": "monthly",
+    "current_spend": 1250.75,
+    "alert_thresholds": [50, 75, 90, 100],
+    "action_on_exceed": "warn",
+    "is_active": true,
+    "period_start": "2024-01-01T00:00:00Z",
+    "period_end": "2024-01-31T23:59:59Z",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-15T00:00:00Z"
+  },
+  {
+    "id": "budget-002",
+    "scope": "department",
+    "scope_id": "engineering",
+    "limit_amount": 2000.00,
+    "period": "monthly",
+    "current_spend": 850.00,
+    "alert_thresholds": [75, 90, 100],
+    "action_on_exceed": "block",
+    "is_active": true,
+    "period_start": "2024-01-01T00:00:00Z",
+    "period_end": "2024-01-31T23:59:59Z",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-15T00:00:00Z"
+  }
+]

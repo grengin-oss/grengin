@@ -1,0 +1,9 @@
+{
+  "total_cost": 45.50,
+  "total_requests": 250,
+  "total_tokens": 125000,
+  "input_tokens": 87500,
+  "output_tokens": 37500,
+  "period_start": "2024-01-01T00:00:00Z",
+  "period_end": "2024-01-15T10:30:00Z"
+}
