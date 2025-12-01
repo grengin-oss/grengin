@@ -1,11 +1,17 @@
 <script lang="ts">
+  import type { components } from '../../types/api.js';
+
+  type User = components['schemas']['User'];
+
   interface Props {
     isCollapsed?: boolean;
     onsidebarToggle?: (collapsed: boolean) => void;
     onnavigate?: (itemId: string) => void;
+    user?: User | null;
+    onlogout?: () => void;
   }
 
-  let { isCollapsed = $bindable(false), onsidebarToggle, onnavigate }: Props = $props();
+  let { isCollapsed = $bindable(false), onsidebarToggle, onnavigate, user = null, onlogout }: Props = $props();
 
   let showUserMenu = $state(false);
   let userMenuElement: HTMLElement;
@@ -49,7 +55,17 @@
   }
 
   function getUserInitials(): string {
-    return 'GU';
+    if (!user?.name) return 'U';
+    const parts = user.name.split(' ').filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return parts[0]?.substring(0, 2).toUpperCase() || 'U';
+  }
+
+  function handleLogout() {
+    closeUserMenu();
+    onlogout?.();
   }
 
   function handleResize() {
@@ -122,7 +138,7 @@
         </div>
         {#if !isCollapsed}
           <div class="user-info">
-            <span class="user-name">Grengin User</span>
+            <span class="user-name">{user?.name || 'User'}</span>
           </div>
           <svg class="dropdown-arrow" class:rotated={showUserMenu} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="6,15 12,9 18,15"/>
@@ -139,7 +155,7 @@
       <span class="menu-item-icon">⚙️</span>
       <span class="menu-item-label">Settings</span>
     </button>
-    <button class="user-menu-item logout-item">
+    <button class="user-menu-item logout-item" onclick={handleLogout}>
       <svg class="menu-item-icon logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
         <polyline points="16,17 21,12 16,7"/>

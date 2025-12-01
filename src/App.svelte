@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import Sidebar from './lib/Sidebar.svelte';
-  import Chat from './lib/Chat.svelte';
+  import { Sidebar } from './lib/components/layout/index.js';
+  import Chat from './lib/features/chat/components/Chat.svelte';
 
   let sidebarCollapsed = $state(false);
   let currentPage = $state('chat');
