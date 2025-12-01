@@ -4,6 +4,7 @@ import type { components } from './types/api.js'
 import { faker } from '@faker-js/faker'
 import chatListExample from './examples/chat/list.response.json' with { type: 'json' }
 import chatDetailExample from './examples/chat/detail.response.json' with { type: 'json' }
+import loginExample from './examples/auth/login.response.json' with { type: 'json' }
 
 // Types
 type Conversation = components['schemas']['Conversation']
@@ -91,6 +92,212 @@ const requireAuth = (req: express.Request, res: express.Response, next: express.
   }
   next()
 }
+
+// Auth endpoints
+app.post('/auth/login', (req, res) => {
+  const { email, password } = req.body
+
+  if (!email || !password) {
+    return res.status(400).json({ detail: 'Email and password are required' })
+  }
+
+  // Accept demo credentials
+  if (email === 'admin@grengin.com' && password === 'Demo123456!@') {
+    return res.json({
+      requires_mfa: loginExample.requires_mfa,
+      access_token: loginExample.access_token,
+      refresh_token: loginExample.refresh_token,
+      expires_in: loginExample.expires_in,
+      user: loginExample.user,
+    })
+  }
+
+  return res.status(401).json({ detail: 'Invalid email or password' })
+})
+
+app.post('/auth/refresh', (req, res) => {
+  const { refresh_token } = req.body
+
+  if (!refresh_token) {
+    return res.status(401).json({ detail: 'Refresh token is required' })
+  }
+
+  return res.json({
+    access_token: loginExample.access_token,
+    refresh_token: loginExample.refresh_token,
+    expires_in: loginExample.expires_in,
+    user: loginExample.user,
+  })
+})
+
+app.post('/auth/logout', requireAuth, (req, res) => {
+  res.status(204).send()
+})
+
+// SSO endpoints - Mock OAuth flow
+// Instead of redirecting to real OAuth providers, we redirect to our own mock callback
+// that immediately returns tokens, simulating a successful OAuth flow
+
+app.get('/auth/google', (req, res) => {
+  const state = faker.string.alphanumeric(32)
+  const redirectUri = req.query.redirect_uri as string || 'http://localhost:5173/auth/callback'
+
+  // Build mock callback URL that will return tokens directly
+  const mockUser = {
+    id: '550e8400-e29b-41d4-a716-446655440001',
+    sub: 'google|112233445566778899',
+    email: 'demo@grengin.com',
+    name: 'Demo User',
+    picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=GoogleDemo',
+    hd: 'grengin.com',
+    role: 'admin',
+    status: 'active',
+    hasPassword: false,
+    mfaEnabled: false,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: new Date().toISOString(),
+  }
+
+  // Return URL that points to our mock OAuth callback endpoint
+  const callbackUrl = new URL('http://localhost:3000/auth/google/callback')
+  callbackUrl.searchParams.set('state', state)
+  callbackUrl.searchParams.set('redirect_uri', redirectUri)
+  callbackUrl.searchParams.set('user', JSON.stringify(mockUser))
+
+  res.json({
+    auth_url: callbackUrl.toString(),
+    state,
+  })
+})
+
+// Mock OAuth callback - simulates what happens after user authenticates with provider
+app.get('/auth/google/callback', (req, res) => {
+  const redirectUri = req.query.redirect_uri as string || 'http://localhost:5173/auth/callback'
+  const userJson = req.query.user as string
+
+  let user
+  try {
+    user = userJson ? JSON.parse(userJson) : {
+      id: '550e8400-e29b-41d4-a716-446655440001',
+      sub: 'google|112233445566778899',
+      email: 'demo@grengin.com',
+      name: 'Demo User',
+      picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=GoogleDemo',
+      hd: 'grengin.com',
+      role: 'admin',
+      status: 'active',
+      hasPassword: false,
+      mfaEnabled: false,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: new Date().toISOString(),
+    }
+  } catch {
+    user = {
+      id: '550e8400-e29b-41d4-a716-446655440001',
+      sub: 'google|112233445566778899',
+      email: 'demo@grengin.com',
+      name: 'Demo User',
+      picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=GoogleDemo',
+      hd: 'grengin.com',
+      role: 'admin',
+      status: 'active',
+      hasPassword: false,
+      mfaEnabled: false,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: new Date().toISOString(),
+    }
+  }
+
+  // Generate tokens
+  const accessToken = `mock_access_token_${faker.string.alphanumeric(32)}`
+  const refreshToken = `mock_refresh_token_${faker.string.alphanumeric(32)}`
+
+  // Redirect to frontend with tokens
+  const frontendCallback = new URL(redirectUri)
+  frontendCallback.searchParams.set('access_token', accessToken)
+  frontendCallback.searchParams.set('refresh_token', refreshToken)
+  frontendCallback.searchParams.set('user', encodeURIComponent(JSON.stringify(user)))
+
+  res.redirect(frontendCallback.toString())
+})
+
+app.get('/auth/azure', (req, res) => {
+  const state = faker.string.alphanumeric(32)
+  const redirectUri = req.query.redirect_uri as string || 'http://localhost:5173/auth/callback'
+
+  const mockUser = {
+    id: '550e8400-e29b-41d4-a716-446655440002',
+    sub: 'azure|aabbccdd-1122-3344-5566-778899aabbcc',
+    email: 'azure-demo@grengin.com',
+    name: 'Azure Demo User',
+    picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AzureDemo',
+    hd: 'grengin.com',
+    role: 'admin',
+    status: 'active',
+    hasPassword: false,
+    mfaEnabled: false,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: new Date().toISOString(),
+  }
+
+  const callbackUrl = new URL('http://localhost:3000/auth/azure/callback')
+  callbackUrl.searchParams.set('state', state)
+  callbackUrl.searchParams.set('redirect_uri', redirectUri)
+  callbackUrl.searchParams.set('user', JSON.stringify(mockUser))
+
+  res.json({
+    auth_url: callbackUrl.toString(),
+    state,
+  })
+})
+
+app.get('/auth/azure/callback', (req, res) => {
+  const redirectUri = req.query.redirect_uri as string || 'http://localhost:5173/auth/callback'
+  const userJson = req.query.user as string
+
+  let user
+  try {
+    user = userJson ? JSON.parse(userJson) : {
+      id: '550e8400-e29b-41d4-a716-446655440002',
+      sub: 'azure|aabbccdd-1122-3344-5566-778899aabbcc',
+      email: 'azure-demo@grengin.com',
+      name: 'Azure Demo User',
+      picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AzureDemo',
+      hd: 'grengin.com',
+      role: 'admin',
+      status: 'active',
+      hasPassword: false,
+      mfaEnabled: false,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: new Date().toISOString(),
+    }
+  } catch {
+    user = {
+      id: '550e8400-e29b-41d4-a716-446655440002',
+      sub: 'azure|aabbccdd-1122-3344-5566-778899aabbcc',
+      email: 'azure-demo@grengin.com',
+      name: 'Azure Demo User',
+      picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AzureDemo',
+      hd: 'grengin.com',
+      role: 'admin',
+      status: 'active',
+      hasPassword: false,
+      mfaEnabled: false,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: new Date().toISOString(),
+    }
+  }
+
+  const accessToken = `mock_access_token_${faker.string.alphanumeric(32)}`
+  const refreshToken = `mock_refresh_token_${faker.string.alphanumeric(32)}`
+
+  const frontendCallback = new URL(redirectUri)
+  frontendCallback.searchParams.set('access_token', accessToken)
+  frontendCallback.searchParams.set('refresh_token', refreshToken)
+  frontendCallback.searchParams.set('user', encodeURIComponent(JSON.stringify(user)))
+
+  res.redirect(frontendCallback.toString())
+})
 
 // Health endpoint
 app.get('/health', (req, res) => {
@@ -445,6 +652,15 @@ app.listen(PORT, () => {
   console.log(`🚀 Grengin Mock API Server v1.0.0`)
   console.log(`   Running at http://${HOST}:${PORT}`)
   console.log('')
+  console.log('Auth endpoints:')
+  console.log(`  POST /auth/login            - Password login`)
+  console.log(`  POST /auth/refresh          - Refresh token`)
+  console.log(`  POST /auth/logout           - Logout (auth required)`)
+  console.log(`  GET  /auth/google           - Google SSO init (mock)`)
+  console.log(`  GET  /auth/google/callback  - Google SSO callback (mock)`)
+  console.log(`  GET  /auth/azure            - Azure SSO init (mock)`)
+  console.log(`  GET  /auth/azure/callback   - Azure SSO callback (mock)`)
+  console.log('')
   console.log('Core endpoints:')
   console.log(`  GET  /health       - Health check`)
   console.log(`  GET  /models       - List AI models`)
@@ -453,6 +669,7 @@ app.listen(PORT, () => {
   console.log(`  *    /files/*      - File endpoints (auth required)`)
   console.log(`  *    /settings     - Settings (auth required)`)
   console.log('')
+  console.log('🔑 Demo credentials: admin@grengin.com / Demo123456!@')
   console.log('💡 Use "Bearer <token>" for authentication')
   console.log('📚 See mock/README.md for full endpoint documentation')
 })
