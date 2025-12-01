@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { Router, Route } from 'svelte-routing';
   import { Sidebar } from './lib/components/layout/index.js';
   import Chat from './lib/features/chat/components/Chat.svelte';
 
   let sidebarCollapsed = $state(false);
-  let currentPage = $state('chat');
+  let currentPath = $state(window.location.pathname);
 
   function isMobile() {
     return window.innerWidth <= 768;
@@ -19,6 +20,16 @@
   onMount(() => {
     sidebarCollapsed = isMobile();
     window.addEventListener('resize', handleResize);
+
+    // Update currentPath on navigation
+    const handlePopState = () => {
+      currentPath = window.location.pathname;
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
   });
 
   onDestroy(() => {
@@ -29,10 +40,6 @@
 
   function handleSidebarToggle(collapsed: boolean) {
     sidebarCollapsed = collapsed;
-  }
-
-  function handleNavigate(itemId: string) {
-    currentPage = itemId;
   }
 
   function toggleSidebarFromMain(event: Event) {
@@ -57,40 +64,45 @@
   }
 </script>
 
-<Sidebar isCollapsed={sidebarCollapsed} onsidebarToggle={handleSidebarToggle} onnavigate={handleNavigate} />
+<Router>
+    <Sidebar
+      isCollapsed={sidebarCollapsed}
+      onsidebarToggle={handleSidebarToggle}
+    />
 
-{#if !sidebarCollapsed}
-  <div
-    class="mobile-overlay"
-    role="button"
-    tabindex="-1"
-    aria-label="Close sidebar"
-    onclick={handleMainContentClick}
-    onkeydown={(e) => e.key === 'Escape' && handleMainContentClick(e)}
-  ></div>
-{/if}
-
-<main class="main-content" class:collapsed={sidebarCollapsed}>
-  <div class="mobile-header">
-    <button
-      class="mobile-logo-btn"
-      onclick={toggleSidebarFromMain}
-      aria-label={sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
-      title={sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
-    >
-      <img src="/grengin-icon.svg" alt="Grengin" class="mobile-logo-icon" />
-    </button>
-    <div class="mobile-header-content">
-      <h1 class="header-title">Grengin</h1>
-    </div>
-  </div>
-
-  <div class="main-content-body">
-    {#if currentPage === 'chat'}
-      <Chat />
+    {#if !sidebarCollapsed}
+      <div
+        class="mobile-overlay"
+        role="button"
+        tabindex="-1"
+        aria-label="Close sidebar"
+        onclick={handleMainContentClick}
+        onkeydown={(e) => e.key === 'Escape' && handleMainContentClick(e)}
+      ></div>
     {/if}
-  </div>
-</main>
+
+    <main class="main-content" class:collapsed={sidebarCollapsed}>
+      <div class="mobile-header">
+        <button
+          class="mobile-logo-btn"
+          onclick={toggleSidebarFromMain}
+          aria-label={sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
+          title={sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
+        >
+          <img src="/grengin-icon.svg" alt="Grengin" class="mobile-logo-icon" />
+        </button>
+        <div class="mobile-header-content">
+          <h1 class="header-title">Grengin</h1>
+        </div>
+      </div>
+
+      <div class="main-content-body">
+        <Route path="/"><Chat /></Route>
+        <Route path="/chat"><Chat /></Route>
+        <Route path="/chat/:id"><Chat /></Route>
+      </div>
+    </main>
+</Router>
 
 <style>
   .main-content {
