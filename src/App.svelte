@@ -2,10 +2,23 @@
   import { onMount, onDestroy } from 'svelte';
   import { Router, Route } from 'svelte-routing';
   import { Sidebar } from './lib/components/layout/index.js';
+  import Login from './lib/features/auth/components/Login.svelte';
   import Chat from './lib/features/chat/components/Chat.svelte';
+  import AuthCallback from './lib/features/auth/components/AuthCallback.svelte';
+  import { initAuth, getAuthState, logout } from './lib/features/auth/index.js';
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
+
+  const authState = getAuthState();
+
+  function isAuthCallback(): boolean {
+    return currentPath.startsWith('/auth/callback');
+  }
+
+  function isAdminLogin(): boolean {
+    return currentPath === '/admin';
+  }
 
   function isMobile() {
     return window.innerWidth <= 768;
@@ -18,6 +31,7 @@
   }
 
   onMount(() => {
+    initAuth();
     sidebarCollapsed = isMobile();
     window.addEventListener('resize', handleResize);
 
@@ -31,6 +45,14 @@
       window.removeEventListener('popstate', handlePopState);
     };
   });
+
+  async function handleLogout() {
+    await logout();
+  }
+
+  function handleLoginSuccess() {
+    // Auth state is already updated by setAuth
+  }
 
   onDestroy(() => {
     if (typeof window !== 'undefined') {
@@ -65,9 +87,26 @@
 </script>
 
 <Router>
+  {#if isAuthCallback()}
+    <!-- Always show callback route, regardless of auth state -->
+    <div class="callback-wrapper">
+      <Route path="/auth/callback"><AuthCallback /></Route>
+    </div>
+  {:else if isAdminLogin() && !authState.isAuthenticated}
+    <!-- Admin login route -->
+    <Login mode="admin" onLoginSuccess={handleLoginSuccess} />
+  {:else if authState.isLoading}
+    <div class="loading-screen">
+      <div class="loading-spinner"></div>
+    </div>
+  {:else if !authState.isAuthenticated}
+    <Login onLoginSuccess={handleLoginSuccess} />
+  {:else}
     <Sidebar
       isCollapsed={sidebarCollapsed}
       onsidebarToggle={handleSidebarToggle}
+      user={authState.user}
+      onlogout={handleLogout}
     />
 
     {#if !sidebarCollapsed}
@@ -102,9 +141,38 @@
         <Route path="/chat/:id"><Chat /></Route>
       </div>
     </main>
+  {/if}
 </Router>
 
 <style>
+  .callback-wrapper {
+    background: var(--bg-primary);
+    min-height: 100vh;
+  }
+
+  .loading-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+  }
+
+  .loading-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid rgba(var(--brand-rgb), 0.2);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   .main-content {
     margin-left: 280px;
     min-height: 100vh;
