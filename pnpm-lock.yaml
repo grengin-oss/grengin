@@ -10,6 +10,10 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      svelte-routing:
+        specifier: ^2.13.0
+        version: 2.13.0
     devDependencies:
       '@faker-js/faker':
         specifier: ^9.8.0
@@ -1238,6 +1242,9 @@ packages:
     peerDependencies:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: '>=5.0.0'
+
+  svelte-routing@2.13.0:
+    resolution: {integrity: sha512-/NTxqTwLc7Dq306hARJrH2HLXOBtKd7hu8nxgoFDlK0AC4SOKnzisiX/9m8Uksei1QAWtlAEdF91YphNM8iDMg==}
 
   svelte@5.43.12:
     resolution: {integrity: sha512-d1R+3pFa39LXoHCsxHmV//D2pSFZlEMlnxCVQ54TlrQv+4o5pewJO0/Pc5MUp+j71PJrOrPJHTvREZJHn+ymDQ==}
@@ -2493,6 +2500,8 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - picomatch
+
+  svelte-routing@2.13.0: {}
 
   svelte@5.43.12:
     dependencies:

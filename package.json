@@ -35,5 +35,8 @@
     "overrides": {
       "vite": "npm:rolldown-vite@7.2.5"
     }
+  },
+  "dependencies": {
+    "svelte-routing": "^2.13.0"
   }
 }
