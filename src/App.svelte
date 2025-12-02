@@ -6,6 +6,7 @@
   import Chat from './lib/features/chat/components/Chat.svelte';
   import AuthCallback from './lib/features/auth/components/AuthCallback.svelte';
   import { initAuth, getAuthState, logout } from './lib/features/auth/index.js';
+  import Toaster from './lib/components/Toaster.svelte';
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
@@ -86,6 +87,7 @@
   }
 </script>
 
+<Toaster />
 <Router>
   {#if isAuthCallback()}
     <!-- Always show callback route, regardless of auth state -->

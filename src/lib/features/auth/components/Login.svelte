@@ -1,6 +1,7 @@
 <script lang="ts">
   import { login, initiateOAuth, ApiError } from '../index.js';
   import { setAuth } from '../index.js';
+  import { toast } from '../../../components/Toaster.svelte';
 
   // TODO: This should come from the server (API update)
   type AuthMode = 'google' | 'admin';
@@ -14,19 +15,17 @@
 
   let email = $state('');
   let password = $state('');
-  let error = $state('');
   let isLoading = $state(false);
 
   async function handleSubmit(e: Event) {
     e.preventDefault();
-    error = '';
     isLoading = true;
 
     try {
       const response = await login(email, password);
 
       if (response.requires_mfa) {
-        error = 'MFA is required but not yet implemented';
+        toast.error('MFA is required but not yet implemented');
         return;
       }
 
@@ -36,9 +35,9 @@
       }
     } catch (err) {
       if (err instanceof ApiError) {
-        error = err.detail;
+        toast.error(err.detail);
       } else {
-        error = 'An unexpected error occurred';
+        toast.error('An unexpected error occurred');
       }
     } finally {
       isLoading = false;
@@ -46,7 +45,6 @@
   }
 
   async function handleGoogleLogin() {
-    error = '';
     isLoading = true;
 
     try {
@@ -54,9 +52,9 @@
       window.location.href = response.auth_url;
     } catch (err) {
       if (err instanceof ApiError) {
-        error = err.detail;
+        toast.error(err.detail);
       } else {
-        error = 'Failed to initiate Google login';
+        toast.error('Failed to initiate Google login');
       }
       isLoading = false;
     }
@@ -70,10 +68,6 @@
       <h1>Welcome to Grengin</h1>
       <p class="login-subtitle">Sign in to continue</p>
     </div>
-
-    {#if error}
-      <div class="error-message">{error}</div>
-    {/if}
 
     {#if mode === 'google'}
       <div class="login-form">
@@ -195,21 +189,6 @@
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--text-secondary);
-  }
-
-  .error-message {
-    padding: var(--space-md) var(--space-lg);
-    background: rgba(var(--brand-red-rgb), 0.12);
-    backdrop-filter: blur(0.5rem);
-    -webkit-backdrop-filter: blur(0.5rem);
-    border-radius: var(--radius-md);
-    color: var(--brand-red);
-    font-size: 0.875rem;
-    text-align: center;
-    margin-bottom: var(--space-xl);
-    box-shadow:
-      var(--glass-edge-glow),
-      inset 0 1px 0 rgba(var(--brand-red-rgb), 0.15);
   }
 
   .btn-google {
