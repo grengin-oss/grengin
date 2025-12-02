@@ -413,11 +413,21 @@ export const authHandlers = [
   }),
 
   // Initiate SSO login
-  http.get(`${API_BASE}/auth/:provider`, ({ params }) => {
+  http.get(`${API_BASE}/auth/:provider`, ({ params, request }) => {
     const { provider } = params
+    const url = new URL(request.url)
+    const redirectUri = url.searchParams.get('redirect_uri')
+
+    const validProviders = ['google', 'azure', 'keycloak']
+    if (!validProviders.includes(provider as string)) {
+      return HttpResponse.json(
+        { detail: 'Invalid provider or configuration' },
+        { status: 400 }
+      )
+    }
 
     const response: AuthInitResponse = {
-      auth_url: `https://${provider}.example.com/authorize?client_id=grengin&state=${ssoInitExample.state}&redirect_uri=http://localhost:3000/auth/${provider}/callback`,
+      auth_url: `https://${provider}.example.com/authorize?client_id=grengin&state=${ssoInitExample.state}&redirect_uri=${redirectUri || `http://localhost:3000/auth/${provider}/callback`}`,
       state: ssoInitExample.state,
     }
 

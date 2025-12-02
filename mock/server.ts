@@ -134,21 +134,28 @@ app.post('/auth/logout', requireAuth, (req, res) => {
   res.status(204).send()
 })
 
-// SSO endpoints - Mock OAuth flow
-// Instead of redirecting to real OAuth providers, we redirect to our own mock callback
-// that immediately returns tokens, simulating a successful OAuth flow
+// SSO endpoints - Generic handler for all providers
+const SUPPORTED_PROVIDERS = ['google', 'azure', 'keycloak']
 
-app.get('/auth/google', (req, res) => {
+app.get('/auth/:provider', (req, res) => {
+  const { provider } = req.params
+  
+  if (!SUPPORTED_PROVIDERS.includes(provider)) {
+    return res.status(400).json({
+      detail: 'Invalid provider or configuration'
+    })
+  }
+  
+  // Mock OAuth flow for supported providers
   const state = faker.string.alphanumeric(32)
   const redirectUri = req.query.redirect_uri as string || 'http://localhost:5173/auth/callback'
-
-  // Build mock callback URL that will return tokens directly
+  
   const mockUser = {
-    id: '550e8400-e29b-41d4-a716-446655440001',
-    sub: 'google|112233445566778899',
-    email: 'demo@grengin.com',
-    name: 'Demo User',
-    picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=GoogleDemo',
+    id: faker.string.uuid(),
+    sub: `${provider}|${faker.string.alphanumeric(20)}`,
+    email: `${provider}-demo@grengin.com`,
+    name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Demo User`,
+    picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}Demo`,
     hd: 'grengin.com',
     role: 'admin',
     status: 'active',
@@ -158,8 +165,7 @@ app.get('/auth/google', (req, res) => {
     updatedAt: new Date().toISOString(),
   }
 
-  // Return URL that points to our mock OAuth callback endpoint
-  const callbackUrl = new URL('http://localhost:3000/auth/google/callback')
+  const callbackUrl = new URL(`http://localhost:3000/auth/${provider}/callback`)
   callbackUrl.searchParams.set('state', state)
   callbackUrl.searchParams.set('redirect_uri', redirectUri)
   callbackUrl.searchParams.set('user', JSON.stringify(mockUser))
@@ -170,19 +176,38 @@ app.get('/auth/google', (req, res) => {
   })
 })
 
-// Mock OAuth callback - simulates what happens after user authenticates with provider
-app.get('/auth/google/callback', (req, res) => {
+// Generic SSO callback handler
+app.get('/auth/:provider/callback', (req, res) => {
+  const { provider } = req.params
+  
+  if (!SUPPORTED_PROVIDERS.includes(provider)) {
+    return res.status(400).json({
+      detail: 'Invalid provider or configuration'
+    })
+  }
+  
   const redirectUri = req.query.redirect_uri as string || 'http://localhost:5173/auth/callback'
   const userJson = req.query.user as string
+  const error = req.query.error as string
+
+  // Handle error from provider
+  if (error) {
+    const frontendCallback = new URL(redirectUri)
+    frontendCallback.searchParams.set('error', error)
+    if (req.query.error_description) {
+      frontendCallback.searchParams.set('error_description', req.query.error_description as string)
+    }
+    return res.redirect(frontendCallback.toString())
+  }
 
   let user
   try {
     user = userJson ? JSON.parse(userJson) : {
-      id: '550e8400-e29b-41d4-a716-446655440001',
-      sub: 'google|112233445566778899',
-      email: 'demo@grengin.com',
-      name: 'Demo User',
-      picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=GoogleDemo',
+      id: faker.string.uuid(),
+      sub: `${provider}|${faker.string.alphanumeric(20)}`,
+      email: `${provider}-demo@grengin.com`,
+      name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Demo User`,
+      picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}Demo`,
       hd: 'grengin.com',
       role: 'admin',
       status: 'active',
@@ -193,91 +218,11 @@ app.get('/auth/google/callback', (req, res) => {
     }
   } catch {
     user = {
-      id: '550e8400-e29b-41d4-a716-446655440001',
-      sub: 'google|112233445566778899',
-      email: 'demo@grengin.com',
-      name: 'Demo User',
-      picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=GoogleDemo',
-      hd: 'grengin.com',
-      role: 'admin',
-      status: 'active',
-      hasPassword: false,
-      mfaEnabled: false,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: new Date().toISOString(),
-    }
-  }
-
-  // Generate tokens
-  const accessToken = `mock_access_token_${faker.string.alphanumeric(32)}`
-  const refreshToken = `mock_refresh_token_${faker.string.alphanumeric(32)}`
-
-  // Redirect to frontend with tokens
-  const frontendCallback = new URL(redirectUri)
-  frontendCallback.searchParams.set('access_token', accessToken)
-  frontendCallback.searchParams.set('refresh_token', refreshToken)
-  frontendCallback.searchParams.set('user', encodeURIComponent(JSON.stringify(user)))
-
-  res.redirect(frontendCallback.toString())
-})
-
-app.get('/auth/azure', (req, res) => {
-  const state = faker.string.alphanumeric(32)
-  const redirectUri = req.query.redirect_uri as string || 'http://localhost:5173/auth/callback'
-
-  const mockUser = {
-    id: '550e8400-e29b-41d4-a716-446655440002',
-    sub: 'azure|aabbccdd-1122-3344-5566-778899aabbcc',
-    email: 'azure-demo@grengin.com',
-    name: 'Azure Demo User',
-    picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AzureDemo',
-    hd: 'grengin.com',
-    role: 'admin',
-    status: 'active',
-    hasPassword: false,
-    mfaEnabled: false,
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: new Date().toISOString(),
-  }
-
-  const callbackUrl = new URL('http://localhost:3000/auth/azure/callback')
-  callbackUrl.searchParams.set('state', state)
-  callbackUrl.searchParams.set('redirect_uri', redirectUri)
-  callbackUrl.searchParams.set('user', JSON.stringify(mockUser))
-
-  res.json({
-    auth_url: callbackUrl.toString(),
-    state,
-  })
-})
-
-app.get('/auth/azure/callback', (req, res) => {
-  const redirectUri = req.query.redirect_uri as string || 'http://localhost:5173/auth/callback'
-  const userJson = req.query.user as string
-
-  let user
-  try {
-    user = userJson ? JSON.parse(userJson) : {
-      id: '550e8400-e29b-41d4-a716-446655440002',
-      sub: 'azure|aabbccdd-1122-3344-5566-778899aabbcc',
-      email: 'azure-demo@grengin.com',
-      name: 'Azure Demo User',
-      picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AzureDemo',
-      hd: 'grengin.com',
-      role: 'admin',
-      status: 'active',
-      hasPassword: false,
-      mfaEnabled: false,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: new Date().toISOString(),
-    }
-  } catch {
-    user = {
-      id: '550e8400-e29b-41d4-a716-446655440002',
-      sub: 'azure|aabbccdd-1122-3344-5566-778899aabbcc',
-      email: 'azure-demo@grengin.com',
-      name: 'Azure Demo User',
-      picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AzureDemo',
+      id: faker.string.uuid(),
+      sub: `${provider}|${faker.string.alphanumeric(20)}`,
+      email: `${provider}-demo@grengin.com`,
+      name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Demo User`,
+      picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}Demo`,
       hd: 'grengin.com',
       role: 'admin',
       status: 'active',
@@ -645,6 +590,11 @@ app.get('/models', (req, res) => {
   })
 })
 
+// Fallback 404 handler - always returns JSON
+app.use((req, res) => {
+  res.status(404).json({ detail: 'Not Found' })
+})
+
 const PORT = process.env.PORT || 3000
 const HOST = process.env.HOST || 'localhost'
 
@@ -656,10 +606,8 @@ app.listen(PORT, () => {
   console.log(`  POST /auth/login            - Password login`)
   console.log(`  POST /auth/refresh          - Refresh token`)
   console.log(`  POST /auth/logout           - Logout (auth required)`)
-  console.log(`  GET  /auth/google           - Google SSO init (mock)`)
-  console.log(`  GET  /auth/google/callback  - Google SSO callback (mock)`)
-  console.log(`  GET  /auth/azure            - Azure SSO init (mock)`)
-  console.log(`  GET  /auth/azure/callback   - Azure SSO callback (mock)`)
+  console.log(`  GET  /auth/:provider          - SSO init (google, azure, keycloak)`)
+  console.log(`  GET  /auth/:provider/callback - SSO callback`)
   console.log('')
   console.log('Core endpoints:')
   console.log(`  GET  /health       - Health check`)

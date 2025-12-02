@@ -54,7 +54,8 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
     throw new ApiError(response.status, error.detail || 'Failed to initiate login');
   }
 
-  return response.json();
+  const data = await response.json();
+  return data;
 }
 
 export async function getCurrentUser(): Promise<User> {
