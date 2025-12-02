@@ -39,7 +39,6 @@ This project uses **Svelte 5** (not Svelte 4). Version 5 has an overhauled synta
 **Don't:**
 - Rely on implicit top-level `let` reactivity
 - Use `$:` statements (deprecated)
-
 ```svelte
 <!-- ✅ Correct (Svelte 5) -->
 <script lang="ts">
@@ -65,7 +64,6 @@ This project uses **Svelte 5** (not Svelte 4). Version 5 has an overhauled synta
 
 **Don't:**
 - Use `export let`, `$$props`, or `$$restProps`
-
 ```svelte
 <!-- ✅ Correct -->
 <script lang="ts">
@@ -89,7 +87,6 @@ This project uses **Svelte 5** (not Svelte 4). Version 5 has an overhauled synta
 - Use `on:click` syntax
 - Use modifiers like `|once`, `|preventDefault` (implement in handler instead)
 - Duplicate event attributes on one element
-
 ```svelte
 <!-- ✅ Correct -->
 <button onclick={() => console.log('clicked')}>Click</button>
@@ -106,7 +103,6 @@ This project uses **Svelte 5** (not Svelte 4). Version 5 has an overhauled synta
 
 **Don't:**
 - Use `createEventDispatcher` (deprecated in Svelte 5)
-
 ```svelte
 <!-- ✅ Correct -->
 <script lang="ts">
@@ -135,7 +131,6 @@ This project uses **Svelte 5** (not Svelte 4). Version 5 has an overhauled synta
 
 **Don't:**
 - Use `<button on:click>` forwarding syntax
-
 ```svelte
 <!-- ✅ Correct -->
 <script lang="ts">
@@ -154,7 +149,6 @@ This project uses **Svelte 5** (not Svelte 4). Version 5 has an overhauled synta
 
 **Don't:**
 - Use `<slot>` or named slots (deprecated in Svelte 5)
-
 ```svelte
 <!-- ✅ Correct -->
 <script lang="ts">
@@ -174,97 +168,120 @@ This project uses **Svelte 5** (not Svelte 4). Version 5 has an overhauled synta
 
 ## UI Design Guidelines - Liquid Glass
 
-### Core Principles
-Our UI follows Apple's **Liquid Glass** design language: translucent, refractive surfaces that adapt to context while preserving content focus.
+This project implements Apple's **Liquid Glass** design language. Glass effects are **reserved for the navigation layer only** — content uses solid surfaces to maximize clarity, performance, and accessibility.
 
-**Key concepts:**
-- Dynamic material that reflects/refracts underlying content in real-time
-- Adaptive behavior responding to background (light/dark, busy/simple)
-- Contextual transformation to enhance focus, not distract
-- Optical separation through lensing, shadows, selective tinting (not hard borders)
+### Layering Hierarchy
+```
+Layer 1 (Background):   Base background (dark or light)
+Layer 2 (Navigation):   GLASS — Header, Footer, Dropdowns (blur + translucent)
+Layer 3 (Buttons):      GLASS — Interactive CTAs that float above content
+Layer 4 (Content):      SOLID — Sections, Cards (no blur, opaque backgrounds)
+Layer 5 (Labels):       PLAIN — Badges, Tags (no glass treatment)
+```
 
-### Material Philosophy
-- **Material, not decoration**: Use glass for chrome (toolbars, panels, menus), not primary content
-- **Clarity first**: Maintain strong contrast; adjust translucency based on background complexity
-- **Dynamic adaptation**: Elements flip between light/dark based on what's behind them
-- **Platform coherence**: Rounded rectangles, soft separators, layered depth
+### CSS Classes by Layer
 
-### Visual Separation (Instead of Borders)
-**Use:**
-- Lensing effects (light bending around edges)
-- Dynamic shadows (more prominent when background reduces glass distinguishability)
-- Selective tinting (sparingly)
-- Contrast adaptation (content inside glass adapts for legibility)
+#### Navigation Layer (Glass)
 
-**Avoid:**
-- Hard border strokes (glass provides boundaries via refracted light and shadow)
+| Element   | Class                 | Effect                      |
+|-----------|-----------------------|-----------------------------|
+| Header    | `nav-glass`           | 24px blur, translucent gradient |
+| Footer    | `footer-glass`        | 24px blur, top border       |
+| Dropdowns | `nav-dropdown-glass`  | 20px blur, elevated shadow  |
 
-### Glass Variants
+#### Button Layer (Glass)
 
-**Regular Variant (Recommended Default):**
-- More adaptive and robust across varying backgrounds
-- Auto-adjusts to light/dark content dynamically
-- Use for navigation, controls, toolbars where background varies
+| Button    | Class        | Usage              |
+|-----------|--------------|--------------------|
+| Primary   | `btn-accent` | Main CTAs          |
+| Secondary | `btn-glass`  | Alternative actions|
 
-**Clear Variant (Conditional):**
-- More transparent, less material presence
-- Requires background dimming for legibility
-- Use for media-rich overlays with bold, high-contrast content
-- Avoid in low-contrast or mismatched light/dark contexts
+#### Content Layer (Solid — No Blur)
 
-### Best Practices
+| Element            | Class                      | Description                     |
+|--------------------|----------------------------|---------------------------------|
+| Elevated sections  | `surface-elevated`         | Prominent content blocks        |
+| Cards              | `surface-card`             | Static content cards            |
+| Interactive cards  | `surface-card-interactive` | Hoverable cards with lift effect|
+| Subtle containers  | `surface-subtle`           | Low-emphasis backgrounds        |
+| Icon containers    | `surface-accent`           | Accent-colored icon boxes       |
 
-**✅ Do:**
-- Use Liquid Glass in navigation/control layers that float above content
-- Use Regular variant for most cases
-- Ensure text and icons adapt (light/dark) based on background
-- Use proper shadows and highlights to communicate edges
-- Support accessibility settings (Increased Contrast, Reduced Transparency)
-- Apply to chrome elements: toolbars, panels, menus, tab bars, controls
+#### Label Layer (Plain — No Glass)
 
-**❌ Avoid:**
-- Putting Liquid Glass behind content that needs to be read
-- Glass on glass stacking
-- Mixing Regular and Clear variants in same UI context
-- Using Clear variant without proper dimming/contrast
-- Text over transparent glass without contrast adaptation
-- Inline styles (use CSS classes and variables)
-- Creating arbitrary colors (use design token variables)
-- Skipping accessibility considerations
-- Hardcoding values (use CSS variables)
+| Element       | Class         | Description              |
+|---------------|---------------|--------------------------|
+| Accent labels | `label-accent`| Highlighted badges       |
+| Stat labels   | `label-stat`  | Statistical indicators   |
 
-### Implementation
+### Corner Shapes (Squircles)
 
-**Layering Hierarchy:**
-1. Content layer (opaque, high contrast)
-2. Glass chrome layer (navigation, controls)
-3. Interaction layer (hover states, focus indicators)
+Use continuous corner radius for softer, organic shapes:
 
-**Adaptive Behavior:**
-- Background detection: analyze underlying content complexity
-- Contrast adjustment: automatically flip light/dark variants
-- Shadow intensity: increase depth when separation needed
-- Accessibility respect: honor user preferences
+| Element       | Class         | Radius |
+|---------------|---------------|--------|
+| Large panels  | `rounded-2xl` | 16px   |
+| Cards         | `rounded-xl`  | 12px   |
+| Buttons       | `rounded-md` to `rounded-lg` | 6–8px |
+| Pills/tags    | `rounded-md`  | 6px    |
 
-**Responsive Adaptation:**
-- Mobile: Reduce blur, increase contrast for touch targets
-- Desktop: Full lensing effects, subtle hover states
-- High contrast mode: Stronger shadows, reduced transparency
-- Reduced motion: Static glass properties, no dynamic adaptation
+### CSS Variables
+
+All design tokens are defined in `src/styles/global.css`:
+
+- `--surface-*` — Solid backgrounds, borders, shadows for content
+- `--glass-*` — Translucent backgrounds and blur for navigation
+- `--color-accent-*` — Brand colors for buttons and highlights
+
+Both light (`:root`) and dark (`.dark`) themes are defined there.
+
+### When to Use Glass
+
+✅ **DO use glass for:**
+- Header navigation (`nav-glass`)
+- Footer (`footer-glass`)
+- Dropdown menus (`nav-dropdown-glass`)
+- Buttons and CTAs (`btn-accent`, `btn-glass`)
+- Modal overlays
+
+❌ **DON'T use glass for:**
+- Content sections (use `surface-*`)
+- Cards (use `surface-card`)
+- Labels/badges (use `label-*`)
+- Static containers
+
+### Creating New Components
+
+**For content components:**
+1. Use `surface-*` classes (never `glass-*`)
+2. No `backdrop-filter` or blur effects
+3. Use solid shadows for depth
+
+**For navigation components:**
+1. Use `nav-glass`, `footer-glass`, or `nav-dropdown-glass`
+2. Include `backdrop-filter: blur()`
+3. Use glass shadows and borders
+
+### Performance Notes
+
+The strict hierarchy improves performance:
+- Glass only on navigation (always visible) and buttons
+- No stacking blur effects in content
+- Solid content is lightweight on mobile
+- Consistent text contrast on solid backgrounds
 
 ---
 
 ## Code Style Requirements
 
 ### CSS
-- **No inline styles** - always use CSS classes and variables
-- Use CSS design token variables for colors and values
+- **No inline styles** — always use CSS classes and variables
+- Use design token variables from `src/styles/global.css`
 - Always include accessibility media queries:
-  - `@media (prefers-contrast: high)`
-  - `@media (prefers-reduced-motion: reduce)`
-  - `@media (prefers-reduced-transparency: reduce)`
+  - `@media (prefers-contrast: high)}` — Stronger shadows, reduced transparency
+  - `@media (prefers-reduced-motion: reduce)` — Static properties, no animations
+  - `@media (prefers-reduced-transparency: reduce)` — Fallback to solid surfaces
 - Test responsive breakpoints at 768px and 480px
-- Use CSS variables for consistency
+- Mobile: Reduce blur intensity, increase contrast for touch targets
 
 ### TypeScript
 - Maintain type safety throughout
@@ -275,7 +292,8 @@ Our UI follows Apple's **Liquid Glass** design language: translucent, refractive
 
 ## Summary Checklist
 
-When working on this project, remember:
+When working on this project:
+
 - [ ] Use pnpm for all package operations
 - [ ] Never run dev server or suggest doing so
 - [ ] Use Svelte 5 runes (`$state`, `$derived`, `$effect`)
@@ -283,7 +301,10 @@ When working on this project, remember:
 - [ ] Use property handlers (`onclick`) not `on:click`
 - [ ] Use callback props not `createEventDispatcher`
 - [ ] Use snippets and `{@render}` not `<slot>`
-- [ ] Apply Liquid Glass principles to UI chrome (not content)
-- [ ] Use CSS classes/variables, never inline styles
-- [ ] Support accessibility preferences
-- [ ] Maintain clear visual hierarchy (avoid glass on glass)
+- [ ] Apply glass classes (`nav-glass`, `btn-glass`) only to navigation/buttons
+- [ ] Use `surface-*` classes for content (no blur)
+- [ ] Use `label-*` classes for badges/tags (plain, no glass)
+- [ ] Reference `src/styles/global.css` for design tokens
+- [ ] No inline styles — use CSS classes and variables
+- [ ] Support accessibility preferences via media queries
+- [ ] Maintain WCAG 2.1 AA contrast ratios (4.5:1 for normal text)

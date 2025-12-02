@@ -1,20 +1,10 @@
----
-description: UI design Guidelines
-globs:
-alwaysApply: true
----
-# Grengin UI Design Guidelines (Svelte 5 + Custom CSS)
+## Design System: Apple Liquid Glass Theme
 
-## Purpose
-Adopt a web-friendly approximation of Apple's **Liquid Glass** across our Svelte UI: translucent, refractive surfaces that adapt to context while preserving content focus. Liquid Glass combines optical qualities of glass with fluidity, reflecting and refracting underlying content in real-time while dynamically transforming to enhance focus and hierarchy.
+The website implements Apple's **Liquid Glass** design language, inspired by iOS/macOS translucent UI. This creates a premium, modern aesthetic with depth and sophistication.
 
-**Priority: Apple Liquid Glass remains the foundation of our design system.**
+### Core Principle: Strict Layering Hierarchy
 
----
-
-## Strict Layering Hierarchy
-
-**Glass effects are reserved for the navigation layer only.** Content uses solid surfaces to create maximum visual clarity and hierarchy.
+Following Apple's Liquid Glass guidelines, **glass effects are reserved for the navigation layer only**. Content uses solid surfaces to create maximum visual clarity and hierarchy.
 
 ```
 Layer 1 (Background):   Base background (dark or light)
@@ -26,13 +16,11 @@ Layer 5 (Labels):       PLAIN - Badges, Tags (no glass treatment)
 
 This hierarchy ensures the navigation layer clearly "floats" above content, while content remains readable and performant.
 
----
+### Layer Treatments
 
-## Layer Treatments
+#### Navigation Layer (Glass)
 
-### Navigation Layer (Glass)
-
-Header, footer, and dropdowns use glass effects to appear floating above the page:
+The header, footer, and dropdowns use glass effects to appear floating above the page:
 
 | Element | Class | Effect |
 |---------|-------|--------|
@@ -40,7 +28,7 @@ Header, footer, and dropdowns use glass effects to appear floating above the pag
 | Footer | `footer-glass` | 24px blur, top border |
 | Dropdowns | `nav-dropdown-glass` | 20px blur, elevated shadow |
 
-### Button Layer (Glass)
+#### Button Layer (Glass)
 
 Buttons retain glass effects as interactive elements that "pop" from the content:
 
@@ -49,7 +37,7 @@ Buttons retain glass effects as interactive elements that "pop" from the content
 | Primary | `btn-accent` | Main CTAs |
 | Secondary | `btn-glass` | Alternative actions |
 
-### Content Layer (Solid)
+#### Content Layer (Solid)
 
 Content sections and cards use **solid surfaces** with no blur:
 
@@ -61,7 +49,7 @@ Content sections and cards use **solid surfaces** with no blur:
 | Subtle containers | `surface-subtle` | Low-emphasis backgrounds |
 | Icon containers | `surface-accent` | Accent-colored icon boxes |
 
-### Label Layer (Plain)
+#### Label Layer (Plain)
 
 Labels and badges have no glass treatment - just solid backgrounds:
 
@@ -70,9 +58,7 @@ Labels and badges have no glass treatment - just solid backgrounds:
 | Accent labels | `label-accent` | Highlighted badges (no blur) |
 | Stat labels | `label-stat` | Statistical indicators |
 
----
-
-## Corner Shapes (Squircles)
+### Corner Shapes (Squircles)
 
 Use **continuous corner radius** (squircle shape) for a softer, more organic feel:
 
@@ -81,9 +67,7 @@ Use **continuous corner radius** (squircle shape) for a softer, more organic fee
 - Buttons: `rounded-md` (6px) to `rounded-lg` (8px)
 - Pills/tags: `rounded-md` (6px)
 
----
-
-## CSS Variables
+### CSS Variables
 
 All color values, shadows, and transitions are defined in `src/styles/global.css`:
 
@@ -93,65 +77,36 @@ All color values, shadows, and transitions are defined in `src/styles/global.css
 
 Both light (`:root`) and dark (`.dark`) themes are defined there.
 
----
+### Implementation Guidelines
 
-## Best Practices
+#### When to Use Glass
 
-### ✅ DO use glass for:
-- Header navigation (`nav-glass`)
-- Footer (`footer-glass`)
-- Dropdown menus (`nav-dropdown-glass`)
-- Buttons and CTAs (`btn-accent`, `btn-glass`)
+✅ **DO use glass for:**
+- Header navigation
+- Footer
+- Dropdown menus
+- Buttons and CTAs
 - Modal overlays
 
-### ❌ DON'T use glass for:
-- Content sections (use `surface-*` classes)
-- Cards (use `surface-card`)
-- Labels/badges (use `label-*` classes)
+❌ **DON'T use glass for:**
+- Content sections
+- Cards
+- Labels/badges
 - Static containers
 
----
+#### Creating New Components
 
-## Creating New Components
-
-### For content components:
+**For content components:**
 1. Use `surface-*` classes instead of `glass-*`
 2. No `backdrop-filter` or blur effects
 3. Use solid shadows for depth
 
-### For navigation components:
+**For navigation components:**
 1. Use `nav-glass`, `footer-glass`, or `nav-dropdown-glass`
 2. Include `backdrop-filter: blur()`
 3. Use glass shadows and borders
 
----
-
-## Visual Separation & Borders
-
-### Instead of Traditional Borders, Use:
-- **Lensing effects:** light bending around edges for natural separation
-- **Dynamic shadows:** more prominent when background makes glass less distinguishable
-- **Selective tinting:** emphasize parts sparingly, not as primary separation method
-- **Contrast adaptation:** content inside glass adapts to maintain legibility
-
-### Border Guidelines
-- **Avoid hard strokes:** glass effect itself provides boundary via refracted light and shadow
-- **Use shadow depth:** larger glass elements cast deeper shadows when needed for separation
-- **Support accessibility:** provide "Increase Contrast" option for firmer borders when needed
-- **Edge highlights:** subtle lensing effects communicate boundaries naturally
-
----
-
-## Responsive Adaptation
-
-- **Mobile:** Reduce blur, increase contrast for touch targets
-- **Desktop:** Full lensing effects, subtle hover states
-- **High contrast mode:** Stronger shadows, reduced transparency
-- **Reduced motion:** Static glass properties, no dynamic adaptation
-
----
-
-## Performance Benefits
+### Performance Benefits
 
 The strict hierarchy significantly improves performance:
 
@@ -160,23 +115,9 @@ The strict hierarchy significantly improves performance:
 - **Mobile-friendly** - Solid content is lightweight on lower-powered devices
 - **Better readability** - Solid backgrounds ensure consistent text contrast
 
----
-
-## Accessibility
+### Accessibility
 
 - Solid content surfaces provide reliable contrast ratios
 - Navigation glass uses adequate opacity for text legibility
 - Labels are plain for maximum readability
 - Maintain WCAG 2.1 AA contrast ratios (4.5:1 for normal text)
-- Support **accessibility settings** (Increased Contrast, Reduced Transparency)
-
----
-
-## What NOT to Do
-
-❌ **Don't use inline styles** - use CSS variables and classes
-❌ **Don't create arbitrary colors** - use design token variables
-❌ **Don't skip accessibility** - always include contrast/motion/transparency queries
-❌ **Don't stack glass on glass** - maintain clear visual hierarchy
-❌ **Don't ignore responsive breakpoints** - test at 768px and 480px
-❌ **Don't hardcode values** - use CSS variables for consistency
