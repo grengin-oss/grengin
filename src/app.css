@@ -323,6 +323,284 @@ button:focus-visible, .btn:focus-visible {
     0 0.625rem 1.875rem rgba(var(--brand-rgb), 0.35);
 }
 
+/* ===== Liquid Glass Pills ===== */
+
+/* Base pill - neutral glass capsule */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  background: var(--glass-bg-dark);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+  border: 1px solid var(--glass-stroke-dark);
+  color: var(--text-primary);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 1px 4px rgba(0, 0, 0, 0.02),
+    var(--glass-highlight),
+    var(--glass-edge-glow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+}
+
+.pill:hover {
+  background: color-mix(in oklab, var(--glass-bg-dark) 90%, white);
+  border-color: var(--glass-stroke-light);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    var(--glass-highlight),
+    var(--glass-edge-glow);
+}
+
+/* Interactive pill (clickable) */
+.pill--interactive {
+  cursor: pointer;
+}
+
+.pill--interactive:hover {
+  transform: translateY(-1px);
+}
+
+.pill--interactive:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Pill sizes */
+.pill--xs {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+}
+
+.pill--sm {
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+}
+
+.pill--lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Primary pill - brand tinted */
+.pill--primary {
+  background: color-mix(in oklab, var(--glass-bg-dark) 85%, var(--glass-tint-primary));
+  border: 1px solid color-mix(in oklab, var(--brand) 20%, transparent);
+  color: var(--brand);
+  box-shadow:
+    0 2px 8px rgba(var(--brand-rgb), 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.04),
+    var(--glass-highlight),
+    var(--glass-edge-glow);
+}
+
+.pill--primary:hover {
+  background: color-mix(in oklab, var(--glass-bg-dark) 80%, var(--glass-tint-emphasis));
+  border-color: color-mix(in oklab, var(--brand) 30%, transparent);
+  color: var(--brand-hover);
+  box-shadow:
+    0 4px 12px rgba(var(--brand-rgb), 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    var(--glass-highlight),
+    var(--glass-edge-glow),
+    0 0 0 1px rgba(var(--brand-rgb), 0.1);
+}
+
+/* Success pill - green tinted */
+.pill--success {
+  background: color-mix(in oklab, var(--glass-bg-dark) 90%, var(--success-surface));
+  border: 1px solid color-mix(in oklab, var(--brand-green) 20%, transparent);
+  color: var(--brand-green);
+  box-shadow:
+    0 2px 8px rgba(var(--brand-green-rgb), 0.06),
+    0 1px 4px rgba(0, 0, 0, 0.04),
+    var(--glass-highlight),
+    var(--glass-edge-glow);
+}
+
+.pill--success:hover {
+  background: color-mix(in oklab, var(--glass-bg-dark) 85%, var(--success-surface));
+  border-color: color-mix(in oklab, var(--brand-green) 30%, transparent);
+  color: color-mix(in oklab, var(--brand-green) 90%, white);
+  box-shadow:
+    0 4px 12px rgba(var(--brand-green-rgb), 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    var(--glass-highlight),
+    var(--glass-edge-glow),
+    0 0 0 1px rgba(var(--brand-green-rgb), 0.1);
+}
+
+/* Danger pill - red tinted */
+.pill--danger {
+  background: color-mix(in oklab, var(--glass-bg-dark) 90%, var(--danger-surface));
+  border: 1px solid color-mix(in oklab, var(--brand-red) 20%, transparent);
+  color: var(--brand-red);
+  box-shadow:
+    0 2px 8px rgba(var(--brand-red-rgb), 0.06),
+    0 1px 4px rgba(0, 0, 0, 0.04),
+    var(--glass-highlight),
+    var(--glass-edge-glow);
+}
+
+.pill--danger:hover {
+  background: color-mix(in oklab, var(--glass-bg-dark) 85%, var(--danger-surface));
+  border-color: color-mix(in oklab, var(--brand-red) 30%, transparent);
+  color: color-mix(in oklab, var(--brand-red) 90%, white);
+  box-shadow:
+    0 4px 12px rgba(var(--brand-red-rgb), 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    var(--glass-highlight),
+    var(--glass-edge-glow),
+    0 0 0 1px rgba(var(--brand-red-rgb), 0.1);
+}
+
+/* Solid filled pill */
+.pill--filled {
+  background: var(--brand);
+  border: none;
+  color: white;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0.375rem 1rem rgba(var(--brand-rgb), 0.3);
+}
+
+.pill--filled:hover {
+  background: var(--brand-hover);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 0.5rem 1.25rem rgba(var(--brand-rgb), 0.4);
+}
+
+/* ===== Segmented Control (Pill Group) ===== */
+.pill-group {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem;
+  gap: 0.125rem;
+  background: var(--glass-bg-dark);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+  border: 1px solid var(--glass-stroke-dark);
+  border-radius: 9999px;
+  box-shadow:
+    var(--glass-highlight),
+    var(--glass-edge-glow),
+    0 0.25rem 1rem rgba(0, 0, 0, 0.08);
+}
+
+.pill-group__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pill-group__item:hover {
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--glass-bg-dark) 50%, white 8%);
+}
+
+.pill-group__item--active,
+.pill-group__item[aria-selected="true"] {
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--glass-bg-dark) 70%, var(--glass-tint-primary));
+  box-shadow:
+    var(--glass-highlight),
+    0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+/* ===== Tag Pills (for labels, badges) ===== */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--glass-bg-dark);
+  backdrop-filter: blur(0.75rem) saturate(1.2);
+  -webkit-backdrop-filter: blur(0.75rem) saturate(1.2);
+  border: 1px solid var(--glass-stroke-dark);
+  color: var(--text-secondary);
+  box-shadow:
+    var(--glass-highlight),
+    var(--glass-edge-glow),
+    0 0.125rem 0.5rem rgba(0, 0, 0, 0.06);
+}
+
+.tag--primary {
+  background: color-mix(in oklab, var(--glass-bg-dark) 85%, var(--glass-tint-primary));
+  border-color: color-mix(in oklab, var(--brand) 15%, transparent);
+  color: var(--brand);
+  box-shadow:
+    var(--glass-highlight),
+    var(--glass-edge-glow),
+    0 0.125rem 0.5rem rgba(var(--brand-rgb), 0.08);
+}
+
+.tag--success {
+  background: color-mix(in oklab, var(--glass-bg-dark) 90%, var(--success-surface));
+  border-color: color-mix(in oklab, var(--brand-green) 15%, transparent);
+  color: var(--brand-green);
+  box-shadow:
+    var(--glass-highlight),
+    var(--glass-edge-glow),
+    0 0.125rem 0.5rem rgba(var(--brand-green-rgb), 0.08);
+}
+
+.tag--danger {
+  background: color-mix(in oklab, var(--glass-bg-dark) 90%, var(--danger-surface));
+  border-color: color-mix(in oklab, var(--brand-red) 15%, transparent);
+  color: var(--brand-red);
+  box-shadow:
+    var(--glass-highlight),
+    var(--glass-edge-glow),
+    0 0.125rem 0.5rem rgba(var(--brand-red-rgb), 0.08);
+}
+
+/* Removable tag with close button */
+.tag--removable {
+  padding-right: 0.375rem;
+}
+
+.tag__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--glass-bg-dark) 50%, white 10%);
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-size: 0.625rem;
+  transition: background 0.2s ease;
+}
+
+.tag__remove:hover {
+  background: color-mix(in oklab, var(--glass-bg-dark) 40%, white 15%);
+}
+
 /* ===== Card Component ===== */
 .card {
   background: var(--glass-bg-dark);
