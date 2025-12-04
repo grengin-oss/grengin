@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { initiateOAuth, ApiError } from '../../features/auth/index.js';
-  import { toast } from '../Toaster.svelte';
+  import { initiateOAuth, ApiError } from '../index.js';
+  import { toast } from '../../../components/Toaster.svelte';
 
   type OAuthProvider = 'google' | 'azure' | 'keycloak';
   type ButtonSize = 'small' | 'medium' | 'large';
@@ -72,10 +72,7 @@
 
     try {
       const response = await initiateOAuth(provider, redirectUri);
-      alert(response.auth_url);
       onSuccess?.();
-      // Redirect to provider's auth page
-      window.location.href = response.auth_url;
     } catch (err) {
       console.log(err);
       isLoading = false;

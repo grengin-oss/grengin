@@ -6,7 +6,7 @@ type User = components['schemas']['User'];
 export interface LoginResponse {
   requires_mfa: boolean;
   mfa_token?: string;
-  access_token?: string;
+  accessToken?: string;
   refresh_token?: string;
   user?: User;
 }
@@ -39,23 +39,38 @@ export async function logout(): Promise<void> {
   }
 }
 
-export async function initiateOAuth(provider: string, redirectUri?: string): Promise<AuthInitResponse> {
-  const params = new URLSearchParams();
+export async function initiateOAuth(provider: string, redirectUri?: string): Promise<AuthInitResponse | undefined> {
+  let url = `${API_BASE}/auth/${provider}`;
+  
   if (redirectUri) {
-    params.set('redirect_uri', redirectUri);
+    const params = new URLSearchParams({ redirect_uri: redirectUri });
+    url += `?${params.toString()}`;
   }
-  const query = params.toString();
-  const url = `${API_BASE}/auth/${provider}${query ? `?${query}` : ''}`;
 
-  const response = await fetch(url);
+  // Store provider in sessionStorage so callback can retrieve it
+  sessionStorage.setItem('oauth_provider', provider);
+
+  // For OAuth, just redirect directly to the endpoint
+  // The server will return 303 and browser will follow to OAuth provider
+  window.location.href = url;
+  return undefined;
+}
+
+export async function handleOAuthCallback(provider: string, code: string, state: string): Promise<LoginResponse> {
+  const params = new URLSearchParams({ code, state });
+  const url = `${API_BASE}/auth/${provider}/callback?${params.toString()}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { 'accept': 'application/json' },
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to initiate login' }));
-    throw new ApiError(response.status, error.detail || 'Failed to initiate login');
+    const error = await response.json().catch(() => ({ detail: 'OAuth callback failed' }));
+    throw new ApiError(response.status, error.detail || 'OAuth callback failed');
   }
 
-  const data = await response.json();
-  return data;
+  return response.json();
 }
 
 export async function getCurrentUser(): Promise<User> {

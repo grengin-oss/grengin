@@ -1,52 +1,122 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { navigate } from 'svelte-routing';
-  import { setAuth } from '../index.js';
+  import { setAuth, ApiError, handleOAuthCallback } from '../index.js';
+  import { toast } from '../../../components/Toaster.svelte';
 
-  let status = $state<'processing' | 'success' | 'error'>('processing');
-  let errorMessage = $state('');
+  // UI State
+  type CallbackStatus = 'processing' | 'success' | 'error';
+  let status = $state<CallbackStatus>('processing');
 
+  // Constants
+  const REDIRECT_DELAY_SUCCESS = 300; // ms
+  const REDIRECT_DELAY_ERROR = 3000; // ms
+
+  /**
+   * Process OAuth callback
+   * Extracts parameters, calls backend, and handles authentication
+   */
+  async function processOAuthCallback(): Promise<void> {
+    const params = new URLSearchParams(window.location.search);
+
+    // 1. Check for OAuth provider errors
+    const error = params.get('error');
+    if (error) {
+      const errorDesc = params.get('error_description') || error;
+      toast.error(errorDesc);
+      throw new Error(errorDesc);
+    }
+
+    // 2. Validate required OAuth parameters
+    const state = params.get('state');
+    const code = params.get('code');
+    if (!state || !code) {
+      const message = 'Missing required OAuth parameters (state or code)';
+      toast.error(message);
+      throw new Error(message);
+    }
+
+    // 3. Retrieve provider from session storage
+    const provider = sessionStorage.getItem('oauth_provider');
+    if (!provider) {
+      const message = 'OAuth provider not found. Please try logging in again.';
+      toast.error(message);
+      throw new Error(message);
+    }
+
+    // 4. Call backend OAuth callback endpoint
+    const response = await handleOAuthCallback(provider, code, state);
+
+    // 5. Validate response and store authentication
+    if (!response?.accessToken || !response?.user) {
+      const message = 'Invalid authentication response from server';
+      toast.error(message);
+      throw new Error(message);
+    }
+
+    setAuth(response.accessToken, response.refresh_token || '', response.user);
+    return;
+  }
+
+  /**
+   * Clean up session storage
+   */
+  function cleanupSessionStorage(): void {
+    sessionStorage.removeItem('oauth_provider');
+  }
+
+  /**
+   * Redirect to return URL after successful authentication
+   */
+  function redirectAfterSuccess(): void {
+    const returnUrl = sessionStorage.getItem('auth_return_url') || '/';
+    sessionStorage.removeItem('auth_return_url');
+    
+    setTimeout(() => {
+      window.location.href = returnUrl;
+    }, REDIRECT_DELAY_SUCCESS);
+  }
+
+  /**
+   * Redirect to home page after error
+   */
+  function redirectAfterError(): void {
+    setTimeout(() => {
+      window.location.href = '/';
+    }, REDIRECT_DELAY_ERROR);
+  }
+
+  /**
+   * Handle errors and show toast notification
+   */
+  function handleError(err: unknown): void {
+    console.error('OAuth callback error:', err);
+    
+    let errorMessage: string;
+    if (err instanceof ApiError) {
+      errorMessage = err.detail;
+    } else if (err instanceof Error) {
+      errorMessage = err.message;
+    } else {
+      errorMessage = 'An unexpected error occurred during authentication';
+    }
+    
+    // Show error toast
+    toast.error(errorMessage);
+    
+    status = 'error';
+    redirectAfterError();
+  }
+
+  // Initialize OAuth callback processing on component mount
   onMount(async () => {
     try {
-      // svelte-routing uses path-based routing, so query params are in window.location.search
-      const params = new URLSearchParams(window.location.search);
-
-      // Check for error from provider
-      const error = params.get('error');
-      if (error) {
-        const errorDesc = params.get('error_description') || error;
-        throw new Error(errorDesc);
-      }
-
-      // Extract tokens from URL (backend redirects with tokens in query params)
-      const accessToken = params.get('access_token') || params.get('accessToken');
-      const refreshToken = params.get('refresh_token') || params.get('refreshToken');
-      const userParam = params.get('user');
-
-      if (!accessToken || !userParam) {
-        throw new Error('Missing authentication tokens');
-      }
-
-      const user = JSON.parse(decodeURIComponent(userParam));
-      setAuth(accessToken, refreshToken || '', user);
-
+      await processOAuthCallback();
+      cleanupSessionStorage();
       status = 'success';
-
-      // Get the return URL (where user originally wanted to go)
-      const returnUrl = sessionStorage.getItem('auth_return_url') || '/';
-      sessionStorage.removeItem('auth_return_url');
-
-      // Redirect to the original URL using window.location to force full page update
-      setTimeout(() => {
-        window.location.href = returnUrl;
-      }, 300);
+      redirectAfterSuccess();
     } catch (err: unknown) {
-      console.error('Authentication callback error:', err);
-      status = 'error';
-      errorMessage = err instanceof Error ? err.message : 'Authentication failed';
-
-      // Redirect to home after error
-      setTimeout(() => navigate('/', { replace: true }), 3000);
+      cleanupSessionStorage();
+      handleError(err);
     }
   });
 </script>
@@ -83,7 +153,6 @@
           </svg>
         </div>
         <h2>Sign in failed</h2>
-        <p class="status-message error">{errorMessage}</p>
         <p class="status-submessage">Redirecting you back to the login page...</p>
       </div>
     {/if}
@@ -185,10 +254,6 @@
     color: var(--text-secondary);
     font-size: 1rem;
     margin: 0;
-  }
-
-  .status-message.error {
-    color: var(--brand-red);
   }
 
   .status-submessage {

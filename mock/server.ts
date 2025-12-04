@@ -105,9 +105,8 @@ app.post('/auth/login', (req, res) => {
   if (email === 'admin@grengin.com' && password === 'Demo123456!@') {
     return res.json({
       requires_mfa: loginExample.requires_mfa,
-      access_token: loginExample.access_token,
+      accessToken: loginExample.access_token,
       refresh_token: loginExample.refresh_token,
-      expires_in: loginExample.expires_in,
       user: loginExample.user,
     })
   }
@@ -123,9 +122,9 @@ app.post('/auth/refresh', (req, res) => {
   }
 
   return res.json({
-    access_token: loginExample.access_token,
+    requires_mfa: false,
+    accessToken: loginExample.access_token,
     refresh_token: loginExample.refresh_token,
-    expires_in: loginExample.expires_in,
     user: loginExample.user,
   })
 })
@@ -140,40 +139,29 @@ const SUPPORTED_PROVIDERS = ['google', 'azure', 'keycloak']
 app.get('/auth/:provider', (req, res) => {
   const { provider } = req.params
   
+  console.log(`[OAuth Init] Provider: ${provider}, Redirect URI: ${req.query.redirect_uri}`)
+  
   if (!SUPPORTED_PROVIDERS.includes(provider)) {
     return res.status(400).json({
       detail: 'Invalid provider or configuration'
     })
   }
   
-  // Mock OAuth flow for supported providers
+  // Mock OAuth flow - generate state and code
   const state = faker.string.alphanumeric(32)
+  const code = faker.string.alphanumeric(32)
   const redirectUri = req.query.redirect_uri as string || 'http://localhost:5173/auth/callback'
   
-  const mockUser = {
-    id: faker.string.uuid(),
-    sub: `${provider}|${faker.string.alphanumeric(20)}`,
-    email: `${provider}-demo@grengin.com`,
-    name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Demo User`,
-    picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}Demo`,
-    hd: 'grengin.com',
-    role: 'admin',
-    status: 'active',
-    hasPassword: false,
-    mfaEnabled: false,
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: new Date().toISOString(),
-  }
-
-  const callbackUrl = new URL(`http://localhost:3000/auth/${provider}/callback`)
+  // Build callback URL that points to the frontend callback page
+  // This simulates what an OAuth provider would do
+  const callbackUrl = new URL(redirectUri)
+  callbackUrl.searchParams.set('code', code)
   callbackUrl.searchParams.set('state', state)
-  callbackUrl.searchParams.set('redirect_uri', redirectUri)
-  callbackUrl.searchParams.set('user', JSON.stringify(mockUser))
 
-  res.json({
-    auth_url: callbackUrl.toString(),
-    state,
-  })
+  console.log(`[OAuth Init] Redirecting to: ${callbackUrl.toString()}`)
+  
+  // Return 303 redirect to simulate OAuth provider redirecting back to app
+  res.redirect(303, callbackUrl.toString())
 })
 
 // Generic SSO callback handler
@@ -186,62 +174,44 @@ app.get('/auth/:provider/callback', (req, res) => {
     })
   }
   
-  const redirectUri = req.query.redirect_uri as string || 'http://localhost:5173/auth/callback'
-  const userJson = req.query.user as string
+  const code = req.query.code as string
+  const state = req.query.state as string
   const error = req.query.error as string
 
   // Handle error from provider
   if (error) {
-    const frontendCallback = new URL(redirectUri)
-    frontendCallback.searchParams.set('error', error)
-    if (req.query.error_description) {
-      frontendCallback.searchParams.set('error_description', req.query.error_description as string)
-    }
-    return res.redirect(frontendCallback.toString())
+    return res.status(400).json({
+      detail: error
+    })
   }
 
-  let user
-  try {
-    user = userJson ? JSON.parse(userJson) : {
-      id: faker.string.uuid(),
-      sub: `${provider}|${faker.string.alphanumeric(20)}`,
-      email: `${provider}-demo@grengin.com`,
-      name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Demo User`,
-      picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}Demo`,
-      hd: 'grengin.com',
-      role: 'admin',
-      status: 'active',
-      hasPassword: false,
-      mfaEnabled: false,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: new Date().toISOString(),
-    }
-  } catch {
-    user = {
-      id: faker.string.uuid(),
-      sub: `${provider}|${faker.string.alphanumeric(20)}`,
-      email: `${provider}-demo@grengin.com`,
-      name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Demo User`,
-      picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}Demo`,
-      hd: 'grengin.com',
-      role: 'admin',
-      status: 'active',
-      hasPassword: false,
-      mfaEnabled: false,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: new Date().toISOString(),
-    }
+  // Validate required parameters
+  if (!code || !state) {
+    return res.status(400).json({
+      detail: 'Missing code or state parameter'
+    })
   }
 
-  const accessToken = `mock_access_token_${faker.string.alphanumeric(32)}`
-  const refreshToken = `mock_refresh_token_${faker.string.alphanumeric(32)}`
+  // Generate mock user for this provider
+  const user = {
+    id: faker.string.uuid(),
+    sub: `${provider}|${faker.string.alphanumeric(20)}`,
+    email: `${provider}-demo@grengin.com`,
+    name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Demo User`,
+    picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}Demo`,
+    hd: 'grengin.com',
+    super_admin: false,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: new Date().toISOString(),
+  }
 
-  const frontendCallback = new URL(redirectUri)
-  frontendCallback.searchParams.set('access_token', accessToken)
-  frontendCallback.searchParams.set('refresh_token', refreshToken)
-  frontendCallback.searchParams.set('user', encodeURIComponent(JSON.stringify(user)))
-
-  res.redirect(frontendCallback.toString())
+  // Return LoginResponse format
+  res.json({
+    requires_mfa: false,
+    accessToken: loginExample.access_token,
+    refresh_token: loginExample.refresh_token,
+    user,
+  })
 })
 
 // Health endpoint
