@@ -39,7 +39,7 @@ export async function logout(): Promise<void> {
   }
 }
 
-export async function initiateOAuth(provider: string, redirectUri?: string): Promise<AuthInitResponse | undefined> {
+export async function initiateOAuth(provider: string, redirectUri?: string): Promise<void> {
   let url = `${API_BASE}/auth/${provider}`;
   
   if (redirectUri) {
@@ -53,7 +53,6 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
   // For OAuth, just redirect directly to the endpoint
   // The server will return 303 and browser will follow to OAuth provider
   window.location.href = url;
-  return undefined;
 }
 
 export async function handleOAuthCallback(provider: string, code: string, state: string): Promise<LoginResponse> {

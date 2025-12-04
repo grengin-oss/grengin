@@ -71,8 +71,7 @@
     onStart?.(); // Notify parent that OAuth flow is starting
 
     try {
-      const response = await initiateOAuth(provider, redirectUri);
-      onSuccess?.();
+      await initiateOAuth(provider, redirectUri);
     } catch (err) {
       console.log(err);
       isLoading = false;
