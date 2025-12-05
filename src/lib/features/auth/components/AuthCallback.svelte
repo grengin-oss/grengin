@@ -109,13 +109,16 @@
 
   // Initialize OAuth callback processing on component mount
   onMount(async () => {
+    console.log('AuthCallback mounted, status:', status);
     try {
       await processOAuthCallback();
       cleanupSessionStorage();
       status = 'success';
+      console.log('AuthCallback success, status:', status);
       redirectAfterSuccess();
     } catch (err: unknown) {
       cleanupSessionStorage();
+      console.log('AuthCallback error, status:', status);
       handleError(err);
     }
   });
@@ -123,37 +126,72 @@
 
 <div class="callback-container">
   <div class="callback-card">
-    <img src="/grengin-icon.svg" alt="Grengin" class="callback-logo" />
-
     {#if status === 'processing'}
       <div class="callback-content">
-        <div class="status-icon processing">
-          <div class="spinner"></div>
+        <div class="brand-header">
+          <img src="/grengin-icon.svg" alt="Grengin" class="callback-logo" />
+          <div class="brand-text">
+            <h1 class="brand-name">Grengin</h1>
+            <p class="brand-tagline">Authentication in progress</p>
+          </div>
         </div>
-        <h2>Completing sign in...</h2>
-        <p class="status-message">Please wait while we verify your credentials</p>
+        
+        <div class="processing-section">
+          <div class="spinner-container">
+            <div class="spinner"></div>
+            <div class="pulse-ring"></div>
+          </div>
+          <div class="status-text">
+            <h2>Completing sign in...</h2>
+            <p class="status-message">Please wait while we verify your credentials</p>
+          </div>
+        </div>
       </div>
     {:else if status === 'success'}
       <div class="callback-content">
-        <div class="status-icon success">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
+        <div class="brand-header">
+          <img src="/grengin-icon.svg" alt="Grengin" class="callback-logo" />
+          <div class="brand-text">
+            <h1 class="brand-name">Grengin</h1>
+            <p class="brand-tagline">Authentication complete</p>
+          </div>
         </div>
-        <h2>Sign in successful!</h2>
-        <p class="status-message">Redirecting you to the application...</p>
+        
+        <div class="success-section">
+          <div class="status-icon success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <div class="status-text">
+            <h2>Sign in successful!</h2>
+            <p class="status-message">Redirecting you to your workspace...</p>
+          </div>
+        </div>
       </div>
     {:else if status === 'error'}
       <div class="callback-content">
-        <div class="status-icon error">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="15" y1="9" x2="9" y2="15"></line>
-            <line x1="9" y1="9" x2="15" y2="15"></line>
-          </svg>
+        <div class="brand-header">
+          <img src="/grengin-icon.svg" alt="Grengin" class="callback-logo" />
+          <div class="brand-text">
+            <h1 class="brand-name">Grengin</h1>
+            <p class="brand-tagline">Authentication failed</p>
+          </div>
         </div>
-        <h2>Sign in failed</h2>
-        <p class="status-submessage">Redirecting you back to the login page...</p>
+        
+        <div class="error-section">
+          <div class="status-icon error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+          </div>
+          <div class="status-text">
+            <h2>Sign in failed</h2>
+            <p class="status-submessage">Redirecting you back to the login page...</p>
+          </div>
+        </div>
       </div>
     {/if}
   </div>
@@ -165,76 +203,104 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--space-xl);
-    background: var(--bg-primary);
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   }
 
   .callback-card {
     width: 100%;
     max-width: 400px;
-    padding: var(--space-3xl);
-    background: rgba(var(--glass-tint), 0.04);
-    backdrop-filter: blur(1.5rem);
-    -webkit-backdrop-filter: blur(1.5rem);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-xl);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 8px 32px rgba(0, 0, 0, 0.12);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-xl);
-  }
-
-  .callback-logo {
-    width: 4rem;
-    height: 4rem;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid #eaeaea;
+    border-radius: 20px;
+    box-shadow: 
+      0 32px 64px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
   .callback-content {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: var(--space-lg);
+    min-height: 400px;
   }
 
-  .status-icon {
-    width: 4rem;
-    height: 4rem;
-    border-radius: 50%;
+  .brand-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 32px 32px 24px 32px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  }
+
+  .callback-logo {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+  }
+
+  .brand-text {
+    flex: 1;
+  }
+
+  .brand-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.025em;
+  }
+
+  .brand-tagline {
+    font-size: 14px;
+    color: #718096;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .processing-section,
+  .success-section,
+  .error-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 32px;
+    text-align: center;
+    flex: 1;
+  }
+
+  .spinner-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  .status-icon.processing {
-    background: rgba(var(--brand-rgb), 0.15);
-  }
-
-  .status-icon.success {
-    background: rgba(var(--brand-green-rgb), 0.15);
-    color: var(--brand-green);
-  }
-
-  .status-icon.error {
-    background: rgba(var(--brand-red-rgb), 0.15);
-    color: var(--brand-red);
-  }
-
-  .status-icon svg {
-    width: 2rem;
-    height: 2rem;
-  }
-
   .spinner {
-    width: 2rem;
-    height: 2rem;
-    border: 3px solid rgba(var(--brand-rgb), 0.2);
-    border-top-color: var(--brand);
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(102, 126, 234, 0.15);
+    border-top-color: #667eea;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: spin 1s linear infinite;
+    z-index: 2;
+    position: relative;
+  }
+
+  .pulse-ring {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
   }
 
   @keyframes spin {
@@ -243,37 +309,166 @@
     }
   }
 
+  @keyframes pulse {
+    0% {
+      transform: scale(0.8);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.1);
+      opacity: 0.3;
+    }
+    100% {
+      transform: scale(0.8);
+      opacity: 1;
+    }
+  }
+
+  .status-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  .status-icon.success {
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.1) 100%);
+    color: #48bb78;
+    border: 1px solid rgba(72, 187, 120, 0.2);
+  }
+
+  .status-icon.error {
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.1) 0%, rgba(229, 62, 62, 0.1) 100%);
+    color: #f56565;
+    border: 1px solid rgba(245, 101, 101, 0.2);
+  }
+
+  .status-icon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .status-text {
+    max-width: 320px;
+  }
+
   h2 {
-    color: var(--text-primary);
-    font-size: 1.5rem;
+    font-size: 20px;
     font-weight: 600;
-    margin: 0;
+    color: #1a202c;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.025em;
   }
 
   .status-message {
-    color: var(--text-secondary);
-    font-size: 1rem;
+    font-size: 15px;
+    color: #4a5568;
     margin: 0;
+    line-height: 1.5;
   }
 
   .status-submessage {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    opacity: 0.7;
-    margin: 0;
+    font-size: 14px;
+    color: #718096;
+    margin: 8px 0 0 0;
+    line-height: 1.4;
   }
 
+  /* Mobile responsive */
   @media (max-width: 480px) {
+    .callback-container {
+      padding: 16px;
+    }
+
     .callback-card {
-      padding: var(--space-2xl);
+      max-width: 100%;
+    }
+
+    .brand-header {
+      padding: 24px 20px 20px 20px;
+    }
+
+    .processing-section,
+    .success-section,
+    .error-section {
+      padding: 32px 20px;
+    }
+
+    .brand-name {
+      font-size: 20px;
+    }
+
+    .brand-tagline {
+      font-size: 13px;
     }
 
     h2 {
-      font-size: 1.25rem;
+      font-size: 18px;
     }
 
     .status-message {
-      font-size: 0.875rem;
+      font-size: 14px;
+    }
+
+    .spinner-container {
+      width: 64px;
+      height: 64px;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+    }
+
+    .pulse-ring {
+      width: 64px;
+      height: 64px;
+    }
+
+    .status-icon {
+      width: 56px;
+      height: 56px;
+    }
+
+    .status-icon svg {
+      width: 28px;
+      height: 28px;
+    }
+  }
+
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .callback-card {
+      background: rgba(45, 55, 72, 0.98);
+      color: #e2e8f0;
+    }
+
+    .brand-header {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      border-bottom-color: rgba(102, 126, 234, 0.2);
+    }
+
+    .brand-name {
+      color: #f7fafc;
+    }
+
+    .brand-tagline {
+      color: #cbd5e0;
+    }
+
+    h2 {
+      color: #f7fafc;
+    }
+
+    .status-message {
+      color: #cbd5e0;
+    }
+
+    .status-submessage {
+      color: #a0aec0;
     }
   }
 </style>
