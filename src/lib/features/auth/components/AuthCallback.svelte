@@ -32,7 +32,8 @@
     if (!state || !code) {
       const message = 'Missing required OAuth parameters (state or code)';
       toast.error(message);
-      throw new Error(message);
+      redirectAfterError();
+      return;
     }
 
     // 3. Retrieve provider from session storage
@@ -40,7 +41,8 @@
     if (!provider) {
       const message = 'OAuth provider not found. Please try logging in again.';
       toast.error(message);
-      throw new Error(message);
+      redirectAfterError();
+      return;
     }
 
     // 4. Call backend OAuth callback endpoint
