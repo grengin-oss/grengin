@@ -2,9 +2,14 @@
   import { onMount, onDestroy } from 'svelte';
   import Sidebar from './lib/Sidebar.svelte';
   import Chat from './lib/Chat.svelte';
+  import Admin from './lib/admin/Admin.svelte';
 
   let sidebarCollapsed = $state(false);
   let currentPage = $state('chat');
+  
+  // TODO: Get this from actual user auth state
+  let isAdmin = $state(true);
+  let showingSidebar = $state(true); // Hide sidebar when in admin
 
   function isMobile() {
     return window.innerWidth <= 768;
@@ -33,6 +38,13 @@
 
   function handleNavigate(itemId: string) {
     currentPage = itemId;
+    
+    // Hide main sidebar when entering admin
+    if (itemId === 'admin') {
+      showingSidebar = false;
+    } else {
+      showingSidebar = true;
+    }
   }
 
   function toggleSidebarFromMain(event: Event) {
@@ -57,9 +69,16 @@
   }
 </script>
 
-<Sidebar isCollapsed={sidebarCollapsed} onsidebarToggle={handleSidebarToggle} onnavigate={handleNavigate} />
+{#if showingSidebar}
+  <Sidebar 
+    isCollapsed={sidebarCollapsed} 
+    onsidebarToggle={handleSidebarToggle} 
+    onnavigate={handleNavigate}
+    isAdmin={isAdmin}
+  />
+{/if}
 
-{#if !sidebarCollapsed}
+{#if !sidebarCollapsed && showingSidebar}
   <div
     class="mobile-overlay"
     role="button"
@@ -70,7 +89,7 @@
   ></div>
 {/if}
 
-<main class="main-content" class:collapsed={sidebarCollapsed}>
+<main class="main-content" class:collapsed={sidebarCollapsed} class:no-sidebar={!showingSidebar}>
   <div class="mobile-header">
     <button
       class="mobile-logo-btn"
@@ -88,6 +107,8 @@
   <div class="main-content-body">
     {#if currentPage === 'chat'}
       <Chat />
+    {:else}
+      <Admin />
     {/if}
   </div>
 </main>
@@ -110,6 +131,12 @@
     margin-left: 80px;
     width: calc(100vw - 80px);
     max-width: calc(100vw - 80px);
+  }
+
+  .main-content.no-sidebar {
+    margin-left: 0;
+    width: 100vw;
+    max-width: 100vw;
   }
 
   .mobile-header {

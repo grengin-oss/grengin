@@ -4,6 +4,14 @@ import type { components } from './types/api.js'
 import { faker } from '@faker-js/faker'
 import chatListExample from './examples/chat/list.response.json' with { type: 'json' }
 import chatDetailExample from './examples/chat/detail.response.json' with { type: 'json' }
+import adminDashboardExample from './examples/admin/dashboard.response.json' with { type: 'json' }
+import adminUsersExample from './examples/admin/users-list.response.json' with { type: 'json' }
+import apiKeysExample from './examples/admin/api-keys-list.response.json' with { type: 'json' }
+import organizationExample from './examples/admin/organization.response.json' with { type: 'json' }
+import ssoProvidersExample from './examples/admin/sso-providers-list.response.json' with { type: 'json' }
+import rateLimitsExample from './examples/admin/rate-limits-list.response.json' with { type: 'json' }
+import budgetsExample from './examples/admin/budgets-list.response.json' with { type: 'json' }
+import { log } from 'console'
 
 // Types
 type Conversation = components['schemas']['Conversation']
@@ -89,6 +97,17 @@ const requireAuth = (req: express.Request, res: express.Response, next: express.
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ detail: 'Unauthorized' })
   }
+  next()
+}
+
+// Admin middleware
+const requireAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const authHeader = req.headers.authorization
+  if (!authHeader?.startsWith('Bearer ')) {
+    console.log('You are not admin!')
+    return res.status(401).json({ detail: 'Unauthorized' })
+  }
+  // In mock mode, any authenticated user is treated as admin
   next()
 }
 
@@ -436,6 +455,50 @@ app.get('/models', (req, res) => {
       },
     ],
   })
+})
+
+// Admin endpoints
+app.get('/admin/dashboard', requireAdmin, (req, res) => {
+  res.json(adminDashboardExample)
+})
+
+app.get('/admin/users', requireAdmin, (req, res) => {
+  const limit = parseInt(req.query.limit as string || '20')
+  const offset = parseInt(req.query.offset as string || '0')
+  
+  res.json({
+    ...adminUsersExample,
+    limit,
+    offset,
+  })
+})
+
+app.get('/admin/users/:userId', requireAdmin, (req, res) => {
+  const user = adminUsersExample.users.find(u => u.id === req.params.userId)
+  if (!user) {
+    return res.status(404).json({ detail: 'User not found' })
+  }
+  res.json(user)
+})
+
+app.get('/admin/organization', requireAdmin, (req, res) => {
+  res.json(organizationExample)
+})
+
+app.get('/admin/api-keys', requireAdmin, (req, res) => {
+  res.json(apiKeysExample)
+})
+
+app.get('/admin/sso-providers', requireAdmin, (req, res) => {
+  res.json(ssoProvidersExample)
+})
+
+app.get('/admin/rate-limits', requireAdmin, (req, res) => {
+  res.json(rateLimitsExample)
+})
+
+app.get('/admin/budgets', requireAdmin, (req, res) => {
+  res.json(budgetsExample)
 })
 
 const PORT = process.env.PORT || 3000

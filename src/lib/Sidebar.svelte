@@ -3,9 +3,10 @@
     isCollapsed?: boolean;
     onsidebarToggle?: (collapsed: boolean) => void;
     onnavigate?: (itemId: string) => void;
+    isAdmin?: boolean;
   }
 
-  let { isCollapsed = $bindable(false), onsidebarToggle, onnavigate }: Props = $props();
+  let { isCollapsed = $bindable(false), onsidebarToggle, onnavigate, isAdmin = false }: Props = $props();
 
   let showUserMenu = $state(false);
   let userMenuElement: HTMLElement;
@@ -26,6 +27,22 @@
       isCollapsed = true;
       onsidebarToggle?.(isCollapsed);
     }
+  }
+
+  function handleAdminClick() {
+    closeUserMenu();
+    onnavigate?.('admin');
+  }
+
+  function handleSettingsClick() {
+    closeUserMenu();
+    onnavigate?.('settings');
+  }
+
+  function handleSignOutClick() {
+    closeUserMenu();
+    // TODO: Implement sign out logic
+    console.log('Sign out clicked');
   }
 
   function toggleSidebar() {
@@ -135,11 +152,20 @@
 
 {#if showUserMenu}
   <div class="user-menu-dropdown">
-    <button class="user-menu-item">
+    <button class="user-menu-item" onclick={handleSettingsClick}>
       <span class="menu-item-icon">⚙️</span>
       <span class="menu-item-label">Settings</span>
     </button>
-    <button class="user-menu-item logout-item">
+    {#if isAdmin}
+      <button class="user-menu-item admin-item" onclick={handleAdminClick}>
+        <svg class="menu-item-icon admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span class="menu-item-label">Admin Dashboard</span>
+      </button>
+    {/if}
+    <button class="user-menu-item logout-item" onclick={handleSignOutClick}>
       <svg class="menu-item-icon logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
         <polyline points="16,17 21,12 16,7"/>
@@ -487,6 +513,11 @@
     color: var(--link-color);
   }
 
+  .user-menu-item.admin-item:hover {
+    background: rgba(var(--brand-rgb), 0.12);
+    color: var(--brand);
+  }
+
   .user-menu-item.logout-item:hover {
     background: rgba(255, 82, 82, 0.12);
     color: #ff5252;
@@ -499,6 +530,11 @@
     align-items: center;
     flex-shrink: 0;
     font-size: 0.875rem;
+  }
+
+  .admin-icon {
+    width: 1.125rem;
+    height: 1.125rem;
   }
 
   .menu-item-label {
