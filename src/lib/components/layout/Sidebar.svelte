@@ -372,7 +372,7 @@
           {#each searchResults as result}
             <button class="search-result-item" onclick={() => selectSearchResult(result.id)}>
               <div class="result-title">{result.title || 'Untitled Chat'}</div>
-              <div class="result-date">{new Date(result.created_at).toLocaleDateString()}</div>
+              <div class="result-date">{result.created_at ? new Date(result.created_at).toLocaleDateString() : 'No date'}</div>
             </button>
           {/each}
         {/if}
