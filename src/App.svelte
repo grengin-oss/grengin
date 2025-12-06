@@ -7,6 +7,7 @@
   import AuthCallback from './lib/features/auth/components/AuthCallback.svelte';
   import { initAuth, getAuthState, logout } from './lib/features/auth/index.js';
   import Toaster from './lib/components/Toaster.svelte';
+  import Admin from './lib/admin/pages/Admin.svelte';
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
@@ -19,7 +20,7 @@
   }
 
   function isAdminLogin(): boolean {
-    return currentPath === '/admin';
+    return currentPath.startsWith('/admin');
   }
 
   function isMobile() {
@@ -142,6 +143,8 @@
         <Route path="/"><Chat /></Route>
         <Route path="/chat"><Chat /></Route>
         <Route path="/chat/:id"><Chat /></Route>
+        <Route path="/admin"><Admin /></Route>
+        <Route path="/admin/*"><Admin /></Route>
       </div>
     </main>
   {/if}
