@@ -28,6 +28,9 @@
     "svelte-check": "^4.3.4",
     "tsx": "^4.20.6",
     "typescript": "~5.9.3",
+    "vega": "^6.2.0",
+    "vega-embed": "^7.1.0",
+    "vega-lite": "^6.4.1",
     "vite": "npm:rolldown-vite@7.2.5"
   },
   "pnpm": {
@@ -39,6 +42,7 @@
     "svelte-routing": "^2.13.0",
     "dompurify": "^3.3.0",
     "highlight.js": "^11.11.1",
-    "marked": "^17.0.1"
+    "marked": "^17.0.1",
+    "svelte-vega": "^2.1.0"
   }
 }
