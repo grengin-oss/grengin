@@ -282,48 +282,78 @@
                 </div>
               {:else}
                 {#each providers as provider}
-                  <div class="provider-section">
-                    <div class="provider-header">
-                      {@html provider.icon}
-                      <span class="provider-name">{provider.name}</span>
-                    </div>
-                    {#each provider.models as model}
-                      <div class="model-item">
-                        <button class="dropdown-item" onclick={() => selectModel(provider, model)}>
-                          <div class="dropdown-item-logo">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <path d="M12 2L2 7L12 12L22 7L12 2Z"></path>
-                              <path d="M2 17L12 22L22 17"></path>
-                              <path d="M2 12L12 17L22 12"></path>
-                            </svg>
-                          </div>
-                          <div class="model-info">
-                            <span class="model-name">{model.name}</span>
-                            {#if model.context_window}
-                              <span class="model-details">{model.context_window.toLocaleString()} context</span>
-                            {/if}
-                          </div>
-                        </button>
-                        {#if model.versions && model.versions.length > 0}
-                          <div class="model-versions">
-                            {#each model.versions as version}
-                              <button class="dropdown-item version-item" onclick={() => selectModel(provider, version)}>
-                                <div class="version-info">
-                                  <span class="version-name">{version.name}</span>
-                                  {#if version.context_window}
-                                    <span class="version-details">{version.context_window.toLocaleString()} context</span>
-                                  {/if}
-                                </div>
-                              </button>
-                            {/each}
-                          </div>
-                        {/if}
+                  <div class="provider-item">
+                    <div 
+                      class="provider-row"
+                      role="button"
+                      tabindex="0"
+                      onmouseenter={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const submenu = document.getElementById(`submenu-${provider.key}`);
+                        if (submenu) {
+                          submenu.style.left = `${rect.right + 4}px`;
+                          submenu.style.top = `${rect.top}px`;
+                          submenu.style.display = 'block';
+                        }
+                      }}
+                      onmouseleave={(e) => {
+                        const submenu = document.getElementById(`submenu-${provider.key}`);
+                        if (submenu) {
+                          submenu.style.display = 'none';
+                        }
+                      }}
+                    >
+                      <div class="provider-icon">
+                        {@html provider.icon}
                       </div>
-                    {/each}
+                      <span class="provider-label">{provider.name}</span>
+                      <svg class="chevron-right" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </div>
                   </div>
                 {/each}
               {/if}
             </div>
+            
+            <!-- Submenus outside dropdown -->
+            {#each providers as provider}
+              <div 
+                id={`submenu-${provider.key}`}
+                class="models-submenu-external"
+                onmouseenter={(e) => {
+                  e.currentTarget.style.display = 'block';
+                }}
+                onmouseleave={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              >
+                {#each provider.models as model}
+                  <button class="submenu-item" onclick={() => selectModel(provider, model)}>
+                    <div class="submenu-item-info">
+                      <span class="submenu-item-name">{model.name}</span>
+                      {#if model.context_window}
+                        <span class="submenu-item-details">{model.context_window.toLocaleString()} context</span>
+                      {/if}
+                    </div>
+                  </button>
+                  
+                  <!-- Versions if available -->
+                  {#if model.versions && model.versions.length > 0}
+                    {#each model.versions as version}
+                      <button class="submenu-item version-item" onclick={() => selectModel(provider, version)}>
+                        <div class="submenu-item-info">
+                          <span class="submenu-item-name">{version.name}</span>
+                          {#if version.context_window}
+                            <span class="submenu-item-details">{version.context_window.toLocaleString()} context</span>
+                          {/if}
+                        </div>
+                      </button>
+                    {/each}
+                  {/if}
+                {/each}
+              </div>
+            {/each}
           {/if}
         </div>
       </div>
@@ -437,27 +467,42 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    background: transparent;
-    border: none;
-    border-radius: 0.5rem;
+    padding: 0.625rem 1rem;
+     border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.75rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   .model-logo {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 8px;
+    border-radius: 10px;
     color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .dropdown-button:hover .model-logo {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   }
 
   .dropdown-button:hover {
-    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .dropdown-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   .dropdown-button h2 {
@@ -478,23 +523,55 @@
 
   .dropdown-menu {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 0.5rem);
     left: 0;
-    margin-top: 0.5rem;
-    background: var(--bg-primary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 0.75rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    min-width: 280px;
-    max-width: 400px;
-    max-height: 400px;
+    box-shadow: 
+      0 4px 24px rgba(0, 0, 0, 0.12),
+      0 1px 2px rgba(0, 0, 0, 0.08);
+    width: 240px;
+    max-height: 480px;
     overflow-y: auto;
     z-index: 1000;
+    animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: top left;
+  }
+
+  /* Custom Scrollbar */
+  .dropdown-menu::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .dropdown-menu::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .dropdown-menu::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+  }
+
+  .dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
   }
 
   .dropdown-loading,
   .dropdown-error {
-    padding: 1rem;
+    padding: 1.5rem;
     text-align: center;
     color: var(--text-secondary);
     font-size: 0.875rem;
@@ -505,8 +582,8 @@
   }
 
   .loading-spinner {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border: 2px solid rgba(255, 255, 255, 0.1);
     border-top: 2px solid var(--text-secondary);
     border-radius: 50%;
@@ -519,115 +596,158 @@
     100% { transform: rotate(360deg); }
   }
 
-  .provider-section {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .provider-section:last-child {
-    border-bottom: none;
-  }
-
-  .provider-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.02);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .provider-name {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .model-item {
+  /* Provider Item */
+  .provider-item {
     position: relative;
   }
 
-  .model-versions {
-    background: rgba(0, 0, 0, 0.2);
-    border-left: 2px solid rgba(255, 255, 255, 0.1);
+  .provider-item:last-child {
+    border-bottom: none;
   }
 
-  .version-item {
-    padding-left: 2.5rem;
-    background: rgba(0, 0, 0, 0.1);
+  .provider-item:hover {
+    z-index: 1002;
   }
 
-  .version-item:hover {
-    background: rgba(255, 255, 255, 0.03);
-  }
-
-  .model-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-  }
-
-  .model-name {
-    font-size: 0.9375rem;
-    font-weight: 500;
-  }
-
-  .model-details {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    opacity: 0.8;
-  }
-
-  .version-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-  }
-
-  .version-name {
-    font-size: 0.875rem;
-    font-weight: 400;
-  }
-
-  .version-details {
-    font-size: 0.7rem;
-    color: var(--text-secondary);
-    opacity: 0.7;
-  }
-
-  .dropdown-item {
+  .provider-row {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    color: var(--text-primary);
-    text-decoration: none;
-    font-size: 0.9375rem;
-    transition: background-color 0.15s ease;
+    padding: 0.625rem 1rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: #1a1a1a;
   }
 
-  .dropdown-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+  .provider-row:hover {
+    background: rgba(0, 0, 0, 0.04);
   }
 
-  .dropdown-item:first-child {
-    border-radius: 0.75rem 0.75rem 0 0;
-  }
-
-  .dropdown-item:last-child {
-    border-radius: 0 0 0.75rem 0.75rem;
-  }
-
-  .dropdown-item-logo {
+  .provider-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    color: var(--text-secondary);
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .provider-label {
+    flex: 1;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: #1a1a1a;
+  }
+
+  .chevron-right {
+    width: 16px;
+    height: 16px;
+    color: #8e8e8e;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .provider-row:hover .chevron-right {
+    color: #1a1a1a;
+  }
+
+  /* External Models Submenu - Fixed Position */
+  .models-submenu-external {
+    position: fixed;
+    width: 280px;
+    max-height: 480px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 0.75rem;
+    box-shadow: 
+      0 4px 24px rgba(0, 0, 0, 0.12),
+      0 1px 2px rgba(0, 0, 0, 0.08);
+    display: none;
+    z-index: 1004;
+  }
+
+  /* Custom Scrollbar for Submenu */
+  .models-submenu-external::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .models-submenu-external::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .models-submenu-external::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+  }
+
+  .models-submenu-external::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  /* Submenu Items */
+  .submenu-item {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0.5rem 1rem;
+    width: 100%;
+    border: none;
+    background: #fff;
+    color: #1a1a1a;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 0.875rem;
+    box-shadow: none;
+  }
+
+  .submenu-item:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  .submenu-item.version-item {
+    padding-left: 2.5rem;
+    font-size: 0.8125rem;
+    color: #666;
+  }
+
+  .submenu-item.version-item:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: #1a1a1a;
+  }
+
+  .submenu-item-icon {
+    display: none;
+  }
+
+  .submenu-item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .submenu-item-name {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: #1a1a1a;
+  }
+
+  .submenu-item.version-item .submenu-item-name {
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: #666;
+  }
+
+  .submenu-item:hover .submenu-item-name {
+    color: #1a1a1a;
+  }
+
+  .submenu-item-details {
+    font-size: 0.75rem;
+    color: #8e8e8e;
   }
 
   .header-actions {

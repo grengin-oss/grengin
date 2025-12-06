@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { components } from '../../types/api.js';
   import type { User } from '$lib/types/auth';
   import { listConversations, searchConversations } from '../../api/chatApi.js';
 
