@@ -1,11 +1,14 @@
 import type { StreamEvent } from '../types/chat';
 
-import { API_BASE } from './client';
+import { API_BASE, request } from './client';
 import { getAccessToken } from '../features/auth';
 
 export interface SendMessageOptions {
   message: string;
   conversationId?: string;
+  provider?: string;
+  modelName?: string;
+  files?: File[];
   onToken?: (token: string) => void;
   onStart?: (data: any) => void;
   onTitle?: (title: string) => void;
@@ -17,7 +20,7 @@ export interface SendMessageOptions {
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, onToken, onStart, onTitle, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, files, onToken, onStart, onTitle, onDone, onError } = options;
 
   try {
     const token = getAccessToken();
@@ -25,23 +28,112 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
       throw new Error('No authentication token available');
     }
 
-    const response = await fetch(`${API_BASE}/chat/stream`, {
+    // Convert files to base64 if present
+    const processedFiles = files ? await Promise.all(
+      files.map(async (file) => {
+        const base64 = await fileToBase64(file);
+        return {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          data: base64
+        };
+      })
+    ) : [];
+
+    let response = await fetch(`${API_BASE}/chat/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
+        provider: provider || 'openai',
+        modelName: modelName || 'gpt-3.5-turbo',
+        config: {},
+        webSearch: false,
+        selectedTools: [],
         messages: [
           {
             role: 'user',
             content: message,
+            files: processedFiles,
           },
         ],
-        conversation_id: conversationId,
-        web_search: false,
       }),
     });
+
+    // Handle token expiration for streaming requests
+    if (response.status === 401) {
+      console.log('Streaming request: Token expired, attempting refresh...');
+      // Try to refresh token using the same logic as client.ts
+      const refreshToken = localStorage.getItem('grengin_refresh_token');
+      if (refreshToken) {
+        try {
+          const refreshResponse = await fetch(`${API_BASE}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+          });
+
+          if (refreshResponse.ok) {
+            const data = await refreshResponse.json();
+            // Update tokens in storage
+            localStorage.setItem('grengin_access_token', data.access_token);
+            localStorage.setItem('grengin_refresh_token', data.refresh_token);
+            localStorage.setItem('grengin_user', JSON.stringify(data.user));
+            
+            console.log('Streaming request: Token refreshed, retrying...');
+            // Retry the streaming request with new token
+            response = await fetch(`${API_BASE}/chat/stream`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${data.access_token}`,
+              },
+              body: JSON.stringify({
+                provider: provider || 'openai',
+                modelName: modelName || 'gpt-3.5-turbo',
+                config: {},
+                webSearch: false,
+                selectedTools: [],
+                messages: [
+                  {
+                    role: 'user',
+                    content: message,
+                    files: processedFiles,
+                  },
+                ],
+              }),
+            });
+          } else {
+            console.log('Streaming request: Refresh failed, redirecting...');
+            // Clear auth and redirect
+            localStorage.removeItem('grengin_access_token');
+            localStorage.removeItem('grengin_refresh_token');
+            localStorage.removeItem('grengin_user');
+            window.location.href = '/';
+            return;
+          }
+        } catch (error) {
+          console.log('Streaming request: Refresh error, redirecting...');
+          // Clear auth and redirect
+          localStorage.removeItem('grengin_access_token');
+          localStorage.removeItem('grengin_refresh_token');
+          localStorage.removeItem('grengin_user');
+          window.location.href = '/';
+          return;
+        }
+      } else {
+        console.log('Streaming request: No refresh token, redirecting...');
+        // Clear auth and redirect
+        localStorage.removeItem('grengin_access_token');
+        localStorage.removeItem('grengin_refresh_token');
+        localStorage.removeItem('grengin_user');
+        window.location.href = '/';
+        return;
+      }
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -204,4 +296,21 @@ export async function searchConversations(query: string) {
     console.error('Failed to search conversations:', error);
     throw error;
   }
+}
+
+/**
+ * Convert a file to base64 string
+ */
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Remove the data URL prefix (e.g., "data:image/png;base64,")
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = (error) => reject(error);
+  });
 }

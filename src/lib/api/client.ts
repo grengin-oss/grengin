@@ -100,8 +100,11 @@ export async function request<T>(
       }
       return retryResponse.json();
     }
-    // Refresh failed, clear auth
+    // Refresh failed, clear auth and redirect to login
     clearAuthFn?.();
+    // Redirect to root path - app will show Login component when not authenticated
+    window.location.href = '/';
+    // Throw error to prevent further execution (though redirect will happen)
     throw new ApiError(401, 'Session expired. Please log in again.');
   }
 

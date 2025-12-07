@@ -3,14 +3,17 @@
   import { renderMarkdown, copyToClipboard } from '../../../utils/markdown';
   import { onMount, tick } from 'svelte';
   import 'highlight.js/styles/github-dark.css';
+  import type { ProviderInfo } from '../../../api/models';
 
   interface Props {
     message: ChatMessage;
     onEdit?: (id: string, newContent: string) => void;
     onDelete?: (id: string) => void;
+    user?: { name?: string } | null;
+    selectedModelInfo?:ProviderInfo;
   }
 
-  let { message, onEdit, onDelete }: Props = $props();
+  let { message, onEdit, onDelete, user, selectedModelInfo }: Props = $props();
   let isEditing = $state(false);
   let editContent = $state(message.content);
   let showActions = $state(false);
@@ -20,6 +23,35 @@
   const renderedContent = $derived(
     message.role === 'assistant' ? renderMarkdown(message.content) : message.content
   );
+
+  function getUserInitials(): string {
+    if (!user?.name) return 'U';
+    const parts = user.name.split(' ').filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return parts[0]?.substring(0, 2).toUpperCase() || 'U';
+  }
+
+  function getUserColor(): string {
+    const colors = [
+      '#667eea', '#f56565', '#48bb78', '#ed8936', 
+      '#9f7aea', '#38b2ac', '#ed64a6', '#4299e1'
+    ];
+    if (!user?.name) return colors[0];
+    let hash = 0;
+    for (let i = 0; i < user.name.length; i++) {
+      hash = user.name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  function getModelDisplayName(): string {
+    if (!selectedModelInfo) return 'Assistant';
+    // Remove common prefixes and make more readable
+    const cleanModel = selectedModelInfo.name.replace(/^(gpt-|claude-|anthropic-)/i, '');
+    return cleanModel.charAt(0).toUpperCase() + cleanModel.slice(1);
+  }
 
   function startEdit() {
     if (message.role !== 'user' || message.isStreaming) return;
@@ -144,12 +176,36 @@
         </div>
       {:else}
         <div class="user-message">
-          <p>{message.content}</p>
+          <div class="message-header">
+            <div class="user-info">
+              <div class="user-avatar">
+                <div class="user-initials" style="background-color: {getUserColor()};">
+                  {getUserInitials()}
+                </div>
+              </div>
+              <span class="user-name">{user?.name || 'You'}</span>
+            </div>
+          </div>
+          <div class="message-body">
+            <p>{message.content}</p>
+          </div>
         </div>
       {/if}
     {:else}
       <div class="assistant-message">
-        {@html renderedContent}
+        <div class="message-header">
+          <div class="model-info">
+            <div class="model-avatar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+              </svg>
+            </div>
+            <span class="model-name">{getModelDisplayName()}</span>
+          </div>
+        </div>
+        <div class="message-body">
+          {@html renderedContent}
+        </div>
       </div>
     {/if}
 
@@ -166,32 +222,33 @@
   </div>
 
   <div class="message-footer">
-    <span class="timestamp">{new Date(message.timestamp).toLocaleTimeString()}</span>
-    
-    {#if showActions && !isEditing && !message.isStreaming}
-      <div class="message-actions">
-        {#if message.role === 'user'}
-          <button class="action-btn" onclick={startEdit} title="Edit message">
+    <div class="footer-left">
+      
+      {#if !isEditing && !message.isStreaming}
+        <div class="message-actions">
+          {#if message.role === 'user'}
+            <button class="action-btn" onclick={startEdit} title="Edit message">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+          {/if}
+          <button class="action-btn" onclick={copyMessageContent} title="Copy message">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
           </button>
-        {/if}
-        <button class="action-btn" onclick={copyMessageContent} title="Copy message">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-        </button>
-        <button class="action-btn delete-btn" onclick={handleDelete} title="Delete message">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-        </button>
-      </div>
-    {/if}
+          <button class="action-btn delete-btn" onclick={handleDelete} title="Delete message">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+      {/if}
+    </div>
   </div>
 </div>
 
@@ -199,7 +256,7 @@
   .message {
     display: flex;
     flex-direction: column;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-3xl);
     animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -223,18 +280,14 @@
   }
 
   .message-content {
-    max-width: 80%;
-    width: fit-content;
+    width: 100%;
+    max-width: 100%;
+    margin-left: var(--space-sm);
   }
 
   .user-message {
-    background: var(--brand);
-    color: white;
+    color: var(--text-primary);
     padding: var(--space-lg) var(--space-xl);
-    border-radius: var(--radius-lg);
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.18),
-      0 0.375rem 1.25rem rgba(var(--brand-rgb), 0.25);
   }
 
   .user-message p {
@@ -245,13 +298,8 @@
   }
 
   .assistant-message {
-    background: color-mix(in oklab, var(--glass-bg-dark) 60%, var(--btn-secondary));
-    backdrop-filter: blur(0.625rem);
-    -webkit-backdrop-filter: blur(0.625rem);
-    padding: var(--space-lg) var(--space-xl);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--glass-edge-glow), var(--glass-shadow-light);
     color: var(--text-primary);
+    padding: var(--space-lg) var(--space-xl);
   }
 
   .assistant-message :global(p) {
@@ -380,29 +428,39 @@
   .message-footer {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
+    justify-content: flex-start;
     margin-top: var(--space-sm);
     padding: 0 var(--space-sm);
+    margin-left: var(--space-3xl);
   }
 
-  .timestamp {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    opacity: 0.7;
+  .message.user .message-footer {
+    justify-content: flex-start;
+    align-self: stretch;
+  }
+
+  .footer-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
   }
 
   .message-actions {
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    margin-left: auto;
-    opacity: 0;
-    animation: fadeIn 0.2s ease forwards;
+    opacity: 1;
   }
 
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+  }
+
+  .timestamp {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
   }
 
   .action-btn {
@@ -579,5 +637,63 @@
       justify-content: flex-end;
       margin-top: var(--space-xs);
     }
+  }
+
+  /* Message Header Styles */
+  .message-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+  }
+
+  .user-info,
+  .model-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .user-avatar,
+  .model-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .user-avatar {
+    background: var(--btn-secondary);
+  }
+
+  .model-avatar {
+    background: var(--btn-secondary);
+    color: var(--text-secondary);
+  }
+
+  .user-initials {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: white;
+    padding: 0.25rem;
+  }
+
+  .user-name,
+  .model-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .message-body {
+    width: 100%;
+    padding-left: var(--space-2xl);
   }
 </style>

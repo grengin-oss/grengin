@@ -32,10 +32,16 @@ function loadFromStorage(): void {
     const userJson = localStorage.getItem(USER_KEY);
     const user = userJson ? JSON.parse(userJson) : null;
 
-    authState.accessToken = accessToken;
-    authState.refreshToken = refreshToken;
-    authState.user = user;
-    authState.isAuthenticated = !!accessToken && !!user;
+    // For now, just check if token exists (skip validation)
+    // Token validation will happen when making actual API calls
+    if (accessToken && user) {
+      authState.accessToken = accessToken;
+      authState.refreshToken = refreshToken;
+      authState.user = user;
+      authState.isAuthenticated = true;
+    } else {
+      clearAuth();
+    }
   } catch {
     clearAuth();
   }

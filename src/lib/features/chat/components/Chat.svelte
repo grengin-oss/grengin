@@ -3,9 +3,10 @@
   import ChatMessage from './ChatMessage.svelte';
   import MessageInput from './MessageInput.svelte';
   import TypingIndicator from './TypingIndicator.svelte';
-  import type { ChatMessage as ChatMessageType } from '../../../types/chat';
+  import type { ChatMessage as ChatMessageType, FileAttachment } from '../../../types/chat';
   import { sendMessage, getConversation } from '../../../api/chatApi';
   import { getModels, type ProviderInfo, type ModelInfo } from '../../../api/models';
+  import { getAuthState } from '../../../features/auth/index.js';
 
   let messages = $state<ChatMessageType[]>([]);
   let isLoading = $state(false);
@@ -17,9 +18,11 @@
   let dropdownOpen = $state(false);
   let selectedModel = $state('Baichuan-M2');
   let selectedProvider = $state('anthropic');
+  let selectedModelInfo = $state<ProviderInfo | null>(null);
   let providers = $state<ProviderInfo[]>([]);
   let loadingModels = $state(true);
   let modelsError = $state<string | null>(null);
+  const authState = getAuthState();
 
   // Listen for URL changes
   function handleUrlChange() {
@@ -41,6 +44,7 @@
   function selectModel(provider: ProviderInfo, model: ModelInfo) {
     selectedProvider = provider.key;
     selectedModel = model.name;
+    selectedModelInfo = provider;
     dropdownOpen = false;
   }
 
@@ -62,6 +66,7 @@
       if (!selectedModel && providers.length > 0 && providers[0].models.length > 0) {
         selectedProvider = providers[0].key;
         selectedModel = providers[0].models[0].name;
+        selectedModelInfo = providers[0];
       }
     } catch (error) {
       modelsError = error instanceof Error ? error.message : 'Failed to load models';
@@ -82,7 +87,7 @@
     }
   }
 
-  async function handleSendMessage(content: string) {
+  async function handleSendMessage(content: string, files?: File[]) {
     if (isLoading) return;
 
     error = null;
@@ -94,6 +99,12 @@
       role: 'user',
       content,
       timestamp: new Date().toISOString(),
+      files: files?.map(file => ({
+        id: crypto.randomUUID(),
+        name: file.name,
+        size: file.size,
+        type: file.type
+      })) || []
     };
     messages = [...messages, userMessage];
     await scrollToBottom();
@@ -114,6 +125,9 @@
       await sendMessage({
         message: content,
         conversationId: conversationId || undefined,
+        provider: selectedProvider,
+        modelName: selectedModel,
+        files: files,
         onStart: (data) => {
           conversationId = data.conversation_id;
           isTyping = false;
@@ -321,6 +335,8 @@
               <div 
                 id={`submenu-${provider.key}`}
                 class="models-submenu-external"
+                role="menu"
+                tabindex="-1"
                 onmouseenter={(e) => {
                   e.currentTarget.style.display = 'block';
                 }}
@@ -374,7 +390,13 @@
         </div>
       {:else}
         {#each messages as message (message.id)}
-          <ChatMessage {message} onEdit={handleEditMessage} onDelete={handleDeleteMessage} />
+          <ChatMessage 
+            {message} 
+            onEdit={handleEditMessage} 
+            onDelete={handleDeleteMessage}
+            user={authState.user}
+            selectedModelInfo={selectedModelInfo}
+          />
         {/each}
         
         {#if isTyping}
@@ -696,10 +718,6 @@
     color: #1a1a1a;
   }
 
-  .submenu-item-icon {
-    display: none;
-  }
-
   .submenu-item-info {
     flex: 1;
     display: flex;
@@ -726,33 +744,6 @@
   .submenu-item-details {
     font-size: 0.75rem;
     color: #8e8e8e;
-  }
-
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .header-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .header-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: var(--text-primary);
   }
 
   .messages-container {
