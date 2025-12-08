@@ -1,22 +1,22 @@
 <script lang="ts">
-  // Basic admin dashboard placeholder
+  // Admin Users page placeholder
 </script>
 
 <div class="admin-page">
   <div class="admin-header">
-    <h1>Admin Dashboard</h1>
-    <p class="subtitle">Welcome to the admin panel</p>
+    <h1>User Management</h1>
+    <p class="subtitle">Manage users and their permissions</p>
   </div>
 
   <div class="admin-content">
     <div class="placeholder-card">
-      <h2>Admin Features Coming Soon</h2>
-      <p>This is a placeholder for the admin dashboard. The following features will be available:</p>
+      <h2>Users List</h2>
+      <p>User management functionality coming soon. This page will allow you to:</p>
       <ul>
-        <li>User Management</li>
-        <li>Usage Statistics</li>
-        <li>Settings</li>
-        <li>Audit Log</li>
+        <li>View all registered users</li>
+        <li>Edit user roles and permissions</li>
+        <li>Enable/disable user accounts</li>
+        <li>View user activity history</li>
       </ul>
     </div>
   </div>

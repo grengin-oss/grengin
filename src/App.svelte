@@ -7,7 +7,10 @@
   import AuthCallback from './lib/features/auth/components/AuthCallback.svelte';
   import { initAuth, getAuthState, logout } from './lib/features/auth/index.js';
   import Toaster from './lib/components/Toaster.svelte';
-  import Admin from './lib/admin/pages/Admin.svelte';
+  import Users from './lib/admin/pages/Users.svelte';
+  import Usage from './lib/admin/pages/Usage.svelte';
+  import Settings from './lib/admin/pages/Settings.svelte';
+  import AuditLog from './lib/admin/pages/AuditLog.svelte';
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
@@ -143,8 +146,11 @@
         <Route path="/"><Chat /></Route>
         <Route path="/chat"><Chat /></Route>
         <Route path="/chat/:id"><Chat /></Route>
-        <Route path="/admin"><Admin /></Route>
-        <Route path="/admin/*"><Admin /></Route>
+        <Route path="/admin"><Usage /></Route>
+        <Route path="/admin/users"><Users /></Route>
+        <Route path="/admin/usage"><Usage /></Route>
+        <Route path="/admin/settings"><Settings /></Route>
+        <Route path="/admin/audit-log"><AuditLog /></Route>
       </div>
     </main>
   {/if}
