@@ -1,7 +1,7 @@
 // Users Store - User management state
 import { writable } from 'svelte/store';
 import type { User, PaginatedUsers } from '../types';
-import { getUsers, createUser, updateUser, deactivateUser } from '../api';
+import { getUsers, createUser, updateUser, deactivateUser } from '../../api/index.js';
 
 interface UsersState {
   users: User[];

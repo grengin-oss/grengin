@@ -1,13 +1,13 @@
 // Dashboard API Service
-import { apiClient } from './client';
-import type { AdminDashboard } from '../types';
+import { request } from './client.js';
+import type { AdminDashboard } from '../admin/types.js';
 
 /**
  * Get admin dashboard overview data
  * Includes user stats, usage metrics, costs, and system health
  */
 export async function getDashboard(): Promise<AdminDashboard> {
-  return apiClient.get<AdminDashboard>('/admin/dashboard');
+  return request<AdminDashboard>('/admin/dashboard', {}, true);
 }
 
 /**

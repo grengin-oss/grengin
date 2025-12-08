@@ -1,33 +1,36 @@
 <script lang="ts">
+  import { navigate, useLocation } from 'svelte-routing';
   import AdminLayout from './components/AdminLayout.svelte';
-  import Dashboard from './pages/Dashboard.svelte';
   import Users from './pages/Users.svelte';
   import Usage from './pages/Usage.svelte';
   import Settings from './pages/Settings.svelte';
   import AuditLog from './pages/AuditLog.svelte';
+  import Dashboard from './pages/Dashboard.svelte';
 
-  let currentPage = $state<string>('dashboard');
+  const location = useLocation();
+  
+  // Map routes to components
+  const routes: Record<string, any> = {
+    // '/admin/dashboard': Dashboard,
+    '/admin/users': Users,
+    '/admin/usage': Usage,
+    '/admin/settings': Settings,
+    '/admin/audit-log': AuditLog,
+  };
 
-  function handleNavigate(page: string) {
-    currentPage = page;
-  }
+  const CurrentComponent = $derived(routes[$location.pathname] || Users);
+
+  // Redirect /admin to /admin/users
+  $effect(() => {
+    if ($location.pathname === '/admin') {
+      navigate('/admin/users', { replace: true });
+    }
+  });
 </script>
 
-<AdminLayout onnavigate={handleNavigate}>
+<AdminLayout>
   {#snippet children()}
-    {#if currentPage === 'dashboard'}
-      <Dashboard />
-    {:else if currentPage === 'users'}
-      <Users />
-    {:else if currentPage === 'usage'}
-      <Usage />
-    {:else if currentPage === 'settings'}
-      <Settings />
-    {:else if currentPage === 'audit-log'}
-      <AuditLog />
-    {:else}
-      <Dashboard />
-    {/if}
+    <CurrentComponent />
   {/snippet}
 </AdminLayout>
 

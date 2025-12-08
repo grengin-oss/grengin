@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import Admin from './lib/admin/Admin.svelte';
-  import { Router, Route } from 'svelte-routing';
-  import { Sidebar } from './lib/components/layout/index.js';
-  import Login from './lib/features/auth/components/Login.svelte';
-  import Chat from './lib/features/chat/components/Chat.svelte';
-  import AuthCallback from './lib/features/auth/components/AuthCallback.svelte';
-  import { initAuth, getAuthState, logout } from './lib/features/auth/index.js';
-  import Toaster from './lib/components/Toaster.svelte';
+  import { onMount, onDestroy } from "svelte";
+  import Admin from "./lib/admin/Admin.svelte";
+  import { Router, Route } from "svelte-routing";
+  import { Sidebar } from "./lib/components/layout/index.js";
+  import Login from "./lib/features/auth/components/Login.svelte";
+  import Chat from "./lib/features/chat/components/Chat.svelte";
+  import AuthCallback from "./lib/features/auth/components/AuthCallback.svelte";
+  import { initAuth, getAuthState, logout } from "./lib/features/auth/index.js";
+  import Toaster from "./lib/components/Toaster.svelte";
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
@@ -15,11 +15,11 @@
   const authState = getAuthState();
 
   function isAuthCallback(): boolean {
-    return currentPath.startsWith('/auth/callback');
+    return currentPath.startsWith("/auth/callback");
   }
 
   function isAdminLogin(): boolean {
-    return currentPath === '/admin';
+    return currentPath.startsWith("/admin");
   }
 
   function isMobile() {
@@ -35,16 +35,16 @@
   onMount(() => {
     initAuth();
     sidebarCollapsed = isMobile();
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     // Update currentPath on navigation
     const handlePopState = () => {
       currentPath = window.location.pathname;
     };
-    window.addEventListener('popstate', handlePopState);
+    window.addEventListener("popstate", handlePopState);
 
     return () => {
-      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener("popstate", handlePopState);
     };
   });
 
@@ -57,8 +57,8 @@
   }
 
   onDestroy(() => {
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('resize', handleResize);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("resize", handleResize);
     }
   });
 
@@ -74,18 +74,22 @@
   function handleMainContentClick(event: Event) {
     const target = event.target as HTMLElement;
     const isInteractiveElement =
-      target.tagName === 'BUTTON' ||
-      target.tagName === 'INPUT' ||
-      target.tagName === 'SELECT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.tagName === 'A' ||
-      target.closest('button') ||
-      target.closest('a');
+      target.tagName === "BUTTON" ||
+      target.tagName === "INPUT" ||
+      target.tagName === "SELECT" ||
+      target.tagName === "TEXTAREA" ||
+      target.tagName === "A" ||
+      target.closest("button") ||
+      target.closest("a");
 
     if (isMobile() && !sidebarCollapsed && !isInteractiveElement) {
       sidebarCollapsed = true;
     }
   }
+
+  $effect(() => {
+    console.log("authState", authState);
+  });
 </script>
 
 <Toaster />
@@ -97,7 +101,7 @@
     </div>
   {:else if isAdminLogin() && !authState.isAuthenticated}
     <!-- Admin login route -->
-    <Login modes={['admin']} onLoginSuccess={handleLoginSuccess} />
+    <Login modes={["admin"]} onLoginSuccess={handleLoginSuccess} />
   {:else if authState.isLoading}
     <div class="loading-screen">
       <div class="loading-spinner"></div>
@@ -105,12 +109,14 @@
   {:else if !authState.isAuthenticated}
     <Login onLoginSuccess={handleLoginSuccess} />
   {:else}
-    <Sidebar
-      isCollapsed={sidebarCollapsed}
-      onsidebarToggle={handleSidebarToggle}
-      user={authState.user}
-      onlogout={handleLogout}
-    />
+    {#if !isAdminLogin()}
+      <Sidebar
+        isCollapsed={sidebarCollapsed}
+        onsidebarToggle={handleSidebarToggle}
+        user={authState.user}
+        onlogout={handleLogout}
+      />
+    {/if}
 
     {#if !sidebarCollapsed}
       <div
@@ -119,17 +125,17 @@
         tabindex="-1"
         aria-label="Close sidebar"
         onclick={handleMainContentClick}
-        onkeydown={(e) => e.key === 'Escape' && handleMainContentClick(e)}
+        onkeydown={(e) => e.key === "Escape" && handleMainContentClick(e)}
       ></div>
     {/if}
 
-    <main class="main-content" class:collapsed={sidebarCollapsed}>
+    <main class="main-content" class:collapsed={sidebarCollapsed} class:admin={isAdminLogin()}>
       <div class="mobile-header">
         <button
           class="mobile-logo-btn"
           onclick={toggleSidebarFromMain}
-          aria-label={sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
-          title={sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
+          aria-label={sidebarCollapsed ? "Open sidebar" : "Close sidebar"}
+          title={sidebarCollapsed ? "Open sidebar" : "Close sidebar"}
         >
           <img src="/grengin-icon.svg" alt="Grengin" class="mobile-logo-icon" />
         </button>
@@ -142,7 +148,7 @@
         <Route path="/"><Chat /></Route>
         <Route path="/chat"><Chat /></Route>
         <Route path="/chat/:id"><Chat /></Route>
-        <Route path="/admin"><Admin /></Route>
+        <Route path="/admin/*"><Admin /></Route>
       </div>
     </main>
   {/if}
@@ -188,6 +194,12 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+  }
+
+  .main-content.admin {
+    margin-left: 0;
+    width: 100vw;
+    max-width: 100vw;
   }
 
   .main-content.collapsed {

@@ -3,8 +3,10 @@ import type { components } from '../types/api.js';
 type User = components['schemas']['User'];
 
 // In development, use /api proxy to avoid CORS. In production, use the configured URL.
-export const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+export const API_BASE = import.meta.env.VITE_API_BASE || 'https://grengin-test-production.up.railway.app';
 
+// Temporary: Remove this once the Admin API is deployed
+export const LOCAL_API_BASE = import.meta.env.VITE_LOCAL_API_BASE || 'http://localhost:3000';
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -63,7 +65,8 @@ async function tryRefreshToken(): Promise<boolean> {
 
 export async function request<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  useLocalApi = false
 ): Promise<T> {
   const token = getAccessTokenFn?.();
   const headers: HeadersInit = {
@@ -75,7 +78,8 @@ export async function request<T>(
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const apiBase = useLocalApi ? LOCAL_API_BASE : API_BASE;
+  const response = await fetch(`${apiBase}${endpoint}`, {
     ...options,
     headers,
   });

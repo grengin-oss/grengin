@@ -1,10 +1,9 @@
 // Audit Log API Service
-import { apiClient } from './client';
-import type { AuditLogEntry } from '../types';
+import { request } from './client.js';
+import type { AuditLogEntry } from '../admin/types.js';
 
 /**
  * Get audit log entries with pagination and filters
- * TODO: Wire this up when backend audit endpoint is ready
  */
 export async function getAuditLogs(params?: {
   limit?: number;
@@ -31,15 +30,7 @@ export async function getAuditLogs(params?: {
   if (params?.end_date) queryParams.set('end_date', params.end_date);
 
   const query = queryParams.toString();
-  
-  // TODO: Replace with actual API endpoint when available
-  // For now, return mock data
-  return {
-    logs: [],
-    total: 0,
-    limit: params?.limit || 50,
-    offset: params?.offset || 0,
-  };
+  return request(`/admin/audit-logs${query ? `?${query}` : ''}`, {}, true);
 }
 
 /**
@@ -54,7 +45,7 @@ export async function logAdminAction(action: {
   details?: Record<string, any>;
 }): Promise<void> {
   // TODO: Implement when backend endpoint is available
-  // await apiClient.post('/admin/audit-logs', action);
+  // await request('/admin/audit-logs', { method: 'POST', body: JSON.stringify(action) });
   console.log('Admin action logged:', action);
 }
 

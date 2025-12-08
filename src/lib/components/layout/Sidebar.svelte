@@ -174,6 +174,11 @@
     return colors[Math.abs(hash) % colors.length];
   }
 
+  function handleAdminClick() {
+    closeUserMenu();
+    window.location.href = '/admin';
+  }
+
   function handleLogout() {
     closeUserMenu();
     onlogout?.();
@@ -192,6 +197,10 @@
   // Fetch chats on component mount
   $effect(() => {
     fetchChats();
+  });
+
+  $effect(() => {
+    console.log('user', user);
   });
 </script>
 
@@ -327,6 +336,15 @@
       <span class="menu-item-icon">⚙️</span>
       <span class="menu-item-label">Settings</span>
     </button>
+    {#if user?.super_admin}
+      <button class="user-menu-item admin-item" onclick={handleAdminClick}>
+        <svg class="menu-item-icon admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span class="menu-item-label">Admin Dashboard</span>
+      </button>
+    {/if}
     <button class="user-menu-item logout-item" onclick={handleLogout}>
       <svg class="menu-item-icon logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -749,9 +767,19 @@
     color: var(--link-color);
   }
 
+  .user-menu-item.admin-item:hover {
+    background: rgba(var(--brand-rgb), 0.12);
+    color: var(--brand);
+  }
+
   .user-menu-item.logout-item:hover {
     background: rgba(255, 82, 82, 0.12);
     color: #ff5252;
+  }
+
+  .admin-icon {
+    width: 1.125rem;
+    height: 1.125rem;
   }
 
   .menu-item-icon {

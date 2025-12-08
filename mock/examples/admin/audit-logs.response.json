@@ -1,0 +1,67 @@
+[
+  {
+    "id": "log-001",
+    "timestamp": "2024-06-01T10:00:00Z",
+    "admin_id": "550e8400-e29b-41d4-a716-446655440001",
+    "admin_email": "admin@grengin.com",
+    "action": "CREATE_USER",
+    "resource_type": "user",
+    "resource_id": "user-1001",
+    "details": {
+      "email": "newemployee@grengin.com"
+    },
+    "ip_address": "192.168.1.10"
+  },
+  {
+    "id": "log-002",
+    "timestamp": "2024-06-01T11:15:27Z",
+    "admin_id": "550e8400-e29b-41d4-a716-446655440001",
+    "admin_email": "admin@grengin.com",
+    "action": "UPDATE_SETTINGS",
+    "resource_type": "organization",
+    "resource_id": "org-001",
+    "details": {
+      "setting": "require_mfa",
+      "value": true
+    },
+    "ip_address": "192.168.1.10"
+  },
+  {
+    "id": "log-003",
+    "timestamp": "2024-06-01T12:04:41Z",
+    "admin_id": "550e8400-e29b-41d4-a716-446655440002",
+    "admin_email": "user@grengin.com",
+    "action": "REVOKE_API_KEY",
+    "resource_type": "api_key",
+    "resource_id": "key-002",
+    "details": {
+      "key_preview": "****abc2"
+    },
+    "ip_address": "192.168.1.11"
+  },
+  {
+    "id": "log-004",
+    "timestamp": "2024-06-01T13:29:18Z",
+    "admin_id": "550e8400-e29b-41d4-a716-446655440001",
+    "admin_email": "admin@grengin.com",
+    "action": "DELETE_USER",
+    "resource_type": "user",
+    "resource_id": "user-1002",
+    "details": {
+      "reason": "User requested removal"
+    },
+    "ip_address": "192.168.1.10"
+  },
+  {
+    "id": "log-005",
+    "timestamp": "2024-06-01T14:00:00Z",
+    "admin_id": "550e8400-e29b-41d4-a716-446655440001",
+    "admin_email": "admin@grengin.com",
+    "action": "LOGIN",
+    "resource_type": "session",
+    "details": {
+      "method": "password"
+    },
+    "ip_address": "192.168.1.10"
+  }
+]

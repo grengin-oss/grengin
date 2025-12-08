@@ -1,7 +1,7 @@
 // Dashboard Store - Dashboard data caching and state
 import { writable } from 'svelte/store';
 import type { AdminDashboard } from '../types';
-import { getDashboard } from '../api';
+import { getDashboard } from '../../api/index.js';
 
 interface DashboardState {
   data: AdminDashboard | null;
