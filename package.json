@@ -13,9 +13,6 @@
     "mock:dev": "tsx mock/server.ts",
     "mock:generate-types": "openapi-typescript api/openapi.yaml -o mock/types/api.ts"
   },
-  "dependencies": {
-    "chart.js": "^4.5.1"
-  },
   "devDependencies": {
     "@faker-js/faker": "^9.8.0",
     "@mswjs/http-middleware": "^0.10.3",
@@ -23,6 +20,7 @@
     "@tailwindcss/postcss": "^4.1.17",
     "@tsconfig/svelte": "^5.0.6",
     "@types/cors": "^2.8.17",
+    "@types/dompurify": "^3.2.0",
     "@types/express": "^5.0.2",
     "@types/node": "^24.10.1",
     "autoprefixer": "^10.4.22",
@@ -42,5 +40,12 @@
     "overrides": {
       "vite": "npm:rolldown-vite@7.2.5"
     }
+  },
+  "dependencies": {
+    "svelte-routing": "^2.13.0",
+    "dompurify": "^3.3.0",
+    "highlight.js": "^11.11.1",
+    "marked": "^17.0.1",
+    "chart.js": "^4.5.1"
   }
 }

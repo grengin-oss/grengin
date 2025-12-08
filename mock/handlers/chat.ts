@@ -38,10 +38,28 @@ export const chatHandlers = [
     const authError = requireAuth(request)
     if (authError) return authError
 
-    return HttpResponse.json({
-      conversations: Array.from(conversations.values()),
-      total: conversations.size,
-    })
+    const url = new URL(request.url)
+    const limit = Number(url.searchParams.get('limit') ?? 20)
+    const offset = Number(url.searchParams.get('offset') ?? 0)
+    const archived = url.searchParams.get('archived')
+    const search = url.searchParams.get('search')
+
+    let allConversations = Array.from(conversations.values())
+
+    if (archived !== null) {
+      const isArchived = archived === 'true'
+      allConversations = allConversations.filter(chat => chat.archived === isArchived)
+    }
+
+    if (search) {
+      allConversations = allConversations.filter(chat =>
+        chat.title.toLowerCase().includes(search.toLowerCase()),
+      )
+    }
+
+    const paginatedConversations = allConversations.slice(offset, offset + limit)
+
+    return HttpResponse.json(paginatedConversations)
   }),
 
   // Get conversation detail
@@ -180,5 +198,24 @@ Would you like me to elaborate on any of these areas?`
         'X-Accel-Buffering': 'no',
       },
     })
+  }),
+
+  // Search conversations
+  http.get(`${API_BASE}/chat/search`, ({ request }) => {
+    const authError = requireAuth(request)
+    if (authError) return authError
+
+    const url = new URL(request.url)
+    const search = url.searchParams.get('search')
+
+    let allConversations = Array.from(conversations.values())
+
+    if (search) {
+      allConversations = allConversations.filter(chat =>
+        chat.title.toLowerCase().includes(search.toLowerCase()),
+      )
+    }
+
+    return HttpResponse.json(allConversations)
   }),
 ]

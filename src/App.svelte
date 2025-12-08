@@ -1,15 +1,26 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import Sidebar from './lib/Sidebar.svelte';
-  import Chat from './lib/Chat.svelte';
   import Admin from './lib/admin/Admin.svelte';
+  import { Router, Route } from 'svelte-routing';
+  import { Sidebar } from './lib/components/layout/index.js';
+  import Login from './lib/features/auth/components/Login.svelte';
+  import Chat from './lib/features/chat/components/Chat.svelte';
+  import AuthCallback from './lib/features/auth/components/AuthCallback.svelte';
+  import { initAuth, getAuthState, logout } from './lib/features/auth/index.js';
+  import Toaster from './lib/components/Toaster.svelte';
 
   let sidebarCollapsed = $state(false);
-  let currentPage = $state('chat');
-  
-  // TODO: Get this from actual user auth state
-  let isAdmin = $state(true);
-  let showingSidebar = $state(true); // Hide sidebar when in admin
+  let currentPath = $state(window.location.pathname);
+
+  const authState = getAuthState();
+
+  function isAuthCallback(): boolean {
+    return currentPath.startsWith('/auth/callback');
+  }
+
+  function isAdminLogin(): boolean {
+    return currentPath === '/admin';
+  }
 
   function isMobile() {
     return window.innerWidth <= 768;
@@ -22,9 +33,28 @@
   }
 
   onMount(() => {
+    initAuth();
     sidebarCollapsed = isMobile();
     window.addEventListener('resize', handleResize);
+
+    // Update currentPath on navigation
+    const handlePopState = () => {
+      currentPath = window.location.pathname;
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
   });
+
+  async function handleLogout() {
+    await logout();
+  }
+
+  function handleLoginSuccess() {
+    // Auth state is already updated by setAuth
+  }
 
   onDestroy(() => {
     if (typeof window !== 'undefined') {
@@ -34,17 +64,6 @@
 
   function handleSidebarToggle(collapsed: boolean) {
     sidebarCollapsed = collapsed;
-  }
-
-  function handleNavigate(itemId: string) {
-    currentPage = itemId;
-    
-    // Hide main sidebar when entering admin
-    if (itemId === 'admin') {
-      showingSidebar = false;
-    } else {
-      showingSidebar = true;
-    }
   }
 
   function toggleSidebarFromMain(event: Event) {
@@ -69,51 +88,95 @@
   }
 </script>
 
-{#if showingSidebar}
-  <Sidebar 
-    isCollapsed={sidebarCollapsed} 
-    onsidebarToggle={handleSidebarToggle} 
-    onnavigate={handleNavigate}
-    isAdmin={isAdmin}
-  />
-{/if}
-
-{#if !sidebarCollapsed && showingSidebar}
-  <div
-    class="mobile-overlay"
-    role="button"
-    tabindex="-1"
-    aria-label="Close sidebar"
-    onclick={handleMainContentClick}
-    onkeydown={(e) => e.key === 'Escape' && handleMainContentClick(e)}
-  ></div>
-{/if}
-
-<main class="main-content" class:collapsed={sidebarCollapsed} class:no-sidebar={!showingSidebar}>
-  <div class="mobile-header">
-    <button
-      class="mobile-logo-btn"
-      onclick={toggleSidebarFromMain}
-      aria-label={sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
-      title={sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
-    >
-      <img src="/grengin-icon.svg" alt="Grengin" class="mobile-logo-icon" />
-    </button>
-    <div class="mobile-header-content">
-      <h1 class="header-title">Grengin</h1>
+<Toaster />
+<Router>
+  {#if isAuthCallback()}
+    <!-- Always show callback route, regardless of auth state -->
+    <div class="callback-wrapper">
+      <Route path="/auth/callback"><AuthCallback /></Route>
     </div>
-  </div>
+  {:else if isAdminLogin() && !authState.isAuthenticated}
+    <!-- Admin login route -->
+    <Login modes={['admin']} onLoginSuccess={handleLoginSuccess} />
+  {:else if authState.isLoading}
+    <div class="loading-screen">
+      <div class="loading-spinner"></div>
+    </div>
+  {:else if !authState.isAuthenticated}
+    <Login onLoginSuccess={handleLoginSuccess} />
+  {:else}
+    <Sidebar
+      isCollapsed={sidebarCollapsed}
+      onsidebarToggle={handleSidebarToggle}
+      user={authState.user}
+      onlogout={handleLogout}
+    />
 
-  <div class="main-content-body">
-    {#if currentPage === 'chat'}
-      <Chat />
-    {:else}
-      <Admin />
+    {#if !sidebarCollapsed}
+      <div
+        class="mobile-overlay"
+        role="button"
+        tabindex="-1"
+        aria-label="Close sidebar"
+        onclick={handleMainContentClick}
+        onkeydown={(e) => e.key === 'Escape' && handleMainContentClick(e)}
+      ></div>
     {/if}
-  </div>
-</main>
+
+    <main class="main-content" class:collapsed={sidebarCollapsed}>
+      <div class="mobile-header">
+        <button
+          class="mobile-logo-btn"
+          onclick={toggleSidebarFromMain}
+          aria-label={sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
+          title={sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
+        >
+          <img src="/grengin-icon.svg" alt="Grengin" class="mobile-logo-icon" />
+        </button>
+        <div class="mobile-header-content">
+          <h1 class="header-title">Grengin</h1>
+        </div>
+      </div>
+
+      <div class="main-content-body">
+        <Route path="/"><Chat /></Route>
+        <Route path="/chat"><Chat /></Route>
+        <Route path="/chat/:id"><Chat /></Route>
+        <Route path="/admin"><Admin /></Route>
+      </div>
+    </main>
+  {/if}
+</Router>
 
 <style>
+  .callback-wrapper {
+    background: var(--bg-primary);
+    min-height: 100vh;
+  }
+
+  .loading-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+  }
+
+  .loading-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid rgba(var(--brand-rgb), 0.2);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   .main-content {
     margin-left: 280px;
     min-height: 100vh;
@@ -131,12 +194,6 @@
     margin-left: 80px;
     width: calc(100vw - 80px);
     max-width: calc(100vw - 80px);
-  }
-
-  .main-content.no-sidebar {
-    margin-left: 0;
-    width: 100vw;
-    max-width: 100vw;
   }
 
   .mobile-header {

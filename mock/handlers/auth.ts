@@ -36,7 +36,7 @@ interface OnboardingStartResponse {
 }
 
 interface AuthTokenResponse {
-  access_token: string
+  accessToken: string
   token_type: string
   expires_in: number
   refresh_token: string
@@ -392,7 +392,7 @@ export const authHandlers = [
     if (body.email === 'admin@grengin.com' && body.password === 'Demo123456!@') {
       return HttpResponse.json({
         requires_mfa: loginExample.requires_mfa,
-        access_token: loginExample.access_token,
+        accessToken: loginExample.access_token,
         refresh_token: loginExample.refresh_token,
         user: loginExample.user,
       })
@@ -412,19 +412,40 @@ export const authHandlers = [
     )
   }),
 
-  // Initiate SSO login
-  http.get(`${API_BASE}/auth/:provider`, ({ params }) => {
+  // Initiate SSO login - redirect to OAuth provider
+  http.get(`${API_BASE}/auth/:provider`, ({ params, request }) => {
     const { provider } = params
+    const url = new URL(request.url)
+    const redirectUri = url.searchParams.get('redirect_uri') || 'http://localhost:5173/auth/callback'
 
-    const response: AuthInitResponse = {
-      auth_url: `https://${provider}.example.com/authorize?client_id=grengin&state=${ssoInitExample.state}&redirect_uri=http://localhost:3000/auth/${provider}/callback`,
-      state: ssoInitExample.state,
+    const validProviders = ['google', 'azure', 'keycloak']
+    if (!validProviders.includes(provider as string)) {
+      return HttpResponse.json(
+        { detail: 'Invalid provider or configuration' },
+        { status: 400 }
+      )
     }
 
-    return HttpResponse.json(response)
+    // Generate mock OAuth code and state
+    const code = Math.random().toString(36).substring(2, 15)
+    const state = ssoInitExample.state
+
+    // Build callback URL that points to the frontend callback page
+    // This simulates what an OAuth provider would do
+    const callbackUrl = new URL(redirectUri)
+    callbackUrl.searchParams.set('code', code)
+    callbackUrl.searchParams.set('state', state)
+
+    // Return 303 redirect to simulate OAuth provider redirecting back to app
+    return new HttpResponse(null, {
+      status: 303,
+      headers: {
+        'Location': callbackUrl.toString(),
+      },
+    })
   }),
 
-  // OAuth callback
+  // OAuth callback - exchange code for tokens
   http.get(`${API_BASE}/auth/:provider/callback`, ({ request }) => {
     const url = new URL(request.url)
     const code = url.searchParams.get('code')
@@ -445,10 +466,10 @@ export const authHandlers = [
       )
     }
 
-    const response: AuthTokenResponse = {
-      access_token: loginExample.access_token,
-      token_type: 'Bearer',
-      expires_in: loginExample.expires_in,
+    // Return LoginResponse format matching the API client
+    const response = {
+      requires_mfa: false,
+      accessToken: loginExample.access_token,
       refresh_token: loginExample.refresh_token,
       user: loginExample.user as User,
     }
@@ -484,7 +505,7 @@ export const authHandlers = [
 
     // Accept any 6-digit code for mock
     const response: AuthTokenResponse = {
-      access_token: loginExample.access_token,
+      accessToken: loginExample.access_token,
       token_type: 'Bearer',
       expires_in: loginExample.expires_in,
       refresh_token: loginExample.refresh_token,
@@ -615,7 +636,7 @@ export const authHandlers = [
     }
 
     const response: AuthTokenResponse = {
-      access_token: loginExample.access_token,
+      accessToken: loginExample.access_token,
       token_type: 'Bearer',
       expires_in: loginExample.expires_in,
       refresh_token: loginExample.refresh_token,
