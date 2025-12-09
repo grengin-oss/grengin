@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { User } from '$lib/types/auth';
-  import { listConversations, searchConversations } from '../../api/chatApi.js';
+  import type { User } from "../../types/auth";
+  import { listConversations, searchConversations, deleteConversation } from '../../api/chatApi.js';
 
   interface Props {
     isCollapsed?: boolean;
@@ -17,6 +17,9 @@
   let userCollapsed = $state(false);
   let showChatMenu = $state(false);
   let activeChatMenu = $state<string | null>(null);
+  let showDeleteConfirmation = $state(false);
+  let chatToDelete = $state<string | null>(null);
+  let deletingChat = $state(false);
 
   const menuItems = [
     { 
@@ -85,8 +88,35 @@
   }
 
   function deleteChat(chatId: string) {
-    chatHistory = chatHistory.filter(chat => chat.id !== chatId);
+    chatToDelete = chatId;
+    showDeleteConfirmation = true;
     activeChatMenu = null;
+  }
+
+  async function confirmDeleteChat() {
+    if (chatToDelete) {
+      deletingChat = true;
+      try {
+        await deleteConversation(chatToDelete);
+        chatHistory = chatHistory.filter(chat => chat.id !== chatToDelete);
+        showDeleteConfirmation = false;
+        chatToDelete = null;
+        
+        // Navigate to fresh chat after deletion
+        window.history.pushState({}, '', window.location.pathname);
+        onnavigate?.('chat');
+      } catch (error) {
+        console.error('Failed to delete conversation:', error);
+        // You might want to show an error message here
+      } finally {
+        deletingChat = false;
+      }
+    }
+  }
+
+  function cancelDeleteChat() {
+    showDeleteConfirmation = false;
+    chatToDelete = null;
   }
 
   async function handleSearch() {
@@ -192,6 +222,18 @@
   // Fetch chats on component mount
   $effect(() => {
     fetchChats();
+    
+    // Listen for chat history refresh events
+    const handleRefresh = () => {
+      console.log('Refreshing chat history in sidebar');
+      fetchChats();
+    };
+    
+    window.addEventListener('refreshChatHistory', handleRefresh);
+    
+    return () => {
+      window.removeEventListener('refreshChatHistory', handleRefresh);
+    };
   });
 </script>
 
@@ -376,6 +418,42 @@
             </button>
           {/each}
         {/if}
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Delete Confirmation Dialog -->
+{#if showDeleteConfirmation}
+  <div class="confirmation-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+    <div class="confirmation-dialog">
+      <div class="confirmation-header">
+        <h3 id="delete-title">Delete Chat</h3>
+        <button class="close-btn" onclick={cancelDeleteChat} aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="confirmation-content">
+        <p>Are you sure you want to delete this chat? This action cannot be undone.</p>
+      </div>
+      <div class="confirmation-actions">
+        <button class="cancel-btn" onclick={cancelDeleteChat} disabled={deletingChat}>
+          Cancel
+        </button>
+        <button class="delete-btn" onclick={confirmDeleteChat} disabled={deletingChat}>
+          {#if deletingChat}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spinner">
+              <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
+              <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"></path>
+            </svg> &nbsp;
+            Deleting...
+          {:else}
+            Delete
+          {/if}
+        </button>
       </div>
     </div>
   </div>
@@ -1099,6 +1177,137 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  /* Confirmation Dialog Styles */
+  .confirmation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+  }
+
+  .confirmation-dialog {
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 90%;
+    max-width: 400px;
+    overflow: hidden;
+    animation: slideUp 0.2s ease-out;
+  }
+
+  .confirmation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .confirmation-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    transition: all 0.15s ease;
+  }
+
+  .close-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  .confirmation-content {
+    padding: 1rem 1.5rem;
+  }
+
+  .confirmation-content p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .confirmation-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .cancel-btn {
+    padding: 0.625rem 1.25rem;
+    border: 1px solid #d1d5db;
+    background: white;
+    color: #374151;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .cancel-btn:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+  }
+
+  .delete-btn {
+    padding: 0.625rem 1.25rem;
+    border: 1px solid #dc2626;
+    background: #dc2626;
+    color: white;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .delete-btn:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+  }
+
+  .delete-btn:disabled {
+    background: #f87171;
+    border-color: #f87171;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .cancel-btn:disabled {
+    background: #f9fafb;
+    border-color: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  .spinner {
+    animation: spin 1s linear infinite;
   }
 
   @keyframes spin {

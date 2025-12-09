@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import type { ProviderInfo, ModelInfo } from '../../../api/models';
+  import { getModels } from '../../../api/models';
 
   interface MessageInputProps {
     onSend: (message: string, files?: File[]) => void;
@@ -7,10 +9,12 @@
     placeholder?: string;
     rows?: number;
     selectedModel?: string;
+    selectedProvider?: string;
     onRemoveModel?: () => void;
+    onModelSelect?: (provider: ProviderInfo, model: ModelInfo) => void;
   }
 
-  let { onSend, disabled = false, placeholder = 'Type a message...', rows = 1, selectedModel, onRemoveModel }: MessageInputProps = $props();
+  let { onSend, disabled = false, placeholder = 'Type a message...', rows = 1, selectedModel, selectedProvider, onRemoveModel, onModelSelect }: MessageInputProps = $props();
   
   let textarea: HTMLTextAreaElement;
   let fileInput: HTMLInputElement;
@@ -23,8 +27,11 @@
   let showImagePreview = $state(false);
   let currentPreviewFile = $state<File | null>(null);
   let currentPreviewImage = $state<{ file: File; url: string } | null>(null);
-  let showDropdown = $state(false);
-  let rowsState = $state(rows);
+  let showFileDropdown = $state(false);
+  let showModelDropdown = $state(false);
+  let providers = $state<ProviderInfo[]>([]);
+  let loadingModels = $state(true);
+  let modelsError = $state<string | null>(null);
   const maxRows = 10;
   const minRows = 1;
 
@@ -71,18 +78,93 @@
     }
   }
 
-  function toggleDropdown() {
-    showDropdown = !showDropdown;
+  function toggleFileDropdown() {
+    showFileDropdown = !showFileDropdown;
   }
+
+  // Handle model selection
+  function selectModel(provider: ProviderInfo, model: ModelInfo) {
+    onModelSelect?.(provider, model);
+    showModelDropdown = false;
+  }
+
+  // Load models from API
+  async function loadModels() {
+    // try {
+    //   loadingModels = true;
+    //   modelsError = null;
+    //   const data = await getModels();
+    //   providers = data.providers;
+    // } catch (error) {
+    //   modelsError = error instanceof Error ? error.message : 'Failed to load models';
+    //   // add this dummy json 
+    providers = [{
+        key: 'openai',
+        name: 'OpenAI',
+        icon: '<svg width="20" height="20" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="1.5" class="text-text-primary shrink-0 icon-md"><path d="M37.5324 16.8707C37.9808 15.5241 38.1363 14.0974 37.9886 12.6859C37.8409 11.2744 37.3934 9.91076 36.676 8.68622C35.6126 6.83404 33.9882 5.3676 32.0373 4.4985C30.0864 3.62941 27.9098 3.40259 25.8215 3.85078C24.8796 2.7893 23.7219 1.94125 22.4257 1.36341C21.1295 0.785575 19.7249 0.491269 18.3058 0.500197C16.1708 0.495044 14.0893 1.16803 12.3614 2.42214C10.6335 3.67624 9.34853 5.44666 8.6917 7.47815C7.30085 7.76286 5.98686 8.3414 4.8377 9.17505C3.68854 10.0087 2.73073 11.0782 2.02839 12.312C0.956464 14.1591 0.498905 16.2988 0.721698 18.4228C0.944492 20.5467 1.83612 22.5449 3.268 24.1293C2.81966 25.4759 2.66413 26.9026 2.81182 28.3141C2.95951 29.7256 3.40701 31.0892 4.12437 32.3138C5.18791 34.1659 6.8123 35.6322 8.76321 36.5013C10.7141 37.3704 12.8907 37.5973 14.9789 37.1492C15.9208 38.2107 17.0786 39.0587 18.3747 39.6366C19.6709 40.2144 21.0755 40.5087 22.4946 40.4998C24.6307 40.5054 26.7133 39.8321 28.4418 38.5772C30.1704 37.3223 31.4556 35.5506 32.1119 33.5179C33.5027 33.2332 34.8167 32.6547 35.9659 31.821C37.115 30.9874 38.0728 29.9178 38.7752 28.684C39.8458 26.8371 40.3023 24.6979 40.0789 22.5748C39.8556 20.4517 38.9639 18.4544 37.5324 16.8707ZM22.4978 37.8849C20.7443 37.8874 19.0459 37.2733 17.6994 36.1501C17.7601 36.117 17.8666 36.0586 17.936 36.0161L25.9004 31.4156C26.1003 31.3019 26.2663 31.137 26.3813 30.9378C26.4964 30.7386 26.5563 30.5124 26.5549 30.2825V19.0542L29.9213 20.998C29.9389 21.0068 29.9541 21.0198 29.9656 21.0359C29.977 21.052 29.9842 21.0707 29.9867 21.0902V30.3889C29.9842 32.375 29.1946 34.2791 27.7909 35.6841C26.3872 37.0892 24.4838 37.8806 22.4978 37.8849ZM6.39227 31.0064C5.51397 29.4888 5.19742 27.7107 5.49804 25.9832C5.55718 26.0187 5.66048 26.0818 5.73461 26.1244L13.699 30.7248C13.8975 30.8408 14.1233 30.902 14.3532 30.902C14.583 30.902 14.8088 30.8408 15.0073 30.7248L24.731 25.1103V28.9979C24.7321 29.0177 24.7283 29.0376 24.7199 29.0556C24.7115 29.0736 24.6988 29.0893 24.6829 29.1012L16.6317 33.7497C14.9096 34.7416 12.8643 35.0097 10.9447 34.4954C9.02506 33.9811 7.38785 32.7263 6.39227 31.0064ZM4.29707 13.6194C5.17156 12.0998 6.55279 10.9364 8.19885 10.3327C8.19885 10.4013 8.19491 10.5228 8.19491 10.6071V19.808C8.19351 20.0378 8.25334 20.2638 8.36823 20.4629C8.48312 20.6619 8.64893 20.8267 8.84863 20.9404L18.5723 26.5542L15.206 28.4979C15.1894 28.5089 15.1703 28.5155 15.1505 28.5173C15.1307 28.5191 15.1107 28.516 15.0924 28.5082L7.04046 23.8557C5.32135 22.8601 4.06716 21.2235 3.55289 19.3046C3.03862 17.3858 3.30624 15.3413 4.29707 13.6194ZM31.955 20.0556L22.2312 14.4411L25.5976 12.4981C25.6142 12.4872 25.6333 12.4805 25.6531 12.4787C25.6729 12.4769 25.6928 12.4801 25.7111 12.4879L33.7631 17.1364C34.9967 17.849 36.0017 18.8982 36.6606 20.1613C37.3194 21.4244 37.6047 22.849 37.4832 24.2684C37.3617 25.6878 36.8382 27.0432 35.9743 28.1759C35.1103 29.3086 33.9415 30.1717 32.6047 30.6641C32.6047 30.5947 32.6047 30.4733 32.6047 30.3889V21.188C32.6066 20.9586 32.5474 20.7328 32.4332 20.5338C32.319 20.3348 32.154 20.1698 31.955 20.0556ZM35.3055 15.0128C35.2464 14.9765 35.1431 14.9142 35.069 14.8717L27.1045 10.2712C26.906 10.1554 26.6803 10.0943 26.4504 10.0943C26.2206 10.0943 25.9948 10.1554 25.7963 10.2712L16.0726 15.8858V11.9982C16.0715 11.9783 16.0753 11.9585 16.0837 11.9405C16.0921 11.9225 16.1048 11.9068 16.1207 11.8949L24.1719 7.25025C25.4053 6.53903 26.8158 6.19376 28.2383 6.25482C29.6608 6.31589 31.0364 6.78077 32.2044 7.59508C33.3723 8.40939 34.2842 9.53945 34.8334 10.8531C35.3826 12.1667 35.5464 13.6095 35.3055 15.0128ZM14.2424 21.9419L10.8752 19.9981C10.8576 19.9893 10.8423 19.9763 10.8309 19.9602C10.8195 19.9441 10.8122 19.9254 10.8098 19.9058V10.6071C10.8107 9.18295 11.2173 7.78848 11.9819 6.58696C12.7466 5.38544 13.8377 4.42659 15.1275 3.82264C16.4173 3.21869 17.8524 2.99464 19.2649 3.1767C20.6775 3.35876 22.0089 3.93941 23.1034 4.85067C23.0427 4.88379 22.937 4.94215 22.8668 4.98473L14.9024 9.58517C14.7025 9.69878 14.5366 9.86356 14.4215 10.0626C14.3065 10.2616 14.2466 10.4877 14.2479 10.7175L14.2424 21.9419ZM16.071 17.9991L20.4018 15.4978L24.7325 17.9975V22.9985L20.4018 25.4983L16.071 22.9985V17.9991Z" fill="currentColor"></path></svg>',
+        models: [
+          {
+            key: 'gpt-4o',
+            name: 'GPT-4o',
+            context_window: 128000,
+            max_output_tokens: 16384,
+            supports_streaming: true,
+            supports_tools: true,
+            supports_vision: true,
+            pricing: { input: 0.0025, output: 0.01 },
+          },
+          {
+            key: 'gpt-5.1',
+            name: 'GPT-4 Turbo',
+            context_window: 128000,
+            max_output_tokens: 4096,
+            supports_streaming: true,
+            supports_tools: true,
+            supports_vision: true,
+            pricing: { input: 0.01, output: 0.03 },
+          },
+          {
+            key: 'gpt-4',
+            name: 'GPT-4',
+            context_window: 8192,
+            max_output_tokens: 4096,
+            supports_streaming: true,
+            supports_tools: true,
+            supports_vision: false,
+            pricing: { input: 0.03, output: 0.06 },
+          },
+          {
+            key: 'gpt-3.5-turbo',
+            name: 'GPT-3.5 Turbo',
+            context_window: 16385,
+            max_output_tokens: 4096,
+            supports_streaming: true,
+            supports_tools: true,
+            supports_vision: false,
+            pricing: { input: 0.0005, output: 0.0015 },
+          },
+        ],
+      }];
+      loadingModels = false;
+    //   modelsError = null; // Clear error since we have fallback data 
+    // } finally {
+    //   loadingModels = false;
+    // }
+  }
+
+  // Load models on mount
+  onMount(() => {
+    loadModels();
+  });
 
   function handlePhotoSelect() {
     photoInput?.click();
-    showDropdown = false;
+    showFileDropdown = false;
   }
 
   function handleFileSelect() {
     fileInput?.click();
-    showDropdown = false;
+    showFileDropdown = false;
   }
 
   function handleFileChange(event: Event) {
@@ -90,43 +172,29 @@
     if (target.files) {
       const newFiles = Array.from(target.files);
       attachedFiles = [...attachedFiles, ...newFiles];
-      console.log('📁 Files added:', newFiles.length, 'Total files:', attachedFiles.length);
       
       // Generate previews for text files and thumbnails for images
       for (const file of newFiles) {
-        console.log('🔍 Processing file:', file.name, file.type, 'Size:', file.size);
         
         // Test basic detection
         const isImage = isImageFile(file);
         const isText = isTextFile(file);
-        console.log('📊 File type detection - Image:', isImage, 'Text:', isText);
-        
+       
         if (isTextFile(file)) {
-          console.log('📄 Processing text file:', file.name);
           readFileContent(file).then(content => {
             filePreviews[file.name] = content;
-            console.log('✅ Text content loaded for:', file.name);
           });
         } else if (isImageFile(file)) {
-          console.log('🖼️ Image file detected:', file.name);
           
           // Try to load real image immediately
-          console.log('🔄 Starting FileReader for:', file.name);
           const reader = new FileReader();
           reader.onload = (e) => {
             const result = e.target?.result as string;
-            console.log('✅ FileReader completed for:', file.name, 'Length:', result?.length);
-            console.log('📸 Data URL starts with:', result?.substring(0, 100));
             if (result) {
               imageThumbnails[file.name] = result;
               imageThumbnails = { ...imageThumbnails };
-              console.log('✅ Real image stored for:', file.name);
-              console.log('🗺️ Object now has keys:', Object.keys(imageThumbnails));
               attachedFiles = [...attachedFiles];
-              console.log('🔄 UI updated with real image');
-            } else {
-              console.error('❌ No result from FileReader for:', file.name);
-            }
+            } 
           };
           reader.onerror = (e) => {
             console.error('❌ FileReader error for:', file.name, e);
@@ -172,37 +240,13 @@
     });
   }
 
-  function createImageThumbnail(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      console.log('Creating thumbnail for:', file.name, 'Size:', file.size, 'Type:', file.type);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        console.log('FileReader completed for:', file.name, 'Result length:', result?.length);
-        console.log('Result starts with:', result?.substring(0, 50));
-        if (result && result.startsWith('data:image/')) {
-          resolve(result);
-        } else {
-          console.error('Invalid image data for:', file.name);
-          reject(new Error('Invalid image data'));
-        }
-      };
-      reader.onerror = (e) => {
-        console.error('FileReader error for:', file.name, e);
-        reject(e);
-      };
-      console.log('Starting FileReader for:', file.name);
-      reader.readAsDataURL(file);
-    });
-  }
-
   function removeFile(index: number) {
     const file = attachedFiles[index];
     attachedFiles = attachedFiles.filter((_, i) => i !== index);
     
     // Remove preview if exists
-    if (file && filePreviews.has(file.name)) {
-      filePreviews.delete(file.name);
+    if (file && filePreviews[file.name]) {
+      delete filePreviews[file.name];
       
       // Close preview if this was the current file
       if (currentPreviewFile?.name === file.name) {
@@ -212,8 +256,8 @@
     }
     
     // Remove thumbnail if exists
-    if (file && imageThumbnails.has(file.name)) {
-      imageThumbnails.delete(file.name);
+    if (file && imageThumbnails[file.name]) {
+      delete imageThumbnails[file.name];
       
       // Close image preview if this was the current image
       if (currentPreviewImage?.file.name === file.name) {
@@ -224,15 +268,15 @@
   }
 
   function openFilePreview(file: File) {
-    if (filePreviews.has(file.name)) {
+    if (filePreviews[file.name]) {
       currentPreviewFile = file;
       showFilePreview = true;
     }
   }
 
   function openImagePreview(file: File) {
-    if (imageThumbnails.has(file.name)) {
-      currentPreviewImage = { file, url: imageThumbnails.get(file.name)! };
+    if (imageThumbnails[file.name]) {
+      currentPreviewImage = { file, url: imageThumbnails[file.name] };
       showImagePreview = true;
     }
   }
@@ -310,7 +354,6 @@
                           console.error('Image failed to load:', file.name, 'Src:', imageThumbnails[file.name]?.substring(0, 50));
                         }}
                         onload={() => {
-                          console.log('✅ Image loaded successfully:', file.name);
                         }}
                       />
                     {:else}
@@ -343,9 +386,14 @@
                     aria-label={isTextFile(file) ? `Preview file: ${file.name}` : `File: ${file.name}`}
                     title={isTextFile(file) ? "Click to preview file" : "File attached"}
                   >
-                    <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);"
-                         onmouseover={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; }}
-                         onmouseout={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'; }}>
+                    <div 
+                      role="button"
+                      tabindex="0"
+                      style="width: 50px; height: 50px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);"
+                      onmouseover={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; }}
+                      onmouseout={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'; }}
+                      onfocus={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; }}
+                      onblur={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'; }}>
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5">
                         <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                         <polyline points="14,2 14,8 20,8"></polyline>
@@ -381,20 +429,22 @@
       <div class="input-actions">
         <div class="input-left">
           <div style="position: relative;">
-            <button class="icon-button" onclick={toggleDropdown} aria-label="Attach file" title="Attach file">
+            <button class="icon-button attachment-button" onclick={toggleFileDropdown} aria-label="Attach file" title="Attach file (photos or files)">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
               </svg>
             </button>
             
-            <!-- Dropdown Menu -->
-            {#if showDropdown}
-              <div style="position: absolute; bottom: 100%; left: 0; margin-bottom: 0.5rem; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); z-index: 50; min-width: 160px; padding: 0.25rem;">
+            <!-- File Attachment Dropdown -->
+            {#if showFileDropdown}
+              <div class="file-dropdown" style="position: absolute; bottom: 100%; left: 0; margin-bottom: 0.5rem; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); z-index: 50; min-width: 160px; padding: 0.25rem;">
                 <button 
                   onclick={handlePhotoSelect}
                   style="width: 100%; padding: 0.75rem 1rem; border: none; background: none; text-align: left; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; border-radius: 0.375rem; font-size: 0.875rem; color: #374151; transition: background 0.15s;"
                   onmouseover={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
                   onmouseout={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                  onfocus={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
+                  onblur={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -408,6 +458,8 @@
                   style="width: 100%; padding: 0.75rem 1rem; border: none; background: none; text-align: left; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; border-radius: 0.375rem; font-size: 0.875rem; color: #374151; transition: background 0.15s;"
                   onmouseover={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
                   onmouseout={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                  onfocus={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
+                  onblur={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
@@ -418,20 +470,51 @@
               </div>
             {/if}
           </div>
-          <button class="icon-button" aria-label="Add link" title="Add link">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-            </svg>
-          </button>
-          <div class="model-tile">
-            <span class="model-name">{selectedModel || 'Baichuan-M2'}</span>
-            <button class="remove-model" onclick={onRemoveModel} title="Remove model">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
+          <div style="width: 1px; height: 24px; background: #e5e7eb; margin: 0 0.25rem;"></div>
+          <div class="dropdown">
+            <button class="dropdown-button" class:open={showModelDropdown} onclick={() => showModelDropdown = !showModelDropdown}>
+              <div class="model-logo">
+                {@html selectedProvider ? providers.find(p => p.key === selectedProvider)?.icon || '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7L12 12L22 7L12 2Z"></path><path d="M2 17L12 22L22 17"></path><path d="M2 12L12 17L22 12"></path></svg>' : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7L12 12L22 7L12 2Z"></path><path d="M2 17L12 22L22 17"></path><path d="M2 12L12 17L22 12"></path></svg>'}
+              </div>
+              <span class="model-name">{selectedModel || 'Baichuan-M2'}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow">
+                <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
+            {#if showModelDropdown}
+              <div class="dropdown-menu">
+                {#if loadingModels}
+                  <div class="dropdown-loading">
+                    <div class="loading-spinner"></div>
+                    Loading models...
+                  </div>
+                {:else if modelsError}
+                  <div class="dropdown-error">
+                    {modelsError}
+                  </div>
+                {:else}
+                  {#each providers as provider}
+                    <div class="provider-section">
+                      <div class="provider-header">
+                        <div class="provider-icon">
+                          {@html provider.icon}
+                        </div>
+                        <span class="provider-name">{provider.name}</span>
+                      </div>
+                      {#each provider.models as model}
+                        <button 
+                          class="model-item"
+                          class:selected={selectedModel === model.name}
+                          onclick={() => selectModel(provider, model)}
+                        >
+                          {model.name}
+                        </button>
+                      {/each}
+                    </div>
+                  {/each}
+                {/if}
+              </div>
+            {/if}
           </div>
         </div>
         
@@ -509,7 +592,7 @@
           <textarea 
             class="file-preview-textarea" 
             readonly 
-            value={filePreviews.get(currentPreviewFile.name) || ''}
+            value={filePreviews[currentPreviewFile.name] || ''}
             aria-label="File content preview"
           ></textarea>
         </div>
@@ -630,20 +713,6 @@
     padding-bottom: 0.25rem;
   }
 
-  .file-attachment {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    color: #374151;
-    flex-shrink: 0;
-    max-width: 200px;
-  }
-
   .file-attachment-image {
     padding: 0;
     background: transparent;
@@ -713,20 +782,6 @@
     transform: scale(1.1);
   }
 
-  .file-name {
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-  }
-
-  .file-size {
-    font-size: 0.75rem;
-    color: #6b7280;
-    flex-shrink: 0;
-  }
-
   .remove-file {
     display: flex;
     align-items: center;
@@ -753,28 +808,22 @@
     height: 12px;
   }
 
-  .preview-file {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: #3b82f6;
-    cursor: pointer;
+  .loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #3b82f6;
     border-radius: 50%;
-    transition: all 0.15s ease;
-    flex-shrink: 0;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 0.5rem;
   }
 
-  .preview-file:hover {
-    background: #dbeafe;
-    color: #1d4ed8;
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 
-  /* File Preview Modal */
+  /* Dropdown Styles */
   .file-preview-overlay {
     position: fixed;
     top: 0;
@@ -983,39 +1032,170 @@
     gap: 0.5rem;
   }
 
-  .model-tile {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    background: #e5e7eb;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    color: #374151;
-  }
-
   .model-name {
     font-weight: 500;
   }
 
-  .remove-model {
+  /* Dropdown Styles */
+  .dropdown {
+    position: relative;
+  }
+
+  .dropdown-button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #e5e7eb;
+    background: white;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+    color: #374151;
+  }
+
+  .dropdown-button:hover {
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .dropdown-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .model-logo {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
-    height: 16px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: #6b7280;
-    cursor: pointer;
-    border-radius: 50%;
-    transition: all 0.15s ease;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
   }
 
-  .remove-model:hover {
-    background: #d1d5db;
+  .dropdown-arrow {
+    color: #6b7280;
+    transition: transform 0.2s ease;
+  }
+
+  .dropdown-button:hover .dropdown-arrow {
     color: #374151;
+  }
+
+  .dropdown-button.open .dropdown-arrow {
+    transform: rotate(180deg);
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    bottom: calc(100% + 0.5rem);
+    left: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    min-width: 100px;
+    max-height: 150px;
+    overflow-y: auto;
+    animation: slideUp 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .dropdown-loading,
+  .dropdown-error {
+    padding: 1.5rem;
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+
+  .dropdown-error {
+    color: #dc2626;
+  }
+
+  .loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 0.5rem;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .provider-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .provider-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.5rem;
+    background: #f8fafc;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.25rem;
+  }
+
+  .provider-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+  }
+
+  .provider-name {
+    font-weight: 600;
+  }
+
+  .model-item {
+    padding: 0.25rem 0.75rem;
+    border: none;
+    background: transparent;
+    text-align: left;
+    font-size: 0.7rem;
+    color: #6b7280;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    transition: all 0.15s ease;
+    margin-left: 0.5rem;
+  }
+
+  .model-item:hover {
+    background: #f1f5f9;
+    color: #374151;
+  }
+
+  .model-item.selected {
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-weight: 500;
   }
 
   .icon-button {
@@ -1041,6 +1221,15 @@
 
   .icon-button:active {
     background: #d1d5db;
+  }
+
+  .attachment-button {
+    color: #3b82f6;
+  }
+
+  .attachment-button:hover {
+    background: #eff6ff;
+    color: #2563eb;
   }
 
   .send-button {

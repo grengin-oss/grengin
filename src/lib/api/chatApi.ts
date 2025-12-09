@@ -41,7 +41,14 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
       })
     ) : [];
 
-    let response = await fetch(`${API_BASE}/chat/stream`, {
+    // Build the correct API URL
+    const streamUrl = conversationId 
+      ? `${API_BASE}/chat/stream/${conversationId}`
+      : `${API_BASE}/chat/stream`;
+    
+    console.log('Using stream URL:', streamUrl);
+
+    let response = await fetch(streamUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -51,15 +58,14 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         provider: provider || 'openai',
         modelName: modelName || 'gpt-3.5-turbo',
         config: {},
+        temperature: 0.1,
         webSearch: false,
         selectedTools: [],
-        messages: [
-          {
-            role: 'user',
-            content: message,
-            files: processedFiles,
-          },
-        ],
+        message: {
+          role: 'user',
+          content: message,
+          files: processedFiles,
+        },
       }),
     });
 
@@ -95,15 +101,14 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
                 provider: provider || 'openai',
                 modelName: modelName || 'gpt-3.5-turbo',
                 config: {},
+                temperature: 0.1,
                 webSearch: false,
                 selectedTools: [],
-                messages: [
-                  {
-                    role: 'user',
-                    content: message,
-                    files: processedFiles,
-                  },
-                ],
+                message: {
+                  role: 'user',
+                  content: message,
+                  files: processedFiles,
+                },
               }),
             });
           } else {
@@ -146,6 +151,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
 
     const decoder = new TextDecoder();
     let buffer = '';
+    let isFirstChunk = true;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -163,19 +169,40 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
 
         if (eventMatch && dataMatch) {
           const event = eventMatch[1];
-          const data = JSON.parse(dataMatch[1]);
+          const dataStr = dataMatch[1];
+          
+          // Check for stream completion signal
+          if (dataStr === '[DONE]') {
+            onDone?.({});
+            break;
+          }
+          
+          const data = JSON.parse(dataStr);
 
           switch (event) {
             case 'start':
               onStart?.(data);
               break;
-            case 'token':
-              onToken?.(data.content);
+            case 'chunk':
+              if (data) {
+                // Handle first chunk - extract conversation ID and call onStart
+                if (isFirstChunk) {
+                  console.log('First chunk detected:', data);
+                  isFirstChunk = false;
+                  
+                  // Call onStart with conversation data if available
+                  if (data.id && onStart) {
+                    onStart({ conversation_id: data.id });
+                  }
+                }
+                
+                onToken?.(data.content);
+              }
               break;
             case 'set_title':
               onTitle?.(data.title);
               break;
-            case 'done':
+            case '[DONE]':
               onDone?.(data);
               break;
             case 'error':
