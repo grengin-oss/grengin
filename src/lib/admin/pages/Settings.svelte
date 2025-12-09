@@ -1,12 +1,105 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import PageHeader from '../components/PageHeader.svelte';
   import SsoProviders from '../components/SsoProviders.svelte';
+  import ApiKeys from '../components/ApiKeys.svelte';
+
+  // Map tab IDs to hash fragments
+  const tabHashMap: Record<string, string> = {
+    'sso': 'sso-providers',
+    'api-keys': 'api-keys',
+    'rate-limits': 'rate-limits',
+    'budgets': 'budgets'
+  };
+
+  // Reverse map for hash to tab ID
+  const hashToTabMap: Record<string, string> = {
+    'sso-providers': 'sso',
+    'api-keys': 'api-keys',
+    'rate-limits': 'rate-limits',
+    'budgets': 'budgets'
+  };
 
   let currentTab = $state<string>('sso');
+  let hasNavigatedFromDefault = $state<boolean>(false);
+  let hasCreatedHistoryEntries = $state<boolean>(false);
+
+  function getTabFromHash(): string {
+    const hash = window.location.hash.slice(1); // Remove the '#'
+    return hashToTabMap[hash] || 'sso';
+  }
 
   function handleTabClick(tab: string) {
+    const previousTab = currentTab;
+    
+    // If clicking the same tab, do nothing
+    if (previousTab === tab) {
+      return;
+    }
+    
     currentTab = tab;
+    const hash = tabHashMap[tab];
+    
+    if (hash) {
+      const isSsoTab = tab === 'sso';
+      const wasSsoTab = previousTab === 'sso';
+      
+      // Only push to history when transitioning between SSO and non-SSO tabs
+      // But only do this once - after both entries are created, always replace
+      const isTransitioningBetweenSsoAndOther = (wasSsoTab && !isSsoTab) || (!wasSsoTab && isSsoTab);
+      
+      if (isTransitioningBetweenSsoAndOther && !hasCreatedHistoryEntries) {
+        // First time transitioning between SSO and non-SSO: push to create history entries
+        window.location.hash = hash;
+        hasNavigatedFromDefault = !isSsoTab;
+        // After going back to SSO from a non-SSO tab, we've created both entries
+        if (!wasSsoTab && isSsoTab) {
+          hasCreatedHistoryEntries = true;
+        }
+      } else {
+        // All other transitions: replace history (don't create new entries)
+        history.replaceState(null, '', `#${hash}`);
+        // Update flag if we're on a non-SSO tab
+        if (!isSsoTab) {
+          hasNavigatedFromDefault = true;
+        }
+      }
+    }
   }
+
+  function handleHashChange() {
+    const newTab = getTabFromHash();
+    
+    // Update navigation flag based on current tab
+    hasNavigatedFromDefault = newTab !== 'sso';
+    
+    currentTab = newTab;
+  }
+
+  onMount(() => {
+    // If no hash in URL, redirect to default tab (sso-providers)
+    if (!window.location.hash) {
+      window.location.hash = 'sso-providers';
+      currentTab = 'sso';
+    } else {
+      // Set initial tab from URL hash
+      currentTab = getTabFromHash();
+      
+      // If starting on a non-default tab, mark as navigated
+      // Assume history entries already exist if user navigated here via URL
+      if (currentTab !== 'sso') {
+        hasNavigatedFromDefault = true;
+        hasCreatedHistoryEntries = true;
+      }
+    }
+
+    // Listen for hash changes (browser back/forward)
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  });
 </script>
 
 <PageHeader
@@ -34,9 +127,7 @@
   {#if currentTab === 'sso'}
     <SsoProviders />
   {:else if currentTab === 'api-keys'}
-    <h2>API Keys</h2>
-    <p>Manage LLM provider API keys for OpenAI, Anthropic, and other services.</p>
-    <p class="settings-note">API key management coming soon...</p>
+    <ApiKeys />
   {:else if currentTab === 'rate-limits'}
     <h2>Rate Limits</h2>
     <p>Set usage rate limits per user or department to control API consumption.</p>
