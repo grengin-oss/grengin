@@ -6,15 +6,7 @@ import chatListExample from './examples/chat/list.response.json' with { type: 'j
 import chatDetailExample from './examples/chat/detail.response.json' with { type: 'json' }
 
 import loginExample from './examples/auth/login.response.json' with { type: 'json' }
-import adminDashboardExample from './examples/admin/dashboard.response.json' with { type: 'json' }
-import adminUsersExample from './examples/admin/users-list.response.json' with { type: 'json' }
-import apiKeysExample from './examples/admin/api-keys-list.response.json' with { type: 'json' }
-import organizationExample from './examples/admin/organization.response.json' with { type: 'json' }
-import ssoProvidersExample from './examples/admin/sso-providers-list.response.json' with { type: 'json' }
-import rateLimitsExample from './examples/admin/rate-limits-list.response.json' with { type: 'json' }
-import budgetsExample from './examples/admin/budgets-list.response.json' with { type: 'json' }
-import auditLogsExample from './examples/admin/audit-logs.response.json' with { type: 'json' }
-import { log } from 'console'
+import adminRouter from './handlers/admin.express.js'
 
 // Types
 type Conversation = components['schemas']['Conversation']
@@ -623,91 +615,8 @@ app.get('/models', (req, res) => {
   })
 })
 
-// Admin endpoints
-app.get('/admin/dashboard', requireAdmin, (req, res) => {
-  res.json(adminDashboardExample)
-})
-
-app.get('/admin/users', requireAdmin, (req, res) => {
-  const limit = parseInt(req.query.limit as string || '20')
-  const offset = parseInt(req.query.offset as string || '0')
-  
-  res.json({
-    ...adminUsersExample,
-    limit,
-    offset,
-  })
-})
-
-app.get('/admin/users/:userId', requireAdmin, (req, res) => {
-  const user = adminUsersExample.users.find(u => u.id === req.params.userId)
-  if (!user) {
-    return res.status(404).json({ detail: 'User not found' })
-  }
-  res.json(user)
-})
-
-app.get('/admin/organization', requireAdmin, (req, res) => {
-  res.json(organizationExample)
-})
-
-app.get('/admin/api-keys', requireAdmin, (req, res) => {
-  res.json(apiKeysExample)
-})
-
-app.get('/admin/sso-providers', requireAdmin, (req, res) => {
-  res.json(ssoProvidersExample)
-})
-
-app.get('/admin/rate-limits', requireAdmin, (req, res) => {
-  res.json(rateLimitsExample)
-})
-
-app.get('/admin/budgets', requireAdmin, (req, res) => {
-  res.json(budgetsExample)
-})
-
-// Admin audit logs
-app.get('/admin/audit-logs', requireAdmin, (req, res) => {
-  const limit = parseInt(req.query.limit as string || '50')
-  const offset = parseInt(req.query.offset as string || '0')
-  const adminId = req.query.admin_id as string
-  const action = req.query.action as string
-  const resourceType = req.query.resource_type as string
-  
-  // Transform the example data to match expected format
-  let logs = auditLogsExample.map(log => ({
-    id: log.id,
-    timestamp: log.timestamp,
-    admin_id: log.admin_id,
-    admin_email: log.admin_email,
-    action: log.action,
-    resource_type: log.resource_type,
-    resource_id: log.resource_id || null,
-    details: log.details || null,
-    ip_address: log.ip_address || '192.168.1.1'
-  }))
-  
-  // Apply filters
-  if (adminId) {
-    logs = logs.filter(log => log.admin_id === adminId)
-  }
-  if (action) {
-    logs = logs.filter(log => log.action === action)
-  }
-  if (resourceType) {
-    logs = logs.filter(log => log.resource_type === resourceType)
-  }
-  
-  const paginatedLogs = logs.slice(offset, offset + limit)
-  
-  res.json({
-    logs: paginatedLogs,
-    total: logs.length,
-    limit,
-    offset
-  })
-})
+// Admin endpoints - Use the admin router for all /admin routes
+app.use('/admin', adminRouter)
 
 // Fallback 404 handler - always returns JSON
 app.use((req, res) => {

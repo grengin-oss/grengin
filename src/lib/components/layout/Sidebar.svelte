@@ -336,7 +336,7 @@
       <span class="menu-item-icon">⚙️</span>
       <span class="menu-item-label">Settings</span>
     </button>
-    {#if user?.super_admin}
+    {#if user?.role === 'admin'}
       <button class="user-menu-item admin-item" onclick={handleAdminClick}>
         <svg class="menu-item-icon admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>

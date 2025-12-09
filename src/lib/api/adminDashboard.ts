@@ -7,7 +7,7 @@ import type { AdminDashboard } from '../admin/types.js';
  * Includes user stats, usage metrics, costs, and system health
  */
 export async function getDashboard(): Promise<AdminDashboard> {
-  return request<AdminDashboard>('/admin/dashboard', {}, true);
+  return request<AdminDashboard>('/admin/dashboard');
 }
 
 /**

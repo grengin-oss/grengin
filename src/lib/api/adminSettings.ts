@@ -62,11 +62,11 @@ export async function validateApiKey(keyId: string): Promise<{
 // ==================== SSO Providers ====================
 
 export async function getSsoProviders(): Promise<SsoProvider[]> {
-    return request<SsoProvider[]>('/admin/sso-providers');
+    return request<SsoProvider[]>('/models', );
 }
 
 export async function getSsoProvider(providerId: string): Promise<SsoProvider> {
-    return request<SsoProvider>(`/admin/sso-providers/${providerId}`);
+    return request<SsoProvider>(`/models/${providerId}`, );
 }
 
 export async function createSsoProvider(data: {
@@ -81,7 +81,7 @@ export async function createSsoProvider(data: {
     is_default?: boolean;
 }): Promise<SsoProvider> {
     // TODO: Add audit logging
-    return request<SsoProvider>('/admin/sso-providers', {
+    return request<SsoProvider>('/models', {
         method: 'POST',
         body: JSON.stringify(data)
     });
@@ -92,7 +92,7 @@ export async function updateSsoProvider(
     updates: Partial<SsoProvider>
 ): Promise<SsoProvider> {
     // TODO: Add audit logging
-    return request<SsoProvider>(`/admin/sso-providers/${providerId}`, {
+    return request<SsoProvider>(`/models/${providerId}`, {
         method: 'PUT',
         body: JSON.stringify(updates)
     });
@@ -100,7 +100,7 @@ export async function updateSsoProvider(
 
 export async function deleteSsoProvider(providerId: string): Promise<void> {
     // TODO: Add audit logging
-    return request<void>(`/admin/sso-providers/${providerId}`, { method: 'DELETE' });
+    return request<void>(`/models/${providerId}`, { method: 'DELETE' });
 }
 
 export async function testSsoProvider(providerId: string): Promise<{
@@ -109,18 +109,18 @@ export async function testSsoProvider(providerId: string): Promise<{
     discovery_url?: string;
     endpoints_found?: Record<string, boolean>;
 }> {
-    return request<any>(`/admin/sso-providers/${providerId}/test`, { method: 'POST' });
+    return request<any>(`/models/${providerId}/test`, { method: 'POST' });
 }
 
 // ==================== Rate Limits ====================
 
 export async function getRateLimits(scope?: string): Promise<RateLimit[]> {
     const query = scope ? `?scope=${scope}` : '';
-    return request<RateLimit[]>(`/admin/rate-limits${query}`);
+    return request<RateLimit[]>(`/rate-limits${query}`, );
 }
 
 export async function getRateLimit(limitId: string): Promise<RateLimit> {
-    return request<RateLimit>(`/admin/rate-limits/${limitId}`);
+    return request<RateLimit>(`/rate-limits/${limitId}`, );
 }
 
 export async function createRateLimit(data: {
@@ -188,11 +188,11 @@ export async function updateBudget(
     return request<Budget>(`/admin/budgets/${budgetId}`, {
         method: 'PUT',
         body: JSON.stringify(updates)
-    }, true);
+    });
 }
 
 export async function deleteBudget(budgetId: string): Promise<void> {
     // TODO: Add audit logging
-    return request<void>(`/admin/budgets/${budgetId}`, { method: 'DELETE' }, true);
+    return request<void>(`/admin/budgets/${budgetId}`, { method: 'DELETE' });
 }
 

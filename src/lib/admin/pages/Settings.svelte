@@ -1,7 +1,8 @@
 <script lang="ts">
   import PageHeader from '../components/PageHeader.svelte';
+  import SsoProviders from '../components/SsoProviders.svelte';
 
-  let currentTab = $state<string>('overview');
+  let currentTab = $state<string>('sso');
 
   function handleTabClick(tab: string) {
     currentTab = tab;
@@ -31,9 +32,7 @@
 
 <div class="settings-content">
   {#if currentTab === 'sso'}
-    <h2>SSO Providers</h2>
-    <p>Configure single sign-on integrations for your organization.</p>
-    <p class="settings-note">SSO provider configuration coming soon...</p>
+    <SsoProviders />
   {:else if currentTab === 'api-keys'}
     <h2>API Keys</h2>
     <p>Manage LLM provider API keys for OpenAI, Anthropic, and other services.</p>

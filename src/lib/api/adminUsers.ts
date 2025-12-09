@@ -23,14 +23,14 @@ export async function getUsers(params?: {
     if (params?.department) queryParams.set('department', params.department);
 
     const query = queryParams.toString();
-    return request<PaginatedUsers>(`/admin/users${query ? `?${query}` : ''}`, {}, true);
+    return request<PaginatedUsers>(`/admin/users${query ? `?${query}` : ''}`, {});
 }
 
 /**
  * Get a single user by ID
  */
 export async function getUser(userId: string): Promise<User> {
-    return request<User>(`/admin/users/${userId}`, {}, true);
+    return request<User>(`/admin/users/${userId}`, );
 }
 
 /**
@@ -43,7 +43,7 @@ export async function createUser(userData: {
     department?: string;
 }): Promise<User> {
     // TODO: Add audit logging on successful creation
-    return request<User>('/admin/users', { method: 'POST', body: JSON.stringify(userData) }, true);
+    return request<User>('/admin/users', { method: 'POST', body: JSON.stringify(userData) });
 }
 
 /**
@@ -51,7 +51,7 @@ export async function createUser(userData: {
  */
 export async function updateUser(userId: string, updates: Partial<User>): Promise<User> {
     // TODO: Add audit logging on successful update
-    return request<User>(`/admin/users/${userId}`, { method: 'PUT', body: JSON.stringify(updates) }, true);
+    return request<User>(`/admin/users/${userId}`, { method: 'PUT', body: JSON.stringify(updates) });
 }
 
 /**
@@ -59,7 +59,7 @@ export async function updateUser(userId: string, updates: Partial<User>): Promis
  */
 export async function deactivateUser(userId: string): Promise<void> {
     // TODO: Add audit logging on successful deactivation
-    return request<void>(`/admin/users/${userId}`, { method: 'DELETE' }, true);
+    return request<void>(`/admin/users/${userId}`, { method: 'DELETE' });
 }
 
 /**
@@ -75,13 +75,13 @@ export async function bulkImportUsers(users: Array<{
     return request<UserBulkImportResult>('/admin/users/bulk', {
         method: 'POST',
         body: JSON.stringify({ users })
-    }, true);
+    });
 }
 
 /**
  * Get user usage statistics
  */
 export async function getUserUsage(userId: string): Promise<CostSummary> {
-    return request<CostSummary>(`/admin/users/${userId}/usage`, {}, true);
+    return request<CostSummary>(`/admin/users/${userId}/usage`, );
 }
 

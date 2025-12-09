@@ -20,7 +20,7 @@ export async function getAuditLogs(params?: {
   offset: number;
 }> {
   const queryParams = new URLSearchParams();
-  
+
   if (params?.limit) queryParams.set('limit', params.limit.toString());
   if (params?.offset) queryParams.set('offset', params.offset.toString());
   if (params?.admin_id) queryParams.set('admin_id', params.admin_id);
@@ -30,7 +30,7 @@ export async function getAuditLogs(params?: {
   if (params?.end_date) queryParams.set('end_date', params.end_date);
 
   const query = queryParams.toString();
-  return request(`/admin/audit-logs${query ? `?${query}` : ''}`, {}, true);
+  return request(`/admin/audit-logs${query ? `?${query}` : ''}`);
 }
 
 /**
