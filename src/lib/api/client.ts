@@ -2,8 +2,8 @@ import type { components } from '../types/api.js';
 
 type User = components['schemas']['User'];
 
-// In development, use /api proxy to avoid CORS. In production, use the configured URL.
-export const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+// Always use /api - proxied by Vite dev server locally, Cloudflare Pages Function in production
+export const API_BASE = '/api';
 
 export class ApiError extends Error {
   constructor(

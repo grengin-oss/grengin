@@ -412,7 +412,42 @@ export const authHandlers = [
     )
   }),
 
-  // Initiate SSO login - redirect to OAuth provider
+  // Initiate SSO login - return OAuth authorization URL
+  http.get(`${API_BASE}/auth/:provider/init`, ({ params, request }) => {
+    const { provider } = params
+    const url = new URL(request.url)
+    const redirectUri = url.searchParams.get('redirect_uri') || 'http://localhost:5173/auth/callback'
+
+    const validProviders = ['google', 'azure', 'keycloak']
+    if (!validProviders.includes(provider as string)) {
+      return HttpResponse.json(
+        { detail: 'Invalid provider or configuration' },
+        { status: 400 }
+      )
+    }
+
+    // Generate state for CSRF protection
+    const state = ssoInitExample.state
+
+    // Build OAuth authorization URL (simulated)
+    // In production, backend would build the real OAuth provider URL
+    const code = Math.random().toString(36).substring(2, 15)
+
+    // For mock, we simulate the OAuth provider by redirecting directly to callback with code
+    // In production, this would be the real OAuth provider URL (e.g., accounts.google.com)
+    const authUrl = new URL(redirectUri)
+    authUrl.searchParams.set('code', code)
+    authUrl.searchParams.set('state', state)
+
+    const response: AuthInitResponse = {
+      auth_url: authUrl.toString(),
+      state: state,
+    }
+
+    return HttpResponse.json(response)
+  }),
+
+  // Legacy: Initiate SSO login - redirect to OAuth provider (kept for backwards compatibility)
   http.get(`${API_BASE}/auth/:provider`, ({ params, request }) => {
     const { provider } = params
     const url = new URL(request.url)
