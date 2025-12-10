@@ -391,7 +391,7 @@
   .assistant-message :global(th),
   .assistant-message :global(td) {
     padding: var(--space-sm) var(--space-md);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-stroke-dark);
     text-align: left;
   }
 
@@ -463,8 +463,8 @@
 
   .action-btn {
     padding: var(--space-xs);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--btn-secondary);
+    border: 1px solid var(--glass-stroke-dark);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     cursor: pointer;
@@ -475,7 +475,7 @@
   }
 
   .action-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--btn-tertiary);
     border-color: var(--brand);
     color: var(--brand);
     transform: translateY(-1px);
@@ -543,12 +543,12 @@
   .btn-cancel {
     background: transparent;
     color: var(--text-secondary);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--glass-stroke-dark);
   }
 
   .btn-cancel:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: var(--btn-tertiary);
+    border-color: var(--glass-stroke-light);
   }
 
   /* Copy button for code blocks */
@@ -560,8 +560,8 @@
     align-items: center;
     gap: var(--space-xs);
     padding: var(--space-xs) var(--space-sm);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--btn-secondary);
+    border: 1px solid var(--glass-stroke-dark);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     font-size: 0.75rem;
@@ -576,7 +576,7 @@
   }
 
   :global(.copy-code-btn:hover) {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--btn-tertiary);
     border-color: var(--brand);
     color: var(--brand);
     transform: translateY(-1px);

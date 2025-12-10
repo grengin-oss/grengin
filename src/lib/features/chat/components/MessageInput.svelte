@@ -329,86 +329,70 @@
       {#if attachedFiles.length > 0}
         <div class="file-attachments">
           {#each attachedFiles as file, index}
-            <div class:file-attachment-image={isImageFile(file)}>
+            <div class="file-attachment-wrapper" class:file-attachment-image={isImageFile(file)}>
               {#if isImageFile(file)}
-                <div style="position: relative;">
-                  <button 
-                    class="thumbnail-button"
-                    onclick={() => openImagePreview(file)}
-                    onkeydown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        openImagePreview(file);
-                      }
-                    }}
-                    aria-label={`Preview image: ${file.name}`}
-                    title="Click to preview image"
-                  >
-                    {#if imageThumbnails[file.name]}
-                      <img 
-                        src={imageThumbnails[file.name]} 
-                        alt={file.name}
-                        class="file-thumbnail"
-                        style="display: block !important; width: 50px; height: 50px; object-fit: cover; border-radius: 0.375rem; border: 1px solid #e5e7eb;"
-                        onerror={(e) => {
-                          console.error('Image failed to load:', file.name, 'Src:', imageThumbnails[file.name]?.substring(0, 50));
-                        }}
-                        onload={() => {
-                        }}
-                      />
-                    {:else}
-                      <div style="width: 50px; height: 50px; background: #ff0000; border: 2px solid #000; border-radius: 0.375rem; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-size: 8px; text-align: center; padding: 2px; font-weight: bold;">
-                        NO THUMB
-                        <div style="font-size: 6px; margin-top: 1px;">
-                          {Object.keys(imageThumbnails).length}
-                        </div>
-                      </div>
-                    {/if}
-                  </button>
-                  <button class="remove-file" style="position: absolute; top: -6px; right: -6px; background: white; border: 1px solid #e5e7eb; border-radius: 50%; width: 20px; height: 20px; padding: 2px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); z-index: 10;" onclick={() => removeFile(index)} aria-label="Remove file">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                  </button>
-                </div>
-              {:else}
-                <div style="position: relative;">
-                  <button 
-                    class="thumbnail-button"
-                    onclick={() => isTextFile(file) ? openFilePreview(file) : null}
-                    onkeydown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        if (isTextFile(file)) openFilePreview(file);
-                      }
-                    }}
-                    aria-label={isTextFile(file) ? `Preview file: ${file.name}` : `File: ${file.name}`}
-                    title={isTextFile(file) ? "Click to preview file" : "File attached"}
-                  >
-                    <div 
-                      role="button"
-                      tabindex="0"
-                      style="width: 50px; height: 50px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);"
-                      onmouseover={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; }}
-                      onmouseout={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'; }}
-                      onfocus={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; }}
-                      onblur={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'; }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                        <polyline points="14,2 14,8 20,8"></polyline>
-                        <line x1="12" y1="12" x2="12" y2="16"></line>
-                        <line x1="10" y1="14" x2="14" y2="14"></line>
+                <button
+                  class="thumbnail-button"
+                  onclick={() => openImagePreview(file)}
+                  onkeydown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openImagePreview(file);
+                    }
+                  }}
+                  aria-label={`Preview image: ${file.name}`}
+                  title="Click to preview image"
+                >
+                  {#if imageThumbnails[file.name]}
+                    <img
+                      src={imageThumbnails[file.name]}
+                      alt={file.name}
+                      class="file-thumbnail"
+                    />
+                  {:else}
+                    <div class="thumbnail-placeholder">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
                       </svg>
                     </div>
-                  </button>
-                  <button class="remove-file" style="position: absolute; top: -6px; right: -6px; background: white; border: 1px solid #e5e7eb; border-radius: 50%; width: 20px; height: 20px; padding: 2px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); z-index: 10;" onclick={() => removeFile(index)} aria-label="Remove file">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                  {/if}
+                </button>
+                <button class="remove-file-btn" onclick={() => removeFile(index)} aria-label="Remove file">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              {:else}
+                <button
+                  class="thumbnail-button"
+                  onclick={() => isTextFile(file) ? openFilePreview(file) : null}
+                  onkeydown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      if (isTextFile(file)) openFilePreview(file);
+                    }
+                  }}
+                  aria-label={isTextFile(file) ? `Preview file: ${file.name}` : `File: ${file.name}`}
+                  title={isTextFile(file) ? "Click to preview file" : "File attached"}
+                >
+                  <div class="file-icon-wrapper">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                      <polyline points="14,2 14,8 20,8"></polyline>
+                      <line x1="12" y1="12" x2="12" y2="16"></line>
+                      <line x1="10" y1="14" x2="14" y2="14"></line>
                     </svg>
-                  </button>
-                </div>
+                  </div>
+                </button>
+                <button class="remove-file-btn" onclick={() => removeFile(index)} aria-label="Remove file">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
               {/if}
             </div>
           {/each}
@@ -437,15 +421,8 @@
             
             <!-- File Attachment Dropdown -->
             {#if showFileDropdown}
-              <div class="file-dropdown" style="position: absolute; bottom: 100%; left: 0; margin-bottom: 0.5rem; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); z-index: 50; min-width: 160px; padding: 0.25rem;">
-                <button 
-                  onclick={handlePhotoSelect}
-                  style="width: 100%; padding: 0.75rem 1rem; border: none; background: none; text-align: left; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; border-radius: 0.375rem; font-size: 0.875rem; color: #374151; transition: background 0.15s;"
-                  onmouseover={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
-                  onmouseout={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                  onfocus={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
-                  onblur={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
+              <div class="file-dropdown">
+                <button class="file-dropdown-item" onclick={handlePhotoSelect}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                     <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -453,14 +430,7 @@
                   </svg>
                   Add photos
                 </button>
-                <button 
-                  onclick={handleFileSelect}
-                  style="width: 100%; padding: 0.75rem 1rem; border: none; background: none; text-align: left; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; border-radius: 0.375rem; font-size: 0.875rem; color: #374151; transition: background 0.15s;"
-                  onmouseover={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
-                  onmouseout={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                  onfocus={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
-                  onblur={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
+                <button class="file-dropdown-item" onclick={handleFileSelect}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                     <polyline points="14,2 14,8 20,8"></polyline>
@@ -470,7 +440,7 @@
               </div>
             {/if}
           </div>
-          <div style="width: 1px; height: 24px; background: #e5e7eb; margin: 0 0.25rem;"></div>
+          <div class="input-divider"></div>
           <div class="dropdown">
             <button class="dropdown-button" class:open={showModelDropdown} onclick={() => showModelDropdown = !showModelDropdown}>
               <div class="model-logo">
@@ -658,14 +628,14 @@
   }
 
   .input-wrapper {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
+    background: var(--btn-secondary);
+    border: 1px solid var(--glass-stroke-dark);
     border-radius: 1.5rem;
     transition: all 0.2s ease;
   }
 
   .input-wrapper:focus-within {
-    border-color: #d1d5db;
+    border-color: var(--glass-stroke-light);
   }
 
   .input-content {
@@ -682,7 +652,7 @@
     border: none;
     outline: none;
     box-shadow: none;
-    color: #374151;
+    color: var(--text-primary);
     font-size: 0.9375rem;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.5;
@@ -696,7 +666,7 @@
   }
 
   .message-textarea::placeholder {
-    color: #9ca3af;
+    color: var(--text-secondary);
   }
 
   .message-textarea:disabled {
@@ -713,6 +683,10 @@
     padding-bottom: 0.25rem;
   }
 
+  .file-attachment-wrapper {
+    position: relative;
+  }
+
   .file-attachment-image {
     padding: 0;
     background: transparent;
@@ -722,10 +696,12 @@
   }
 
   .file-thumbnail {
+    display: block;
     width: 50px;
     height: 50px;
     object-fit: cover;
     border-radius: 0.375rem;
+    border: 1px solid var(--glass-stroke-dark);
     cursor: pointer;
     transition: all 0.15s ease;
     flex-shrink: 0;
@@ -733,7 +709,37 @@
 
   .file-thumbnail:hover {
     transform: scale(1.02);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--glass-shadow-light);
+  }
+
+  .thumbnail-placeholder {
+    width: 50px;
+    height: 50px;
+    background: var(--btn-tertiary);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+  }
+
+  .file-icon-wrapper {
+    width: 50px;
+    height: 50px;
+    background: var(--btn-tertiary);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+  }
+
+  .file-icon-wrapper:hover {
+    transform: scale(1.02);
+    box-shadow: var(--glass-shadow-light);
   }
 
   .thumbnail-button {
@@ -744,7 +750,6 @@
     border-radius: 0.5rem;
     transition: all 0.15s ease;
     flex-shrink: 0;
-    position: relative;
     display: inline-block;
   }
 
@@ -753,32 +758,33 @@
   }
 
   .thumbnail-button:focus {
-    outline: 2px solid #3b82f6;
+    outline: 2px solid var(--brand-ring);
     outline-offset: 2px;
   }
 
-  .file-attachment-image .remove-file {
+  .remove-file-btn {
     position: absolute;
     top: -6px;
     right: -6px;
-    background: #1f2937;
-    color: white;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
     border-radius: 50%;
     width: 20px;
     height: 20px;
     padding: 0;
-    border: 2px solid white;
+    border: 1px solid var(--glass-stroke-dark);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.15s ease;
     z-index: 10;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--glass-shadow-light);
   }
 
-  .file-attachment-image .remove-file:hover {
-    background: #374151;
+  .remove-file-btn:hover {
+    background: var(--btn-tertiary);
+    color: var(--text-primary);
     transform: scale(1.1);
   }
 
@@ -791,7 +797,7 @@
     padding: 0;
     border: none;
     background: transparent;
-    color: #6b7280;
+    color: var(--text-secondary);
     cursor: pointer;
     border-radius: 50%;
     transition: all 0.15s ease;
@@ -799,8 +805,8 @@
   }
 
   .remove-file:hover {
-    background: #d1d5db;
-    color: #374151;
+    background: var(--btn-tertiary);
+    color: var(--text-primary);
   }
 
   .remove-file svg {
@@ -811,8 +817,8 @@
   .loading-spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid #e5e7eb;
-    border-top: 2px solid #3b82f6;
+    border: 2px solid var(--glass-stroke-dark);
+    border-top: 2px solid var(--brand);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 0.5rem;
@@ -830,7 +836,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -839,9 +845,10 @@
   }
 
   .file-preview-modal {
-    background: white;
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-stroke-dark);
     border-radius: 1rem;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--glass-shadow-emphasis);
     width: 90vw;
     max-width: 800px;
     max-height: 80vh;
@@ -855,8 +862,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f9fafb;
+    border-bottom: 1px solid var(--glass-stroke-dark);
+    background: var(--btn-secondary);
   }
 
   .file-preview-info {
@@ -864,17 +871,18 @@
     align-items: center;
     gap: 0.75rem;
     flex: 1;
+    color: var(--text-secondary);
   }
 
   .file-preview-name {
     font-weight: 600;
-    color: #111827;
+    color: var(--text-primary);
     font-size: 0.875rem;
   }
 
   .file-preview-size {
     font-size: 0.75rem;
-    color: #6b7280;
+    color: var(--text-secondary);
   }
 
   .file-preview-close {
@@ -886,15 +894,15 @@
     padding: 0;
     border: none;
     background: transparent;
-    color: #6b7280;
+    color: var(--text-secondary);
     cursor: pointer;
     border-radius: 0.5rem;
     transition: all 0.15s ease;
   }
 
   .file-preview-close:hover {
-    background: #e5e7eb;
-    color: #374151;
+    background: var(--btn-tertiary);
+    color: var(--text-primary);
   }
 
   .file-preview-content {
@@ -910,18 +918,18 @@
     width: 100%;
     min-height: 300px;
     padding: 1rem;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--glass-stroke-dark);
     border-radius: 0.5rem;
-    background: #f9fafb;
+    background: var(--btn-secondary);
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     font-size: 0.875rem;
     line-height: 1.5;
     resize: none;
     outline: none;
-    color: #374151;
+    color: var(--text-primary);
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: #d1d5db #f9fafb;
+    scrollbar-color: var(--glass-stroke-light) var(--btn-secondary);
   }
 
   .file-preview-textarea::-webkit-scrollbar {
@@ -929,23 +937,24 @@
   }
 
   .file-preview-textarea::-webkit-scrollbar-track {
-    background: #f9fafb;
+    background: var(--btn-secondary);
   }
 
   .file-preview-textarea::-webkit-scrollbar-thumb {
-    background: #d1d5db;
+    background: var(--glass-stroke-light);
     border-radius: 4px;
   }
 
   .file-preview-textarea::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+    background: var(--text-secondary);
   }
 
   /* Image Preview Modal */
   .image-preview-modal {
-    background: white;
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-stroke-dark);
     border-radius: 1rem;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--glass-shadow-emphasis);
     width: 90vw;
     max-width: 900px;
     max-height: 90vh;
@@ -959,8 +968,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f9fafb;
+    border-bottom: 1px solid var(--glass-stroke-dark);
+    background: var(--btn-secondary);
   }
 
   .image-preview-info {
@@ -968,17 +977,18 @@
     align-items: center;
     gap: 0.75rem;
     flex: 1;
+    color: var(--text-secondary);
   }
 
   .image-preview-name {
     font-weight: 600;
-    color: #111827;
+    color: var(--text-primary);
     font-size: 0.875rem;
   }
 
   .image-preview-size {
     font-size: 0.75rem;
-    color: #6b7280;
+    color: var(--text-secondary);
   }
 
   .image-preview-close {
@@ -990,15 +1000,15 @@
     padding: 0;
     border: none;
     background: transparent;
-    color: #6b7280;
+    color: var(--text-secondary);
     cursor: pointer;
     border-radius: 0.5rem;
     transition: all 0.15s ease;
   }
 
   .image-preview-close:hover {
-    background: #e5e7eb;
-    color: #374151;
+    background: var(--btn-tertiary);
+    color: var(--text-primary);
   }
 
   .image-preview-content {
@@ -1008,7 +1018,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f9fafb;
+    background: var(--btn-secondary);
   }
 
   .image-preview-img {
@@ -1016,7 +1026,7 @@
     max-height: 100%;
     object-fit: contain;
     border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--glass-shadow-dark);
   }
 
   .input-actions {
@@ -1036,6 +1046,47 @@
     font-weight: 500;
   }
 
+  .input-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--glass-stroke-dark);
+    margin: 0 0.25rem;
+  }
+
+  .file-dropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 0.5rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: 0.5rem;
+    box-shadow: var(--glass-shadow-emphasis);
+    z-index: 50;
+    min-width: 160px;
+    padding: 0.25rem;
+  }
+
+  .file-dropdown-item {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    transition: background 0.15s ease;
+  }
+
+  .file-dropdown-item:hover {
+    background: var(--btn-tertiary);
+  }
+
   /* Dropdown Styles */
   .dropdown {
     position: relative;
@@ -1046,24 +1097,24 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.25rem 0.5rem;
-    border: 1px solid #e5e7eb;
-    background: white;
+    border: 1px solid var(--glass-stroke-dark);
+    background: var(--btn-secondary);
     border-radius: 0.5rem;
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 0.875rem;
-    color: #374151;
+    color: var(--text-primary);
   }
 
   .dropdown-button:hover {
-    border-color: #d1d5db;
+    border-color: var(--glass-stroke-light);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--glass-shadow-light);
   }
 
   .dropdown-button:active {
     transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
   }
 
   .model-logo {
@@ -1073,15 +1124,16 @@
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+    color: var(--text-primary);
   }
 
   .dropdown-arrow {
-    color: #6b7280;
+    color: var(--text-secondary);
     transition: transform 0.2s ease;
   }
 
   .dropdown-button:hover .dropdown-arrow {
-    color: #374151;
+    color: var(--text-primary);
   }
 
   .dropdown-button.open .dropdown-arrow {
@@ -1092,10 +1144,10 @@
     position: absolute;
     bottom: calc(100% + 0.5rem);
     left: 0;
-    background: white;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-stroke-dark);
     border-radius: 0.375rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--glass-shadow-emphasis);
     z-index: 1000;
     min-width: 100px;
     max-height: 150px;
@@ -1118,19 +1170,19 @@
   .dropdown-error {
     padding: 1.5rem;
     text-align: center;
-    color: #6b7280;
+    color: var(--text-secondary);
     font-size: 0.875rem;
   }
 
   .dropdown-error {
-    color: #dc2626;
+    color: var(--brand-red);
   }
 
   .loading-spinner {
     width: 20px;
     height: 20px;
-    border: 2px solid #e5e7eb;
-    border-top: 2px solid #3b82f6;
+    border: 2px solid var(--glass-stroke-dark);
+    border-top: 2px solid var(--brand);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 0.5rem;
@@ -1153,11 +1205,11 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.375rem 0.5rem;
-    background: #f8fafc;
+    background: var(--btn-tertiary);
     border-radius: 0.25rem;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #374151;
+    color: var(--text-primary);
     margin-bottom: 0.25rem;
   }
 
@@ -1168,6 +1220,7 @@
     width: 12px;
     height: 12px;
     flex-shrink: 0;
+    color: var(--text-primary);
   }
 
   .provider-name {
@@ -1180,7 +1233,7 @@
     background: transparent;
     text-align: left;
     font-size: 0.7rem;
-    color: #6b7280;
+    color: var(--text-secondary);
     cursor: pointer;
     border-radius: 0.25rem;
     transition: all 0.15s ease;
@@ -1188,13 +1241,13 @@
   }
 
   .model-item:hover {
-    background: #f1f5f9;
-    color: #374151;
+    background: var(--btn-tertiary);
+    color: var(--text-primary);
   }
 
   .model-item.selected {
-    background: #dbeafe;
-    color: #1d4ed8;
+    background: var(--glass-tint-primary);
+    color: var(--brand);
     font-weight: 500;
   }
 
@@ -1211,25 +1264,25 @@
     cursor: pointer;
     transition: all 0.15s ease;
     background: transparent;
-    color: #6b7280;
+    color: var(--text-secondary);
   }
 
   .icon-button:hover {
-    background: #e5e7eb;
-    color: #374151;
+    background: var(--btn-tertiary);
+    color: var(--text-primary);
   }
 
   .icon-button:active {
-    background: #d1d5db;
+    background: var(--btn-quaternary);
   }
 
   .attachment-button {
-    color: #3b82f6;
+    color: var(--brand);
   }
 
   .attachment-button:hover {
-    background: #eff6ff;
-    color: #2563eb;
+    background: var(--glass-tint-primary);
+    color: var(--brand-hover);
   }
 
   .send-button {
@@ -1244,28 +1297,28 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.15s ease;
-    background: #e5e7eb;
-    color: #6b7280;
+    background: var(--btn-tertiary);
+    color: var(--text-secondary);
   }
 
   .send-button:not(:disabled) {
-    background: #000000;
-    color: #ffffff;
+    background: var(--brand);
+    color: white;
   }
 
   .send-button:hover:not(:disabled) {
-    background: #1a1a1a;
-    color: #ffffff;
+    background: var(--brand-hover);
+    color: white;
   }
 
   .send-button:active:not(:disabled) {
-    background: #333333;
+    background: var(--brand-active);
   }
 
   .send-button:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    color: #6b7280;
+    color: var(--text-secondary);
   }
 
   .spinner {

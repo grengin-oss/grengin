@@ -3,7 +3,7 @@
   import ChatMessage from './ChatMessage.svelte';
   import MessageInput from './MessageInput.svelte';
   import TypingIndicator from './TypingIndicator.svelte';
-  import type { ChatMessage as ChatMessageType, FileAttachment } from '../../../types/chat';
+  import type { ChatMessage as ChatMessageType } from '../../../types/chat';
   import { sendMessage, getConversation } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
   import { getAuthState } from '../../../features/auth/index.js';
@@ -537,20 +537,9 @@
   .input-container {
     flex-shrink: 0;
     padding: 1.25rem 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    background: linear-gradient(135deg, var(--bg-primary) 0%, rgba(255, 255, 255, 0.02) 100%);
-    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--glass-stroke-dark);
+    background: var(--bg-primary);
     position: relative;
-  }
-
-  .input-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
   }
 
   /* Custom scrollbar */
@@ -563,24 +552,16 @@
   }
 
   .messages-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--glass-stroke-light);
     border-radius: 4px;
     transition: background 0.2s ease;
   }
 
   .messages-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--text-secondary);
   }
 
   @media (max-width: 768px) {
-    .chat-header {
-      padding: 1rem;
-    }
-
-    .header-title h1 {
-      font-size: 1.25rem;
-    }
-
     .messages-inner {
       padding: 1.5rem 1rem;
     }
@@ -605,32 +586,6 @@
   }
 
   @media (max-width: 480px) {
-    .chat-header {
-      padding: 0.875rem;
-    }
-
-    .header-title {
-      gap: 0.625rem;
-    }
-
-    .chat-icon {
-      width: 32px;
-      height: 32px;
-    }
-
-    .header-title h1 {
-      font-size: 1.125rem;
-    }
-
-    .header-subtitle {
-      font-size: 0.75rem;
-    }
-
-    .header-action-btn {
-      width: 32px;
-      height: 32px;
-    }
-
     .empty-icon {
       width: 80px;
       height: 80px;
