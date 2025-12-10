@@ -6,7 +6,6 @@
   import type { ChatMessage as ChatMessageType } from '../../../types/chat';
   import { sendMessage, getConversation } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
-  import { getAuthState } from '../../../features/auth/index.js';
 
   let messages = $state<ChatMessageType[]>([]);
   let isLoading = $state(false);
@@ -44,7 +43,6 @@
       },
     ],
   });
-  const authState = getAuthState();
 
   // Listen for URL changes
   function handleUrlChange() {
@@ -222,10 +220,6 @@
     );
   }
 
-  function handleDeleteMessage(id: string) {
-    messages = messages.filter(msg => msg.id !== id);
-  }
-
   async function loadConversationFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chatId');
@@ -320,11 +314,9 @@
         </div>
       {:else}
         {#each messages as message (message.id)}
-          <ChatMessage 
-            {message} 
-            onEdit={handleEditMessage} 
-            onDelete={handleDeleteMessage}
-            user={authState.user}
+          <ChatMessage
+            {message}
+            onEdit={handleEditMessage}
             selectedModelInfo={selectedModelInfo}
           />
         {/each}
@@ -389,10 +381,14 @@
   }
 
   .messages-inner {
-    max-width: 900px;
+    /* Dynamic max-width: 90ch for readability, clamped between 600px and 65vw */
+    max-width: clamp(600px, 90ch, 65vw);
     margin: 0 auto;
     width: 100%;
-    padding: 1rem 0rem;
+    padding: var(--space-2xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
   }
 
   .empty-state {
@@ -537,7 +533,6 @@
   .input-container {
     flex-shrink: 0;
     padding: 1.25rem 1.5rem;
-    border-top: 1px solid var(--glass-stroke-dark);
     background: var(--bg-primary);
     position: relative;
   }
@@ -563,7 +558,7 @@
 
   @media (max-width: 768px) {
     .messages-inner {
-      padding: 1.5rem 1rem;
+      padding: var(--space-md);
     }
 
     .empty-state {
