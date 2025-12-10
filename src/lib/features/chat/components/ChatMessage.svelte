@@ -1,9 +1,16 @@
 <script lang="ts">
   import type { ChatMessage } from '../../../types/chat';
   import { renderMarkdown, copyToClipboard } from '../../../utils/markdown';
-  import { onMount, tick } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
   import 'highlight.js/styles/github-dark.css';
   import type { ProviderInfo } from '../../../api/models';
+  import {
+    speechSynthesisSupported,
+    subscribeTTSState,
+    toggleSpeaking,
+    stopSpeaking,
+    type TTSState,
+  } from '../../../utils/tts';
 
   interface Props {
     message: ChatMessage;
@@ -17,6 +24,31 @@
   let showActions = $state(false);
   let messageContainer: HTMLDivElement;
   let editTextarea: HTMLTextAreaElement;
+
+  // TTS state
+  let ttsState = $state<TTSState>({
+    messageId: null,
+    isSpeaking: false,
+    isPaused: false,
+    utterance: null,
+  });
+  let unsubscribeTTS: (() => void) | null = null;
+
+  const isSpeaking = $derived(
+    ttsState.messageId === message.id && ttsState.isSpeaking && !ttsState.isPaused
+  );
+  const isPaused = $derived(
+    ttsState.messageId === message.id && ttsState.isSpeaking && ttsState.isPaused
+  );
+  const isActive = $derived(ttsState.messageId === message.id && ttsState.isSpeaking);
+
+  function handleTTSToggle() {
+    toggleSpeaking(message.id, message.content);
+  }
+
+  function handleTTSStop() {
+    stopSpeaking();
+  }
 
   const renderedContent = $derived(
     message.role === 'assistant' ? renderMarkdown(message.content) : message.content
@@ -41,9 +73,28 @@
 
   onMount(() => {
     document.addEventListener('click', handleClickOutside);
+
+    // Subscribe to TTS state changes
+    if (speechSynthesisSupported) {
+      unsubscribeTTS = subscribeTTSState((newState) => {
+        ttsState = newState;
+      });
+    }
+
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
+  });
+
+  onDestroy(() => {
+    // Clean up TTS subscription
+    if (unsubscribeTTS) {
+      unsubscribeTTS();
+    }
+    // Stop TTS if this message was speaking
+    if (ttsState.messageId === message.id && ttsState.isSpeaking) {
+      stopSpeaking();
+    }
   });
 
   function startEdit() {
@@ -213,7 +264,45 @@
     {:else}
       <div class="assistant-message">
         {#if !message.isStreaming}
-          <div class="message-actions">
+          <div class="message-actions" class:tts-active={isActive}>
+            <!-- TTS Toggle Button -->
+            {#if speechSynthesisSupported}
+              <button
+                class="action-btn"
+                class:active={isActive}
+                onclick={handleTTSToggle}
+                title={isSpeaking ? 'Pause' : isPaused ? 'Resume' : 'Listen'}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  {#if isSpeaking}
+                    <!-- Pause icon -->
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  {:else if isPaused}
+                    <!-- Play icon -->
+                    <polygon points="5,3 19,12 5,21"></polygon>
+                  {:else}
+                    <!-- Speaker icon -->
+                    <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                  {/if}
+                </svg>
+              </button>
+              <!-- Stop Button (only shown when active) -->
+              {#if isActive}
+                <button
+                  class="action-btn stop-btn"
+                  onclick={handleTTSStop}
+                  title="Stop"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                  </svg>
+                </button>
+              {/if}
+            {/if}
+            <!-- Copy Button -->
             <button
               class="action-btn"
               class:success={copySuccess}
@@ -588,6 +677,38 @@
     background: rgba(255, 255, 255, 0.35);
     color: white;
     border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  /* TTS active state - always visible when speaking */
+  .message-actions.tts-active {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Active TTS button */
+  .action-btn.active {
+    background: rgba(var(--brand-rgb), 0.2);
+    color: var(--brand);
+    border-color: color-mix(in oklab, var(--brand) 30%, transparent);
+  }
+
+  .action-btn.active:hover:not(:disabled) {
+    background: rgba(var(--brand-rgb), 0.3);
+    color: var(--brand);
+    border-color: color-mix(in oklab, var(--brand) 40%, transparent);
+  }
+
+  /* Stop button styling */
+  .action-btn.stop-btn {
+    background: rgba(var(--brand-red-rgb, 220, 38, 38), 0.15);
+    color: var(--brand-red, #dc2626);
+    border-color: color-mix(in oklab, var(--brand-red, #dc2626) 25%, transparent);
+  }
+
+  .action-btn.stop-btn:hover:not(:disabled) {
+    background: rgba(var(--brand-red-rgb, 220, 38, 38), 0.25);
+    color: var(--brand-red, #dc2626);
+    border-color: color-mix(in oklab, var(--brand-red, #dc2626) 35%, transparent);
   }
 
   .edit-container {
