@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { User } from "../../types/auth";
-  import { listConversations, searchConversations, deleteConversation } from '../../api/chatApi.js';
+  import { listConversations, deleteConversation } from '../../api/chatApi.js';
 
   interface Props {
     isCollapsed?: boolean;
@@ -18,21 +18,16 @@
   let showChatMenu = $state(false);
   let activeChatMenu = $state<string | null>(null);
   let showDeleteConfirmation = $state(false);
+  let selectedChatId = $state<string | null>(null);
   let chatToDelete = $state<string | null>(null);
   let deletingChat = $state(false);
 
   const menuItems = [
-    { 
-      id: 'chat', 
+    {
+      id: 'chat',
       label: 'New Chat',
       icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>'
     },
-    { 
-      id: 'search', 
-      label: 'Search Chats',
-      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>'
-    },
-    
   ];
 
   let activeItem = $state('chat');
@@ -40,26 +35,29 @@
   // Chat data from API
   let chatHistory = $state<any[]>([]);
   let loadingChats = $state(false);
-  let showSearchPopup = $state(false);
   let searchQuery = $state('');
-  let searchResults = $state<any[]>([]);
-  let searching = $state(false);
+  let searchFocused = $state(false);
+
+  // Filtered chats based on search query
+  let filteredChats = $derived(
+    searchQuery.trim()
+      ? chatHistory.filter(chat =>
+          chat.title.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : chatHistory
+  );
 
   function handleItemClick(itemId: string) {
     activeItem = itemId;
-    
-    if (itemId === 'search') {
-      showSearchPopup = true;
-      return;
-    }
-    
+
     if (itemId === 'chat') {
       // Remove chatId from URL and open fresh chat
+      selectedChatId = null;
       window.history.pushState({}, '', window.location.pathname);
       onnavigate?.(itemId);
       return;
     }
-    
+
     onnavigate?.(itemId);
 
     // Auto-collapse on mobile after navigation
@@ -81,6 +79,7 @@
 
   function selectChat(chatId: string) {
     console.log('Selected chat:', chatId);
+    selectedChatId = chatId;
     // Navigate to chat with chatId parameter
     window.history.pushState({}, '', `?chatId=${chatId}`);
     onnavigate?.(`chat-${chatId}`);
@@ -100,11 +99,16 @@
         await deleteConversation(chatToDelete);
         chatHistory = chatHistory.filter(chat => chat.id !== chatToDelete);
         showDeleteConfirmation = false;
+
+        // Clear selection if deleted chat was selected
+        if (selectedChatId === chatToDelete) {
+          selectedChatId = null;
+          // Navigate to fresh chat after deletion
+          window.history.pushState({}, '', window.location.pathname);
+          onnavigate?.('chat');
+        }
+
         chatToDelete = null;
-        
-        // Navigate to fresh chat after deletion
-        window.history.pushState({}, '', window.location.pathname);
-        onnavigate?.('chat');
       } catch (error) {
         console.error('Failed to delete conversation:', error);
         // You might want to show an error message here
@@ -119,34 +123,9 @@
     chatToDelete = null;
   }
 
-  async function handleSearch() {
-    if (!searchQuery.trim()) {
-      searchResults = [];
-      return;
-    }
-
-    try {
-      searching = true;
-      searchResults = await searchConversations(searchQuery);
-    } catch (error) {
-      console.error('Search failed:', error);
-      searchResults = [];
-    } finally {
-      searching = false;
-    }
-  }
-
-  function closeSearchPopup() {
-    showSearchPopup = false;
+  function clearSearch() {
     searchQuery = '';
-    searchResults = [];
-  }
-
-  function selectSearchResult(chatId: string) {
-    closeSearchPopup();
-    // Navigate to chat with chatId parameter
-    window.history.pushState({}, '', `?chatId=${chatId}`);
-    onnavigate?.(`chat-${chatId}`);
+    searchFocused = false;
   }
 
   async function fetchChats() {
@@ -179,6 +158,9 @@
   function handleClickOutside(event: MouseEvent) {
     if (showUserMenu && userMenuElement && !userMenuElement.contains(event.target as Node)) {
       closeUserMenu();
+    }
+    if (activeChatMenu) {
+      activeChatMenu = null;
     }
   }
 
@@ -219,20 +201,35 @@
     }
   }
 
+  // Initialize selected chat from URL and listen for changes
+  function updateSelectedChatFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const chatId = params.get('chatId');
+    selectedChatId = chatId;
+  }
+
   // Fetch chats on component mount
   $effect(() => {
     fetchChats();
-    
+    updateSelectedChatFromUrl();
+
     // Listen for chat history refresh events
     const handleRefresh = () => {
       console.log('Refreshing chat history in sidebar');
       fetchChats();
     };
-    
+
+    // Listen for URL changes (popstate for back/forward navigation)
+    const handlePopState = () => {
+      updateSelectedChatFromUrl();
+    };
+
     window.addEventListener('refreshChatHistory', handleRefresh);
-    
+    window.addEventListener('popstate', handlePopState);
+
     return () => {
       window.removeEventListener('refreshChatHistory', handleRefresh);
+      window.removeEventListener('popstate', handlePopState);
     };
   });
 </script>
@@ -243,7 +240,7 @@
   <div class="sidebar-header">
     <div class="sidebar-brand">
       {#if !isCollapsed}
-        <img src="/grengin-icon.svg" alt="Grengin" class="logo-icon" />
+        <img src="/src/assets/grengin-logo.svg" alt="Grengin" class="brand-logo" />
         <div class="spacer"></div>
         <button
           class="burger-btn"
@@ -294,25 +291,62 @@
   <!-- Chat List Section -->
   {#if !isCollapsed}
     <div class="chat-list-section">
-      <div class="chat-section-title">
-        <span>Chats</span>
+      <!-- Inline Search -->
+      <div class="chat-search-wrapper" class:expanded={searchQuery.length > 0 || searchFocused}>
+        <div class="chat-search-container">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search..."
+            bind:value={searchQuery}
+            class="chat-search-input"
+            onfocus={() => searchFocused = true}
+            onblur={() => searchFocused = false}
+            title="Search through your chat conversations"
+          />
+          {#if searchQuery}
+            <button class="clear-search-btn" onclick={clearSearch} aria-label="Clear search" title="Clear search">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          {/if}
+        </div>
       </div>
+
+      <!-- Chat List Header -->
+      <div class="chat-section-title">
+        <span>Chats {#if chatHistory.length > 0}({filteredChats.length}){/if}</span>
+      </div>
+
       <div class="chat-list">
         {#if loadingChats}
           <div class="chat-loading">
+            <div class="loading-spinner-small"></div>
             <span>Loading chats...</span>
           </div>
         {:else if chatHistory.length === 0}
           <div class="chat-empty">
             <span>No chats yet</span>
           </div>
+        {:else if filteredChats.length === 0 && searchQuery}
+          <div class="no-results">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            <span>No chats found</span>
+          </div>
         {:else}
-          {#each chatHistory as chat (chat.id)}
+          {#each filteredChats as chat (chat.id)}
             <div class="chat-item">
-              <button class="chat-item-btn" onclick={() => selectChat(chat.id)} title={chat.title}>
+              <button class="chat-item-btn" class:selected={selectedChatId === chat.id} onclick={() => selectChat(chat.id)} title={chat.title}>
                 <span class="chat-item-title">{chat.title}</span>
               </button>
-              <button class="chat-item-menu" onclick={() => toggleChatMenu(chat.id)} title="Chat options">
+              <button class="chat-item-menu" onclick={(e) => { e.stopPropagation(); toggleChatMenu(chat.id); }} title="Chat options" aria-expanded={activeChatMenu === chat.id}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="1"></circle>
                   <circle cx="12" cy="5" r="1"></circle>
@@ -320,7 +354,7 @@
                 </svg>
               </button>
               {#if activeChatMenu === chat.id}
-                <div class="chat-dropdown">
+                <div class="chat-dropdown" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="menu" tabindex="-1">
                   <button class="chat-dropdown-item" onclick={() => deleteChat(chat.id)}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="3,6 5,6 21,6"></polyline>
@@ -380,49 +414,6 @@
   </div>
 {/if}
 
-<!-- Search Popup -->
-{#if showSearchPopup}
-  <div class="search-overlay" onclick={closeSearchPopup}>
-    <div class="search-popup" onclick={(e) => e.stopPropagation()}>
-      <div class="search-header">
-        <h3>Search Chats</h3>
-        <button class="close-btn" onclick={closeSearchPopup}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-      <div class="search-input-container">
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Search conversations..."
-          bind:value={searchQuery}
-          oninput={handleSearch}
-        />
-        {#if searching}
-          <div class="search-spinner"></div>
-        {/if}
-      </div>
-      <div class="search-results">
-        {#if searching}
-          <div class="search-loading">Searching...</div>
-        {:else if searchResults.length === 0 && searchQuery}
-          <div class="search-empty">No conversations found</div>
-        {:else if searchResults.length > 0}
-          {#each searchResults as result}
-            <button class="search-result-item" onclick={() => selectSearchResult(result.id)}>
-              <div class="result-title">{result.title || 'Untitled Chat'}</div>
-              <div class="result-date">{result.created_at ? new Date(result.created_at).toLocaleDateString() : 'No date'}</div>
-            </button>
-          {/each}
-        {/if}
-      </div>
-    </div>
-  </div>
-{/if}
-
 <!-- Delete Confirmation Dialog -->
 {#if showDeleteConfirmation}
   <div class="confirmation-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-title">
@@ -460,34 +451,53 @@
 {/if}
 
 <style>
+  /* ===== Sidebar Container ===== */
   .sidebar {
     position: fixed;
     left: 0;
     top: 0;
-    width: 280px;
+    width: 260px;
     height: 100vh;
     display: flex;
     flex-direction: column;
     z-index: 1000;
     overflow-y: auto;
-    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-x: hidden;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background: var(--bg-primary);
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 2px 0 24px rgba(0, 0, 0, 0.12);
+    border-right: 1px solid var(--glass-stroke-dark);
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15);
   }
 
   .sidebar.collapsed {
-    width: 80px;
+    width: 72px;
   }
 
+  /* Custom scrollbar */
+  .sidebar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar::-webkit-scrollbar-thumb {
+    background: var(--glass-stroke-light);
+    border-radius: 2px;
+  }
+
+  .sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+  }
+
+  /* ===== Sidebar Header ===== */
   .sidebar-header {
-    padding: var(--space-xl) var(--space-xl);
-    border-bottom: 1px solid #eaeaea;
-    margin-bottom: 1px;
+    padding: var(--space-lg) var(--space-lg);
   }
 
   .collapsed .sidebar-header {
-    padding: var(--space-2xl) 0;
+    padding: var(--space-lg) var(--space-sm);
   }
 
   .sidebar-brand {
@@ -495,6 +505,7 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    gap: var(--space-md);
   }
 
   .spacer {
@@ -521,17 +532,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     padding: 0;
     border: none;
-    background: rgba(var(--glass-tint), 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
+    background: var(--btn-secondary);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-md);
     color: var(--text-primary);
     cursor: pointer;
     opacity: 0;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
     z-index: 10;
   }
 
@@ -543,170 +554,309 @@
     opacity: 1;
   }
 
-  /* Burger button - shown when sidebar is expanded */
+  .expand-btn:hover {
+    background: var(--btn-tertiary);
+    border-color: var(--brand);
+    color: var(--brand);
+  }
+
+  /* Burger button - toggle sidebar */
   .burger-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 36px;
+    height: 36px;
     padding: 0;
     border: none;
-    background: rgba(var(--glass-tint), 0.06);
-    backdrop-filter: blur(0.75rem);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: var(--btn-secondary);
+    border: 1px solid var(--glass-stroke-dark);
     border-radius: var(--radius-sm);
-    color: var(--text-primary);
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
   }
 
   .burger-btn:hover {
-    background: rgba(var(--glass-tint), 0.12);
-    border-color: var(--link-color);
-    color: var(--link-color);
+    background: var(--btn-tertiary);
+    border-color: var(--brand);
+    color: var(--brand);
     transform: translateY(-1px);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.15),
-      0 4px 16px rgba(0, 0, 0, 0.12);
   }
 
   .burger-btn:active {
     transform: translateY(0);
   }
 
-  .burger-icon {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-
-  /* Brand logo - shown when sidebar is expanded */
-  .brand-logo {
-    height: 1.8rem;
-    width: auto;
-    max-width: 100%;
-    object-fit: contain;
-  }
-
-  /* Logo button - shown when sidebar is collapsed */
+  /* Logo */
   .logo-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: calc(100% - 1.5rem);
-    margin: 0 0.75rem;
-    height: 3rem;
-    padding: 0.75rem;
+    width: 100%;
+    height: 44px;
+    padding: var(--space-sm);
     border: none;
-    background: rgba(var(--glass-tint), 0.06);
-    backdrop-filter: blur(0.75rem);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: var(--radius-lg);
+    background: var(--btn-secondary);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .logo-btn:hover {
-    background: rgba(var(--glass-tint), 0.12);
-    border-color: var(--link-color);
-    transform: translateY(-2px) scale(1.02);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.15),
-      0 6px 20px rgba(0, 0, 0, 0.15);
+    background: var(--btn-tertiary);
+    border-color: var(--brand);
+    transform: scale(1.02);
   }
 
   .logo-btn:active {
-    transform: translateY(0) scale(0.98);
+    transform: scale(0.98);
   }
 
   .logo-icon {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     object-fit: contain;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
   }
 
   .logo-btn:hover .logo-icon {
-    filter: brightness(1.2) drop-shadow(0 0 8px rgba(var(--brand-rgb), 0.4));
+    filter: brightness(1.1);
   }
 
+  .brand-logo {
+    height: 28px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  /* ===== Sidebar Navigation ===== */
   .sidebar-nav {
     flex: 0;
-    padding: var(--space-lg) 0 var(--space-sm) 0;
+    padding: var(--space-md) var(--space-sm);
   }
 
   .sidebar-item {
     width: 100%;
-    margin: 0;
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 0.75rem;
-    padding: 0.625rem 1rem;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: 2px;
     border: none;
+    background: transparent;
     color: var(--text-secondary);
-    background: #fff;
     font-size: 0.875rem;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: left;
-    border-radius: 0;
-    margin-bottom: 0.125rem;
-    box-shadow: none;
+    border-radius: var(--radius-md);
   }
 
   .sidebar-item:hover {
-    background: transparent;
+    background: var(--btn-secondary);
     color: var(--text-primary);
   }
 
   .sidebar-item.active {
-    background: transparent;
-    color: #667eea;
-    font-weight: 500;
+    background: var(--glass-tint-primary);
+    color: var(--brand);
+    font-weight: 600;
   }
 
   .sidebar-icon {
-    font-size: 1.125rem;
-    height: 1.75rem;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
+    justify-content: center;
     flex-shrink: 0;
   }
 
   .sidebar-label {
-    font-weight: 600;
+    font-weight: 500;
     white-space: nowrap;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease, width 0.2s ease;
   }
 
   .collapsed .sidebar-label {
     opacity: 0;
-    pointer-events: none;
-    position: absolute;
     width: 0;
+    overflow: hidden;
   }
 
   .collapsed .sidebar-item {
     justify-content: center;
-    padding: var(--space-sm);
-    width: calc(100% - 1.5rem);
-    margin: 0 0.75rem;
+    padding: var(--space-md);
   }
 
-  .sidebar-footer {
-    padding: var(--space-sm) 0;
+  .collapsed .sidebar-nav {
+    padding: var(--space-md) var(--space-xs);
+  }
+
+  /* ===== Chat List Section ===== */
+  .chat-list-section {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 var(--space-sm);
+    margin-bottom: var(--space-sm);
+  }
+
+  .chat-list-section::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .chat-list-section::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .chat-list-section::-webkit-scrollbar-thumb {
+    background: var(--glass-stroke-light);
+    border-radius: 2px;
+  }
+
+  .chat-section-title {
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-xs);
+  }
+
+  .chat-section-title span {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .chat-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
-    border-top: 1px solid #eaeaea;
+    gap: 1px;
+  }
+
+  .chat-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .chat-item-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: var(--space-sm) var(--space-md);
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    text-align: left;
+    font-size: 0.8125rem;
+    min-width: 0;
+  }
+
+  .chat-item-btn:hover {
+    background: var(--btn-secondary);
+    color: var(--text-primary);
+  }
+
+  .chat-item-btn.selected {
+    background: var(--glass-tint-primary);
+    color: var(--brand);
+    font-weight: 500;
+  }
+
+  .chat-item-btn.selected:hover {
+    background: var(--glass-tint-primary);
+  }
+
+  .chat-item-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chat-item-menu {
+    position: absolute;
+    right: var(--space-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+  }
+
+  .chat-item:hover .chat-item-menu,
+  .chat-item-menu[aria-expanded="true"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .chat-item-menu:hover {
+    background: var(--btn-tertiary);
+    color: var(--text-primary);
+  }
+
+  .chat-dropdown {
+    position: absolute;
+    top: 100%;
+    right: var(--space-sm);
+    margin-top: var(--space-xs);
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-md);
+    box-shadow: var(--glass-shadow-emphasis);
+    z-index: 1000;
+    min-width: 120px;
+    animation: slideUp 0.15s ease;
+  }
+
+  .chat-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.8125rem;
+    transition: all 0.15s ease;
+    border-radius: var(--radius-sm);
+  }
+
+  .chat-dropdown-item:hover {
+    background: var(--btn-tertiary);
+    color: var(--brand-red);
+  }
+
+  .chat-empty {
+    padding: var(--space-xl) var(--space-md);
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+  }
+
+  /* ===== Sidebar Footer ===== */
+  .sidebar-footer {
+    padding: var(--space-sm);
+    margin-top: auto;
   }
 
   .user-menu-container {
@@ -714,13 +864,16 @@
   }
 
   .user-menu-trigger {
-    padding: var(--space-sm) var(--space-lg);
-    margin: 0 var(--space-md);
-    width: calc(100% - var(--space-2xl));
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
     background: transparent;
     border-radius: var(--radius-md);
     justify-content: flex-start;
     gap: var(--space-md);
+  }
+
+  .user-menu-trigger:hover {
+    background: var(--btn-secondary);
   }
 
   .collapsed .user-menu-trigger {
@@ -729,24 +882,26 @@
   }
 
   .user-avatar {
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(var(--glass-tint), 0.1);
     flex-shrink: 0;
   }
 
   .user-initials {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 0.75rem;
-    font-weight: 500;
-    border-radius: 50%;
-    color: var(--bg-primary);
+    font-weight: 600;
+    color: white;
     text-transform: uppercase;
-    padding: 0.25rem;
   }
 
   .user-info {
@@ -754,14 +909,17 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.125rem;
     min-width: 0;
+  }
+
+  .collapsed .user-info {
+    display: none;
   }
 
   .user-name {
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -769,37 +927,40 @@
   }
 
   .dropdown-arrow {
-    width: 1.125rem;
-    height: 1.125rem;
+    width: 16px;
+    height: 16px;
     color: var(--text-secondary);
-    transition: transform 0.3s ease;
+    transition: transform 0.25s ease;
     flex-shrink: 0;
+  }
+
+  .collapsed .dropdown-arrow {
+    display: none;
   }
 
   .dropdown-arrow.rotated {
     transform: rotate(180deg);
   }
 
+  /* ===== User Menu Dropdown ===== */
   .user-menu-dropdown {
     position: fixed;
-    bottom: 3.5rem;
+    bottom: 4rem;
     left: var(--space-md);
-    min-width: 180px;
-    background: rgba(var(--glass-tint), 0.06);
-    backdrop-filter: blur(1.5rem);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-sm);
-    box-shadow:
-      0 8px 24px rgba(0, 0, 0, 0.12);
+    min-width: 200px;
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-md);
+    box-shadow: var(--glass-shadow-emphasis);
     overflow: hidden;
-    animation: slideUpFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: slideUpFade 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 10001;
   }
 
   @keyframes slideUpFade {
     from {
       opacity: 0;
-      transform: translateY(0.5rem);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
@@ -812,411 +973,155 @@
     display: flex;
     align-items: center;
     gap: var(--space-md);
-    padding: var(--space-sm) var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
     background: transparent;
     border: none;
     color: var(--text-secondary);
     font-size: 0.875rem;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: all 0.2s ease;
     text-align: left;
   }
 
   .user-menu-item:hover {
-    background: rgba(var(--glass-tint), 0.08);
-    color: var(--link-color);
+    background: var(--btn-secondary);
+    color: var(--text-primary);
   }
 
   .user-menu-item.logout-item:hover {
-    background: rgba(255, 82, 82, 0.12);
-    color: #ff5252;
+    background: var(--danger-surface);
+    color: var(--brand-red);
   }
 
   .menu-item-icon {
-    height: 1.25rem;
-    width: 1.25rem;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
+    justify-content: center;
     flex-shrink: 0;
-    font-size: 0.875rem;
+  }
+
+  .logout-icon {
+    width: 18px;
+    height: 18px;
   }
 
   .menu-item-label {
     font-weight: 500;
   }
 
-  /* Mobile responsiveness */
-  @media (max-width: 768px) {
-    .sidebar {
-      width: 300px;
-      background: var(--bg-primary);
-      box-shadow: 4px 0 32px rgba(0, 0, 0, 0.2);
-      border-right: 1px solid rgba(255, 255, 255, 0.12);
-    }
-
-    .sidebar.collapsed {
-      transform: translateX(-100%);
-      width: 300px;
-    }
-
-    .user-menu-dropdown {
-      left: var(--space-md);
-    }
+  /* ===== Inline Search ===== */
+  .chat-search-wrapper {
+    padding: 0 var(--space-sm);
+    margin-bottom: var(--space-sm);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  @media (max-width: 480px) {
-    .sidebar {
-      width: 85vw;
-      max-width: 340px;
-      background: var(--bg-primary);
-      box-shadow: 4px 0 40px rgba(0, 0, 0, 0.25);
-      border-right: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    .sidebar.collapsed {
-      transform: translateX(-100%);
-      width: 85vw;
-      max-width: 340px;
-    }
-
-    .user-menu-dropdown {
-      left: var(--space-md);
-    }
+  .chat-search-wrapper.expanded {
+    transform: scale(1.01);
   }
 
-  /* Chat List Styles */
-  .chat-list-section {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0 var(--space-md);
-    margin-top: 0;
-    margin-bottom: var(--space-md);
-  }
-
-  .chat-section-title {
-    padding: 0.5rem 0.75rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .chat-section-title span {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .chat-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .chat-item {
+  .chat-search-container {
     position: relative;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    height: 2rem;
+    background: var(--btn-secondary);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .chat-item-btn {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 0.625rem 0.75rem;
-    border: none;
-    background: #fff;
-    color: var(--text-secondary);
-    cursor: pointer;
-    border-radius: 0;
-    margin: 0;
-    transition: all 0.2s ease;
-    text-align: left;
-    font-size: 0.875rem;
-    box-shadow: none;
+  .chat-search-wrapper.expanded .chat-search-container {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.1);
   }
 
-  .chat-item-btn:hover {
-    background: transparent;
-    color: var(--text-primary);
-  }
-
-  .chat-item-title {
-    font-size: 0.875rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 180px;
-  }
-
-  .chat-item-menu {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    border-radius: 4px;
-    margin-right: 0.5rem;
-    opacity: 0;
-    transition: all 0.2s ease;
-  }
-
-  .chat-item:hover .chat-item-menu {
-    opacity: 1;
-  }
-
-  .chat-item-menu:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-  }
-
-  .chat-dropdown {
+  .chat-search-container .search-icon {
     position: absolute;
-    top: 100%;
-    right: 0.5rem;
-    margin-top: 0.25rem;
-    background: var(--bg-primary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    min-width: 120px;
-  }
-
-  .chat-dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: none;
-    background: transparent;
-    color: var(--text-primary);
-    cursor: pointer;
-    font-size: 0.875rem;
-    transition: background-color 0.15s ease;
-  }
-
-  .chat-dropdown-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .chat-loading,
-  .chat-empty {
-    padding: 1rem 0.75rem;
-    text-align: center;
+    left: var(--space-sm);
     color: var(--text-secondary);
-    font-size: 0.875rem;
-  }
-
-  /* Search Popup Styles */
-  .search-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 2000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.2s ease;
-  }
-
-  .search-popup {
-    background: var(--bg-primary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    width: 90%;
-    max-width: 500px;
-    max-height: 80vh;
-    overflow: hidden;
-    animation: slideUp 0.3s ease;
-  }
-
-  .search-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .search-header h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .close-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 6px;
+    opacity: 0.6;
     transition: all 0.2s ease;
+    pointer-events: none;
   }
 
-  .close-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
+  .chat-search-wrapper.expanded .search-icon {
+    color: var(--brand);
+    opacity: 0.8;
   }
 
-  .search-input-container {
-    position: relative;
-    padding: 1rem 1.5rem;
-  }
-
-  .search-input {
+  .chat-search-input {
     width: 100%;
-    padding: 0.75rem 1rem;
-    background: var(--bg-secondary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    height: 100%;
+    padding: 0 var(--space-sm) 0 2rem;
+    background: transparent;
+    border: none;
     color: var(--text-primary);
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     outline: none;
     transition: all 0.2s ease;
   }
 
-  .search-input:focus {
-    border-color: var(--brand-primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-  }
-
-  .search-input::placeholder {
+  .chat-search-input::placeholder {
     color: var(--text-secondary);
+    opacity: 0.6;
   }
 
-  .search-spinner {
+  .clear-search-btn {
     position: absolute;
-    right: 2rem;
-    top: 1.5rem;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-top: 2px solid var(--brand-primary);
+    right: var(--space-xs);
+    padding: var(--space-xs);
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .clear-search-btn:hover {
+    color: var(--text-primary);
+    background: var(--btn-tertiary);
+  }
+
+  .no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xl) var(--space-md);
+    color: var(--text-secondary);
+    opacity: 0.7;
+    text-align: center;
+  }
+
+  .no-results span {
+    font-size: 0.8rem;
+  }
+
+  .loading-spinner-small {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--glass-stroke-dark);
+    border-top: 2px solid var(--brand);
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
 
-  .search-results {
-    max-height: 400px;
-    overflow-y: auto;
-  }
-
-  .search-loading,
-  .search-empty {
-    padding: 2rem 1.5rem;
+  .chat-loading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xl) var(--space-md);
     text-align: center;
     color: var(--text-secondary);
-    font-size: 0.875rem;
-  }
-
-  .search-result-item {
-    width: 100%;
-    padding: 1rem 1.5rem;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-    text-align: left !important;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    display: block;
-  }
-
-  .search-result-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .search-result-item:last-child {
-    border-bottom: none;
-  }
-
-  .result-title {
-    font-size: 0.875rem;
-    font-weight: 500;
-    margin-bottom: 0.25rem;
-    text-align: left !important;
-    display: block;
-  }
-
-  .result-date {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    text-align: left !important;
-    display: block;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Confirmation Dialog Styles */
-  .confirmation-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
+    font-size: 0.8125rem;
     justify-content: center;
-    z-index: 9999;
-    backdrop-filter: blur(4px);
-  }
-
-  .confirmation-dialog {
-    background: white;
-    border-radius: 0.75rem;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    width: 90%;
-    max-width: 400px;
-    overflow: hidden;
-    animation: slideUp 0.2s ease-out;
-  }
-
-  .confirmation-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.5rem 1.5rem 1rem;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .confirmation-header h3 {
-    margin: 0;
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #111827;
   }
 
   .close-btn {
@@ -1228,42 +1133,84 @@
     padding: 0;
     border: none;
     background: transparent;
-    color: #6b7280;
+    color: var(--text-secondary);
     cursor: pointer;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-sm);
     transition: all 0.15s ease;
   }
 
   .close-btn:hover {
-    background: #f3f4f6;
-    color: #374151;
+    background: var(--btn-tertiary);
+    color: var(--text-primary);
+  }
+
+  /* ===== Confirmation Dialog ===== */
+  .confirmation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease;
+  }
+
+  .confirmation-dialog {
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow-emphasis);
+    width: 90%;
+    max-width: 400px;
+    overflow: hidden;
+    animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .confirmation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg) var(--space-xl);
+    border-bottom: 1px solid var(--glass-stroke-dark);
+  }
+
+  .confirmation-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
   }
 
   .confirmation-content {
-    padding: 1rem 1.5rem;
+    padding: var(--space-lg) var(--space-xl);
   }
 
   .confirmation-content p {
     margin: 0;
-    color: #6b7280;
+    color: var(--text-secondary);
     font-size: 0.875rem;
-    line-height: 1.5;
+    line-height: 1.6;
   }
 
   .confirmation-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 0.75rem;
-    padding: 1rem 1.5rem 1.5rem;
-    border-top: 1px solid #e5e7eb;
+    gap: var(--space-md);
+    padding: var(--space-lg) var(--space-xl);
+    border-top: 1px solid var(--glass-stroke-dark);
   }
 
   .cancel-btn {
-    padding: 0.625rem 1.25rem;
-    border: 1px solid #d1d5db;
-    background: white;
-    color: #374151;
-    border-radius: 0.5rem;
+    padding: var(--space-sm) var(--space-xl);
+    border: 1px solid var(--glass-stroke-dark);
+    background: transparent;
+    color: var(--text-primary);
+    border-radius: var(--radius-md);
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
@@ -1271,38 +1218,36 @@
   }
 
   .cancel-btn:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
+    background: var(--btn-secondary);
+    border-color: var(--glass-stroke-light);
+  }
+
+  .cancel-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .delete-btn {
-    padding: 0.625rem 1.25rem;
-    border: 1px solid #dc2626;
-    background: #dc2626;
+    padding: var(--space-sm) var(--space-xl);
+    border: none;
+    background: var(--brand-red);
     color: white;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
   }
 
   .delete-btn:hover {
-    background: #b91c1c;
-    border-color: #b91c1c;
+    background: color-mix(in oklab, var(--brand-red) 85%, black);
   }
 
   .delete-btn:disabled {
-    background: #f87171;
-    border-color: #f87171;
-    cursor: not-allowed;
     opacity: 0.7;
-  }
-
-  .cancel-btn:disabled {
-    background: #f9fafb;
-    border-color: #e5e7eb;
-    color: #9ca3af;
     cursor: not-allowed;
   }
 
@@ -1310,12 +1255,56 @@
     animation: spin 1s linear infinite;
   }
 
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
+  /* ===== Animations ===== */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
     }
-    100% {
-      transform: rotate(360deg);
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* ===== Mobile Responsiveness ===== */
+  @media (max-width: 768px) {
+    .sidebar {
+      width: 280px;
+      box-shadow: 4px 0 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+      width: 280px;
+    }
+
+    .user-menu-dropdown {
+      left: var(--space-md);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .sidebar {
+      width: 85vw;
+      max-width: 320px;
+      box-shadow: 4px 0 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+      width: 85vw;
+      max-width: 320px;
     }
   }
 </style>
