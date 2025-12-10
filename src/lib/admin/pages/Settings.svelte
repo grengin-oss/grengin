@@ -3,6 +3,8 @@
   import PageHeader from '../components/PageHeader.svelte';
   import SsoProviders from '../components/SsoProviders.svelte';
   import ApiKeys from '../components/ApiKeys.svelte';
+  import RateLimits from '../components/RateLimits.svelte';
+  import Budgets from '../components/Budgets.svelte';
 
   // Map tab IDs to hash fragments
   const tabHashMap: Record<string, string> = {
@@ -129,13 +131,9 @@
   {:else if currentTab === 'api-keys'}
     <ApiKeys />
   {:else if currentTab === 'rate-limits'}
-    <h2>Rate Limits</h2>
-    <p>Set usage rate limits per user or department to control API consumption.</p>
-    <p class="settings-note">Rate limit configuration coming soon...</p>
+    <RateLimits />
   {:else if currentTab === 'budgets'}
-    <h2>Budgets</h2>
-    <p>Configure spending budgets and alerts to monitor costs.</p>
-    <p class="settings-note">Budget configuration coming soon...</p>
+    <Budgets />
   {:else}
     <p class="settings-note">
       Please select a settings category from the tabs above:

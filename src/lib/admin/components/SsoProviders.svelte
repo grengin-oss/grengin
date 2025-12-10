@@ -1,17 +1,22 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import Modal from './Modal.svelte';
-  import type { SsoProvider } from '../types.js';
-  import { getSsoProviders, createSsoProvider, updateSsoProvider, deleteSsoProvider } from '../../api/adminSsoProviders.js';
-  import { getModels, type ModelInfo } from '../../api/models.js';
+  import { onMount } from "svelte";
+  import Modal from "./Modal.svelte";
+  import type { SsoProvider } from "../types.js";
+  import {
+    getSsoProviders,
+    createSsoProvider,
+    updateSsoProvider,
+    deleteSsoProvider,
+  } from "../../api/adminSsoProviders.js";
+  import { getModels, type ModelInfo } from "../../api/models.js";
 
   // Provider options for the dropdown
   const providerOptions = [
-    { value: 'google', label: 'Google' },
-    { value: 'microsoft', label: 'Microsoft' },
-    { value: 'github', label: 'GitHub' },
-    { value: 'anthropic', label: 'Anthropic' },
-    { value: 'openai', label: 'OpenAI' },
+    { value: "google", label: "Google" },
+    { value: "microsoft", label: "Microsoft" },
+    { value: "github", label: "GitHub" },
+    { value: "anthropic", label: "Anthropic" },
+    { value: "openai", label: "OpenAI" },
   ];
 
   let providers = $state<SsoProvider[]>([]);
@@ -23,18 +28,18 @@
 
   // Form state
   let formData = $state({
-    provider: 'google',
-    name: '',
-    client_id: '',
-    client_secret: '',
-    callback_url: 'https://localhost:3000/auth/callback',
+    provider: "google",
+    name: "",
+    client_id: "",
+    client_secret: "",
+    callback_url: "https://localhost:3000/auth/callback",
     is_enabled: true,
-    selected_models: [] as string[]
+    selected_models: [] as string[],
   });
 
   let currentProviderModels = $derived.by(() => {
     const providerKey = formData.provider;
-    if (providerKey === 'anthropic' || providerKey === 'openai') {
+    if (providerKey === "anthropic" || providerKey === "openai") {
       return availableModels.get(providerKey) || [];
     }
     return [];
@@ -44,21 +49,21 @@
     try {
       loading = true;
       error = null;
-      
+
       // Load SSO providers
       providers = await getSsoProviders();
-      console.log(providers);      
-      
+      console.log(providers);
+
       // Load available models for Anthropic and OpenAI
       const modelsResponse = await getModels();
-      modelsResponse.providers.forEach(p => {
-        if (p.key === 'anthropic' || p.key === 'openai') {
+      modelsResponse.providers.forEach((p) => {
+        if (p.key === "anthropic" || p.key === "openai") {
           availableModels.set(p.key, p.models);
         }
       });
     } catch (err: any) {
-      error = err.message || 'Failed to load SSO providers';
-      console.error('Error loading SSO providers:', err);
+      error = err.message || "Failed to load SSO providers";
+      console.error("Error loading SSO providers:", err);
     } finally {
       loading = false;
     }
@@ -67,13 +72,13 @@
   function openAddModal() {
     editingProvider = null;
     formData = {
-      provider: 'google',
-      name: '',
-      client_id: '',
-      client_secret: '',
-      callback_url: 'https://localhost:3000/auth/callback',
+      provider: "google",
+      name: "",
+      client_id: "",
+      client_secret: "",
+      callback_url: "https://localhost:3000/auth/callback",
       is_enabled: true,
-      selected_models: []
+      selected_models: [],
     };
     showModal = true;
   }
@@ -84,10 +89,10 @@
       provider: provider.provider,
       name: provider.name,
       client_id: provider.client_id,
-      client_secret: '',
+      client_secret: "",
       callback_url: provider.issuer_url,
       is_enabled: provider.is_enabled,
-      selected_models: []
+      selected_models: [],
     };
     showModal = true;
   }
@@ -105,10 +110,10 @@
         client_id: formData.client_id,
         client_secret: formData.client_secret,
         issuer_url: formData.callback_url,
-        scopes: ['openid', 'email', 'profile'],
+        scopes: ["openid", "email", "profile"],
         allowed_domains: [],
         is_enabled: formData.is_enabled,
-        is_default: false
+        is_default: false,
       };
 
       if (editingProvider) {
@@ -120,13 +125,13 @@
       await loadProviders();
       closeModal();
     } catch (err: any) {
-      error = err.message || 'Failed to save SSO provider';
-      console.error('Error saving SSO provider:', err);
+      error = err.message || "Failed to save SSO provider";
+      console.error("Error saving SSO provider:", err);
     }
   }
 
   async function handleDelete(providerId: string) {
-    if (!confirm('Are you sure you want to delete this SSO provider?')) {
+    if (!confirm("Are you sure you want to delete this SSO provider?")) {
       return;
     }
 
@@ -134,20 +139,20 @@
       await deleteSsoProvider(providerId);
       await loadProviders();
     } catch (err: any) {
-      error = err.message || 'Failed to delete SSO provider';
-      console.error('Error deleting SSO provider:', err);
+      error = err.message || "Failed to delete SSO provider";
+      console.error("Error deleting SSO provider:", err);
     }
   }
 
   async function toggleProviderStatus(provider: SsoProvider) {
     try {
       await updateSsoProvider(provider.id, {
-        is_enabled: !provider.is_enabled
+        is_enabled: !provider.is_enabled,
       });
       await loadProviders();
     } catch (err: any) {
-      error = err.message || 'Failed to update provider status';
-      console.error('Error updating provider status:', err);
+      error = err.message || "Failed to update provider status";
+      console.error("Error updating provider status:", err);
     }
   }
 
@@ -155,21 +160,23 @@
     // Reset models selection when provider changes
     formData.selected_models = [];
     // Update callback URL based on provider if needed
-    if (formData.provider === 'google') {
-      formData.callback_url = 'https://localhost:3000/auth/google/callback';
-    } else if (formData.provider === 'microsoft') {
-      formData.callback_url = 'https://localhost:3000/auth/microsoft/callback';
-    } else if (formData.provider === 'github') {
-      formData.callback_url = 'https://localhost:3000/auth/github/callback';
+    if (formData.provider === "google") {
+      formData.callback_url = "https://localhost:3000/auth/google/callback";
+    } else if (formData.provider === "microsoft") {
+      formData.callback_url = "https://localhost:3000/auth/microsoft/callback";
+    } else if (formData.provider === "github") {
+      formData.callback_url = "https://localhost:3000/auth/github/callback";
     } else {
-      formData.callback_url = 'https://localhost:3000/auth/callback';
+      formData.callback_url = "https://localhost:3000/auth/callback";
     }
   }
 
   function toggleModel(modelId: string) {
     const index = formData.selected_models.indexOf(modelId);
     if (index > -1) {
-      formData.selected_models = formData.selected_models.filter(id => id !== modelId);
+      formData.selected_models = formData.selected_models.filter(
+        (id) => id !== modelId
+      );
     } else {
       formData.selected_models = [...formData.selected_models, modelId];
     }
@@ -187,9 +194,14 @@
       <p>Configure single sign-on integrations for your organization</p>
     </div>
     <button class="btn-primary" onclick={openAddModal}>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="12" y1="5" x2="12" y2="19"/>
-        <line x1="5" y1="12" x2="19" y2="12"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
       Add Provider
     </button>
@@ -207,13 +219,20 @@
     </div>
   {:else if providers.length === 0}
     <div class="empty-state">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <line x1="9" y1="9" x2="15" y2="15"/>
-        <line x1="15" y1="9" x2="9" y2="15"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <line x1="9" y1="9" x2="15" y2="15" />
+        <line x1="15" y1="9" x2="9" y2="15" />
       </svg>
       <p>No SSO providers configured</p>
-      <button class="btn-primary" onclick={openAddModal}>Add Your First Provider</button>
+      <button class="btn-primary" onclick={openAddModal}
+        >Add Your First Provider</button
+      >
     </div>
   {:else}
     <div class="providers-table">
@@ -236,36 +255,54 @@
                 <span class="client-id-text">{provider.client_id}</span>
               </td>
               <td>
-                <button 
+                <button
                   class="status-toggle"
                   class:active={provider.is_enabled}
                   onclick={() => toggleProviderStatus(provider)}
-                  aria-label={provider.is_enabled ? 'Active' : 'Inactive'}
+                  aria-label={provider.is_enabled ? "Active" : "Inactive"}
                 >
+                  <span class="toggle-label"
+                    >{provider.is_enabled ? "ON" : "OFF"}</span
+                  >
                   <span class="toggle-slider"></span>
                 </button>
-                <span class="status-text">{provider.is_enabled ? 'Active' : 'Inactive'}</span>
               </td>
               <td>
                 <div class="actions">
-                  <button 
+                  <button
                     class="action-btn edit-btn"
                     onclick={() => openEditModal(provider)}
                     aria-label="Edit provider"
                   >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                      />
+                      <path
+                        d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                      />
                     </svg>
                   </button>
-                  <button 
+                  <button
                     class="action-btn delete-btn"
                     onclick={() => handleDelete(provider.id)}
                     aria-label="Delete provider"
                   >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="3 6 5 6 21 6"/>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <polyline points="3 6 5 6 21 6" />
+                      <path
+                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -278,17 +315,23 @@
   {/if}
 </div>
 
-<Modal 
-  bind:isOpen={showModal} 
-  title={editingProvider ? 'Edit SSO Provider' : 'Add SSO Provider'}
+<Modal
+  bind:isOpen={showModal}
+  title={editingProvider ? "Edit SSO Provider" : "Add SSO Provider"}
   onclose={closeModal}
 >
   {#snippet children()}
-    <form class="provider-form" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+    <form
+      class="provider-form"
+      onsubmit={(e) => {
+        e.preventDefault();
+        handleSubmit();
+      }}
+    >
       <div class="form-group">
         <label for="provider">Provider Name</label>
-        <select 
-          id="provider" 
+        <select
+          id="provider"
           bind:value={formData.provider}
           onchange={handleProviderChange}
           disabled={!!editingProvider}
@@ -302,9 +345,9 @@
 
       <div class="form-group">
         <label for="client_id">Client ID</label>
-        <input 
-          type="text" 
-          id="client_id" 
+        <input
+          type="text"
+          id="client_id"
           bind:value={formData.client_id}
           placeholder="Client ID"
           required
@@ -313,9 +356,9 @@
 
       <div class="form-group">
         <label for="client_secret">Client Secret</label>
-        <input 
-          type="password" 
-          id="client_secret" 
+        <input
+          type="password"
+          id="client_secret"
           bind:value={formData.client_secret}
           placeholder="••••••••••"
           required={!editingProvider}
@@ -324,9 +367,9 @@
 
       <div class="form-group">
         <label for="callback_url">Callback URL</label>
-        <input 
-          type="url" 
-          id="callback_url" 
+        <input
+          type="url"
+          id="callback_url"
           bind:value={formData.callback_url}
           placeholder="https://localhost:3000/auth/callback"
           required
@@ -339,8 +382,8 @@
           <div class="models-list">
             {#each currentProviderModels as model}
               <label class="model-checkbox">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={formData.selected_models.includes(model.key)}
                   onchange={() => toggleModel(model.key)}
                 />
@@ -354,16 +397,18 @@
       <div class="form-group">
         <label for="status">Status</label>
         <div class="status-toggle-wrapper">
-          <button 
+          <button
             type="button"
             class="status-toggle"
             class:active={formData.is_enabled}
-            onclick={() => formData.is_enabled = !formData.is_enabled}
-            aria-label={formData.is_enabled ? 'Active' : 'Inactive'}
+            onclick={() => (formData.is_enabled = !formData.is_enabled)}
+            aria-label={formData.is_enabled ? "Active" : "Inactive"}
           >
             <span class="toggle-slider"></span>
           </button>
-          <span class="status-label">{formData.is_enabled ? 'Active' : 'Inactive'}</span>
+          <span class="status-label"
+            >{formData.is_enabled ? "Active" : "Inactive"}</span
+          >
         </div>
       </div>
 
@@ -372,7 +417,7 @@
           Cancel
         </button>
         <button type="submit" class="btn-primary">
-          {editingProvider ? 'Save Changes' : 'Add Provider'}
+          {editingProvider ? "Save Changes" : "Add Provider"}
         </button>
       </div>
     </form>
@@ -468,7 +513,9 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .empty-state svg {
@@ -533,7 +580,7 @@
   }
 
   .client-id {
-    font-family: 'Courier New', monospace;
+    font-family: "Courier New", monospace;
     font-size: 0.875rem;
     color: var(--text-secondary);
   }
@@ -548,18 +595,29 @@
 
   .status-toggle {
     position: relative;
-    width: 3rem;
+    display: inline-flex;
+    align-items: center;
+    width: 3.5rem;
     height: 1.5rem;
     background: rgba(255, 255, 255, 0.1);
     border: none;
     border-radius: 0.75rem;
     cursor: pointer;
     transition: background 0.2s ease;
-    margin-right: var(--space-md);
+    margin-right: var(--space-sm);
+    padding-left: 0.25rem;
   }
 
   .status-toggle.active {
     background: var(--brand-green);
+  }
+
+  .toggle-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: white;
+    z-index: 1;
+    margin-left: 0.125rem;
   }
 
   .toggle-slider {
@@ -575,14 +633,12 @@
   }
 
   .status-toggle.active .toggle-slider {
-    transform: translateX(1.5rem);
+    transform: translateX(2rem);
   }
 
-  .status-text {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+  .status-toggle.active .toggle-label {
+    margin-left: 0.125rem;
   }
-
   .actions {
     display: flex;
     gap: var(--space-sm);
@@ -768,4 +824,3 @@
     }
   }
 </style>
-

@@ -116,11 +116,11 @@ export async function testSsoProvider(providerId: string): Promise<{
 
 export async function getRateLimits(scope?: string): Promise<RateLimit[]> {
     const query = scope ? `?scope=${scope}` : '';
-    return request<RateLimit[]>(`/rate-limits${query}`, );
+    return request<RateLimit[]>(`/admin/rate-limits${query}`);
 }
 
 export async function getRateLimit(limitId: string): Promise<RateLimit> {
-    return request<RateLimit>(`/rate-limits/${limitId}`, );
+    return request<RateLimit>(`/admin/rate-limits/${limitId}`);
 }
 
 export async function createRateLimit(data: {
