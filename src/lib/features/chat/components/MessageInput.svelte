@@ -31,6 +31,16 @@
   let loadingModels = $state(true);
   let modelsError = $state<string | null>(null);
 
+  // Voice input state
+  let isRecording = $state(false);
+  let recognition: SpeechRecognition | null = null;
+  let microphoneError = $state<string | null>(null);
+
+  // Dynamic placeholder based on recording state
+  let currentPlaceholder = $derived(
+    isRecording ? 'Listening... Speak now' : placeholder
+  );
+
   function autoResize() {
     if (!textarea) return;
     textarea.style.height = 'auto';
@@ -91,6 +101,17 @@
   onMount(() => {
     loadModels();
     autoResize();
+
+    // Cleanup speech recognition on unmount
+    return () => {
+      if (recognition) {
+        try {
+          recognition.stop();
+        } catch (error) {
+          // Ignore errors during cleanup
+        }
+      }
+    };
   });
 
   function handlePhotoSelect() {
@@ -205,6 +226,86 @@
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
+  // ===== Speech Recognition =====
+  function initializeSpeechRecognition(): SpeechRecognition | null {
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) {
+      microphoneError = 'Speech recognition is not supported in your browser';
+      return null;
+    }
+
+    const recognitionInstance = new SpeechRecognitionAPI();
+    recognitionInstance.continuous = true;
+    recognitionInstance.interimResults = true;
+    recognitionInstance.lang = 'en-US';
+
+    return recognitionInstance;
+  }
+
+  function toggleVoiceInput() {
+    if (disabled) return;
+
+    if (isRecording && recognition) {
+      // Stop recording
+      recognition.stop();
+      isRecording = false;
+      return;
+    }
+
+    // Start recording
+    if (!recognition) {
+      recognition = initializeSpeechRecognition();
+      if (!recognition) return;
+    }
+
+    microphoneError = null;
+
+    // Store the text that existed before we started recording
+    const textBeforeRecording = message.trim();
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      // Build the full transcript from all results
+      let fullTranscript = '';
+
+      for (let i = 0; i < event.results.length; i++) {
+        fullTranscript += event.results[i][0].transcript;
+      }
+
+      // Combine pre-existing text with new transcription
+      message = textBeforeRecording
+        ? textBeforeRecording + ' ' + fullTranscript
+        : fullTranscript;
+
+      // Trigger auto-resize for growing textarea
+      requestAnimationFrame(autoResize);
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      if (event.error === 'not-allowed') {
+        microphoneError = 'Microphone access denied. Please allow microphone access.';
+      } else if (event.error === 'no-speech') {
+        // User didn't speak - silently stop
+      } else if (event.error !== 'aborted') {
+        microphoneError = `Voice input error: ${event.error}`;
+      }
+      isRecording = false;
+    };
+
+    recognition.onend = () => {
+      isRecording = false;
+    };
+
+    try {
+      recognition.start();
+      isRecording = true;
+    } catch (error) {
+      console.error('Failed to start speech recognition:', error);
+      microphoneError = 'Failed to start voice input';
+      isRecording = false;
+    }
+  }
+
   // Close dropdowns when clicking outside
   function handleClickOutside(event: MouseEvent) {
     const target = event.target as HTMLElement;
@@ -299,9 +400,10 @@
       bind:value={message}
       oninput={handleInput}
       onkeydown={handleKeyDown}
-      {placeholder}
+      placeholder={currentPlaceholder}
       {disabled}
       class="chat-input-textarea"
+      class:recording={isRecording}
       aria-label="Message input"
     ></textarea>
 
@@ -417,13 +519,28 @@
 
       <!-- Right: Mic and Send -->
       <div class="bottom-bar-right">
-        <button class="input-btn mic-btn" aria-label="Voice input" title="Voice input" {disabled}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-            <path d="M12 19v4"/>
-            <path d="M8 23h8"/>
-          </svg>
+        <button
+          class="input-btn mic-btn"
+          class:recording={isRecording}
+          onclick={toggleVoiceInput}
+          aria-label={isRecording ? "Stop recording" : "Voice input"}
+          title={isRecording ? "Stop recording" : "Voice input"}
+          {disabled}
+        >
+          {#if isRecording}
+            <!-- Filled circle during recording -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <circle cx="12" cy="12" r="8"/>
+            </svg>
+          {:else}
+            <!-- Microphone icon when idle -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <path d="M12 19v4"/>
+              <path d="M8 23h8"/>
+            </svg>
+          {/if}
         </button>
 
         <button
@@ -722,6 +839,49 @@
     color: var(--text-secondary);
     opacity: 0.5;
     box-shadow: none;
+  }
+
+  /* Microphone Recording State */
+  .input-btn.mic-btn.recording {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(185, 28, 28, 0.15) 100%);
+    color: rgb(220, 38, 38);
+    animation: pulse 1.5s ease-in-out infinite;
+    box-shadow:
+      0 0 0 0 rgba(220, 38, 38, 0.4),
+      0 2px 8px rgba(220, 38, 38, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .input-btn.mic-btn.recording:hover {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.25) 0%, rgba(185, 28, 28, 0.25) 100%);
+    color: rgb(185, 28, 28);
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow:
+        0 0 0 0 rgba(220, 38, 38, 0.4),
+        0 2px 8px rgba(220, 38, 38, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    50% {
+      box-shadow:
+        0 0 0 8px rgba(220, 38, 38, 0),
+        0 2px 8px rgba(220, 38, 38, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    100% {
+      box-shadow:
+        0 0 0 0 rgba(220, 38, 38, 0),
+        0 2px 8px rgba(220, 38, 38, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+  }
+
+  /* Recording placeholder style */
+  .chat-input-textarea.recording::placeholder {
+    color: rgb(220, 38, 38);
+    opacity: 0.8;
   }
 
   /* ===== Toggle Button (Model Selector) ===== */
