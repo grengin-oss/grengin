@@ -40,19 +40,54 @@ export async function logout(): Promise<void> {
 }
 
 export async function initiateOAuth(provider: string, redirectUri?: string): Promise<void> {
-  let url = `${API_BASE}/auth/${provider}`;
-  
+  const params = new URLSearchParams();
   if (redirectUri) {
-    const params = new URLSearchParams({ redirect_uri: redirectUri });
-    url += `?${params.toString()}`;
+    params.set('redirect_uri', redirectUri);
   }
 
   // Store provider in sessionStorage so callback can retrieve it
   sessionStorage.setItem('oauth_provider', provider);
 
-  // For OAuth, just redirect directly to the endpoint
-  // The server will return 303 and browser will follow to OAuth provider
-  window.location.href = url;
+  const query = params.toString();
+  const url = `${API_BASE}/auth/${provider}${query ? `?${query}` : ''}`;
+
+  // Try fetch first to handle JSON response (200 with auth_url)
+  // If backend returns redirect, fetch will fail due to opaque redirect, fall back to navigation
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      redirect: 'manual', // Don't follow redirects automatically
+    });
+
+    // If we get a redirect response, navigate directly
+    if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
+      window.location.href = url;
+      return;
+    }
+
+    // If we get a JSON response with auth_url, redirect to it
+    if (response.ok) {
+      const data = await response.json();
+      if (data.auth_url) {
+        window.location.href = data.auth_url;
+        return;
+      }
+    }
+
+    // If response wasn't ok and wasn't a redirect, throw error
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Failed to initiate OAuth' }));
+      throw new ApiError(response.status, error.detail || 'Failed to initiate OAuth');
+    }
+  } catch (err) {
+    // If it's already an ApiError, rethrow it
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    // For network errors or other issues, fall back to direct navigation
+    window.location.href = url;
+  }
 }
 
 export async function handleOAuthCallback(provider: string, code: string, state: string): Promise<LoginResponse> {
