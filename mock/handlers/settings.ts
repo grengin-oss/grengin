@@ -18,6 +18,7 @@ let userSettings: UserSettings = {
       },
     },
   },
+  language: 'en',
 }
 
 export const settingsHandlers = [

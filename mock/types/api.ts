@@ -24,7 +24,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/me": {
+    "/models": {
         parameters: {
             query?: never;
             header?: never;
@@ -32,10 +32,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get current user
-         * @description Get authenticated user information
+         * List available models
+         * @description Get list of available AI models by provider
          */
-        get: operations["getCurrentUser"];
+        get: operations["listModels"];
         put?: never;
         post?: never;
         delete?: never;
@@ -44,7 +44,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/chat": {
+    "/settings": {
         parameters: {
             query?: never;
             header?: never;
@@ -52,61 +52,17 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List conversations
-         * @description Get all conversations for the authenticated user
+         * Get user settings
+         * @description Get current user settings and preferences
          */
-        get: operations["listConversations"];
-        put?: never;
+        get: operations["getSettings"];
+        /**
+         * Update user settings
+         * @description Update user settings and preferences
+         */
+        put: operations["updateSettings"];
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/chat/stream": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Stream chat response
-         * @description Send a message and receive streaming response
-         */
-        post: operations["streamChat"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/chat/{chat_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get conversation
-         * @description Get a conversation with all messages
-         */
-        get: operations["getConversation"];
-        /**
-         * Update conversation
-         * @description Update conversation title or other properties
-         */
-        put: operations["updateConversation"];
-        post?: never;
-        /**
-         * Delete conversation
-         * @description Delete a conversation and all its messages
-         */
-        delete: operations["deleteConversation"];
         options?: never;
         head?: never;
         patch?: never;
@@ -127,7 +83,7 @@ export interface paths {
         put?: never;
         /**
          * Upload file
-         * @description Upload a new file
+         * @description Upload a new file (supports PDF, DOCX, TXT, CSV, XLSX, PNG, JPG, WEBP)
          */
         post: operations["uploadFile"];
         delete?: never;
@@ -180,7 +136,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/settings": {
+    "/me": {
         parameters: {
             query?: never;
             header?: never;
@@ -188,15 +144,11 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get user settings
-         * @description Get current user settings and preferences
+         * Get current user
+         * @description Get authenticated user information
          */
-        get: operations["getSettings"];
-        /**
-         * Update user settings
-         * @description Update user settings and preferences
-         */
-        put: operations["updateSettings"];
+        get: operations["getCurrentUser"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -204,7 +156,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/models": {
+    "/me/rate-limit": {
         parameters: {
             query?: never;
             header?: never;
@@ -212,10 +164,1082 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List available models
-         * @description Get list of available AI models by provider
+         * Get current rate limit status
+         * @description Get the current user's rate limit status
          */
-        get: operations["listModels"];
+        get: operations["getCurrentUserRateLimit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/budget": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current budget status
+         * @description Get the current user's budget status
+         */
+        get: operations["getCurrentUserBudget"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current user usage
+         * @description Get usage statistics for the current user
+         */
+        get: operations["getCurrentUserUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List conversations
+         * @description Get all conversations for the authenticated user
+         */
+        get: operations["listConversations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stream chat response
+         * @description Send a message and receive streaming response via SSE
+         */
+        post: operations["streamChat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/{chat_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get conversation
+         * @description Get a conversation with all messages
+         */
+        get: operations["getConversation"];
+        /**
+         * Update conversation
+         * @description Update conversation title or other properties
+         */
+        put: operations["updateConversation"];
+        post?: never;
+        /**
+         * Delete conversation
+         * @description Delete a conversation and all its messages
+         */
+        delete: operations["deleteConversation"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start onboarding
+         * @description Initialize platform onboarding flow. Creates a new organization and begins the setup wizard.
+         *     Only available when no organization exists (fresh deployment).
+         */
+        post: operations["startOnboarding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get onboarding status
+         * @description Check current onboarding progress and state
+         */
+        get: operations["getOnboardingStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/organization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set organization details
+         * @description Configure organization name, domain, and company information
+         */
+        post: operations["setOnboardingOrganization"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create super admin
+         * @description Create the super admin account with email/password authentication.
+         *     This account cannot use SSO and serves as the platform's root administrator.
+         */
+        post: operations["createSuperAdmin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Configure LLM providers
+         * @description Set up API keys for LLM providers (OpenAI, Anthropic, Groq)
+         */
+        post: operations["configureOnboardingProviders"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/providers/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Validate API key
+         * @description Test if an LLM provider API key is valid before saving
+         */
+        post: operations["validateOnboardingApiKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/sso": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Configure SSO (optional)
+         * @description Configure SSO/OIDC provider for organization users.
+         *     Can be skipped and configured later from admin panel.
+         */
+        post: operations["configureOnboardingSso"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/sso/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test SSO configuration
+         * @description Verify OIDC discovery endpoint and credentials before saving
+         */
+        post: operations["testOnboardingSso"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete onboarding
+         * @description Finalize the onboarding process. Returns recovery codes for the super admin account.
+         *     **Important:** Recovery codes are only shown once - user must save them securely.
+         */
+        post: operations["completeOnboarding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Password login
+         * @description Authenticate with email and password (for super admin or password-enabled accounts).
+         *     If MFA is enabled, returns a temporary token to complete MFA verification.
+         */
+        post: operations["passwordLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Initiate SSO login
+         * @description Start the OAuth/OIDC flow for the specified provider
+         */
+        get: operations["initiateAuth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/{provider}/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * OAuth callback (GET)
+         * @description Handle the OAuth callback from the identity provider via query parameters.
+         *     Used when the OAuth provider redirects directly to this endpoint.
+         */
+        get: operations["authCallbackGet"];
+        put?: never;
+        /**
+         * OAuth callback (POST)
+         * @description Handle the OAuth callback via POST request body.
+         *     Preferred for providers with long authorization codes (e.g., Azure AD)
+         *     to avoid URL length limits.
+         */
+        post: operations["authCallbackPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/mfa/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set up MFA
+         * @description Initialize TOTP-based MFA for the current user. Returns QR code and secret.
+         */
+        post: operations["setupMfa"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/mfa/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify MFA code
+         * @description Verify a TOTP code for MFA setup or login completion
+         */
+        post: operations["verifyMfa"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/mfa/recovery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Use recovery code
+         * @description Use a recovery code to bypass MFA (single-use, code is consumed)
+         */
+        post: operations["useMfaRecovery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/mfa/regenerate-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Regenerate recovery codes
+         * @description Generate new recovery codes (invalidates existing ones)
+         */
+        post: operations["regenerateMfaCodes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password/forgot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request password reset
+         * @description Send a password reset email to the user
+         */
+        post: operations["forgotPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset password
+         * @description Reset password using token from email
+         */
+        post: operations["resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password/change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change password
+         * @description Change password for logged-in user
+         */
+        post: operations["changePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh access token
+         * @description Exchange a refresh token for a new access token
+         */
+        post: operations["refreshToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logout
+         * @description Invalidate the current session and tokens
+         */
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get admin dashboard
+         * @description Get admin dashboard with overview statistics
+         */
+        get: operations["getAdminDashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all users
+         * @description Get paginated list of all users in the organization
+         */
+        get: operations["listUsers"];
+        put?: never;
+        /**
+         * Create user
+         * @description Create a new user manually
+         */
+        post: operations["createUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk import users
+         * @description Import multiple users via CSV or JSON
+         */
+        post: operations["bulkImportUsers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get user details
+         * @description Get detailed information about a specific user by their ID
+         */
+        get: operations["getUser"];
+        /**
+         * Update user
+         * @description Update user details including role, status, and department
+         */
+        put: operations["updateUser"];
+        post?: never;
+        /**
+         * Deactivate user
+         * @description Deactivate a user account (does not permanently delete)
+         */
+        delete: operations["deactivateUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{user_id}/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get user usage
+         * @description Get usage statistics for a specific user over a time period
+         */
+        get: operations["getUserUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/organization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get organization settings
+         * @description Get current organization settings including SSO providers and AI engine configurations
+         */
+        get: operations["getOrganization"];
+        /**
+         * Update organization settings
+         * @description Update organization settings including allowed domains and AI engine configurations
+         */
+        put: operations["updateOrganization"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ai-engines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List AI engines
+         * @description List all AI engines with their configuration and API key status.
+         *     Returns both enabled and disabled engines for complete visibility.
+         */
+        get: operations["listAIEngines"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ai-engines/{engine_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get AI engine details
+         * @description Get detailed configuration for a specific AI engine
+         */
+        get: operations["getAIEngine"];
+        /**
+         * Update AI engine
+         * @description Update AI engine configuration including enable/disable, API key, and model whitelist.
+         *     Setting api_key will replace the existing key. Omit to keep current key.
+         */
+        put: operations["updateAIEngine"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ai-engines/{engine_key}/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Validate AI engine API key
+         * @description Test the configured API key by making a validation request to the provider
+         */
+        post: operations["validateAIEngineKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ai-engines/{engine_key}/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch available models from provider
+         * @description Query the AI provider's API to get a list of available models.
+         *     Requires a valid API key to be configured for this engine.
+         *     Returns models with their whitelist status.
+         */
+        get: operations["getAIEngineModels"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ai-engines/{engine_key}/api-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove AI engine API key
+         * @description Remove the configured API key from this engine (disables the engine)
+         */
+        delete: operations["deleteAIEngineKey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/sso-providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List SSO providers
+         * @description List all configured SSO/OIDC providers for the organization
+         */
+        get: operations["listSsoProviders"];
+        put?: never;
+        /**
+         * Add SSO provider
+         * @description Configure a new SSO/OIDC provider for the organization
+         */
+        post: operations["createSsoProvider"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/sso-providers/{provider_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get SSO provider
+         * @description Get configuration details for a specific SSO provider
+         */
+        get: operations["getSsoProvider"];
+        /**
+         * Update SSO provider
+         * @description Update configuration for an existing SSO provider
+         */
+        put: operations["updateSsoProvider"];
+        post?: never;
+        /**
+         * Delete SSO provider
+         * @description Remove an SSO provider configuration from the organization
+         */
+        delete: operations["deleteSsoProvider"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/sso-providers/{provider_id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test SSO provider
+         * @description Test SSO provider configuration by checking OIDC discovery endpoints
+         */
+        post: operations["testSsoProvider"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/rate-limits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List rate limit configurations
+         * @description List all rate limit configurations for users, departments, or organization
+         */
+        get: operations["listRateLimits"];
+        put?: never;
+        /**
+         * Create rate limit
+         * @description Create a new rate limit configuration for a user, department, or organization
+         */
+        post: operations["createRateLimit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/rate-limits/{limit_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update rate limit
+         * @description Update an existing rate limit configuration
+         */
+        put: operations["updateRateLimit"];
+        post?: never;
+        /**
+         * Delete rate limit
+         * @description Remove a rate limit configuration
+         */
+        delete: operations["deleteRateLimit"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/budgets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List budgets
+         * @description List all budget configurations for users, departments, or organization
+         */
+        get: operations["listBudgets"];
+        put?: never;
+        /**
+         * Create budget
+         * @description Create a new budget configuration with spending limits and alerts
+         */
+        post: operations["createBudget"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/budgets/{budget_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update budget
+         * @description Update an existing budget configuration
+         */
+        put: operations["updateBudget"];
+        post?: never;
+        /**
+         * Delete budget
+         * @description Remove a budget configuration
+         */
+        delete: operations["deleteBudget"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get cost analytics
+         * @description Get cost breakdown and analytics
+         */
+        get: operations["getCostAnalytics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/costs/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export cost data
+         * @description Export cost data as CSV for chargeback/billing
+         */
+        get: operations["exportCosts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get usage analytics
+         * @description Get usage statistics and trends
+         */
+        get: operations["getUsageAnalytics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get cost trends
+         * @description Get historical cost trends for visualization
+         */
+        get: operations["getCostTrends"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audit/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get audit logs
+         * @description Get paginated audit logs with filtering
+         */
+        get: operations["getAuditLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audit/logs/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export audit logs
+         * @description Export audit logs for compliance reporting
+         */
+        get: operations["exportAuditLogs"];
         put?: never;
         post?: never;
         delete?: never;
@@ -236,8 +1260,16 @@ export interface components {
         Error: {
             detail: string | {
                 error?: string;
+                code?: string;
                 message?: string;
             };
+        };
+        ValidationError: {
+            detail: {
+                loc?: string[];
+                msg?: string;
+                type?: string;
+            }[];
         };
         HealthResponse: {
             /** @enum {string} */
@@ -249,9 +1281,403 @@ export interface components {
                 database?: "up" | "down";
                 /** @enum {string} */
                 redis?: "up" | "down";
+                llm_providers?: {
+                    [key: string]: "up" | "down";
+                };
             };
             version?: string;
         };
+        /** @enum {string} */
+        FileStatus: "uploaded" | "processing" | "ready" | "error";
+        /** @enum {string} */
+        VirusScanStatus: "pending" | "clean" | "infected" | "error";
+        UserFile: {
+            /** Format: uuid */
+            id: string;
+            /** @description User-facing filename */
+            name: string;
+            /** Format: int64 */
+            size: number;
+            /** @description MIME type */
+            type: string;
+            description?: string | null;
+            /** Format: uri */
+            url?: string;
+            /** Format: uri */
+            download_url?: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at?: string;
+            /**
+             * Format: uuid
+             * @description ID of the user who uploaded the file
+             */
+            user_id?: string;
+            status?: components["schemas"]["FileStatus"];
+            metadata?: {
+                checksum?: string;
+                virus_scan_status?: components["schemas"]["VirusScanStatus"];
+                processing_status?: string;
+            };
+        };
+        PaginatedFiles: {
+            files: components["schemas"]["UserFile"][];
+            total: number;
+            limit: number;
+            offset: number;
+            sort?: string;
+            /** @enum {string} */
+            order?: "asc" | "desc";
+        };
+        ModelInfo: {
+            /** @description Model identifier used with APIs (e.g., gpt-4.1, claude-sonnet-4-20250514) */
+            key: string;
+            /** @description Human-readable name for the model */
+            name: string;
+            engine?: components["schemas"]["AIEngine"];
+            /** @description Comment displayed to user when model is selected */
+            comment?: string | null;
+            /** @description Optional SVG icon (overrides engine default icon) */
+            icon?: string | null;
+            context_window?: number | null;
+            max_output_tokens?: number | null;
+            supports_streaming?: boolean;
+            supports_tools?: boolean;
+            /** @description Whether the model supports image inputs */
+            supports_vision?: boolean;
+            /** @description Whether the model supports native PDF processing */
+            supports_pdf_native?: boolean;
+            /** @description Whether the model supports web search */
+            supports_web_search?: boolean;
+            /** @description Maximum number of images supported per request */
+            max_images?: number | null;
+            pricing?: {
+                /**
+                 * Format: float
+                 * @description Price per 1M input tokens in USD
+                 */
+                input?: number;
+                /**
+                 * Format: float
+                 * @description Price per 1M output tokens in USD
+                 */
+                output?: number;
+            } | null;
+        };
+        ProviderInfo: {
+            /** @description Provider identifier (same as AIEngine) */
+            key: string;
+            /** @description Human-readable provider name */
+            name: string;
+            icon?: string | null;
+            /** @enum {string} */
+            status?: "active" | "degraded" | "unavailable";
+            models: components["schemas"]["ModelInfo"][];
+        };
+        ModelSelection: {
+            model_name: string;
+            provider: string;
+        };
+        ModelSettings: {
+            tool_models?: {
+                [key: string]: components["schemas"]["ModelSelection"];
+            };
+        };
+        UserSettings: {
+            models?: components["schemas"]["ModelSettings"];
+            default_model?: string;
+            default_provider?: string;
+            /** @enum {string} */
+            theme?: "light" | "dark" | "system";
+            /** @default en */
+            language: string;
+        };
+        /**
+         * @description Identifier for the SSO/OIDC provider. This is a free-form string that
+         *     serves as a display name and URL slug (e.g., /auth/google, /auth/keycloak).
+         *
+         *     Common values: google, azure, keycloak, authentik, authelia, okta, auth0,
+         *     onelogin, jumpcloud, or any custom identifier.
+         *
+         *     The actual OIDC configuration (issuer_url, client_id, etc.) determines
+         *     provider behavior - not this identifier.
+         * @example keycloak
+         */
+        AuthProvider: string;
+        AuthInitResponse: {
+            /**
+             * Format: uri
+             * @description URL to redirect user for authentication
+             */
+            auth_url: string;
+            /** @description CSRF protection state token */
+            state: string;
+        };
+        AuthCallbackRequest: {
+            /** @description Authorization code from OAuth provider */
+            code: string;
+            /** @description State token for CSRF validation */
+            state: string;
+        };
+        AuthTokenResponse: {
+            /** @description JWT access token */
+            access_token: string;
+            /** @enum {string} */
+            token_type: "Bearer";
+            /** @description Token expiration time in seconds */
+            expires_in: number;
+            /** @description Refresh token for obtaining new access tokens */
+            refresh_token?: string;
+            user?: components["schemas"]["User"];
+        };
+        RefreshTokenRequest: {
+            refresh_token: string;
+        };
+        OidcProviderConfig: {
+            /** Format: uuid */
+            id?: string;
+            provider: components["schemas"]["AuthProvider"];
+            /** @description Display name for this provider */
+            name?: string;
+            /** @description OAuth 2.0 Client ID */
+            client_id: string;
+            /** @description OAuth 2.0 Client Secret (write-only, never returned) */
+            client_secret?: string;
+            /**
+             * Format: uri
+             * @description OIDC Issuer URL for discovery (must have /.well-known/openid-configuration).
+             *     Examples:
+             *     - Keycloak: https://keycloak.example.com/realms/{realm}
+             *     - Authentik: https://auth.example.com/application/o/{app-slug}/
+             *     - Authelia: https://auth.example.com
+             *     - Google: https://accounts.google.com
+             *     - Azure AD: https://login.microsoftonline.com/{tenant}/v2.0
+             *     - Dex: https://dex.example.com
+             *     - Any OIDC-compliant provider
+             */
+            issuer_url: string;
+            /**
+             * @description OAuth scopes to request
+             * @default [
+             *       "openid",
+             *       "email",
+             *       "profile"
+             *     ]
+             */
+            scopes: string[];
+            /** @description Restrict login to users from these email domains */
+            allowed_domains?: string[];
+            /** @default true */
+            is_enabled: boolean;
+            /**
+             * @description Use as the default SSO provider
+             * @default false
+             */
+            is_default: boolean;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        OidcProviderConfigCreate: {
+            provider: components["schemas"]["AuthProvider"];
+            name?: string;
+            client_id: string;
+            client_secret: string;
+            /** Format: uri */
+            issuer_url: string;
+            scopes?: string[];
+            allowed_domains?: string[];
+            /** @default true */
+            is_enabled: boolean;
+            /** @default false */
+            is_default: boolean;
+        };
+        /**
+         * @description Current step in the onboarding flow
+         * @enum {string}
+         */
+        OnboardingStep: "welcome" | "organization" | "admin" | "providers" | "sso" | "complete";
+        OnboardingStatus: {
+            /** Format: uuid */
+            session_id: string;
+            current_step: components["schemas"]["OnboardingStep"];
+            completed_steps?: components["schemas"]["OnboardingStep"][];
+            organization_configured?: boolean;
+            admin_created?: boolean;
+            providers_configured?: boolean;
+            sso_configured?: boolean;
+            /** Format: date-time */
+            expires_at: string;
+        };
+        OnboardingStartRequest: {
+            /** @description User accepts Terms of Service */
+            accept_terms: boolean;
+            /** @description User accepts Privacy Policy */
+            accept_privacy: boolean;
+        };
+        OnboardingStartResponse: {
+            /** Format: uuid */
+            session_id: string;
+            /** @description Token to authenticate subsequent onboarding requests */
+            session_token: string;
+            /** Format: date-time */
+            expires_at?: string;
+        };
+        /** @enum {string} */
+        CompanySize: "1-50" | "51-200" | "201-500" | "501-1000" | "1000+";
+        /** @enum {string} */
+        Industry: "financial_services" | "healthcare" | "technology" | "legal" | "government" | "education" | "manufacturing" | "retail" | "other";
+        OrganizationSetupRequest: {
+            name: string;
+            /** @description Primary domain (e.g., company.com) */
+            domain: string;
+            industry?: components["schemas"]["Industry"];
+            company_size: components["schemas"]["CompanySize"];
+            /** @description ISO 3166-1 alpha-2 country code */
+            country: string;
+        };
+        SuperAdminCreateRequest: {
+            /** Format: email */
+            email: string;
+            name: string;
+            /**
+             * @description Password requirements:
+             *     - Minimum 12 characters
+             *     - At least 1 uppercase letter
+             *     - At least 1 lowercase letter
+             *     - At least 1 number
+             *     - At least 1 special character
+             */
+            password: string;
+            password_confirmation: string;
+            /**
+             * Format: email
+             * @description Optional recovery email (must differ from primary)
+             */
+            recovery_email?: string;
+        };
+        /** @description AI engine identifier (e.g., openai, anthropic, groq, or any custom provider) */
+        AIEngine: string;
+        AIModelParameter: {
+            /** @description Parameter name (e.g., temperature, max_tokens) */
+            name: string;
+            /** @enum {string} */
+            type: "number" | "integer" | "boolean" | "string";
+            /** @description Default value for the parameter */
+            default?: unknown;
+            /** @description Minimum value (for numeric types) */
+            min?: number;
+            /** @description Maximum value (for numeric types) */
+            max?: number;
+            description?: string;
+        };
+        LlmProviderSetupRequest: {
+            providers: {
+                provider: components["schemas"]["AIEngine"];
+                api_key: string;
+                name?: string;
+            }[];
+            default_provider: components["schemas"]["AIEngine"];
+            default_model: string;
+        };
+        ValidateApiKeyRequest: {
+            provider: components["schemas"]["AIEngine"];
+            api_key: string;
+        };
+        ValidateApiKeyResponse: {
+            valid?: boolean;
+            provider?: string;
+            available_models?: string[];
+            error?: string | null;
+        };
+        OnboardingSsoRequest: {
+            /**
+             * @description Set to true to skip SSO configuration
+             * @default false
+             */
+            skip: boolean;
+            provider?: components["schemas"]["AuthProvider"];
+            name?: string;
+            /** Format: uri */
+            issuer_url?: string;
+            client_id?: string;
+            client_secret?: string;
+            allowed_domains?: string[];
+        };
+        OnboardingCompleteResponse: {
+            success: boolean;
+            /** @description 10 single-use recovery codes (store securely!) */
+            recovery_codes: string[];
+            organization: components["schemas"]["Organization"];
+            super_admin: components["schemas"]["User"];
+            /** Format: uri */
+            login_url?: string;
+        };
+        PasswordLoginRequest: {
+            /** Format: email */
+            email: string;
+            password: string;
+            /** @default false */
+            remember_me: boolean;
+        };
+        PasswordLoginResponse: {
+            requires_mfa?: boolean;
+            /** @description Temporary token to complete MFA verification */
+            mfa_token?: string;
+            /** @description Only returned if MFA not required or already verified */
+            access_token?: string;
+            refresh_token?: string;
+            user?: components["schemas"]["User"];
+        };
+        MfaSetupResponse: {
+            /** @description Base32 encoded TOTP secret */
+            secret: string;
+            /**
+             * Format: uri
+             * @description URL to QR code image
+             */
+            qr_code_url: string;
+            /** @description otpauth:// URL for authenticator apps */
+            otpauth_url: string;
+            /** @description New recovery codes (only on initial setup) */
+            recovery_codes?: string[];
+        };
+        MfaVerifyRequest: {
+            /** @description 6-digit TOTP code */
+            code: string;
+            /** @description Token from login response (if verifying after login) */
+            mfa_token?: string;
+        };
+        MfaRecoveryRequest: {
+            /** @description One of the 10 recovery codes */
+            recovery_code: string;
+            /** @description Token from login response */
+            mfa_token?: string;
+        };
+        PasswordForgotRequest: {
+            /** Format: email */
+            email: string;
+        };
+        PasswordResetRequest: {
+            /** @description Reset token from email */
+            token: string;
+            password: string;
+            password_confirmation: string;
+        };
+        PasswordChangeRequest: {
+            current_password: string;
+            new_password: string;
+            new_password_confirmation: string;
+        };
+        /**
+         * @description User role determining access level
+         * @enum {string}
+         */
+        UserRole: "user" | "admin" | "observer";
+        /** @enum {string} */
+        UserStatus: "active" | "suspended" | "deactivated";
         User: {
             /** Format: uuid */
             id: string;
@@ -262,13 +1688,61 @@ export interface components {
             name?: string;
             /** Format: uri */
             picture?: string;
-            /** @description Hosted domain */
+            /** @description Hosted domain (organization domain) */
             hd?: string;
-            super_admin?: boolean;
+            role?: components["schemas"]["UserRole"];
+            status?: components["schemas"]["UserStatus"];
+            department?: string | null;
+            /** @description Super admin has full platform control and cannot be deleted */
+            is_super_admin?: boolean;
+            /** @description Whether user has password authentication (vs SSO-only) */
+            has_password?: boolean;
+            /** @description Whether MFA is enabled for this user */
+            mfa_enabled?: boolean;
+            /** Format: date-time */
+            last_login_at?: string | null;
+            /** Format: date-time */
+            password_changed_at?: string | null;
             /** Format: date-time */
             created_at?: string;
             /** Format: date-time */
             updated_at?: string;
+        };
+        UserCreate: {
+            /** Format: email */
+            email: string;
+            name?: string;
+            role?: components["schemas"]["UserRole"];
+            department?: string;
+        };
+        UserUpdate: {
+            name?: string;
+            role?: components["schemas"]["UserRole"];
+            status?: components["schemas"]["UserStatus"];
+            department?: string;
+        };
+        UserBulkImport: {
+            users: components["schemas"]["UserCreate"][];
+            /**
+             * @description Send invitation emails to new users
+             * @default true
+             */
+            send_invites: boolean;
+        };
+        UserBulkImportResult: {
+            created?: number;
+            updated?: number;
+            failed?: number;
+            errors?: {
+                email?: string;
+                error?: string;
+            }[];
+        };
+        PaginatedUsers: {
+            users: components["schemas"]["User"][];
+            total: number;
+            limit: number;
+            offset: number;
         };
         Conversation: {
             /** Format: uuid */
@@ -278,6 +1752,15 @@ export interface components {
             archived: boolean;
             /** Format: date-time */
             archived_at?: string | null;
+            /** @description Last used model in conversation */
+            model?: string | null;
+            /** @description Total tokens used in conversation */
+            total_tokens?: number;
+            /**
+             * Format: float
+             * @description Total cost of conversation in USD
+             */
+            total_cost?: number;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
@@ -298,6 +1781,11 @@ export interface components {
             /** Format: int64 */
             size?: number;
         };
+        TokenUsage: {
+            input_tokens?: number;
+            output_tokens?: number;
+            total_tokens?: number;
+        };
         Message: {
             /** Format: uuid */
             id: string;
@@ -309,10 +1797,12 @@ export interface components {
             model_params?: Record<string, never> | null;
             tool_calls?: Record<string, never>[] | null;
             tool_results?: Record<string, never>[] | null;
-            usage?: {
-                input_tokens?: number;
-                output_tokens?: number;
-            } | null;
+            usage?: components["schemas"]["TokenUsage"];
+            /**
+             * Format: float
+             * @description Cost of this message in USD
+             */
+            cost?: number | null;
             request_id?: string | null;
             /** Format: date-time */
             created_at: string;
@@ -337,84 +1827,561 @@ export interface components {
             conversation_id?: string | null;
             selected_tools?: string[] | null;
         };
-        /** @enum {string} */
-        FileStatus: "uploaded" | "processing" | "error";
-        /** @enum {string} */
-        VirusScanStatus: "pending" | "clean" | "infected" | "error";
-        UserFile: {
-            /** Format: uuid */
-            id: string;
-            /** @description User-facing filename */
-            name: string;
-            /** Format: int64 */
-            size: number;
-            /** @description MIME type */
-            type: string;
-            description?: string | null;
-            /** Format: uri */
-            url?: string;
-            /** Format: uri */
-            download_url?: string;
-            /** Format: date-time */
-            created_at: string;
-            /** Format: date-time */
-            updated_at?: string;
-            user_id?: string;
-            status?: components["schemas"]["FileStatus"];
-            metadata?: {
-                checksum?: string;
-                virus_scan_status?: components["schemas"]["VirusScanStatus"];
-                processing_status?: string;
-            };
-        };
-        ModelSelection: {
-            model_name: string;
-            provider: string;
-        };
-        ModelSettings: {
-            tool_models?: {
-                [key: string]: components["schemas"]["ModelSelection"];
-            };
-        };
-        UserSettings: {
-            models?: components["schemas"]["ModelSettings"];
-        };
-        ModelInfo: {
-            key: string;
-            name: string;
-            context_window?: number | null;
-            max_output_tokens?: number | null;
-            supports_streaming?: boolean;
-            supports_tools?: boolean;
-            pricing?: {
-                /** Format: float */
-                input?: number;
-                /** Format: float */
-                output?: number;
-            } | null;
-        };
-        ProviderInfo: {
-            key: string;
-            name: string;
-            icon?: string | null;
-            models: components["schemas"]["ModelInfo"][];
-        };
-        PaginatedFiles: {
-            files: components["schemas"]["UserFile"][];
-            total: number;
-            limit: number;
-            offset: number;
-            sort?: string;
-            /** @enum {string} */
-            order?: "asc" | "desc";
-        };
         ConversationList: {
             conversations: components["schemas"]["Conversation"][];
             total: number;
         };
+        /**
+         * @example {
+         *       "id": "550e8400-e29b-41d4-a716-446655440000",
+         *       "model_name": "claude-sonnet-4-20250514",
+         *       "display_name": "Claude Sonnet 4",
+         *       "engine": "anthropic",
+         *       "is_active": true,
+         *       "supports_vision": true,
+         *       "supports_pdf_native": true,
+         *       "supports_web_search": false,
+         *       "max_images": 20
+         *     }
+         */
+        AIModel: {
+            /** Format: uuid */
+            id: string;
+            /** @description Model identifier used with APIs (e.g., gpt-4.1, claude-sonnet-4-20250514) */
+            model_name: string;
+            /** @description Human-readable name for the model */
+            display_name: string;
+            engine: components["schemas"]["AIEngine"];
+            /** @description Configurable parameters for the model */
+            parameters?: components["schemas"]["AIModelParameter"][];
+            /** @description Comment displayed to user when model is selected */
+            comment?: string | null;
+            /** @description Optional SVG icon (overrides engine default icon) */
+            icon?: string | null;
+            /**
+             * @description Whether the model is available for use
+             * @default true
+             */
+            is_active: boolean;
+            /**
+             * @description Whether the model supports image inputs
+             * @default false
+             */
+            supports_vision: boolean;
+            /**
+             * @description Whether the model supports native PDF processing
+             * @default false
+             */
+            supports_pdf_native: boolean;
+            /**
+             * @description Whether the model supports web search
+             * @default false
+             */
+            supports_web_search: boolean;
+            /** @description Maximum number of images supported per request */
+            max_images?: number | null;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        AIModelCreate: {
+            model_name: string;
+            display_name: string;
+            engine: components["schemas"]["AIEngine"];
+            parameters?: components["schemas"]["AIModelParameter"][];
+            comment?: string;
+            icon?: string;
+            /** @default true */
+            is_active: boolean;
+            /** @default false */
+            supports_vision: boolean;
+            /** @default false */
+            supports_pdf_native: boolean;
+            /** @default false */
+            supports_web_search: boolean;
+            max_images?: number;
+        };
+        AIModelUpdate: {
+            model_name?: string;
+            display_name?: string;
+            engine?: components["schemas"]["AIEngine"];
+            parameters?: components["schemas"]["AIModelParameter"][];
+            comment?: string;
+            icon?: string;
+            is_active?: boolean;
+            supports_vision?: boolean;
+            supports_pdf_native?: boolean;
+            supports_web_search?: boolean;
+            max_images?: number;
+        };
+        /**
+         * @example {
+         *       "engine_key": "openai",
+         *       "display_name": "OpenAI",
+         *       "is_enabled": true,
+         *       "api_key_configured": true,
+         *       "api_key_status": "valid",
+         *       "api_key_preview": "sk-...abc1",
+         *       "api_key_last_validated_at": "2025-01-15T10:30:00Z",
+         *       "whitelisted_models": [
+         *         "gpt-4.1",
+         *         "gpt-4.1-mini",
+         *         "o3"
+         *       ],
+         *       "default_model": "gpt-4.1"
+         *     }
+         */
+        AIEngineDetail: {
+            /** @description Unique identifier for the engine (e.g., 'openai', 'anthropic', 'groq') */
+            engine_key: string;
+            /** @description Human-readable name for the engine */
+            display_name: string;
+            /** @description Whether this engine is enabled for the organization */
+            is_enabled: boolean;
+            /** @description Whether an API key has been set for this engine */
+            api_key_configured: boolean;
+            /**
+             * @description Status of the configured API key
+             * @enum {string}
+             */
+            api_key_status?: "valid" | "invalid" | "untested";
+            /** @description Last 4 characters of the configured API key */
+            api_key_preview?: string | null;
+            /**
+             * Format: date-time
+             * @description When the API key was last validated
+             */
+            api_key_last_validated_at?: string | null;
+            /**
+             * @description Global whitelist of model_name values allowed for this engine.
+             *     Empty array means all models from this engine are allowed.
+             */
+            whitelisted_models?: string[];
+            /** @description Default model for this engine */
+            default_model?: string | null;
+            /** Format: date-time */
+            updated_at?: string | null;
+        };
+        /** @description Request body for updating an AI engine configuration */
+        AIEngineUpdate: {
+            /** @description Enable or disable this engine */
+            is_enabled?: boolean;
+            /** @description The API key (write-only, for setting or rotating) */
+            api_key?: string;
+            /** @description Models to whitelist for this engine */
+            whitelisted_models?: string[];
+            /** @description Default model for this engine */
+            default_model?: string;
+        };
+        /**
+         * @example {
+         *       "valid": true,
+         *       "message": "API key validated successfully",
+         *       "models_available": 15
+         *     }
+         */
+        AIEngineValidateResponse: {
+            valid: boolean;
+            message?: string;
+            /** @description Number of models available with this API key */
+            models_available?: number;
+        };
+        /**
+         * @example {
+         *       "models": [
+         *         {
+         *           "model_id": "gpt-4.1",
+         *           "display_name": "GPT-4.1",
+         *           "is_whitelisted": true,
+         *           "capabilities": {
+         *             "vision": true,
+         *             "function_calling": true,
+         *             "streaming": true
+         *           }
+         *         }
+         *       ]
+         *     }
+         */
+        AIEngineModelsResponse: {
+            models: {
+                /** @description Model identifier from the provider */
+                model_id?: string;
+                display_name?: string;
+                /** @description Whether this model is in the whitelist */
+                is_whitelisted?: boolean;
+                capabilities?: {
+                    vision?: boolean;
+                    function_calling?: boolean;
+                    streaming?: boolean;
+                };
+            }[];
+        };
+        /**
+         * @example {
+         *       "user_id": "550e8400-e29b-41d4-a716-446655440001",
+         *       "whitelisted_models": [
+         *         "claude-opus-4-20250514"
+         *       ],
+         *       "blacklisted_models": [
+         *         "o3"
+         *       ]
+         *     }
+         */
+        UserModelAccess: {
+            /** Format: uuid */
+            user_id: string;
+            /**
+             * @description Models this user CAN access (in addition to global whitelist).
+             *     Only applies to models that exist in the global whitelist.
+             */
+            whitelisted_models?: string[];
+            /**
+             * @description Models this user CANNOT access (overrides global whitelist).
+             *     Takes precedence over user whitelist.
+             */
+            blacklisted_models?: string[];
+        };
+        UserModelAccessUpdate: {
+            whitelisted_models?: string[];
+            blacklisted_models?: string[];
+        };
+        Organization: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description Primary domain for SSO */
+            domain?: string;
+            /** @description List of allowed email domains */
+            allowed_domains?: string[];
+            /** Format: uri */
+            logo_url?: string | null;
+            settings?: components["schemas"]["OrganizationSettings"];
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        /**
+         * @example {
+         *       "sso_providers": [
+         *         "google",
+         *         "keycloak"
+         *       ],
+         *       "default_engine": "anthropic",
+         *       "default_model": "claude-sonnet-4-20250514",
+         *       "data_retention_days": 90,
+         *       "require_mfa": true
+         *     }
+         */
+        OrganizationSettings: {
+            /** @description Enabled SSO providers */
+            sso_providers?: components["schemas"]["AuthProvider"][];
+            /** @description Default model_name for the organization */
+            default_model?: string;
+            /** @description Default AI engine for the organization */
+            default_engine?: string;
+            /** @default 90 */
+            data_retention_days: number;
+            /** @default false */
+            require_mfa: boolean;
+        };
+        OrganizationUpdate: {
+            name?: string;
+            allowed_domains?: string[];
+            /** Format: uri */
+            logo_url?: string;
+            settings?: components["schemas"]["OrganizationSettings"];
+        };
+        /** @enum {string} */
+        RateLimitScope: "user" | "department" | "organization";
+        RateLimitConfig: {
+            /** Format: uuid */
+            id: string;
+            scope: components["schemas"]["RateLimitScope"];
+            /** @description User ID, department name, or org ID depending on scope */
+            scope_id?: string | null;
+            requests_per_minute: number;
+            requests_per_hour?: number;
+            requests_per_day?: number;
+            tokens_per_day?: number | null;
+            /** @default true */
+            is_active: boolean;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        RateLimitConfigCreate: {
+            scope: components["schemas"]["RateLimitScope"];
+            scope_id?: string | null;
+            requests_per_minute: number;
+            requests_per_hour?: number;
+            requests_per_day?: number;
+            tokens_per_day?: number | null;
+        };
+        RateLimitStatus: {
+            requests_remaining?: number;
+            requests_limit?: number;
+            tokens_remaining?: number | null;
+            tokens_limit?: number | null;
+            /** Format: date-time */
+            reset_at?: string;
+        };
+        /** @enum {string} */
+        BudgetPeriod: "daily" | "weekly" | "monthly";
+        Budget: {
+            /** Format: uuid */
+            id: string;
+            scope: components["schemas"]["RateLimitScope"];
+            scope_id?: string | null;
+            /**
+             * Format: float
+             * @description Budget limit in USD
+             */
+            limit_amount: number;
+            period: components["schemas"]["BudgetPeriod"];
+            /**
+             * Format: float
+             * @description Current spend in the period
+             */
+            current_spend?: number;
+            /**
+             * @description Percentage thresholds for alerts (e.g., [50, 75, 90, 100])
+             * @default [
+             *       50,
+             *       75,
+             *       90,
+             *       100
+             *     ]
+             */
+            alert_thresholds: number[];
+            /**
+             * @default warn
+             * @enum {string}
+             */
+            action_on_exceed: "warn" | "throttle" | "block";
+            /** @default true */
+            is_active: boolean;
+            /** Format: date-time */
+            period_start?: string;
+            /** Format: date-time */
+            period_end?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        BudgetCreate: {
+            scope: components["schemas"]["RateLimitScope"];
+            scope_id?: string | null;
+            /** Format: float */
+            limit_amount: number;
+            period: components["schemas"]["BudgetPeriod"];
+            alert_thresholds?: number[];
+            /** @enum {string} */
+            action_on_exceed?: "warn" | "throttle" | "block";
+        };
+        BudgetStatus: {
+            /** Format: uuid */
+            budget_id?: string;
+            /** Format: float */
+            limit_amount?: number;
+            /** Format: float */
+            current_spend?: number;
+            /** Format: float */
+            percentage_used?: number;
+            /** Format: float */
+            remaining?: number;
+            /** Format: date-time */
+            period_end?: string;
+            /** @enum {string} */
+            status?: "ok" | "warning" | "exceeded";
+        };
+        AdminDashboard: {
+            users?: {
+                total?: number;
+                active?: number;
+                new_this_month?: number;
+            };
+            usage?: components["schemas"]["UsageStats"];
+            costs?: components["schemas"]["CostSummary"];
+            cost_trend?: components["schemas"]["CostTrend"][];
+            system_health?: components["schemas"]["HealthResponse"];
+        };
+        CostSummary: {
+            /** Format: float */
+            total_cost?: number;
+            total_requests?: number;
+            total_tokens?: number;
+            input_tokens?: number;
+            output_tokens?: number;
+            /** Format: date-time */
+            period_start?: string;
+            /** Format: date-time */
+            period_end?: string;
+        };
+        CostByDimension: {
+            /** @description The dimension value (user email, department name, model name, etc.) */
+            dimension?: string;
+            /** Format: float */
+            cost?: number;
+            requests?: number;
+            tokens?: number;
+            /** Format: float */
+            percentage?: number;
+        };
+        CostBreakdown: {
+            summary?: components["schemas"]["CostSummary"];
+            by_user?: components["schemas"]["CostByDimension"][];
+            by_department?: components["schemas"]["CostByDimension"][];
+            by_model?: components["schemas"]["CostByDimension"][];
+            by_provider?: components["schemas"]["CostByDimension"][];
+        };
+        CostTrend: {
+            /** Format: date */
+            date?: string;
+            /** Format: float */
+            cost?: number;
+            requests?: number;
+            tokens?: number;
+        };
+        UsageStats: {
+            /** @description Number of users who made requests in the period */
+            active_users?: number;
+            total_users?: number;
+            total_conversations?: number;
+            total_messages?: number;
+            /** Format: float */
+            avg_messages_per_conversation?: number;
+            /** Format: float */
+            avg_requests_per_user?: number;
+            most_used_models?: {
+                model?: string;
+                requests?: number;
+                /** Format: float */
+                percentage?: number;
+            }[];
+        };
+        /** @enum {string} */
+        AuditAction: "user.login" | "user.logout" | "user.created" | "user.updated" | "user.deactivated" | "chat.created" | "chat.message_sent" | "chat.deleted" | "file.uploaded" | "file.deleted" | "settings.updated" | "admin.user_created" | "admin.user_updated" | "admin.user_deactivated" | "admin.settings_updated" | "admin.api_key_created" | "admin.api_key_deleted" | "admin.budget_updated" | "admin.rate_limit_updated";
+        AuditLog: {
+            /** Format: uuid */
+            id: string;
+            action: components["schemas"]["AuditAction"];
+            /** Format: uuid */
+            user_id?: string | null;
+            user_email?: string | null;
+            resource_type?: string | null;
+            resource_id?: string | null;
+            /** @description Additional details about the action */
+            details?: Record<string, never> | null;
+            ip_address?: string | null;
+            user_agent?: string | null;
+            /** Format: date-time */
+            timestamp: string;
+        };
+        PaginatedAuditLogs: {
+            logs: components["schemas"]["AuditLog"][];
+            total: number;
+            limit: number;
+            offset: number;
+        };
     };
-    responses: never;
-    parameters: never;
+    responses: {
+        /** @description Unauthorized */
+        Unauthorized: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Forbidden - Admin role required */
+        Forbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Resource not found */
+        NotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Bad request */
+        BadRequest: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Validation error */
+        ValidationError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ValidationError"];
+            };
+        };
+        /** @description Rate limit exceeded */
+        RateLimitExceeded: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Invalid onboarding token */
+        InvalidOnboardingToken: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Resource already exists */
+        Conflict: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+    };
+    parameters: {
+        /** @description Unique identifier for the conversation */
+        ChatId: string;
+        /** @description Unique identifier for the file */
+        FileId: string;
+        /** @description Unique identifier for the user */
+        UserId: number;
+        /** @description Unique identifier for the SSO provider */
+        ProviderId: string;
+        /** @description Unique identifier for the rate limit configuration */
+        LimitId: string;
+        /** @description Unique identifier for the budget */
+        BudgetId: string;
+        /** @description AI engine identifier (e.g., 'openai', 'anthropic', 'groq') */
+        EngineKey: string;
+        /** @description Token to authenticate onboarding requests */
+        OnboardingToken: string;
+        /** @description SSO/OIDC provider identifier */
+        AuthProvider: components["schemas"]["AuthProvider"];
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
@@ -441,7 +2408,7 @@ export interface operations {
             };
         };
     };
-    getCurrentUser: {
+    listModels: {
         parameters: {
             query?: never;
             header?: never;
@@ -450,27 +2417,20 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Current user information */
+            /** @description List of providers and models */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["User"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
+                    "application/json": {
+                        providers?: components["schemas"]["ProviderInfo"][];
+                    };
                 };
             };
         };
     };
-    listConversations: {
+    getSettings: {
         parameters: {
             query?: never;
             header?: never;
@@ -479,27 +2439,19 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description List of conversations */
+            /** @description User settings */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConversationList"];
+                    "application/json": components["schemas"]["UserSettings"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
+            401: components["responses"]["Unauthorized"];
         };
     };
-    streamChat: {
+    updateSettings: {
         parameters: {
             query?: never;
             header?: never;
@@ -508,161 +2460,21 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ChatRequest"];
+                "application/json": components["schemas"]["UserSettings"];
             };
         };
         responses: {
-            /** @description Streaming response */
+            /** @description Updated settings */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "text/event-stream": string;
+                    "application/json": components["schemas"]["UserSettings"];
                 };
             };
-            /** @description Bad request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    getConversation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                chat_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Conversation details */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ConversationDetail"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description Conversation not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    updateConversation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                chat_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    title?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Updated conversation */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Conversation"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description Conversation not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    deleteConversation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                chat_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Conversation deleted successfully */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description Conversation not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
         };
     };
     listFiles: {
@@ -692,15 +2504,7 @@ export interface operations {
                     "application/json": components["schemas"]["PaginatedFiles"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
+            401: components["responses"]["Unauthorized"];
         };
     };
     uploadFile: {
@@ -738,15 +2542,7 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
+            401: components["responses"]["Unauthorized"];
         };
     };
     getFile: {
@@ -754,7 +2550,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                file_id: string;
+                /** @description Unique identifier for the file */
+                file_id: components["parameters"]["FileId"];
             };
             cookie?: never;
         };
@@ -769,24 +2566,8 @@ export interface operations {
                     "application/json": components["schemas"]["UserFile"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description File not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
         };
     };
     deleteFile: {
@@ -794,7 +2575,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                file_id: string;
+                /** @description Unique identifier for the file */
+                file_id: components["parameters"]["FileId"];
             };
             cookie?: never;
         };
@@ -807,24 +2589,8 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description File not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
         };
     };
     downloadFile: {
@@ -832,7 +2598,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                file_id: string;
+                /** @description Unique identifier for the file */
+                file_id: components["parameters"]["FileId"];
             };
             cookie?: never;
         };
@@ -847,27 +2614,11 @@ export interface operations {
                     "application/octet-stream": string;
                 };
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description File not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
         };
     };
-    getSettings: {
+    getCurrentUser: {
         parameters: {
             query?: never;
             header?: never;
@@ -876,27 +2627,111 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description User settings */
+            /** @description Current user information */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserSettings"];
+                    "application/json": components["schemas"]["User"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getCurrentUserRateLimit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rate limit status */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    "application/json": components["schemas"]["RateLimitStatus"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
         };
     };
-    updateSettings: {
+    getCurrentUserBudget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Budget status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetStatus"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getCurrentUserUsage: {
+        parameters: {
+            query?: {
+                period?: "day" | "week" | "month";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User usage statistics */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostSummary"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    listConversations: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                archived?: boolean;
+                /** @description Search in conversation titles */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of conversations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    streamChat: {
         parameters: {
             query?: never;
             header?: never;
@@ -905,20 +2740,127 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UserSettings"];
+                "application/json": components["schemas"]["ChatRequest"];
             };
         };
         responses: {
-            /** @description Updated settings */
+            /** @description Streaming response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserSettings"];
+                    "text/event-stream": string;
                 };
             };
-            /** @description Bad request */
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            429: components["responses"]["RateLimitExceeded"];
+        };
+    };
+    getConversation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the conversation */
+                chat_id: components["parameters"]["ChatId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Conversation details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationDetail"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateConversation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the conversation */
+                chat_id: components["parameters"]["ChatId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    title?: string;
+                    archived?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Updated conversation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Conversation"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteConversation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the conversation */
+                chat_id: components["parameters"]["ChatId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Conversation deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    startOnboarding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OnboardingStartRequest"];
+            };
+        };
+        responses: {
+            /** @description Onboarding session created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingStartResponse"];
+                };
+            };
+            /** @description Terms not accepted */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -927,8 +2869,359 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getOnboardingStatus: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Token to authenticate onboarding requests */
+                "X-Onboarding-Token": components["parameters"]["OnboardingToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current onboarding status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingStatus"];
+                };
+            };
+            401: components["responses"]["InvalidOnboardingToken"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    setOnboardingOrganization: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Token to authenticate onboarding requests */
+                "X-Onboarding-Token": components["parameters"]["OnboardingToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrganizationSetupRequest"];
+            };
+        };
+        responses: {
+            /** @description Organization configured */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingStatus"];
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationError"];
+                };
+            };
+            401: components["responses"]["InvalidOnboardingToken"];
+        };
+    };
+    createSuperAdmin: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Token to authenticate onboarding requests */
+                "X-Onboarding-Token": components["parameters"]["OnboardingToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuperAdminCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Super admin created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingStatus"];
+                };
+            };
+            /** @description Validation error (weak password, etc.) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationError"];
+                };
+            };
+            401: components["responses"]["InvalidOnboardingToken"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    configureOnboardingProviders: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Token to authenticate onboarding requests */
+                "X-Onboarding-Token": components["parameters"]["OnboardingToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LlmProviderSetupRequest"];
+            };
+        };
+        responses: {
+            /** @description Providers configured */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingStatus"];
+                };
+            };
+            /** @description Validation error or invalid API key */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["InvalidOnboardingToken"];
+        };
+    };
+    validateOnboardingApiKey: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Token to authenticate onboarding requests */
+                "X-Onboarding-Token": components["parameters"]["OnboardingToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ValidateApiKeyRequest"];
+            };
+        };
+        responses: {
+            /** @description Validation result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidateApiKeyResponse"];
+                };
+            };
+            401: components["responses"]["InvalidOnboardingToken"];
+        };
+    };
+    configureOnboardingSso: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Token to authenticate onboarding requests */
+                "X-Onboarding-Token": components["parameters"]["OnboardingToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OnboardingSsoRequest"];
+            };
+        };
+        responses: {
+            /** @description SSO configured or skipped */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingStatus"];
+                };
+            };
+            /** @description Invalid SSO configuration */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["InvalidOnboardingToken"];
+        };
+    };
+    testOnboardingSso: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Token to authenticate onboarding requests */
+                "X-Onboarding-Token": components["parameters"]["OnboardingToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OnboardingSsoRequest"];
+            };
+        };
+        responses: {
+            /** @description Test result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success?: boolean;
+                        message?: string;
+                        discovered_endpoints?: {
+                            authorization_endpoint?: string;
+                            token_endpoint?: string;
+                            userinfo_endpoint?: string;
+                            jwks_uri?: string;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["InvalidOnboardingToken"];
+        };
+    };
+    completeOnboarding: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Token to authenticate onboarding requests */
+                "X-Onboarding-Token": components["parameters"]["OnboardingToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description User confirms they have saved recovery codes */
+                    confirm_recovery_codes: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Onboarding complete */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingCompleteResponse"];
+                };
+            };
+            /** @description Onboarding steps not completed or confirmation not provided */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["InvalidOnboardingToken"];
+        };
+    };
+    passwordLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Login successful or MFA required */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordLoginResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Account locked (too many failed attempts) */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail?: string;
+                        /** Format: date-time */
+                        locked_until?: string;
+                    };
+                };
+            };
+        };
+    };
+    initiateAuth: {
+        parameters: {
+            query?: {
+                /** @description Optional redirect URI after successful authentication */
+                redirect_uri?: string;
+            };
+            header?: never;
+            path: {
+                /** @description SSO/OIDC provider identifier */
+                provider: components["parameters"]["AuthProvider"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Authentication URL and state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthInitResponse"];
+                };
+            };
+            /** @description Redirect to provider's login page */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid provider or configuration */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -938,7 +3231,89 @@ export interface operations {
             };
         };
     };
-    listModels: {
+    authCallbackGet: {
+        parameters: {
+            query: {
+                code: string;
+                state: string;
+                error?: string;
+                error_description?: string;
+            };
+            header?: never;
+            path: {
+                /** @description SSO/OIDC provider identifier */
+                provider: components["parameters"]["AuthProvider"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Authentication successful */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthTokenResponse"];
+                };
+            };
+            /** @description Redirect to application with tokens */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid callback parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    authCallbackPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description SSO/OIDC provider identifier */
+                provider: components["parameters"]["AuthProvider"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuthCallbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Authentication successful */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthTokenResponse"];
+                };
+            };
+            /** @description Invalid callback parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    setupMfa: {
         parameters: {
             query?: never;
             header?: never;
@@ -947,17 +3322,1237 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description List of providers and models */
+            /** @description MFA setup information */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MfaSetupResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    verifyMfa: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MfaVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description MFA verified successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthTokenResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    useMfaRecovery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MfaRecoveryRequest"];
+            };
+        };
+        responses: {
+            /** @description Recovery successful */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        providers?: components["schemas"]["ProviderInfo"][];
+                        access_token?: string;
+                        refresh_token?: string;
+                        remaining_codes?: number;
+                        user?: components["schemas"]["User"];
                     };
                 };
             };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    regenerateMfaCodes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    current_password: string;
+                };
+            };
+        };
+        responses: {
+            /** @description New recovery codes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        recovery_codes?: string[];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    forgotPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordForgotRequest"];
+            };
+        };
+        responses: {
+            /** @description Reset email sent (always returns success for security) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message?: string;
+                    };
+                };
+            };
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Password reset successful */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message?: string;
+                    };
+                };
+            };
+            /** @description Invalid or expired token, or weak password */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Password changed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message?: string;
+                    };
+                };
+            };
+            /** @description Invalid current password or weak new password */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    refreshToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description New tokens */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthTokenResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successfully logged out */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getAdminDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Admin dashboard data */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDashboard"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    listUsers: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                search?: string;
+                role?: components["schemas"]["UserRole"];
+                status?: components["schemas"]["UserStatus"];
+                department?: string;
+                sort?: "name" | "email" | "created_at" | "last_login_at";
+                order?: "asc" | "desc";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of users */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedUsers"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserCreate"];
+            };
+        };
+        responses: {
+            /** @description User created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    bulkImportUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserBulkImport"];
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                    /** @default true */
+                    send_invites?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Import results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserBulkImportResult"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the user */
+                user_id: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the user */
+                user_id: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deactivateUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the user */
+                user_id: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User deactivated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getUserUsage: {
+        parameters: {
+            query?: {
+                period?: "day" | "week" | "month" | "year";
+            };
+            header?: never;
+            path: {
+                /** @description Unique identifier for the user */
+                user_id: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User usage statistics */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostSummary"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getOrganization: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Organization settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Organization"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    updateOrganization: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrganizationUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated organization */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Organization"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    listAIEngines: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of AI engines with their configuration */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIEngineDetail"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getAIEngine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description AI engine identifier (e.g., 'openai', 'anthropic', 'groq') */
+                engine_key: components["parameters"]["EngineKey"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description AI engine details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIEngineDetail"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateAIEngine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description AI engine identifier (e.g., 'openai', 'anthropic', 'groq') */
+                engine_key: components["parameters"]["EngineKey"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AIEngineUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated AI engine configuration */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIEngineDetail"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    validateAIEngineKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description AI engine identifier (e.g., 'openai', 'anthropic', 'groq') */
+                engine_key: components["parameters"]["EngineKey"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Validation result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIEngineValidateResponse"];
+                };
+            };
+            /** @description No API key configured for this engine */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getAIEngineModels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description AI engine identifier (e.g., 'openai', 'anthropic', 'groq') */
+                engine_key: components["parameters"]["EngineKey"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of available models from the provider */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIEngineModelsResponse"];
+                };
+            };
+            /** @description No API key configured or API key invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteAIEngineKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description AI engine identifier (e.g., 'openai', 'anthropic', 'groq') */
+                engine_key: components["parameters"]["EngineKey"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description API key removed, engine disabled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIEngineDetail"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listSsoProviders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of SSO provider configurations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OidcProviderConfig"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createSsoProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OidcProviderConfigCreate"];
+            };
+        };
+        responses: {
+            /** @description SSO provider configured */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OidcProviderConfig"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getSsoProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the SSO provider */
+                provider_id: components["parameters"]["ProviderId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description SSO provider configuration */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OidcProviderConfig"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateSsoProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the SSO provider */
+                provider_id: components["parameters"]["ProviderId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OidcProviderConfigCreate"];
+            };
+        };
+        responses: {
+            /** @description Updated SSO provider */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OidcProviderConfig"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteSsoProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the SSO provider */
+                provider_id: components["parameters"]["ProviderId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description SSO provider deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    testSsoProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the SSO provider */
+                provider_id: components["parameters"]["ProviderId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Test result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success?: boolean;
+                        message?: string;
+                        /** Format: uri */
+                        discovery_url?: string;
+                        endpoints_found?: {
+                            authorization?: boolean;
+                            token?: boolean;
+                            userinfo?: boolean;
+                            jwks?: boolean;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listRateLimits: {
+        parameters: {
+            query?: {
+                scope?: components["schemas"]["RateLimitScope"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of rate limit configurations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateLimitConfig"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createRateLimit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateLimitConfigCreate"];
+            };
+        };
+        responses: {
+            /** @description Rate limit created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateLimitConfig"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    updateRateLimit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the rate limit configuration */
+                limit_id: components["parameters"]["LimitId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateLimitConfigCreate"];
+            };
+        };
+        responses: {
+            /** @description Updated rate limit */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateLimitConfig"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteRateLimit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the rate limit configuration */
+                limit_id: components["parameters"]["LimitId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rate limit deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listBudgets: {
+        parameters: {
+            query?: {
+                scope?: components["schemas"]["RateLimitScope"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of budgets */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Budget"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createBudget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BudgetCreate"];
+            };
+        };
+        responses: {
+            /** @description Budget created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Budget"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    updateBudget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the budget */
+                budget_id: components["parameters"]["BudgetId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BudgetCreate"];
+            };
+        };
+        responses: {
+            /** @description Updated budget */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Budget"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteBudget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the budget */
+                budget_id: components["parameters"]["BudgetId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Budget deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getCostAnalytics: {
+        parameters: {
+            query: {
+                start_date: string;
+                end_date: string;
+                group_by?: "user" | "department" | "model" | "provider" | "day";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cost analytics */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostBreakdown"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    exportCosts: {
+        parameters: {
+            query: {
+                start_date: string;
+                end_date: string;
+                format?: "csv" | "json";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Exported cost data */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                    "application/json": Record<string, never>[];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getUsageAnalytics: {
+        parameters: {
+            query: {
+                start_date: string;
+                end_date: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Usage analytics */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageStats"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getCostTrends: {
+        parameters: {
+            query: {
+                start_date: string;
+                end_date: string;
+                granularity?: "day" | "week" | "month";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cost trend data */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostTrend"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getAuditLogs: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                user_id?: string;
+                action?: components["schemas"]["AuditAction"];
+                resource_type?: string;
+                start_date?: string;
+                end_date?: string;
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated audit logs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAuditLogs"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    exportAuditLogs: {
+        parameters: {
+            query: {
+                start_date: string;
+                end_date: string;
+                format?: "csv" | "json";
+                action?: components["schemas"]["AuditAction"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Exported audit logs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                    "application/json": components["schemas"]["AuditLog"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
 }

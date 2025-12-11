@@ -18,8 +18,8 @@
   ],
   "by_model": [
     { "dimension": "claude-sonnet-4-5", "cost": 600.00, "requests": 1200, "tokens": 600000, "percentage": 48.0 },
-    { "dimension": "gpt-5.1", "cost": 400.50, "requests": 800, "tokens": 400000, "percentage": 32.0 },
-    { "dimension": "gemini-pro", "cost": 250.25, "requests": 500, "tokens": 250000, "percentage": 20.0 }
+    { "dimension": "gpt-5", "cost": 400.50, "requests": 800, "tokens": 400000, "percentage": 32.0 },
+    { "dimension": "gemini-2.5-flash", "cost": 250.25, "requests": 500, "tokens": 250000, "percentage": 20.0 }
   ],
   "by_provider": [
     { "dimension": "anthropic", "cost": 600.00, "requests": 1200, "tokens": 600000, "percentage": 48.0 },

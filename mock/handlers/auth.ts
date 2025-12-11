@@ -276,10 +276,18 @@ export const authHandlers = [
     // Simulate validation - accept any key that starts with sk-
     const valid = body.api_key?.startsWith('sk-') || body.api_key?.length > 10
 
+    // Return models based on provider from the example data
+    const modelsByProvider: Record<string, string[]> = {
+      anthropic: ['claude-sonnet-4-5', 'claude-sonnet-4-20250514', 'claude-opus-4-1-20250805', 'claude-haiku-4-5'],
+      openai: ['gpt-5', 'gpt-5-chat-latest', 'gpt-5-mini', 'gpt-4.1', 'gpt-4o-mini-search-preview'],
+      google: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'],
+      groq: ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'qwen/qwen3-32b'],
+    }
+
     return HttpResponse.json({
       valid,
       provider: body.provider,
-      available_models: valid ? ['claude-sonnet-4-5', 'claude-3-opus-20240229'] : [],
+      available_models: valid ? (modelsByProvider[body.provider] || []) : [],
       error: valid ? null : 'Invalid API key format',
     })
   }),

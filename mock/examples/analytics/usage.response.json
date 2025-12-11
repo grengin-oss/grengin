@@ -7,7 +7,7 @@
   "avg_requests_per_user": 100,
   "most_used_models": [
     { "model": "claude-sonnet-4-5", "requests": 1200, "percentage": 48.0 },
-    { "model": "gpt-5.1", "requests": 800, "percentage": 32.0 },
-    { "model": "gemini-pro", "requests": 500, "percentage": 20.0 }
+    { "model": "gpt-5", "requests": 800, "percentage": 32.0 },
+    { "model": "gemini-2.5-flash", "requests": 500, "percentage": 20.0 }
   ]
 }
