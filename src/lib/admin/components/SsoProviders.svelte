@@ -1,5 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import AdminEmptyState from "./AdminEmptyState.svelte";
+  import AdminPanelCard from "./AdminPanelCard.svelte";
+  import AdminSectionHeader from "./AdminSectionHeader.svelte";
+  import AdminTableCard from "./AdminTableCard.svelte";
+  import ErrorMessage from "./ErrorMessage.svelte";
+  import LoadingSpinner from "./LoadingSpinner.svelte";
   import Modal from "./Modal.svelte";
   import type { SsoProvider } from "../types.js";
   import {
@@ -188,55 +194,62 @@
 </script>
 
 <div class="sso-providers-container">
-  <div class="section-header">
-    <div>
-      <h2>SSO Providers</h2>
-      <p>Configure single sign-on integrations for your organization</p>
-    </div>
-    <button class="btn-primary" onclick={openAddModal}>
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
-      </svg>
-      Add Provider
-    </button>
-  </div>
+  <AdminSectionHeader
+    title="SSO Providers"
+    subtitle="Configure single sign-on integrations for your organization"
+  >
+    {#snippet actions()}
+      <button class="btn-primary" onclick={openAddModal}>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Add Provider
+      </button>
+    {/snippet}
+  </AdminSectionHeader>
 
   {#if loading}
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading providers...</p>
-    </div>
+    <AdminPanelCard>
+      <LoadingSpinner text="Loading providers..." />
+    </AdminPanelCard>
   {:else if error}
-    <div class="error-state">
-      <p>Error: {error}</p>
-      <button class="btn-secondary" onclick={loadProviders}>Retry</button>
-    </div>
+    <AdminPanelCard>
+      <ErrorMessage message={error} onretry={loadProviders} />
+    </AdminPanelCard>
   {:else if providers.length === 0}
-    <div class="empty-state">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
+    <AdminPanelCard>
+      <AdminEmptyState
+        title="No SSO providers configured"
+        message="Add a provider to enable single sign-on."
       >
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <line x1="9" y1="9" x2="15" y2="15" />
-        <line x1="15" y1="9" x2="9" y2="15" />
-      </svg>
-      <p>No SSO providers configured</p>
-      <button class="btn-primary" onclick={openAddModal}
-        >Add Your First Provider</button
-      >
-    </div>
+        {#snippet icon()}
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+          </svg>
+        {/snippet}
+        {#snippet actions()}
+          <button class="btn-primary" onclick={openAddModal}>
+            Add Your First Provider
+          </button>
+        {/snippet}
+      </AdminEmptyState>
+    </AdminPanelCard>
   {:else}
-    <div class="providers-table">
-      <table>
+    <AdminTableCard minWidth="760px">
+      <table class="admin-table">
         <thead>
           <tr>
             <th>Provider Name</th>
@@ -311,7 +324,7 @@
           {/each}
         </tbody>
       </table>
-    </div>
+    </AdminTableCard>
   {/if}
 </div>
 
@@ -431,145 +444,6 @@
     gap: var(--space-xl);
   }
 
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: var(--space-lg);
-    flex-wrap: wrap;
-  }
-
-  .section-header h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 var(--space-sm) 0;
-  }
-
-  .section-header p {
-    font-size: 0.9375rem;
-    color: var(--text-secondary);
-    margin: 0;
-  }
-
-  .btn-primary,
-  .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-md) var(--space-lg);
-    font-size: 0.9375rem;
-    font-weight: 500;
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .btn-primary {
-    background: var(--brand);
-    color: white;
-  }
-
-  .btn-primary:hover {
-    background: var(--brand-hover);
-    transform: translateY(-1px);
-  }
-
-  .btn-primary svg {
-    width: 1rem;
-    height: 1rem;
-  }
-
-  .btn-secondary {
-    background: var(--btn-secondary);
-    color: var(--text-primary);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .btn-secondary:hover {
-    background: var(--btn-tertiary);
-  }
-
-  .loading-state,
-  .error-state,
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-3xl);
-    gap: var(--space-lg);
-    text-align: center;
-  }
-
-  .spinner {
-    width: 2rem;
-    height: 2rem;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-top-color: var(--brand);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .empty-state svg {
-    width: 3rem;
-    height: 3rem;
-    color: var(--text-secondary);
-    opacity: 0.5;
-  }
-
-  .providers-table {
-    background: rgba(var(--glass-tint), 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  thead {
-    background: rgba(var(--glass-tint), 0.03);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  th {
-    padding: var(--space-lg);
-    text-align: left;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  tbody tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    transition: background 0.2s ease;
-  }
-
-  tbody tr:hover {
-    background: rgba(var(--glass-tint), 0.03);
-  }
-
-  tbody tr:last-child {
-    border-bottom: none;
-  }
-
-  td {
-    padding: var(--space-lg);
-    color: var(--text-primary);
-  }
-
   .provider-name {
     font-weight: 500;
   }
@@ -639,6 +513,7 @@
   .status-toggle.active .toggle-label {
     margin-left: 0.125rem;
   }
+
   .actions {
     display: flex;
     gap: var(--space-sm);
@@ -802,19 +677,6 @@
   }
 
   @media (max-width: 768px) {
-    .section-header {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .providers-table {
-      overflow-x: auto;
-    }
-
-    table {
-      min-width: 600px;
-    }
-
     .form-actions {
       flex-direction: column-reverse;
     }

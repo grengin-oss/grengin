@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import AdminTableCard from '../components/AdminTableCard.svelte';
   import PageHeader from '../components/PageHeader.svelte';
   import LoadingSpinner from '../components/LoadingSpinner.svelte';
   import ErrorMessage from '../components/ErrorMessage.svelte';
@@ -49,8 +50,8 @@
       <p>No audit logs found.</p>
     </div>
   {:else}
-    <div class="table-container">
-      <table class="audit-table">
+    <AdminTableCard minWidth="900px">
+      <table class="admin-table audit-table">
         <thead>
           <tr>
             <th>Timestamp</th>
@@ -81,7 +82,7 @@
           {/each}
         </tbody>
       </table>
-    </div>
+    </AdminTableCard>
 
     <div class="pagination-info">
       <p>Showing {offset + 1} to {Math.min(offset + limit, total)} of {total} logs</p>
@@ -94,33 +95,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-xl);
-  }
-
-  .table-container {
-    overflow-x: auto;
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-  }
-
-  .audit-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .audit-table th,
-  .audit-table td {
-    padding: var(--space-lg);
-    text-align: left;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .audit-table th {
-    font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
 
   .action-badge {

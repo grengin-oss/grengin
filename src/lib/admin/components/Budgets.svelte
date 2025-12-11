@@ -1,5 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import AdminEmptyState from './AdminEmptyState.svelte';
+  import AdminPanelCard from './AdminPanelCard.svelte';
+  import AdminSectionHeader from './AdminSectionHeader.svelte';
+  import AdminTableCard from './AdminTableCard.svelte';
+  import ErrorMessage from './ErrorMessage.svelte';
+  import LoadingSpinner from './LoadingSpinner.svelte';
   import Modal from './Modal.svelte';
   import type { Budget } from '../types.js';
   import { getBudgets, createBudget, updateBudget, deleteBudget } from '../../api/adminSettings.js';
@@ -214,54 +220,65 @@
 </script>
 
 <div class="budgets-container">
-  <div class="section-header">
-    <div>
-      <h2>Budgets</h2>
-      <p>Manage monetary spending limits globally or for specific entities.</p>
-    </div>
-    <button class="btn-primary" onclick={openAddModal}>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="12" y1="5" x2="12" y2="19"/>
-        <line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
-      Create Budget
-    </button>
-  </div>
+  <AdminSectionHeader
+    title="Budgets"
+    subtitle="Manage monetary spending limits globally or for specific entities."
+  >
+    {#snippet actions()}
+      <button class="btn-primary" onclick={openAddModal}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Create Budget
+      </button>
+    {/snippet}
+  </AdminSectionHeader>
 
-  <!-- Filter Scope -->
-  <div class="filter-row">
-    <div class="filter-group">
-      <label for="filter-scope">Filter Scope</label>
-      <select id="filter-scope" bind:value={filterScope}>
-        {#each scopeOptions as option}
-          <option value={option.value}>{option.label}</option>
-        {/each}
-      </select>
+  <AdminPanelCard>
+    <div class="filter-row">
+      <div class="filter-group">
+        <label for="filter-scope">Filter Scope</label>
+        <select id="filter-scope" bind:value={filterScope}>
+          {#each scopeOptions as option}
+            <option value={option.value}>{option.label}</option>
+          {/each}
+        </select>
+      </div>
     </div>
-  </div>
+  </AdminPanelCard>
 
   {#if loading}
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading budgets...</p>
-    </div>
+    <AdminPanelCard>
+      <LoadingSpinner text="Loading budgets..." />
+    </AdminPanelCard>
   {:else if error}
-    <div class="error-state">
-      <p>Error: {error}</p>
-      <button class="btn-secondary" onclick={loadBudgets}>Retry</button>
-    </div>
+    <AdminPanelCard>
+      <ErrorMessage message={error} onretry={loadBudgets} />
+    </AdminPanelCard>
   {:else if filteredBudgets.length === 0}
-    <div class="empty-state">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="12" y1="1" x2="12" y2="23"/>
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-      </svg>
-      <p>{filterScope ? `No budgets found for ${getScopeLabel(filterScope)} scope` : 'No budgets configured'}</p>
-      <button class="btn-primary" onclick={openAddModal}>Create Your First Budget</button>
-    </div>
+    <AdminPanelCard>
+      <AdminEmptyState
+        title={filterScope ? `No budgets for ${getScopeLabel(filterScope)}` : 'No budgets configured'}
+        message="Create a budget to control spend."
+      >
+        {#snippet icon()}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23" />
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+        {/snippet}
+
+        {#snippet actions()}
+          <button class="btn-primary" onclick={openAddModal}>
+            Create Your First Budget
+          </button>
+        {/snippet}
+      </AdminEmptyState>
+    </AdminPanelCard>
   {:else}
-    <div class="budgets-table">
-      <table>
+    <AdminTableCard minWidth="1040px">
+      <table class="admin-table">
         <thead>
           <tr>
             <th>Scope</th>
@@ -296,8 +313,8 @@
               </td>
               <td class="usage-cell">
                 <div class="usage-bar-wrapper">
-                  <div 
-                    class="usage-bar" 
+                  <div
+                    class="usage-bar"
                     style="width: {Math.min(percentage, 100)}%; background-color: {getUsageColor(percentage)};"
                   >
                     <span class="usage-label">{percentage}%</span>
@@ -308,7 +325,7 @@
                 {getActionLabel(budget.action_on_exceed)}
               </td>
               <td>
-                <button 
+                <button
                   class="status-toggle"
                   class:active={budget.is_active}
                   onclick={() => toggleStatus(budget)}
@@ -320,24 +337,24 @@
               </td>
               <td>
                 <div class="actions">
-                  <button 
+                  <button
                     class="action-btn edit-btn"
                     onclick={() => openEditModal(budget)}
                     aria-label="Edit budget"
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
                   </button>
-                  <button 
+                  <button
                     class="action-btn delete-btn"
                     onclick={() => handleDelete(budget.id)}
                     aria-label="Delete budget"
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="3 6 5 6 21 6"/>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                     </svg>
                   </button>
                 </div>
@@ -346,7 +363,7 @@
           {/each}
         </tbody>
       </table>
-    </div>
+    </AdminTableCard>
   {/if}
 </div>
 
@@ -513,27 +530,6 @@
     gap: var(--space-xl);
   }
 
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: var(--space-lg);
-    flex-wrap: wrap;
-  }
-
-  .section-header h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 var(--space-sm) 0;
-  }
-
-  .section-header p {
-    font-size: 0.9375rem;
-    color: var(--text-secondary);
-    margin: 0;
-  }
-
   .filter-row {
     display: flex;
     justify-content: flex-end;
@@ -571,122 +567,6 @@
   .filter-group select:focus {
     outline: none;
     border-color: var(--brand);
-  }
-
-  .btn-primary,
-  .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-md) var(--space-lg);
-    font-size: 0.9375rem;
-    font-weight: 500;
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .btn-primary {
-    background: var(--brand);
-    color: white;
-  }
-
-  .btn-primary:hover {
-    background: var(--brand-hover);
-    transform: translateY(-1px);
-  }
-
-  .btn-primary svg {
-    width: 1rem;
-    height: 1rem;
-  }
-
-  .btn-secondary {
-    background: var(--btn-secondary);
-    color: var(--text-primary);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .btn-secondary:hover {
-    background: var(--btn-tertiary);
-  }
-
-  .loading-state,
-  .error-state,
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-3xl);
-    gap: var(--space-lg);
-    text-align: center;
-  }
-
-  .spinner {
-    width: 2rem;
-    height: 2rem;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-top-color: var(--brand);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  .empty-state svg {
-    width: 3rem;
-    height: 3rem;
-    color: var(--text-secondary);
-    opacity: 0.5;
-  }
-
-  .budgets-table {
-    background: rgba(var(--glass-tint), 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  thead {
-    background: rgba(var(--glass-tint), 0.03);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  th {
-    padding: var(--space-lg);
-    text-align: left;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  tbody tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    transition: background 0.2s ease;
-  }
-
-  tbody tr:hover {
-    background: rgba(var(--glass-tint), 0.03);
-  }
-
-  tbody tr:last-child {
-    border-bottom: none;
-  }
-
-  td {
-    padding: var(--space-lg);
-    color: var(--text-primary);
   }
 
   .scope-cell {
@@ -1018,21 +898,8 @@
   }
 
   @media (max-width: 768px) {
-    .section-header {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
     .filter-row {
       justify-content: flex-start;
-    }
-
-    .budgets-table {
-      overflow-x: auto;
-    }
-
-    table {
-      min-width: 1000px;
     }
 
     .form-row {

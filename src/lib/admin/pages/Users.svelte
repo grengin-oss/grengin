@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { usersStore } from '../stores';
+  import AdminTableCard from '../components/AdminTableCard.svelte';
   import PageHeader from '../components/PageHeader.svelte';
   import LoadingSpinner from '../components/LoadingSpinner.svelte';
   import ErrorMessage from '../components/ErrorMessage.svelte';
@@ -210,8 +211,8 @@
   <LoadingSpinner size="lg" text="Loading users..." />
 {:else}
   <!-- Users Table -->
-  <div class="table-container">
-    <table class="users-table">
+  <AdminTableCard minWidth="960px">
+    <table class="admin-table users-table">
       <thead>
         <tr>
           <th>Name</th>
@@ -268,7 +269,7 @@
         {/each}
       </tbody>
     </table>
-  </div>
+  </AdminTableCard>
 
   <!-- Pagination -->
   {#if totalPages > 1}
@@ -406,37 +407,6 @@
   .filters-actions {
     display: flex;
     gap: var(--space-md);
-  }
-
-  .table-container {
-    overflow-x: auto;
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-  }
-
-  .users-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .users-table th,
-  .users-table td {
-    padding: var(--space-lg);
-    text-align: left;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .users-table th {
-    font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .users-table tbody tr:hover {
-    background: rgba(var(--glass-tint), 0.03);
   }
 
   .role-badge,
