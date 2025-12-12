@@ -91,16 +91,23 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
 }
 
 export async function handleOAuthCallback(provider: string, code: string, state: string): Promise<LoginResponse> {
-  const params = new URLSearchParams({ code, state });
-  const url = `${API_BASE}/auth/${provider}/callback?${params.toString()}`;
+  const url = `${API_BASE}/auth/${provider}/callback`;
+  const body = JSON.stringify({ code, state });
 
+  // Use POST with body to avoid URL length limits (Azure codes are very long)
+  // Backend retrieves redirect_uri from stored state, so we only send code and state
   const response = await fetch(url, {
-    method: 'GET',
-    headers: { 'accept': 'application/json' },
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body,
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'OAuth callback failed' }));
+    const responseText = await response.text();
+    const error = responseText ? JSON.parse(responseText) : { detail: 'OAuth callback failed' };
     throw new ApiError(response.status, error.detail || 'OAuth callback failed');
   }
 

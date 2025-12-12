@@ -16,15 +16,21 @@
 
   }
 
-  let { 
+  let {
     provider,
-    redirectUri = window.location.origin + '/auth/callback',
+    redirectUri,
     size = 'medium',
     disabled = false,
     onStart,
     onSuccess,
     onError,
   }: Props = $props();
+
+  // Always send redirect_uri so the backend knows where to redirect after OAuth
+  // Use provider-specific callback path to match Azure/OAuth provider configuration
+  const effectiveRedirectUri = $derived(
+    redirectUri ?? window.location.origin + `/auth/${provider}/callback`
+  );
 
   let isLoading = $state(false);
 
@@ -45,7 +51,7 @@
     onStart?.(); // Notify parent that OAuth flow is starting
 
     try {
-      await initiateOAuth(provider, redirectUri);
+      await initiateOAuth(provider, effectiveRedirectUri);
     } catch (err) {
       console.log(err);
       isLoading = false;

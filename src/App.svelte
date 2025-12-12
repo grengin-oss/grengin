@@ -14,7 +14,8 @@
   const authState = getAuthState();
 
   function isAuthCallback(): boolean {
-    return currentPath.startsWith('/auth/callback');
+    // Match only /auth/{provider}/callback pattern
+    return /^\/auth\/[^/]+\/callback$/.test(currentPath);
   }
 
   function isAdminLogin(): boolean {
@@ -92,7 +93,7 @@
   {#if isAuthCallback()}
     <!-- Always show callback route, regardless of auth state -->
     <div class="callback-wrapper">
-      <Route path="/auth/callback"><AuthCallback /></Route>
+      <Route path="/auth/:provider/callback"><AuthCallback /></Route>
     </div>
   {:else if isAdminLogin() && !authState.isAuthenticated}
     <!-- Admin login route -->
