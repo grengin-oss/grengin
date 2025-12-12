@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import AdminTableCard from '../components/AdminTableCard.svelte';
-  import PageHeader from '../components/PageHeader.svelte';
-  import LoadingSpinner from '../components/LoadingSpinner.svelte';
-  import ErrorMessage from '../components/ErrorMessage.svelte';
-  import { getAuditLogs } from '../../api/index.js';
-  import type { AuditLogEntry } from '../types.js';
+  import { onMount } from "svelte";
+  import AdminTableCard from "../components/AdminTableCard.svelte";
+  import PageHeader from "../components/PageHeader.svelte";
+  import LoadingSpinner from "../components/LoadingSpinner.svelte";
+  import ErrorMessage from "../components/ErrorMessage.svelte";
+  import { getAuditLogs } from "../../api/index.js";
+  import type { AuditLogEntry } from "../types.js";
 
   let logs = $state<AuditLogEntry[]>([]);
   let isLoading = $state(false);
@@ -17,14 +17,14 @@
   async function fetchLogs() {
     isLoading = true;
     error = null;
-    
+
     try {
       const response = await getAuditLogs({ limit, offset });
       logs = response.logs;
       total = response.total;
     } catch (err: any) {
-      error = err.message || 'Failed to load audit logs';
-      console.error('Failed to fetch audit logs:', err);
+      error = err.message || "Failed to load audit logs";
+      console.error("Failed to fetch audit logs:", err);
     } finally {
       isLoading = false;
     }
@@ -35,62 +35,74 @@
   });
 </script>
 
-<PageHeader
-  title="Audit Log"
-  subtitle="View all administrative actions"
-/>
+<div class="audit-log-container">
+  <PageHeader title="Audit Log" subtitle="View all administrative actions" />
 
-<div class="audit-content">
-  {#if isLoading}
-    <LoadingSpinner />
-  {:else if error}
-    <ErrorMessage message={error} onretry={fetchLogs} />
-  {:else if logs.length === 0}
-    <div class="empty-state">
-      <p>No audit logs found.</p>
-    </div>
-  {:else}
-    <AdminTableCard minWidth="900px">
-      <table class="admin-table audit-table">
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>Admin</th>
-            <th>Action</th>
-            <th>Resource</th>
-            <th>Details</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each logs as log (log.id)}
+  <div class="audit-content">
+    {#if isLoading}
+      <LoadingSpinner />
+    {:else if error}
+      <ErrorMessage message={error} onretry={fetchLogs} />
+    {:else if logs.length === 0}
+      <div class="empty-state">
+        <p>No audit logs found.</p>
+      </div>
+    {:else}
+      <AdminTableCard minWidth="900px">
+        <table class="admin-table audit-table">
+          <thead>
             <tr>
-              <td>{new Date(log.timestamp).toLocaleString()}</td>
-              <td>{log.admin_email}</td>
-              <td>
-                <span class="action-badge">{log.action}</span>
-              </td>
-              <td>
-                {log.resource_type || 'N/A'}
-                {#if log.resource_id}
-                  <code class="resource-id">{log.resource_id}</code>
-                {/if}
-              </td>
-              <td>
-                <code class="details">{JSON.stringify(log.details || {})}</code>
-              </td>
+              <th>Timestamp</th>
+              <th>Admin</th>
+              <th>Action</th>
+              <th>Resource</th>
+              <th>Details</th>
             </tr>
-          {/each}
-        </tbody>
-      </table>
-    </AdminTableCard>
+          </thead>
+          <tbody>
+            {#each logs as log (log.id)}
+              <tr>
+                <td>{new Date(log.timestamp).toLocaleString()}</td>
+                <td>{log.admin_email}</td>
+                <td>
+                  <span class="action-badge">{log.action}</span>
+                </td>
+                <td>
+                  {log.resource_type || "N/A"}
+                  {#if log.resource_id}
+                    <code class="resource-id">{log.resource_id}</code>
+                  {/if}
+                </td>
+                <td>
+                  <code class="details"
+                    >{JSON.stringify(log.details || {})}</code
+                  >
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </AdminTableCard>
 
-    <div class="pagination-info">
-      <p>Showing {offset + 1} to {Math.min(offset + limit, total)} of {total} logs</p>
-    </div>
-  {/if}
+      <div class="pagination-info">
+        <p>
+          Showing {offset + 1} to {Math.min(offset + limit, total)} of {total} logs
+        </p>
+      </div>
+    {/if}
+  </div>
 </div>
 
 <style>
+  .audit-log-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background: var(--bg-primary);
+    padding: var(--space-3xl);
+  }
+
   .audit-content {
     display: flex;
     flex-direction: column;
@@ -109,7 +121,7 @@
 
   .resource-id,
   .details {
-    font-family: 'SF Mono', Monaco, Menlo, 'Ubuntu Mono', monospace;
+    font-family: "SF Mono", Monaco, Menlo, "Ubuntu Mono", monospace;
     font-size: 0.8125rem;
     background: rgba(var(--glass-tint), 0.05);
     padding: var(--space-xs) var(--space-sm);
@@ -129,4 +141,3 @@
     font-size: 0.875rem;
   }
 </style>
-

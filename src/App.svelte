@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import Admin from "./lib/admin/Admin.svelte";
   import { Router, Route } from "svelte-routing";
   import { Sidebar } from "./lib/components/layout/index.js";
   import Login from "./lib/features/auth/components/Login.svelte";
@@ -8,6 +7,10 @@
   import AuthCallback from "./lib/features/auth/components/AuthCallback.svelte";
   import { initAuth, getAuthState, logout } from "./lib/features/auth/index.js";
   import Toaster from "./lib/components/Toaster.svelte";
+  import Users from "./lib/admin/pages/Users.svelte";
+  import Usage from "./lib/admin/pages/Usage.svelte";
+  import Settings from "./lib/admin/pages/Settings.svelte";
+  import AuditLog from "./lib/admin/pages/AuditLog.svelte";
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
@@ -109,14 +112,12 @@
   {:else if !authState.isAuthenticated}
     <Login onLoginSuccess={handleLoginSuccess} />
   {:else}
-    {#if !isAdminLogin()}
-      <Sidebar
-        isCollapsed={sidebarCollapsed}
-        onsidebarToggle={handleSidebarToggle}
-        user={authState.user}
-        onlogout={handleLogout}
-      />
-    {/if}
+    <Sidebar
+      isCollapsed={sidebarCollapsed}
+      onsidebarToggle={handleSidebarToggle}
+      user={authState.user}
+      onlogout={handleLogout}
+    />
 
     {#if !sidebarCollapsed}
       <div
@@ -129,7 +130,11 @@
       ></div>
     {/if}
 
-    <main class="main-content" class:collapsed={sidebarCollapsed} class:admin={isAdminLogin()}>
+    <main
+      class="main-content"
+      class:collapsed={sidebarCollapsed}
+      class:admin={isAdminLogin()}
+    >
       <div class="mobile-header">
         <button
           class="mobile-logo-btn"
@@ -148,7 +153,10 @@
         <Route path="/"><Chat /></Route>
         <Route path="/chat"><Chat /></Route>
         <Route path="/chat/:id"><Chat /></Route>
-        <Route path="/admin/*"><Admin /></Route>
+        <Route path="/admin/users"><Users /></Route>
+        <Route path="/admin/usage"><Usage /></Route>
+        <Route path="/admin/settings"><Settings /></Route>
+        <Route path="/admin/audit-log"><AuditLog /></Route>
       </div>
     </main>
   {/if}
@@ -194,12 +202,6 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-  }
-
-  .main-content.admin {
-    margin-left: 0;
-    width: 100vw;
-    max-width: 100vw;
   }
 
   .main-content.collapsed {
