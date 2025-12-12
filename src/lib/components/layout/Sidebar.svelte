@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { User } from "../../types/auth";
   import { listConversations, deleteConversation } from '../../api/chatApi.js';
+  import grenginLogo from '../../../assets/grengin-logo.svg';
 
   interface Props {
     isCollapsed?: boolean;
@@ -240,7 +241,7 @@
   <div class="sidebar-header">
     <div class="sidebar-brand">
       {#if !isCollapsed}
-        <img src="/src/assets/grengin-logo.svg" alt="Grengin" class="brand-logo" />
+        <img src={grenginLogo} alt="Grengin" class="brand-logo" />
         <div class="spacer"></div>
         <button
           class="burger-btn"
