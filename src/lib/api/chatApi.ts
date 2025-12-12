@@ -56,16 +56,15 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
       },
       body: JSON.stringify({
         provider: provider || 'openai',
-        modelName: modelName || 'gpt-3.5-turbo',
+        model_name: modelName || 'gpt-5.2',
         config: {},
-        temperature: 0.1,
-        webSearch: false,
-        selectedTools: [],
-        message: {
+        web_search: false,
+        selected_tools: [],
+        messages: [{
           role: 'user',
           content: message,
           files: processedFiles,
-        },
+        }],
       }),
     });
 
@@ -91,7 +90,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
             
             console.log('Streaming request: Token refreshed, retrying...');
             // Retry the streaming request with new token
-            response = await fetch(`${API_BASE}/chat/stream`, {
+            response = await fetch(streamUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -99,16 +98,15 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
               },
               body: JSON.stringify({
                 provider: provider || 'openai',
-                modelName: modelName || 'gpt-3.5-turbo',
+                model_name: modelName || 'gpt-5.2',
                 config: {},
-                temperature: 0.1,
-                webSearch: false,
-                selectedTools: [],
-                message: {
+                web_search: false,
+                selected_tools: [],
+                messages: [{
                   role: 'user',
                   content: message,
                   files: processedFiles,
-                },
+                }],
               }),
             });
           } else {
