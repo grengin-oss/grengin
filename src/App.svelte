@@ -295,9 +295,9 @@
     }
 
     .main-content {
-      margin-left: 300px;
-      width: calc(100vw - 300px);
-      max-width: calc(100vw - 300px);
+      margin-left: 0;
+      width: 100vw;
+      max-width: 100vw;
     }
 
     .main-content.collapsed {
