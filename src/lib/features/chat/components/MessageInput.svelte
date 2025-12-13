@@ -712,7 +712,7 @@
     width: 100%;
     min-height: 1.6rem;
     max-height: 30vh;
-    padding: var(--space-xs) var(--space-md);
+    padding: var(--space-sm) var(--space-md);
     padding-bottom: calc(2rem + var(--space-xs));
     border: none !important;
     outline: none !important;

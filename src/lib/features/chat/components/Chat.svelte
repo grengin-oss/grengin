@@ -12,6 +12,8 @@
   let isTyping = $state(false);
   let error = $state<string | null>(null);
   let conversationId = $state<string | null>(null);
+  // Track if we're still loading the initial conversation
+  let isLoadingConversation = $state(typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('chatId'));
   let messagesContainer: HTMLDivElement;
   let messageInput: MessageInput;
   let currentStreamingMessage = $state<ChatMessageType | null>(null);
@@ -183,7 +185,7 @@
           console.log('Stream completed:', data);
           if (currentStreamingMessage) {
             currentStreamingMessage.isStreaming = false;
-            messages = messages.map(m => 
+            messages = messages.map(m =>
               m.id === currentStreamingMessage?.id ? { ...currentStreamingMessage } : m
             );
             console.log('Final message content:', currentStreamingMessage.content);
@@ -191,6 +193,8 @@
           currentStreamingMessage = null;
           isLoading = false;
           isTyping = false;
+          // Refocus input after streaming completes
+          messageInput?.focus();
         },
         onError: (errorMessage) => {
           error = errorMessage;
@@ -198,12 +202,14 @@
           if (currentStreamingMessage) {
             currentStreamingMessage.error = errorMessage;
             currentStreamingMessage.isStreaming = false;
-            messages = messages.map(m => 
+            messages = messages.map(m =>
               m.id === currentStreamingMessage?.id ? { ...currentStreamingMessage } : m
             );
           }
           currentStreamingMessage = null;
           isLoading = false;
+          // Refocus input after error
+          messageInput?.focus();
         },
       });
     } catch (err) {
@@ -212,6 +218,8 @@
       isTyping = false;
       isLoading = false;
       currentStreamingMessage = null;
+      // Refocus input after exception
+      messageInput?.focus();
     }
   }
 
@@ -233,20 +241,18 @@
     
     if (chatId) {
       try {
+        isLoadingConversation = true;
         isLoading = true;
-        // Clear previous messages immediately
-        console.log('Clearing previous messages...');
-        messages = [];
         error = null;
-        
+
         const conversation = await getConversation(chatId);
         conversationId = chatId;
-        
+
         console.log('Loaded conversation:', {
           conversationId: conversation.id,
           messagesCount: conversation.messages.length
         });
-        
+
         // Convert messages to ChatMessageType format
         messages = conversation.messages.map((msg: any) => ({
           id: msg.id,
@@ -256,15 +262,16 @@
           model: msg.model,
           usage: msg.usage
         }));
-        
+
         console.log('Set new messages:', messages.length);
         scrollToBottom(false);
       } catch (err) {
         error = 'Failed to load conversation';
         console.error('Failed to load conversation:', err);
-        messages = []; // Clear messages on error too
+        messages = []; // Clear messages on error
       } finally {
         isLoading = false;
+        isLoadingConversation = false;
       }
     } else {
       // No chatId in URL, clear everything
@@ -272,6 +279,7 @@
       conversationId = null;
       messages = [];
       error = null;
+      isLoadingConversation = false;
     }
   }
 
@@ -283,6 +291,11 @@
   onMount(() => {
     scrollToBottom(false);
     loadConversationFromUrl();
+
+    // Focus the chat input if nothing else is focused
+    if (!document.activeElement || document.activeElement === document.body) {
+      messageInput?.focus();
+    }
 
     // Listen for URL changes (when using history.pushState)
     window.addEventListener('popstate', handleUrlChange);
@@ -305,24 +318,66 @@
   });
 </script>
 
-<div class="chat-container">
-  <div class="messages-container" bind:this={messagesContainer}>
-    <div class="messages-inner">
-      {#if messages.length === 0}
-        <div class="empty-state">
-          <div class="empty-icon-wrapper">
-            <div class="empty-icon">
-              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
-            </div>
-          </div>
-          <div class="empty-content">
-            <h3>Start a conversation</h3>
-            <p>Send a message to begin chatting with the AI assistant!</p>
-          </div>
+{#if isLoadingConversation}
+  <!-- Loading state: wait until we know if there are messages -->
+  <div class="chat-container chat-container--loading"></div>
+{:else if messages.length === 0}
+  <!-- Empty state: centered layout with input included -->
+  <div class="chat-container chat-container--empty">
+    <div class="empty-state-container">
+      <div class="empty-icon-wrapper">
+        <div class="empty-icon">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
         </div>
-      {:else}
+      </div>
+      <div class="empty-content">
+        <h3>Start a conversation</h3>
+        <p>Send a message to begin chatting with the AI assistant!</p>
+      </div>
+      <div class="empty-state-input">
+        <MessageInput
+          bind:this={messageInput}
+          onSend={handleSendMessage}
+          disabled={isLoading}
+          placeholder={`Message ${selectedModel}`}
+          {selectedModel}
+          {selectedProvider}
+          onRemoveModel={handleRemoveModel}
+          onModelSelect={selectModel}
+        />
+        <p class="ai-disclaimer">AI can make mistakes. Please double-check responses.</p>
+      </div>
+    </div>
+
+    {#if error && !currentStreamingMessage}
+      <div class="error-banner error-banner--centered">
+        <div class="error-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <div class="error-content">
+          <span class="error-title">Something went wrong</span>
+          <span class="error-message">{error}</span>
+        </div>
+        <button class="dismiss-btn" onclick={() => error = null} aria-label="Dismiss error" title="Dismiss error">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    {/if}
+  </div>
+{:else}
+  <!-- Active chat: bottom-anchored input -->
+  <div class="chat-container">
+    <div class="messages-container" bind:this={messagesContainer}>
+      <div class="messages-inner">
         {#each messages as message (message.id)}
           <ChatMessage
             {message}
@@ -330,49 +385,50 @@
             selectedModelInfo={selectedModelInfo}
           />
         {/each}
-        
+
         {#if isTyping}
           <TypingIndicator />
         {/if}
-      {/if}
 
-      {#if error && !currentStreamingMessage}
-        <div class="error-banner">
-          <div class="error-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
+        {#if error && !currentStreamingMessage}
+          <div class="error-banner">
+            <div class="error-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <div class="error-content">
+              <span class="error-title">Something went wrong</span>
+              <span class="error-message">{error}</span>
+            </div>
+            <button class="dismiss-btn" onclick={() => error = null} aria-label="Dismiss error" title="Dismiss error">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
-          <div class="error-content">
-            <span class="error-title">Something went wrong</span>
-            <span class="error-message">{error}</span>
-          </div>
-          <button class="dismiss-btn" onclick={() => error = null} aria-label="Dismiss error" title="Dismiss error">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-      {/if}
+        {/if}
+      </div>
+    </div>
+
+    <div class="input-container">
+      <MessageInput
+        bind:this={messageInput}
+        onSend={handleSendMessage}
+        disabled={isLoading}
+        placeholder={`Message ${selectedModel}`}
+        {selectedModel}
+        {selectedProvider}
+        onRemoveModel={handleRemoveModel}
+        onModelSelect={selectModel}
+      />
+      <p class="ai-disclaimer">AI can make mistakes. Please double-check responses.</p>
     </div>
   </div>
-
-  <div class="input-container">
-    <MessageInput
-      bind:this={messageInput}
-      onSend={handleSendMessage}
-      disabled={isLoading}
-      placeholder={`Message ${selectedModel}`}
-      {selectedModel}
-      {selectedProvider}
-      onRemoveModel={handleRemoveModel}
-      onModelSelect={selectModel}
-    />
-  </div>
-</div>
+{/if}
 
 <style>
   .chat-container {
@@ -381,6 +437,10 @@
     height: 100vh;
     width: 100%;
     background: var(--bg-primary);
+  }
+
+  .chat-container--loading {
+    display: flex;
   }
 
   .messages-container {
@@ -402,20 +462,52 @@
     gap: var(--space-sm);
   }
 
-  .empty-state {
+  .chat-container--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .empty-state-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 500px;
     text-align: center;
-    padding: 3rem 2rem;
-    position: relative;
+    padding: 2rem;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .empty-state-input {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .ai-disclaimer {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.75rem;
+    color: var(--text-tertiary, rgba(128, 128, 128, 0.6));
+    text-align: center;
+  }
+
+  .input-container .ai-disclaimer {
+    margin: 0.5rem 0 -0.5rem 0;
+  }
+
+  .error-banner--centered {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 500px;
+    width: calc(100% - 2rem);
   }
 
   .empty-icon-wrapper {
     position: relative;
-    margin-bottom: 2rem;
   }
 
   .empty-icon {
@@ -437,7 +529,7 @@
   }
 
   .empty-content h3 {
-    margin: 0 0 0.75rem 0;
+    margin: 0 0 0.5rem 0;
     font-size: 1.75rem;
     font-weight: 700;
     color: var(--text-primary);
@@ -448,7 +540,7 @@
   }
 
   .empty-content p {
-    margin: 0 0 2rem 0;
+    margin: 0;
     font-size: 1rem;
     color: var(--text-secondary);
     max-width: 480px;
@@ -546,6 +638,9 @@
     padding: 1.25rem 1.5rem;
     background: var(--bg-primary);
     position: relative;
+    max-width: clamp(600px, 90ch, 65vw);
+    margin: 0 auto;
+    width: 100%;
   }
 
   /* Custom scrollbar */
@@ -572,9 +667,9 @@
       padding: var(--space-md);
     }
 
-    .empty-state {
-      min-height: 400px;
-      padding: 2rem 1rem;
+    .empty-state-container {
+      padding: 1.5rem 1rem;
+      gap: 1rem;
     }
 
     .empty-icon {
