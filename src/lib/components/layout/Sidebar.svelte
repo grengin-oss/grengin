@@ -1039,8 +1039,8 @@
   }
 
   .chat-search-wrapper.expanded .chat-search-container {
-    border-color: var(--brand);
-    box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.1);
+    border-color: var(--glass-stroke-dark);
+    box-shadow: var(--glass-shadow-light);
   }
 
   .chat-search-container .search-icon {
@@ -1053,8 +1053,8 @@
   }
 
   .chat-search-wrapper.expanded .search-icon {
-    color: var(--brand);
-    opacity: 0.8;
+    color: var(--text-primary);
+    opacity: 1;
   }
 
   .chat-search-input {
