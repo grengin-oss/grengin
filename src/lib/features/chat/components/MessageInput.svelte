@@ -98,6 +98,11 @@
     }
   }
 
+  // Expose focus method for external callers
+  export function focus() {
+    textarea?.focus();
+  }
+
   onMount(() => {
     loadModels();
     autoResize();

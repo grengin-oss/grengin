@@ -13,6 +13,7 @@
   let error = $state<string | null>(null);
   let conversationId = $state<string | null>(null);
   let messagesContainer: HTMLDivElement;
+  let messageInput: MessageInput;
   let currentStreamingMessage = $state<ChatMessageType | null>(null);
   let selectedModel = $state('gpt-5.1');
   let selectedProvider = $state('openai');
@@ -274,22 +275,31 @@
     }
   }
 
+  // Focus the chat input when requested (e.g., when "New Chat" is clicked)
+  function handleFocusChatInput() {
+    messageInput?.focus();
+  }
+
   onMount(() => {
     scrollToBottom(false);
     loadConversationFromUrl();
-    
+
     // Listen for URL changes (when using history.pushState)
     window.addEventListener('popstate', handleUrlChange);
-    
+
+    // Listen for focus chat input event (from Sidebar "New Chat" button)
+    window.addEventListener('focusChatInput', handleFocusChatInput);
+
     // Also listen for custom pushstate events
     const originalPushState = history.pushState;
     history.pushState = function(...args) {
       originalPushState.apply(history, args);
       setTimeout(handleUrlChange, 0); // Small delay to ensure URL is updated
     };
-    
+
     return () => {
       window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('focusChatInput', handleFocusChatInput);
       history.pushState = originalPushState;
     };
   });
@@ -309,7 +319,7 @@
           </div>
           <div class="empty-content">
             <h3>Start a conversation</h3>
-            <p>Send a message to begin chatting with the AI assistant. Try asking about anything!</p>
+            <p>Send a message to begin chatting with the AI assistant!</p>
           </div>
         </div>
       {:else}
@@ -351,8 +361,9 @@
   </div>
 
   <div class="input-container">
-    <MessageInput 
-      onSend={handleSendMessage} 
+    <MessageInput
+      bind:this={messageInput}
+      onSend={handleSendMessage}
       disabled={isLoading}
       placeholder={`Message ${selectedModel}`}
       {selectedModel}

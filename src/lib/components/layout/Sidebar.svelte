@@ -56,6 +56,10 @@
       selectedChatId = null;
       window.history.pushState({}, '', window.location.pathname);
       onnavigate?.(itemId);
+      // Focus the chat input after a short delay to allow state to settle
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('focusChatInput'));
+      }, 50);
       return;
     }
 
