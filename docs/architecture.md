@@ -28,7 +28,7 @@ Grengin Webapp is a modern Single Page Application (SPA) built with Svelte 5, de
 - **Framework**: Svelte 5 with TypeScript
 - **Build Tool**: Vite (Rolldown)
 - **API Contract**: OpenAPI 3.2.0 specification (git submodule)
-- **Development API**: Express mock server with MSW support
+- **Development API**: Express mock server
 - **Design Language**: Apple Liquid Glass aesthetic
 
 ---
@@ -48,7 +48,6 @@ Grengin Webapp is a modern Single Page Application (SPA) built with Svelte 5, de
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | Express.js | 5.1.0 | Mock API server |
-| MSW | 2.9.2 | Browser API mocking |
 | Faker.js | 9.8.0 | Realistic test data |
 | tsx | 4.20.6 | TypeScript execution |
 | openapi-typescript | 7.10.1 | Type generation from OpenAPI |
@@ -82,11 +81,8 @@ webapp/
 │
 ├── mock/                       # Mock API server
 │   ├── server.ts               # Express server entry point
-│   ├── handlers.ts             # MSW handler aggregator
-│   ├── handlers/               # Domain-specific handlers
+│   ├── routes/                 # Route handlers by domain
 │   │   ├── admin.ts            # Admin endpoints
-│   │   ├── analytics.ts        # Analytics endpoints
-│   │   ├── audit.ts            # Audit log endpoints
 │   │   ├── auth.ts             # Authentication endpoints
 │   │   ├── chat.ts             # Chat/conversation endpoints
 │   │   ├── files.ts            # File management endpoints
@@ -94,8 +90,10 @@ webapp/
 │   │   ├── models.ts           # AI model endpoints
 │   │   ├── settings.ts         # User settings endpoints
 │   │   └── user.ts             # User profile endpoints
+│   ├── lib/                    # Shared utilities
+│   │   ├── middleware.ts       # Auth middleware
+│   │   └── store.ts            # In-memory stores & seed data
 │   ├── examples/               # Mock response data (JSON)
-│   ├── lib/                    # Mock utilities
 │   └── types/
 │       └── api.ts              # Generated API types
 │
@@ -150,7 +148,7 @@ webapp/
 │                    Service Layer                             │
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │  API Client (TBD)                                   │    │
-│  │  └── Fetch / MSW integration                        │    │
+│  │  └── Fetch API                                      │    │
 │  └─────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -341,31 +339,11 @@ pnpm mock:dev
 ### SSE Streaming Format
 
 ```
-event: start
-data: {"conversation_id":"...","files_attached":0}
-
-event: token
+event: chunk
 data: {"content":"Hello ","conversation_id":"..."}
 
-event: set_title
-data: {"conversation_id":"...","title":"Generated Title"}
-
 event: done
-data: {"conversation_id":"...","user_message_id":"...","assistant_message_id":"..."}
-```
-
-### MSW Integration
-
-For in-browser mocking during development:
-
-```typescript
-import { setupWorker } from 'msw/browser';
-import { handlers } from './mock/handlers';
-
-if (import.meta.env.DEV) {
-  const worker = setupWorker(...handlers);
-  worker.start();
-}
+data: {"conversation_id":"..."}
 ```
 
 ---
@@ -490,11 +468,11 @@ pnpm mock:generate-types
 - Version-controlled API changes
 - Automated type generation
 
-### Why Express Mock Server + MSW?
+### Why Express Mock Server?
 
-- Express: Standalone testing, curl-friendly
-- MSW: In-browser mocking for component tests
-- Both share handler logic via `mock/handlers/`
+- Standalone testing, curl-friendly
+- Realistic API simulation with in-memory state
+- Modular route handlers in `mock/routes/`
 
 ---
 
