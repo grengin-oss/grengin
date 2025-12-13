@@ -663,8 +663,16 @@
   }
 
   @media (max-width: 768px) {
+    .chat-container {
+      height: 100%;
+    }
+
     .messages-inner {
       padding: var(--space-md);
+    }
+
+    .messages-container {
+      min-height: 0;
     }
 
     .empty-state-container {
@@ -683,6 +691,7 @@
 
     .input-container {
       padding: 1rem;
+      max-width: 100%;
     }
   }
 

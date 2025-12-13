@@ -298,12 +298,17 @@
       margin-left: 0;
       width: 100vw;
       max-width: 100vw;
+      height: 100dvh;
     }
 
     .main-content.collapsed {
       margin-left: 0;
       width: 100vw;
       max-width: 100vw;
+    }
+
+    .main-content-body {
+      overflow: hidden;
     }
   }
 
