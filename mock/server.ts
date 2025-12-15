@@ -9,6 +9,8 @@ import userRoutes from './routes/user.js'
 import healthRoutes from './routes/health.js'
 import modelsRoutes from './routes/models.js'
 import adminRoutes from './routes/admin.js'
+import analyticsRoutes from './routes/analytics.js'
+import onboardingRoutes from './routes/onboarding.js'
 
 // Seed initial data
 seedData()
@@ -28,6 +30,8 @@ app.use(userRoutes)
 app.use(healthRoutes)
 app.use(modelsRoutes)
 app.use(adminRoutes)
+app.use(analyticsRoutes)
+app.use(onboardingRoutes)
 
 // Fallback 404 handler - always returns JSON
 app.use((req, res) => {

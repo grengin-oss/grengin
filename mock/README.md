@@ -39,6 +39,7 @@ mock/
 ├── server.ts             # Express server entry point
 ├── routes/               # Route handlers by domain
 │   ├── admin.ts          # Admin management endpoints
+│   ├── analytics.ts      # Analytics & audit log endpoints
 │   ├── auth.ts           # Authentication & SSO
 │   ├── chat.ts           # Chat conversations & streaming
 │   ├── files.ts          # File management
@@ -78,6 +79,9 @@ mock/
 
 ### User (Requires Auth)
 - `GET /me` - Get current user
+- `GET /me/rate-limit` - Get current rate limit status
+- `GET /me/budget` - Get current budget status
+- `GET /me/usage` - Get current usage statistics
 
 ### Chat (Requires Auth)
 - `GET /chat` - List conversations
@@ -102,6 +106,19 @@ mock/
 
 ### Admin (Requires Auth)
 
+#### Dashboard & Users
+- `GET /admin/dashboard` - Get admin dashboard
+- `GET /admin/users` - List all users
+- `POST /admin/users` - Create user
+- `GET /admin/users/{user_id}` - Get user details
+- `PUT /admin/users/{user_id}` - Update user
+- `DELETE /admin/users/{user_id}` - Deactivate user
+- `GET /admin/users/{user_id}/usage` - Get user usage
+
+#### Organization
+- `GET /admin/organization` - Get organization settings
+- `PUT /admin/organization` - Update organization settings
+
 #### AI Engines
 - `GET /admin/ai-engines` - List AI engines
 - `GET /admin/ai-engines/{engine_key}` - Get engine details
@@ -109,6 +126,16 @@ mock/
 - `POST /admin/ai-engines/{engine_key}/validate` - Validate API key
 - `GET /admin/ai-engines/{engine_key}/models` - List available models
 - `DELETE /admin/ai-engines/{engine_key}/api-key` - Remove API key
+
+### Analytics (Requires Auth)
+- `GET /analytics/costs` - Get cost analytics
+- `GET /analytics/costs/export` - Export cost data as CSV
+- `GET /analytics/usage` - Get usage analytics
+- `GET /analytics/trends` - Get cost trends
+
+### Audit Logs (Requires Auth)
+- `GET /audit/logs` - Get paginated audit logs
+- `GET /audit/logs/export` - Export audit logs as CSV
 
 ## Authentication
 
