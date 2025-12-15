@@ -15,3 +15,4 @@ All package management must use **pnpm**. Cursor should never try to start or pr
 2. **Never run or suggest running the app or a server.** Do not execute or propose `pnpm dev`, `pnpm preview`, `vite`, or any server/preview command.
 3. **Assume development is always run manually by the developer in a terminal.** Cursor should never attempt to auto-run or simulate `dev`/`preview`.
 4. **Allowed tasks**: Cursor may *check, lint, type-check, build, or test* the project — but only via pnpm commands.
+5. **Always use the `request()` helper for API calls.** All authenticated API calls must use the `request()` function from `src/lib/api/client.ts`. Never use raw `fetch()` for authenticated endpoints — the `request()` helper handles authorization headers, token refresh on 401, and redirects to login when auth fails.

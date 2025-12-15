@@ -220,107 +220,28 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
  * Fetch conversation history
  */
 export async function getConversation(conversationId: string) {
-  try {
-    const token = getAccessToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    const response = await fetch(`${API_BASE}/chat/${conversationId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Failed to fetch conversation:', error);
-    throw error;
-  }
+  return request(`/chat/${conversationId}`);
 }
 
 /**
  * List all conversations
  */
 export async function listConversations() {
-  try {
-    const token = getAccessToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    const response = await fetch(`${API_BASE}/chat`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Failed to fetch conversations:', error);
-    throw error;
-  }
+  return request('/chat');
 }
 
 /**
  * Delete a conversation
  */
 export async function deleteConversation(conversationId: string) {
-  try {
-    const token = getAccessToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    const response = await fetch(`${API_BASE}/chat/${conversationId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-  } catch (error) {
-    console.error('Failed to delete conversation:', error);
-    throw error;
-  }
+  return request(`/chat/${conversationId}`, { method: 'DELETE' });
 }
 
 /**
  * Search conversations
  */
 export async function searchConversations(query: string) {
-  try {
-    const token = getAccessToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    const response = await fetch(`${API_BASE}/chat/search?search=${encodeURIComponent(query)}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Failed to search conversations:', error);
-    throw error;
-  }
+  return request(`/chat/search?search=${encodeURIComponent(query)}`);
 }
 
 /**
