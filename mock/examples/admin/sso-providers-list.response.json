@@ -2,7 +2,7 @@
   {
     "id": "sso-001",
     "provider": "google",
-    "name": "Google Workspace",
+    "name": "Google",
     "client_id": "mock-client-id-google",
     "issuer_url": "https://accounts.google.com",
     "scopes": ["openid", "email", "profile"],
@@ -11,5 +11,18 @@
     "is_default": true,
     "created_at": "2024-01-01T00:00:00Z",
     "updated_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": "sso-002",
+    "provider": "microsoft",
+    "name": "Microsoft",
+    "client_id": "mock-client-id-microsoft",
+    "issuer_url": "https://login.microsoftonline.com/common/v2.0",
+    "scopes": ["openid", "email", "profile"],
+    "allowed_domains": ["grengin.com"],
+    "is_enabled": true,
+    "is_default": false,
+    "created_at": "2024-01-02T00:00:00Z",
+    "updated_at": "2024-01-02T00:00:00Z"
   }
 ]

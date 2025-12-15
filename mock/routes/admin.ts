@@ -295,4 +295,37 @@ router.post('/admin/users/bulk', requireAuth, (req, res) => {
   })
 })
 
+// Audit Logs
+import auditLogsExample from '../examples/admin/audit-logs.response.json' with { type: 'json' }
+
+router.get('/admin/audit-logs', requireAuth, (req, res) => {
+  const limit = parseInt(req.query.limit as string || '50')
+  const offset = parseInt(req.query.offset as string || '0')
+  const adminId = req.query.admin_id as string
+  const action = req.query.action as string
+  const resourceType = req.query.resource_type as string
+
+  let logs = [...auditLogsExample]
+
+  // Apply filters
+  if (adminId) {
+    logs = logs.filter(log => log.admin_id === adminId)
+  }
+  if (action) {
+    logs = logs.filter(log => log.action === action)
+  }
+  if (resourceType) {
+    logs = logs.filter(log => log.resource_type === resourceType)
+  }
+
+  const paginatedLogs = logs.slice(offset, offset + limit)
+
+  res.json({
+    logs: paginatedLogs,
+    total: logs.length,
+    limit,
+    offset,
+  })
+})
+
 export default router
