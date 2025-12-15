@@ -2,8 +2,8 @@ import type { components } from '../types/api.js';
 
 type User = components['schemas']['User'];
 
-// In development, use /api proxy to avoid CORS. In production, use the configured URL.
-export const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
+// Always use /api - proxied by Vite dev server locally, Cloudflare Pages Function in production
+export const API_BASE = '/api';
 
 export class ApiError extends Error {
   constructor(
@@ -100,8 +100,11 @@ export async function request<T>(
       }
       return retryResponse.json();
     }
-    // Refresh failed, clear auth
+    // Refresh failed, clear auth and redirect to login
     clearAuthFn?.();
+    // Redirect to root path - app will show Login component when not authenticated
+    window.location.href = '/';
+    // Throw error to prevent further execution (though redirect will happen)
     throw new ApiError(401, 'Session expired. Please log in again.');
   }
 
