@@ -1,9 +1,65 @@
 import { Router } from 'express'
 import { requireAuth } from '../lib/middleware.js'
 import { aiEngines, type AIEngineDetail, type AIEngineModelsResponse } from '../lib/store.js'
+import dashboardExample from '../examples/admin/dashboard.response.json' with { type: 'json' }
+import usersListExample from '../examples/admin/users-list.response.json' with { type: 'json' }
+import organizationExample from '../examples/admin/organization.response.json' with { type: 'json' }
 
 const router = Router()
 
+// Dashboard
+router.get('/admin/dashboard', requireAuth, (req, res) => {
+  res.json(dashboardExample)
+})
+
+// Users
+router.get('/admin/users', requireAuth, (req, res) => {
+  res.json(usersListExample)
+})
+
+router.post('/admin/users', requireAuth, (req, res) => {
+  res.status(201).json({
+    id: crypto.randomUUID(),
+    ...req.body,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })
+})
+
+router.get('/admin/users/:userId', requireAuth, (req, res) => {
+  const user = usersListExample.users.find(u => u.id === req.params.userId)
+  if (!user) {
+    return res.status(404).json({ detail: 'User not found' })
+  }
+  res.json(user)
+})
+
+router.put('/admin/users/:userId', requireAuth, (req, res) => {
+  const user = usersListExample.users.find(u => u.id === req.params.userId)
+  if (!user) {
+    return res.status(404).json({ detail: 'User not found' })
+  }
+  res.json({ ...user, ...req.body, updated_at: new Date().toISOString() })
+})
+
+router.delete('/admin/users/:userId', requireAuth, (req, res) => {
+  res.status(204).send()
+})
+
+router.get('/admin/users/:userId/usage', requireAuth, (req, res) => {
+  res.json(dashboardExample.costs)
+})
+
+// Organization
+router.get('/admin/organization', requireAuth, (req, res) => {
+  res.json(organizationExample)
+})
+
+router.put('/admin/organization', requireAuth, (req, res) => {
+  res.json({ ...organizationExample, ...req.body, updated_at: new Date().toISOString() })
+})
+
+// AI Engines
 router.get('/admin/ai-engines', requireAuth, (req, res) => {
   res.json(Array.from(aiEngines.values()))
 })
@@ -119,6 +175,124 @@ router.delete('/admin/ai-engines/:engineKey/api-key', requireAuth, (req, res) =>
   }
   aiEngines.set(req.params.engineKey, updated)
   res.json(updated)
+})
+
+// SSO Providers
+import ssoProvidersExample from '../examples/admin/sso-providers-list.response.json' with { type: 'json' }
+
+router.get('/admin/sso-providers', requireAuth, (req, res) => {
+  res.json(ssoProvidersExample)
+})
+
+router.post('/admin/sso-providers', requireAuth, (req, res) => {
+  res.status(201).json({
+    id: crypto.randomUUID(),
+    ...req.body,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })
+})
+
+router.get('/admin/sso-providers/:providerId', requireAuth, (req, res) => {
+  const provider = ssoProvidersExample.find((p: { id: string }) => p.id === req.params.providerId)
+  if (!provider) {
+    return res.status(404).json({ detail: 'SSO provider not found' })
+  }
+  res.json(provider)
+})
+
+router.put('/admin/sso-providers/:providerId', requireAuth, (req, res) => {
+  const provider = ssoProvidersExample.find((p: { id: string }) => p.id === req.params.providerId)
+  if (!provider) {
+    return res.status(404).json({ detail: 'SSO provider not found' })
+  }
+  res.json({ ...provider, ...req.body, updated_at: new Date().toISOString() })
+})
+
+router.delete('/admin/sso-providers/:providerId', requireAuth, (req, res) => {
+  res.status(204).send()
+})
+
+router.post('/admin/sso-providers/:providerId/test', requireAuth, (req, res) => {
+  res.json({
+    success: true,
+    message: 'SSO provider test successful',
+    discovery_url: 'https://example.com/.well-known/openid-configuration',
+    endpoints_found: {
+      authorization: true,
+      token: true,
+      userinfo: true,
+      jwks: true,
+    },
+  })
+})
+
+// Rate Limits
+import rateLimitsExample from '../examples/admin/rate-limits-list.response.json' with { type: 'json' }
+
+router.get('/admin/rate-limits', requireAuth, (req, res) => {
+  res.json(rateLimitsExample)
+})
+
+router.post('/admin/rate-limits', requireAuth, (req, res) => {
+  res.status(201).json({
+    id: crypto.randomUUID(),
+    ...req.body,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })
+})
+
+router.put('/admin/rate-limits/:limitId', requireAuth, (req, res) => {
+  res.json({
+    id: req.params.limitId,
+    ...req.body,
+    updated_at: new Date().toISOString(),
+  })
+})
+
+router.delete('/admin/rate-limits/:limitId', requireAuth, (req, res) => {
+  res.status(204).send()
+})
+
+// Budgets
+import budgetsExample from '../examples/admin/budgets-list.response.json' with { type: 'json' }
+
+router.get('/admin/budgets', requireAuth, (req, res) => {
+  res.json(budgetsExample)
+})
+
+router.post('/admin/budgets', requireAuth, (req, res) => {
+  res.status(201).json({
+    id: crypto.randomUUID(),
+    ...req.body,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })
+})
+
+router.put('/admin/budgets/:budgetId', requireAuth, (req, res) => {
+  res.json({
+    id: req.params.budgetId,
+    ...req.body,
+    updated_at: new Date().toISOString(),
+  })
+})
+
+router.delete('/admin/budgets/:budgetId', requireAuth, (req, res) => {
+  res.status(204).send()
+})
+
+// Bulk user import
+router.post('/admin/users/bulk', requireAuth, (req, res) => {
+  res.json({
+    total: 5,
+    successful: 4,
+    failed: 1,
+    errors: [
+      { row: 3, email: 'invalid@', error: 'Invalid email format' },
+    ],
+  })
 })
 
 export default router

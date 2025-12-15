@@ -46,6 +46,84 @@ router.post('/auth/logout', requireAuth, (req, res) => {
   res.status(204).send()
 })
 
+// MFA endpoints
+router.post('/auth/mfa/setup', requireAuth, (req, res) => {
+  res.json({
+    secret: 'MOCK_MFA_SECRET_BASE32',
+    qr_code: 'data:image/png;base64,MOCK_QR_CODE',
+    recovery_codes: [
+      'ABCD-EFGH-IJKL',
+      'MNOP-QRST-UVWX',
+      'YZAB-CDEF-GHIJ',
+      'KLMN-OPQR-STUV',
+      'WXYZ-1234-5678',
+    ],
+  })
+})
+
+router.post('/auth/mfa/verify', requireAuth, (req, res) => {
+  const { code } = req.body
+  if (!code) {
+    return res.status(400).json({ detail: 'MFA code is required' })
+  }
+  res.json({
+    requires_mfa: false,
+    accessToken: loginExample.access_token,
+    refresh_token: loginExample.refresh_token,
+    user: loginExample.user,
+  })
+})
+
+router.post('/auth/mfa/recovery', requireAuth, (req, res) => {
+  const { recovery_code } = req.body
+  if (!recovery_code) {
+    return res.status(400).json({ detail: 'Recovery code is required' })
+  }
+  res.json({
+    requires_mfa: false,
+    accessToken: loginExample.access_token,
+    refresh_token: loginExample.refresh_token,
+    user: loginExample.user,
+  })
+})
+
+router.post('/auth/mfa/regenerate-codes', requireAuth, (req, res) => {
+  res.json({
+    recovery_codes: [
+      'NEW1-CODE-AAAA',
+      'NEW2-CODE-BBBB',
+      'NEW3-CODE-CCCC',
+      'NEW4-CODE-DDDD',
+      'NEW5-CODE-EEEE',
+    ],
+  })
+})
+
+// Password endpoints
+router.post('/auth/password/forgot', (req, res) => {
+  const { email } = req.body
+  if (!email) {
+    return res.status(400).json({ detail: 'Email is required' })
+  }
+  res.json({ message: 'Password reset email sent' })
+})
+
+router.post('/auth/password/reset', (req, res) => {
+  const { token, new_password } = req.body
+  if (!token || !new_password) {
+    return res.status(400).json({ detail: 'Token and new password are required' })
+  }
+  res.json({ message: 'Password reset successful' })
+})
+
+router.post('/auth/password/change', requireAuth, (req, res) => {
+  const { current_password, new_password } = req.body
+  if (!current_password || !new_password) {
+    return res.status(400).json({ detail: 'Current and new password are required' })
+  }
+  res.json({ message: 'Password changed successfully' })
+})
+
 router.get('/auth/:provider', (req, res) => {
   const { provider } = req.params
 
