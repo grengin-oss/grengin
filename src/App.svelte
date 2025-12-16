@@ -8,6 +8,7 @@
   import { initAuth, getAuthState, logout } from './lib/features/auth/index.js';
   import Toaster from './lib/components/Toaster.svelte';
   import grenginLogo from './assets/grengin-logo.svg';
+  import Users from './lib/admin/pages/Users.svelte';
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
@@ -141,6 +142,7 @@
         <Route path="/"><Chat /></Route>
         <Route path="/chat"><Chat /></Route>
         <Route path="/chat/:id"><Chat /></Route>
+        <Route path="/admin/users"><Users /></Route>
       </div>
     </main>
   {/if}
