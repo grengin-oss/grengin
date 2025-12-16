@@ -4,7 +4,7 @@
   import MessageInput from './MessageInput.svelte';
   import TypingIndicator from './TypingIndicator.svelte';
   import type { ChatMessage as ChatMessageType } from '../../../types/chat';
-  import { sendMessage, getConversation } from '../../../api/chatApi';
+  import { sendMessage, getConversation, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
 
   let messages = $state<ChatMessageType[]>([]);
@@ -90,7 +90,7 @@
     }
   }
 
-  async function handleSendMessage(content: string, files?: File[]) {
+  async function handleSendMessage(content: string, uploadedFiles?: UploadedFile[]) {
     if (isLoading) return;
 
     error = null;
@@ -102,8 +102,8 @@
       role: 'user',
       content,
       timestamp: new Date().toISOString(),
-      files: files?.map(file => ({
-        id: crypto.randomUUID(),
+      files: uploadedFiles?.map(file => ({
+        id: file.id,
         name: file.name,
         size: file.size,
         type: file.type
@@ -132,7 +132,7 @@
         conversationId: conversationId || undefined,
         provider: selectedProvider,
         modelName: selectedModel,
-        files: files,
+        uploadedFiles: uploadedFiles,
 
         onStart: (data) => {
           

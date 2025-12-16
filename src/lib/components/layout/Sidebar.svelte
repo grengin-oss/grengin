@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { User } from "../../types/auth";
-  import { listConversations, deleteConversation } from '../../api/chatApi.js';
+  import { listConversations, deleteConversation, archiveConversation } from '../../api/chatApi.js';
   import grenginLogo from '../../../assets/grengin-logo.svg';
+  import { toast } from '../Toaster.svelte';
 
   interface Props {
     isCollapsed?: boolean;
@@ -102,12 +103,14 @@
       deletingChat = true;
       try {
         await deleteConversation(chatToDelete);
+        const deletedChat = chatHistory.find(chat => chat.id === chatToDelete);
         chatHistory = chatHistory.filter(chat => chat.id !== chatToDelete);
         showDeleteConfirmation = false;
 
         // Clear selection if deleted chat was selected
         if (selectedChatId === chatToDelete) {
           selectedChatId = null;
+          toast.success(`"${deletedChat?.title || 'Chat'}" deleted successfully`);
           // Navigate to fresh chat after deletion
           window.history.pushState({}, '', window.location.pathname);
           onnavigate?.('chat');
@@ -116,6 +119,7 @@
         chatToDelete = null;
       } catch (error) {
         console.error('Failed to delete conversation:', error);
+        toast.error('Failed to delete chat');
         // You might want to show an error message here
       } finally {
         deletingChat = false;
@@ -131,6 +135,26 @@
   function clearSearch() {
     searchQuery = '';
     searchFocused = false;
+  }
+
+  function archiveChat(chatId: string, title: string) {
+    archiveChatAction(chatId, title);
+    activeChatMenu = null;
+  }
+
+  async function archiveChatAction(chatId: string, title: string) {
+    try {
+      await archiveConversation(chatId, title);
+      chatHistory = chatHistory.filter(chat => chat.id !== chatId);
+      toast.success(`"${title}" archived successfully`);
+      
+      // Navigate to fresh chat after archiving
+      window.history.pushState({}, '', window.location.pathname);
+      onnavigate?.('chat');
+    } catch (error) {
+      console.error('Failed to archive conversation:', error);
+      toast.error('Failed to archive chat');
+    }
   }
 
   async function fetchChats() {
@@ -366,6 +390,12 @@
                       <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
                     </svg>
                     Delete
+                  </button>
+                  <button class="chat-dropdown-item" onclick={() => archiveChat(chat.id, chat.title)}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Archive
                   </button>
                 </div>
               {/if}

@@ -6,6 +6,7 @@ export type MessageRole = components['schemas']['MessageRole'];
 export type MessagePart = components['schemas']['MessagePart'];
 export type Conversation = components['schemas']['Conversation'];
 export type ConversationDetail = components['schemas']['ConversationDetail'];
+export type ConversationList = components['schemas']['ConversationList'];
 export type FileAttachment = components['schemas']['FileAttachment'];
 
 // UI-specific types

@@ -1,4 +1,4 @@
-import type { StreamEvent } from '../types/chat';
+import type { StreamEvent, ConversationDetail, ConversationList } from '../types/chat';
 
 import { API_BASE, request } from './client';
 import { getAccessToken } from '../features/auth';
@@ -8,7 +8,7 @@ export interface SendMessageOptions {
   conversationId?: string;
   provider?: string;
   modelName?: string;
-  files?: File[];
+  uploadedFiles?: UploadedFile[];
   onToken?: (token: string) => void;
   onStart?: (data: any) => void;
   onTitle?: (title: string) => void;
@@ -16,30 +16,69 @@ export interface SendMessageOptions {
   onError?: (error: string) => void;
 }
 
+export interface UploadedFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+}
+
+export interface UploadDocumentOptions {
+  file: File;
+  provider?: string;
+}
+
+export async function uploadDocument(options: UploadDocumentOptions): Promise<UploadedFile> {
+  const { file, provider = 'openai' } = options;
+  
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error('No authentication token available');
+  }
+
+  const base64 = await fileToBase64(file);
+  
+  const response = await fetch(`${API_BASE}/files`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      attachment: {
+        file: base64,
+        name: file.name,
+        type: file.type,
+      },
+      provider,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
+    throw new Error(error.detail || `Upload failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return {
+    id: data.id || data.file_id,
+    name: data.name,
+    size: data.size || 0,
+    type: data.type,
+  };
+}
+
 /**
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, files, onToken, onStart, onTitle, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, uploadedFiles, onToken, onStart, onTitle, onDone, onError } = options;
 
   try {
     const token = getAccessToken();
     if (!token) {
       throw new Error('No authentication token available');
     }
-
-    // Convert files to base64 if present
-    const processedFiles = files ? await Promise.all(
-      files.map(async (file) => {
-        const base64 = await fileToBase64(file);
-        return {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          data: base64
-        };
-      })
-    ) : [];
 
     // Build the correct API URL
     const streamUrl = conversationId 
@@ -63,7 +102,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         messages: [{
           role: 'user',
           content: message,
-          files: processedFiles,
+          files: uploadedFiles || [],
         }],
       }),
     });
@@ -105,7 +144,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
                 messages: [{
                   role: 'user',
                   content: message,
-                  files: processedFiles,
+                  files: uploadedFiles || [],
                 }],
               }),
             });
@@ -219,29 +258,62 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
 /**
  * Fetch conversation history
  */
-export async function getConversation(conversationId: string) {
-  return request(`/chat/${conversationId}`);
+export async function getConversation(conversationId: string): Promise<ConversationDetail> {
+  return request<ConversationDetail>(`/chat/${conversationId}`);
 }
 
 /**
  * List all conversations
  */
-export async function listConversations() {
-  return request('/chat');
+export async function listConversations(): Promise<ConversationList> {
+  return request<ConversationList>('/chat');
 }
 
 /**
  * Delete a conversation
  */
-export async function deleteConversation(conversationId: string) {
-  return request(`/chat/${conversationId}`, { method: 'DELETE' });
+export async function deleteConversation(conversationId: string): Promise<void> {
+  return request<void>(`/chat/${conversationId}`, { method: 'DELETE' });
 }
 
 /**
  * Search conversations
  */
-export async function searchConversations(query: string) {
-  return request(`/chat/search?search=${encodeURIComponent(query)}`);
+export async function searchConversations(query: string): Promise<ConversationList> {
+  return request<ConversationList>(`/chat/search?search=${encodeURIComponent(query)}`);
+}
+
+/**
+ * Archive a conversation
+ */
+export async function archiveConversation(conversationId: string, title: string): Promise<ConversationDetail> {
+  try {
+    const token = getAccessToken();
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+
+    const response = await fetch(`${API_BASE}/chat/${conversationId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        archived: true,
+        title: title
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to archive conversation:', error);
+    throw error;
+  }
 }
 
 /**

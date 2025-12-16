@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { ProviderInfo, ModelInfo } from '../../../api/models';
+  import type { ProviderInfo, ModelInfo, SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from '../../../api/models';
   import { getModels } from '../../../api/models';
+  import { uploadDocument, type UploadedFile } from '../../../api/chatApi';
 
   interface MessageInputProps {
-    onSend: (message: string, files?: File[]) => void;
+    onSend: (message: string, uploadedFiles?: UploadedFile[]) => void;
     disabled?: boolean;
     placeholder?: string;
     selectedModel?: string;
@@ -19,6 +20,7 @@
   let photoInput: HTMLInputElement;
   let message = $state('');
   let attachedFiles = $state<File[]>([]);
+  let uploadingFiles = $state<Set<string>>(new Set());
   let filePreviews = $state<Record<string, string>>({});
   let imageThumbnails = $state<Record<string, string>>({});
   let showFilePreview = $state(false);
@@ -62,12 +64,48 @@
     }
   }
 
-  function handleSend() {
+  async function handleSend() {
     const trimmed = message.trim();
     if ((trimmed || attachedFiles.length > 0) && !disabled) {
-      onSend(trimmed, attachedFiles.length > 0 ? attachedFiles : undefined);
+      // Upload files first if there are any
+      let uploadedFiles: UploadedFile[] = [];
+      if (attachedFiles.length > 0) {
+        const filesToUpload = [...attachedFiles];
+        
+        // Upload each file individually - upload API handles one file at a time
+        for (const file of filesToUpload) {
+          uploadingFiles.add(file.name);
+          try {
+            console.log(`Uploading file: ${file.name}`);
+            const uploaded = await uploadDocument({
+              file,
+              provider: selectedProvider || 'openai'
+            });
+            uploadedFiles.push(uploaded);
+            console.log(`Successfully uploaded: ${file.name} with ID: ${uploaded.id}`);
+          } catch (error) {
+            console.error(`Failed to upload file: ${file.name}`, error);
+            // Remove failed file from attached files
+            attachedFiles = attachedFiles.filter(f => f !== file);
+            // Continue with other files instead of stopping completely
+            continue;
+          } finally {
+            uploadingFiles.delete(file.name);
+          }
+        }
+        
+        // If no files were successfully uploaded, don't send message
+        if (uploadedFiles.length === 0 && attachedFiles.length > 0) {
+          console.error('No files were successfully uploaded');
+          return;
+        }
+      }
+      
+      // Send message with successfully uploaded file metadata
+      onSend(trimmed, uploadedFiles.length > 0 ? uploadedFiles : undefined);
       message = '';
       attachedFiles = [];
+      
       if (textarea) {
         textarea.style.height = 'auto';
       }
@@ -135,6 +173,7 @@
       const newFiles = Array.from(target.files);
       attachedFiles = [...attachedFiles, ...newFiles];
 
+      // Generate previews for text and image files
       for (const file of newFiles) {
         if (isTextFile(file)) {
           readFileContent(file).then(content => {
@@ -154,7 +193,28 @@
         }
       }
     }
+    showPlusMenu = false;
     target.value = '';
+  }
+
+  function removeFile(index: number) {
+    const file = attachedFiles[index];
+    attachedFiles = attachedFiles.filter((_, i) => i !== index);
+
+    if (file && filePreviews[file.name]) {
+      delete filePreviews[file.name];
+      if (currentPreviewFile?.name === file.name) {
+        showFilePreview = false;
+        currentPreviewFile = null;
+      }
+    }
+    if (file && imageThumbnails[file.name]) {
+      delete imageThumbnails[file.name];
+      if (currentPreviewImage?.file.name === file.name) {
+        showImagePreview = false;
+        currentPreviewImage = null;
+      }
+    }
   }
 
   function isTextFile(file: File): boolean {
@@ -176,27 +236,6 @@
       reader.onerror = (e) => reject(e);
       reader.readAsText(file);
     });
-  }
-
-  function removeFile(index: number) {
-    const file = attachedFiles[index];
-    attachedFiles = attachedFiles.filter((_, i) => i !== index);
-
-    if (file && filePreviews[file.name]) {
-      delete filePreviews[file.name];
-      if (currentPreviewFile?.name === file.name) {
-        showFilePreview = false;
-        currentPreviewFile = null;
-      }
-    }
-
-    if (file && imageThumbnails[file.name]) {
-      delete imageThumbnails[file.name];
-      if (currentPreviewImage?.file.name === file.name) {
-        showImagePreview = false;
-        currentPreviewImage = null;
-      }
-    }
   }
 
   function openFilePreview(file: File) {
