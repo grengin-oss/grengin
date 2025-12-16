@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Link } from "svelte-routing";
   import type { User } from "../../types/auth";
   import { listConversations, deleteConversation, archiveConversation } from '../../api/chatApi.js';
   import grenginLogo from '../../../assets/grengin-logo.svg';
@@ -17,18 +18,60 @@
   let showUserMenu = $state(false);
   let userMenuElement: HTMLElement;
   let userCollapsed = $state(false);
-  let showChatMenu = $state(false);
   let activeChatMenu = $state<string | null>(null);
   let showDeleteConfirmation = $state(false);
   let selectedChatId = $state<string | null>(null);
   let chatToDelete = $state<string | null>(null);
   let deletingChat = $state(false);
 
+  // Detect if we're in admin view
+  let currentPath = $state(window.location.pathname);
+  let isAdminView = $derived(currentPath.startsWith('/admin'));
+
+  // Update currentPath on navigation
+  $effect(() => {
+    const updatePath = () => {
+      currentPath = window.location.pathname;
+    };
+
+    // Listen for browser back/forward
+    window.addEventListener('popstate', updatePath);
+
+    // Listen for pushState/replaceState (used by svelte-routing Link)
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+
+    history.pushState = function(...args) {
+      originalPushState.apply(this, args);
+      updatePath();
+    };
+
+    history.replaceState = function(...args) {
+      originalReplaceState.apply(this, args);
+      updatePath();
+    };
+
+    return () => {
+      window.removeEventListener('popstate', updatePath);
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
+    };
+  });
+
   const menuItems = [
     {
       id: 'chat',
       label: 'New Chat',
       icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>'
+    },
+  ];
+
+  const adminMenuItems = [
+    {
+      id: 'users',
+      path: '/admin/users',
+      label: 'Users',
+      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
     },
   ];
 
@@ -304,21 +347,61 @@
     </div>
   </div>
 
-  <nav class="sidebar-nav">
-    {#each menuItems as item}
-      <button
-        class="sidebar-item"
-        onclick={() => handleItemClick(item.id)}
-        title={item.label}
-      >
-        <span class="sidebar-icon">{@html item.icon}</span>
-        <span class="sidebar-label">{item.label}</span>
-      </button>
-    {/each}
-  </nav>
+  <!-- Admin Header with back button -->
+  {#if isAdminView}
+    <div class="admin-sidebar-header">
+      <div class="header-top">
+        <button
+          class="back-btn"
+          onclick={() => window.location.href = '/'}
+          title="Back to Chat"
+          aria-label="Back to Chat"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12,19 5,12 12,5"></polyline>
+          </svg>
+        </button>
+        {#if !isCollapsed}
+          <h1 class="admin-title">Admin Panel</h1>
+        {/if}
+      </div>
+    </div>
+  {/if}
+
+  <!-- Sidebar Navigation -->
+  {#if isAdminView}
+    <nav class="sidebar-nav admin-sidebar-nav">
+      {#each adminMenuItems as item}
+        <Link to={item.path}>
+          <button
+            class="sidebar-item"
+            class:active={currentPath === item.path}
+            title={item.label}
+          >
+            <span class="sidebar-icon">{@html item.icon}</span>
+            <span class="sidebar-label">{item.label}</span>
+          </button>
+        </Link>
+      {/each}
+    </nav>
+  {:else}
+    <nav class="sidebar-nav">
+      {#each menuItems as item}
+        <button
+          class="sidebar-item"
+          onclick={() => handleItemClick(item.id)}
+          title={item.label}
+        >
+          <span class="sidebar-icon">{@html item.icon}</span>
+          <span class="sidebar-label">{item.label}</span>
+        </button>
+      {/each}
+    </nav>
+  {/if}
 
   <!-- Chat List Section -->
-  {#if !isCollapsed}
+  {#if !isCollapsed && !isAdminView}
     <div class="chat-list-section">
       <!-- Inline Search -->
       <div class="chat-search-wrapper" class:expanded={searchQuery.length > 0 || searchFocused}>
@@ -438,6 +521,10 @@
       <span class="menu-item-icon">⚙️</span>
       <span class="menu-item-label">Settings</span>
     </button>
+    <a href="/admin/users" class="user-menu-item">
+      <span class="menu-item-icon">🔒</span>
+      <span class="menu-item-label">Admin</span>
+    </a>
     <button class="user-menu-item logout-item" onclick={handleLogout}>
       <svg class="menu-item-icon logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -533,6 +620,66 @@
 
   .collapsed .sidebar-header {
     padding: var(--space-lg) var(--space-sm);
+  }
+
+  /* ===== Admin Sidebar Header ===== */
+  .admin-sidebar-header {
+    padding: 1rem 1rem 0 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: none;
+    background: rgba(var(--glass-tint), 0.06);
+    backdrop-filter: blur(0.75rem);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+  }
+
+  .back-btn:hover {
+    background: rgba(var(--glass-tint), 0.12);
+    border-color: var(--link-color);
+    color: var(--link-color);
+    transform: translateY(-1px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .back-btn:active {
+    transform: translateY(0);
+  }
+
+  .admin-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.02em;
+    flex: 1;
+  }
+
+  .admin-sidebar-nav {
+    flex: 1;
+  }
+
+  .admin-sidebar-nav a {
+    text-decoration: none;
   }
 
   .sidebar-brand {
@@ -1007,6 +1154,7 @@
     width: 100%;
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: var(--space-md);
     padding: var(--space-md) var(--space-lg);
     background: transparent;
@@ -1016,6 +1164,8 @@
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: left;
+    text-decoration: none;
+    box-sizing: border-box;
   }
 
   .user-menu-item:hover {
