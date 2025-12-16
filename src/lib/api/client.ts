@@ -117,5 +117,6 @@ export async function request<T>(
     return undefined as T;
   }
 
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) as T : ("" as T);
 }
