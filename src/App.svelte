@@ -306,10 +306,6 @@
       width: 100vw;
       max-width: 100vw;
     }
-
-    .main-content-body {
-      overflow: hidden;
-    }
   }
 
   @media (max-width: 480px) {

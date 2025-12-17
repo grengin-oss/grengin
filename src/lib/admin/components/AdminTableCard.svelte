@@ -71,6 +71,18 @@
     tbody tr:hover {
       background: rgba(var(--glass-tint), 0.03);
     }
+
+    @media (max-width: 768px) {
+      .admin-table-card {
+        overflow: visible;
+        border-radius: var(--radius-md);
+      }
+
+      .table-scroll :global(th),
+      .table-scroll :global(td) {
+        padding: var(--space-md);
+      }
+    }
   }
 </style>
 
