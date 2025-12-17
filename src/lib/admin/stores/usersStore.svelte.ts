@@ -1,6 +1,6 @@
 // Users Store - User management state using Svelte 5 runes
 import type { User } from '../types.js';
-import { getUsers, createUser, updateUser, deactivateUser } from '../../api/adminUsers.js';
+import { getUsers, createUser, updateUser, deleteUser } from '../../api/adminUsers.js';
 import type { CreateUserData, GetUsersParams } from '../../api/adminUsers.js';
 
 interface UsersFilters {
@@ -20,7 +20,7 @@ function createUsersStore() {
   let filters = $state<UsersFilters>({
     search: '',
     role: '',
-    status: '',
+    status: 'active',
     department: '',
   });
 
@@ -38,6 +38,7 @@ function createUsersStore() {
       if (filters.role) params.role = filters.role;
       if (filters.status) params.status = filters.status;
       if (filters.department) params.department = filters.department;
+      params.sort = 'name'; // Default sort by name
 
       const data = await getUsers(params);
       users = data.users;
@@ -91,12 +92,12 @@ function createUsersStore() {
       }
     },
 
-    async deactivate(userId: string) {
+    async delete(userId: string) {
       try {
-        await deactivateUser(userId);
+        await deleteUser(userId);
         return fetch();
       } catch (err: any) {
-        error = err.message || 'Failed to deactivate user';
+        error = err.message || 'Failed to delete user';
         throw err;
       }
     },
@@ -115,7 +116,7 @@ function createUsersStore() {
       filters = {
         search: '',
         role: '',
-        status: '',
+        status: 'active',
         department: '',
       };
     },

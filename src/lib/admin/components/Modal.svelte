@@ -32,6 +32,12 @@
   <div
     class="modal-backdrop"
     onclick={handleBackdropClick}
+    onkeydown={(e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleBackdropClick(e as unknown as MouseEvent);
+      }
+    }}
     role="dialog"
     aria-modal="true"
     aria-labelledby="modal-title"
@@ -67,7 +73,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10000;
+    z-index: 1001;
     padding: var(--space-xl);
     animation: fadeIn 0.2s ease;
   }

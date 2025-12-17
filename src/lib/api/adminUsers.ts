@@ -8,6 +8,7 @@ export interface GetUsersParams {
   role?: string;
   status?: string;
   department?: string;
+  sort?: string;
 }
 
 export interface CreateUserData {
@@ -51,7 +52,7 @@ export async function updateUser(userId: string, updates: Partial<User>): Promis
   });
 }
 
-export async function deactivateUser(userId: string): Promise<void> {
+export async function deleteUser(userId: string): Promise<void> {
   return request<void>(`/admin/users/${userId}`, { method: 'DELETE' });
 }
 

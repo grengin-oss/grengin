@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Link } from "svelte-routing";
+  import { Link, navigate } from "svelte-routing";
   import type { User } from "../../types/auth";
   import { listConversations, deleteConversation, archiveConversation } from '../../api/chatApi.js';
   import grenginLogo from '../../../assets/grengin-logo.svg';
@@ -521,10 +521,12 @@
       <span class="menu-item-icon">⚙️</span>
       <span class="menu-item-label">Settings</span>
     </button>
-    <a href="/admin/users" class="user-menu-item">
-      <span class="menu-item-icon">🔒</span>
-      <span class="menu-item-label">Admin</span>
-    </a>
+    <!-- {#if user?.role === 'admin' || user?.role === 'super_admin'} -->
+      <button onclick={() => navigate('/admin/users')} class="user-menu-item">
+          <span class="menu-item-icon">🔒</span>
+          <span class="menu-item-label">Admin</span>
+      </button>
+    <!-- {/if} -->
     <button class="user-menu-item logout-item" onclick={handleLogout}>
       <svg class="menu-item-icon logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>

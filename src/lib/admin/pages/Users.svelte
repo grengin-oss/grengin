@@ -10,10 +10,12 @@
 
   let isCreateModalOpen = $state(false);
   let isEditModalOpen = $state(false);
+  let isDeleteModalOpen = $state(false);
   let selectedUser = $state<User | null>(null);
+  let userToDelete = $state<User | null>(null);
   let searchQuery = $state("");
   let filterRole = $state("");
-  let filterStatus = $state("");
+  let filterStatus = $state("active");
   let filterDepartment = $state("");
 
   // Form state
@@ -51,12 +53,12 @@
   function clearFilters() {
     searchQuery = "";
     filterRole = "";
-    filterStatus = "";
+    filterStatus = "active";
     filterDepartment = "";
     usersStore.setFilters({
       search: "",
       role: "",
-      status: "",
+      status: "active",
       department: "",
     });
   }
@@ -101,7 +103,7 @@
       formData = { email: "", name: "", role: "user", department: "" };
       toast.success("User created successfully");
     } catch (err: any) {
-      toast.error(err.message || "Failed to create user");
+      toast.error(err.detail?.message || "Failed to create user");
     } finally {
       isSubmitting = false;
     }
@@ -123,14 +125,24 @@
     }
   }
 
-  async function handleDeactivate(user: User) {
-    if (!confirm(`Are you sure you want to deactivate ${user.email}?`)) return;
+  function openDeleteModal(user: User) {
+    userToDelete = user;
+    isDeleteModalOpen = true;
+  }
 
+  async function confirmDelete() {
+    if (!userToDelete) return;
+
+    isSubmitting = true;
     try {
-      await usersStore.deactivate(user.id);
-      toast.success("User deactivated successfully");
+      await usersStore.delete(userToDelete.id);
+      toast.success("User deleted successfully");
+      isDeleteModalOpen = false;
+      userToDelete = null;
     } catch (err: any) {
-      toast.error(err.message || "Failed to deactivate user");
+      toast.error(err.detail?.message || "Failed to delete user");
+    } finally {
+      isSubmitting = false;
     }
   }
 
@@ -138,7 +150,9 @@
     usersStore.setPage(page);
   }
 
-  const currentPage = $derived(Math.floor(usersStore.offset / usersStore.limit));
+  const currentPage = $derived(
+    Math.floor(usersStore.offset / usersStore.limit),
+  );
   const totalPages = $derived(Math.ceil(usersStore.total / usersStore.limit));
 </script>
 
@@ -169,7 +183,7 @@
       <select bind:value={filterStatus} class="filter-select">
         <option value="">All Statuses</option>
         <option value="active">Active</option>
-        <option value="deactivated">Deactivated</option>
+        <option value="deleted">Deleted</option>
       </select>
       <input
         type="text"
@@ -235,7 +249,7 @@
                   {#if !user.is_super_admin && user.status !== "deactivated"}
                     <button
                       class="action-btn delete"
-                      onclick={() => handleDeactivate(user)}
+                      onclick={() => openDeleteModal(user)}
                       title="Deactivate user"
                     >
                       🚫
@@ -264,7 +278,7 @@
           Previous
         </button>
         <span class="pagination-info">
-          Page {currentPage + 1} of {totalPages} ({usersStore.total} total)
+          Page {currentPage + 1} of {totalPages}
         </span>
         <button
           class="btn"
@@ -418,6 +432,51 @@
       </form>
     {/snippet}
   </Modal>
+
+  <!-- Deactivate Confirmation Modal -->
+  <Modal
+    isOpen={isDeleteModalOpen}
+    title="Delete User"
+    onclose={() => {
+      isDeleteModalOpen = false;
+      userToDelete = null;
+    }}
+  >
+    {#snippet children()}
+      <div class="confirm-content">
+        <div class="warning-icon">⚠️</div>
+        <p class="confirm-message">
+          Are you sure you want to delete <strong>{userToDelete?.email}</strong
+          >?
+        </p>
+        <p class="confirm-description">
+          This user will lose access to the system. This action cannot be
+          undone.
+        </p>
+
+        <div class="confirm-actions">
+          <button
+            type="button"
+            class="btn"
+            onclick={() => {
+              isDeleteModalOpen = false;
+              userToDelete = null;
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn-danger"
+            onclick={confirmDelete}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Deleting..." : "Delete User"}
+          </button>
+        </div>
+      </div>
+    {/snippet}
+  </Modal>
 </div>
 
 <style>
@@ -563,6 +622,70 @@
     border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 
+  .confirm-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+    text-align: center;
+    padding: var(--space-lg) 0;
+  }
+
+  .warning-icon {
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  .confirm-message {
+    font-size: 1.0625rem;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .confirm-message strong {
+    color: var(--brand-red);
+    font-weight: 600;
+  }
+
+  .confirm-description {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 400px;
+  }
+
+  .confirm-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-md);
+    width: 100%;
+    padding-top: var(--space-lg);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .btn-danger {
+    padding: var(--space-sm) var(--space-xl);
+    background: var(--brand-red);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9375rem;
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--brand-red) 85%, black);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--brand-red-rgb), 0.3);
+  }
+
+  .btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   @media (max-width: 768px) {
     .filters-grid {
       grid-template-columns: 1fr;
@@ -575,6 +698,10 @@
     .pagination {
       flex-direction: column;
       gap: var(--space-md);
+    }
+
+    .confirm-actions {
+      flex-direction: column;
     }
   }
 </style>

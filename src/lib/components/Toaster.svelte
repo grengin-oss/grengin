@@ -163,6 +163,7 @@
 <style>
   .toaster {
     pointer-events: none;
+    z-index: 9999;
   }
 
   .toast {
