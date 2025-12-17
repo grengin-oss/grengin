@@ -1,4 +1,4 @@
-import { API_BASE } from './client';
+import { request } from './client';
 
 export interface ModelInfo {
   key: string;
@@ -72,20 +72,5 @@ export interface SpeechRecognitionAlternative {
  * Fetch available models and providers
  */
 export async function getModels(): Promise<ModelsResponse> {
-  try {
-    const response = await fetch(`${API_BASE}/models`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Failed to fetch models:', error);
-    throw error;
-  }
+  return request<ModelsResponse>('/models');
 }
