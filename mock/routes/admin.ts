@@ -46,8 +46,35 @@ router.delete('/admin/users/:userId', requireAuth, (req, res) => {
   res.status(204).send()
 })
 
+router.patch('/admin/users/:userId/status', requireAuth, (req, res) => {
+  const user = usersListExample.users.find(u => u.id === req.params.userId)
+  if (!user) {
+    return res.status(404).json({ detail: 'User not found' })
+  }
+  const { status } = req.body
+  if (!status || !['active', 'inactive', 'pending'].includes(status)) {
+    return res.status(400).json({ detail: 'Invalid status value' })
+  }
+  res.json({ ...user, status, updated_at: new Date().toISOString() })
+})
+
 router.get('/admin/users/:userId/usage', requireAuth, (req, res) => {
   res.json(dashboardExample.costs)
+})
+
+// Departments
+router.get('/admin/departments', requireAuth, (req, res) => {
+  const departmentCounts = new Map<string, number>()
+  for (const user of usersListExample.users) {
+    if (user.department) {
+      departmentCounts.set(user.department, (departmentCounts.get(user.department) || 0) + 1)
+    }
+  }
+  const departments = Array.from(departmentCounts.entries()).map(([name, user_count]) => ({
+    name,
+    user_count,
+  }))
+  res.json({ departments })
 })
 
 // Organization

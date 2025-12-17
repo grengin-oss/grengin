@@ -808,6 +808,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/users/{user_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update user status
+         * @description Activate or deactivate a user account
+         */
+        patch: operations["updateUserStatus"];
+        trace?: never;
+    };
     "/admin/users/{user_id}/usage": {
         parameters: {
             query?: never;
@@ -820,6 +840,26 @@ export interface paths {
          * @description Get usage statistics for a specific user over a time period
          */
         get: operations["getUserUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/departments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List departments
+         * @description Get list of all departments in the organization
+         */
+        get: operations["listDepartments"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1721,6 +1761,9 @@ export interface components {
             status?: components["schemas"]["UserStatus"];
             department?: string;
         };
+        UserStatusUpdate: {
+            status: components["schemas"]["UserStatus"];
+        };
         UserBulkImport: {
             users: components["schemas"]["UserCreate"][];
             /**
@@ -2428,6 +2471,7 @@ export interface operations {
                     };
                 };
             };
+            401: components["responses"]["Unauthorized"];
         };
     };
     getSettings: {
@@ -3755,6 +3799,37 @@ export interface operations {
             404: components["responses"]["NotFound"];
         };
     };
+    updateUserStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the user */
+                user_id: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserStatusUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
     getUserUsage: {
         parameters: {
             query?: {
@@ -3781,6 +3856,35 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    listDepartments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of departments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        departments: {
+                            /** @description Department name */
+                            name: string;
+                            /** @description Number of users in this department */
+                            user_count: number;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
     getOrganization: {
