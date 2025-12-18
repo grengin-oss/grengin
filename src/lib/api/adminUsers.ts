@@ -52,7 +52,10 @@ export async function updateUser(userId: string, updates: Partial<User>): Promis
   });
 }
 
-export async function deleteUser(userId: string): Promise<void> {
-  return request<void>(`/admin/users/${userId}`, { method: 'DELETE' });
+export async function updateUserStatus(userId: string, status: 'active' | 'deactivated'): Promise<void> {
+  return request<void>(`/admin/users/${userId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
 }
 

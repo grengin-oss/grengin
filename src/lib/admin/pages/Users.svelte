@@ -10,9 +10,7 @@
 
   let isCreateModalOpen = $state(false);
   let isEditModalOpen = $state(false);
-  let isDeleteModalOpen = $state(false);
   let selectedUser = $state<User | null>(null);
-  let userToDelete = $state<User | null>(null);
   let searchQuery = $state("");
   let filterRole = $state("");
   let filterStatus = $state("active");
@@ -125,24 +123,14 @@
     }
   }
 
-  function openDeleteModal(user: User) {
-    userToDelete = user;
-    isDeleteModalOpen = true;
-  }
-
-  async function confirmDelete() {
-    if (!userToDelete) return;
-
-    isSubmitting = true;
+  async function toggleUserStatus(user: User) {
+    const newStatus = user.status === 'active' ? 'deactivated' : 'active';
+    
     try {
-      await usersStore.delete(userToDelete.id);
-      toast.success("User deleted successfully");
-      isDeleteModalOpen = false;
-      userToDelete = null;
+      await usersStore.updateStatus(user.id, newStatus);
+      toast.success(`User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
     } catch (err: any) {
-      toast.error(err.detail?.message || "Failed to delete user");
-    } finally {
-      isSubmitting = false;
+      toast.error(err.detail?.message || 'Failed to update user status');
     }
   }
 
@@ -170,7 +158,7 @@
     <div class="filters-grid">
       <input
         type="text"
-        placeholder="Search by name or email..."
+        placeholder="Search by name..."
         bind:value={searchQuery}
         onkeyup={(e) => e.key === "Enter" && applyFilters()}
         class="filter-input"
@@ -183,7 +171,7 @@
       <select bind:value={filterStatus} class="filter-select">
         <option value="">All Statuses</option>
         <option value="active">Active</option>
-        <option value="deleted">Deleted</option>
+        <option value="deactivated">Deactivated</option>
       </select>
       <input
         type="text"
@@ -228,9 +216,21 @@
               </td>
               <td>{user.department || "-"}</td>
               <td>
-                <span class="status-badge {user.status}">
-                  {user.status || "active"}
-                </span>
+                {#if !user.is_super_admin}
+                  <label class="status-switch">
+                    <input
+                      type="checkbox"
+                      checked={user.status === 'active'}
+                      onchange={() => toggleUserStatus(user)}
+                    />
+                    <span class="status-slider"></span>
+                    <span class="status-label">
+                      {user.status === 'active' ? 'Active' : 'Deactivated'}
+                    </span>
+                  </label>
+                {:else}
+                  <span class="status-badge active">Active</span>
+                {/if}
               </td>
               <td
                 >{user.created_at
@@ -246,15 +246,6 @@
                   >
                     ✏️
                   </button>
-                  {#if !user.is_super_admin && user.status !== "deactivated"}
-                    <button
-                      class="action-btn delete"
-                      onclick={() => openDeleteModal(user)}
-                      title="Deactivate user"
-                    >
-                      🚫
-                    </button>
-                  {/if}
                 </div>
               </td>
             </tr>
@@ -433,50 +424,6 @@
     {/snippet}
   </Modal>
 
-  <!-- Deactivate Confirmation Modal -->
-  <Modal
-    isOpen={isDeleteModalOpen}
-    title="Delete User"
-    onclose={() => {
-      isDeleteModalOpen = false;
-      userToDelete = null;
-    }}
-  >
-    {#snippet children()}
-      <div class="confirm-content">
-        <div class="warning-icon">⚠️</div>
-        <p class="confirm-message">
-          Are you sure you want to delete <strong>{userToDelete?.email}</strong
-          >?
-        </p>
-        <p class="confirm-description">
-          This user will lose access to the system. This action cannot be
-          undone.
-        </p>
-
-        <div class="confirm-actions">
-          <button
-            type="button"
-            class="btn"
-            onclick={() => {
-              isDeleteModalOpen = false;
-              userToDelete = null;
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="btn-danger"
-            onclick={confirmDelete}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Deleting..." : "Delete User"}
-          </button>
-        </div>
-      </div>
-    {/snippet}
-  </Modal>
 </div>
 
 <style>
@@ -487,6 +434,7 @@
     width: 100%;
     background: var(--bg-primary);
     padding: var(--space-3xl);
+    overflow-y: auto;
   }
 
   .filters-section {
@@ -622,68 +570,60 @@
     border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  .confirm-content {
+  /* Status Switch */
+  .status-switch {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: var(--space-lg);
-    text-align: center;
-    padding: var(--space-lg) 0;
-  }
-
-  .warning-icon {
-    font-size: 3rem;
-    line-height: 1;
-  }
-
-  .confirm-message {
-    font-size: 1.0625rem;
-    color: var(--text-primary);
-    margin: 0;
-  }
-
-  .confirm-message strong {
-    color: var(--brand-red);
-    font-weight: 600;
-  }
-
-  .confirm-description {
-    font-size: 0.9375rem;
-    color: var(--text-secondary);
-    margin: 0;
-    max-width: 400px;
-  }
-
-  .confirm-actions {
-    display: flex;
-    justify-content: center;
     gap: var(--space-md);
-    width: 100%;
-    padding-top: var(--space-lg);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .btn-danger {
-    padding: var(--space-sm) var(--space-xl);
-    background: var(--brand-red);
-    color: white;
-    border: none;
-    border-radius: var(--radius-md);
-    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.9375rem;
+    position: relative;
   }
 
-  .btn-danger:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--brand-red) 85%, black);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(var(--brand-red-rgb), 0.3);
+  .status-switch input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
   }
 
-  .btn-danger:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .status-slider {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background: rgba(143, 143, 143, 0.2);
+    border-radius: 24px;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .status-slider::before {
+    content: '';
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    top: 3px;
+    background: var(--brand-red);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .status-switch input:checked + .status-slider::before {
+    background: var(--brand-green);
+    transform: translateX(20px);
+  }
+
+  .status-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 90px;
+  }
+
+  .status-switch:hover .status-slider {
+    opacity: 0.9;
   }
 
   @media (max-width: 768px) {

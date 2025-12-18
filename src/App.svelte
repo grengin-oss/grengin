@@ -183,6 +183,8 @@
     min-height: 100vh;
     background: var(--bg-primary);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    width: calc(100vw - 280px);
+    max-width: calc(100vw - 280px);
     overflow-x: hidden;
     box-sizing: border-box;
     display: flex;
@@ -305,6 +307,10 @@
       margin-left: 0;
       width: 100vw;
       max-width: 100vw;
+    }
+
+    .main-content-body {
+      overflow: hidden;
     }
   }
 
