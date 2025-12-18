@@ -1,6 +1,6 @@
 // Users Store - User management state using Svelte 5 runes
 import type { User } from '../types.js';
-import { getUsers, createUser, updateUser, deactivateUser } from '../../api/adminUsers.js';
+import { getUsers, createUser, updateUser, updateUserStatus } from '../../api/adminUsers.js';
 import type { CreateUserData, GetUsersParams } from '../../api/adminUsers.js';
 
 interface UsersFilters {
@@ -91,12 +91,12 @@ function createUsersStore() {
       }
     },
 
-    async deactivate(userId: string) {
+    async updateStatus(userId: string, status: 'active' | 'deactivated') {
       try {
-        await deactivateUser(userId);
+        await updateUserStatus(userId, status);
         return fetch();
       } catch (err: any) {
-        error = err.message || 'Failed to deactivate user';
+        error = err.message || 'Failed to update user status';
         throw err;
       }
     },
