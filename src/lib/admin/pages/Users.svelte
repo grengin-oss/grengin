@@ -123,14 +123,14 @@
     }
   }
 
-  async function handleDeactivate(user: User) {
-    if (!confirm(`Are you sure you want to deactivate ${user.email}?`)) return;
-
+  async function toggleUserStatus(user: User) {
+    const newStatus = user.status === 'active' ? 'deactivated' : 'active';
+    
     try {
-      await usersStore.deactivate(user.id);
-      toast.success("User deactivated successfully");
+      await usersStore.updateStatus(user.id, newStatus);
+      toast.success(`User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
     } catch (err: any) {
-      toast.error(err.message || "Failed to deactivate user");
+      toast.error(err.detail?.message || 'Failed to update user status');
     }
   }
 
@@ -156,7 +156,7 @@
     <div class="filters-grid">
       <input
         type="text"
-        placeholder="Search by name or email..."
+        placeholder="Search by name..."
         bind:value={searchQuery}
         onkeyup={(e) => e.key === "Enter" && applyFilters()}
         class="filter-input"
@@ -214,9 +214,21 @@
               </td>
               <td>{user.department || "-"}</td>
               <td>
-                <span class="status-badge {user.status}">
-                  {user.status || "active"}
-                </span>
+                {#if !user.is_super_admin}
+                  <label class="status-switch">
+                    <input
+                      type="checkbox"
+                      checked={user.status === 'active'}
+                      onchange={() => toggleUserStatus(user)}
+                    />
+                    <span class="status-slider"></span>
+                    <span class="status-label">
+                      {user.status === 'active' ? 'Active' : 'Deactivated'}
+                    </span>
+                  </label>
+                {:else}
+                  <span class="status-badge active">Active</span>
+                {/if}
               </td>
               <td
                 >{user.created_at
@@ -232,15 +244,6 @@
                   >
                     ✏️
                   </button>
-                  {#if !user.is_super_admin && user.status !== "deactivated"}
-                    <button
-                      class="action-btn delete"
-                      onclick={() => handleDeactivate(user)}
-                      title="Deactivate user"
-                    >
-                      🚫
-                    </button>
-                  {/if}
                 </div>
               </td>
             </tr>
@@ -418,6 +421,7 @@
       </form>
     {/snippet}
   </Modal>
+
 </div>
 
 <style>
@@ -428,6 +432,7 @@
     width: 100%;
     background: var(--bg-primary);
     padding: var(--space-3xl);
+    overflow-y: auto;
   }
 
   .filters-section {
@@ -561,6 +566,62 @@
     gap: var(--space-md);
     padding-top: var(--space-lg);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Status Switch */
+  .status-switch {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    cursor: pointer;
+    position: relative;
+  }
+
+  .status-switch input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .status-slider {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background: rgba(143, 143, 143, 0.2);
+    border-radius: 24px;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .status-slider::before {
+    content: '';
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    top: 3px;
+    background: var(--brand-red);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .status-switch input:checked + .status-slider::before {
+    background: var(--brand-green);
+    transform: translateX(20px);
+  }
+
+  .status-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 90px;
+  }
+
+  .status-switch:hover .status-slider {
+    opacity: 0.9;
   }
 
   @media (max-width: 768px) {
