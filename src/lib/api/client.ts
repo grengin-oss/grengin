@@ -8,9 +8,9 @@ export const API_BASE = '/api';
 export class ApiError extends Error {
   constructor(
     public status: number,
-    public detail: { message: string }  
+    public detail: string
   ) {
-    super(detail.message);
+    super(detail);
     this.name = 'ApiError';
   }
 }
@@ -105,18 +105,26 @@ export async function request<T>(
     // Redirect to root path - app will show Login component when not authenticated
     window.location.href = '/';
     // Throw error to prevent further execution (though redirect will happen)
-    throw new ApiError(401, { message: 'Session expired. Please log in again.' });
+    throw new ApiError(401, 'Session expired. Please log in again.');
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-    throw new ApiError(response.status, { message: error.detail.message || 'Request failed' });
+    const error = await response.json().then((body) => (
+      { detail: body?.detail?.message || 'Request failed' }
+    )).catch(() => (
+      { detail: 'Request failed' })
+    );
+
+    throw new ApiError(response.status, error.detail || 'Request failed');
   }
 
   if (response.status === 204) {
     return undefined as T;
   }
 
-  const text = await response.text();
-  return text ? JSON.parse(text) as T : ("" as T);
+  try {
+    return await response.json();
+  } catch {
+    return "Request successful but invalid JSON response." as T;
+  }
 }
