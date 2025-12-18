@@ -109,7 +109,12 @@ export async function request<T>(
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Request failed' }));
+    const error = await response.json().then((body) => (
+      { detail: body?.detail?.message || 'Request failed' }
+    )).catch(() => (
+      { detail: 'Request failed' })
+    );
+
     throw new ApiError(response.status, error.detail || 'Request failed');
   }
 
@@ -117,6 +122,9 @@ export async function request<T>(
     return undefined as T;
   }
 
-  const text = await response.text();
-  return text ? JSON.parse(text) as T : ("" as T);
+  try {
+    return await response.json();
+  } catch {
+    return "Request successful but invalid JSON response." as T;
+  }
 }
