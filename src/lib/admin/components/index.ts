@@ -14,6 +14,7 @@ export { default as PageHeader } from './PageHeader.svelte';
 export { default as ChartWrapper } from './ChartWrapper.svelte';
 
 // Feature components
+export { default as AiEngines } from './AiEngines.svelte';
 export { default as ApiKeys } from './ApiKeys.svelte';
 export { default as Budgets } from './Budgets.svelte';
 export { default as RateLimits } from './RateLimits.svelte';

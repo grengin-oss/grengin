@@ -162,3 +162,32 @@ export interface AuditLogEntry {
   details?: Record<string, any>;
   ip_address?: string;
 }
+
+export interface AIEngine {
+  engine_key: string;
+  display_name: string;
+  is_enabled: boolean;
+  api_key_configured: boolean;
+  api_key_status?: 'valid' | 'invalid' | 'untested';
+  api_key_preview?: string | null;
+  api_key_last_validated_at?: string | null;
+  whitelisted_models?: string[];
+  default_model?: string | null;
+  is_default: boolean;
+  updated_at?: string | null;
+}
+
+export interface AIEngineModel {
+  model_id: string;
+  display_name: string;
+  is_whitelisted: boolean;
+  capabilities?: {
+    vision?: boolean;
+    function_calling?: boolean;
+    streaming?: boolean;
+  };
+}
+
+export interface AIEngineModels {
+  models: AIEngineModel[];
+}

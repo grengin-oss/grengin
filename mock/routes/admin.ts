@@ -78,11 +78,28 @@ router.put('/admin/ai-engines/:engineKey', requireAuth, (req, res) => {
     return res.status(404).json({ detail: 'AI engine not found' })
   }
 
+  // If setting this engine as the default engine (is_default: true),
+  // unset all other engines as default
+  if (req.body.is_default === true) {
+    aiEngines.forEach((otherEngine, key) => {
+      if (key !== req.params.engineKey && otherEngine.is_default) {
+        aiEngines.set(key, {
+          ...otherEngine,
+          is_default: false,
+          updated_at: new Date().toISOString(),
+        })
+      }
+    })
+  }
+
   const updated: AIEngineDetail = {
     ...engine,
     ...(req.body.is_enabled !== undefined && { is_enabled: req.body.is_enabled }),
-    ...(req.body.whitelisted_models && { whitelisted_models: req.body.whitelisted_models }),
-    ...(req.body.default_model && { default_model: req.body.default_model }),
+    ...(req.body.whitelisted_models !== undefined && { whitelisted_models: req.body.whitelisted_models }),
+    // Allow setting default_model to a value or explicitly clearing it with null
+    ...(req.body.default_model !== undefined && { default_model: req.body.default_model }),
+    // Allow setting is_default flag
+    ...(req.body.is_default !== undefined && { is_default: req.body.is_default }),
     updated_at: new Date().toISOString(),
   }
 

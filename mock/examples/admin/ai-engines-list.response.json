@@ -8,6 +8,7 @@
     "api_key_preview": "...abc1",
     "api_key_last_validated_at": "2025-01-15T10:30:00Z",
     "whitelisted_models": ["gpt-5", "gpt-5-chat-latest", "gpt-5-mini", "gpt-4.1", "gpt-4o-mini-search-preview"],
+    "is_default": true,
     "default_model": "gpt-5",
     "updated_at": "2025-01-15T10:30:00Z"
   },
@@ -20,6 +21,7 @@
     "api_key_preview": "...xyz9",
     "api_key_last_validated_at": "2025-01-15T10:30:00Z",
     "whitelisted_models": ["claude-sonnet-4-5", "claude-sonnet-4-20250514", "claude-opus-4-1-20250805", "claude-haiku-4-5"],
+    "is_default": false,
     "default_model": "claude-sonnet-4-5",
     "updated_at": "2025-01-15T10:30:00Z"
   },
@@ -32,6 +34,7 @@
     "api_key_preview": "...def5",
     "api_key_last_validated_at": "2025-01-14T08:00:00Z",
     "whitelisted_models": ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"],
+    "is_default": false,
     "default_model": "gemini-2.5-flash",
     "updated_at": "2025-01-14T08:00:00Z"
   },
@@ -44,6 +47,7 @@
     "api_key_preview": "...gsk1",
     "api_key_last_validated_at": "2025-01-14T08:00:00Z",
     "whitelisted_models": ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "qwen/qwen3-32b", "gemma2-9b-it", "moonshotai/kimi-k2-instruct-0905"],
+    "is_default": false,
     "default_model": "llama-3.3-70b-versatile",
     "updated_at": "2025-01-14T08:00:00Z"
   }

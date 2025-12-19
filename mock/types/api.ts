@@ -1960,6 +1960,8 @@ export interface components {
             whitelisted_models?: string[];
             /** @description Default model for this engine */
             default_model?: string | null;
+            /** @description Whether this engine is the system default engine */
+            is_default: boolean;
             /** Format: date-time */
             updated_at?: string | null;
         };

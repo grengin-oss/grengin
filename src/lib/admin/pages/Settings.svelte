@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import PageHeader from "../components/PageHeader.svelte";
   import SsoProviders from "../components/SsoProviders.svelte";
+  import AiEngines from "../components/AiEngines.svelte";
   import ApiKeys from "../components/ApiKeys.svelte";
   import RateLimits from "../components/RateLimits.svelte";
   import Budgets from "../components/Budgets.svelte";
@@ -9,6 +10,7 @@
   // Map tab IDs to hash fragments
   const tabHashMap: Record<string, string> = {
     sso: "sso-providers",
+    "ai-engines": "ai-engines",
     "api-keys": "api-keys",
     "rate-limits": "rate-limits",
     budgets: "budgets",
@@ -17,6 +19,7 @@
   // Reverse map for hash to tab ID
   const hashToTabMap: Record<string, string> = {
     "sso-providers": "sso",
+    "ai-engines": "ai-engines",
     "api-keys": "api-keys",
     "rate-limits": "rate-limits",
     budgets: "budgets",
@@ -122,6 +125,13 @@
     </button>
     <button
       class="settings-tab"
+      class:active={currentTab === "ai-engines"}
+      onclick={() => handleTabClick("ai-engines")}
+    >
+      AI Engines
+    </button>
+    <button
+      class="settings-tab"
       class:active={currentTab === "api-keys"}
       onclick={() => handleTabClick("api-keys")}
     >
@@ -146,6 +156,8 @@
   <div class="settings-content">
     {#if currentTab === "sso"}
       <SsoProviders />
+    {:else if currentTab === "ai-engines"}
+      <AiEngines />
     {:else if currentTab === "api-keys"}
       <ApiKeys />
     {:else if currentTab === "rate-limits"}
@@ -158,6 +170,7 @@
       </p>
       <ul class="settings-list">
         <li>SSO Providers - Configure single sign-on integrations</li>
+        <li>AI Engines - Configure AI provider integrations and model access</li>
         <li>API Keys - Manage LLM provider API keys</li>
         <li>Rate Limits - Set usage rate limits per user or department</li>
         <li>Budgets - Configure spending budgets and alerts</li>
@@ -210,13 +223,6 @@
     background: rgba(var(--glass-tint), 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-lg);
-  }
-
-  .settings-content h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 var(--space-md) 0;
   }
 
   .settings-content p {
