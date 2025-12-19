@@ -14,6 +14,11 @@
 
   let { isCollapsed = $bindable(false), onsidebarToggle, onnavigate, user = null, onlogout }: Props = $props();
 
+  // Mobile detection helper
+  function isMobileDevice() {
+    return window.innerWidth <= 768;
+  }
+
   let showUserMenu = $state(false);
   let userMenuElement: HTMLElement;
   let userCollapsed = $state(false);
@@ -61,13 +66,19 @@
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('focusChatInput'));
       }, 50);
+      
+      // Auto-collapse sidebar on mobile
+      if (isMobileDevice()) {
+        isCollapsed = true;
+        onsidebarToggle?.(isCollapsed);
+      }
       return;
     }
 
     onnavigate?.(itemId);
 
     // Auto-collapse on mobile after navigation
-    if (window.innerWidth <= 768) {
+    if (isMobileDevice()) {
       isCollapsed = true;
       onsidebarToggle?.(isCollapsed);
     }
@@ -90,6 +101,12 @@
     window.history.pushState({}, '', `?chatId=${chatId}`);
     onnavigate?.(`chat-${chatId}`);
     activeChatMenu = null;
+    
+    // Auto-collapse sidebar on mobile after chat selection
+    if (isMobileDevice()) {
+      isCollapsed = true;
+      onsidebarToggle?.(isCollapsed);
+    }
   }
 
   function deleteChat(chatId: string) {
@@ -114,6 +131,12 @@
           // Navigate to fresh chat after deletion
           window.history.pushState({}, '', window.location.pathname);
           onnavigate?.('chat');
+          
+          // Auto-collapse sidebar on mobile after deletion
+          if (isMobileDevice()) {
+            isCollapsed = true;
+            onsidebarToggle?.(isCollapsed);
+          }
         }
 
         chatToDelete = null;
@@ -148,9 +171,19 @@
       chatHistory = chatHistory.filter(chat => chat.id !== chatId);
       toast.success(`"${title}" archived successfully`);
       
-      // Navigate to fresh chat after archiving
-      window.history.pushState({}, '', window.location.pathname);
-      onnavigate?.('chat');
+      // Clear selection if archived chat was selected
+      if (selectedChatId === chatId) {
+        selectedChatId = null;
+        // Navigate to fresh chat after archiving
+        window.history.pushState({}, '', window.location.pathname);
+        onnavigate?.('chat');
+        
+        // Auto-collapse sidebar on mobile after archiving
+        if (isMobileDevice()) {
+          isCollapsed = true;
+          onsidebarToggle?.(isCollapsed);
+        }
+      }
     } catch (error) {
       console.error('Failed to archive conversation:', error);
       toast.error('Failed to archive chat');

@@ -23,7 +23,7 @@
   let editContent = $state(message.content);
   let showActions = $state(false);
   let messageContainer: HTMLDivElement;
-  let editTextarea: HTMLTextAreaElement;
+  let editTextarea: HTMLTextAreaElement | undefined;
 
   // TTS state
   let ttsState = $state<TTSState>({
@@ -50,9 +50,31 @@
     stopSpeaking();
   }
 
-  const renderedContent = $derived(
-    message.role === 'assistant' ? renderMarkdown(message.content) : message.content
-  );
+  let renderedContent = $state('');
+  let isRenderingMarkdown = $state(false);
+
+  // Async markdown rendering with copy button addition
+  $effect(() => {
+    const render = async () => {
+      if (message.role === 'assistant') {
+        isRenderingMarkdown = true;
+        try {
+          renderedContent = await renderMarkdown(message.content);
+          // Add copy buttons after content is rendered
+          await tick();
+          addCopyButtonsToCodeBlocks();
+        } catch {
+          renderedContent = `<p>${message.content}</p>`;
+        } finally {
+          isRenderingMarkdown = false;
+        }
+      } else {
+        renderedContent = message.content;
+      }
+    };
+    
+    render();
+  });
 
   // Toggle actions visibility on tap (for touch devices)
   function handleMessageTap(e: MouseEvent) {
@@ -124,18 +146,8 @@
 
   let copySuccess = $state(false);
 
-  async function copyMessageContent() {
-    const success = await copyToClipboard(message.content);
-    if (success) {
-      copySuccess = true;
-      setTimeout(() => {
-        copySuccess = false;
-      }, 2000);
-    }
-  }
-
-  onMount(() => {
-    // Add copy buttons to code blocks after render
+  // Function to add copy buttons to code blocks
+  function addCopyButtonsToCodeBlocks() {
     if (messageContainer && message.role === 'assistant') {
       const codeBlocks = messageContainer.querySelectorAll('pre');
       codeBlocks.forEach((pre, index) => {
@@ -145,9 +157,9 @@
             const button = document.createElement('button');
             button.className = 'copy-code-btn';
             button.innerHTML = `
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                <path d="m5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
               </svg>
               <span>Copy</span>
             `;
@@ -156,18 +168,17 @@
               const success = await copyToClipboard(codeText);
               if (success) {
                 button.innerHTML = `
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20,6 9,17 4,12"></polyline>
                   </svg>
                   <span>Copied!</span>
                 `;
                 setTimeout(() => {
                   button.innerHTML = `
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      <path d="m5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg>
-                    <span>Copy</span>
                   `;
                 }, 2000);
               }
@@ -178,7 +189,17 @@
         }
       });
     }
-  });
+  }
+
+  async function copyMessageContent() {
+    const success = await copyToClipboard(message.content);
+    if (success) {
+      copySuccess = true;
+      setTimeout(() => {
+        copySuccess = false;
+      }, 2000);
+    }
+  }
 </script>
 
 <div
@@ -624,7 +645,7 @@
 
   /* Action button - glass style */
   .action-btn {
-    background: rgba(var(--glass-tint), 0.2);
+    background: rgba(var(--glass-tint), 1);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid color-mix(in oklab, white 15%, transparent);
