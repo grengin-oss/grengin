@@ -11,9 +11,10 @@
     stopSpeaking,
     type TTSState,
   } from '../../../utils/tts';
+  import { downloadFile } from '../../../api/fileApi';
 
   interface Props {
-    message: ChatMessage;
+    message: ChatMessage & { files?: Array<{ id: string; name?: string; type?: string }> };
     onEdit?: (id: string, newContent: string) => void;
     selectedModelInfo?: ProviderInfo;
   }
@@ -145,6 +146,103 @@
   }
 
   let copySuccess = $state(false);
+
+  // File blob URLs state
+  let fileBlobUrls = $state<Map<string, string>>(new Map());
+  let fileLoadingStates = $state<Map<string, boolean>>(new Map());
+
+  // Image preview modal state
+  let previewImage = $state<{ url: string; name: string } | null>(null);
+
+  function openImagePreview(blobUrl: string, fileName: string) {
+    previewImage = { url: blobUrl, name: fileName };
+  }
+
+  function closeImagePreview() {
+    previewImage = null;
+  }
+
+  async function handleFileClick(fileId: string, fileName: string) {
+    try {
+      // Download file with authentication
+      const blobUrl = await downloadFile(fileId);
+      if (blobUrl) {
+        // Open blob URL in new tab
+        window.open(blobUrl, '_blank');
+      } else {
+        console.error('Failed to download file');
+      }
+    } catch (err) {
+      console.error('Error downloading file:', err);
+    }
+  }
+
+  // Helper functions for file handling
+  function isImage(type?: string): boolean {
+    return type?.startsWith('image/') || false;
+  }
+
+  function getFileIcon(type?: string): string {
+    if (!type) return '📎';
+    if (type.startsWith('image/')) return '🖼️';
+    if (type.startsWith('video/')) return '🎥';
+    if (type.startsWith('audio/')) return '🎵';
+    if (type.includes('pdf')) return '📄';
+    if (type.includes('text')) return '📝';
+    if (type.includes('zip') || type.includes('archive')) return '📦';
+    if (type.includes('word') || type.includes('doc')) return '📝';
+    if (type.includes('excel') || type.includes('sheet')) return '📊';
+    if (type.includes('powerpoint') || type.includes('presentation')) return '📊';
+    return '📎';
+  }
+
+  function formatFileSize(bytes?: number): string {
+    if (!bytes || bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  // Load file binary data only for image files
+  let loadedFileIds = new Set<string>();
+
+  $effect(() => {
+    const files = message.files;
+    
+    if (files && files.length > 0) {
+      files.forEach((file) => {
+        // Only fetch blob URLs for images and if not already loaded
+        if (isImage(file.type) && !loadedFileIds.has(file.id)) {
+          loadedFileIds.add(file.id);
+          
+          // Set loading state immediately
+          fileLoadingStates.set(file.id, true);
+          fileLoadingStates = new Map(fileLoadingStates);
+
+          // Load image asynchronously without blocking
+          downloadFile(file.id).then((blobUrl) => {
+            if (blobUrl) {
+              fileBlobUrls.set(file.id, blobUrl);
+              fileBlobUrls = new Map(fileBlobUrls);
+            }
+            // Clear loading state
+            fileLoadingStates.set(file.id, false);
+            fileLoadingStates = new Map(fileLoadingStates);
+          }).catch((err) => {
+            console.error('Failed to load image:', err);
+            fileLoadingStates.set(file.id, false);
+            fileLoadingStates = new Map(fileLoadingStates);
+          });
+        }
+      });
+    }
+
+    // Cleanup blob URLs when component unmounts
+    return () => {
+      fileBlobUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  });
 
   // Function to add copy buttons to code blocks
   function addCopyButtonsToCodeBlocks() {
@@ -279,6 +377,40 @@
           {/if}
           <div class="message-body">
             <p>{message.content}</p>
+            {#if message.files && message.files.length > 0}
+              <div class="message-files">
+                {#each message.files as file}
+                  {#if isImage(file.type)}
+                    {#if fileLoadingStates.get(file.id)}
+                      <div class="image-loader">
+                        <div class="spinner"></div>
+                        <div class="loader-text">Loading image...</div>
+                      </div>
+                    {:else if fileBlobUrls.has(file.id)}
+                      {@const blobUrl = fileBlobUrls.get(file.id)}
+                      {#if blobUrl}
+                        <img 
+                          src={blobUrl} 
+                          alt={file.name || 'Image'} 
+                          class="message-image"
+                          onclick={() => openImagePreview(blobUrl, file.name || 'Image')}
+                        />
+                      {/if}
+                    {/if}
+                  {:else}
+                    <div class="file-box" onclick={() => handleFileClick(file.id, file.name || 'File')}>
+                      <div class="file-icon-large">{getFileIcon(file.type)}</div>
+                      <div class="file-info">
+                        <div class="file-name">{file.name || 'File'}</div>
+                        {#if file.type}
+                          <div class="file-type">{file.type}</div>
+                        {/if}
+                      </div>
+                    </div>
+                  {/if}
+                {/each}
+              </div>
+            {/if}
           </div>
         </div>
       <!-- {/if} end of edit mode conditional -->
@@ -343,6 +475,40 @@
         {/if}
         <div class="message-body">
           {@html renderedContent}
+          {#if message.files && message.files.length > 0}
+            <div class="message-files">
+              {#each message.files as file}
+                {#if isImage(file.type)}
+                  {#if fileLoadingStates.get(file.id)}
+                    <div class="image-loader">
+                      <div class="spinner"></div>
+                      <div class="loader-text">Loading image...</div>
+                    </div>
+                  {:else if fileBlobUrls.has(file.id)}
+                    {@const blobUrl = fileBlobUrls.get(file.id)}
+                    {#if blobUrl}
+                      <img 
+                        src={blobUrl} 
+                        alt={file.name || 'Image'} 
+                        class="message-image"
+                        onclick={() => openImagePreview(blobUrl, file.name || 'Image')}
+                      />
+                    {/if}
+                  {/if}
+                {:else}
+                  <div class="file-box" onclick={() => handleFileClick(file.id, file.name || 'File')}>
+                    <div class="file-icon-large">{getFileIcon(file.type)}</div>
+                    <div class="file-info">
+                      <div class="file-name">{file.name || 'File'}</div>
+                      {#if file.type}
+                        <div class="file-type">{file.type}</div>
+                      {/if}
+                    </div>
+                  </div>
+                {/if}
+              {/each}
+            </div>
+          {/if}
         </div>
       </div>
     {/if}
@@ -359,6 +525,19 @@
     {/if}
   </div>
 </div>
+
+<!-- Image Preview Modal -->
+{#if previewImage}
+  <div class="modal-backdrop" onclick={closeImagePreview}>
+    <div class="modal-content" onclick={(e) => e.stopPropagation()}>
+      <button class="modal-close" onclick={closeImagePreview} aria-label="Close preview">
+        ✕
+      </button>
+      <img src={previewImage.url} alt={previewImage.name} class="preview-image" />
+      <div class="preview-filename">{previewImage.name}</div>
+    </div>
+  </div>
+{/if}
 
 <style>
   .message {
@@ -883,7 +1062,250 @@
 
   .message-body {
     width: 100%;
-    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .message-files {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+  }
+
+  .message-image {
+    max-width: min(220px, 100%);
+    max-height: 400px;
+    border-radius: var(--radius-md);
+    object-fit: contain;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    display: block;
+    overflow: hidden;
+  }
+
+  /* Responsive image sizing */
+  @media (max-width: 768px) {
+    .message-image {
+      max-width: min(180px, 100%);
+      max-height: 300px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .message-image {
+      max-width: min(140px, 100%);
+      max-height: 250px;
+    }
+  }
+
+  .message-image:hover {
+    transform: scale(1.02);
+  }
+
+  .user-message .message-image {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .assistant-message .message-image {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .file-box {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 300px;
+    transition: all 0.2s ease;
+  }
+
+  .file-box:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .file-icon-large {
+    font-size: 32px;
+    flex-shrink: 0;
+  }
+
+  .file-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .file-name {
+    font-weight: 500;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file-type {
+    font-size: 12px;
+    opacity: 0.7;
+    font-family: monospace;
+  }
+
+  .user-message .file-box {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .user-message .file-box:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  .assistant-message .file-box {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .assistant-message .file-box:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .image-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-xl);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-md);
+    min-height: 150px;
+    max-width: 300px;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .loader-text {
+    font-size: 13px;
+    opacity: 0.6;
+  }
+
+  .user-message .image-loader {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .user-message .spinner {
+    border-color: rgba(255, 255, 255, 0.2);
+    border-top-color: rgba(255, 255, 255, 0.8);
+  }
+
+  .assistant-message .image-loader {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  .assistant-message .spinner {
+    border-color: rgba(0, 0, 0, 0.1);
+    border-top-color: rgba(0, 0, 0, 0.4);
+  }
+
+  /* Image Preview Modal */
+  .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: var(--space-xl);
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .modal-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .modal-close {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10000;
+    color: white;
+    font-size: 28px;
+    font-weight: 300;
+    line-height: 1;
+  }
+
+  .modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+  }
+
+  .preview-image {
+    max-width: 100%;
+    max-height: calc(90vh - 60px);
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  }
+
+  .preview-filename {
+    color: white;
+    font-size: 14px;
+    text-align: center;
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: var(--radius-md);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file-box {
+    cursor: pointer;
   }
 </style>
