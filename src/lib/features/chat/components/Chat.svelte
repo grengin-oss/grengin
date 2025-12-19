@@ -259,9 +259,10 @@
           id: msg.id,
           role: msg.role,
           content: msg.parts.text || '',
-          timestamp: msg.created_at ? new Date(msg.created_at) : new Date(),
+          timestamp: msg.created_at || new Date().toISOString(),
           model: msg.model,
-          usage: msg.usage
+          usage: msg.usage,
+          files: msg.parts.files || []
         }));
 
         console.log('Set new messages:', messages.length);
