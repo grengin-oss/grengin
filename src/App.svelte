@@ -197,7 +197,7 @@
   .mobile-header {
     display: none;
     align-items: center;
-    padding: var(--space-xl);
+    padding: var(--space-md);
     background: var(--bg-primary);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
@@ -208,8 +208,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     border: 1px solid transparent;
     background: var(--btn-secondary);
@@ -232,10 +232,10 @@
   }
 
   .mobile-header-logo {
-    height: 28px;
+    height: 22px;
     width: auto;
     object-fit: contain;
-    margin-left: var(--space-md);
+    margin-left: var(--space-sm);
   }
 
   .main-content-body {
@@ -290,12 +290,16 @@
 
   @media (max-width: 480px) {
     .mobile-header {
-      padding: var(--space-lg);
+      padding: var(--space-sm);
     }
 
     .mobile-menu-btn {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
+    }
+
+    .mobile-header-logo {
+      height: 18px;
     }
 
     .mobile-overlay {

@@ -691,8 +691,17 @@
     }
 
     .input-container {
-      padding: 1rem;
+      padding: 0.75rem 1rem;
       max-width: 100%;
+    }
+
+    .ai-disclaimer {
+      margin: 0.25rem 0 0 0;
+      font-size: 0.75rem;
+    }
+
+    .input-container .ai-disclaimer {
+      margin: 0.25rem 0 -0.25rem 0;
     }
   }
 
