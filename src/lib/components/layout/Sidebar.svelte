@@ -14,6 +14,14 @@
 
   let { isCollapsed = $bindable(false), onsidebarToggle, onnavigate, user = null, onlogout }: Props = $props();
 
+  // Auto-collapse sidebar on mobile after navigation actions
+  function collapseSidebarOnMobile() {
+    if (window.innerWidth <= 768) {
+      isCollapsed = true;
+      onsidebarToggle?.(isCollapsed);
+    }
+  }
+
   let showUserMenu = $state(false);
   let userMenuElement: HTMLElement;
   let userCollapsed = $state(false);
@@ -61,16 +69,13 @@
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('focusChatInput'));
       }, 50);
+      
+      collapseSidebarOnMobile();
       return;
     }
 
     onnavigate?.(itemId);
-
-    // Auto-collapse on mobile after navigation
-    if (window.innerWidth <= 768) {
-      isCollapsed = true;
-      onsidebarToggle?.(isCollapsed);
-    }
+    collapseSidebarOnMobile();
   }
 
   function toggleSidebar() {
@@ -90,6 +95,7 @@
     window.history.pushState({}, '', `?chatId=${chatId}`);
     onnavigate?.(`chat-${chatId}`);
     activeChatMenu = null;
+    collapseSidebarOnMobile();
   }
 
   function deleteChat(chatId: string) {
@@ -114,6 +120,7 @@
           // Navigate to fresh chat after deletion
           window.history.pushState({}, '', window.location.pathname);
           onnavigate?.('chat');
+          collapseSidebarOnMobile();
         }
 
         chatToDelete = null;
@@ -148,9 +155,14 @@
       chatHistory = chatHistory.filter(chat => chat.id !== chatId);
       toast.success(`"${title}" archived successfully`);
       
-      // Navigate to fresh chat after archiving
-      window.history.pushState({}, '', window.location.pathname);
-      onnavigate?.('chat');
+      // Clear selection if archived chat was selected
+      if (selectedChatId === chatId) {
+        selectedChatId = null;
+        // Navigate to fresh chat after archiving
+        window.history.pushState({}, '', window.location.pathname);
+        onnavigate?.('chat');
+        collapseSidebarOnMobile();
+      }
     } catch (error) {
       console.error('Failed to archive conversation:', error);
       toast.error('Failed to archive chat');
