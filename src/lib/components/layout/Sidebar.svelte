@@ -583,14 +583,15 @@
     height: 36px;
     padding: 0;
     border: none;
-    background: var(--btn-secondary);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
+    background: var(--btn-tertiary);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
     cursor: pointer;
     opacity: 0;
     transition: all 0.25s ease;
     z-index: 10;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .collapsed-logo-container:hover .logo-btn {
@@ -602,9 +603,9 @@
   }
 
   .expand-btn:hover {
-    background: var(--btn-tertiary);
-    border-color: var(--brand);
+    background: var(--btn-quaternary);
     color: var(--brand);
+    transform: scale(1.05);
   }
 
   /* Burger button - toggle sidebar */
@@ -616,24 +617,24 @@
     height: 36px;
     padding: 0;
     border: none;
-    background: var(--btn-secondary);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-sm);
+    background: var(--btn-tertiary);
+    border-radius: var(--radius-full);
     color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .burger-btn:hover {
-    background: var(--btn-tertiary);
-    border-color: var(--brand);
+    background: var(--btn-quaternary);
     color: var(--brand);
-    transform: translateY(-1px);
+    transform: scale(1.05);
   }
 
   .burger-btn:active {
-    transform: translateY(0);
+    transform: scale(0.95);
   }
 
   /* Logo */
@@ -645,16 +646,16 @@
     height: 44px;
     padding: var(--space-sm);
     border: none;
-    background: var(--btn-secondary);
-    border: 1px solid var(--glass-stroke-dark);
+    background: transparent;
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .logo-btn:hover {
     background: var(--btn-tertiary);
-    border-color: var(--brand);
     transform: scale(1.02);
   }
 
@@ -701,12 +702,15 @@
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: left;
-    border-radius: var(--radius-md);
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .sidebar-item:hover {
-    background: var(--btn-secondary);
+    background: var(--btn-tertiary);
     color: var(--text-primary);
+    border-radius: var(--radius-md);
   }
 
   .sidebar-item.active {
@@ -801,26 +805,30 @@
     background: transparent;
     color: var(--text-secondary);
     cursor: pointer;
-    border-radius: var(--radius-sm);
+    border-radius: 0;
     transition: all 0.2s ease;
     text-align: left;
     font-size: 0.8125rem;
     min-width: 0;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .chat-item-btn:hover {
-    background: var(--btn-secondary);
+    background: var(--btn-tertiary);
     color: var(--text-primary);
+    border-radius: var(--radius-sm);
   }
 
   .chat-item-btn.selected {
-    background: var(--glass-tint-primary);
+    background: transparent;
     color: var(--brand);
     font-weight: 500;
   }
 
   .chat-item-btn.selected:hover {
-    background: var(--glass-tint-primary);
+    background: var(--btn-tertiary);
+    border-radius: var(--radius-sm);
   }
 
   .chat-item-title {
@@ -842,10 +850,12 @@
     background: transparent;
     color: var(--text-secondary);
     cursor: pointer;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-full);
     opacity: 0;
     pointer-events: none;
     transition: all 0.2s ease;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .chat-item:hover .chat-item-menu,
@@ -855,8 +865,8 @@
   }
 
   .chat-item-menu:hover {
-    background: var(--btn-tertiary);
-    color: var(--text-primary);
+    background: var(--btn-quaternary);
+    color: var(--brand);
   }
 
   .chat-dropdown {
@@ -1028,11 +1038,15 @@
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: left;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .user-menu-item:hover {
-    background: var(--btn-secondary);
+    background: var(--btn-tertiary);
     color: var(--text-primary);
+    border-radius: var(--radius-sm);
   }
 
   .user-menu-item.logout-item:hover {
