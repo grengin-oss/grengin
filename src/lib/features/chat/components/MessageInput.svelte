@@ -11,9 +11,13 @@
     selectedModel?: string;
     selectedProvider?: string;
     onModelSelect?: (provider: ProviderInfo, model: ModelInfo) => void;
+    onRemoveModel?: () => void;
+    providers?: ProviderInfo[];
+    loadingModels?: boolean;
+    modelsError?: string | null;
   }
 
-  let { onSend, disabled = false, placeholder = 'Ask anything', selectedModel, selectedProvider, onModelSelect }: MessageInputProps = $props();
+  let { onSend, disabled = false, placeholder = 'Ask anything', selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null }: MessageInputProps = $props();
 
   let textarea: HTMLTextAreaElement;
   let fileInput: HTMLInputElement;
@@ -29,9 +33,6 @@
   let currentPreviewImage = $state<{ file: File; url: string } | null>(null);
   let showPlusMenu = $state(false);
   let showModelDropdown = $state(false);
-  let providers = $state<ProviderInfo[]>([]);
-  let loadingModels = $state(true);
-  let modelsError = $state<string | null>(null);
 
   // Voice input state
   let isRecording = $state(false);
@@ -76,13 +77,11 @@
         for (const file of filesToUpload) {
           uploadingFiles.add(file.name);
           try {
-            console.log(`Uploading file: ${file.name}`);
             const uploaded = await uploadDocument({
               file,
               provider: selectedProvider || 'openai'
             });
             uploadedFiles.push(uploaded);
-            console.log(`Successfully uploaded: ${file.name} with ID: ${uploaded.id}`);
           } catch (error) {
             console.error(`Failed to upload file: ${file.name}`, error);
             // Remove failed file from attached files
@@ -122,27 +121,12 @@
     showModelDropdown = false;
   }
 
-  async function loadModels() {
-    loadingModels = true;
-    modelsError = null;
-    try {
-      const response = await getModels();
-      providers = response.providers;
-    } catch (error) {
-      console.error('Failed to load models:', error);
-      modelsError = 'Failed to load models';
-    } finally {
-      loadingModels = false;
-    }
-  }
-
   // Expose focus method for external callers
   export function focus() {
     textarea?.focus();
   }
 
   onMount(() => {
-    loadModels();
     autoResize();
 
     // Cleanup speech recognition on unmount
@@ -155,6 +139,21 @@
         }
       }
     };
+  });
+
+  // Sync model selection with props from parent component
+  $effect(() => {
+    if (selectedModel && selectedProvider && providers.length > 0) {
+      // Find the provider and model in the loaded providers
+      const provider = providers.find(p => p.key === selectedProvider);
+      if (provider) {
+        const model = provider.models.find(m => m.key === selectedModel || m.name === selectedModel);
+        if (model) {
+          // The props are already being used in the template, so no need to update internal state
+          console.log('Model synced from props:', { provider: selectedProvider, model: selectedModel });
+        }
+      }
+    }
   });
 
   function handlePhotoSelect() {

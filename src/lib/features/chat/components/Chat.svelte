@@ -6,6 +6,7 @@
   import type { ChatMessage as ChatMessageType } from '../../../types/chat';
   import { sendMessage, getConversation, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
+  import { getModels } from '../../../api/models';
 
   let messages = $state<ChatMessageType[]>([]);
   let isLoading = $state(false);
@@ -47,6 +48,25 @@
     ],
   });
 
+  // Models state
+  let providers = $state<ProviderInfo[]>([]);
+  let loadingModels = $state(true);
+  let modelsError = $state<string | null>(null);
+
+  async function loadModels() {
+    loadingModels = true;
+    modelsError = null;
+    try {
+      const response = await getModels();
+      providers = response.providers;
+    } catch (error) {
+      console.error('Failed to load models:', error);
+      modelsError = 'Failed to load models';
+    } finally {
+      loadingModels = false;
+    }
+  }
+
   // Listen for URL changes
   function handleUrlChange() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -68,7 +88,7 @@
   // Handle model selection
   function selectModel(provider: ProviderInfo, model: ModelInfo) {
     selectedProvider = provider.key;
-    selectedModel = model.name;
+    selectedModel = model.key;
     selectedModelInfo = provider;
   }
 
@@ -122,6 +142,7 @@
       content: '',
       timestamp: new Date().toISOString(),
       isStreaming: true,
+      model: selectedModel,
     };
 
     let messageAddedToArray = $state(false);
@@ -248,13 +269,8 @@
         const conversation = await getConversation(chatId);
         conversationId = chatId;
 
-        console.log('Loaded conversation:', {
-          conversationId: conversation.id,
-          messagesCount: conversation.messages.length
-        });
-
         // Convert messages to ChatMessageType format
-        messages = conversation.messages.map((msg: any) => ({
+        messages = (conversation.messages || []).map((msg: any) => ({
           id: msg.id,
           role: msg.role,
           content: msg.parts.text || '',
@@ -264,7 +280,33 @@
           files: msg.parts.files || []
         }));
 
-        console.log('Set new messages:', messages.length);
+        // Extract model and provider from conversation
+        // Use last message model if messages exist, otherwise use conversation model
+        let modelToUse = conversation.model;
+        if (conversation.messages && conversation.messages.length > 0) {
+          const lastMessage = conversation.messages[conversation.messages.length - 1];
+          if (lastMessage.model) {
+            modelToUse = lastMessage.model;
+          }
+        }
+        
+        if (modelToUse) {
+          selectedModel = modelToUse;
+          // Find the provider that contains this model
+          const providerWithModel = providers.find(p => 
+            p.models.some(m => m.key === modelToUse || m.name === modelToUse)
+          );
+          
+          if (providerWithModel) {
+            selectedProvider = providerWithModel.key;
+            selectedModelInfo = providerWithModel;
+          } else {
+            // Fallback to default provider
+            selectedProvider = 'openai';
+            selectedModelInfo = providers.find(p => p.key === 'openai') || providers[0];
+          }
+        }
+
         scrollToBottom(false);
       } catch (err) {
         error = 'Failed to load conversation';
@@ -281,6 +323,10 @@
       messages = [];
       error = null;
       isLoadingConversation = false;
+      // Set default model and provider
+      selectedModel = 'gpt-5.1';
+      selectedProvider = 'openai';
+      selectedModelInfo = providers.find(p => p.key === 'openai') || providers[0];
     }
   }
 
@@ -292,6 +338,7 @@
   onMount(() => {
     scrollToBottom(false);
     loadConversationFromUrl();
+    loadModels();
 
     // Focus the chat input if nothing else is focused
     if (!document.activeElement || document.activeElement === document.body) {
@@ -347,6 +394,9 @@
           {selectedProvider}
           onRemoveModel={handleRemoveModel}
           onModelSelect={selectModel}
+          {providers}
+          {loadingModels}
+          {modelsError}
         />
         <p class="ai-disclaimer">AI can make mistakes. Please double-check responses.</p>
       </div>
@@ -384,6 +434,7 @@
             {message}
             onEdit={handleEditMessage}
             selectedModelInfo={selectedModelInfo}
+            providers={providers}
           />
         {/each}
 
@@ -425,6 +476,9 @@
         {selectedProvider}
         onRemoveModel={handleRemoveModel}
         onModelSelect={selectModel}
+        {providers}
+        {loadingModels}
+        {modelsError}
       />
       <p class="ai-disclaimer">AI can make mistakes. Please double-check responses.</p>
     </div>

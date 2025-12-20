@@ -19,6 +19,7 @@ export interface ChatMessage {
   isStreaming?: boolean;
   error?: string;
   isEditing?: boolean;
+  model?: string | null;
 }
 
 export interface StreamEvent {

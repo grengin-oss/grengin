@@ -17,9 +17,10 @@
     message: ChatMessage & { files?: Array<{ id: string; name?: string; type?: string }> };
     onEdit?: (id: string, newContent: string) => void;
     selectedModelInfo?: ProviderInfo;
+    providers?: ProviderInfo[];
   }
 
-  let { message, onEdit, selectedModelInfo }: Props = $props();
+  let { message, onEdit, selectedModelInfo, providers }: Props = $props();
   let isEditing = $state(false);
   let editContent = $state(message.content);
   let showActions = $state(false);
@@ -42,6 +43,17 @@
     ttsState.messageId === message.id && ttsState.isSpeaking && ttsState.isPaused
   );
   const isActive = $derived(ttsState.messageId === message.id && ttsState.isSpeaking);
+
+  // Find the provider that matches the message's model
+  const messageProvider = $derived(
+    providers?.find(provider => 
+      provider.models.some(model => 
+        model.key === message.model || model.key === message.model
+      )
+    )
+  );
+
+  console.log("messageProvider  " + messageProvider);
 
   function handleTTSToggle() {
     toggleSpeaking(message.id, message.content);
@@ -313,7 +325,7 @@
   {#if message.role !== 'user'}
     <div class="message-avatar">
       <div class="model-avatar">
-        {@html selectedModelInfo?.icon}
+        {@html messageProvider?.icon}
       </div>
     </div>
   {/if}
