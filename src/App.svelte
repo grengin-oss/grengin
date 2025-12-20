@@ -7,6 +7,7 @@
   import AuthCallback from './lib/features/auth/components/AuthCallback.svelte';
   import { initAuth, getAuthState, logout } from './lib/features/auth/index.js';
   import Toaster from './lib/components/Toaster.svelte';
+  import grenginLogo from './assets/grengin-logo.svg';
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
@@ -126,16 +127,14 @@
     <main class="main-content" class:collapsed={sidebarCollapsed}>
       <div class="mobile-header">
         <button
-          class="mobile-logo-btn"
+          class="mobile-menu-btn"
           onclick={toggleSidebarFromMain}
-          aria-label={sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
-          title={sidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
+          aria-label={sidebarCollapsed ? 'Open menu' : 'Close menu'}
+          title={sidebarCollapsed ? 'Open menu' : 'Close menu'}
         >
-          <img src="/grengin-icon.svg" alt="Grengin" class="mobile-logo-icon" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
         </button>
-        <div class="mobile-header-content">
-          <h1 class="header-title">Grengin</h1>
-        </div>
+        <img src={grenginLogo} alt="Grengin" class="mobile-header-logo" />
       </div>
 
       <div class="main-content-body">
@@ -205,61 +204,38 @@
     z-index: 10;
   }
 
-  .mobile-header-content {
-    flex: 1;
-    margin-left: var(--space-lg);
-  }
-
-  .header-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-  }
-
-  .mobile-logo-btn {
+  .mobile-menu-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 3rem;
-    height: 3rem;
-    padding: var(--space-sm);
-    border: none;
-    background: rgba(var(--glass-tint), 0.06);
-    backdrop-filter: blur(0.75rem);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: var(--radius-md);
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid transparent;
+    background: var(--btn-secondary);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
   }
 
-  .mobile-logo-btn:hover {
-    background: rgba(var(--glass-tint), 0.12);
-    border-color: var(--link-color);
-    transform: translateY(-2px) scale(1.02);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.15),
-      0 6px 20px rgba(0, 0, 0, 0.12);
+  .mobile-menu-btn:hover {
+    background: var(--btn-tertiary);
+    border-color: var(--brand);
+    color: var(--brand);
+    transform: translateY(-1px);
   }
 
-  .mobile-logo-btn:active {
-    transform: translateY(0) scale(0.98);
+  .mobile-menu-btn:active {
+    transform: translateY(0);
   }
 
-  .mobile-logo-icon {
-    width: 100%;
-    height: 100%;
+  .mobile-header-logo {
+    height: 28px;
+    width: auto;
     object-fit: contain;
-    transition: all 0.3s ease;
-  }
-
-  .mobile-logo-btn:hover .mobile-logo-icon {
-    filter: brightness(1.2) drop-shadow(0 0 8px rgba(var(--brand-rgb), 0.4));
+    margin-left: var(--space-md);
   }
 
   .main-content-body {
@@ -317,10 +293,9 @@
       padding: var(--space-lg);
     }
 
-    .mobile-logo-btn {
-      width: 2.75rem;
-      height: 2.75rem;
-      padding: var(--space-sm);
+    .mobile-menu-btn {
+      width: 32px;
+      height: 32px;
     }
 
     .mobile-overlay {
