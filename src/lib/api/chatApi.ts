@@ -9,6 +9,7 @@ export interface SendMessageOptions {
   provider?: string;
   modelName?: string;
   uploadedFiles?: UploadedFile[];
+  webSearch?: boolean;
   onToken?: (token: string) => void;
   onStart?: (data: any) => void;
   onTitle?: (title: string) => void;
@@ -72,7 +73,7 @@ export async function uploadDocument(options: UploadDocumentOptions): Promise<Up
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, uploadedFiles, onToken, onStart, onTitle, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, onToken, onStart, onTitle, onDone, onError } = options;
 
   try {
     const token = getAccessToken();
@@ -97,7 +98,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         provider: provider || 'openai',
         model_name: modelName || 'gpt-5.2',
         config: {},
-        web_search: false,
+        web_search: webSearch || false,
         selected_tools: [],
         messages: [{
           role: 'user',
@@ -139,7 +140,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
                 provider: provider || 'openai',
                 model_name: modelName || 'gpt-5.2',
                 config: {},
-                web_search: false,
+                web_search: webSearch || false,
                 selected_tools: [],
                 messages: [{
                   role: 'user',

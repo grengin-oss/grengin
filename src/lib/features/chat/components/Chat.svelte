@@ -90,7 +90,7 @@
     }
   }
 
-  async function handleSendMessage(content: string, uploadedFiles?: UploadedFile[]) {
+  async function handleSendMessage(content: string, uploadedFiles?: UploadedFile[], webSearch?: boolean) {
     if (isLoading) return;
 
     error = null;
@@ -133,6 +133,7 @@
         provider: selectedProvider,
         modelName: selectedModel,
         uploadedFiles: uploadedFiles,
+        webSearch: webSearch,
 
         onStart: (data) => {
           

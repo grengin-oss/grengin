@@ -47,6 +47,7 @@
   --radius-md: 1rem;
   --radius-lg: 1.25rem;
   --radius-xl: 1.5rem;
+  --radius-full: 9999px;
 
   /* Spacing system - consistent padding/margins */
   --space-2xs: 0.125rem;

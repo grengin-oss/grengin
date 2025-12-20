@@ -5,7 +5,7 @@
   import { uploadDocument, type UploadedFile } from '../../../api/chatApi';
 
   interface MessageInputProps {
-    onSend: (message: string, uploadedFiles?: UploadedFile[]) => void;
+    onSend: (message: string, uploadedFiles?: UploadedFile[], webSearch?: boolean) => void;
     disabled?: boolean;
     placeholder?: string;
     selectedModel?: string;
@@ -29,6 +29,7 @@
   let currentPreviewImage = $state<{ file: File; url: string } | null>(null);
   let showPlusMenu = $state(false);
   let showModelDropdown = $state(false);
+  let webSearchEnabled = $state(false);
   let providers = $state<ProviderInfo[]>([]);
   let loadingModels = $state(true);
   let modelsError = $state<string | null>(null);
@@ -102,7 +103,7 @@
       }
       
       // Send message with successfully uploaded file metadata
-      onSend(trimmed, uploadedFiles.length > 0 ? uploadedFiles : undefined);
+      onSend(trimmed, uploadedFiles.length > 0 ? uploadedFiles : undefined, webSearchEnabled);
       message = '';
       attachedFiles = [];
       
@@ -491,7 +492,7 @@
 
         <div class="model-dropdown-container">
           <button
-            class="toggle-btn model-selector-btn active"
+            class="selector-btn model-selector-btn"
             onclick={() => { showModelDropdown = !showModelDropdown; showPlusMenu = false; }}
             title="Select model"
             aria-label="Select model"
@@ -507,7 +508,7 @@
                 </svg>
               {/if}
             </div>
-            <span class="toggle-label model-caption">{selectedModel || 'Select Model'}</span>
+            <span class="selector-label model-caption">{selectedModel || 'Select Model'}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow" class:open={showModelDropdown}>
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
@@ -556,6 +557,24 @@
             </div>
           {/if}
         </div>
+
+        <button
+          class="toggle-btn"
+          class:active={webSearchEnabled}
+          onclick={() => { webSearchEnabled = !webSearchEnabled; }}
+          title={webSearchEnabled ? "Disable web search" : "Enable web search"}
+          aria-label={webSearchEnabled ? "Disable web search" : "Enable web search"}
+          aria-pressed={webSearchEnabled}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M2 12h20"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          {#if webSearchEnabled}
+            <span class="toggle-label">Search</span>
+          {/if}
+        </button>
       </div>
 
       <!-- Center: Spacer -->
@@ -830,7 +849,7 @@
     height: 1.75rem;
     padding: 0;
     border: none;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     background: var(--btn-tertiary);
     color: var(--text-secondary);
     cursor: pointer;
@@ -928,8 +947,8 @@
     opacity: 0.8;
   }
 
-  /* ===== Toggle Button (Model Selector) ===== */
-  .toggle-btn {
+  /* ===== Selector Button (Dropdowns) ===== */
+  .selector-btn {
     display: flex;
     align-items: center;
     gap: var(--space-xs);
@@ -946,6 +965,51 @@
     box-shadow: var(--glass-edge-glow);
   }
 
+  .selector-btn:hover:not(:disabled) {
+    background: var(--btn-tertiary);
+    border-color: color-mix(in oklab, var(--brand) 30%, transparent);
+    color: var(--link-color);
+    transform: translateY(-1px);
+  }
+
+  .selector-label {
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ===== Toggle Button (On/Off) ===== */
+  .toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0 var(--space-sm);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-full);
+    background: var(--btn-secondary);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    box-shadow: var(--glass-edge-glow);
+  }
+
+  .toggle-btn:not(.active) {
+    padding: 0;
+    width: 1.75rem;
+  }
+
+  .toggle-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
   .toggle-btn:hover:not(:disabled) {
     background: var(--btn-tertiary);
     border-color: color-mix(in oklab, var(--brand) 30%, transparent);
@@ -960,6 +1024,10 @@
     box-shadow: var(--glass-shadow-light);
   }
 
+  .toggle-label {
+    font-size: 0.8125rem;
+  }
+
   .model-icon {
     display: flex;
     align-items: center;
@@ -972,12 +1040,6 @@
   .model-icon :global(svg) {
     width: 12px;
     height: 12px;
-  }
-
-  .toggle-label {
-    max-width: 8rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .dropdown-arrow {
@@ -1454,14 +1516,27 @@
       min-height: 1.75rem;
     }
 
+    .selector-label,
     .toggle-label {
       display: none;
     }
 
-    .toggle-btn {
+    .selector-btn {
       padding: var(--space-xs);
       border-radius: 50%;
       gap: 0;
+    }
+
+    .toggle-btn {
+      width: 1.625rem;
+      min-width: 1.625rem;
+      height: 1.625rem;
+      padding: 0;
+    }
+
+    .toggle-btn svg {
+      width: 12px;
+      height: 12px;
     }
 
     .dropdown-arrow {
@@ -1486,6 +1561,17 @@
     }
 
     .input-btn svg {
+      width: 11px;
+      height: 11px;
+    }
+
+    .toggle-btn {
+      width: 1.5rem;
+      min-width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .toggle-btn svg {
       width: 11px;
       height: 11px;
     }
