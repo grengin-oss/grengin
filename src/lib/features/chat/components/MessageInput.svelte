@@ -470,7 +470,7 @@
 
           {#if showPlusMenu}
             <div class="plus-menu">
-              <button class="plus-menu-item" onclick={handlePhotoSelect}>
+              <button class="menu-item" onclick={handlePhotoSelect}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                   <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -478,7 +478,7 @@
                 </svg>
                 <span>Add photos</span>
               </button>
-              <button class="plus-menu-item" onclick={handleFileSelect}>
+              <button class="menu-item" onclick={handleFileSelect}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                   <polyline points="14,2 14,8 20,8"></polyline>
@@ -534,7 +534,7 @@
                     <div class="provider-models">
                       {#each provider.models as model}
                         <button
-                          class="model-option"
+                          class="menu-item model-option"
                           class:selected={selectedModel === model.name}
                           onclick={() => selectModel(provider, model)}
                         >
@@ -1064,16 +1064,22 @@
     left: 0;
     z-index: 100;
     min-width: 11rem;
-    background: var(--glass-bg-dark);
-    backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
+    background: color-mix(in oklab, var(--bg-primary) 85%, var(--btn-secondary));
+    backdrop-filter: blur(calc(var(--glass-blur) * 1.5)) saturate(1.5);
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.5)) saturate(1.5);
     border: 1px solid var(--glass-stroke-light);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     box-shadow:
+      /* Outer glow for floating effect */
+      0 0 0 1px var(--glass-edge-glow),
+      /* Layered depth shadows */
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      0 12px 28px rgba(0, 0, 0, 0.2),
+      0 20px 48px rgba(0, 0, 0, 0.15),
+      /* Inner highlight for glass edge */
       var(--glass-highlight),
-      var(--glass-edge-glow),
-      var(--glass-shadow-emphasis);
-    padding: var(--space-xs);
+      inset 0 0 20px rgba(255, 255, 255, 0.02);
+    padding: var(--space-sm);
     overflow: hidden;
   }
 
@@ -1085,48 +1091,39 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg,
-      var(--glass-tint-primary) 0%,
-      transparent 30%);
+    background:
+      /* Top highlight edge - liquid refraction */
+      linear-gradient(180deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        transparent 20%),
+      /* Subtle brand tint */
+      linear-gradient(135deg,
+        var(--glass-tint-primary) 0%,
+        transparent 40%,
+        transparent 60%,
+        rgba(var(--brand-rgb), 0.02) 100%);
     border-radius: inherit;
     pointer-events: none;
   }
 
-  .plus-menu-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    font-weight: 400;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
+  .plus-menu::after,
+  .model-menu::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.15) 20%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(255, 255, 255, 0.15) 80%,
+      transparent 100%);
+    border-radius: inherit;
+    pointer-events: none;
   }
 
-  .plus-menu-item:hover {
-    background: var(--btn-tertiary);
-    color: var(--link-color);
-  }
-
-  .plus-menu-item svg {
-    flex-shrink: 0;
-    color: var(--text-secondary);
-    transition: color 0.2s ease;
-  }
-
-  .plus-menu-item:hover svg {
-    color: var(--link-color);
-  }
-
-  .plus-menu-item span {
-    flex: 1;
-  }
 
   /* ===== Model Menu ===== */
   .model-menu {
@@ -1134,7 +1131,24 @@
     max-height: 20rem;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: var(--glass-stroke-light) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  }
+
+  .model-menu::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .model-menu::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .model-menu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+  }
+
+  .model-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
   }
 
   .provider-section {
@@ -1180,35 +1194,11 @@
   .provider-models {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2xs);
+    gap: 0;
   }
 
   .model-option {
-    display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: var(--space-md);
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    font-weight: 400;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
-  }
-
-  .model-option:hover {
-    background: var(--btn-tertiary);
-    color: var(--link-color);
-  }
-
-  .model-option.selected {
-    background: var(--brand);
-    color: white;
   }
 
   .model-option .model-name {

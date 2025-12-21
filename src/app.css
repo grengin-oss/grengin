@@ -3,7 +3,7 @@
   /* Typography & rendering - Grengin brand fonts */
   font-family: 'Coustard', -apple-system, BlinkMacSystemFont, system-ui, serif;
   line-height: 1.5;
-  font-weight: 400;
+  font-weight: 500;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -110,7 +110,7 @@
   :root {
     --bg-primary: #fcfcfc;
     --text-primary: #1a1d23;
-    --text-secondary: #4b5563;
+    --text-secondary: #111827;
 
     --link-color: var(--brand);
     --link-hover: color-mix(in oklab, var(--brand) 80%, black);
@@ -625,6 +625,64 @@ button:focus-visible, .btn:focus-visible {
     var(--glass-highlight),
     var(--glass-edge-glow),
     0 1.25rem 3.5rem rgba(0, 0, 0, 0.18);
+}
+
+/* ===== Menu Item (clickable list items) ===== */
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.menu-item:hover {
+  background: var(--btn-tertiary);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.menu-item svg {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.menu-item:hover svg {
+  color: var(--text-primary);
+}
+
+/* Selected state */
+.menu-item.selected {
+  background: color-mix(in oklab, var(--brand) 20%, transparent);
+  color: var(--brand);
+  font-weight: 500;
+}
+
+.menu-item.selected:hover {
+  background: color-mix(in oklab, var(--brand) 25%, transparent);
+}
+
+/* Danger variant (for delete actions) */
+.menu-item--danger:hover {
+  background: var(--danger-surface);
+  color: var(--brand-red);
+}
+
+.menu-item--danger:hover svg {
+  color: var(--brand-red);
 }
 
 /* ===== Form Components ===== */

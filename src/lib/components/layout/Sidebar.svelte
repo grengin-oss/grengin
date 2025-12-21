@@ -278,7 +278,8 @@
 <svelte:window onclick={handleClickOutside} onresize={handleResize} />
 
 <aside class="sidebar" class:collapsed={isCollapsed}>
-  <div class="sidebar-header">
+  <div class="sidebar-elevated-top">
+    <div class="sidebar-header">
     <div class="sidebar-brand">
       {#if !isCollapsed}
         <img src={grenginLogo} alt="Grengin" class="brand-logo" />
@@ -327,12 +328,9 @@
         <span class="sidebar-label">{item.label}</span>
       </button>
     {/each}
-  </nav>
 
-  <!-- Chat List Section -->
-  {#if !isCollapsed}
-    <div class="chat-list-section">
-      <!-- Inline Search -->
+    <!-- Inline Search (non-scrollable) -->
+    {#if !isCollapsed}
       <div class="chat-search-wrapper" class:expanded={searchQuery.length > 0 || searchFocused}>
         <div class="chat-search-container">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
@@ -357,12 +355,26 @@
           {/if}
         </div>
       </div>
+    {/if}
 
-      <!-- Chat List Header -->
-      <div class="chat-section-title">
-        <span>Chats {#if chatHistory.length > 0}({filteredChats.length}){/if}</span>
-      </div>
+  </nav>
+  </div>
 
+  <!-- Divider between elevated top and scrollable content -->
+  {#if !isCollapsed}
+    <div class="sidebar-divider"></div>
+  {/if}
+
+  <!-- Chat List Header (non-scrollable, but below the elevated area) -->
+  {#if !isCollapsed}
+    <div class="chat-section-title">
+      <span>Chats {#if chatHistory.length > 0}({filteredChats.length}){/if}</span>
+    </div>
+  {/if}
+
+  <!-- Chat List Section (scrollable) -->
+  {#if !isCollapsed}
+    <div class="chat-list-section">
       <div class="chat-list">
         {#if loadingChats}
           <div class="chat-loading">
@@ -384,7 +396,7 @@
         {:else}
           {#each filteredChats as chat (chat.id)}
             <div class="chat-item">
-              <button class="chat-item-btn" class:selected={selectedChatId === chat.id} onclick={() => selectChat(chat.id)} title={chat.title}>
+              <button class="menu-item chat-item-btn" class:selected={selectedChatId === chat.id} onclick={() => selectChat(chat.id)} title={chat.title}>
                 <span class="chat-item-title">{chat.title}</span>
               </button>
               <button class="chat-item-menu" onclick={(e) => { e.stopPropagation(); toggleChatMenu(chat.id); }} title="Chat options" aria-expanded={activeChatMenu === chat.id}>
@@ -396,14 +408,14 @@
               </button>
               {#if activeChatMenu === chat.id}
                 <div class="chat-dropdown" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="menu" tabindex="-1">
-                  <button class="chat-dropdown-item" onclick={() => deleteChat(chat.id)}>
+                  <button class="menu-item menu-item--danger" onclick={() => deleteChat(chat.id)}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="3,6 5,6 21,6"></polyline>
                       <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
                     </svg>
                     Delete
                   </button>
-                  <button class="chat-dropdown-item" onclick={() => archiveChat(chat.id, chat.title)}>
+                  <button class="menu-item" onclick={() => archiveChat(chat.id, chat.title)}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                     </svg>
@@ -418,27 +430,29 @@
     </div>
   {/if}
 
-  <div class="sidebar-footer">
-    <div class="user-menu-container" bind:this={userMenuElement}>
-      <button
-        class="user-menu-trigger sidebar-item"
-        onclick={toggleUserMenu}
-        title="User menu"
-      >
-        <div class="user-avatar">
-          <div class="user-initials" style="background-color: {getUserColor()};">
-            {getUserInitials()}
+  <div class="sidebar-elevated-bottom">
+    <div class="sidebar-footer">
+      <div class="user-menu-container" bind:this={userMenuElement}>
+        <button
+          class="user-menu-trigger sidebar-item"
+          onclick={toggleUserMenu}
+          title="User menu"
+        >
+          <div class="user-avatar">
+            <div class="user-initials" style="background-color: {getUserColor()};">
+              {getUserInitials()}
+            </div>
           </div>
-        </div>
-        {#if !isCollapsed}
-          <div class="user-info">
-            <span class="user-name">{user?.name || 'User'}</span>
-          </div>
-          <svg class="dropdown-arrow" class:rotated={showUserMenu} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6,15 12,9 18,15"/>
-          </svg>
-        {/if}
-      </button>
+          {#if !isCollapsed}
+            <div class="user-info">
+              <span class="user-name">{user?.name || 'User'}</span>
+            </div>
+            <svg class="dropdown-arrow" class:rotated={showUserMenu} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6,15 12,9 18,15"/>
+            </svg>
+          {/if}
+        </button>
+      </div>
     </div>
   </div>
 </aside>
@@ -446,17 +460,17 @@
 
 {#if showUserMenu}
   <div class="user-menu-dropdown">
-    <button class="user-menu-item">
-      <span class="menu-item-icon">⚙️</span>
-      <span class="menu-item-label">Settings</span>
+    <button class="menu-item">
+      <span class="user-menu-icon">⚙️</span>
+      <span>Settings</span>
     </button>
-    <button class="user-menu-item logout-item" onclick={handleLogout}>
-      <svg class="menu-item-icon logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <button class="menu-item menu-item--danger" onclick={handleLogout}>
+      <svg class="user-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
         <polyline points="16,17 21,12 16,7"/>
         <line x1="21" y1="12" x2="9" y2="12"/>
       </svg>
-      <span class="menu-item-label">Sign out</span>
+      <span>Sign out</span>
     </button>
   </div>
 {/if}
@@ -498,7 +512,7 @@
 {/if}
 
 <style>
-  /* ===== Sidebar Container ===== */
+  /* ===== Sidebar Container (Layer 1 - floats above main content) ===== */
   .sidebar {
     position: fixed;
     left: 0;
@@ -511,31 +525,54 @@
     overflow-y: auto;
     overflow-x: hidden;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Liquid Glass Layer 1 - Primary navigation surface */
     background: var(--bg-primary);
     border-right: 1px solid var(--glass-stroke-dark);
-    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--glass-shadow-dark);
   }
 
   .sidebar.collapsed {
     width: 72px;
   }
 
-  /* Custom scrollbar */
+  /* Hide sidebar scrollbar - only chat-list-section should scroll */
   .sidebar::-webkit-scrollbar {
-    width: 4px;
+    display: none;
   }
 
-  .sidebar::-webkit-scrollbar-track {
-    background: transparent;
+  .sidebar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
   }
 
-  .sidebar::-webkit-scrollbar-thumb {
-    background: var(--glass-stroke-light);
-    border-radius: 2px;
+  /* ===== Elevated Sections (Liquid Glass Layer 2 - floats above sidebar content) ===== */
+  .sidebar-elevated-top,
+  .sidebar-elevated-bottom {
+    position: relative;
+    z-index: 2;
+
+    /* Liquid Glass Layer 2 - Subtle elevation using glass background */
+    background: var(--glass-bg-light);
   }
 
-  .sidebar::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
+  .sidebar-elevated-top {
+    /* Soft downward shadow with highlight edge */
+    box-shadow:
+      0 4px 16px -8px rgba(0, 0, 0, 0.15),
+      var(--glass-highlight);
+  }
+
+  .sidebar-elevated-bottom {
+    margin-top: auto;
+    /* Soft upward shadow with highlight edge */
+    box-shadow:
+      0 -4px 16px -8px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .sidebar-divider {
+    display: none;
   }
 
   /* ===== Sidebar Header ===== */
@@ -698,7 +735,6 @@
     background: transparent;
     color: var(--text-secondary);
     font-size: 0.875rem;
-    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: left;
@@ -710,6 +746,7 @@
   .sidebar-item:hover {
     background: var(--btn-tertiary);
     color: var(--text-primary);
+    font-weight: 500;
     border-radius: var(--radius-md);
   }
 
@@ -757,6 +794,15 @@
     margin-bottom: var(--space-sm);
   }
 
+  .chat-list-section {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: transparent transparent; /* Firefox - hidden by default */
+  }
+
+  .chat-list-section:hover {
+    scrollbar-color: var(--glass-stroke-light) transparent; /* Firefox - show on hover */
+  }
+
   .chat-list-section::-webkit-scrollbar {
     width: 4px;
   }
@@ -766,13 +812,18 @@
   }
 
   .chat-list-section::-webkit-scrollbar-thumb {
-    background: var(--glass-stroke-light);
+    background: transparent;
     border-radius: 2px;
+    transition: background 0.2s ease;
+  }
+
+  .chat-list-section:hover::-webkit-scrollbar-thumb {
+    background: var(--glass-stroke-light);
   }
 
   .chat-section-title {
     padding: var(--space-sm) var(--space-md);
-    margin-bottom: var(--space-xs);
+    margin-top: var(--space-sm);
   }
 
   .chat-section-title span {
@@ -797,38 +848,8 @@
 
   .chat-item-btn {
     flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding: var(--space-sm) var(--space-md);
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    border-radius: 0;
-    transition: all 0.2s ease;
-    text-align: left;
-    font-size: 0.8125rem;
     min-width: 0;
-    box-shadow: none;
-    backdrop-filter: none;
-  }
-
-  .chat-item-btn:hover {
-    background: var(--btn-tertiary);
-    color: var(--text-primary);
-    border-radius: var(--radius-sm);
-  }
-
-  .chat-item-btn.selected {
-    background: transparent;
-    color: var(--brand);
-    font-weight: 500;
-  }
-
-  .chat-item-btn.selected:hover {
-    background: var(--btn-tertiary);
-    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
   }
 
   .chat-item-title {
@@ -883,25 +904,6 @@
     animation: slideUp 0.15s ease;
   }
 
-  .chat-dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    border: none;
-    background: transparent;
-    color: var(--text-primary);
-    cursor: pointer;
-    font-size: 0.8125rem;
-    transition: all 0.15s ease;
-    border-radius: var(--radius-sm);
-  }
-
-  .chat-dropdown-item:hover {
-    background: var(--btn-tertiary);
-    color: var(--brand-red);
-  }
 
   .chat-empty {
     padding: var(--space-xl) var(--space-md);
@@ -912,8 +914,11 @@
 
   /* ===== Sidebar Footer ===== */
   .sidebar-footer {
+    padding: var(--space-sm) var(--space-lg);
+  }
+
+  .collapsed .sidebar-footer {
     padding: var(--space-sm);
-    margin-top: auto;
   }
 
   .user-menu-container {
@@ -922,7 +927,7 @@
 
   .user-menu-trigger {
     width: 100%;
-    padding: var(--space-sm) var(--space-md);
+    padding: 0;
     background: transparent;
     border-radius: var(--radius-md);
     justify-content: flex-start;
@@ -930,17 +935,17 @@
   }
 
   .user-menu-trigger:hover {
-    background: var(--btn-secondary);
+    background: transparent;
   }
 
   .collapsed .user-menu-trigger {
     justify-content: center;
-    padding: var(--space-sm);
+    padding: 0;
   }
 
   .user-avatar {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     overflow: hidden;
     display: flex;
@@ -955,7 +960,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
     font-weight: 600;
     color: white;
     text-transform: uppercase;
@@ -1002,13 +1007,22 @@
   /* ===== User Menu Dropdown ===== */
   .user-menu-dropdown {
     position: fixed;
-    bottom: 4rem;
-    left: var(--space-md);
+    bottom: 3rem;
+    left: var(--space-lg);
     min-width: 200px;
-    background: var(--bg-primary);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-md);
-    box-shadow: var(--glass-shadow-emphasis);
+    background: color-mix(in oklab, var(--bg-primary) 85%, var(--btn-secondary));
+    backdrop-filter: blur(calc(var(--glass-blur) * 1.5)) saturate(1.5);
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.5)) saturate(1.5);
+    border: 1px solid var(--glass-stroke-light);
+    border-radius: var(--radius-lg);
+    box-shadow:
+      0 0 0 1px var(--glass-edge-glow),
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      0 12px 28px rgba(0, 0, 0, 0.2),
+      0 20px 48px rgba(0, 0, 0, 0.15),
+      var(--glass-highlight),
+      inset 0 0 20px rgba(255, 255, 255, 0.02);
+    padding: var(--space-sm);
     overflow: hidden;
     animation: slideUpFade 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 10001;
@@ -1025,36 +1039,7 @@
     }
   }
 
-  .user-menu-item {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
-    border-radius: 0;
-    box-shadow: none;
-    backdrop-filter: none;
-  }
-
-  .user-menu-item:hover {
-    background: var(--btn-tertiary);
-    color: var(--text-primary);
-    border-radius: var(--radius-sm);
-  }
-
-  .user-menu-item.logout-item:hover {
-    background: var(--danger-surface);
-    color: var(--brand-red);
-  }
-
-  .menu-item-icon {
+  .user-menu-icon {
     width: 18px;
     height: 18px;
     display: flex;
@@ -1063,19 +1048,10 @@
     flex-shrink: 0;
   }
 
-  .logout-icon {
-    width: 18px;
-    height: 18px;
-  }
-
-  .menu-item-label {
-    font-weight: 500;
-  }
-
   /* ===== Inline Search ===== */
   .chat-search-wrapper {
-    padding: 0 var(--space-sm);
-    margin-bottom: var(--space-sm);
+    padding: 0 var(--space-md);
+    margin-top: var(--space-sm);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
