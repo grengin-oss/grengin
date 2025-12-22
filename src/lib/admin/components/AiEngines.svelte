@@ -42,6 +42,12 @@
   }
 
   async function toggleEngineStatus(engine: AIEngine) {
+    // Prevent disabling default engine
+    if (engine.is_default && engine.is_enabled) {
+      toast.error("Cannot disable the default engine. Please set another engine as default first.");
+      return;
+    }
+
     try {
       await updateAIEngine(engine.engine_key, {
         is_enabled: !engine.is_enabled,
@@ -92,9 +98,27 @@
   async function handleConfigSubmit() {
     if (!selectedEngine) return;
 
-    // Validate: default model is required when API key is configured
-    if (selectedEngine.api_key_configured && !formData.default_model) {
+    // Validate: at least one model must be whitelisted if API key is configured
+    if (selectedEngine.api_key_configured && formData.whitelisted_models.length === 0) {
+      toast.error("Please whitelist at least one model");
+      return;
+    }
+
+    // Validate: default model is required when models are whitelisted
+    if (selectedEngine.api_key_configured && formData.whitelisted_models.length > 0 && !formData.default_model) {
       toast.error("Please select a default model for this engine");
+      return;
+    }
+
+    // Validate: default engine must remain enabled
+    if (formData.is_default && !formData.is_enabled) {
+      toast.error("Cannot disable the default engine");
+      return;
+    }
+
+    // Validate: default model must be in whitelisted models
+    if (formData.default_model && !formData.whitelisted_models.includes(formData.default_model)) {
+      toast.error("The default model must be included in the whitelisted models");
       return;
     }
 
@@ -121,13 +145,29 @@
   }
 
   function toggleModelSelection(modelId: string) {
+    // Prevent unchecking the default model
+    if (modelId === formData.default_model && formData.whitelisted_models.includes(modelId)) {
+      toast.error("Cannot remove the default model from the whitelist. Please change the default model first.");
+      return;
+    }
+
     const index = formData.whitelisted_models.indexOf(modelId);
     if (index > -1) {
       formData.whitelisted_models = formData.whitelisted_models.filter(
         (id) => id !== modelId,
       );
+      
+      // If we removed a model and default becomes invalid, clear default
+      if (formData.default_model && !formData.whitelisted_models.includes(formData.default_model)) {
+        formData.default_model = null;
+      }
     } else {
       formData.whitelisted_models = [...formData.whitelisted_models, modelId];
+      
+      // Auto-select first model as default if none is set
+      if (!formData.default_model && formData.whitelisted_models.length === 1) {
+        formData.default_model = modelId;
+      }
     }
   }
 
@@ -136,11 +176,22 @@
       formData.whitelisted_models = availableModels.models.map(
         (m) => m.model_id,
       );
+      
+      // Auto-select first model as default if none is set
+      if (!formData.default_model && formData.whitelisted_models.length > 0) {
+        formData.default_model = formData.whitelisted_models[0];
+      }
     }
   }
 
   function deselectAllModels() {
-    formData.whitelisted_models = [];
+    // Keep the default model in the whitelist
+    if (formData.default_model) {
+      formData.whitelisted_models = [formData.default_model];
+      toast.error("Default model must remain whitelisted");
+    } else {
+      formData.whitelisted_models = [];
+    }
   }
 
   // Helper to get engine status
@@ -228,8 +279,11 @@
               <button
                 class="status-toggle"
                 class:active={engine.is_enabled}
+                class:disabled={isDefault}
                 onclick={() => toggleEngineStatus(engine)}
                 aria-label={engine.is_enabled ? "Enabled" : "Disabled"}
+                disabled={isDefault}
+                title={isDefault ? "Cannot disable default engine" : ""}
               >
                 <span class="toggle-slider"></span>
               </button>
@@ -433,16 +487,24 @@
             {:else if availableModels && availableModels.models.length > 0}
               <div class="models-list">
                 {#each availableModels.models as model}
-                  <label class="model-item">
+                  {@const isDefaultModel = model.model_id === formData.default_model}
+                  <label class="model-item" class:is-default={isDefaultModel}>
                     <input
                       type="checkbox"
                       checked={formData.whitelisted_models.includes(
                         model.model_id,
                       )}
+                      disabled={isDefaultModel}
                       onchange={() => toggleModelSelection(model.model_id)}
+                      title={isDefaultModel ? "Default model must remain whitelisted" : ""}
                     />
                     <div class="model-info">
-                      <span class="model-name">{model.model_id}</span>
+                      <span class="model-name">
+                        {model.model_id}
+                        {#if isDefaultModel}
+                          <span class="default-model-badge">Default</span>
+                        {/if}
+                      </span>
                       <span class="model-meta">{model.display_name}</span>
                     </div>
                   </label>
@@ -453,21 +515,37 @@
               <div class="form-section">
                 <div class="form-group">
                   <label for="default-model-select">Default Model for this Engine</label>
-                  <select
-                    id="default-model-select"
-                    bind:value={formData.default_model}
-                    required
-                  >
-                    {#each availableModels.models as model}
-                      <option value={model.model_id}
-                        >{model.display_name}</option
+                  {#if formData.whitelisted_models.length > 0}
+                    <select
+                      id="default-model-select"
+                      bind:value={formData.default_model}
+                      required
+                    >
+                      {#each availableModels.models.filter(m => formData.whitelisted_models.includes(m.model_id)) as model}
+                        <option value={model.model_id}
+                          >{model.display_name}</option
+                        >
+                      {/each}
+                    </select>
+                    <span class="form-hint"
+                      >This model will be used by default when this engine is
+                      selected. Only whitelisted models are available.</span
+                    >
+                  {:else}
+                    <div class="form-notice warning">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
                       >
-                    {/each}
-                  </select>
-                  <span class="form-hint"
-                    >This model will be used by default when this engine is
-                    selected.</span
-                  >
+                        <path d="M13.73 4a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>
+                      <p>Please whitelist at least one model before selecting a default model.</p>
+                    </div>
+                  {/if}
                 </div>
               </div>
 
@@ -516,14 +594,24 @@
               type="button"
               class="status-toggle"
               class:active={formData.is_enabled}
-              onclick={() => (formData.is_enabled = !formData.is_enabled)}
+              class:disabled={formData.is_default}
+              onclick={() => {
+                if (!formData.is_default) {
+                  formData.is_enabled = !formData.is_enabled;
+                }
+              }}
               aria-label={formData.is_enabled ? "Enabled" : "Disabled"}
+              disabled={formData.is_default}
+              title={formData.is_default ? "Cannot disable default engine" : ""}
             >
               <span class="toggle-slider"></span>
             </button>
             <span class="status-label"
               >{formData.is_enabled ? "Enabled" : "Disabled"}</span
             >
+            {#if formData.is_default}
+              <span class="status-hint">(Default engine must remain enabled)</span>
+            {/if}
           </div>
         </div>
 
@@ -688,6 +776,17 @@
 
   .status-toggle.active .toggle-slider {
     transform: translateX(1.25rem);
+  }
+
+  .status-toggle:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .status-hint {
+    font-size: 0.75rem;
+    color: #f59e0b;
+    font-style: italic;
   }
 
   .provider-details {
@@ -875,6 +974,21 @@
     accent-color: var(--brand);
   }
 
+  .model-item input[type="checkbox"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .model-item.is-default {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.2);
+  }
+
+  .model-item.is-default:hover {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
   .model-info {
     display: flex;
     flex-direction: column;
@@ -886,6 +1000,22 @@
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .default-model-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem var(--space-xs);
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--brand);
+    border-radius: var(--radius-sm);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 
   .model-meta {
@@ -909,6 +1039,12 @@
     border: 1px solid rgba(59, 130, 246, 0.2);
     border-radius: var(--radius-md);
     color: var(--brand);
+  }
+
+  .form-notice.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
   }
 
   .form-notice svg {
