@@ -271,6 +271,7 @@ export interface components {
             created_at?: string;
             /** Format: date-time */
             updated_at?: string;
+            role?: string;
         };
         Conversation: {
             /** Format: uuid */

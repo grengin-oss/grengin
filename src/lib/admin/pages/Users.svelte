@@ -15,6 +15,8 @@
   let filterRole = $state("");
   let filterStatus = $state("");
   let filterDepartment = $state("");
+  let debounceTimeout: number | null = null;
+  let filtersOpen = $state(false);
 
   // Form state
   let formData = $state({
@@ -46,6 +48,13 @@
       status: filterStatus,
       department: filterDepartment,
     });
+  }
+
+  function applyFiltersDebounced() {
+    if (debounceTimeout) clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+      applyFilters();
+    }, 500); // ms
   }
 
   function clearFilters() {
@@ -125,7 +134,7 @@
 
   async function toggleUserStatus(user: User) {
     const newStatus = user.status === 'active' ? 'deactivated' : 'active';
-    
+
     try {
       await usersStore.updateStatus(user.id, newStatus);
       toast.success(`User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
@@ -153,20 +162,71 @@
 
   <!-- Filters -->
   <div class="filters-section">
-    <div class="filters-grid">
+    <button
+      class="filter-toggle-btn"
+      onclick={() => (filtersOpen = !filtersOpen)}
+      aria-label={filtersOpen ? "Close filters" : "Open filters"}
+    >
+      {#if filtersOpen}
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M10 6l-5 5M10 6l5 5"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      {:else}
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M2.5 5h15M5 10h10M7.5 15h5"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+          <circle cx="15" cy="5" r="2" fill="currentColor" />
+          <circle cx="10" cy="10" r="2" fill="currentColor" />
+          <circle cx="5" cy="15" r="2" fill="currentColor" />
+        </svg>
+        Filters
+      {/if}
+    </button>
+    <div class="filters-grid" class:open={filtersOpen}>
       <input
         type="text"
         placeholder="Search by name..."
         bind:value={searchQuery}
-        onkeyup={(e) => e.key === "Enter" && applyFilters()}
+        oninput={applyFiltersDebounced}
         class="filter-input"
       />
-      <select bind:value={filterRole} class="filter-select">
+      <select
+        bind:value={filterRole}
+        class="filter-select"
+        onchange={applyFilters}
+      >
         <option value="">All Roles</option>
+        <option value="superadmin">Super Admin</option>
         <option value="admin">Admin</option>
         <option value="user">User</option>
       </select>
-      <select bind:value={filterStatus} class="filter-select">
+      <select
+        bind:value={filterStatus}
+        class="filter-select"
+        onchange={applyFilters}
+      >
         <option value="">All Statuses</option>
         <option value="active">Active</option>
         <option value="deactivated">Deactivated</option>
@@ -178,10 +238,9 @@
         onkeyup={(e) => e.key === "Enter" && applyFilters()}
         class="filter-input"
       />
-    </div>
-    <div class="filters-actions">
-      <button class="btn-primary" onclick={applyFilters}>Apply Filters</button>
-      <button class="btn" onclick={clearFilters}>Clear</button>
+      <button class="btn-secondary reset-btn" onclick={clearFilters}
+        >Reset</button
+      >
     </div>
   </div>
 
@@ -218,12 +277,12 @@
                   <label class="status-switch">
                     <input
                       type="checkbox"
-                      checked={user.status === 'active'}
+                      checked={user.status === "active"}
                       onchange={() => toggleUserStatus(user)}
                     />
                     <span class="status-slider"></span>
                     <span class="status-label">
-                      {user.status === 'active' ? 'Active' : 'Deactivated'}
+                      {user.status === "active" ? "Active" : "Deactivated"}
                     </span>
                   </label>
                 {:else}
@@ -421,7 +480,6 @@
       </form>
     {/snippet}
   </Modal>
-
 </div>
 
 <style>
@@ -440,7 +498,36 @@
     background: rgba(var(--glass-tint), 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-lg);
-    margin-bottom: var(--space-xl);
+    position: relative;
+  }
+
+  .filter-toggle-btn {
+    display: none;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--button-bg);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: var(--space-lg);
+    margin-left: auto;
+  }
+
+  .filter-toggle-btn:hover {
+    background: var(--btn-secondary);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+  }
+
+  .filter-toggle-btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
   }
 
   .filters-grid {
@@ -503,6 +590,10 @@
     border-radius: var(--radius-sm);
     transition: all 0.2s ease;
     font-size: 1rem;
+  }
+
+  .reset-btn {
+    max-width: 100px;
   }
 
   .action-btn:hover {
@@ -625,8 +716,35 @@
   }
 
   @media (max-width: 768px) {
+    .filters-section {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .filter-toggle-btn {
+      display: flex;
+      align-self: flex-end;
+      margin-bottom: var(--space-lg);
+    }
+
     .filters-grid {
       grid-template-columns: 1fr;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      margin-bottom: 0;
+      padding: 2px;
+      transform: translateY(-10px);
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .filters-grid.open {
+      max-height: 1000px;
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .filters-actions {
@@ -639,4 +757,3 @@
     }
   }
 </style>
-

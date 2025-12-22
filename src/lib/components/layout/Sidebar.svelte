@@ -547,10 +547,12 @@
       <span class="user-menu-icon">⚙️</span>
       <span>Settings</span>
     </button>
-    <a href="/admin/users" class="menu-item">
-      <span class="menu-item-icon">🔒</span>
-      <span class="menu-item-label">Admin</span>
-    </a>
+    {#if user?.role && (user?.role === 'superadmin' || user?.role === 'admin')}
+      <a href="/admin/users" class="menu-item">
+        <span class="menu-item-icon">🔒</span>
+        <span class="menu-item-label">Admin</span>
+      </a>
+    {/if}
     <button class="menu-item menu-item--danger" onclick={handleLogout}>
       <svg class="user-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>

@@ -30,7 +30,6 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-xl);
-    margin-bottom: var(--space-3xl);
     padding-bottom: var(--space-xl);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }

@@ -1,7 +1,7 @@
 // Users Store - User management state using Svelte 5 runes
 import type { User } from '../types.js';
-import { getUsers, createUser, updateUser, updateUserStatus } from '../../api/adminUsers.js';
-import type { CreateUserData, GetUsersParams } from '../../api/adminUsers.js';
+import { getUsers, createUser, updateUser, updateUserStatus } from '../../api/admin/users.js';
+import type { CreateUserData, GetUsersParams } from '../../api/admin/users.js';
 
 interface UsersFilters {
   search: string;

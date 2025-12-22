@@ -1,5 +1,5 @@
-import { request } from './client.js';
-import type { User, PaginatedUsers } from '../admin/types.js';
+import { request } from '../client.js';
+import type { User, PaginatedUsers } from '../../admin/types.js';
 
 export interface GetUsersParams {
   limit?: number;
@@ -30,7 +30,7 @@ function buildQueryString(params?: Record<string, string | number | undefined>):
 }
 
 export async function getUsers(params?: GetUsersParams): Promise<PaginatedUsers> {
-  return request<PaginatedUsers>(`/admin/users${buildQueryString(params)}`);
+  return request<PaginatedUsers>(`/admin/users${buildQueryString(params as Record<string, string | number | undefined>)}`);
 }
 
 export async function getUser(userId: string): Promise<User> {
