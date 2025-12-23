@@ -10,4 +10,4 @@ export * from './adminDashboard.js';
 export * from './adminUsers.js';
 export * from './adminSettings.js';
 export * from './adminAudit.js';
-export * from './adminAiEngines.js';
+export * from './admin/AiEngines.js';

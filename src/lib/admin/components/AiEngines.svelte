@@ -14,7 +14,7 @@
     validateAIEngineKey,
     getAIEngineModels,
     deleteAIEngineKey,
-  } from "../../api/adminAiEngines.js";
+  } from "../../api/admin/AiEngines.js";
 
   let engines = $state<AIEngine[]>([]);
   let loading = $state(true);

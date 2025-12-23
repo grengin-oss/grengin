@@ -1,5 +1,5 @@
-import { request } from './client.js';
-import type { AIEngine, AIEngineModels } from '../admin/types.js';
+import { request } from '../client.js';
+import type { AIEngine, AIEngineModels } from '../../admin/types.js';
 
 export async function getAIEngines(): Promise<AIEngine[]> {
   const response = await request<AIEngine[]>('/admin/ai-engines', {
