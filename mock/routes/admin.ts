@@ -130,6 +130,31 @@ router.put('/admin/ai-engines/:engineKey', requireAuth, (req, res) => {
   res.json(updated)
 })
 
+// Add/replace API key for an engine
+router.post('/admin/ai-engines/:engineKey/api-key', requireAuth, (req, res) => {
+  const engine = aiEngines.get(req.params.engineKey)
+  if (!engine) {
+    return res.status(404).json({ detail: 'AI engine not found' })
+  }
+
+  if (!req.body?.api_key) {
+    return res.status(400).json({ detail: 'API key is required' })
+  }
+
+  const updated: AIEngineDetail = {
+    ...engine,
+    api_key_configured: true,
+    api_key_status: 'untested',
+    api_key_preview: '...' + String(req.body.api_key).slice(-4),
+    api_key_last_validated_at: null,
+    is_enabled: true,
+    updated_at: new Date().toISOString(),
+  }
+
+  aiEngines.set(req.params.engineKey, updated)
+  res.status(201).json(updated)
+})
+
 router.post('/admin/ai-engines/:engineKey/validate', requireAuth, (req, res) => {
   const engine = aiEngines.get(req.params.engineKey)
   if (!engine) {

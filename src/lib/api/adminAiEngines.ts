@@ -21,7 +21,8 @@ export async function updateAIEngine(
     is_enabled?: boolean;
     api_key?: string;
     whitelisted_models?: string[];
-    default_model?: string;
+    default_model?: string | null;
+    is_default?: boolean;
   }
 ): Promise<AIEngine> {
   const response = await request<AIEngine>(`/admin/ai-engines/${engineKey}`, {
@@ -46,6 +47,14 @@ export async function validateAIEngineKey(
 export async function getAIEngineModels(engineKey: string): Promise<AIEngineModels> {
   const response = await request<AIEngineModels>(`/admin/ai-engines/${engineKey}/models`, {
     method: 'GET',
+  });
+  return response;
+}
+
+export async function addAIEngineKey(engineKey: string, apiKey: string): Promise<AIEngine> {
+  const response = await request<AIEngine>(`/admin/ai-engines/${engineKey}/api-key`, {
+    method: 'POST',
+    body: JSON.stringify({ api_key: apiKey }),
   });
   return response;
 }
