@@ -71,6 +71,16 @@
     tbody tr:hover {
       background: rgba(var(--glass-tint), 0.03);
     }
+
+    @media (max-width: 768px) {
+      .admin-table-card {
+        flex-shrink: 0;
+      }
+
+      .table-scroll {
+        max-height: none;
+      }
+    }
   }
 </style>
 

@@ -164,6 +164,7 @@
   <div class="filters-section">
     <button
       class="filter-toggle-btn"
+      class:open={filtersOpen}
       onclick={() => (filtersOpen = !filtersOpen)}
       aria-label={filtersOpen ? "Close filters" : "Open filters"}
     >
@@ -495,6 +496,7 @@
 
   .filters-section {
     padding: var(--space-xl);
+    margin: var(--space-md) 0;
     background: rgba(var(--glass-tint), 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-lg);
@@ -514,7 +516,6 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-bottom: var(--space-lg);
     margin-left: auto;
   }
 
@@ -534,7 +535,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: var(--space-md);
-    margin-bottom: var(--space-lg);
   }
 
   .filter-input,
@@ -724,7 +724,11 @@
     .filter-toggle-btn {
       display: flex;
       align-self: flex-end;
-      margin-bottom: var(--space-lg);
+    }
+
+    .filter-toggle-btn.open {
+      padding: var(--space-md);
+      margin-bottom: var(--space-md);
     }
 
     .filters-grid {
@@ -752,7 +756,6 @@
     }
 
     .pagination {
-      flex-direction: column;
       gap: var(--space-md);
     }
   }
