@@ -9,6 +9,7 @@
   import Toaster from './lib/components/Toaster.svelte';
   import grenginLogo from './assets/grengin-logo.svg';
   import Users from './lib/admin/pages/Users.svelte';
+import Settings from './lib/admin/pages/Settings.svelte';
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
@@ -143,6 +144,7 @@
         <Route path="/chat"><Chat /></Route>
         <Route path="/chat/:id"><Chat /></Route>
         <Route path="/admin/users"><Users /></Route>
+        <Route path="/admin/settings"><Settings /></Route>
       </div>
     </main>
   {/if}
