@@ -2001,6 +2001,8 @@ export interface components {
              *     Empty array means all models from this engine are allowed.
              */
             whitelisted_models?: string[];
+            /** @description Whether this engine is the default engine for the organization */
+            is_default?: boolean;
             /** @description Default model for this engine */
             default_model?: string | null;
             /** Format: date-time */
