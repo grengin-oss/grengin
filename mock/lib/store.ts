@@ -87,7 +87,9 @@ export const seedData = () => {
   })
 
   // Seed AI engine data from examples
-  aiEnginesExample.forEach((engine) => {
-    aiEngines.set(engine.engine_key, engine as AIEngineDetail)
-  })
+  if (aiEnginesExample && Array.isArray(aiEnginesExample)) {
+    aiEnginesExample.forEach((engine) => {
+      aiEngines.set(engine.engine_key, engine as AIEngineDetail)
+    })
+  }
 }
