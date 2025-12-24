@@ -25,29 +25,37 @@
   }
 
   .spinner {
-    border: 3px solid rgba(var(--brand-rgb), 0.1);
-    border-top-color: var(--brand);
+    display: block;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+    border-style: solid;
+    border-color: rgba(64, 121, 197, 0.2);
+    border-top-color: #4079c5;
   }
 
   .spinner-sm {
     width: 1rem;
     height: 1rem;
+    border-width: 2px;
   }
 
   .spinner-md {
-    width: 2rem;
-    height: 2rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-width: 3px;
   }
 
   .spinner-lg {
-    width: 3rem;
-    height: 3rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-width: 4px;
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .loading-text {
