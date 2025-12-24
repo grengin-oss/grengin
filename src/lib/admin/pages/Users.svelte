@@ -7,6 +7,7 @@
   import Modal from "../components/Modal.svelte";
   import { toast } from "../../components/Toaster.svelte";
   import type { User } from "../types.js";
+  import UserRow from "../components/UserRow.svelte";
 
   let isCreateModalOpen = $state(false);
   let isEditModalOpen = $state(false);
@@ -30,7 +31,7 @@
   let isSubmitting = $state(false);
 
   onMount(() => {
-    usersStore.fetch();
+    usersStore.fetchUsers();
   });
 
   // Handle errors with toast
@@ -133,13 +134,15 @@
   }
 
   async function toggleUserStatus(user: User) {
-    const newStatus = user.status === 'active' ? 'deactivated' : 'active';
+    const newStatus = user.status === "active" ? "deactivated" : "active";
 
     try {
       await usersStore.updateStatus(user.id, newStatus);
-      toast.success(`User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
+      toast.success(
+        `User ${newStatus === "active" ? "activated" : "deactivated"} successfully`,
+      );
     } catch (err: any) {
-      toast.error(err.detail?.message || 'Failed to update user status');
+      throw err;
     }
   }
 
@@ -147,7 +150,9 @@
     usersStore.setPage(page);
   }
 
-  const currentPage = $derived(Math.floor(usersStore.offset / usersStore.limit));
+  const currentPage = $derived(
+    Math.floor(usersStore.offset / usersStore.limit),
+  );
   const totalPages = $derived(Math.ceil(usersStore.total / usersStore.limit));
 </script>
 
@@ -264,49 +269,7 @@
         </thead>
         <tbody>
           {#each usersStore.users as user (user.id)}
-            <tr>
-              <td>{user.name || "-"}</td>
-              <td>{user.email}</td>
-              <td>
-                <span class="role-badge {user.role}">
-                  {user.role || "user"}
-                </span>
-              </td>
-              <td>{user.department || "-"}</td>
-              <td>
-                {#if !user.is_super_admin}
-                  <label class="status-switch">
-                    <input
-                      type="checkbox"
-                      checked={user.status === "active"}
-                      onchange={() => toggleUserStatus(user)}
-                    />
-                    <span class="status-slider"></span>
-                    <span class="status-label">
-                      {user.status === "active" ? "Active" : "Deactivated"}
-                    </span>
-                  </label>
-                {:else}
-                  <span class="status-badge active">Active</span>
-                {/if}
-              </td>
-              <td
-                >{user.created_at
-                  ? new Date(user.created_at).toLocaleDateString()
-                  : "-"}</td
-              >
-              <td>
-                <div class="actions">
-                  <button
-                    class="action-btn edit"
-                    onclick={() => openEditModal(user)}
-                    title="Edit user"
-                  >
-                    ✏️
-                  </button>
-                </div>
-              </td>
-            </tr>
+            <UserRow {user} {toggleUserStatus} {openEditModal} />
           {:else}
             <tr>
               <td colspan="7" class="empty-state">No users found</td>
@@ -542,63 +505,8 @@
     width: 100%;
   }
 
-  .filters-actions {
-    display: flex;
-    gap: var(--space-md);
-  }
-
-  .role-badge,
-  .status-badge {
-    display: inline-block;
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-sm);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-
-  .role-badge.admin {
-    background: rgba(var(--brand-rgb), 0.15);
-    color: var(--brand);
-  }
-
-  .role-badge.user {
-    background: rgba(var(--glass-tint), 0.1);
-    color: var(--text-secondary);
-  }
-
-  .status-badge.active {
-    background: rgba(var(--brand-green-rgb), 0.15);
-    color: var(--brand-green);
-  }
-
-  .status-badge.deactivated {
-    background: rgba(var(--brand-red-rgb), 0.15);
-    color: var(--brand-red);
-  }
-
-  .actions {
-    display: flex;
-    gap: var(--space-sm);
-  }
-
-  .action-btn {
-    padding: var(--space-xs) var(--space-sm);
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: all 0.2s ease;
-    font-size: 1rem;
-  }
-
   .reset-btn {
     max-width: 100px;
-  }
-
-  .action-btn:hover {
-    background: rgba(var(--glass-tint), 0.08);
-    transform: scale(1.1);
   }
 
   .empty-state {
@@ -659,62 +567,6 @@
     border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  /* Status Switch */
-  .status-switch {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    cursor: pointer;
-    position: relative;
-  }
-
-  .status-switch input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .status-slider {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 24px;
-    background: rgba(143, 143, 143, 0.2);
-    border-radius: 24px;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-  }
-
-  .status-slider::before {
-    content: '';
-    position: absolute;
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    top: 3px;
-    background: var(--brand-red);
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-
-  .status-switch input:checked + .status-slider::before {
-    background: var(--brand-green);
-    transform: translateX(20px);
-  }
-
-  .status-label {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    min-width: 90px;
-  }
-
-  .status-switch:hover .status-slider {
-    opacity: 0.9;
-  }
-
   @media (max-width: 768px) {
     .filters-section {
       display: flex;
@@ -739,7 +591,8 @@
       margin-bottom: 0;
       padding: 2px;
       transform: translateY(-10px);
-      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      transition:
+        max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
         opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
         transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
         margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -749,10 +602,6 @@
       max-height: 1000px;
       opacity: 1;
       transform: translateY(0);
-    }
-
-    .filters-actions {
-      flex-direction: column;
     }
 
     .pagination {

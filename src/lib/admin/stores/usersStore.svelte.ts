@@ -25,27 +25,39 @@ function createUsersStore() {
   });
 
   async function fetch() {
+    const params: GetUsersParams = {
+      limit,
+      offset,
+    };
+
+    if (filters.search) params.search = filters.search;
+    if (filters.role) params.role = filters.role;
+    if (filters.status) params.status = filters.status;
+    if (filters.department) params.department = filters.department;
+
+    const data = await getUsers(params);
+    users = data.users;
+    total = data.total;
+  }
+
+  async function fetchUsers() {
     isLoading = true;
     error = null;
 
     try {
-      const params: GetUsersParams = {
-        limit,
-        offset,
-      };
-
-      if (filters.search) params.search = filters.search;
-      if (filters.role) params.role = filters.role;
-      if (filters.status) params.status = filters.status;
-      if (filters.department) params.department = filters.department;
-
-      const data = await getUsers(params);
-      users = data.users;
-      total = data.total;
+      await fetch();
     } catch (err: any) {
       error = err.message || 'Failed to fetch users';
     } finally {
       isLoading = false;
+    }
+  }
+
+  async function updateUsersInBackground() {
+    try {
+      await fetch();
+    } catch (err: any) {
+      error = err.message || 'Failed to fetch users';
     }
   }
 
@@ -58,23 +70,23 @@ function createUsersStore() {
     get error() { return error; },
     get filters() { return filters; },
 
-    fetch,
+    fetchUsers,
 
     async setFilters(newFilters: Partial<UsersFilters>) {
       filters = { ...filters, ...newFilters };
       offset = 0; // Reset to first page when filters change
-      return fetch();
+      return updateUsersInBackground();
     },
 
     async setPage(page: number) {
       offset = page * limit;
-      return fetch();
+      return fetchUsers();
     },
 
     async create(userData: CreateUserData) {
       try {
         await createUser(userData);
-        return fetch();
+        return updateUsersInBackground();
       } catch (err: any) {
         error = err.message || 'Failed to create user';
         throw err;
@@ -84,7 +96,7 @@ function createUsersStore() {
     async update(userId: string, updates: Partial<User>) {
       try {
         await updateUser(userId, updates);
-        return fetch();
+        return updateUsersInBackground();
       } catch (err: any) {
         error = err.message || 'Failed to update user';
         throw err;
@@ -94,7 +106,7 @@ function createUsersStore() {
     async updateStatus(userId: string, status: 'active' | 'deactivated') {
       try {
         await updateUserStatus(userId, status);
-        return fetch();
+        return updateUsersInBackground();
       } catch (err: any) {
         error = err.message || 'Failed to update user status';
         throw err;
