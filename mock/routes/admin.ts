@@ -137,11 +137,43 @@ router.put('/admin/ai-engines/:engineKey', requireAuth, (req, res) => {
     return res.status(404).json({ detail: 'AI engine not found' })
   }
 
+  // Prevent disabling a default engine
+  if (engine.is_default && req.body.is_enabled === false) {
+    return res.status(400).json({ 
+      detail: 'Cannot disable the default engine. Please set another engine as default first.' 
+    })
+  }
+
+  // Validate that default_model is in whitelisted_models
+  const defaultModel = req.body.default_model !== undefined ? req.body.default_model : engine.default_model
+  const whitelistedModels = req.body.whitelisted_models !== undefined ? req.body.whitelisted_models : engine.whitelisted_models
+  
+  if (defaultModel && whitelistedModels && !whitelistedModels.includes(defaultModel)) {
+    return res.status(400).json({
+      detail: 'The default model must be included in the whitelisted models.'
+    })
+  }
+
+  // If setting this engine as the default engine (is_default: true),
+  // unset all other engines as default
+  if (req.body.is_default === true) {
+    aiEngines.forEach((otherEngine, key) => {
+      if (key !== req.params.engineKey && otherEngine.is_default) {
+        aiEngines.set(key, {
+          ...otherEngine,
+          is_default: false,
+          updated_at: new Date().toISOString(),
+        })
+      }
+    })
+  }
+
   const updated: AIEngineDetail = {
     ...engine,
     ...(req.body.is_enabled !== undefined && { is_enabled: req.body.is_enabled }),
-    ...(req.body.whitelisted_models && { whitelisted_models: req.body.whitelisted_models }),
-    ...(req.body.default_model && { default_model: req.body.default_model }),
+    ...(req.body.whitelisted_models !== undefined && { whitelisted_models: req.body.whitelisted_models }),
+    ...(req.body.default_model !== undefined && { default_model: req.body.default_model }),
+    ...(req.body.is_default !== undefined && { is_default: req.body.is_default }),
     updated_at: new Date().toISOString(),
   }
 
