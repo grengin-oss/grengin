@@ -90,19 +90,15 @@
       is_default: engine.is_default || false,
     };
 
-    // Load available models if API key is configured
-    if (engine.api_key_configured) {
-      try {
-        loadingModels = true;
-        availableModels = await getAIEngineModels(engine.engine_key);
-      } catch (err: any) {
-        toast.error(err.message || "Failed to load models");
-        availableModels = null;
-      } finally {
-        loadingModels = false;
-      }
-    } else {
+    // Load available models
+    try {
+      loadingModels = true;
+      availableModels = await getAIEngineModels(engine.engine_key);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load models");
       availableModels = null;
+    } finally {
+      loadingModels = false;
     }
 
     // Initialize API key state
@@ -230,7 +226,6 @@
       apiKeyMode = "view";
       toast.success("API key added. Please validate to enable models.");
       await refreshSelectedEngine();
-      await loadModelsForSelected();
       apiKeyInput = "";
     } catch (err: any) {
       apiKeyStatus = "invalid";
@@ -257,7 +252,6 @@
       if (result.valid) {
         toast.success(apiKeyMessage);
         await refreshSelectedEngine();
-        await loadModelsForSelected();
       } else {
         toast.error(apiKeyMessage);
       }
@@ -278,7 +272,7 @@
     try {
       await deleteAIEngineKey(selectedEngine.engine_key);
       toast.success(
-        "API key removed. Engine disabled until a new key is added.",
+        "API key removed. Engine disabled.",
       );
       availableModels = null;
       apiKeyMode = "cta";
@@ -286,6 +280,7 @@
       apiKeyMessage = null;
       apiKeyDeleteConfirm = false;
       await refreshSelectedEngine();
+      await loadModelsForSelected();
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete API key");
     } finally {
@@ -639,6 +634,13 @@
                     autocomplete="off"
                     spellcheck="false"
                     aria-label="API Key"
+                    onkeydown={(e) => {
+                      if (e.key === "Enter") {
+                        // e.stopPropagation();
+                        e.preventDefault();
+                        handleAddOrUpdateApiKey();
+                      }
+                    }}
                   />
                   <button
                     type="button"
@@ -798,161 +800,145 @@
         </div>
 
         <!-- Models Section -->
-        {#if selectedEngine.api_key_configured}
-          <div class="form-section">
-            <div class="section-header">
-              <h4 class="form-section-title">Model Whitelist</h4>
-              <div class="bulk-actions">
-                <button
-                  type="button"
-                  class="btn-text success"
-                  onclick={selectAllModels}
+        <div class="form-section">
+          <div class="section-header">
+            <h4 class="form-section-title">Model Whitelist</h4>
+            <div class="bulk-actions">
+              <button
+                type="button"
+                class="btn-text success"
+                onclick={selectAllModels}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M9 11l3 3L22 4" />
-                    <path
-                      d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
-                    />
-                  </svg>
-                  Check All
-                </button>
-                <button
-                  type="button"
-                  class="btn-text danger"
-                  onclick={deselectAllModels}
+                  <path d="M9 11l3 3L22 4" />
+                  <path
+                    d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
+                  />
+                </svg>
+                Check All
+              </button>
+              <button
+                type="button"
+                class="btn-text danger"
+                onclick={deselectAllModels}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                </svg>
+                Uncheck All
+              </button>
+            </div>
+          </div>
+
+          {#if loadingModels}
+            <LoadingSpinner text="Loading models..." />
+          {:else if availableModels && availableModels.models.length > 0}
+            <div class="models-list">
+              {#each availableModels.models as model}
+                {@const isDefaultModel =
+                  model.model_id === formData.default_model}
+                <label class="model-item" class:is-default={isDefaultModel}>
+                  <input
+                    type="checkbox"
+                    checked={formData.whitelisted_models.includes(
+                      model.model_id,
+                    )}
+                    disabled={isDefaultModel}
+                    onchange={() => toggleModelSelection(model.model_id)}
+                    title={isDefaultModel
+                      ? "Default model must remain whitelisted"
+                      : ""}
+                  />
+                  <div class="model-info">
+                    <span class="model-name">
+                      {model.model_id}
+                      {#if isDefaultModel}
+                        <span class="default-model-badge">Default</span>
+                      {/if}
+                    </span>
+                    <span class="model-meta">{model.display_name}</span>
+                  </div>
+                </label>
+              {/each}
+            </div>
+
+            <!-- Default Model for this Engine -->
+            <div class="form-section">
+              <div class="form-group">
+                <label for="default-model-select"
+                  >Default Model for this Engine</label
+                >
+                {#if formData.whitelisted_models.length > 0}
+                  <select
+                    id="default-model-select"
+                    bind:value={formData.default_model}
+                    required
                   >
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <line x1="9" y1="9" x2="15" y2="15" />
-                    <line x1="15" y1="9" x2="9" y2="15" />
-                  </svg>
-                  Uncheck All
-                </button>
+                    {#each availableModels.models.filter( (m) => formData.whitelisted_models.includes(m.model_id), ) as model}
+                      <option value={model.model_id}
+                        >{model.display_name}</option
+                      >
+                    {/each}
+                  </select>
+                  <span class="form-hint"
+                    >This model will be used by default when this engine is
+                    selected. Only whitelisted models are available.</span
+                  >
+                {:else}
+                  <div class="form-notice warning">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        d="M13.73 4a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+                      />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                    <p>
+                      Please whitelist at least one model before selecting a
+                      default model.
+                    </p>
+                  </div>
+                {/if}
               </div>
             </div>
 
-            {#if loadingModels}
-              <LoadingSpinner text="Loading models..." />
-            {:else if availableModels && availableModels.models.length > 0}
-              <div class="models-list">
-                {#each availableModels.models as model}
-                  {@const isDefaultModel =
-                    model.model_id === formData.default_model}
-                  <label class="model-item" class:is-default={isDefaultModel}>
-                    <input
-                      type="checkbox"
-                      checked={formData.whitelisted_models.includes(
-                        model.model_id,
-                      )}
-                      disabled={isDefaultModel}
-                      onchange={() => toggleModelSelection(model.model_id)}
-                      title={isDefaultModel
-                        ? "Default model must remain whitelisted"
-                        : ""}
-                    />
-                    <div class="model-info">
-                      <span class="model-name">
-                        {model.model_id}
-                        {#if isDefaultModel}
-                          <span class="default-model-badge">Default</span>
-                        {/if}
-                      </span>
-                      <span class="model-meta">{model.display_name}</span>
-                    </div>
-                  </label>
-                {/each}
+            <!-- System Default Engine -->
+            <div class="default-engine-section">
+              <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" bind:checked={formData.is_default} />
+                  <span>Set as system default engine</span>
+                </label>
+                <span class="form-hint"
+                  >When enabled, this engine will be used for new conversations
+                  when no specific routing is set. Only one engine can be the
+                  system default at a time.</span
+                >
               </div>
-
-              <!-- Default Model for this Engine -->
-              <div class="form-section">
-                <div class="form-group">
-                  <label for="default-model-select"
-                    >Default Model for this Engine</label
-                  >
-                  {#if formData.whitelisted_models.length > 0}
-                    <select
-                      id="default-model-select"
-                      bind:value={formData.default_model}
-                      required
-                    >
-                      {#each availableModels.models.filter( (m) => formData.whitelisted_models.includes(m.model_id), ) as model}
-                        <option value={model.model_id}
-                          >{model.display_name}</option
-                        >
-                      {/each}
-                    </select>
-                    <span class="form-hint"
-                      >This model will be used by default when this engine is
-                      selected. Only whitelisted models are available.</span
-                    >
-                  {:else}
-                    <div class="form-notice warning">
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
-                        <path
-                          d="M13.73 4a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
-                        />
-                        <line x1="12" y1="9" x2="12" y2="13" />
-                        <line x1="12" y1="17" x2="12.01" y2="17" />
-                      </svg>
-                      <p>
-                        Please whitelist at least one model before selecting a
-                        default model.
-                      </p>
-                    </div>
-                  {/if}
-                </div>
-              </div>
-
-              <!-- System Default Engine -->
-              <div class="default-engine-section">
-                <div class="form-group checkbox-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" bind:checked={formData.is_default} />
-                    <span>Set as system default engine</span>
-                  </label>
-                  <span class="form-hint"
-                    >When enabled, this engine will be used for new
-                    conversations when no specific routing is set. Only one
-                    engine can be the system default at a time.</span
-                  >
-                </div>
-              </div>
-            {:else}
-              <p class="no-models-message">
-                No models available. Try validating your API key first.
-              </p>
-            {/if}
-          </div>
-        {:else}
-          <div class="form-notice">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="16" x2="12" y2="12" />
-              <line x1="12" y1="8" x2="12.01" y2="8" />
-            </svg>
-            <p>Configure an API key first to access model configuration.</p>
-          </div>
-        {/if}
+            </div>
+          {:else}
+            <p class="no-models-message">
+              No models available. Try validating your API key first.
+            </p>
+          {/if}
+        </div>
 
         <!-- Status Toggle -->
         <div class="form-group">

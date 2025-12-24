@@ -186,10 +186,6 @@ router.get('/admin/ai-engines/:engineKey/models', requireAuth, (req, res) => {
     return res.status(404).json({ detail: 'AI engine not found' })
   }
 
-  if (!engine.api_key_configured) {
-    return res.status(400).json({ detail: 'No API key configured for this engine' })
-  }
-
   const modelsByEngine: Record<string, AIEngineModelsResponse['models']> = {
     openai: [
       { model_id: 'gpt-4o', display_name: 'GPT-4o', is_whitelisted: true, capabilities: { vision: true, function_calling: true, streaming: true } },
