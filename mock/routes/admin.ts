@@ -137,13 +137,6 @@ router.put('/admin/ai-engines/:engineKey', requireAuth, (req, res) => {
     return res.status(404).json({ detail: 'AI engine not found' })
   }
 
-  // Prevent disabling a default engine
-  if (engine.is_default && req.body.is_enabled === false) {
-    return res.status(400).json({ 
-      detail: 'Cannot disable the default engine. Please set another engine as default first.' 
-    })
-  }
-
   // Validate that default_model is in whitelisted_models
   const defaultModel = req.body.default_model !== undefined ? req.body.default_model : engine.default_model
   const whitelistedModels = req.body.whitelisted_models !== undefined ? req.body.whitelisted_models : engine.whitelisted_models
@@ -179,7 +172,7 @@ router.put('/admin/ai-engines/:engineKey', requireAuth, (req, res) => {
 
   if (req.body.api_key) {
     updated.api_key_configured = true
-    updated.api_key_status = 'untested'
+    updated.api_key_status = 'not_validated'
     updated.api_key_preview = '...' + req.body.api_key.slice(-4)
   }
 
@@ -259,7 +252,7 @@ router.put('/admin/ai-engines/:engineKey/api-key', requireAuth, (req, res) => {
   const updated: AIEngineDetail = {
     ...engine,
     api_key_configured: true,
-    api_key_status: 'untested',
+    api_key_status: 'not_validated',
     api_key_preview: '...' + api_key.slice(-4),
     api_key_last_validated_at: null,
     updated_at: new Date().toISOString(),
@@ -278,7 +271,7 @@ router.delete('/admin/ai-engines/:engineKey/api-key', requireAuth, (req, res) =>
     ...engine,
     is_enabled: false,
     api_key_configured: false,
-    api_key_status: 'untested',
+    api_key_status: 'not_configured',
     api_key_preview: null,
     api_key_last_validated_at: null,
     updated_at: new Date().toISOString(),

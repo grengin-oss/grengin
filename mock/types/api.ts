@@ -1988,7 +1988,7 @@ export interface components {
              * @description Status of the configured API key
              * @enum {string}
              */
-            api_key_status?: "valid" | "invalid" | "untested";
+            api_key_status?: "valid" | "in_valid" | "not_validated" | "not_configured";
             /** @description Last 4 characters of the configured API key */
             api_key_preview?: string | null;
             /**

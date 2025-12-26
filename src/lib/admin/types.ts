@@ -28,7 +28,7 @@ export interface AIEngine {
   display_name: string;
   is_enabled: boolean;
   api_key_configured: boolean;
-  api_key_status?: 'valid' | 'invalid' | 'untested';
+  api_key_status?: 'valid' | 'in_valid' | 'not_validated' | 'not_configured';
   api_key_preview?: string | null;
   api_key_last_validated_at?: string | null;
   whitelisted_models?: string[];
