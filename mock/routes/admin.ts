@@ -245,7 +245,7 @@ router.get('/admin/ai-engines/:engineKey/models', requireAuth, (req, res) => {
   })
 })
 
-router.post('/admin/ai-engines/:engineKey/api-key', requireAuth, (req, res) => {
+router.put('/admin/ai-engines/:engineKey/api-key', requireAuth, (req, res) => {
   const engine = aiEngines.get(req.params.engineKey)
   if (!engine) {
     return res.status(404).json({ detail: 'AI engine not found' })

@@ -53,7 +53,7 @@ export async function getAIEngineModels(engineKey: string): Promise<AIEngineMode
 
 export async function addAIEngineKey(engineKey: string, apiKey: string): Promise<AIEngine> {
   const response = await request<AIEngine>(`/admin/ai-engines/${engineKey}/api-key`, {
-    method: 'POST',
+    method: 'PUT',
     body: JSON.stringify({ api_key: apiKey }),
   });
   return response;
