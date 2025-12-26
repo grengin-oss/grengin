@@ -14,7 +14,39 @@ router.get('/admin/dashboard', requireAuth, (req, res) => {
 
 // Users
 router.get('/admin/users', requireAuth, (req, res) => {
-  res.json(usersListExample)
+  // Handle sorting via query params
+  const { sort, ascending } = req.query
+  let result = { ...usersListExample }
+  
+  if (sort && ['name', 'email', 'created_at'].includes(sort as string)) {
+    const users = [...usersListExample.users]
+    const isAscending = ascending === 'true' || ascending === undefined
+    users.sort((a, b) => {
+      let aVal: string | number
+      let bVal: string | number
+      
+      if (sort === 'name') {
+        aVal = (a.name || '').toLowerCase()
+        bVal = (b.name || '').toLowerCase()
+      } else if (sort === 'email') {
+        aVal = (a.email || '').toLowerCase()
+        bVal = (b.email || '').toLowerCase()
+      } else if (sort === 'created_at') {
+        aVal = new Date(a.created_at || 0).getTime()
+        bVal = new Date(b.created_at || 0).getTime()
+      } else {
+        return 0
+      }
+      
+      if (aVal < bVal) return isAscending ? -1 : 1
+      if (aVal > bVal) return isAscending ? 1 : -1
+      return 0
+    })
+    
+    result = { ...usersListExample, users }
+  }
+  
+  res.json(result)
 })
 
 router.post('/admin/users', requireAuth, (req, res) => {

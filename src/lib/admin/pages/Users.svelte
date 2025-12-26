@@ -8,6 +8,7 @@
   import { toast } from "../../components/Toaster.svelte";
   import type { User } from "../types.js";
   import UserRow from "../components/UserRow.svelte";
+  import SortIcon from "../components/SortIcon.svelte";
 
   let isCreateModalOpen = $state(false);
   let isEditModalOpen = $state(false);
@@ -150,6 +151,10 @@
     usersStore.setPage(page);
   }
 
+  function handleSort(field: 'name' | 'email' | 'created_at') {
+    usersStore.setSort(field);
+  }
+
   const currentPage = $derived(
     Math.floor(usersStore.offset / usersStore.limit),
   );
@@ -258,12 +263,27 @@
       <table class="admin-table users-table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Email</th>
+            <th class="sortable" onclick={() => handleSort('name')}>
+              <span class="th-content">
+                Name
+                <SortIcon sort="name" currentSort={usersStore.sort} ascending={usersStore.ascending} />
+              </span>
+            </th>
+            <th class="sortable" onclick={() => handleSort('email')}>
+              <span class="th-content">
+                Email
+                <SortIcon sort="email" currentSort={usersStore.sort} ascending={usersStore.ascending} />
+              </span>
+            </th>
             <th>Role</th>
             <th>Department</th>
             <th>Status</th>
-            <th>Created</th>
+            <th class="sortable" onclick={() => handleSort('created_at')}>
+              <span class="th-content">
+                Created
+                <SortIcon sort="created_at" currentSort={usersStore.sort} ascending={usersStore.ascending} />
+              </span>
+            </th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -565,6 +585,31 @@
     gap: var(--space-md);
     padding-top: var(--space-lg);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: all 0.2s ease;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+  }
+
+  .sortable:hover {
+    background: rgba(var(--glass-tint), 0.08);
+    color: var(--text-primary);
+  }
+
+  .sortable:active {
+    background: rgba(var(--glass-tint), 0.12);
+  }
+
+  .th-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    justify-content: flex-start;
   }
 
   @media (max-width: 768px) {

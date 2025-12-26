@@ -10,6 +10,8 @@ interface UsersFilters {
   department: string;
 }
 
+type SortField = 'name' | 'email' | 'created_at' | null;
+
 function createUsersStore() {
   let users = $state<User[]>([]);
   let total = $state(0);
@@ -23,6 +25,8 @@ function createUsersStore() {
     status: '',
     department: '',
   });
+  let sort = $state<SortField>(null);
+  let ascending = $state(true);
 
   async function fetch() {
     const params: GetUsersParams = {
@@ -34,6 +38,16 @@ function createUsersStore() {
     if (filters.role) params.role = filters.role;
     if (filters.status) params.status = filters.status;
     if (filters.department) params.department = filters.department;
+    
+    // If user has explicitly selected a sort, use it; otherwise default to created_at descending
+    if (sort) {
+      params.sort = sort;
+      params.ascending = ascending;
+    } else {
+      // Default sort: created_at descending (not visible in UI)
+      params.sort = 'created_at';
+      params.ascending = false;
+    }
 
     const data = await getUsers(params);
     users = data.users;
@@ -69,12 +83,34 @@ function createUsersStore() {
     get isLoading() { return isLoading; },
     get error() { return error; },
     get filters() { return filters; },
+    get sort() { return sort; },
+    get ascending() { return ascending; },
 
     fetchUsers,
 
     async setFilters(newFilters: Partial<UsersFilters>) {
       filters = { ...filters, ...newFilters };
       offset = 0; // Reset to first page when filters change
+      return updateUsersInBackground();
+    },
+
+    async setSort(field: SortField) {
+      if (sort === field) {
+        // Same column clicked - cycle through: ascending -> descending -> remove
+        if (ascending) {
+          // Currently ascending, switch to descending
+          ascending = false;
+        } else {
+          // Currently descending, remove sort (back to default)
+          sort = null;
+          ascending = true; // Reset for next time
+        }
+      } else {
+        // Different column clicked - start with ascending
+        sort = field;
+        ascending = true;
+      }
+      offset = 0; // Reset to first page when sort changes
       return updateUsersInBackground();
     },
 
@@ -130,6 +166,8 @@ function createUsersStore() {
         status: '',
         department: '',
       };
+      sort = null;
+      ascending = true;
     },
   };
 }

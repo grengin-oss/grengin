@@ -8,6 +8,8 @@ export interface GetUsersParams {
   role?: string;
   status?: string;
   department?: string;
+  sort?: 'name' | 'email' | 'created_at';
+  ascending?: boolean;
 }
 
 export interface CreateUserData {
@@ -17,7 +19,7 @@ export interface CreateUserData {
   department?: string;
 }
 
-function buildQueryString(params?: Record<string, string | number | undefined>): string {
+function buildQueryString(params?: Record<string, string | number | boolean | undefined>): string {
   if (!params) return '';
   const queryParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -30,7 +32,7 @@ function buildQueryString(params?: Record<string, string | number | undefined>):
 }
 
 export async function getUsers(params?: GetUsersParams): Promise<PaginatedUsers> {
-  return request<PaginatedUsers>(`/admin/users${buildQueryString(params as Record<string, string | number | undefined>)}`);
+  return request<PaginatedUsers>(`/admin/users${buildQueryString(params as Record<string, string | number | boolean | undefined>)}`);
 }
 
 export async function getUser(userId: string): Promise<User> {
