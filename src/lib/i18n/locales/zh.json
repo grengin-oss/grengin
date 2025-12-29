@@ -1,0 +1,33 @@
+{
+  "common": {
+    "welcome": "TODO: 欢迎",
+    "login": "TODO: 登录",
+    "logout": "TODO: 登出",
+    "email": "TODO: 电子邮件",
+    "password": "TODO: 密码",
+    "submit": "TODO: 提交",
+    "cancel": "TODO: 取消",
+    "save": "TODO: 保存",
+    "delete": "TODO: 删除",
+    "edit": "TODO: 编辑",
+    "search": "TODO: 搜索",
+    "loading": "TODO: 加载中...",
+    "error": "TODO: 错误",
+    "success": "TODO: 成功"
+  },
+  "navigation": {
+    "home": "TODO: 首页",
+    "dashboard": "TODO: 仪表板",
+    "settings": "TODO: 设置",
+    "profile": "TODO: 个人资料",
+    "users": "TODO: 用户"
+  },
+  "auth": {
+    "signIn": "TODO: 登录",
+    "signUp": "TODO: 注册",
+    "forgotPassword": "TODO: 忘记密码？",
+    "rememberMe": "TODO: 记住我",
+    "emailPlaceholder": "TODO: 输入您的电子邮件",
+    "passwordPlaceholder": "TODO: 输入您的密码"
+  }
+}

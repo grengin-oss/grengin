@@ -1,0 +1,33 @@
+{
+  "common": {
+    "welcome": "TODO: Bem-vindo",
+    "login": "TODO: Entrar",
+    "logout": "TODO: Sair",
+    "email": "TODO: Email",
+    "password": "TODO: Senha",
+    "submit": "TODO: Enviar",
+    "cancel": "TODO: Cancelar",
+    "save": "TODO: Salvar",
+    "delete": "TODO: Excluir",
+    "edit": "TODO: Editar",
+    "search": "TODO: Pesquisar",
+    "loading": "TODO: Carregando...",
+    "error": "TODO: Erro",
+    "success": "TODO: Sucesso"
+  },
+  "navigation": {
+    "home": "TODO: Início",
+    "dashboard": "TODO: Painel",
+    "settings": "TODO: Configurações",
+    "profile": "TODO: Perfil",
+    "users": "TODO: Usuários"
+  },
+  "auth": {
+    "signIn": "TODO: Entrar",
+    "signUp": "TODO: Cadastrar",
+    "forgotPassword": "TODO: Esqueceu a senha?",
+    "rememberMe": "TODO: Lembrar de mim",
+    "emailPlaceholder": "TODO: Digite seu email",
+    "passwordPlaceholder": "TODO: Digite sua senha"
+  }
+}
