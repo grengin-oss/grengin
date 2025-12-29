@@ -25,6 +25,7 @@ function createAIEnginesStore() {
   // Models state
   let availableModels = $state<AIEngineModels | null>(null);
   let loadingModels = $state(false);
+  let loadingOrganization = $state(false);
 
   // API key form state
   let apiKeyInput = $state('');
@@ -42,6 +43,9 @@ function createAIEnginesStore() {
     default_model: null as string | null | undefined,
     is_default: false,
   });
+
+  // Saving state
+  let saving = $state(false);
 
   function getStatusMessage(status: ApiKeyStatus): string {
     if (status === 'valid') return 'Key is valid and connected.';
@@ -110,37 +114,15 @@ function createAIEnginesStore() {
   async function openConfigModal(engine: AIEngine) {
     selectedEngine = engine;
 
-    // Fetch current organization settings to get accurate default engine
-    let isDefault = false;
-    try {
-      const organization = await getOrganization();
-      isDefault = organization.settings?.default_engine === engine.engine_key;
-      // Update cached default engine key
-      defaultEngineKey = organization.settings?.default_engine;
-    } catch (err: any) {
-      // Fallback to cached default engine key
-      isDefault = defaultEngineKey === engine.engine_key;
-    }
-
+    // Initialize form data immediately with available engine data
     formData = {
       is_enabled: engine.is_enabled,
       whitelisted_models: engine.whitelisted_models || [],
       default_model: engine.default_model,
-      is_default: isDefault,
+      is_default: false, // Will be updated when organization data loads
     };
 
-    // Load available models
-    try {
-      loadingModels = true;
-      availableModels = await getAIEngineModels(engine.engine_key);
-    } catch (err: any) {
-      error = err.message || 'Failed to load models';
-      availableModels = null;
-    } finally {
-      loadingModels = false;
-    }
-
-    // Initialize API key state
+    // Initialize API key state immediately
     apiKeyInput = '';
     apiKeyStatus = engine.api_key_status || 'not_configured';
     apiKeyMessage = getStatusMessage(apiKeyStatus);
@@ -148,7 +130,46 @@ function createAIEnginesStore() {
     showApiKey = false;
     apiKeyDeleteConfirm = false;
 
+    // Set loading states immediately to prevent flash of "No models available"
+    loadingModels = true;
+    loadingOrganization = true;
+    availableModels = null; // Reset to ensure clean state
+
+    // Open modal immediately
     showConfigModal = true;
+
+    // Load organization data and models asynchronously
+    // Fetch current organization settings to get accurate default engine
+    try {
+      const organization = await getOrganization();
+      const isDefault = organization.settings?.default_engine === engine.engine_key;
+      // Update cached default engine key
+      defaultEngineKey = organization.settings?.default_engine;
+      // Update form data with default engine status
+      formData = {
+        ...formData,
+        is_default: isDefault,
+      };
+    } catch (err: any) {
+      // Fallback to cached default engine key
+      const isDefault = defaultEngineKey === engine.engine_key;
+      formData = {
+        ...formData,
+        is_default: isDefault,
+      };
+    } finally {
+      loadingOrganization = false;
+    }
+
+    // Load available models asynchronously
+    try {
+      availableModels = await getAIEngineModels(engine.engine_key);
+    } catch (err: any) {
+      error = err.message || 'Failed to load models';
+      availableModels = null;
+    } finally {
+      loadingModels = false;
+    }
   }
 
   function closeConfigModal() {
@@ -199,6 +220,7 @@ function createAIEnginesStore() {
       is_default?: boolean;
     },
   ) {
+    saving = true;
     try {
       // If setting default engine, update organization settings
       if (data.is_default === true) {
@@ -250,6 +272,8 @@ function createAIEnginesStore() {
     } catch (err: any) {
       error = err.message || 'Failed to update engine';
       throw err;
+    } finally {
+      saving = false;
     }
   }
 
@@ -353,6 +377,8 @@ function createAIEnginesStore() {
     selectedEngine = null;
     availableModels = null;
     loadingModels = false;
+    loadingOrganization = false;
+    saving = false;
     resetApiKeyState();
     formData = {
       is_enabled: true,
@@ -385,6 +411,9 @@ function createAIEnginesStore() {
     get loadingModels() {
       return loadingModels;
     },
+    get loadingOrganization() {
+      return loadingOrganization;
+    },
     get apiKeyInput() {
       return apiKeyInput;
     },
@@ -408,6 +437,9 @@ function createAIEnginesStore() {
     },
     get formData() {
       return formData;
+    },
+    get saving() {
+      return saving;
     },
 
     // State setters

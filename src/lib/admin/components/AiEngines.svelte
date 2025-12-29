@@ -784,22 +784,29 @@
             <!-- System Default Engine -->
             <div class="default-engine-section">
               <div class="form-group checkbox-group">
-                <label class="checkbox-label">
-                  <input 
-                    type="checkbox" 
-                    bind:checked={store.formData.is_default}
-                    disabled={store.formData.is_default && store.isDefaultEngine(store.selectedEngine?.engine_key || '')}
-                    title={store.formData.is_default && store.isDefaultEngine(store.selectedEngine?.engine_key || '') 
-                      ? "You cannot remove the default engine. Select another engine as default first." 
-                      : ""}
-                  />
-                  <span>Set as system default engine</span>
-                </label>
-                <span class="form-hint"
-                  >When enabled, this engine will be used for new conversations
-                  when no specific routing is set. Only one engine can be the
-                  system default at a time. To change the default, select another engine as default.</span
-                >
+                {#if store.loadingOrganization}
+                  <div class="loading-organization">
+                    <span class="button-spinner"></span>
+                    <span>Loading default engine status...</span>
+                  </div>
+                {:else}
+                  <label class="checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      bind:checked={store.formData.is_default}
+                      disabled={store.formData.is_default && store.isDefaultEngine(store.selectedEngine?.engine_key || '')}
+                      title={store.formData.is_default && store.isDefaultEngine(store.selectedEngine?.engine_key || '') 
+                        ? "You cannot remove the default engine. Select another engine as default first." 
+                        : ""}
+                    />
+                    <span>Set as system default engine</span>
+                  </label>
+                  <span class="form-hint"
+                    >When enabled, this engine will be used for new conversations
+                    when no specific routing is set. Only one engine can be the
+                    system default at a time. To change the default, select another engine as default.</span
+                  >
+                {/if}
               </div>
             </div>
           {:else}
@@ -836,10 +843,18 @@
             type="button"
             class="btn-secondary"
             onclick={store.closeConfigModal}
+            disabled={store.saving}
           >
             Cancel
           </button>
-          <button type="submit" class="btn-accent"> Save </button>
+          <button type="submit" class="btn-accent" disabled={store.saving}>
+            {#if store.saving}
+              <span class="button-spinner"></span>
+              <span>Saving...</span>
+            {:else}
+              Save
+            {/if}
+          </button>
         </div>
       </form>
     {/if}
@@ -1519,6 +1534,38 @@
     gap: var(--space-md);
     padding-top: var(--space-lg);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .form-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .form-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .loading-organization {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+
+  .button-spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   @media (max-width: 768px) {
