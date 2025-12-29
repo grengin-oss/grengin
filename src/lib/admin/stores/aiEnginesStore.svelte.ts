@@ -1,5 +1,5 @@
 // AI Engines Store - AI engine management state using Svelte 5 runes
-import type { AIEngine, AIEngineModels } from '../types.js';
+import type { AIEngine, AIEngineModels, Organization } from '../types.js';
 import {
   getAIEngines,
   updateAIEngine,
@@ -7,6 +7,7 @@ import {
   getAIEngineModels,
   deleteAIEngineKey,
 } from '../../api/admin/AiEngines.js';
+import { getOrganization, updateOrganization } from '../../api/admin/organization.js';
 
 type ApiKeyStatus = 'valid' | 'in_valid' | 'not_validated' | 'not_configured';
 type ApiKeyMode = 'cta' | 'add' | 'view' | 'update';
@@ -15,6 +16,7 @@ function createAIEnginesStore() {
   let engines = $state<AIEngine[]>([]);
   let isLoading = $state(false);
   let error = $state<string | null>(null);
+  let defaultEngineKey = $state<string | undefined>(undefined);
 
   // Modal state
   let showConfigModal = $state(false);
@@ -55,7 +57,15 @@ function createAIEnginesStore() {
     error = null;
 
     try {
-      engines = await getAIEngines();
+      // Fetch engines and organization settings in parallel
+      const [enginesData, organization] = await Promise.all([
+        getAIEngines(),
+        getOrganization(),
+      ]);
+
+      // Store default engine key from organization settings
+      defaultEngineKey = organization.settings?.default_engine;
+      engines = enginesData;
     } catch (err: any) {
       error = err.message || 'Failed to fetch AI engines';
       throw err;
@@ -100,11 +110,23 @@ function createAIEnginesStore() {
   async function openConfigModal(engine: AIEngine) {
     selectedEngine = engine;
 
+    // Fetch current organization settings to get accurate default engine
+    let isDefault = false;
+    try {
+      const organization = await getOrganization();
+      isDefault = organization.settings?.default_engine === engine.engine_key;
+      // Update cached default engine key
+      defaultEngineKey = organization.settings?.default_engine;
+    } catch (err: any) {
+      // Fallback to cached default engine key
+      isDefault = defaultEngineKey === engine.engine_key;
+    }
+
     formData = {
       is_enabled: engine.is_enabled,
       whitelisted_models: engine.whitelisted_models || [],
       default_model: engine.default_model,
-      is_default: engine.is_default || false,
+      is_default: isDefault,
     };
 
     // Load available models
@@ -178,7 +200,49 @@ function createAIEnginesStore() {
     },
   ) {
     try {
-      await updateAIEngine(engineKey, data);
+      // If setting default engine, update organization settings
+      if (data.is_default === true) {
+        const organization = await getOrganization();
+        const engine = engines.find((e) => e.engine_key === engineKey);
+        if (!engine) {
+          throw new Error('Engine not found');
+        }
+
+        // Determine the default model to use:
+        // 1. Use the model from data if provided (from form)
+        // 2. Fall back to engine's current default_model
+        // 3. Fall back to first whitelisted model if available
+        const defaultModel = 
+          data.default_model || 
+          engine.default_model || 
+          (engine.whitelisted_models && engine.whitelisted_models.length > 0 
+            ? engine.whitelisted_models[0] 
+            : undefined);
+
+        if (!defaultModel) {
+          throw new Error('Cannot set default engine without a default model. Please select a default model for this engine first.');
+        }
+
+        // Update organization with new default engine and model
+        // Construct the full request body as required by the API
+        await updateOrganization({
+          name: organization.name,
+          domain: organization.domain,
+          allowed_domains: organization.allowed_domains || [],
+          logo_url: organization.logo_url,
+          settings: {
+            ...organization.settings,
+            default_engine: engineKey,
+            default_model: defaultModel,
+          },
+        });
+      }
+
+      // Update engine configuration (excluding is_default as it's handled by organization)
+      const { is_default, ...engineUpdateData } = data;
+      await updateAIEngine(engineKey, engineUpdateData);
+      
+      // Refresh to sync state
       await fetch();
       if (selectedEngine?.engine_key === engineKey) {
         await refreshSelectedEngine();
@@ -276,10 +340,15 @@ function createAIEnginesStore() {
     error = null;
   }
 
+  function isDefaultEngine(engineKey: string): boolean {
+    return defaultEngineKey === engineKey;
+  }
+
   function reset() {
     engines = [];
     isLoading = false;
     error = null;
+    defaultEngineKey = undefined;
     showConfigModal = false;
     selectedEngine = null;
     availableModels = null;
@@ -379,6 +448,7 @@ function createAIEnginesStore() {
     resetApiKeyState,
     getStatusMessage,
     clearError,
+    isDefaultEngine,
     reset,
   };
 }

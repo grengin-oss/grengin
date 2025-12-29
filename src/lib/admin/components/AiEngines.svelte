@@ -55,6 +55,13 @@
       return;
     }
 
+    // Prevent unsetting the default engine if it's currently the default
+    const isCurrentlyDefault = store.isDefaultEngine(store.selectedEngine.engine_key);
+    if (isCurrentlyDefault && !store.formData.is_default) {
+      toast.error("Cannot remove default engine. Please select another engine as default first.");
+      return;
+    }
+
     try {
       const updateData: any = {
         is_enabled: store.formData.is_enabled,
@@ -224,7 +231,7 @@
 
   // Check if engine is default
   function isDefaultEngine(engine: AIEngine): boolean {
-    return engine.is_enabled && engine.is_default;
+    return engine.is_enabled && store.isDefaultEngine(engine.engine_key);
   }
 
   onMount(() => {
@@ -778,13 +785,20 @@
             <div class="default-engine-section">
               <div class="form-group checkbox-group">
                 <label class="checkbox-label">
-                  <input type="checkbox" bind:checked={store.formData.is_default} />
+                  <input 
+                    type="checkbox" 
+                    bind:checked={store.formData.is_default}
+                    disabled={store.formData.is_default && store.isDefaultEngine(store.selectedEngine?.engine_key || '')}
+                    title={store.formData.is_default && store.isDefaultEngine(store.selectedEngine?.engine_key || '') 
+                      ? "You cannot remove the default engine. Select another engine as default first." 
+                      : ""}
+                  />
                   <span>Set as system default engine</span>
                 </label>
                 <span class="form-hint"
                   >When enabled, this engine will be used for new conversations
                   when no specific routing is set. Only one engine can be the
-                  system default at a time.</span
+                  system default at a time. To change the default, select another engine as default.</span
                 >
               </div>
             </div>
