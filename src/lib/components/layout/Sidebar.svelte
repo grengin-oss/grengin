@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Link } from "svelte-routing";
+  import { _ } from 'svelte-i18n';
   import type { User } from "../../types/auth";
   import { listConversations, deleteConversation, archiveConversation } from '../../api/chatApi.js';
   import grenginLogo from '../../../assets/grengin-logo.svg';
@@ -66,22 +67,22 @@
     };
   });
 
-  const menuItems = [
+  let menuItems = $derived([
     {
       id: 'chat',
-      label: 'New Chat',
+      label: $_('sidebar.newChat'),
       icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>'
     },
-  ];
+  ]);
 
-  const adminMenuItems = [
+  let adminMenuItems = $derived([
     {
       id: 'users',
       path: '/admin/users',
-      label: 'Users',
+      label: $_('sidebar.users'),
       icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
     },
-  ];
+  ]);
 
   let activeItem = $state('chat');
 
@@ -159,7 +160,8 @@
         // Clear selection if deleted chat was selected
         if (selectedChatId === chatToDelete) {
           selectedChatId = null;
-          toast.success(`"${deletedChat?.title || 'Chat'}" deleted successfully`);
+          const chatTitle = deletedChat?.title || $_('sidebar.chat');
+          toast.success($_('sidebar.chatDeleted', { values: { title: `"${chatTitle}"` } }));
           // Navigate to fresh chat after deletion
           window.history.pushState({}, '', window.location.pathname);
           onnavigate?.('chat');
@@ -169,7 +171,7 @@
         chatToDelete = null;
       } catch (error) {
         console.error('Failed to delete conversation:', error);
-        toast.error('Failed to delete chat');
+        toast.error($_('sidebar.deleteChatError'));
         // You might want to show an error message here
       } finally {
         deletingChat = false;
@@ -196,7 +198,7 @@
     try {
       await archiveConversation(chatId, title);
       chatHistory = chatHistory.filter(chat => chat.id !== chatId);
-      toast.success(`"${title}" archived successfully`);
+      toast.success($_('sidebar.chatArchived', { values: { title: `"${title}"` } }));
       
       // Clear selection if archived chat was selected
       if (selectedChatId === chatId) {
@@ -208,7 +210,7 @@
       }
     } catch (error) {
       console.error('Failed to archive conversation:', error);
-      toast.error('Failed to archive chat');
+      toast.error($_('sidebar.archiveChatError'));
     }
   }
 
@@ -218,7 +220,7 @@
       const chats = await listConversations();
       chatHistory = chats.map((chat: any) => ({
         id: chat.id,
-        title: chat.title || 'Untitled Chat',
+        title: chat.title || $_('sidebar.untitledChat'),
         archived: chat.archived,
         createdAt: chat.createdAt,
         lastMessageAt: chat.lastMessageAt,
@@ -330,8 +332,8 @@
         <button
           class="burger-btn"
           onclick={toggleSidebar}
-          aria-label="Toggle sidebar"
-          title="Toggle sidebar"
+          aria-label={$_('sidebar.toggleSidebar')}
+          title={$_('sidebar.toggleSidebar')}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" data-rtl-flip="" class="icon max-md:hidden"><path d="M6.83496 3.99992C6.38353 4.00411 6.01421 4.0122 5.69824 4.03801C5.31232 4.06954 5.03904 4.12266 4.82227 4.20012L4.62207 4.28606C4.18264 4.50996 3.81498 4.85035 3.55859 5.26848L3.45605 5.45207C3.33013 5.69922 3.25006 6.01354 3.20801 6.52824C3.16533 7.05065 3.16504 7.71885 3.16504 8.66301V11.3271C3.16504 12.2712 3.16533 12.9394 3.20801 13.4618C3.25006 13.9766 3.33013 14.2909 3.45605 14.538L3.55859 14.7216C3.81498 15.1397 4.18266 15.4801 4.62207 15.704L4.82227 15.79C5.03904 15.8674 5.31234 15.9205 5.69824 15.9521C6.01398 15.9779 6.383 15.986 6.83398 15.9902L6.83496 3.99992ZM18.165 11.3271C18.165 12.2493 18.1653 12.9811 18.1172 13.5702C18.0745 14.0924 17.9916 14.5472 17.8125 14.9648L17.7295 15.1415C17.394 15.8 16.8834 16.3511 16.2568 16.7353L15.9814 16.8896C15.5157 17.1268 15.0069 17.2285 14.4102 17.2773C13.821 17.3254 13.0893 17.3251 12.167 17.3251H7.83301C6.91071 17.3251 6.17898 17.3254 5.58984 17.2773C5.06757 17.2346 4.61294 17.1508 4.19531 16.9716L4.01855 16.8896C3.36014 16.5541 2.80898 16.0434 2.4248 15.4169L2.27051 15.1415C2.03328 14.6758 1.93158 14.167 1.88281 13.5702C1.83468 12.9811 1.83496 12.2493 1.83496 11.3271V8.66301C1.83496 7.74072 1.83468 7.00898 1.88281 6.41985C1.93157 5.82309 2.03329 5.31432 2.27051 4.84856L2.4248 4.57317C2.80898 3.94666 3.36012 3.436 4.01855 3.10051L4.19531 3.0175C4.61285 2.83843 5.06771 2.75548 5.58984 2.71281C6.17898 2.66468 6.91071 2.66496 7.83301 2.66496H12.167C13.0893 2.66496 13.821 2.66468 14.4102 2.71281C15.0069 2.76157 15.5157 2.86329 15.9814 3.10051L16.2568 3.25481C16.8833 3.63898 17.394 4.19012 17.7295 4.84856L17.8125 5.02531C17.9916 5.44285 18.0745 5.89771 18.1172 6.41985C18.1653 7.00898 18.165 7.74072 18.165 8.66301V11.3271ZM8.16406 15.995H12.167C13.1112 15.995 13.7794 15.9947 14.3018 15.9521C14.8164 15.91 15.1308 15.8299 15.3779 15.704L15.5615 15.6015C15.9797 15.3451 16.32 14.9774 16.5439 14.538L16.6299 14.3378C16.7074 14.121 16.7605 13.8478 16.792 13.4618C16.8347 12.9394 16.835 12.2712 16.835 11.3271V8.66301C16.835 7.71885 16.8347 7.05065 16.792 6.52824C16.7605 6.14232 16.7073 5.86904 16.6299 5.65227L16.5439 5.45207C16.32 5.01264 15.9796 4.64498 15.5615 4.3886L15.3779 4.28606C15.1308 4.16013 14.8165 4.08006 14.3018 4.03801C13.7794 3.99533 13.1112 3.99504 12.167 3.99504H8.16406C8.16407 3.99667 8.16504 3.99829 8.16504 3.99992L8.16406 15.995Z"></path></svg>
         </button>
@@ -340,16 +342,16 @@
           <button
             class="logo-btn"
             onclick={toggleSidebar}
-            aria-label="Toggle sidebar"
-            title="Toggle sidebar"
+            aria-label={$_('sidebar.toggleSidebar')}
+            title={$_('sidebar.toggleSidebar')}
           >
             <img src="/grengin-icon.svg" alt="Grengin" class="logo-icon" />
           </button>
           <button
             class="expand-btn"
             onclick={toggleSidebar}
-            aria-label="Expand sidebar"
-            title="Expand sidebar"
+            aria-label={$_('sidebar.expandSidebar')}
+            title={$_('sidebar.expandSidebar')}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
               <path d="M6.83496 3.99992C6.38353 4.00411 6.01421 4.0122 5.69824 4.03801C5.31232 4.06954 5.03904 4.12266 4.82227 4.20012L4.62207 4.28606C4.18264 4.50996 3.81498 4.85035 3.55859 5.26848L3.45605 5.45207C3.33013 5.69922 3.25006 6.01354 3.20801 6.52824C3.16533 7.05065 3.16504 7.71885 3.16504 8.66301V11.3271C3.16504 12.2712 3.16533 12.9394 3.20801 13.4618C3.25006 13.9766 3.33013 14.2909 3.45605 14.538L3.55859 14.7216C3.81498 15.1397 4.18266 15.4801 4.62207 15.704L4.82227 15.79C5.03904 15.8674 5.31234 15.9205 5.69824 15.9521C6.01398 15.9779 6.383 15.986 6.83398 15.9902L6.83496 3.99992ZM18.165 11.3271C18.165 12.2493 18.1653 12.9811 18.1172 13.5702C18.0745 14.0924 17.9916 14.5472 17.8125 14.9648L17.7295 15.1415C17.394 15.8 16.8834 16.3511 16.2568 16.7353L15.9814 16.8896C15.5157 17.1268 15.0069 17.2285 14.4102 17.2773C13.821 17.3254 13.0893 17.3251 12.167 17.3251H7.83301C6.91071 17.3251 6.17898 17.3254 5.58984 17.2773C5.06757 17.2346 4.61294 17.1508 4.19531 16.9716L4.01855 16.8896C3.36014 16.5541 2.80898 16.0434 2.4248 15.4169L2.27051 15.1415C2.03328 14.6758 1.93158 14.167 1.88281 13.5702C1.83468 12.9811 1.83496 12.2493 1.83496 11.3271V8.66301C1.83496 7.74072 1.83468 7.00898 1.88281 6.41985C1.93157 5.82309 2.03329 5.31432 2.27051 4.84856L2.4248 4.57317C2.80898 3.94666 3.36012 3.436 4.01855 3.10051L4.19531 3.0175C4.61285 2.83843 5.06771 2.75548 5.58984 2.71281C6.17898 2.66468 6.91071 2.66496 7.83301 2.66496H12.167C13.0893 2.66496 13.821 2.66468 14.4102 2.71281C15.0069 2.76157 15.5157 2.86329 15.9814 3.10051L16.2568 3.25481C16.8833 3.63898 17.394 4.19012 17.7295 4.84856L17.8125 5.02531C17.9916 5.44285 18.0745 5.89771 18.1172 6.41985C18.1653 7.00898 18.165 7.74072 18.165 8.66301V11.3271ZM8.16406 15.995H12.167C13.1112 15.995 13.7794 15.9947 14.3018 15.9521C14.8164 15.91 15.1308 15.8299 15.3779 15.704L15.5615 15.6015C15.9797 15.3451 16.32 14.9774 16.5439 14.538L16.6299 14.3378C16.7074 14.121 16.7605 13.8478 16.792 13.4618C16.8347 12.9394 16.835 12.2712 16.835 11.3271V8.66301C16.835 7.71885 16.8347 7.05065 16.792 6.52824C16.7605 6.14232 16.7073 5.86904 16.6299 5.65227L16.5439 5.45207C16.32 5.01264 15.9796 4.64498 15.5615 4.3886L15.3779 4.28606C15.1308 4.16013 14.8165 4.08006 14.3018 4.03801C13.7794 3.99533 13.1112 3.99504 12.167 3.99504H8.16406C8.16407 3.99667 8.16504 3.99829 8.16504 3.99992L8.16406 15.995Z"></path>
@@ -367,8 +369,8 @@
         <button
           class="back-btn"
           onclick={() => window.location.href = '/'}
-          title="Back to Chat"
-          aria-label="Back to Chat"
+          title={$_('sidebar.backToChat')}
+          aria-label={$_('sidebar.backToChat')}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -376,7 +378,7 @@
           </svg>
         </button>
         {#if !isCollapsed}
-          <h1 class="admin-title">Admin Panel</h1>
+          <h1 class="admin-title">{$_('sidebar.adminPanel')}</h1>
         {/if}
       </div>
     </div>
@@ -421,15 +423,15 @@
             </svg>
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={$_('sidebar.searchPlaceholder')}
               bind:value={searchQuery}
               class="chat-search-input"
               onfocus={() => searchFocused = true}
               onblur={() => searchFocused = false}
-              title="Search through your chat conversations"
+              title={$_('sidebar.searchTitle')}
             />
             {#if searchQuery}
-              <button class="clear-search-btn" onclick={clearSearch} aria-label="Clear search" title="Clear search">
+              <button class="clear-search-btn" onclick={clearSearch} aria-label={$_('sidebar.clearSearch')} title={$_('sidebar.clearSearch')}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 6L6 18M6 6l12 12"/>
                 </svg>
@@ -451,7 +453,7 @@
   <!-- Chat List Header (non-scrollable, but below the elevated area) -->
   {#if !isCollapsed && !isAdminView}
     <div class="chat-section-title">
-      <span>Chats {#if chatHistory.length > 0}({filteredChats.length}){/if}</span>
+      <span>{$_('sidebar.chats')} {#if chatHistory.length > 0}({filteredChats.length}){/if}</span>
     </div>
   {/if}
 
@@ -462,11 +464,11 @@
         {#if loadingChats}
           <div class="chat-loading">
             <div class="loading-spinner-small"></div>
-            <span>Loading chats...</span>
+            <span>{$_('sidebar.loadingChats')}</span>
           </div>
         {:else if chatHistory.length === 0}
           <div class="chat-empty">
-            <span>No chats yet</span>
+            <span>{$_('sidebar.noChatsYet')}</span>
           </div>
         {:else if filteredChats.length === 0 && searchQuery}
           <div class="no-results">
@@ -474,7 +476,7 @@
               <circle cx="11" cy="11" r="8"/>
               <path d="m21 21-4.35-4.35"/>
             </svg>
-            <span>No chats found</span>
+            <span>{$_('sidebar.noChatsFound')}</span>
           </div>
         {:else}
           {#each filteredChats as chat (chat.id)}
@@ -482,7 +484,7 @@
               <button class="menu-item chat-item-btn" class:selected={selectedChatId === chat.id} onclick={() => selectChat(chat.id)} title={chat.title}>
                 <span class="chat-item-title">{chat.title}</span>
               </button>
-              <button class="chat-item-menu" onclick={(e) => { e.stopPropagation(); toggleChatMenu(chat.id); }} title="Chat options" aria-expanded={activeChatMenu === chat.id}>
+              <button class="chat-item-menu" onclick={(e) => { e.stopPropagation(); toggleChatMenu(chat.id); }} title={$_('sidebar.chatOptions')} aria-expanded={activeChatMenu === chat.id}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="1"></circle>
                   <circle cx="12" cy="5" r="1"></circle>
@@ -496,13 +498,13 @@
                       <polyline points="3,6 5,6 21,6"></polyline>
                       <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
                     </svg>
-                    Delete
+                    {$_('sidebar.delete')}
                   </button>
                   <button class="menu-item" onclick={() => archiveChat(chat.id, chat.title)}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                     </svg>
-                    Archive
+                    {$_('sidebar.archive')}
                   </button>
                 </div>
               {/if}
@@ -519,7 +521,7 @@
         <button
           class="user-menu-trigger sidebar-item"
           onclick={toggleUserMenu}
-          title="User menu"
+          title={$_('sidebar.userMenu')}
         >
           <div class="user-avatar">
             <div class="user-initials" style="background-color: {getUserColor()};">
@@ -528,7 +530,7 @@
           </div>
           {#if !isCollapsed}
             <div class="user-info">
-              <span class="user-name">{user?.name || 'User'}</span>
+              <span class="user-name">{user?.name || $_('sidebar.user')}</span>
             </div>
             <svg class="dropdown-arrow" class:rotated={showUserMenu} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6,15 12,9 18,15"/>
@@ -545,12 +547,12 @@
   <div class="user-menu-dropdown">
     <button class="menu-item">
       <span class="user-menu-icon">⚙️</span>
-      <span>Settings</span>
+      <span>{$_('sidebar.settings')}</span>
     </button>
     {#if user?.role && (user?.role === 'superadmin' || user?.role === 'admin')}
       <a href="/admin/users" class="menu-item">
         <span class="menu-item-icon">🔒</span>
-        <span class="menu-item-label">Admin</span>
+        <span class="menu-item-label">{$_('sidebar.admin')}</span>
       </a>
     {/if}
     <button class="menu-item menu-item--danger" onclick={handleLogout}>
@@ -559,7 +561,7 @@
         <polyline points="16,17 21,12 16,7"/>
         <line x1="21" y1="12" x2="9" y2="12"/>
       </svg>
-      <span>Sign out</span>
+      <span>{$_('sidebar.signOut')}</span>
     </button>
   </div>
 {/if}
@@ -569,8 +571,8 @@
   <div class="confirmation-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-title">
     <div class="confirmation-dialog">
       <div class="confirmation-header">
-        <h3 id="delete-title">Delete Chat</h3>
-        <button class="close-btn" onclick={cancelDeleteChat} aria-label="Close">
+        <h3 id="delete-title">{$_('sidebar.deleteChat')}</h3>
+        <button class="close-btn" onclick={cancelDeleteChat} aria-label={$_('sidebar.close')}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -578,11 +580,11 @@
         </button>
       </div>
       <div class="confirmation-content">
-        <p>Are you sure you want to delete this chat? This action cannot be undone.</p>
+        <p>{$_('sidebar.deleteChatConfirm')}</p>
       </div>
       <div class="confirmation-actions">
         <button class="cancel-btn" onclick={cancelDeleteChat} disabled={deletingChat}>
-          Cancel
+          {$_('sidebar.cancel')}
         </button>
         <button class="delete-btn" onclick={confirmDeleteChat} disabled={deletingChat}>
           {#if deletingChat}
@@ -590,9 +592,9 @@
               <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
               <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"></path>
             </svg> &nbsp;
-            Deleting...
+            {$_('sidebar.deleting')}
           {:else}
-            Delete
+            {$_('sidebar.delete')}
           {/if}
         </button>
       </div>

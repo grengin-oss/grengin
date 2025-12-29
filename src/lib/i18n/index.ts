@@ -6,7 +6,6 @@ import ja from './locales/ja.json';
 import es from './locales/es.json';
 import ko from './locales/ko.json';
 import pt from './locales/pt.json';
-import zh from './locales/zh.json';
 
 export const SUPPORTED_LOCALES = {
   en: 'English',
@@ -14,8 +13,7 @@ export const SUPPORTED_LOCALES = {
   ja: '日本語',
   es: 'Español',
   ko: '한국어',
-  pt: 'Português',
-  zh: '中文'
+  pt: 'Português'
 } as const;
 
 export type SupportedLocale = keyof typeof SUPPORTED_LOCALES;
@@ -26,7 +24,6 @@ addMessages('ja', ja);
 addMessages('es', es);
 addMessages('ko', ko);
 addMessages('pt', pt);
-addMessages('zh', zh);
 
 init({
   fallbackLocale: 'en',
