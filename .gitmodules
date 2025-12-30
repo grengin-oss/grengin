@@ -1,0 +1,6 @@
+[submodule "webapp"]
+	path = webapp
+	url = git@github.com:grengin-oss/webapp.git
+[submodule "service"]
+	path = service
+	url = git@github.com:grengin-oss/grengin-api.git
