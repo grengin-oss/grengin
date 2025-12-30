@@ -94,5 +94,11 @@
     "archiveChatError": "Failed to archive chat",
     "chat": "Chat",
     "untitledChat": "Untitled Chat"
+  },
+  "app": {
+    "closeSidebar": "Close sidebar",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "notifications": "Notifications"
   }
 }

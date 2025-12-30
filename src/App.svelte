@@ -9,7 +9,8 @@
   import Toaster from './lib/components/Toaster.svelte';
   import grenginLogo from './assets/grengin-logo.svg';
   import Users from './lib/admin/pages/Users.svelte';
-import Settings from './lib/admin/pages/Settings.svelte';
+  import Settings from './lib/admin/pages/Settings.svelte';
+  import { _ } from 'svelte-i18n';
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
@@ -120,7 +121,7 @@ import Settings from './lib/admin/pages/Settings.svelte';
         class="mobile-overlay"
         role="button"
         tabindex="-1"
-        aria-label="Close sidebar"
+        aria-label={$_('app.closeSidebar')}
         onclick={handleMainContentClick}
         onkeydown={(e) => e.key === 'Escape' && handleMainContentClick(e)}
       ></div>
@@ -131,8 +132,8 @@ import Settings from './lib/admin/pages/Settings.svelte';
         <button
           class="mobile-menu-btn"
           onclick={toggleSidebarFromMain}
-          aria-label={sidebarCollapsed ? 'Open menu' : 'Close menu'}
-          title={sidebarCollapsed ? 'Open menu' : 'Close menu'}
+          aria-label={sidebarCollapsed ? $_('app.openMenu') : $_('app.closeMenu')}
+          title={sidebarCollapsed ? $_('app.openMenu') : $_('app.closeMenu')}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
         </button>

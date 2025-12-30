@@ -94,5 +94,11 @@
     "archiveChatError": "チャットのアーカイブに失敗しました",
     "chat": "チャット",
     "untitledChat": "タイトルなしチャット"
+  },
+  "app": {
+    "closeSidebar": "サイドバーを閉じる",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる",
+    "notifications": "通知"
   }
 }

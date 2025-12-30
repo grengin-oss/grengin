@@ -94,5 +94,11 @@
     "archiveChatError": "Falha ao arquivar a conversa",
     "chat": "Conversa",
     "untitledChat": "Conversa sem título"
+  },
+  "app": {
+    "closeSidebar": "Fechar barra lateral",
+    "openMenu": "Abrir menu",
+    "closeMenu": "Fechar menu",
+    "notifications": "Notificações"
   }
 }

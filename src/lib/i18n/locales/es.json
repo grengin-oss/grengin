@@ -94,5 +94,11 @@
     "archiveChatError": "Error al archivar la conversación",
     "chat": "Conversación",
     "untitledChat": "Conversación sin título"
+  },
+  "app": {
+    "closeSidebar": "Cerrar barra lateral",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "notifications": "Notificaciones"
   }
 }

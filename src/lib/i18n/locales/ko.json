@@ -94,5 +94,11 @@
     "archiveChatError": "채팅 보관 실패",
     "chat": "채팅",
     "untitledChat": "제목 없는 채팅"
+  },
+  "app": {
+    "closeSidebar": "사이드바 닫기",
+    "openMenu": "메뉴 열기",
+    "closeMenu": "메뉴 닫기",
+    "notifications": "알림"
   }
 }

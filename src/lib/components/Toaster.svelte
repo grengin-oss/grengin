@@ -120,6 +120,8 @@
 </script>
 
 <script lang="ts">
+  import { _ } from 'svelte-i18n';
+
   interface Props {
     position?: ToastPosition;
   }
@@ -140,7 +142,7 @@
   }
 </script>
 
-<div class="toaster" role="region" aria-label="Notifications">
+<div class="toaster" role="region" aria-label={$_('app.notifications')}>
   {#each toasts as t (t.id)}
     {@const pos = t.position ?? position}
     {@const pillVariant = t.type === 'success' ? 'pill--success' : t.type === 'error' ? 'pill--danger' : t.type === 'loading' ? 'pill--primary' : ''}
