@@ -3,6 +3,7 @@
   import { setAuth } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import OAuthButton from './OAuthButton.svelte';
+  import { _ } from 'svelte-i18n';
 
   // TODO: This should come from the server (API update)
   type AuthMode = 'google' | 'azure' | 'keycloak' | 'admin';
@@ -32,7 +33,7 @@
       const response = await login(email, password);
 
       if (response.requires_mfa) {
-          toast.error('MFA is required but not yet implemented');
+          toast.error($_('auth.mfaRequired'));
         return;
       }
 
@@ -44,7 +45,7 @@
       if (err instanceof ApiError) {
         toast.error(err.detail);
       } else {
-        toast.error('An unexpected error occurred');
+        toast.error($_('auth.unexpectedError'));
       }
     } finally {
       isLoading = false;
@@ -69,8 +70,8 @@
     <div class="brand-header">
       <img src="/grengin-icon.svg" alt="Grengin" class="login-logo" />
       <div class="brand-text">
-        <h1 class="brand-name">Welcome to Grengin</h1>
-        <p class="brand-tagline">Sign in to continue to your workspace</p>
+        <h1 class="brand-name">{$_('auth.welcomeToGrengin')}</h1>
+        <p class="brand-tagline">{$_('auth.signInToContinue')}</p>
       </div>
     </div>
 
@@ -78,14 +79,14 @@
       {#if hasAdminLogin}
         <form onsubmit={handleSubmit} class="login-form">
           <div class="form-section">
-            <h3 class="section-title">Email & Password</h3>
+            <h3 class="section-title">{$_('auth.emailAndPassword')}</h3>
             <div class="form-group">
-              <label for="email">Email address</label>
+              <label for="email">{$_('auth.emailAddress')}</label>
               <input
                 type="email"
                 id="email"
                 bind:value={email}
-                placeholder="Enter your email"
+                placeholder={$_('auth.emailPlaceholder')}
                 required
                 disabled={isLoading}
                 autocomplete="email"
@@ -94,12 +95,12 @@
             </div>
 
             <div class="form-group">
-              <label for="password">Password</label>
+              <label for="password">{$_('auth.password')}</label>
               <input
                 type="password"
                 id="password"
                 bind:value={password}
-                placeholder="Enter your password"
+                placeholder={$_('auth.passwordPlaceholder')}
                 required
                 disabled={isLoading}
                 autocomplete="current-password"
@@ -110,9 +111,9 @@
             <button type="submit" class="login-btn" disabled={isLoading}>
               {#if isLoading}
                 <div class="btn-spinner"></div>
-                Signing in...
+                {$_('auth.signingIn')}
               {:else}
-                Sign in
+                {$_('auth.signIn')}
               {/if}
             </button>
           </div>
@@ -126,7 +127,7 @@
               <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
             <div class="demo-text">
-              <p class="demo-title">Demo Account</p>
+              <p class="demo-title">{$_('auth.demoAccount')}</p>
               <p class="demo-credentials">admin@grengin.com / Demo123456!@</p>
             </div>
           </div>
@@ -135,7 +136,7 @@
 
       {#if hasOAuthProviders && hasAdminLogin}
         <div class="divider">
-          <span>or continue with</span>
+          <span>{$_('auth.orContinueWith')}</span>
         </div>
       {/if}
 
@@ -165,19 +166,19 @@
               <line x1="9" y1="9" x2="15" y2="15"></line>
             </svg>
           </div>
-          <h3>No Authentication Methods</h3>
-          <p>Please contact your administrator to configure authentication options.</p>
+          <h3>{$_('auth.noAuthMethods')}</h3>
+          <p>{$_('auth.noAuthMethodsDescription')}</p>
         </div>
       {/if}
     </div>
 
     <div class="legal-footer">
       <div class="legal-links">
-        <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+        <a href="/terms" target="_blank" rel="noopener noreferrer">{$_('auth.termsOfService')}</a>
         <span class="separator">•</span>
-        <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+        <a href="/privacy" target="_blank" rel="noopener noreferrer">{$_('auth.privacyPolicy')}</a>
       </div>
-      <p class="copyright">© 2024 Grengin. All rights reserved.</p>
+      <p class="copyright">{$_('auth.copyright')}</p>
     </div>
   </div>
 </div>

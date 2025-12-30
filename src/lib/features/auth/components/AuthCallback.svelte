@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { setAuth, ApiError, handleOAuthCallback } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
+  import { _ } from 'svelte-i18n';
 
   // UI State
   type CallbackStatus = 'processing' | 'success' | 'error';
@@ -30,7 +31,7 @@
     const state = params.get('state');
     const code = params.get('code');
     if (!state || !code) {
-      const message = 'Missing required OAuth parameters (state or code)';
+      const message = $_('auth.missingOAuthParams');
       toast.error(message);
       redirectAfterError();
       return;
@@ -39,7 +40,7 @@
     // 3. Retrieve provider from session storage
     const provider = sessionStorage.getItem('oauth_provider');
     if (!provider) {
-      const message = 'OAuth provider not found. Please try logging in again.';
+      const message = $_('auth.oauthProviderNotFound');
       toast.error(message);
       redirectAfterError();
       return;
@@ -50,7 +51,7 @@
 
     // 5. Validate response and store authentication
     if (!response?.accessToken || !response?.user) {
-      const message = 'Invalid authentication response from server';
+      const message = $_('auth.invalidAuthResponse');
       toast.error(message);
       throw new Error(message);
     }
@@ -99,7 +100,7 @@
     } else if (err instanceof Error) {
       errorMessage = err.message;
     } else {
-      errorMessage = 'An unexpected error occurred during authentication';
+      errorMessage = $_('auth.unexpectedAuthError');
     }
     
     // Show error toast
@@ -134,7 +135,7 @@
           <img src="/grengin-icon.svg" alt="Grengin" class="callback-logo" />
           <div class="brand-text">
             <h1 class="brand-name">Grengin</h1>
-            <p class="brand-tagline">Authentication in progress</p>
+            <p class="brand-tagline">{$_('auth.authenticationInProgress')}</p>
           </div>
         </div>
         
@@ -144,8 +145,8 @@
             <div class="pulse-ring"></div>
           </div>
           <div class="status-text">
-            <h2>Completing sign in...</h2>
-            <p class="status-message">Please wait while we verify your credentials</p>
+            <h2>{$_('auth.completingSignIn')}</h2>
+            <p class="status-message">{$_('auth.pleaseWaitVerifying')}</p>
           </div>
         </div>
       </div>
@@ -155,7 +156,7 @@
           <img src="/grengin-icon.svg" alt="Grengin" class="callback-logo" />
           <div class="brand-text">
             <h1 class="brand-name">Grengin</h1>
-            <p class="brand-tagline">Authentication complete</p>
+            <p class="brand-tagline">{$_('auth.authenticationComplete')}</p>
           </div>
         </div>
         
@@ -166,8 +167,8 @@
             </svg>
           </div>
           <div class="status-text">
-            <h2>Sign in successful!</h2>
-            <p class="status-message">Redirecting you to your workspace...</p>
+            <h2>{$_('auth.signInSuccessful')}</h2>
+            <p class="status-message">{$_('auth.redirectingToWorkspace')}</p>
           </div>
         </div>
       </div>
@@ -177,7 +178,7 @@
           <img src="/grengin-icon.svg" alt="Grengin" class="callback-logo" />
           <div class="brand-text">
             <h1 class="brand-name">Grengin</h1>
-            <p class="brand-tagline">Authentication failed</p>
+            <p class="brand-tagline">{$_('auth.authenticationFailed')}</p>
           </div>
         </div>
         
@@ -190,8 +191,8 @@
             </svg>
           </div>
           <div class="status-text">
-            <h2>Sign in failed</h2>
-            <p class="status-submessage">Redirecting you back to the login page...</p>
+            <h2>{$_('auth.signInFailed')}</h2>
+            <p class="status-submessage">{$_('auth.redirectingToLogin')}</p>
           </div>
         </div>
       </div>
