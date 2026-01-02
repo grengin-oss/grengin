@@ -154,5 +154,61 @@
       "failedToUpdateUserStatus": "Failed to update user status",
       "editUserTitle": "Edit user"
     }
+  },
+  "chat": {
+    "emptyState": {
+      "title": "Start a conversation",
+      "description": "Send a message to begin chatting with the AI assistant!",
+      "aiDisclaimer": "AI can make mistakes. Please double-check responses."
+    },
+    "errors": {
+      "somethingWentWrong": "Something went wrong",
+      "dismissError": "Dismiss error",
+      "failedToLoadModels": "Failed to load models",
+      "failedToLoadConversation": "Failed to load conversation",
+      "failedToSendMessage": "Failed to send message"
+    },
+    "messageInput": {
+      "placeholder": "Ask anything",
+      "placeholderWithModel": "Message {model}",
+      "recordingPlaceholder": "Listening... Speak now",
+      "addContent": "Add content",
+      "addPhotos": "Add photos",
+      "addFiles": "Add files",
+      "selectModel": "Select model",
+      "selectModelFallback": "Select Model",
+      "loadingModels": "Loading models...",
+      "enableWebSearch": "Enable web search",
+      "disableWebSearch": "Disable web search",
+      "search": "Search",
+      "voiceInput": "Voice input",
+      "stopRecording": "Stop recording",
+      "sendMessage": "Send message",
+      "sendMessageTitle": "Send message (Enter)",
+      "messageInput": "Message input",
+      "visionCapable": "Vision capable",
+      "removeFile": "Remove file",
+      "previewImage": "Preview image: {name}",
+      "previewFile": "Preview file: {name}",
+      "fileLabel": "File: {name}",
+      "closePreview": "Close preview",
+      "speechRecognitionNotSupported": "Speech recognition is not supported in your browser",
+      "microphoneAccessDenied": "Microphone access denied. Please allow microphone access.",
+      "voiceInputError": "Voice input error: {error}",
+      "failedToStartVoiceInput": "Failed to start voice input"
+    },
+    "message": {
+      "copy": "Copy",
+      "copied": "Copied!",
+      "copyContent": "Copy content",
+      "loadingImage": "Loading image...",
+      "imageAlt": "Image",
+      "fileFallback": "File",
+      "pause": "Pause",
+      "resume": "Resume",
+      "listen": "Listen",
+      "stop": "Stop",
+      "closePreview": "Close preview"
+    }
   }
 }

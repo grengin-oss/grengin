@@ -3,6 +3,7 @@
   import type { ProviderInfo, ModelInfo, SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from '../../../api/models';
   import { getModels } from '../../../api/models';
   import { uploadDocument, type UploadedFile } from '../../../api/chatApi';
+  import { _ } from 'svelte-i18n';
 
   interface MessageInputProps {
     onSend: (message: string, uploadedFiles?: UploadedFile[], webSearch?: boolean) => void;
@@ -17,7 +18,7 @@
     modelsError?: string | null;
   }
 
-  let { onSend, disabled = false, placeholder = 'Ask anything', selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null }: MessageInputProps = $props();
+  let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null }: MessageInputProps = $props();
 
   let textarea: HTMLTextAreaElement;
   let fileInput: HTMLInputElement;
@@ -42,7 +43,9 @@
 
   // Dynamic placeholder based on recording state
   let currentPlaceholder = $derived(
-    isRecording ? 'Listening... Speak now' : placeholder
+    isRecording 
+      ? $_('chat.messageInput.recordingPlaceholder') 
+      : (placeholder || $_('chat.messageInput.placeholder'))
   );
 
   function autoResize() {
@@ -275,7 +278,7 @@
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognitionAPI) {
-      microphoneError = 'Speech recognition is not supported in your browser';
+      microphoneError = $_('chat.messageInput.speechRecognitionNotSupported');
       return null;
     }
 
@@ -327,11 +330,11 @@
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       if (event.error === 'not-allowed') {
-        microphoneError = 'Microphone access denied. Please allow microphone access.';
+        microphoneError = $_('chat.messageInput.microphoneAccessDenied');
       } else if (event.error === 'no-speech') {
         // User didn't speak - silently stop
       } else if (event.error !== 'aborted') {
-        microphoneError = `Voice input error: ${event.error}`;
+        microphoneError = $_('chat.messageInput.voiceInputError', { values: { error: event.error } });
       }
       isRecording = false;
     };
@@ -345,7 +348,7 @@
       isRecording = true;
     } catch (error) {
       console.error('Failed to start speech recognition:', error);
-      microphoneError = 'Failed to start voice input';
+      microphoneError = $_('chat.messageInput.failedToStartVoiceInput');
       isRecording = false;
     }
   }
@@ -395,7 +398,7 @@
             <button
               class="thumbnail-button"
               onclick={() => openImagePreview(file)}
-              aria-label={`Preview image: ${file.name}`}
+              aria-label={$_('chat.messageInput.previewImage', { values: { name: file.name } })}
             >
               {#if imageThumbnails[file.name]}
                 <img src={imageThumbnails[file.name]} alt={file.name} class="file-thumbnail" />
@@ -413,7 +416,7 @@
             <button
               class="thumbnail-button file-icon-button"
               onclick={() => isTextFile(file) ? openFilePreview(file) : null}
-              aria-label={isTextFile(file) ? `Preview file: ${file.name}` : `File: ${file.name}`}
+              aria-label={isTextFile(file) ? $_('chat.messageInput.previewFile', { values: { name: file.name } }) : $_('chat.messageInput.fileLabel', { values: { name: file.name } })}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
@@ -423,7 +426,7 @@
             <span class="file-name" title={file.name}>{file.name}</span>
             <span class="file-size">{formatFileSize(file.size)}</span>
           {/if}
-          <button class="pill-remove-btn" onclick={() => removeFile(index)} aria-label="Remove file">
+          <button class="pill-remove-btn" onclick={() => removeFile(index)} aria-label={$_('chat.messageInput.removeFile')}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -448,7 +451,7 @@
       {disabled}
       class="chat-input-textarea"
       class:recording={isRecording}
-      aria-label="Message input"
+      aria-label={$_('chat.messageInput.messageInput')}
     ></textarea>
 
     <!-- Floating Bottom Bar -->
@@ -459,8 +462,8 @@
           <button
             class="input-btn plus-btn"
             onclick={togglePlusMenu}
-            aria-label="Add content"
-            title="Add content"
+            aria-label={$_('chat.messageInput.addContent')}
+            title={$_('chat.messageInput.addContent')}
             {disabled}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -476,14 +479,14 @@
                   <circle cx="8.5" cy="8.5" r="1.5"></circle>
                   <polyline points="21 15 16 10 5 21"></polyline>
                 </svg>
-                <span>Add photos</span>
+                <span>{$_('chat.messageInput.addPhotos')}</span>
               </button>
               <button class="menu-item" onclick={handleFileSelect}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                   <polyline points="14,2 14,8 20,8"></polyline>
                 </svg>
-                <span>Add files</span>
+                <span>{$_('chat.messageInput.addFiles')}</span>
               </button>
             </div>
           {/if}
@@ -493,8 +496,8 @@
           <button
             class="selector-btn model-selector-btn"
             onclick={() => { showModelDropdown = !showModelDropdown; showPlusMenu = false; }}
-            title="Select model"
-            aria-label="Select model"
+            title={$_('chat.messageInput.selectModel')}
+            aria-label={$_('chat.messageInput.selectModel')}
           >
             <div class="model-icon">
               {#if selectedProvider}
@@ -507,7 +510,7 @@
                 </svg>
               {/if}
             </div>
-            <span class="selector-label model-caption">{selectedModel || 'Select Model'}</span>
+            <span class="selector-label model-caption">{selectedModel || $_('chat.messageInput.selectModelFallback')}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow" class:open={showModelDropdown}>
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
@@ -518,7 +521,7 @@
               {#if loadingModels}
                 <div class="dropdown-loading">
                   <div class="loading-spinner"></div>
-                  <span>Loading models...</span>
+                  <span>{$_('chat.messageInput.loadingModels')}</span>
                 </div>
               {:else if modelsError}
                 <div class="dropdown-error">{modelsError}</div>
@@ -541,7 +544,7 @@
                           <span class="model-name">{model.name}</span>
                           <div class="model-capabilities">
                             {#if model.supports_vision}
-                              <svg class="capability-icon active" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Vision capable">
+                              <svg class="capability-icon active" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label={$_('chat.messageInput.visionCapable')}>
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                 <circle cx="12" cy="12" r="3"/>
                               </svg>
@@ -561,8 +564,8 @@
           class="toggle-btn"
           class:active={webSearchEnabled}
           onclick={() => { webSearchEnabled = !webSearchEnabled; }}
-          title={webSearchEnabled ? "Disable web search" : "Enable web search"}
-          aria-label={webSearchEnabled ? "Disable web search" : "Enable web search"}
+          title={webSearchEnabled ? $_('chat.messageInput.disableWebSearch') : $_('chat.messageInput.enableWebSearch')}
+          aria-label={webSearchEnabled ? $_('chat.messageInput.disableWebSearch') : $_('chat.messageInput.enableWebSearch')}
           aria-pressed={webSearchEnabled}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -571,7 +574,7 @@
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
           </svg>
           {#if webSearchEnabled}
-            <span class="toggle-label">Search</span>
+            <span class="toggle-label">{$_('chat.messageInput.search')}</span>
           {/if}
         </button>
       </div>
@@ -585,8 +588,8 @@
           class="input-btn mic-btn"
           class:recording={isRecording}
           onclick={toggleVoiceInput}
-          aria-label={isRecording ? "Stop recording" : "Voice input"}
-          title={isRecording ? "Stop recording" : "Voice input"}
+          aria-label={isRecording ? $_('chat.messageInput.stopRecording') : $_('chat.messageInput.voiceInput')}
+          title={isRecording ? $_('chat.messageInput.stopRecording') : $_('chat.messageInput.voiceInput')}
           {disabled}
         >
           {#if isRecording}
@@ -609,8 +612,8 @@
           class="input-btn send-btn"
           onclick={handleSend}
           disabled={disabled || (!message.trim() && attachedFiles.length === 0)}
-          aria-label="Send message"
-          title="Send message (Enter)"
+          aria-label={$_('chat.messageInput.sendMessage')}
+          title={$_('chat.messageInput.sendMessageTitle')}
         >
           {#if disabled}
             <svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -651,7 +654,7 @@
           <span class="preview-name">{currentPreviewFile.name}</span>
           <span class="preview-size">{formatFileSize(currentPreviewFile.size)}</span>
         </div>
-        <button class="preview-close" onclick={closeFilePreview} aria-label="Close preview">
+        <button class="preview-close" onclick={closeFilePreview} aria-label={$_('chat.messageInput.closePreview')}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -688,7 +691,7 @@
           <span class="preview-name">{currentPreviewImage.file.name}</span>
           <span class="preview-size">{formatFileSize(currentPreviewImage.file.size)}</span>
         </div>
-        <button class="preview-close" onclick={closeImagePreview} aria-label="Close preview">
+        <button class="preview-close" onclick={closeImagePreview} aria-label={$_('chat.messageInput.closePreview')}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>

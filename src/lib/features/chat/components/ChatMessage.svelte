@@ -12,6 +12,8 @@
     type TTSState,
   } from '../../../utils/tts';
   import { downloadFile } from '../../../api/fileApi';
+  import { _ } from 'svelte-i18n';
+  import { get } from 'svelte/store';
 
   interface Props {
     message: ChatMessage & { files?: Array<{ id: string; name?: string; type?: string }> };
@@ -266,12 +268,14 @@
           if (code) {
             const button = document.createElement('button');
             button.className = 'copy-code-btn';
+            const copyText = get(_)('chat.message.copy');
+            const copiedText = get(_)('chat.message.copied');
             button.innerHTML = `
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                 <path d="m5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
               </svg>
-              <span>Copy</span>
+              <span>${copyText}</span>
             `;
             button.onclick = async () => {
               const codeText = code.textContent || '';
@@ -281,7 +285,7 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="20,6 9,17 4,12"></polyline>
                   </svg>
-                  <span>Copied!</span>
+                  <span>${copiedText}</span>
                 `;
                 setTimeout(() => {
                   button.innerHTML = `
@@ -366,7 +370,7 @@
                 class="action-btn"
                 class:success={copySuccess}
                 onclick={copyMessageContent}
-                title="Copy content"
+                title={$_('chat.message.copyContent')}
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   {#if copySuccess}
@@ -396,24 +400,24 @@
                     {#if fileLoadingStates.get(file.id)}
                       <div class="image-loader">
                         <div class="spinner"></div>
-                        <div class="loader-text">Loading image...</div>
+                        <div class="loader-text">{$_('chat.message.loadingImage')}</div>
                       </div>
                     {:else if fileBlobUrls.has(file.id)}
                       {@const blobUrl = fileBlobUrls.get(file.id)}
                       {#if blobUrl}
                         <img 
                           src={blobUrl} 
-                          alt={file.name || 'Image'} 
+                          alt={file.name || $_('chat.message.imageAlt')} 
                           class="message-image"
-                          onclick={() => openImagePreview(blobUrl, file.name || 'Image')}
+                          onclick={() => openImagePreview(blobUrl, file.name || $_('chat.message.imageAlt'))}
                         />
                       {/if}
                     {/if}
                   {:else}
-                    <div class="file-box" onclick={() => handleFileClick(file.id, file.name || 'File')}>
+                    <div class="file-box" onclick={() => handleFileClick(file.id, file.name || $_('chat.message.fileFallback'))}>
                       <div class="file-icon-large">{getFileIcon(file.type)}</div>
                       <div class="file-info">
-                        <div class="file-name">{file.name || 'File'}</div>
+                        <div class="file-name">{file.name || $_('chat.message.fileFallback')}</div>
                         {#if file.type}
                           <div class="file-type">{file.type}</div>
                         {/if}
@@ -436,7 +440,7 @@
                 class="action-btn"
                 class:active={isActive}
                 onclick={handleTTSToggle}
-                title={isSpeaking ? 'Pause' : isPaused ? 'Resume' : 'Listen'}
+                title={isSpeaking ? $_('chat.message.pause') : isPaused ? $_('chat.message.resume') : $_('chat.message.listen')}
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   {#if isSpeaking}
@@ -459,7 +463,7 @@
                 <button
                   class="action-btn stop-btn"
                   onclick={handleTTSStop}
-                  title="Stop"
+                  title={$_('chat.message.stop')}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="4" y="4" width="16" height="16" rx="2"></rect>
@@ -472,7 +476,7 @@
               class="action-btn"
               class:success={copySuccess}
               onclick={copyMessageContent}
-              title="Copy content"
+              title={$_('chat.message.copyContent')}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 {#if copySuccess}
@@ -494,24 +498,24 @@
                   {#if fileLoadingStates.get(file.id)}
                     <div class="image-loader">
                       <div class="spinner"></div>
-                      <div class="loader-text">Loading image...</div>
+                      <div class="loader-text">{$_('chat.message.loadingImage')}</div>
                     </div>
                   {:else if fileBlobUrls.has(file.id)}
                     {@const blobUrl = fileBlobUrls.get(file.id)}
                     {#if blobUrl}
                       <img 
                         src={blobUrl} 
-                        alt={file.name || 'Image'} 
+                        alt={file.name || $_('chat.message.imageAlt')} 
                         class="message-image"
-                        onclick={() => openImagePreview(blobUrl, file.name || 'Image')}
+                        onclick={() => openImagePreview(blobUrl, file.name || $_('chat.message.imageAlt'))}
                       />
                     {/if}
                   {/if}
                 {:else}
-                  <div class="file-box" onclick={() => handleFileClick(file.id, file.name || 'File')}>
+                  <div class="file-box" onclick={() => handleFileClick(file.id, file.name || $_('chat.message.fileFallback'))}>
                     <div class="file-icon-large">{getFileIcon(file.type)}</div>
                     <div class="file-info">
-                      <div class="file-name">{file.name || 'File'}</div>
+                      <div class="file-name">{file.name || $_('chat.message.fileFallback')}</div>
                       {#if file.type}
                         <div class="file-type">{file.type}</div>
                       {/if}
@@ -542,7 +546,7 @@
 {#if previewImage}
   <div class="modal-backdrop" onclick={closeImagePreview}>
     <div class="modal-content" onclick={(e) => e.stopPropagation()}>
-      <button class="modal-close" onclick={closeImagePreview} aria-label="Close preview">
+      <button class="modal-close" onclick={closeImagePreview} aria-label={$_('chat.message.closePreview')}>
         ✕
       </button>
       <img src={previewImage.url} alt={previewImage.name} class="preview-image" />

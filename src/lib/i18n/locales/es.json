@@ -154,5 +154,61 @@
       "failedToUpdateUserStatus": "Error al actualizar el estado del usuario",
       "editUserTitle": "Editar usuario"
     }
+  },
+  "chat": {
+    "emptyState": {
+      "title": "Iniciar una conversación",
+      "description": "¡Envía un mensaje para comenzar a chatear con el asistente de IA!",
+      "aiDisclaimer": "La IA puede cometer errores. Por favor, verifica las respuestas."
+    },
+    "errors": {
+      "somethingWentWrong": "Algo salió mal",
+      "dismissError": "Descartar error",
+      "failedToLoadModels": "Error al cargar modelos",
+      "failedToLoadConversation": "Error al cargar conversación",
+      "failedToSendMessage": "Error al enviar mensaje"
+    },
+    "messageInput": {
+      "placeholder": "Pregunta cualquier cosa",
+      "placeholderWithModel": "Mensaje {model}",
+      "recordingPlaceholder": "Escuchando... Habla ahora",
+      "addContent": "Agregar contenido",
+      "addPhotos": "Agregar fotos",
+      "addFiles": "Agregar archivos",
+      "selectModel": "Seleccionar modelo",
+      "selectModelFallback": "Seleccionar Modelo",
+      "loadingModels": "Cargando modelos...",
+      "enableWebSearch": "Habilitar búsqueda web",
+      "disableWebSearch": "Deshabilitar búsqueda web",
+      "search": "Buscar",
+      "voiceInput": "Entrada de voz",
+      "stopRecording": "Detener grabación",
+      "sendMessage": "Enviar mensaje",
+      "sendMessageTitle": "Enviar mensaje (Enter)",
+      "messageInput": "Entrada de mensaje",
+      "visionCapable": "Capaz de visión",
+      "removeFile": "Eliminar archivo",
+      "previewImage": "Vista previa de imagen: {name}",
+      "previewFile": "Vista previa de archivo: {name}",
+      "fileLabel": "Archivo: {name}",
+      "closePreview": "Cerrar vista previa",
+      "speechRecognitionNotSupported": "El reconocimiento de voz no es compatible con su navegador",
+      "microphoneAccessDenied": "Acceso al micrófono denegado. Por favor, permite el acceso al micrófono.",
+      "voiceInputError": "Error de entrada de voz: {error}",
+      "failedToStartVoiceInput": "Error al iniciar la entrada de voz"
+    },
+    "message": {
+      "copy": "Copiar",
+      "copied": "¡Copiado!",
+      "copyContent": "Copiar contenido",
+      "loadingImage": "Cargando imagen...",
+      "imageAlt": "Imagen",
+      "fileFallback": "Archivo",
+      "pause": "Pausar",
+      "resume": "Reanudar",
+      "listen": "Escuchar",
+      "stop": "Detener",
+      "closePreview": "Cerrar vista previa"
+    }
   }
 }

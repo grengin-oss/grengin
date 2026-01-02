@@ -154,5 +154,61 @@
       "failedToUpdateUserStatus": "Échec de la mise à jour du statut de l'utilisateur",
       "editUserTitle": "Modifier l'utilisateur"
     }
+  },
+  "chat": {
+    "emptyState": {
+      "title": "Démarrer une conversation",
+      "description": "Envoyez un message pour commencer à discuter avec l'assistant IA !",
+      "aiDisclaimer": "L'IA peut faire des erreurs. Veuillez vérifier les réponses."
+    },
+    "errors": {
+      "somethingWentWrong": "Quelque chose s'est mal passé",
+      "dismissError": "Ignorer l'erreur",
+      "failedToLoadModels": "Échec du chargement des modèles",
+      "failedToLoadConversation": "Échec du chargement de la conversation",
+      "failedToSendMessage": "Échec de l'envoi du message"
+    },
+    "messageInput": {
+      "placeholder": "Demander n'importe quoi",
+      "placeholderWithModel": "Message {model}",
+      "recordingPlaceholder": "En cours d'écoute... Parlez maintenant",
+      "addContent": "Ajouter du contenu",
+      "addPhotos": "Ajouter des photos",
+      "addFiles": "Ajouter des fichiers",
+      "selectModel": "Sélectionner un modèle",
+      "selectModelFallback": "Sélectionner un modèle",
+      "loadingModels": "Chargement des modèles...",
+      "enableWebSearch": "Activer la recherche web",
+      "disableWebSearch": "Désactiver la recherche web",
+      "search": "Rechercher",
+      "voiceInput": "Saisie vocale",
+      "stopRecording": "Arrêter l'enregistrement",
+      "sendMessage": "Envoyer le message",
+      "sendMessageTitle": "Envoyer le message (Entrée)",
+      "messageInput": "Saisie de message",
+      "visionCapable": "Capacité de vision",
+      "removeFile": "Supprimer le fichier",
+      "previewImage": "Aperçu de l'image : {name}",
+      "previewFile": "Aperçu du fichier : {name}",
+      "fileLabel": "Fichier : {name}",
+      "closePreview": "Fermer l'aperçu",
+      "speechRecognitionNotSupported": "La reconnaissance vocale n'est pas prise en charge dans votre navigateur",
+      "microphoneAccessDenied": "Accès au microphone refusé. Veuillez autoriser l'accès au microphone.",
+      "voiceInputError": "Erreur de saisie vocale : {error}",
+      "failedToStartVoiceInput": "Échec du démarrage de la saisie vocale"
+    },
+    "message": {
+      "copy": "Copier",
+      "copied": "Copié !",
+      "copyContent": "Copier le contenu",
+      "loadingImage": "Chargement de l'image...",
+      "imageAlt": "Image",
+      "fileFallback": "Fichier",
+      "pause": "Pause",
+      "resume": "Reprendre",
+      "listen": "Écouter",
+      "stop": "Arrêter",
+      "closePreview": "Fermer l'aperçu"
+    }
   }
 }

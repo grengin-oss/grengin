@@ -154,5 +154,61 @@
       "failedToUpdateUserStatus": "ユーザーステータスの更新に失敗しました",
       "editUserTitle": "ユーザーを編集"
     }
+  },
+  "chat": {
+    "emptyState": {
+      "title": "会話を開始",
+      "description": "メッセージを送信してAIアシスタントとのチャットを始めましょう！",
+      "aiDisclaimer": "AIは間違いを犯す可能性があります。回答を確認してください。"
+    },
+    "errors": {
+      "somethingWentWrong": "問題が発生しました",
+      "dismissError": "エラーを閉じる",
+      "failedToLoadModels": "モデルの読み込みに失敗しました",
+      "failedToLoadConversation": "会話の読み込みに失敗しました",
+      "failedToSendMessage": "メッセージの送信に失敗しました"
+    },
+    "messageInput": {
+      "placeholder": "何でも聞いてください",
+      "placeholderWithModel": "{model}にメッセージ",
+      "recordingPlaceholder": "聞いています... 今話してください",
+      "addContent": "コンテンツを追加",
+      "addPhotos": "写真を追加",
+      "addFiles": "ファイルを追加",
+      "selectModel": "モデルを選択",
+      "selectModelFallback": "モデルを選択",
+      "loadingModels": "モデルを読み込み中...",
+      "enableWebSearch": "ウェブ検索を有効にする",
+      "disableWebSearch": "ウェブ検索を無効にする",
+      "search": "検索",
+      "voiceInput": "音声入力",
+      "stopRecording": "録音を停止",
+      "sendMessage": "メッセージを送信",
+      "sendMessageTitle": "メッセージを送信（Enter）",
+      "messageInput": "メッセージ入力",
+      "visionCapable": "ビジョン対応",
+      "removeFile": "ファイルを削除",
+      "previewImage": "画像プレビュー: {name}",
+      "previewFile": "ファイルプレビュー: {name}",
+      "fileLabel": "ファイル: {name}",
+      "closePreview": "プレビューを閉じる",
+      "speechRecognitionNotSupported": "お使いのブラウザでは音声認識がサポートされていません",
+      "microphoneAccessDenied": "マイクへのアクセスが拒否されました。マイクへのアクセスを許可してください。",
+      "voiceInputError": "音声入力エラー: {error}",
+      "failedToStartVoiceInput": "音声入力の開始に失敗しました"
+    },
+    "message": {
+      "copy": "コピー",
+      "copied": "コピーしました！",
+      "copyContent": "コンテンツをコピー",
+      "loadingImage": "画像を読み込み中...",
+      "imageAlt": "画像",
+      "fileFallback": "ファイル",
+      "pause": "一時停止",
+      "resume": "再開",
+      "listen": "聞く",
+      "stop": "停止",
+      "closePreview": "プレビューを閉じる"
+    }
   }
 }

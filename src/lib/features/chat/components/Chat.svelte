@@ -7,6 +7,7 @@
   import { sendMessage, getConversation, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
   import { getModels } from '../../../api/models';
+  import { _ } from 'svelte-i18n';
 
   let messages = $state<ChatMessageType[]>([]);
   let isLoading = $state(false);
@@ -35,7 +36,7 @@
       providers = response.providers;
     } catch (error) {
       console.error('Failed to load models:', error);
-      modelsError = 'Failed to load models';
+      modelsError = $_('chat.errors.failedToLoadModels');
     } finally {
       loadingModels = false;
     }
@@ -209,7 +210,7 @@
         },
       });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
+      const errorMessage = err instanceof Error ? err.message : $_('chat.errors.failedToSendMessage');
       error = errorMessage;
       isTyping = false;
       isLoading = false;
@@ -284,7 +285,7 @@
 
         scrollToBottom(false);
       } catch (err) {
-        error = 'Failed to load conversation';
+        error = $_('chat.errors.failedToLoadConversation');
         console.error('Failed to load conversation:', err);
         messages = []; // Clear messages on error
       } finally {
@@ -356,15 +357,15 @@
         </div>
       </div>
       <div class="empty-content">
-        <h3>Start a conversation</h3>
-        <p>Send a message to begin chatting with the AI assistant!</p>
+        <h3>{$_('chat.emptyState.title')}</h3>
+        <p>{$_('chat.emptyState.description')}</p>
       </div>
       <div class="empty-state-input">
         <MessageInput
           bind:this={messageInput}
           onSend={handleSendMessage}
           disabled={isLoading}
-          placeholder={`Message ${selectedModel}`}
+          placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
           {selectedModel}
           {selectedProvider}
           onRemoveModel={handleRemoveModel}
@@ -373,7 +374,7 @@
           {loadingModels}
           {modelsError}
         />
-        <p class="ai-disclaimer">AI can make mistakes. Please double-check responses.</p>
+        <p class="ai-disclaimer">{$_('chat.emptyState.aiDisclaimer')}</p>
       </div>
     </div>
 
@@ -387,10 +388,10 @@
           </svg>
         </div>
         <div class="error-content">
-          <span class="error-title">Something went wrong</span>
+          <span class="error-title">{$_('chat.errors.somethingWentWrong')}</span>
           <span class="error-message">{error}</span>
         </div>
-        <button class="dismiss-btn" onclick={() => error = null} aria-label="Dismiss error" title="Dismiss error">
+        <button class="dismiss-btn" onclick={() => error = null} aria-label={$_('chat.errors.dismissError')} title={$_('chat.errors.dismissError')}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -427,10 +428,10 @@
               </svg>
             </div>
             <div class="error-content">
-              <span class="error-title">Something went wrong</span>
+              <span class="error-title">{$_('chat.errors.somethingWentWrong')}</span>
               <span class="error-message">{error}</span>
             </div>
-            <button class="dismiss-btn" onclick={() => error = null} aria-label="Dismiss error" title="Dismiss error">
+            <button class="dismiss-btn" onclick={() => error = null} aria-label={$_('chat.errors.dismissError')} title={$_('chat.errors.dismissError')}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -446,7 +447,7 @@
         bind:this={messageInput}
         onSend={handleSendMessage}
         disabled={isLoading}
-        placeholder={`Message ${selectedModel}`}
+        placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
         {selectedModel}
         {selectedProvider}
         onRemoveModel={handleRemoveModel}
@@ -455,7 +456,7 @@
         {loadingModels}
         {modelsError}
       />
-      <p class="ai-disclaimer">AI can make mistakes. Please double-check responses.</p>
+      <p class="ai-disclaimer">{$_('chat.emptyState.aiDisclaimer')}</p>
     </div>
   </div>
 {/if}

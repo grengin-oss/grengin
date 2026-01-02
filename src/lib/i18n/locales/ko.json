@@ -154,5 +154,61 @@
       "failedToUpdateUserStatus": "사용자 상태 업데이트 실패",
       "editUserTitle": "사용자 편집"
     }
+  },
+  "chat": {
+    "emptyState": {
+      "title": "대화 시작",
+      "description": "AI 어시스턴트와 채팅을 시작하려면 메시지를 보내세요!",
+      "aiDisclaimer": "AI는 실수를 할 수 있습니다. 응답을 다시 확인해 주세요."
+    },
+    "errors": {
+      "somethingWentWrong": "문제가 발생했습니다",
+      "dismissError": "오류 닫기",
+      "failedToLoadModels": "모델 로드 실패",
+      "failedToLoadConversation": "대화 로드 실패",
+      "failedToSendMessage": "메시지 전송 실패"
+    },
+    "messageInput": {
+      "placeholder": "무엇이든 물어보세요",
+      "placeholderWithModel": "{model}에 메시지",
+      "recordingPlaceholder": "듣는 중... 지금 말하세요",
+      "addContent": "콘텐츠 추가",
+      "addPhotos": "사진 추가",
+      "addFiles": "파일 추가",
+      "selectModel": "모델 선택",
+      "selectModelFallback": "모델 선택",
+      "loadingModels": "모델 로딩 중...",
+      "enableWebSearch": "웹 검색 사용",
+      "disableWebSearch": "웹 검색 비활성화",
+      "search": "검색",
+      "voiceInput": "음성 입력",
+      "stopRecording": "녹음 중지",
+      "sendMessage": "메시지 보내기",
+      "sendMessageTitle": "메시지 보내기 (Enter)",
+      "messageInput": "메시지 입력",
+      "visionCapable": "비전 지원",
+      "removeFile": "파일 제거",
+      "previewImage": "이미지 미리보기: {name}",
+      "previewFile": "파일 미리보기: {name}",
+      "fileLabel": "파일: {name}",
+      "closePreview": "미리보기 닫기",
+      "speechRecognitionNotSupported": "브라우저에서 음성 인식을 지원하지 않습니다",
+      "microphoneAccessDenied": "마이크 액세스가 거부되었습니다. 마이크 액세스를 허용해 주세요.",
+      "voiceInputError": "음성 입력 오류: {error}",
+      "failedToStartVoiceInput": "음성 입력 시작 실패"
+    },
+    "message": {
+      "copy": "복사",
+      "copied": "복사됨!",
+      "copyContent": "콘텐츠 복사",
+      "loadingImage": "이미지 로딩 중...",
+      "imageAlt": "이미지",
+      "fileFallback": "파일",
+      "pause": "일시정지",
+      "resume": "재개",
+      "listen": "듣기",
+      "stop": "중지",
+      "closePreview": "미리보기 닫기"
+    }
   }
 }
