@@ -9,6 +9,8 @@
   import type { User } from "../types.js";
   import UserRow from "../components/UserRow.svelte";
   import SortIcon from "../components/SortIcon.svelte";
+  import { _ } from "svelte-i18n";
+  import { formatNumber } from "../../utils/format.js";
 
   let isCreateModalOpen = $state(false);
   let isEditModalOpen = $state(false);
@@ -94,9 +96,9 @@
     formErrors = {};
 
     if (!formData.email) {
-      formErrors.email = "Email is required";
+      formErrors.email = $_('admin.users.emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      formErrors.email = "Invalid email format";
+      formErrors.email = $_('admin.users.invalidEmailFormat');
     }
 
     return Object.keys(formErrors).length === 0;
@@ -110,9 +112,9 @@
       await usersStore.create(formData);
       isCreateModalOpen = false;
       formData = { email: "", name: "", role: "user", department: "" };
-      toast.success("User created successfully");
+      toast.success($_('admin.users.userCreatedSuccessfully'));
     } catch (err: any) {
-      toast.error(err.message || "Failed to create user");
+      toast.error(err.message || $_('admin.users.failedToCreateUser'));
     } finally {
       isSubmitting = false;
     }
@@ -126,9 +128,9 @@
       await usersStore.update(selectedUser.id, formData);
       isEditModalOpen = false;
       selectedUser = null;
-      toast.success("User updated successfully");
+      toast.success($_('admin.users.userUpdatedSuccessfully'));
     } catch (err: any) {
-      toast.error(err.message || "Failed to update user");
+      toast.error(err.message || $_('admin.users.failedToUpdateUser'));
     } finally {
       isSubmitting = false;
     }
@@ -140,7 +142,7 @@
     try {
       await usersStore.updateStatus(user.id, newStatus);
       toast.success(
-        `User ${newStatus === "active" ? "activated" : "deactivated"} successfully`,
+        newStatus === "active" ? $_('admin.users.activatedMessage') : $_('admin.users.deactivatedMessage'),
       );
     } catch (err: any) {
       throw err;
@@ -162,10 +164,10 @@
 </script>
 
 <div class="users-container">
-  <PageHeader title="User Management" subtitle="Manage users and their roles">
+  <PageHeader title={$_('admin.users.userManagement')} subtitle={$_('admin.users.manageUsersAndRoles')}>
     {#snippet children()}
       <button class="btn-primary" onclick={openCreateModal}>
-        + Create User
+        + {$_('admin.users.createUserButton')}
       </button>
     {/snippet}
   </PageHeader>
@@ -176,7 +178,7 @@
       class="filter-toggle-btn"
       class:open={filtersOpen}
       onclick={() => (filtersOpen = !filtersOpen)}
-      aria-label={filtersOpen ? "Close filters" : "Open filters"}
+      aria-label={filtersOpen ? $_('admin.users.closeFilters') : $_('admin.users.openFilters')}
     >
       {#if filtersOpen}
         <svg
@@ -212,13 +214,13 @@
           <circle cx="10" cy="10" r="2" fill="currentColor" />
           <circle cx="5" cy="15" r="2" fill="currentColor" />
         </svg>
-        Filters
+        {$_('admin.users.filters')}
       {/if}
     </button>
     <div class="filters-grid" class:open={filtersOpen}>
       <input
         type="text"
-        placeholder="Search by name..."
+        placeholder={$_('admin.users.searchByName')}
         bind:value={searchQuery}
         oninput={applyFiltersDebounced}
         class="filter-input"
@@ -228,35 +230,35 @@
         class="filter-select"
         onchange={applyFilters}
       >
-        <option value="">All Roles</option>
-        <option value="superadmin">Super Admin</option>
-        <option value="admin">Admin</option>
-        <option value="user">User</option>
+        <option value="">{$_('admin.common.allRoles')}</option>
+        <option value="superadmin">{$_('admin.common.superAdmin')}</option>
+        <option value="admin">{$_('admin.common.admin')}</option>
+        <option value="user">{$_('admin.common.user')}</option>
       </select>
       <select
         bind:value={filterStatus}
         class="filter-select"
         onchange={applyFilters}
       >
-        <option value="">All Statuses</option>
-        <option value="active">Active</option>
-        <option value="deactivated">Deactivated</option>
+        <option value="">{$_('admin.common.allStatuses')}</option>
+        <option value="active">{$_('admin.common.active')}</option>
+        <option value="deactivated">{$_('admin.common.deactivated')}</option>
       </select>
       <input
         type="text"
-        placeholder="Department"
+        placeholder={$_('admin.common.department')}
         bind:value={filterDepartment}
         onkeyup={(e) => e.key === "Enter" && applyFilters()}
         class="filter-input"
       />
       <button class="btn-secondary reset-btn" onclick={clearFilters}
-        >Reset</button
+        >{$_('admin.users.reset')}</button
       >
     </div>
   </div>
 
   {#if usersStore.isLoading}
-    <LoadingSpinner size="lg" text="Loading users..." />
+    <LoadingSpinner size="lg" text={$_('admin.users.loadingUsers')} />
   {:else}
     <!-- Users Table -->
     <AdminTableCard minWidth="960px">
@@ -265,26 +267,26 @@
           <tr>
             <th class="sortable" onclick={() => handleSort('name')}>
               <span class="th-content">
-                Name
+                {$_('admin.common.name')}
                 <SortIcon sort="name" currentSort={usersStore.sort} ascending={usersStore.ascending} />
               </span>
             </th>
             <th class="sortable" onclick={() => handleSort('email')}>
               <span class="th-content">
-                Email
+                {$_('admin.common.email')}
                 <SortIcon sort="email" currentSort={usersStore.sort} ascending={usersStore.ascending} />
               </span>
             </th>
-            <th>Role</th>
-            <th>Department</th>
-            <th>Status</th>
+            <th>{$_('admin.common.role')}</th>
+            <th>{$_('admin.common.department')}</th>
+            <th>{$_('admin.common.status')}</th>
             <th class="sortable" onclick={() => handleSort('created_at')}>
               <span class="th-content">
-                Created
+                {$_('admin.common.created')}
                 <SortIcon sort="created_at" currentSort={usersStore.sort} ascending={usersStore.ascending} />
               </span>
             </th>
-            <th>Actions</th>
+            <th>{$_('admin.common.actions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -292,7 +294,7 @@
             <UserRow {user} {toggleUserStatus} {openEditModal} />
           {:else}
             <tr>
-              <td colspan="7" class="empty-state">No users found</td>
+              <td colspan="7" class="empty-state">{$_('admin.users.noUsersFound')}</td>
             </tr>
           {/each}
         </tbody>
@@ -307,17 +309,17 @@
           onclick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 0}
         >
-          Previous
+          {$_('admin.common.previous')}
         </button>
         <span class="pagination-info">
-          Page {currentPage + 1} of {totalPages} ({usersStore.total} total)
+          {$_('admin.common.pageInfo', { values: { current: formatNumber(currentPage + 1), total: formatNumber(totalPages), count: formatNumber(usersStore.total) } })}
         </span>
         <button
           class="btn"
           onclick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage >= totalPages - 1}
         >
-          Next
+          {$_('admin.common.next')}
         </button>
       </div>
     {/if}
@@ -326,7 +328,7 @@
   <!-- Create Modal -->
   <Modal
     isOpen={isCreateModalOpen}
-    title="Create New User"
+    title={$_('admin.users.createNewUser')}
     onclose={() => (isCreateModalOpen = false)}
   >
     {#snippet children()}
@@ -338,7 +340,7 @@
         class="user-form"
       >
         <div class="form-group">
-          <label for="create-email">Email <span class="required">*</span></label
+          <label for="create-email">{$_('admin.common.email')} <span class="required">*</span></label
           >
           <input
             id="create-email"
@@ -354,30 +356,30 @@
         </div>
 
         <div class="form-group">
-          <label for="create-name">Name</label>
+          <label for="create-name">{$_('admin.common.name')}</label>
           <input
             id="create-name"
             type="text"
             bind:value={formData.name}
-            placeholder="John Doe"
+            placeholder={$_('admin.users.namePlaceholder')}
           />
         </div>
 
         <div class="form-group">
-          <label for="create-role">Role</label>
+          <label for="create-role">{$_('admin.common.role')}</label>
           <select id="create-role" bind:value={formData.role}>
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
+            <option value="user">{$_('admin.common.user')}</option>
+            <option value="admin">{$_('admin.common.admin')}</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label for="create-department">Department</label>
+          <label for="create-department">{$_('admin.common.department')}</label>
           <input
             id="create-department"
             type="text"
             bind:value={formData.department}
-            placeholder="Engineering"
+            placeholder={$_('admin.users.departmentPlaceholder')}
           />
         </div>
 
@@ -387,10 +389,10 @@
             class="btn"
             onclick={() => (isCreateModalOpen = false)}
           >
-            Cancel
+            {$_('common.cancel')}
           </button>
           <button type="submit" class="btn-primary" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create User"}
+            {isSubmitting ? $_('admin.common.creating') : $_('admin.users.createUser')}
           </button>
         </div>
       </form>
@@ -400,7 +402,7 @@
   <!-- Edit Modal -->
   <Modal
     isOpen={isEditModalOpen}
-    title="Edit User"
+    title={$_('admin.users.editUser')}
     onclose={() => (isEditModalOpen = false)}
   >
     {#snippet children()}
@@ -412,7 +414,7 @@
         class="user-form"
       >
         <div class="form-group">
-          <label for="edit-email">Email</label>
+          <label for="edit-email">{$_('admin.common.email')}</label>
           <input
             id="edit-email"
             type="email"
@@ -422,30 +424,30 @@
         </div>
 
         <div class="form-group">
-          <label for="edit-name">Name</label>
+          <label for="edit-name">{$_('admin.common.name')}</label>
           <input
             id="edit-name"
             type="text"
             bind:value={formData.name}
-            placeholder="John Doe"
+            placeholder={$_('admin.users.namePlaceholder')}
           />
         </div>
 
         <div class="form-group">
-          <label for="edit-role">Role</label>
+          <label for="edit-role">{$_('admin.common.role')}</label>
           <select id="edit-role" bind:value={formData.role}>
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
+            <option value="user">{$_('admin.common.user')}</option>
+            <option value="admin">{$_('admin.common.admin')}</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label for="edit-department">Department</label>
+          <label for="edit-department">{$_('admin.common.department')}</label>
           <input
             id="edit-department"
             type="text"
             bind:value={formData.department}
-            placeholder="Engineering"
+            placeholder={$_('admin.users.departmentPlaceholder')}
           />
         </div>
 
@@ -455,10 +457,10 @@
             class="btn"
             onclick={() => (isEditModalOpen = false)}
           >
-            Cancel
+            {$_('common.cancel')}
           </button>
           <button type="submit" class="btn-primary" disabled={isSubmitting}>
-            {isSubmitting ? "Updating..." : "Update User"}
+            {isSubmitting ? $_('admin.common.updating') : $_('admin.users.updateUser')}
           </button>
         </div>
       </form>

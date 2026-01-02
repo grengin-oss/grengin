@@ -1,5 +1,7 @@
 <script lang="ts">
     import type { User } from "../types.js";
+    import { _ } from "svelte-i18n";
+    import { formatDate } from "../../utils/format.js";
 
     interface Props {
         user: User;
@@ -61,24 +63,20 @@
                 />
                 <span class="status-slider"></span>
                 <span class="status-label">
-                    {user.status === "active" ? "Active" : "Deactivated"}
+                    {user.status === "active" ? $_('admin.common.active') : $_('admin.common.deactivated')}
                 </span>
             </label>
         {:else}
-            <span class="status-badge active">Active</span>
+            <span class="status-badge active">{$_('admin.common.active')}</span>
         {/if}
     </td>
-    <td
-        >{user.created_at
-            ? new Date(user.created_at).toLocaleDateString()
-            : "-"}</td
-    >
+    <td>{user.created_at ? formatDate(user.created_at) : "-"}</td>
     <td>
         <div class="actions">
             <button
                 class="action-btn edit"
                 onclick={() => openEditModal(user)}
-                title="Edit user"
+                title={$_('admin.users.editUserTitle')}
             >
                 ✏️
             </button>
