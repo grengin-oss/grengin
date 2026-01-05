@@ -748,6 +748,7 @@
                 {#if store.formData.whitelisted_models.length > 0}
                   <select
                     id="default-model-select"
+                    class="filter-select"
                     bind:value={store.formData.default_model}
                     required
                   >
@@ -887,27 +888,13 @@
     color: var(--text-primary);
   }
 
-  .form-group select {
-    width: 100%;
-    padding: var(--space-md);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 0.9375rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
+  .form-group .filter-select {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right var(--space-md) center;
     background-size: 1.25rem;
-  }
-
-  .form-group select:focus {
-    outline: none;
-    border-color: var(--brand);
-    background: rgba(255, 255, 255, 0.08);
+    padding-right: 3rem;
   }
 
   .api-key-section {
