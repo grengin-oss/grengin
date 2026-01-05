@@ -291,6 +291,9 @@
                     status.type === "not-configured"}
                   class:invalid={status.type === "invalid"}
                 ></div>
+                {#if engine.icon}
+                  <div class="provider-icon">{@html engine.icon}</div>
+                {/if}
                 <div>
                   <h4 class="provider-name">{engine.display_name}</h4>
                   {#if isDefault}
@@ -1152,6 +1155,21 @@
     display: flex;
     align-items: center;
     gap: var(--space-md);
+  }
+
+  .provider-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    color: var(--text-primary);
+  }
+
+  .provider-icon :global(svg) {
+    width: 100%;
+    height: 100%;
   }
 
   .provider-status-indicator {

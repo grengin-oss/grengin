@@ -26,6 +26,7 @@ export interface PaginatedUsers {
 export interface AIEngine {
   engine_key: string;
   display_name: string;
+  icon?: string;
   is_enabled: boolean;
   api_key_configured: boolean;
   api_key_status?: 'valid' | 'in_valid' | 'not_validated' | 'not_configured';
