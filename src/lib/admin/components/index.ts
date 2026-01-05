@@ -6,5 +6,4 @@ export { default as Modal } from './Modal.svelte';
 export { default as AdminEmptyState } from './AdminEmptyState.svelte';
 export { default as AdminPanelCard } from './AdminPanelCard.svelte';
 export { default as AdminSectionHeader } from './AdminSectionHeader.svelte';
-export { default as AiEngines } from './AiEngines.svelte';
 

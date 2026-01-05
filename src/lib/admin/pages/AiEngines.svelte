@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import AdminEmptyState from "./AdminEmptyState.svelte";
-  import AdminPanelCard from "./AdminPanelCard.svelte";
-  import AdminSectionHeader from "./AdminSectionHeader.svelte";
-  import LoadingSpinner from "./LoadingSpinner.svelte";
-  import Modal from "./Modal.svelte";
+  import AdminEmptyState from "../components/AdminEmptyState.svelte";
+  import AdminPanelCard from "../components/AdminPanelCard.svelte";
+  import PageHeader from "../components/PageHeader.svelte";
+  import LoadingSpinner from "../components/LoadingSpinner.svelte";
+  import Modal from "../components/Modal.svelte";
   import { toast } from "../../components/Toaster.svelte";
   import type { AIEngine } from "../types.js";
   import { aiEnginesStore } from "../stores/index.js";
@@ -242,9 +242,9 @@
 </script>
 
 <div class="ai-engines-container">
-  <AdminSectionHeader
-    title="AI Engine Configuration"
-    subtitle="Configure system settings and integrations with AI providers"
+  <PageHeader
+    title="AI Engines"
+    subtitle="Configure and manage AI engine integrations"
   />
 
   {#if store.isLoading}
@@ -865,7 +865,11 @@
   .ai-engines-container {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2xl);
+    height: 100%;
+    width: 100%;
+    background: var(--bg-primary);
+    padding: var(--space-3xl);
+    overflow-y: auto;
   }
 
   .form-group {
