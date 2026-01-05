@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { _ } from 'svelte-i18n';
   import AdminEmptyState from "../components/AdminEmptyState.svelte";
   import AdminPanelCard from "../components/AdminPanelCard.svelte";
   import PageHeader from "../components/PageHeader.svelte";
@@ -15,10 +16,10 @@
     try {
       await store.toggleEngineStatus(engine);
       toast.success(
-        `${engine.display_name} ${!engine.is_enabled ? "enabled" : "disabled"}`,
+        $_('aiEngines.toasts.' + (!engine.is_enabled ? 'enabled' : 'disabled'), { values: { name: engine.display_name } }),
       );
     } catch (err: any) {
-      toast.error(err.message || "Failed to update engine status");
+      toast.error(err.message || $_('aiEngines.toasts.failedToUpdate'));
     }
   }
 
@@ -30,7 +31,7 @@
       store.selectedEngine.api_key_configured &&
       store.formData.whitelisted_models.length === 0
     ) {
-      toast.error("Please whitelist at least one model");
+      toast.error($_('aiEngines.toasts.pleaseWhitelistModel'));
       return;
     }
 
@@ -40,7 +41,7 @@
       store.formData.whitelisted_models.length > 0 &&
       !store.formData.default_model
     ) {
-      toast.error("Please select a default model for this engine");
+      toast.error($_('aiEngines.toasts.selectDefaultModel'));
       return;
     }
 
@@ -49,16 +50,14 @@
       store.formData.default_model &&
       !store.formData.whitelisted_models.includes(store.formData.default_model)
     ) {
-      toast.error(
-        "The default model must be included in the whitelisted models",
-      );
+      toast.error($_('aiEngines.toasts.defaultMustBeWhitelisted'));
       return;
     }
 
     // Prevent unsetting the default engine if it's currently the default
     const isCurrentlyDefault = store.isDefaultEngine(store.selectedEngine.engine_key);
     if (isCurrentlyDefault && !store.formData.is_default) {
-      toast.error("Cannot remove default engine. Please select another engine as default first.");
+      toast.error($_('aiEngines.toasts.cannotRemoveDefault'));
       return;
     }
 
@@ -75,43 +74,45 @@
       // Backend will automatically unset other engines when is_default: true
       await store.updateEngine(store.selectedEngine.engine_key, updateData);
 
-      const action = store.formData.is_default ? "set as system default" : "updated";
-      toast.success(`${store.selectedEngine.display_name} ${action} successfully`);
+      const action = store.formData.is_default 
+        ? $_('aiEngines.toasts.setAsDefault', { values: { name: store.selectedEngine.display_name } })
+        : $_('aiEngines.toasts.updated', { values: { name: store.selectedEngine.display_name } });
+      toast.success(action);
       store.closeConfigModal();
     } catch (err: any) {
-      toast.error(err.message || "Failed to update engine configuration");
+      toast.error(err.message || $_('aiEngines.toasts.failedToUpdate'));
     }
   }
 
   async function handleAddOrUpdateApiKey() {
     try {
       await store.addOrUpdateApiKey();
-      toast.success("API key added successfully");
+      toast.success($_('aiEngines.apiKey.added'));
     } catch (err: any) {
-      toast.error(store.apiKeyMessage || "Error: The provided API key is invalid.");
+      toast.error(store.apiKeyMessage || $_('aiEngines.apiKey.invalid'));
     }
   }
 
   async function handleValidateApiKey() {
     try {
       const result = await store.validateApiKey();
-      const message = store.apiKeyMessage || "Key is valid and connected.";
+      const message = store.apiKeyMessage || $_('aiEngines.apiKey.valid');
       if (result.valid) {
         toast.success(message);
       } else {
         toast.error(message);
       }
     } catch (err: any) {
-      toast.error(store.apiKeyMessage || "Error: The provided API key is invalid.");
+      toast.error(store.apiKeyMessage || $_('aiEngines.apiKey.invalid'));
     }
   }
 
   async function handleDeleteApiKey() {
     try {
       await store.removeApiKey();
-      toast.success("API key removed successfully");
+      toast.success($_('aiEngines.apiKey.removed'));
     } catch (err: any) {
-      toast.error(err?.message || "Failed to delete API key");
+      toast.error(err?.message || $_('aiEngines.toasts.failedToDeleteKey'));
     }
   }
 
@@ -121,9 +122,7 @@
       modelId === store.formData.default_model &&
       store.formData.whitelisted_models.includes(modelId)
     ) {
-      toast.error(
-        "Cannot remove the default model from the whitelist. Please change the default model first.",
-      );
+      toast.error($_('aiEngines.modelWhitelist.cannotRemoveDefault'));
       return;
     }
 
@@ -188,7 +187,7 @@
         ...store.formData,
         whitelisted_models: [store.formData.default_model],
       };
-      toast.error("Default model must remain whitelisted");
+      toast.error($_('aiEngines.modelWhitelist.mustRemainWhitelisted'));
     } else {
       store.formData = {
         ...store.formData,
@@ -209,24 +208,24 @@
       | "not-configured";
   } {
     if (!engine.is_enabled) {
-      return { text: "Disabled", type: "disabled" };
+      return { text: $_('aiEngines.status.disabled'), type: "disabled" };
     }
     if (
       !engine.api_key_configured ||
       engine.api_key_status === "not_configured"
     ) {
-      return { text: "No API Key", type: "no-key" };
+      return { text: $_('aiEngines.status.noKey'), type: "no-key" };
     }
     if (engine.api_key_status === "in_valid") {
-      return { text: "Invalid Key", type: "invalid" };
+      return { text: $_('aiEngines.status.invalid'), type: "invalid" };
     }
     if (engine.api_key_status === "not_validated") {
-      return { text: "Not Validated", type: "not-validated" };
+      return { text: $_('aiEngines.status.notValidated'), type: "not-validated" };
     }
     if (engine.api_key_status === "valid") {
-      return { text: "Connected", type: "connected" };
+      return { text: $_('aiEngines.status.connected'), type: "connected" };
     }
-    return { text: "Not Configured", type: "not-configured" };
+    return { text: $_('aiEngines.status.notConfigured'), type: "not-configured" };
   }
 
   // Check if engine is default
@@ -236,26 +235,26 @@
 
   onMount(() => {
     store.fetch().catch((err: any) => {
-      toast.error(err.message || "Failed to load AI engines");
+      toast.error(err.message || $_('aiEngines.toasts.failedToLoad'));
     });
   });
 </script>
 
 <div class="ai-engines-container">
   <PageHeader
-    title="AI Engines"
-    subtitle="Configure and manage AI engine integrations"
+    title={$_('aiEngines.title')}
+    subtitle={$_('aiEngines.subtitle')}
   />
 
   {#if store.isLoading}
     <AdminPanelCard>
-      <LoadingSpinner text="Loading AI engines..." />
+      <LoadingSpinner text={$_('aiEngines.loading')} />
     </AdminPanelCard>
   {:else if store.engines.length === 0}
     <AdminPanelCard>
       <AdminEmptyState
-        title="No AI engines available"
-        message="Contact your administrator to configure AI engines."
+        title={$_('aiEngines.emptyTitle')}
+        message={$_('aiEngines.emptyMessage')}
       >
         {#snippet icon()}
           <svg
@@ -297,7 +296,7 @@
                 <div>
                   <h4 class="provider-name">{engine.display_name}</h4>
                   {#if isDefault}
-                    <span class="default-badge">Default Engine</span>
+                    <span class="default-badge">{$_('aiEngines.defaultEngine')}</span>
                   {/if}
                 </div>
               </div>
@@ -305,7 +304,7 @@
                 class="status-toggle"
                 class:active={engine.is_enabled}
                 onclick={() => toggleEngineStatus(engine)}
-                aria-label={engine.is_enabled ? "Enabled" : "Disabled"}
+                aria-label={engine.is_enabled ? $_('aiEngines.engineStatus.enabled') : $_('aiEngines.engineStatus.disabled')}
               >
                 <span class="toggle-slider"></span>
               </button>
@@ -371,7 +370,7 @@
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
                   <span class="status-text api-key-text">
-                    API Key: <code>{engine.api_key_preview}</code>
+                    {$_('aiEngines.apiKey.title')}: <code>{engine.api_key_preview}</code>
                   </span>
                 </div>
               {/if}
@@ -392,7 +391,7 @@
                     />
                   </svg>
                   <span class="status-text">
-                    Default Model: <strong>{engine.default_model}</strong>
+                    {$_('aiEngines.details.defaultModel', { values: { model: engine.default_model } })}
                   </span>
                 </div>
               {/if}
@@ -414,7 +413,7 @@
                     <line x1="3" y1="18" x2="3.01" y2="18" />
                   </svg>
                   <span class="status-text"
-                    >{engine.whitelisted_models.length} Models Whitelisted</span
+                    >{$_('aiEngines.details.modelsWhitelisted', { values: { count: engine.whitelisted_models.length } })}</span
                   >
                 </div>
               {:else}
@@ -430,14 +429,14 @@
                       d="M13.73 4a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
                     />
                   </svg>
-                  <span class="status-text">No Models Allowed</span>
+                  <span class="status-text">{$_('aiEngines.details.noModelsAllowed')}</span>
                 </div>
               {/if}
             </div>
 
             <div class="provider-actions">
               <button class="btn-glass" onclick={() => store.openConfigModal(engine)}>
-                Configure Engine
+                {$_('aiEngines.configureEngine')}
               </button>
             </div>
           </div>
@@ -451,8 +450,8 @@
 <Modal
   bind:isOpen={store.showConfigModal}
   title={store.selectedEngine
-    ? `Configure ${store.selectedEngine.display_name} Models`
-    : "Configure Models"}
+    ? $_('aiEngines.configureModels', { values: { name: store.selectedEngine.display_name } })
+    : $_('aiEngines.configureModels', { values: { name: '' } })}
   onclose={store.closeConfigModal}
 >
   {#snippet children()}
@@ -466,7 +465,7 @@
       >
         <!-- API Key Section -->
         <div class="form-section api-key-section">
-          <h4 class="form-section-title">API Key</h4>
+          <h4 class="form-section-title">{$_('aiEngines.apiKey.title')}</h4>
           {#if store.apiKeyMode === "cta"}
             <div class="api-key-cta">
               <button
@@ -479,9 +478,9 @@
                   store.apiKeyStatus = "not_configured";
                 }}
               >
-                + Add API Key
+                + {$_('aiEngines.apiKey.add')}
               </button>
-              <p class="api-key-helper">Please add api key</p>
+              <p class="api-key-helper">{$_('aiEngines.apiKey.helper')}</p>
             </div>
           {:else if store.apiKeyMode === "add" || store.apiKeyMode === "update"}
             <div class="form-group">
@@ -495,11 +494,11 @@
                   <input
                     id="api-key-input"
                     type={store.showApiKey ? "text" : "password"}
-                    placeholder="Enter api key..."
+                    placeholder={$_('aiEngines.apiKey.placeholder')}
                     bind:value={store.apiKeyInput}
                     autocomplete="off"
                     spellcheck="false"
-                    aria-label="API Key"
+                    aria-label={$_('aiEngines.apiKey.title')}
                     onkeydown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -511,7 +510,7 @@
                     type="button"
                     class="api-key-visibility"
                     onclick={() => (store.showApiKey = !store.showApiKey)}
-                    aria-label="Toggle API key visibility"
+                    aria-label={$_('aiEngines.apiKey.toggleVisibility')}
                   >
                     {#if store.showApiKey}
                       <svg
@@ -551,18 +550,18 @@
                         : "cta";
                     }}
                     disabled={store.apiKeyLoading}
-                    aria-label="Cancel"
+                    aria-label={$_('common.cancel')}
                   >
-                    Cancel
+                    {$_('common.cancel')}
                   </button>
                   <button
                     type="button"
                     class="btn-primary test-key-button"
                     onclick={handleAddOrUpdateApiKey}
                     disabled={store.apiKeyLoading}
-                    aria-label="Add or save API key"
+                    aria-label={store.apiKeyMode === "add" ? $_('aiEngines.apiKey.add') : $_('aiEngines.apiKey.update')}
                   >
-                    {store.apiKeyMode === "add" ? "Add" : "Update"}
+                    {store.apiKeyMode === "add" ? $_('aiEngines.apiKey.add') : $_('aiEngines.apiKey.update')}
                   </button>
                 </div>
               </div>
@@ -581,7 +580,7 @@
             {#if !store.apiKeyDeleteConfirm}
               <div class="api-key-view-row">
                 <div class="api-key-preview">
-                  {store.selectedEngine.api_key_preview ?? "••••"}
+                  <code>{store.selectedEngine.api_key_preview ?? "••••"}</code>
                 </div>
                 <div class="api-key-actions">
                   <button
@@ -589,11 +588,11 @@
                     class="btn-secondary success"
                     onclick={handleValidateApiKey}
                     disabled={store.apiKeyLoading}
-                    aria-label="Validate API key"
+                    aria-label={$_('aiEngines.apiKey.validate')}
                   >
                     {store.apiKeyLoading && store.apiKeyStatus !== "not_validated"
-                      ? "Validating..."
-                      : "Validate"}
+                      ? $_('aiEngines.apiKey.validating')
+                      : $_('aiEngines.apiKey.validate')}
                   </button>
                   <button
                     type="button"
@@ -605,9 +604,9 @@
                       store.apiKeyStatus = "not_validated";
                     }}
                     disabled={store.apiKeyLoading}
-                    aria-label="Update API key"
+                    aria-label={$_('aiEngines.apiKey.update')}
                   >
-                    Update
+                    {$_('aiEngines.apiKey.update')}
                   </button>
                   <button
                     type="button"
@@ -616,17 +615,16 @@
                       store.apiKeyDeleteConfirm = true;
                     }}
                     disabled={store.apiKeyLoading}
-                    aria-label="Delete API key"
+                    aria-label={$_('aiEngines.apiKey.delete')}
                   >
-                    Delete
+                    {$_('aiEngines.apiKey.delete')}
                   </button>
                 </div>
               </div>
             {:else}
               <div class="api-key-delete-confirm">
                 <p>
-                  Delete this API key? This will disable the engine until a new
-                  key is added.
+                  {$_('aiEngines.apiKey.deleteConfirm')}
                 </p>
                 <div class="api-key-confirm-actions">
                   <button
@@ -637,16 +635,16 @@
                     }}
                     disabled={store.apiKeyLoading}
                   >
-                    Cancel
+                    {$_('common.cancel')}
                   </button>
                   <button
                     type="button"
                     class="btn-secondary danger"
                     onclick={handleDeleteApiKey}
                     disabled={store.apiKeyLoading}
-                    aria-label="Confirm delete API key"
+                    aria-label={$_('aiEngines.apiKey.confirmDelete')}
                   >
-                    Confirm Delete
+                    {$_('aiEngines.apiKey.confirmDelete')}
                   </button>
                 </div>
               </div>
@@ -667,7 +665,7 @@
         <!-- Models Section -->
         <div class="form-section">
           <div class="section-header">
-            <h4 class="form-section-title">Model Whitelist</h4>
+            <h4 class="form-section-title">{$_('aiEngines.modelWhitelist.title')}</h4>
             <div class="bulk-actions">
               <button
                 type="button"
@@ -685,7 +683,7 @@
                     d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
                   />
                 </svg>
-                Check All
+                {$_('aiEngines.modelWhitelist.checkAll')}
               </button>
               <button
                 type="button"
@@ -702,13 +700,13 @@
                   <line x1="9" y1="9" x2="15" y2="15" />
                   <line x1="15" y1="9" x2="9" y2="15" />
                 </svg>
-                Uncheck All
+                {$_('aiEngines.modelWhitelist.uncheckAll')}
               </button>
             </div>
           </div>
 
           {#if store.loadingModels}
-            <LoadingSpinner text="Loading models..." />
+            <LoadingSpinner text={$_('aiEngines.modelWhitelist.loading')} />
           {:else if store.availableModels && store.availableModels.models.length > 0}
             <div class="models-list">
               {#each store.availableModels.models as model}
@@ -723,14 +721,14 @@
                     disabled={isDefaultModel}
                     onchange={() => toggleModelSelection(model.model_id)}
                     title={isDefaultModel
-                      ? "Default model must remain whitelisted"
+                      ? $_('aiEngines.modelWhitelist.mustRemainWhitelisted')
                       : ""}
                   />
                   <div class="model-info">
                     <span class="model-name">
                       {model.model_id}
                       {#if isDefaultModel}
-                        <span class="default-model-badge">Default</span>
+                        <span class="default-model-badge">{$_('aiEngines.modelWhitelist.defaultBadge')}</span>
                       {/if}
                     </span>
                     <span class="model-meta">{model.display_name}</span>
@@ -743,7 +741,7 @@
             <div class="form-section">
               <div class="form-group">
                 <label for="default-model-select"
-                  >Default Model for this Engine</label
+                  >{$_('aiEngines.modelWhitelist.defaultModel')}</label
                 >
                 {#if store.formData.whitelisted_models.length > 0}
                   <select
@@ -759,8 +757,7 @@
                     {/each}
                   </select>
                   <span class="form-hint"
-                    >This model will be used by default when this engine is
-                    selected. Only whitelisted models are available.</span
+                    >{$_('aiEngines.modelWhitelist.defaultModelHint')}</span
                   >
                 {:else}
                   <div class="form-notice warning">
@@ -777,8 +774,7 @@
                       <line x1="12" y1="17" x2="12.01" y2="17" />
                     </svg>
                     <p>
-                      Please whitelist at least one model before selecting a
-                      default model.
+                      {$_('aiEngines.modelWhitelist.defaultModelWarning')}
                     </p>
                   </div>
                 {/if}
@@ -791,7 +787,7 @@
                 {#if store.loadingOrganization}
                   <div class="loading-organization">
                     <span class="button-spinner"></span>
-                    <span>Loading default engine status...</span>
+                    <span>{$_('aiEngines.systemDefault.loading')}</span>
                   </div>
                 {:else}
                   <label class="checkbox-label">
@@ -800,29 +796,27 @@
                       bind:checked={store.formData.is_default}
                       disabled={store.formData.is_default && store.isDefaultEngine(store.selectedEngine?.engine_key || '')}
                       title={store.formData.is_default && store.isDefaultEngine(store.selectedEngine?.engine_key || '') 
-                        ? "You cannot remove the default engine. Select another engine as default first." 
+                        ? $_('aiEngines.systemDefault.cannotRemove')
                         : ""}
                     />
-                    <span>Set as system default engine</span>
+                    <span>{$_('aiEngines.systemDefault.title')}</span>
                   </label>
                   <span class="form-hint"
-                    >When enabled, this engine will be used for new conversations
-                    when no specific routing is set. Only one engine can be the
-                    system default at a time. To change the default, select another engine as default.</span
+                    >{$_('aiEngines.systemDefault.hint')}</span
                   >
                 {/if}
               </div>
             </div>
           {:else}
             <p class="no-models-message">
-              No models available. Try validating your API key first.
+              {$_('aiEngines.modelWhitelist.noModels')}
             </p>
           {/if}
         </div>
 
         <!-- Status Toggle -->
         <div class="form-group">
-          <label for="engine-status">Engine Status</label>
+          <label for="engine-status">{$_('aiEngines.engineStatus.label')}</label>
           <div class="status-toggle-wrapper">
             <button
               id="engine-status"
@@ -832,12 +826,12 @@
               onclick={() => {
                 store.formData = { ...store.formData, is_enabled: !store.formData.is_enabled };
               }}
-              aria-label={store.formData.is_enabled ? "Enabled" : "Disabled"}
+              aria-label={store.formData.is_enabled ? $_('aiEngines.engineStatus.enabled') : $_('aiEngines.engineStatus.disabled')}
             >
               <span class="toggle-slider"></span>
             </button>
             <span class="status-label"
-              >{store.formData.is_enabled ? "Enabled" : "Disabled"}</span
+              >{store.formData.is_enabled ? $_('aiEngines.engineStatus.enabled') : $_('aiEngines.engineStatus.disabled')}</span
             >
           </div>
         </div>
@@ -849,14 +843,14 @@
             onclick={store.closeConfigModal}
             disabled={store.saving}
           >
-            Cancel
+            {$_('common.cancel')}
           </button>
           <button type="submit" class="btn-accent" disabled={store.saving}>
             {#if store.saving}
               <span class="button-spinner"></span>
-              <span>Saving...</span>
+              <span>{$_('aiEngines.actions.saving')}</span>
             {:else}
-              Save
+              {$_('aiEngines.actions.save')}
             {/if}
           </button>
         </div>

@@ -210,5 +210,96 @@
       "stop": "Arrêter",
       "closePreview": "Fermer l'aperçu"
     }
+  },
+  "aiEngines": {
+    "title": "Moteurs IA",
+    "subtitle": "Configurer et gérer les intégrations de moteurs IA",
+    "loading": "Chargement des moteurs IA...",
+    "emptyTitle": "Aucun moteur IA disponible",
+    "emptyMessage": "Contactez votre administrateur pour configurer les moteurs IA.",
+    "defaultEngine": "Moteur par défaut",
+    "configureEngine": "Configurer le moteur",
+    "configureModels": "Configurer les modèles {name}",
+    "status": {
+      "disabled": "Désactivé",
+      "noKey": "Aucune clé API",
+      "invalid": "Clé invalide",
+      "notValidated": "Non validé",
+      "connected": "Connecté",
+      "notConfigured": "Non configuré"
+    },
+    "apiKey": {
+      "title": "Clé API",
+      "add": "Ajouter une clé API",
+      "update": "Mettre à jour",
+      "delete": "Supprimer",
+      "validate": "Valider",
+      "validating": "Validation...",
+      "placeholder": "Entrez la clé API...",
+      "helper": "Veuillez ajouter une clé API",
+      "added": "Clé API ajoutée avec succès",
+      "removed": "Clé API supprimée avec succès",
+      "deleteConfirm": "Supprimer cette clé API ? Cela désactivera le moteur jusqu'à l'ajout d'une nouvelle clé.",
+      "confirmDelete": "Confirmer la suppression",
+      "invalid": "Erreur : La clé API fournie est invalide.",
+      "invalidDetailed": "Erreur : La clé API fournie est invalide. Veuillez vérifier et réessayer.",
+      "valid": "La clé est valide et connectée.",
+      "notValidated": "La clé n'est pas validée. Validez pour activer l'accès aux modèles.",
+      "notConfigured": "La clé API n'est pas configurée. Veuillez ajouter une clé API.",
+      "enterKey": "Veuillez entrer une clé API.",
+      "toggleVisibility": "Basculer la visibilité de la clé API"
+    },
+    "modelWhitelist": {
+      "title": "Liste blanche des modèles",
+      "checkAll": "Tout cocher",
+      "uncheckAll": "Tout décocher",
+      "loading": "Chargement des modèles...",
+      "noModels": "Aucun modèle disponible. Essayez de valider votre clé API d'abord.",
+      "defaultModel": "Modèle par défaut pour ce moteur",
+      "defaultModelHint": "Ce modèle sera utilisé par défaut lorsque ce moteur est sélectionné. Seuls les modèles de la liste blanche sont disponibles.",
+      "defaultModelWarning": "Veuillez ajouter au moins un modèle à la liste blanche avant de sélectionner un modèle par défaut.",
+      "defaultBadge": "Par défaut",
+      "mustRemainWhitelisted": "Le modèle par défaut doit rester dans la liste blanche",
+      "cannotRemoveDefault": "Impossible de retirer le modèle par défaut de la liste blanche. Veuillez d'abord changer le modèle par défaut."
+    },
+    "systemDefault": {
+      "title": "Définir comme moteur par défaut du système",
+      "hint": "Lorsqu'il est activé, ce moteur sera utilisé pour les nouvelles conversations lorsqu'aucun routage spécifique n'est défini. Un seul moteur peut être le moteur par défaut du système à la fois. Pour changer le défaut, sélectionnez un autre moteur comme défaut.",
+      "loading": "Chargement du statut du moteur par défaut...",
+      "cannotRemove": "Vous ne pouvez pas retirer le moteur par défaut. Sélectionnez d'abord un autre moteur comme défaut."
+    },
+    "engineStatus": {
+      "label": "Statut du moteur",
+      "enabled": "Activé",
+      "disabled": "Désactivé"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "saving": "Enregistrement..."
+    },
+    "toasts": {
+      "enabled": "{name} activé",
+      "disabled": "{name} désactivé",
+      "updated": "{name} mis à jour avec succès",
+      "setAsDefault": "{name} défini comme moteur par défaut du système avec succès",
+      "failedToLoad": "Échec du chargement des moteurs IA",
+      "failedToFetch": "Échec de la récupération des moteurs IA",
+      "failedToUpdate": "Échec de la mise à jour de la configuration du moteur",
+      "failedToUpdateStatus": "Échec de la mise à jour du statut du moteur",
+      "failedToLoadModels": "Échec du chargement des modèles",
+      "engineNotFound": "Moteur introuvable",
+      "cannotSetDefaultWithoutModel": "Impossible de définir le moteur par défaut sans modèle par défaut. Veuillez d'abord sélectionner un modèle par défaut pour ce moteur.",
+      "noEngineSelected": "Aucun moteur sélectionné",
+      "pleaseWhitelistModel": "Veuillez ajouter au moins un modèle à la liste blanche",
+      "selectDefaultModel": "Veuillez sélectionner un modèle par défaut pour ce moteur",
+      "defaultMustBeWhitelisted": "Le modèle par défaut doit être inclus dans les modèles de la liste blanche",
+      "cannotRemoveDefault": "Impossible de retirer le moteur par défaut. Veuillez sélectionner un autre moteur comme défaut d'abord.",
+      "failedToDeleteKey": "Échec de la suppression de la clé API"
+    },
+    "details": {
+      "defaultModel": "Modèle par défaut : {model}",
+      "modelsWhitelisted": "{count} modèles dans la liste blanche",
+      "noModelsAllowed": "Aucun modèle autorisé"
+    }
   }
 }

@@ -210,5 +210,96 @@
       "stop": "Stop",
       "closePreview": "Close preview"
     }
+  },
+  "aiEngines": {
+    "title": "AI Engines",
+    "subtitle": "Configure and manage AI engine integrations",
+    "loading": "Loading AI engines...",
+    "emptyTitle": "No AI engines available",
+    "emptyMessage": "Contact your administrator to configure AI engines.",
+    "defaultEngine": "Default Engine",
+    "configureEngine": "Configure Engine",
+    "configureModels": "Configure {name} Models",
+    "status": {
+      "disabled": "Disabled",
+      "noKey": "No API Key",
+      "invalid": "Invalid Key",
+      "notValidated": "Not Validated",
+      "connected": "Connected",
+      "notConfigured": "Not Configured"
+    },
+    "apiKey": {
+      "title": "API Key",
+      "add": "Add API Key",
+      "update": "Update",
+      "delete": "Delete",
+      "validate": "Validate",
+      "validating": "Validating...",
+      "placeholder": "Enter api key...",
+      "helper": "Please add api key",
+      "added": "API key added successfully",
+      "removed": "API key removed successfully",
+      "deleteConfirm": "Delete this API key? This will disable the engine until a new key is added.",
+      "confirmDelete": "Confirm Delete",
+      "invalid": "Error: The provided API key is invalid.",
+      "invalidDetailed": "Error: The provided API key is invalid. Please check and try again.",
+      "valid": "Key is valid and connected.",
+      "notValidated": "Key is not validated. Validate to enable model access.",
+      "notConfigured": "API key is not configured. Please add an API key.",
+      "enterKey": "Please enter an API key.",
+      "toggleVisibility": "Toggle API key visibility"
+    },
+    "modelWhitelist": {
+      "title": "Model Whitelist",
+      "checkAll": "Check All",
+      "uncheckAll": "Uncheck All",
+      "loading": "Loading models...",
+      "noModels": "No models available. Try validating your API key first.",
+      "defaultModel": "Default Model for this Engine",
+      "defaultModelHint": "This model will be used by default when this engine is selected. Only whitelisted models are available.",
+      "defaultModelWarning": "Please whitelist at least one model before selecting a default model.",
+      "defaultBadge": "Default",
+      "mustRemainWhitelisted": "Default model must remain whitelisted",
+      "cannotRemoveDefault": "Cannot remove the default model from the whitelist. Please change the default model first."
+    },
+    "systemDefault": {
+      "title": "Set as system default engine",
+      "hint": "When enabled, this engine will be used for new conversations when no specific routing is set. Only one engine can be the system default at a time. To change the default, select another engine as default.",
+      "loading": "Loading default engine status...",
+      "cannotRemove": "You cannot remove the default engine. Select another engine as default first."
+    },
+    "engineStatus": {
+      "label": "Engine Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "actions": {
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "toasts": {
+      "enabled": "{name} enabled",
+      "disabled": "{name} disabled",
+      "updated": "{name} updated successfully",
+      "setAsDefault": "{name} set as system default successfully",
+      "failedToLoad": "Failed to load AI engines",
+      "failedToFetch": "Failed to fetch AI engines",
+      "failedToUpdate": "Failed to update engine configuration",
+      "failedToUpdateStatus": "Failed to update engine status",
+      "failedToLoadModels": "Failed to load models",
+      "engineNotFound": "Engine not found",
+      "cannotSetDefaultWithoutModel": "Cannot set default engine without a default model. Please select a default model for this engine first.",
+      "noEngineSelected": "No engine selected",
+      "pleaseWhitelistModel": "Please whitelist at least one model",
+      "selectDefaultModel": "Please select a default model for this engine",
+      "defaultMustBeWhitelisted": "The default model must be included in the whitelisted models",
+      "cannotRemoveDefault": "Cannot remove default engine. Please select another engine as default first.",
+      "failedToDeleteKey": "Failed to delete API key"
+    },
+    "details": {
+      "defaultModel": "Default Model: {model}",
+      "modelsWhitelisted": "{count} Models Whitelisted",
+      "noModelsAllowed": "No Models Allowed"
+    }
   }
 }

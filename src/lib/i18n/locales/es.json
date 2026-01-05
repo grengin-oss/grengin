@@ -210,5 +210,96 @@
       "stop": "Detener",
       "closePreview": "Cerrar vista previa"
     }
+  },
+  "aiEngines": {
+    "title": "Motores de IA",
+    "subtitle": "Configurar y gestionar integraciones de motores de IA",
+    "loading": "Cargando motores de IA...",
+    "emptyTitle": "No hay motores de IA disponibles",
+    "emptyMessage": "Contacte a su administrador para configurar los motores de IA.",
+    "defaultEngine": "Motor predeterminado",
+    "configureEngine": "Configurar motor",
+    "configureModels": "Configurar modelos {name}",
+    "status": {
+      "disabled": "Desactivado",
+      "noKey": "Sin clave API",
+      "invalid": "Clave inválida",
+      "notValidated": "No validado",
+      "connected": "Conectado",
+      "notConfigured": "No configurado"
+    },
+    "apiKey": {
+      "title": "Clave API",
+      "add": "Agregar clave API",
+      "update": "Actualizar",
+      "delete": "Eliminar",
+      "validate": "Validar",
+      "validating": "Validando...",
+      "placeholder": "Ingrese la clave API...",
+      "helper": "Por favor agregue una clave API",
+      "added": "Clave API agregada correctamente",
+      "removed": "Clave API eliminada correctamente",
+      "deleteConfirm": "¿Eliminar esta clave API? Esto desactivará el motor hasta que se agregue una nueva clave.",
+      "confirmDelete": "Confirmar eliminación",
+      "invalid": "Error: La clave API proporcionada es inválida.",
+      "invalidDetailed": "Error: La clave API proporcionada es inválida. Por favor verifique e intente nuevamente.",
+      "valid": "La clave es válida y está conectada.",
+      "notValidated": "La clave no está validada. Valide para habilitar el acceso a modelos.",
+      "notConfigured": "La clave API no está configurada. Por favor agregue una clave API.",
+      "enterKey": "Por favor ingrese una clave API.",
+      "toggleVisibility": "Alternar visibilidad de la clave API"
+    },
+    "modelWhitelist": {
+      "title": "Lista blanca de modelos",
+      "checkAll": "Seleccionar todo",
+      "uncheckAll": "Deseleccionar todo",
+      "loading": "Cargando modelos...",
+      "noModels": "No hay modelos disponibles. Intente validar su clave API primero.",
+      "defaultModel": "Modelo predeterminado para este motor",
+      "defaultModelHint": "Este modelo se usará por defecto cuando se seleccione este motor. Solo los modelos de la lista blanca están disponibles.",
+      "defaultModelWarning": "Por favor agregue al menos un modelo a la lista blanca antes de seleccionar un modelo predeterminado.",
+      "defaultBadge": "Predeterminado",
+      "mustRemainWhitelisted": "El modelo predeterminado debe permanecer en la lista blanca",
+      "cannotRemoveDefault": "No se puede eliminar el modelo predeterminado de la lista blanca. Por favor cambie el modelo predeterminado primero."
+    },
+    "systemDefault": {
+      "title": "Establecer como motor predeterminado del sistema",
+      "hint": "Cuando está habilitado, este motor se usará para nuevas conversaciones cuando no se establezca un enrutamiento específico. Solo un motor puede ser el predeterminado del sistema a la vez. Para cambiar el predeterminado, seleccione otro motor como predeterminado.",
+      "loading": "Cargando estado del motor predeterminado...",
+      "cannotRemove": "No puede eliminar el motor predeterminado. Seleccione otro motor como predeterminado primero."
+    },
+    "engineStatus": {
+      "label": "Estado del motor",
+      "enabled": "Habilitado",
+      "disabled": "Desactivado"
+    },
+    "actions": {
+      "save": "Guardar",
+      "saving": "Guardando..."
+    },
+    "toasts": {
+      "enabled": "{name} habilitado",
+      "disabled": "{name} desactivado",
+      "updated": "{name} actualizado correctamente",
+      "setAsDefault": "{name} establecido como motor predeterminado del sistema correctamente",
+      "failedToLoad": "Error al cargar los motores de IA",
+      "failedToFetch": "Error al obtener los motores de IA",
+      "failedToUpdate": "Error al actualizar la configuración del motor",
+      "failedToUpdateStatus": "Error al actualizar el estado del motor",
+      "failedToLoadModels": "Error al cargar los modelos",
+      "engineNotFound": "Motor no encontrado",
+      "cannotSetDefaultWithoutModel": "No se puede establecer el motor predeterminado sin un modelo predeterminado. Por favor seleccione un modelo predeterminado para este motor primero.",
+      "noEngineSelected": "Ningún motor seleccionado",
+      "pleaseWhitelistModel": "Por favor agregue al menos un modelo a la lista blanca",
+      "selectDefaultModel": "Por favor seleccione un modelo predeterminado para este motor",
+      "defaultMustBeWhitelisted": "El modelo predeterminado debe estar incluido en los modelos de la lista blanca",
+      "cannotRemoveDefault": "No se puede eliminar el motor predeterminado. Por favor seleccione otro motor como predeterminado primero.",
+      "failedToDeleteKey": "Error al eliminar la clave API"
+    },
+    "details": {
+      "defaultModel": "Modelo predeterminado: {model}",
+      "modelsWhitelisted": "{count} modelos en lista blanca",
+      "noModelsAllowed": "No hay modelos permitidos"
+    }
   }
 }

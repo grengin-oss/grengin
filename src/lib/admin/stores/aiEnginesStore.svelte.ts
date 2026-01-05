@@ -8,6 +8,8 @@ import {
   deleteAIEngineKey,
 } from '../../api/admin/AiEngines.js';
 import { getOrganization, updateOrganization } from '../../api/admin/organization.js';
+import { _ } from 'svelte-i18n';
+import { get } from 'svelte/store';
 
 type ApiKeyStatus = 'valid' | 'in_valid' | 'not_validated' | 'not_configured';
 type ApiKeyMode = 'cta' | 'add' | 'view' | 'update';
@@ -48,12 +50,13 @@ function createAIEnginesStore() {
   let saving = $state(false);
 
   function getStatusMessage(status: ApiKeyStatus): string {
-    if (status === 'valid') return 'Key is valid and connected.';
+    const t = get(_);
+    if (status === 'valid') return t('aiEngines.apiKey.valid');
     if (status === 'in_valid')
-      return 'Error: The provided API key is invalid. Please check and try again.';
+      return t('aiEngines.apiKey.invalidDetailed');
     if (status === 'not_validated')
-      return 'Key is not validated. Validate to enable model access.';
-    return 'API key is not configured. Please add an API key.';
+      return t('aiEngines.apiKey.notValidated');
+    return t('aiEngines.apiKey.notConfigured');
   }
 
   async function fetch() {
@@ -71,7 +74,8 @@ function createAIEnginesStore() {
       defaultEngineKey = organization.settings?.default_engine;
       engines = enginesData;
     } catch (err: any) {
-      error = err.message || 'Failed to fetch AI engines';
+      const t = get(_);
+      error = err.message || t('aiEngines.toasts.failedToFetch');
       throw err;
     } finally {
       isLoading = false;
@@ -106,7 +110,8 @@ function createAIEnginesStore() {
           is_enabled: originalStatus,
         };
       }
-      error = err.message || 'Failed to update engine status';
+      const t = get(_);
+      error = err.message || t('aiEngines.toasts.failedToUpdateStatus');
       throw err;
     }
   }
@@ -165,7 +170,8 @@ function createAIEnginesStore() {
     try {
       availableModels = await getAIEngineModels(engine.engine_key);
     } catch (err: any) {
-      error = err.message || 'Failed to load models';
+      const t = get(_);
+      error = err.message || t('aiEngines.toasts.failedToLoadModels');
       availableModels = null;
     } finally {
       loadingModels = false;
@@ -203,7 +209,8 @@ function createAIEnginesStore() {
       loadingModels = true;
       availableModels = await getAIEngineModels(selectedEngine.engine_key);
     } catch (err: any) {
-      error = err.message || 'Failed to load models';
+      const t = get(_);
+      error = err.message || t('aiEngines.toasts.failedToLoadModels');
       availableModels = null;
     } finally {
       loadingModels = false;
@@ -227,7 +234,8 @@ function createAIEnginesStore() {
         const organization = await getOrganization();
         const engine = engines.find((e) => e.engine_key === engineKey);
         if (!engine) {
-          throw new Error('Engine not found');
+          const t = get(_);
+          throw new Error(t('aiEngines.toasts.engineNotFound'));
         }
 
         // Determine the default model to use:
@@ -242,7 +250,8 @@ function createAIEnginesStore() {
             : undefined);
 
         if (!defaultModel) {
-          throw new Error('Cannot set default engine without a default model. Please select a default model for this engine first.');
+          const t = get(_);
+          throw new Error(t('aiEngines.toasts.cannotSetDefaultWithoutModel'));
         }
 
         // Update organization with new default engine and model
@@ -270,7 +279,8 @@ function createAIEnginesStore() {
         await refreshSelectedEngine();
       }
     } catch (err: any) {
-      error = err.message || 'Failed to update engine';
+      const t = get(_);
+      error = err.message || t('aiEngines.toasts.failedToUpdate');
       throw err;
     } finally {
       saving = false;
@@ -281,7 +291,8 @@ function createAIEnginesStore() {
     if (!selectedEngine) return;
     const trimmedKey = apiKeyInput.trim();
     if (!trimmedKey) {
-      throw new Error('Please enter an API key.');
+      const t = get(_);
+      throw new Error(t('aiEngines.apiKey.enterKey'));
     }
 
     apiKeyLoading = true;
@@ -295,10 +306,11 @@ function createAIEnginesStore() {
       await refreshSelectedEngine();
       apiKeyInput = '';
     } catch (err: any) {
+      const t = get(_);
       apiKeyStatus = 'in_valid';
       apiKeyMessage =
         err?.message ||
-        'Error: The provided API key is invalid. Please check and try again.';
+        t('aiEngines.apiKey.invalidDetailed');
       throw err;
     } finally {
       apiKeyLoading = false;
@@ -307,24 +319,27 @@ function createAIEnginesStore() {
 
   async function validateApiKey() {
     if (!selectedEngine) {
-      throw new Error('No engine selected');
+      const t = get(_);
+      throw new Error(t('aiEngines.toasts.noEngineSelected'));
     }
     apiKeyLoading = true;
     try {
       const result = await validateAIEngineKey(selectedEngine.engine_key);
+      const t = get(_);
       apiKeyStatus = result.valid ? 'valid' : 'in_valid';
       apiKeyMessage =
         result.message ||
         (result.valid
-          ? 'Key is valid and connected.'
-          : 'Error: The provided API key is invalid. Please check and try again.');
+          ? t('aiEngines.apiKey.valid')
+          : t('aiEngines.apiKey.invalidDetailed'));
       await refreshSelectedEngine();
       return result;
     } catch (err: any) {
+      const t = get(_);
       apiKeyStatus = 'in_valid';
       apiKeyMessage =
         err?.message ||
-        'Error: The provided API key is invalid. Please check and try again.';
+        t('aiEngines.apiKey.invalidDetailed');
       throw err;
     } finally {
       apiKeyLoading = false;
@@ -344,7 +359,8 @@ function createAIEnginesStore() {
       await refreshSelectedEngine();
       await loadModelsForSelected();
     } catch (err: any) {
-      error = err?.message || 'Failed to delete API key';
+      const t = get(_);
+      error = err?.message || t('aiEngines.toasts.failedToDeleteKey');
       throw err;
     } finally {
       apiKeyLoading = false;

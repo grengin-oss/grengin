@@ -210,5 +210,96 @@
       "stop": "停止",
       "closePreview": "プレビューを閉じる"
     }
+  },
+  "aiEngines": {
+    "title": "AIエンジン",
+    "subtitle": "AIエンジン統合の設定と管理",
+    "loading": "AIエンジンを読み込み中...",
+    "emptyTitle": "利用可能なAIエンジンがありません",
+    "emptyMessage": "AIエンジンを設定するには、管理者にお問い合わせください。",
+    "defaultEngine": "デフォルトエンジン",
+    "configureEngine": "エンジンを設定",
+    "configureModels": "{name}モデルを設定",
+    "status": {
+      "disabled": "無効",
+      "noKey": "APIキーなし",
+      "invalid": "無効なキー",
+      "notValidated": "未検証",
+      "connected": "接続済み",
+      "notConfigured": "未設定"
+    },
+    "apiKey": {
+      "title": "APIキー",
+      "add": "APIキーを追加",
+      "update": "更新",
+      "delete": "削除",
+      "validate": "検証",
+      "validating": "検証中...",
+      "placeholder": "APIキーを入力...",
+      "helper": "APIキーを追加してください",
+      "added": "APIキーが正常に追加されました",
+      "removed": "APIキーが正常に削除されました",
+      "deleteConfirm": "このAPIキーを削除しますか？新しいキーが追加されるまで、エンジンは無効になります。",
+      "confirmDelete": "削除を確認",
+      "invalid": "エラー: 提供されたAPIキーは無効です。",
+      "invalidDetailed": "エラー: 提供されたAPIキーは無効です。確認して再試行してください。",
+      "valid": "キーは有効で接続されています。",
+      "notValidated": "キーは検証されていません。モデルアクセスを有効にするには検証してください。",
+      "notConfigured": "APIキーが設定されていません。APIキーを追加してください。",
+      "enterKey": "APIキーを入力してください。",
+      "toggleVisibility": "APIキーの表示を切り替え"
+    },
+    "modelWhitelist": {
+      "title": "モデルホワイトリスト",
+      "checkAll": "すべて選択",
+      "uncheckAll": "すべて解除",
+      "loading": "モデルを読み込み中...",
+      "noModels": "利用可能なモデルがありません。まずAPIキーを検証してみてください。",
+      "defaultModel": "このエンジンのデフォルトモデル",
+      "defaultModelHint": "このエンジンが選択された場合、このモデルがデフォルトで使用されます。ホワイトリストに登録されたモデルのみが利用可能です。",
+      "defaultModelWarning": "デフォルトモデルを選択する前に、少なくとも1つのモデルをホワイトリストに追加してください。",
+      "defaultBadge": "デフォルト",
+      "mustRemainWhitelisted": "デフォルトモデルはホワイトリストに残す必要があります",
+      "cannotRemoveDefault": "デフォルトモデルをホワイトリストから削除できません。まずデフォルトモデルを変更してください。"
+    },
+    "systemDefault": {
+      "title": "システムのデフォルトエンジンとして設定",
+      "hint": "有効にすると、特定のルーティングが設定されていない場合、このエンジンが新しい会話に使用されます。一度に1つのエンジンのみがシステムのデフォルトになることができます。デフォルトを変更するには、別のエンジンをデフォルトとして選択してください。",
+      "loading": "デフォルトエンジンのステータスを読み込み中...",
+      "cannotRemove": "デフォルトエンジンを削除できません。まず別のエンジンをデフォルトとして選択してください。"
+    },
+    "engineStatus": {
+      "label": "エンジンステータス",
+      "enabled": "有効",
+      "disabled": "無効"
+    },
+    "actions": {
+      "save": "保存",
+      "saving": "保存中..."
+    },
+    "toasts": {
+      "enabled": "{name} を有効化しました",
+      "disabled": "{name} を無効化しました",
+      "updated": "{name} を正常に更新しました",
+      "setAsDefault": "{name} をシステムのデフォルトエンジンとして正常に設定しました",
+      "failedToLoad": "AIエンジンの読み込みに失敗しました",
+      "failedToFetch": "AIエンジンの取得に失敗しました",
+      "failedToUpdate": "エンジン設定の更新に失敗しました",
+      "failedToUpdateStatus": "エンジンステータスの更新に失敗しました",
+      "failedToLoadModels": "モデルの読み込みに失敗しました",
+      "engineNotFound": "エンジンが見つかりません",
+      "cannotSetDefaultWithoutModel": "デフォルトモデルなしでデフォルトエンジンを設定できません。まずこのエンジンのデフォルトモデルを選択してください。",
+      "noEngineSelected": "エンジンが選択されていません",
+      "pleaseWhitelistModel": "少なくとも1つのモデルをホワイトリストに追加してください",
+      "selectDefaultModel": "このエンジンのデフォルトモデルを選択してください",
+      "defaultMustBeWhitelisted": "デフォルトモデルはホワイトリストに含まれている必要があります",
+      "cannotRemoveDefault": "デフォルトエンジンを削除できません。まず別のエンジンをデフォルトとして選択してください。",
+      "failedToDeleteKey": "APIキーの削除に失敗しました"
+    },
+    "details": {
+      "defaultModel": "デフォルトモデル: {model}",
+      "modelsWhitelisted": "{count} モデルがホワイトリストに登録されています",
+      "noModelsAllowed": "許可されたモデルがありません"
+    }
   }
 }

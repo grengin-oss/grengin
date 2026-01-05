@@ -210,5 +210,96 @@
       "stop": "중지",
       "closePreview": "미리보기 닫기"
     }
+  },
+  "aiEngines": {
+    "title": "AI 엔진",
+    "subtitle": "AI 엔진 통합 구성 및 관리",
+    "loading": "AI 엔진 로딩 중...",
+    "emptyTitle": "사용 가능한 AI 엔진이 없습니다",
+    "emptyMessage": "AI 엔진을 구성하려면 관리자에게 문의하세요.",
+    "defaultEngine": "기본 엔진",
+    "configureEngine": "엔진 구성",
+    "configureModels": "{name} 모델 구성",
+    "status": {
+      "disabled": "비활성화됨",
+      "noKey": "API 키 없음",
+      "invalid": "잘못된 키",
+      "notValidated": "검증되지 않음",
+      "connected": "연결됨",
+      "notConfigured": "구성되지 않음"
+    },
+    "apiKey": {
+      "title": "API 키",
+      "add": "API 키 추가",
+      "update": "업데이트",
+      "delete": "삭제",
+      "validate": "검증",
+      "validating": "검증 중...",
+      "placeholder": "API 키 입력...",
+      "helper": "API 키를 추가해주세요",
+      "added": "API 키가 성공적으로 추가되었습니다",
+      "removed": "API 키가 성공적으로 제거되었습니다",
+      "deleteConfirm": "이 API 키를 삭제하시겠습니까? 새 키가 추가될 때까지 엔진이 비활성화됩니다.",
+      "confirmDelete": "삭제 확인",
+      "invalid": "오류: 제공된 API 키가 유효하지 않습니다.",
+      "invalidDetailed": "오류: 제공된 API 키가 유효하지 않습니다. 확인하고 다시 시도해주세요.",
+      "valid": "키가 유효하고 연결되었습니다.",
+      "notValidated": "키가 검증되지 않았습니다. 모델 액세스를 활성화하려면 검증하세요.",
+      "notConfigured": "API 키가 구성되지 않았습니다. API 키를 추가해주세요.",
+      "enterKey": "API 키를 입력해주세요.",
+      "toggleVisibility": "API 키 표시 전환"
+    },
+    "modelWhitelist": {
+      "title": "모델 화이트리스트",
+      "checkAll": "모두 선택",
+      "uncheckAll": "모두 해제",
+      "loading": "모델 로딩 중...",
+      "noModels": "사용 가능한 모델이 없습니다. 먼저 API 키를 검증해보세요.",
+      "defaultModel": "이 엔진의 기본 모델",
+      "defaultModelHint": "이 엔진이 선택되면 이 모델이 기본적으로 사용됩니다. 화이트리스트에 있는 모델만 사용 가능합니다.",
+      "defaultModelWarning": "기본 모델을 선택하기 전에 최소한 하나의 모델을 화이트리스트에 추가해주세요.",
+      "defaultBadge": "기본",
+      "mustRemainWhitelisted": "기본 모델은 화이트리스트에 남아 있어야 합니다",
+      "cannotRemoveDefault": "기본 모델을 화이트리스트에서 제거할 수 없습니다. 먼저 기본 모델을 변경해주세요."
+    },
+    "systemDefault": {
+      "title": "시스템 기본 엔진으로 설정",
+      "hint": "활성화되면 특정 라우팅이 설정되지 않은 경우 이 엔진이 새 대화에 사용됩니다. 한 번에 하나의 엔진만 시스템 기본값이 될 수 있습니다. 기본값을 변경하려면 다른 엔진을 기본값으로 선택하세요.",
+      "loading": "기본 엔진 상태 로딩 중...",
+      "cannotRemove": "기본 엔진을 제거할 수 없습니다. 먼저 다른 엔진을 기본값으로 선택하세요."
+    },
+    "engineStatus": {
+      "label": "엔진 상태",
+      "enabled": "활성화됨",
+      "disabled": "비활성화됨"
+    },
+    "actions": {
+      "save": "저장",
+      "saving": "저장 중..."
+    },
+    "toasts": {
+      "enabled": "{name} 활성화됨",
+      "disabled": "{name} 비활성화됨",
+      "updated": "{name} 성공적으로 업데이트됨",
+      "setAsDefault": "{name} 시스템 기본 엔진으로 성공적으로 설정됨",
+      "failedToLoad": "AI 엔진 로딩 실패",
+      "failedToFetch": "AI 엔진 가져오기 실패",
+      "failedToUpdate": "엔진 구성 업데이트 실패",
+      "failedToUpdateStatus": "엔진 상태 업데이트 실패",
+      "failedToLoadModels": "모델 로딩 실패",
+      "engineNotFound": "엔진을 찾을 수 없습니다",
+      "cannotSetDefaultWithoutModel": "기본 모델 없이는 기본 엔진을 설정할 수 없습니다. 먼저 이 엔진의 기본 모델을 선택해주세요.",
+      "noEngineSelected": "선택된 엔진이 없습니다",
+      "pleaseWhitelistModel": "최소한 하나의 모델을 화이트리스트에 추가해주세요",
+      "selectDefaultModel": "이 엔진의 기본 모델을 선택해주세요",
+      "defaultMustBeWhitelisted": "기본 모델은 화이트리스트에 포함된 모델이어야 합니다",
+      "cannotRemoveDefault": "기본 엔진을 제거할 수 없습니다. 먼저 다른 엔진을 기본값으로 선택해주세요.",
+      "failedToDeleteKey": "API 키 삭제 실패"
+    },
+    "details": {
+      "defaultModel": "기본 모델: {model}",
+      "modelsWhitelisted": "{count}개 모델이 화이트리스트에 등록됨",
+      "noModelsAllowed": "허용된 모델 없음"
+    }
   }
 }
