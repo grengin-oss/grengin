@@ -1462,17 +1462,17 @@ export interface components {
         };
         AuthTokenResponse: {
             /** @description JWT access token */
-            access_token: string;
+            accessToken: string;
             /** @enum {string} */
             token_type: "Bearer";
             /** @description Token expiration time in seconds */
-            expires_in: number;
+            expiresIn: number;
             /** @description Refresh token for obtaining new access tokens */
-            refresh_token?: string;
+            refreshToken?: string;
             user?: components["schemas"]["User"];
         };
         RefreshTokenRequest: {
-            refresh_token: string;
+            refreshToken: string;
         };
         OidcProviderConfig: {
             /** Format: uuid */
@@ -1667,8 +1667,8 @@ export interface components {
             /** @description Temporary token to complete MFA verification */
             mfa_token?: string;
             /** @description Only returned if MFA not required or already verified */
-            access_token?: string;
-            refresh_token?: string;
+            accessToken?: string;
+            refreshToken?: string;
             user?: components["schemas"]["User"];
         };
         MfaSetupResponse: {
@@ -3426,9 +3426,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        access_token?: string;
-                        refresh_token?: string;
-                        remaining_codes?: number;
+                        accessToken?: string;
+                        refreshToken?: string;
+                        remainingCodes?: number;
                         user?: components["schemas"]["User"];
                     };
                 };

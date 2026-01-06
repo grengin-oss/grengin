@@ -18,8 +18,8 @@ router.post('/auth/login', (req, res) => {
   if (email === 'admin@grengin.com' && password === 'Demo123456!@') {
     return res.json({
       requires_mfa: loginExample.requires_mfa,
-      accessToken: loginExample.access_token,
-      refresh_token: loginExample.refresh_token,
+      accessToken: loginExample.accessToken,
+      refreshToken: loginExample.refreshToken,
       user: loginExample.user,
     })
   }
@@ -36,8 +36,8 @@ router.post('/auth/refresh', (req, res) => {
 
   return res.json({
     requires_mfa: false,
-    accessToken: loginExample.access_token,
-    refresh_token: loginExample.refresh_token,
+    accessToken: loginExample.accessToken,
+    refreshToken: loginExample.refreshToken,
     user: loginExample.user,
   })
 })
@@ -68,8 +68,8 @@ router.post('/auth/mfa/verify', requireAuth, (req, res) => {
   }
   res.json({
     requires_mfa: false,
-    accessToken: loginExample.access_token,
-    refresh_token: loginExample.refresh_token,
+    accessToken: loginExample.accessToken,
+    refreshToken: loginExample.refreshToken,
     user: loginExample.user,
   })
 })
@@ -81,8 +81,8 @@ router.post('/auth/mfa/recovery', requireAuth, (req, res) => {
   }
   res.json({
     requires_mfa: false,
-    accessToken: loginExample.access_token,
-    refresh_token: loginExample.refresh_token,
+    accessToken: loginExample.accessToken,
+    refreshToken: loginExample.refreshToken,
     user: loginExample.user,
   })
 })
@@ -185,8 +185,8 @@ router.get('/auth/:provider/callback', (req, res) => {
 
   res.json({
     requires_mfa: false,
-    accessToken: loginExample.access_token,
-    refresh_token: loginExample.refresh_token,
+    accessToken: loginExample.accessToken,
+    refreshToken: loginExample.refreshToken,
     user,
   })
 })
@@ -226,8 +226,8 @@ router.post('/auth/:provider/callback', (req, res) => {
 
   res.json({
     requires_mfa: false,
-    accessToken: loginExample.access_token,
-    refresh_token: loginExample.refresh_token,
+    accessToken: loginExample.accessToken,
+    refreshToken: loginExample.refreshToken,
     user,
   })
 })

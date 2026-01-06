@@ -55,7 +55,7 @@
       throw new Error(message);
     }
 
-    setAuth(response.accessToken, response.refresh_token || '', response.user);
+    setAuth(response.accessToken, response.refreshToken || '', response.user);
     return;
   }
 

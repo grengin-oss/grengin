@@ -7,7 +7,7 @@ export interface LoginResponse {
   requires_mfa: boolean;
   mfa_token?: string;
   accessToken?: string;
-  refresh_token?: string;
+  refreshToken?: string;
   user?: User;
 }
 

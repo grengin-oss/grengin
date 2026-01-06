@@ -16,8 +16,8 @@ export class ApiError extends Error {
 }
 
 interface RefreshResponse {
-  access_token: string;
-  refresh_token: string;
+  accessToken: string;
+  refreshToken: string;
   user: User;
 }
 
@@ -38,7 +38,7 @@ export function setAuthAccessors(
 
 async function tryRefreshToken(): Promise<boolean> {
   const refreshToken = localStorage.getItem('grengin_refresh_token');
-  if (!refreshToken) {
+  if (!refreshToken || refreshToken === '') {
     return false;
   }
 
@@ -54,7 +54,11 @@ async function tryRefreshToken(): Promise<boolean> {
     }
 
     const data: RefreshResponse = await response.json();
-    setAuthFn?.(data.access_token, data.refresh_token, data.user);
+    if (!data.accessToken || !data.user) {
+      return false;
+    }
+    
+    setAuthFn?.(data.accessToken, refreshToken, data.user);
     return true;
   } catch {
     return false;

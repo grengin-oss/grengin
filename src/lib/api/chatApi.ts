@@ -124,7 +124,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
           if (refreshResponse.ok) {
             const data = await refreshResponse.json();
             // Update tokens in storage
-            localStorage.setItem('grengin_access_token', data.access_token);
+            localStorage.setItem('grengin_access_token', data.accessToken);
             localStorage.setItem('grengin_refresh_token', data.refresh_token);
             localStorage.setItem('grengin_user', JSON.stringify(data.user));
             
@@ -134,7 +134,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${data.access_token}`,
+                'Authorization': `Bearer ${data.accessToken}`,
               },
               body: JSON.stringify({
                 provider: provider || 'openai',

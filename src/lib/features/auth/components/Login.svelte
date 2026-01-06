@@ -36,8 +36,8 @@
         return;
       }
 
-      if (response.accessToken && response.refresh_token && response.user) {
-        setAuth(response.accessToken, response.refresh_token, response.user);
+      if (response.accessToken && response.refreshToken && response.user) {
+        setAuth(response.accessToken, response.refreshToken, response.user);
         onLoginSuccess?.();
       }
     } catch (err) {
