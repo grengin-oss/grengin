@@ -67,7 +67,7 @@
   "error": {
     "not_found": {
       "description": "要求されたリソースが見つかりませんでした",
-      "solution": "お探しのリソースは存在しないか、削除されました。URLを確認するか、もう一度お試しください"
+      "solution": "お探しのリソースは存在しないか、削除されました。URLを確認するか、もう一度お試しください。問題が続く場合は、{app}サポートにお問い合わせください"
     },
     "validation": {
       "missing_field": {
@@ -75,8 +75,8 @@
         "solution": "`{field}` を含むすべての必須フィールドを入力してください"
       },
       "empty_field": {
-        "description": "必須フィールドは空にできません",
-        "solution": "すべての必須フィールドに値を入力してください"
+        "description": "必須フィールド `{field}` は空にできません",
+        "solution": "`{field}` フィールドに値を入力してください"
       }
     },
     "sso": {
@@ -101,30 +101,100 @@
     },
     "db": {
       "not_found": {
-        "description": "会話が見つかりません",
-        "solution": "お探しの会話は存在しません。新しいチャットを開始してください"
+        "description": "{app}データベースでリソースが見つかりません",
+        "solution": "お探しのリソースは存在しません。新しいチャットを開始するか、{app}サポートにお問い合わせください"
       },
       "unavailable": {
-        "description": "データベースが一時的に利用できません",
-        "solution": "しばらくしてからもう一度お試しください。問題が続く場合は、サポートにお問い合わせください"
+        "description": "{app}データベースが一時的に利用できません",
+        "solution": "しばらくしてからもう一度お試しください。問題が続く場合は、{app}サポートにお問い合わせください"
       },
       "timeout": {
-        "description": "データベースリクエストがタイムアウトしました",
-        "solution": "操作に時間がかかりすぎました。より小さなリクエストで再試行してください"
+        "description": "{app}データベースリクエストがタイムアウトしました",
+        "solution": "操作に時間がかかりすぎました。より小さなリクエストで再試行するか、{app}サポートにお問い合わせください"
       },
       "conflict": {
-        "description": "リクエストの処理中に競合が発生しました",
+        "description": "{app}リクエストの処理中に競合が発生しました",
         "solution": "リソースが別のプロセスによって変更されました。更新してからもう一度お試しください"
       }
     },
     "service_unavailable": {
-      "description": "サービスが一時的に利用できません",
-      "solution": "技術的な問題が発生しています。しばらくしてからもう一度お試しください"
+      "description": "{app}サービスが一時的に利用できません",
+      "solution": "技術的な問題が発生しています。しばらくしてからもう一度お試しください。問題が続く場合は、{app}サポートにお問い合わせください"
     },
     "auth": {
+      "service_unavailable": {
+        "description": "{app}認証サービスが一時的に利用できません",
+        "solution": "しばらくしてからもう一度お試しください。問題が続く場合は、{app}サポートにお問い合わせください"
+      },
+      "invalid_credentials": {
+        "description": "{app}のメールアドレスまたはパスワードが正しくありません",
+        "solution": "資格情報を確認して、もう一度お試しください。パスワードを忘れた場合は、パスワードリセットオプションを使用してください"
+      },
+      "email_not_found": {
+        "description": "このメールアドレスで{app}アカウントが見つかりませんでした",
+        "solution": "メールアドレスを確認するか、新しい{app}アカウントに登録してください"
+      },
+      "missing_credentials": {
+        "description": "{app}にログインするにはメールアドレスとパスワードが必要です",
+        "solution": "ログインするには、メールアドレスとパスワードの両方を入力してください"
+      },
       "invalid_token": {
-        "description": "セッションの有効期限が切れました",
-        "solution": "続行するには、再度ログインしてください"
+        "description": "{app}セッションの有効期限が切れました",
+        "solution": "{app}の使用を続行するには、再度ログインしてください"
+      },
+      "invalid_user_status": {
+        "description": "{app}アカウントのステータスが無効です",
+        "solution": "アカウントの問題を解決するには、{app}サポートにお問い合わせください"
+      },
+      "account_deactivated": {
+        "description": "{app}アカウントが無効化されました",
+        "solution": "アカウントを再有効化するには、管理者または{app}サポートにお問い合わせください"
+      },
+      "email_already_exists": {
+        "description": "このメールアドレスで既に{app}アカウントが存在します",
+        "solution": "既存の{app}アカウントでログインするか、別のメールアドレスを使用してください"
+      },
+      "invalid_provider": {
+        "description": "認証プロバイダー `{provider}` は無効であるか、{app}でサポートされていません",
+        "solution": "{app}で有効な認証プロバイダーを選択してください"
+      },
+      "invalid_callback_params": {
+        "description": "{app}認証コールバックパラメータが無効です",
+        "solution": "{app}認証プロセスでエラーが発生しました。もう一度ログインをお試しください"
+      },
+      "missing_oauth_params": "必須OAuthパラメータが不足しています（stateまたはcode）",
+      "oauth_provider_not_found": "OAuthプロバイダーが見つかりませんでした。もう一度ログインをお試しください",
+      "invalid_auth_response": "サーバーから無効な認証応答が返されました",
+      "mfa_not_implemented": "多要素認証が必要ですが、まだ実装されていません",
+      "invalid_redirect_uri": {
+        "description": "{app}リダイレクトURIが無効です: `{redirect_uri}`",
+        "solution": "リダイレクトURIが{app}で承認されていません。問題が続く場合は、{app}サポートにお問い合わせください"
+      },
+      "permission_denied": {
+        "description": "{app}でこの操作を実行する権限がありません",
+        "solution": "アクセス権限があると思われる場合は、{app}管理者にお問い合わせください"
+      },
+      "org_not_found": {
+        "description": "{app}で組織が見つかりませんでした",
+        "solution": "ID `{org_id}` の{app}組織は存在しません。組織設定を確認してください"
+      },
+      "resource_not_found": {
+        "description": "{app}で要求されたリソースが見つかりませんでした",
+        "solution": "お探しのリソースは{app}に存在しないか、削除されました"
+      },
+      "email_domain_not_allowed": {
+        "description": "メールドメイン `{domain}` は{app}で許可されていません",
+        "solution": "{app}組織では特定のメールドメインのみが許可されています。許可されたドメインのメールを使用してください"
+      },
+      "sso": {
+        "not_configured": {
+          "description": "SSOプロバイダー `{provider}` が{app}で設定されていません",
+          "solution": "`{provider}` のSSOを設定するには、{app}管理者にお問い合わせください"
+        },
+        "disabled_by_admin": {
+          "description": "SSOプロバイダー `{provider}` は{app}管理者によって無効化されています",
+          "solution": "`{provider}` のSSOを有効にするには、{app}管理者にお問い合わせするか、別の認証方法をお試しください"
+        }
       }
     },
     "fallback": {

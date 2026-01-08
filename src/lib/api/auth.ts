@@ -1,5 +1,5 @@
 import type { components } from '../types/api.js';
-import { API_BASE, ApiError, request } from './client.js';
+import { API_BASE, ApiError, request, parseErrorDetail } from './client.js';
 
 type User = components['schemas']['User'];
 
@@ -24,8 +24,9 @@ export async function login(email: string, password: string): Promise<LoginRespo
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Login failed' }));
-    throw new ApiError(response.status, error.detail || 'Login failed');
+    const body = await response.json().catch(() => null);
+    const detail = parseErrorDetail(body);
+    throw new ApiError(response.status, detail);
   }
 
   return response.json();
@@ -77,8 +78,9 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
 
     // If response wasn't ok and wasn't a redirect, throw error
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Failed to initiate OAuth' }));
-      throw new ApiError(response.status, error.detail || 'Failed to initiate OAuth');
+      const body = await response.json().catch(() => null);
+      const detail = parseErrorDetail(body);
+      throw new ApiError(response.status, detail);
     }
   } catch (err) {
     // If it's already an ApiError, rethrow it
@@ -107,8 +109,9 @@ export async function handleOAuthCallback(provider: string, code: string, state:
 
   if (!response.ok) {
     const responseText = await response.text();
-    const error = responseText ? JSON.parse(responseText) : { detail: 'OAuth callback failed' };
-    throw new ApiError(response.status, error.detail || 'OAuth callback failed');
+    const body = responseText ? JSON.parse(responseText) : null;
+    const detail = parseErrorDetail(body);
+    throw new ApiError(response.status, detail);
   }
 
   return response.json();
