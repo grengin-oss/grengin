@@ -2,6 +2,8 @@
   import { login, ApiError } from '../index.js';
   import { setAuth } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
+  import { _ } from 'svelte-i18n';
+  import { getLocalizedError } from '../../../utils/errorLocalization';
   import OAuthButton from './OAuthButton.svelte';
   import { _ } from 'svelte-i18n';
 
@@ -33,7 +35,7 @@
       const response = await login(email, password);
 
       if (response.requires_mfa) {
-          toast.error($_('auth.mfaRequired'));
+        toast.error($_('error.auth.mfa_not_implemented'));
         return;
       }
 
@@ -42,11 +44,10 @@
         onLoginSuccess?.();
       }
     } catch (err) {
-      if (err instanceof ApiError) {
-        toast.error(err.description);
-      } else {
-        toast.error($_('auth.unexpectedError'));
-      }
+      const errorMessage = err instanceof ApiError 
+        ? getLocalizedError(err, 'description', $_) || err.description
+        : $_('error.fallback.description');
+      toast.error(errorMessage);
     } finally {
       isLoading = false;
     }

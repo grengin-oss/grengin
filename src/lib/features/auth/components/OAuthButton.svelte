@@ -2,6 +2,8 @@
   import { initiateOAuth, ApiError } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
+  import { _ } from 'svelte-i18n';
+  import { getLocalizedError } from '../../../utils/errorLocalization';
 
   type OAuthProvider = 'google' | 'azure' | 'keycloak';
   type ButtonSize = 'small' | 'medium' | 'large';
@@ -53,8 +55,8 @@
       console.log(err);
       isLoading = false;
       const errorMessage = err instanceof ApiError 
-        ? err.description 
-        : $_('auth.failedToInitiateLogin', { values: { provider: providerName } });
+        ? getLocalizedError(err, 'description', $_) || err.description
+        : $_('error.fallback.description');
       
       toast.error(errorMessage);
       onError?.(errorMessage);

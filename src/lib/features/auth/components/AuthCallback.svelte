@@ -3,6 +3,8 @@
   import { setAuth, ApiError, handleOAuthCallback } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
+  import { _ } from 'svelte-i18n';
+  import { getLocalizedError } from '../../../utils/errorLocalization';
 
   // UI State
   type CallbackStatus = 'processing' | 'success' | 'error';
@@ -31,7 +33,7 @@
     const state = params.get('state');
     const code = params.get('code');
     if (!state || !code) {
-      const message = $_('auth.missingOAuthParams');
+      const message = $_('error.auth.missing_oauth_params');
       toast.error(message);
       redirectAfterError();
       return;
@@ -40,7 +42,7 @@
     // 3. Retrieve provider from session storage
     const provider = sessionStorage.getItem('oauth_provider');
     if (!provider) {
-      const message = $_('auth.oauthProviderNotFound');
+      const message = $_('error.auth.oauth_provider_not_found');
       toast.error(message);
       redirectAfterError();
       return;
@@ -51,7 +53,7 @@
 
     // 5. Validate response and store authentication
     if (!response?.accessToken || !response?.user) {
-      const message = $_('auth.invalidAuthResponse');
+      const message = $_('error.auth.invalid_auth_response');
       toast.error(message);
       throw new Error(message);
     }
@@ -91,17 +93,10 @@
   /**
    * Handle errors and show toast notification
    */
-  function handleError(err: unknown): void {
+  function handleError(err: ApiError): void {
     console.error('OAuth callback error:', err);
     
-    let errorMessage: string;
-    if (err instanceof ApiError) {
-      errorMessage = err.description;
-    } else if (err instanceof Error) {
-      errorMessage = err.message;
-    } else {
-      errorMessage = $_('auth.unexpectedAuthError');
-    }
+    const errorMessage = getLocalizedError(err, 'description', $_) || err.description;
     
     // Show error toast
     toast.error(errorMessage);
@@ -122,7 +117,11 @@
     } catch (err: unknown) {
       cleanupSessionStorage();
       console.log('AuthCallback error, status:', status);
-      handleError(err);
+      // Convert all errors to ApiError for consistent handling
+      const apiError = err instanceof ApiError 
+        ? err 
+        : new ApiError(500, err instanceof Error ? err.message : $_('error.fallback.description'));
+      handleError(apiError);
     }
   });
 </script>

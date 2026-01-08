@@ -305,7 +305,7 @@
   "error": {
     "not_found": {
       "description": "The requested resource was not found",
-      "solution": "The resource you're looking for doesn't exist or has been removed. Please check the URL or try again"
+      "solution": "The resource you're looking for doesn't exist or has been removed. Please check the URL or try again. If the problem persists, contact {app} support"
     },
     "validation": {
       "missing_field": {
@@ -313,8 +313,8 @@
         "solution": "Please provide all required fields including `{field}`"
       },
       "empty_field": {
-        "description": "Required field cannot be empty",
-        "solution": "Please provide a value for all required fields"
+        "description": "Required field `{field}` cannot be empty",
+        "solution": "Please provide a value for the `{field}` field"
       }
     },
     "sso": {
@@ -339,30 +339,100 @@
     },
     "db": {
       "not_found": {
-        "description": "Conversation not found",
-        "solution": "The conversation you're looking for doesn't exist. Try starting a new chat"
+        "description": "Resource not found in {app} database",
+        "solution": "The resource you're looking for doesn't exist. Try starting a new chat or contact {app} support"
       },
       "unavailable": {
-        "description": "Database temporarily unavailable",
-        "solution": "Please try again in a few moments. If the problem persists, contact support"
+        "description": "{app} database is temporarily unavailable",
+        "solution": "Please try again in a few moments. If the problem persists, contact {app} support"
       },
       "timeout": {
-        "description": "Database request timed out",
-        "solution": "The operation took too long. Please try again with a smaller request"
+        "description": "{app} database request timed out",
+        "solution": "The operation took too long. Please try again with a smaller request or contact {app} support"
       },
       "conflict": {
-        "description": "A conflict occurred while processing your request",
+        "description": "A conflict occurred while processing your {app} request",
         "solution": "The resource has been modified by another process. Please refresh and try again"
       }
     },
     "service_unavailable": {
-      "description": "Service temporarily unavailable",
-      "solution": "We're experiencing technical difficulties. Please try again in a few moments"
+      "description": "{app} service is temporarily unavailable",
+      "solution": "We're experiencing technical difficulties. Please try again in a few moments. If the problem persists, contact {app} support"
     },
     "auth": {
+      "service_unavailable": {
+        "description": "{app} authentication service is temporarily unavailable",
+        "solution": "Please try again in a few moments. If the problem persists, contact {app} support"
+      },
+      "invalid_credentials": {
+        "description": "Invalid email or password for {app}",
+        "solution": "Please check your credentials and try again. If you've forgotten your password, use the password reset option"
+      },
+      "email_not_found": {
+        "description": "No {app} account found with this email address",
+        "solution": "Please check your email address or sign up for a new {app} account"
+      },
+      "missing_credentials": {
+        "description": "Email and password are required to sign in to {app}",
+        "solution": "Please provide both your email address and password to sign in"
+      },
       "invalid_token": {
-        "description": "Your session has expired",
-        "solution": "Please log in again to continue"
+        "description": "Your {app} session has expired",
+        "solution": "Please log in again to continue using {app}"
+      },
+      "invalid_user_status": {
+        "description": "Your {app} account status is invalid",
+        "solution": "Please contact {app} support to resolve this issue with your account"
+      },
+      "account_deactivated": {
+        "description": "Your {app} account has been deactivated",
+        "solution": "Please contact your administrator or {app} support to reactivate your account"
+      },
+      "email_already_exists": {
+        "description": "An {app} account with this email already exists",
+        "solution": "Please sign in with your existing {app} account or use a different email address"
+      },
+      "invalid_provider": {
+        "description": "The authentication provider `{provider}` is invalid or not supported by {app}",
+        "solution": "Please select a valid authentication provider for {app}"
+      },
+      "invalid_callback_params": {
+        "description": "Invalid authentication callback parameters for {app}",
+        "solution": "The {app} authentication process encountered an error. Please try signing in again"
+      },
+      "missing_oauth_params": "Missing required OAuth parameters (state or code)",
+      "oauth_provider_not_found": "OAuth provider not found. Please try logging in again",
+      "invalid_auth_response": "Invalid authentication response from server",
+      "mfa_not_implemented": "Multi-factor authentication is required but not yet implemented",
+      "invalid_redirect_uri": {
+        "description": "Invalid redirect URI `{redirect_uri}` for {app}",
+        "solution": "The redirect URI is not authorized for {app}. Please contact {app} support if this issue persists"
+      },
+      "permission_denied": {
+        "description": "You don't have permission to perform this action in {app}",
+        "solution": "Please contact your {app} administrator if you believe you should have access"
+      },
+      "org_not_found": {
+        "description": "Organization not found in {app}",
+        "solution": "The {app} organization with ID `{org_id}` does not exist. Please check your organization settings"
+      },
+      "resource_not_found": {
+        "description": "The requested resource was not found in {app}",
+        "solution": "The resource you're looking for doesn't exist or has been removed from {app}"
+      },
+      "email_domain_not_allowed": {
+        "description": "Email domain `{domain}` is not allowed for {app}",
+        "solution": "Your {app} organization only allows certain email domains. Please use an email from an allowed domain"
+      },
+      "sso": {
+        "not_configured": {
+          "description": "SSO provider `{provider}` is not configured for {app}",
+          "solution": "Please contact your {app} administrator to configure SSO for `{provider}`"
+        },
+        "disabled_by_admin": {
+          "description": "SSO provider `{provider}` is disabled by an {app} administrator",
+          "solution": "Please contact your {app} administrator to enable SSO for `{provider}` or use a different authentication method"
+        }
       }
     },
     "fallback": {

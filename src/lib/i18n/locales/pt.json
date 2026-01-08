@@ -214,7 +214,7 @@
   "error": {
     "not_found": {
       "description": "O recurso solicitado não foi encontrado",
-      "solution": "O recurso que você está procurando não existe ou foi removido. Por favor, verifique a URL ou tente novamente"
+      "solution": "O recurso que você está procurando não existe ou foi removido. Por favor, verifique a URL ou tente novamente. Se o problema persistir, entre em contato com o suporte {app}"
     },
     "validation": {
       "missing_field": {
@@ -222,8 +222,8 @@
         "solution": "Por favor, forneça todos os campos obrigatórios, incluindo `{field}`"
       },
       "empty_field": {
-        "description": "O campo obrigatório não pode estar vazio",
-        "solution": "Por favor, forneça um valor para todos os campos obrigatórios"
+        "description": "O campo obrigatório `{field}` não pode estar vazio",
+        "solution": "Por favor, forneça um valor para o campo `{field}`"
       }
     },
     "sso": {
@@ -248,30 +248,100 @@
     },
     "db": {
       "not_found": {
-        "description": "Conversa não encontrada",
-        "solution": "A conversa que você está procurando não existe. Tente iniciar um novo chat"
+        "description": "Recurso não encontrado no banco de dados {app}",
+        "solution": "O recurso que você está procurando não existe. Tente iniciar um novo chat ou entre em contato com o suporte {app}"
       },
       "unavailable": {
-        "description": "Banco de dados temporariamente indisponível",
-        "solution": "Por favor, tente novamente em alguns momentos. Se o problema persistir, entre em contato com o suporte"
+        "description": "O banco de dados {app} está temporariamente indisponível",
+        "solution": "Por favor, tente novamente em alguns momentos. Se o problema persistir, entre em contato com o suporte {app}"
       },
       "timeout": {
-        "description": "A solicitação ao banco de dados expirou",
-        "solution": "A operação demorou muito. Por favor, tente novamente com uma solicitação menor"
+        "description": "A solicitação ao banco de dados {app} expirou",
+        "solution": "A operação demorou muito. Por favor, tente novamente com uma solicitação menor ou entre em contato com o suporte {app}"
       },
       "conflict": {
-        "description": "Ocorreu um conflito ao processar sua solicitação",
+        "description": "Ocorreu um conflito ao processar sua solicitação {app}",
         "solution": "O recurso foi modificado por outro processo. Por favor, atualize e tente novamente"
       }
     },
     "service_unavailable": {
-      "description": "Serviço temporariamente indisponível",
-      "solution": "Estamos enfrentando dificuldades técnicas. Por favor, tente novamente em alguns momentos"
+      "description": "O serviço {app} está temporariamente indisponível",
+      "solution": "Estamos enfrentando dificuldades técnicas. Por favor, tente novamente em alguns momentos. Se o problema persistir, entre em contato com o suporte {app}"
     },
     "auth": {
+      "service_unavailable": {
+        "description": "O serviço de autenticação {app} está temporariamente indisponível",
+        "solution": "Por favor, tente novamente em alguns momentos. Se o problema persistir, entre em contato com o suporte {app}"
+      },
+      "invalid_credentials": {
+        "description": "Email ou senha inválidos para {app}",
+        "solution": "Por favor, verifique suas credenciais e tente novamente. Se você esqueceu sua senha, use a opção de redefinição de senha"
+      },
+      "email_not_found": {
+        "description": "Nenhuma conta {app} encontrada com este endereço de email",
+        "solution": "Por favor, verifique seu endereço de email ou cadastre-se para uma nova conta {app}"
+      },
+      "missing_credentials": {
+        "description": "Email e senha são obrigatórios para entrar no {app}",
+        "solution": "Por favor, forneça seu endereço de email e senha para entrar"
+      },
       "invalid_token": {
-        "description": "Sua sessão expirou",
-        "solution": "Por favor, faça login novamente para continuar"
+        "description": "Sua sessão {app} expirou",
+        "solution": "Por favor, faça login novamente para continuar usando {app}"
+      },
+      "invalid_user_status": {
+        "description": "O status da sua conta {app} é inválido",
+        "solution": "Por favor, entre em contato com o suporte {app} para resolver este problema com sua conta"
+      },
+      "account_deactivated": {
+        "description": "Sua conta {app} foi desativada",
+        "solution": "Por favor, entre em contato com seu administrador ou suporte {app} para reativar sua conta"
+      },
+      "email_already_exists": {
+        "description": "Uma conta {app} com este email já existe",
+        "solution": "Por favor, entre com sua conta {app} existente ou use um endereço de email diferente"
+      },
+      "invalid_provider": {
+        "description": "O provedor de autenticação `{provider}` é inválido ou não é suportado pelo {app}",
+        "solution": "Por favor, selecione um provedor de autenticação válido para {app}"
+      },
+      "invalid_callback_params": {
+        "description": "Parâmetros de callback de autenticação inválidos para {app}",
+        "solution": "O processo de autenticação {app} encontrou um erro. Por favor, tente entrar novamente"
+      },
+      "missing_oauth_params": "Parâmetros OAuth obrigatórios ausentes (state ou code)",
+      "oauth_provider_not_found": "Provedor OAuth não encontrado. Por favor, tente entrar novamente",
+      "invalid_auth_response": "Resposta de autenticação inválida do servidor",
+      "mfa_not_implemented": "A autenticação de múltiplos fatores é necessária, mas ainda não foi implementada",
+      "invalid_redirect_uri": {
+        "description": "URI de redirecionamento inválida `{redirect_uri}` para {app}",
+        "solution": "A URI de redirecionamento não está autorizada para {app}. Por favor, entre em contato com o suporte {app} se este problema persistir"
+      },
+      "permission_denied": {
+        "description": "Você não tem permissão para realizar esta ação no {app}",
+        "solution": "Por favor, entre em contato com seu administrador {app} se você acredita que deveria ter acesso"
+      },
+      "org_not_found": {
+        "description": "Organização não encontrada no {app}",
+        "solution": "A organização {app} com ID `{org_id}` não existe. Por favor, verifique as configurações da sua organização"
+      },
+      "resource_not_found": {
+        "description": "O recurso solicitado não foi encontrado no {app}",
+        "solution": "O recurso que você está procurando não existe ou foi removido do {app}"
+      },
+      "email_domain_not_allowed": {
+        "description": "O domínio de email `{domain}` não é permitido para {app}",
+        "solution": "Sua organização {app} permite apenas certos domínios de email. Por favor, use um email de um domínio permitido"
+      },
+      "sso": {
+        "not_configured": {
+          "description": "O provedor SSO `{provider}` não está configurado para {app}",
+          "solution": "Por favor, entre em contato com seu administrador {app} para configurar SSO para `{provider}`"
+        },
+        "disabled_by_admin": {
+          "description": "O provedor SSO `{provider}` está desabilitado por um administrador {app}",
+          "solution": "Por favor, entre em contato com seu administrador {app} para habilitar SSO para `{provider}` ou use um método de autenticação diferente"
+        }
       }
     },
     "fallback": {
