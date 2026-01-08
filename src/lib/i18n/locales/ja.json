@@ -63,5 +63,73 @@
     "archiveChatError": "チャットのアーカイブに失敗しました",
     "chat": "チャット",
     "untitledChat": "タイトルなしチャット"
+  },
+  "error": {
+    "not_found": {
+      "description": "要求されたリソースが見つかりませんでした",
+      "solution": "お探しのリソースは存在しないか、削除されました。URLを確認するか、もう一度お試しください"
+    },
+    "validation": {
+      "missing_field": {
+        "description": "必須フィールド `{field}` が不足しています",
+        "solution": "`{field}` を含むすべての必須フィールドを入力してください"
+      },
+      "empty_field": {
+        "description": "必須フィールドは空にできません",
+        "solution": "すべての必須フィールドに値を入力してください"
+      }
+    },
+    "sso": {
+      "conditional_access": {
+        "description": "`{provider}` の条件付きアクセスポリシーによりアクセスが拒否されました",
+        "solution": "組織のセキュリティポリシーがアクセスをブロックしています。管理者に連絡するか、別の認証方法をお試しください"
+      }
+    },
+    "llm": {
+      "disabled_by_admin": {
+        "description": "LLMプロバイダー `{provider}` は管理者によって無効化されています",
+        "solution": "管理者に `{provider}` を有効にするよう依頼するか、別のプロバイダーを選択してください"
+      },
+      "invalid_provider": {
+        "description": "LLMプロバイダー `{provider}` は無効であるか、サポートされていません",
+        "solution": "利用可能なオプションから有効なプロバイダーを選択してください"
+      },
+      "not_configured": {
+        "description": "LLMプロバイダー `{provider}` が正しく設定されていません",
+        "solution": "プロバイダーの設定を構成するか、管理者に連絡してください"
+      }
+    },
+    "db": {
+      "not_found": {
+        "description": "会話が見つかりません",
+        "solution": "お探しの会話は存在しません。新しいチャットを開始してください"
+      },
+      "unavailable": {
+        "description": "データベースが一時的に利用できません",
+        "solution": "しばらくしてからもう一度お試しください。問題が続く場合は、サポートにお問い合わせください"
+      },
+      "timeout": {
+        "description": "データベースリクエストがタイムアウトしました",
+        "solution": "操作に時間がかかりすぎました。より小さなリクエストで再試行してください"
+      },
+      "conflict": {
+        "description": "リクエストの処理中に競合が発生しました",
+        "solution": "リソースが別のプロセスによって変更されました。更新してからもう一度お試しください"
+      }
+    },
+    "service_unavailable": {
+      "description": "サービスが一時的に利用できません",
+      "solution": "技術的な問題が発生しています。しばらくしてからもう一度お試しください"
+    },
+    "auth": {
+      "invalid_token": {
+        "description": "セッションの有効期限が切れました",
+        "solution": "続行するには、再度ログインしてください"
+      }
+    },
+    "fallback": {
+      "description": "問題が発生しました",
+      "solution": "予期しないエラーが発生しました。もう一度お試しください"
+    }
   }
 }

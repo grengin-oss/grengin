@@ -56,7 +56,7 @@
       console.log(err);
       isLoading = false;
       const errorMessage = err instanceof ApiError 
-        ? err.detail 
+        ? err.description 
         : `Failed to initiate ${providerName} login`;
       
       toast.error(errorMessage);

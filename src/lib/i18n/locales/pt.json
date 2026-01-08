@@ -63,5 +63,73 @@
     "archiveChatError": "Falha ao arquivar a conversa",
     "chat": "Conversa",
     "untitledChat": "Conversa sem título"
+  },
+  "error": {
+    "not_found": {
+      "description": "O recurso solicitado não foi encontrado",
+      "solution": "O recurso que você está procurando não existe ou foi removido. Por favor, verifique a URL ou tente novamente"
+    },
+    "validation": {
+      "missing_field": {
+        "description": "O campo obrigatório `{field}` está faltando",
+        "solution": "Por favor, forneça todos os campos obrigatórios, incluindo `{field}`"
+      },
+      "empty_field": {
+        "description": "O campo obrigatório não pode estar vazio",
+        "solution": "Por favor, forneça um valor para todos os campos obrigatórios"
+      }
+    },
+    "sso": {
+      "conditional_access": {
+        "description": "Acesso negado devido à política de acesso condicional para `{provider}`",
+        "solution": "A política de segurança da sua organização está bloqueando o acesso. Entre em contato com seu administrador ou tente um método de autenticação diferente"
+      }
+    },
+    "llm": {
+      "disabled_by_admin": {
+        "description": "O provedor LLM `{provider}` está desabilitado por um administrador",
+        "solution": "Peça a um administrador para habilitar `{provider}` ou selecione um provedor diferente"
+      },
+      "invalid_provider": {
+        "description": "O provedor LLM `{provider}` é inválido ou não é suportado",
+        "solution": "Por favor, selecione um provedor válido das opções disponíveis"
+      },
+      "not_configured": {
+        "description": "O provedor LLM `{provider}` não está configurado corretamente",
+        "solution": "Por favor, configure as configurações do provedor ou entre em contato com um administrador"
+      }
+    },
+    "db": {
+      "not_found": {
+        "description": "Conversa não encontrada",
+        "solution": "A conversa que você está procurando não existe. Tente iniciar um novo chat"
+      },
+      "unavailable": {
+        "description": "Banco de dados temporariamente indisponível",
+        "solution": "Por favor, tente novamente em alguns momentos. Se o problema persistir, entre em contato com o suporte"
+      },
+      "timeout": {
+        "description": "A solicitação ao banco de dados expirou",
+        "solution": "A operação demorou muito. Por favor, tente novamente com uma solicitação menor"
+      },
+      "conflict": {
+        "description": "Ocorreu um conflito ao processar sua solicitação",
+        "solution": "O recurso foi modificado por outro processo. Por favor, atualize e tente novamente"
+      }
+    },
+    "service_unavailable": {
+      "description": "Serviço temporariamente indisponível",
+      "solution": "Estamos enfrentando dificuldades técnicas. Por favor, tente novamente em alguns momentos"
+    },
+    "auth": {
+      "invalid_token": {
+        "description": "Sua sessão expirou",
+        "solution": "Por favor, faça login novamente para continuar"
+      }
+    },
+    "fallback": {
+      "description": "Algo deu errado",
+      "solution": "Ocorreu um erro inesperado. Por favor, tente novamente"
+    }
   }
 }

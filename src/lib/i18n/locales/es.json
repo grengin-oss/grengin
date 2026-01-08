@@ -63,5 +63,73 @@
     "archiveChatError": "Error al archivar la conversación",
     "chat": "Conversación",
     "untitledChat": "Conversación sin título"
+  },
+  "error": {
+    "not_found": {
+      "description": "El recurso solicitado no se encontró",
+      "solution": "El recurso que está buscando no existe o ha sido eliminado. Por favor, verifique la URL o intente de nuevo"
+    },
+    "validation": {
+      "missing_field": {
+        "description": "El campo requerido `{field}` está faltando",
+        "solution": "Por favor, proporcione todos los campos requeridos, incluido `{field}`"
+      },
+      "empty_field": {
+        "description": "El campo requerido no puede estar vacío",
+        "solution": "Por favor, proporcione un valor para todos los campos requeridos"
+      }
+    },
+    "sso": {
+      "conditional_access": {
+        "description": "Acceso denegado debido a la política de acceso condicional para `{provider}`",
+        "solution": "La política de seguridad de su organización está bloqueando el acceso. Contacte a su administrador o pruebe un método de autenticación diferente"
+      }
+    },
+    "llm": {
+      "disabled_by_admin": {
+        "description": "El proveedor de LLM `{provider}` está deshabilitado por un administrador",
+        "solution": "Pida a un administrador que habilite `{provider}` o seleccione un proveedor diferente"
+      },
+      "invalid_provider": {
+        "description": "El proveedor de LLM `{provider}` es inválido o no está soportado",
+        "solution": "Por favor, seleccione un proveedor válido de las opciones disponibles"
+      },
+      "not_configured": {
+        "description": "El proveedor de LLM `{provider}` no está configurado correctamente",
+        "solution": "Por favor, configure la configuración del proveedor o contacte a un administrador"
+      }
+    },
+    "db": {
+      "not_found": {
+        "description": "Conversación no encontrada",
+        "solution": "La conversación que está buscando no existe. Intente iniciar un nuevo chat"
+      },
+      "unavailable": {
+        "description": "Base de datos temporalmente no disponible",
+        "solution": "Por favor, intente de nuevo en unos momentos. Si el problema persiste, contacte al soporte"
+      },
+      "timeout": {
+        "description": "Solicitud a la base de datos agotó el tiempo de espera",
+        "solution": "La operación tardó demasiado. Por favor, intente de nuevo con una solicitud más pequeña"
+      },
+      "conflict": {
+        "description": "Ocurrió un conflicto al procesar su solicitud",
+        "solution": "El recurso ha sido modificado por otro proceso. Por favor, actualice e intente de nuevo"
+      }
+    },
+    "service_unavailable": {
+      "description": "Servicio temporalmente no disponible",
+      "solution": "Estamos experimentando dificultades técnicas. Por favor, intente de nuevo en unos momentos"
+    },
+    "auth": {
+      "invalid_token": {
+        "description": "Su sesión ha expirado",
+        "solution": "Por favor, inicie sesión nuevamente para continuar"
+      }
+    },
+    "fallback": {
+      "description": "Algo salió mal",
+      "solution": "Ocurrió un error inesperado. Por favor, intente de nuevo"
+    }
   }
 }

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
+  import { _ } from 'svelte-i18n';
   import ChatMessage from './ChatMessage.svelte';
   import MessageInput from './MessageInput.svelte';
   import TypingIndicator from './TypingIndicator.svelte';
@@ -7,11 +8,13 @@
   import { sendMessage, getConversation, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
   import { getModels } from '../../../api/models';
+  import { ApiError } from '../../../api/client';
+  import { getLocalizedError } from '../../../utils/errorLocalization';
 
   let messages = $state<ChatMessageType[]>([]);
   let isLoading = $state(false);
   let isTyping = $state(false);
-  let error = $state<string | null>(null);
+  let error = $state<ApiError | null>(null);
   let conversationId = $state<string | null>(null);
   // Track if we're still loading the initial conversation
   let isLoadingConversation = $state(typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('chatId'));
@@ -193,10 +196,15 @@
           messageInput?.focus();
         },
         onError: (errorMessage) => {
-          error = errorMessage;
+          // Store the error - it should be an ApiError instance
+          const apiError = errorMessage instanceof ApiError 
+            ? errorMessage 
+            : new ApiError(500, errorMessage instanceof Error ? errorMessage.message : String(errorMessage));
+          
+          error = apiError;
           isTyping = false;
           if (currentStreamingMessage) {
-            currentStreamingMessage.error = errorMessage;
+            currentStreamingMessage.error = getLocalizedError(apiError, 'description', $_) || apiError.description;
             currentStreamingMessage.isStreaming = false;
             messages = messages.map(m =>
               m.id === currentStreamingMessage?.id ? { ...currentStreamingMessage } : m
@@ -209,8 +217,12 @@
         },
       });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
-      error = errorMessage;
+      // Convert all errors to ApiError for consistent handling
+      const apiError = err instanceof ApiError 
+        ? err 
+        : new ApiError(500, err instanceof Error ? err.message : 'Failed to send message');
+      
+      error = apiError;
       isTyping = false;
       isLoading = false;
       currentStreamingMessage = null;
@@ -284,7 +296,12 @@
 
         scrollToBottom(false);
       } catch (err) {
-        error = 'Failed to load conversation';
+        // Convert all errors to ApiError for consistent handling
+        const apiError = err instanceof ApiError 
+          ? err 
+          : new ApiError(500, err instanceof Error ? err.message : 'Failed to load conversation');
+        
+        error = apiError;
         console.error('Failed to load conversation:', err);
         messages = []; // Clear messages on error
       } finally {
@@ -387,8 +404,14 @@
           </svg>
         </div>
         <div class="error-content">
-          <span class="error-title">Something went wrong</span>
-          <span class="error-message">{error}</span>
+          <span class="error-title">
+            {getLocalizedError(error, 'description', $_) || $_('error.fallback.description')}
+          </span>
+          {#if getLocalizedError(error, 'solution', $_)}
+            <span class="error-message">
+              {getLocalizedError(error, 'solution', $_)}
+            </span>
+          {/if}
         </div>
         <button class="dismiss-btn" onclick={() => error = null} aria-label="Dismiss error" title="Dismiss error">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -427,8 +450,14 @@
               </svg>
             </div>
             <div class="error-content">
-              <span class="error-title">Something went wrong</span>
-              <span class="error-message">{error}</span>
+              <span class="error-title">
+                {getLocalizedError(error, 'description', $_) || $_('error.fallback.description')}
+              </span>
+              {#if getLocalizedError(error, 'solution', $_)}
+                <span class="error-message">
+                  {getLocalizedError(error, 'solution', $_)}
+                </span>
+              {/if}
             </div>
             <button class="dismiss-btn" onclick={() => error = null} aria-label="Dismiss error" title="Dismiss error">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -641,6 +670,7 @@
   .error-message {
     font-size: 0.875rem;
     color: rgba(239, 68, 68, 0.8);
+    line-height: 1.5;
   }
 
   .dismiss-btn {

@@ -1,6 +1,6 @@
 import type { StreamEvent, ConversationDetail, ConversationList } from '../types/chat';
 
-import { API_BASE, request } from './client';
+import { API_BASE, request, ApiError, parseErrorDetail } from './client';
 import { getAccessToken } from '../features/auth';
 
 export interface SendMessageOptions {
@@ -14,7 +14,7 @@ export interface SendMessageOptions {
   onStart?: (data: any) => void;
   onTitle?: (title: string) => void;
   onDone?: (data: any) => void;
-  onError?: (error: string) => void;
+  onError?: (error: ApiError | Error) => void;
 }
 
 export interface UploadedFile {
@@ -55,10 +55,12 @@ export async function uploadDocument(options: UploadDocumentOptions): Promise<Up
     }),
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
-    throw new Error(error.detail || `Upload failed: ${response.status}`);
-  }
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      const detail = parseErrorDetail(body);
+      const apiError = new ApiError(response.status, detail);
+      throw apiError;
+    }
 
   const data = await response.json();
   return {
@@ -156,7 +158,8 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
             localStorage.removeItem('grengin_refresh_token');
             localStorage.removeItem('grengin_user');
             window.location.href = '/';
-            return;
+            // Throw error to prevent further execution
+            throw new ApiError(401, 'Session expired. Please log in again.');
           }
         } catch (error) {
           console.log('Streaming request: Refresh error, redirecting...');
@@ -165,7 +168,8 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
           localStorage.removeItem('grengin_refresh_token');
           localStorage.removeItem('grengin_user');
           window.location.href = '/';
-          return;
+          // Throw error to prevent further execution
+          throw new ApiError(401, 'Session expired. Please log in again.');
         }
       } else {
         console.log('Streaming request: No refresh token, redirecting...');
@@ -174,12 +178,15 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         localStorage.removeItem('grengin_refresh_token');
         localStorage.removeItem('grengin_user');
         window.location.href = '/';
-        return;
+        // Throw error to prevent further execution
+        throw new ApiError(401, 'Session expired. Please log in again.');
       }
     }
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const body = await response.json().catch(() => null);
+      const detail = parseErrorDetail(body);
+      throw new ApiError(response.status, detail);
     }
 
     const reader = response.body?.getReader();
@@ -244,15 +251,28 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
               onDone?.(data);
               break;
             case 'error':
-              onError?.(data.message || 'An error occurred');
+              // Parse the error detail and create an ApiError
+              const errorDetail = parseErrorDetail(data);
+              const streamError = new ApiError(response.status || 500, errorDetail);
+              onError?.(streamError);
               break;
           }
         }
       }
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
-    onError?.(errorMessage);
+    // Convert all errors to ApiError for consistent handling
+    if (error instanceof ApiError) {
+      onError?.(error);
+    } else if (error instanceof Error) {
+      // Convert generic errors to ApiError
+      const apiError = new ApiError(500, error.message);
+      onError?.(apiError);
+    } else {
+      // Fallback for unknown error types
+      const apiError = new ApiError(500, 'Failed to send message');
+      onError?.(apiError);
+    }
   }
 }
 
@@ -307,13 +327,19 @@ export async function archiveConversation(conversationId: string, title: string)
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const body = await response.json().catch(() => null);
+      const detail = parseErrorDetail(body);
+      throw new ApiError(response.status, detail);
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Failed to archive conversation:', error);
-    throw error;
+    // Re-throw ApiError as-is, convert others
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    const body = error instanceof Error ? { detail: error.message } : { detail: 'Failed to archive conversation' };
+    throw new ApiError(500, body.detail);
   }
 }
 

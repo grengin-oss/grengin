@@ -95,7 +95,7 @@
     
     let errorMessage: string;
     if (err instanceof ApiError) {
-      errorMessage = err.detail;
+      errorMessage = err.description;
     } else if (err instanceof Error) {
       errorMessage = err.message;
     } else {
