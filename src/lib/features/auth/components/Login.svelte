@@ -43,7 +43,7 @@
       }
     } catch (err) {
       if (err instanceof ApiError) {
-        toast.error(err.detail);
+        toast.error(err.description);
       } else {
         toast.error($_('auth.unexpectedError'));
       }

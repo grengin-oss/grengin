@@ -3,6 +3,8 @@
   import { _ } from 'svelte-i18n';
   import type { User } from "../../types/auth";
   import { listConversations, deleteConversation, archiveConversation } from '../../api/chatApi.js';
+  import { ApiError } from '../../api/client';
+  import { getLocalizedError } from '../../utils/errorLocalization';
   import grenginLogo from '../../../assets/grengin-logo.svg';
   import { toast } from '../Toaster.svelte';
 
@@ -177,8 +179,10 @@
         chatToDelete = null;
       } catch (error) {
         console.error('Failed to delete conversation:', error);
-        toast.error($_('sidebar.deleteChatError'));
-        // You might want to show an error message here
+        const errorMessage = error instanceof ApiError 
+          ? getLocalizedError(error, 'description', $_) || $_('sidebar.deleteChatError')
+          : $_('sidebar.deleteChatError');
+        toast.error(errorMessage);
       } finally {
         deletingChat = false;
       }
@@ -216,7 +220,10 @@
       }
     } catch (error) {
       console.error('Failed to archive conversation:', error);
-      toast.error($_('sidebar.archiveChatError'));
+      const errorMessage = error instanceof ApiError 
+        ? getLocalizedError(error, 'description', $_) || $_('sidebar.archiveChatError')
+        : $_('sidebar.archiveChatError');
+      toast.error(errorMessage);
     }
   }
 

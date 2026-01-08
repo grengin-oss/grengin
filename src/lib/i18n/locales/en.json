@@ -301,5 +301,73 @@
       "modelsWhitelisted": "{count} Models Whitelisted",
       "noModelsAllowed": "No Models Allowed"
     }
+  },
+  "error": {
+    "not_found": {
+      "description": "The requested resource was not found",
+      "solution": "The resource you're looking for doesn't exist or has been removed. Please check the URL or try again"
+    },
+    "validation": {
+      "missing_field": {
+        "description": "Required field `{field}` is missing",
+        "solution": "Please provide all required fields including `{field}`"
+      },
+      "empty_field": {
+        "description": "Required field cannot be empty",
+        "solution": "Please provide a value for all required fields"
+      }
+    },
+    "sso": {
+      "conditional_access": {
+        "description": "Access denied due to conditional access policy for `{provider}`",
+        "solution": "Your organization's security policy is blocking access. Contact your administrator or try a different authentication method"
+      }
+    },
+    "llm": {
+      "disabled_by_admin": {
+        "description": "The LLM provider `{provider}` is disabled by an administrator",
+        "solution": "Ask an admin to enable `{provider}` or select a different provider"
+      },
+      "invalid_provider": {
+        "description": "The LLM provider `{provider}` is invalid or not supported",
+        "solution": "Please select a valid provider from the available options"
+      },
+      "not_configured": {
+        "description": "The LLM provider `{provider}` is not properly configured",
+        "solution": "Please configure the provider settings or contact an administrator"
+      }
+    },
+    "db": {
+      "not_found": {
+        "description": "Conversation not found",
+        "solution": "The conversation you're looking for doesn't exist. Try starting a new chat"
+      },
+      "unavailable": {
+        "description": "Database temporarily unavailable",
+        "solution": "Please try again in a few moments. If the problem persists, contact support"
+      },
+      "timeout": {
+        "description": "Database request timed out",
+        "solution": "The operation took too long. Please try again with a smaller request"
+      },
+      "conflict": {
+        "description": "A conflict occurred while processing your request",
+        "solution": "The resource has been modified by another process. Please refresh and try again"
+      }
+    },
+    "service_unavailable": {
+      "description": "Service temporarily unavailable",
+      "solution": "We're experiencing technical difficulties. Please try again in a few moments"
+    },
+    "auth": {
+      "invalid_token": {
+        "description": "Your session has expired",
+        "solution": "Please log in again to continue"
+      }
+    },
+    "fallback": {
+      "description": "Something went wrong",
+      "solution": "An unexpected error occurred. Please try again"
+    }
   }
 }

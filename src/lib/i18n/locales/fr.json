@@ -301,5 +301,73 @@
       "modelsWhitelisted": "{count} modèles dans la liste blanche",
       "noModelsAllowed": "Aucun modèle autorisé"
     }
+  },
+  "error": {
+    "not_found": {
+      "description": "La ressource demandée est introuvable",
+      "solution": "La ressource que vous recherchez n'existe pas ou a été supprimée. Veuillez vérifier l'URL ou réessayer"
+    },
+    "validation": {
+      "missing_field": {
+        "description": "Le champ requis `{field}` est manquant",
+        "solution": "Veuillez fournir tous les champs requis, y compris `{field}`"
+      },
+      "empty_field": {
+        "description": "Le champ requis ne peut pas être vide",
+        "solution": "Veuillez fournir une valeur pour tous les champs requis"
+      }
+    },
+    "sso": {
+      "conditional_access": {
+        "description": "Accès refusé en raison de la politique d'accès conditionnel pour `{provider}`",
+        "solution": "La politique de sécurité de votre organisation bloque l'accès. Contactez votre administrateur ou essayez une autre méthode d'authentification"
+      }
+    },
+    "llm": {
+      "disabled_by_admin": {
+        "description": "Le fournisseur LLM `{provider}` est désactivé par un administrateur",
+        "solution": "Demandez à un administrateur d'activer `{provider}` ou sélectionnez un autre fournisseur"
+      },
+      "invalid_provider": {
+        "description": "Le fournisseur LLM `{provider}` est invalide ou non pris en charge",
+        "solution": "Veuillez sélectionner un fournisseur valide parmi les options disponibles"
+      },
+      "not_configured": {
+        "description": "Le fournisseur LLM `{provider}` n'est pas correctement configuré",
+        "solution": "Veuillez configurer les paramètres du fournisseur ou contacter un administrateur"
+      }
+    },
+    "db": {
+      "not_found": {
+        "description": "Conversation introuvable",
+        "solution": "La conversation que vous recherchez n'existe pas. Essayez de démarrer un nouveau chat"
+      },
+      "unavailable": {
+        "description": "Base de données temporairement indisponible",
+        "solution": "Veuillez réessayer dans quelques instants. Si le problème persiste, contactez le support"
+      },
+      "timeout": {
+        "description": "La requête à la base de données a expiré",
+        "solution": "L'opération a pris trop de temps. Veuillez réessayer avec une requête plus petite"
+      },
+      "conflict": {
+        "description": "Un conflit s'est produit lors du traitement de votre requête",
+        "solution": "La ressource a été modifiée par un autre processus. Veuillez actualiser et réessayer"
+      }
+    },
+    "service_unavailable": {
+      "description": "Service temporairement indisponible",
+      "solution": "Nous rencontrons des difficultés techniques. Veuillez réessayer dans quelques instants"
+    },
+    "auth": {
+      "invalid_token": {
+        "description": "Votre session a expiré",
+        "solution": "Veuillez vous reconnecter pour continuer"
+      }
+    },
+    "fallback": {
+      "description": "Quelque chose s'est mal passé",
+      "solution": "Une erreur inattendue s'est produite. Veuillez réessayer"
+    }
   }
 }

@@ -52,10 +52,9 @@
     } catch (err) {
       console.log(err);
       isLoading = false;
-      const name = providerName;
       const errorMessage = err instanceof ApiError 
-        ? err.detail 
-        : $_('auth.failedToInitiateLogin', { values: { provider: name } });
+        ? err.description 
+        : $_('auth.failedToInitiateLogin', { values: { provider: providerName } });
       
       toast.error(errorMessage);
       onError?.(errorMessage);
