@@ -42,7 +42,7 @@ const PORT = process.env.PORT || 3000
 const HOST = process.env.HOST || 'localhost'
 
 app.listen(PORT, () => {
-  console.log(`🚀 Grengin Mock API Server v1.1.0`)
+  console.log(`🚀 Grengin Mock API Server v1.2.0`)
   console.log(`   Running at http://${HOST}:${PORT}`)
   console.log('')
   console.log('Auth endpoints:')
@@ -61,12 +61,12 @@ app.listen(PORT, () => {
   console.log(`  *    /settings     - Settings (auth required)`)
   console.log('')
   console.log('Admin endpoints:')
-  console.log(`  GET    /admin/ai-engines                    - List AI engines`)
-  console.log(`  GET    /admin/ai-engines/:key               - Get engine details`)
-  console.log(`  PUT    /admin/ai-engines/:key               - Update engine config`)
-  console.log(`  POST   /admin/ai-engines/:key/validate      - Validate API key`)
-  console.log(`  GET    /admin/ai-engines/:key/models        - List available models`)
-  console.log(`  DELETE /admin/ai-engines/:key/api-key       - Remove API key`)
+  console.log(`  *    /admin/ai-engines/*      - AI engine management`)
+  console.log(`  *    /admin/departments/*     - Department hierarchy (v1.2)`)
+  console.log(`  *    /admin/users/*           - User management`)
+  console.log(`  *    /admin/sso-providers/*   - SSO configuration`)
+  console.log(`  *    /admin/rate-limits/*     - Rate limit management`)
+  console.log(`  *    /admin/budgets/*         - Budget management`)
   console.log('')
   console.log('🔑 Demo credentials: admin@grengin.com / Demo123456!@')
   console.log('💡 Use "Bearer <token>" for authentication')

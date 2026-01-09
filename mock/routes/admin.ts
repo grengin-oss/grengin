@@ -1,6 +1,14 @@
 import { Router } from 'express'
 import { requireAuth } from '../lib/middleware.js'
-import { aiEngines, type AIEngineDetail, type AIEngineModelsResponse } from '../lib/store.js'
+import {
+  aiEngines,
+  departments,
+  type AIEngineDetail,
+  type AIEngineModelsResponse,
+  type Department,
+  type DepartmentTree,
+  type DepartmentBudgetStatus,
+} from '../lib/store.js'
 import dashboardExample from '../examples/admin/dashboard.response.json' with { type: 'json' }
 import usersListExample from '../examples/admin/users-list.response.json' with { type: 'json' }
 import organizationExample from '../examples/admin/organization.response.json' with { type: 'json' }
@@ -94,19 +102,446 @@ router.get('/admin/users/:userId/usage', requireAuth, (req, res) => {
   res.json(dashboardExample.costs)
 })
 
-// Departments
+// Departments - v1.2 hierarchical departments API
+
+// Helper: Build tree from flat departments
+function buildDepartmentTree(depts: Department[], parentId: string | null = null, maxDepth: number = 10, currentDepth: number = 0): DepartmentTree[] {
+  if (currentDepth >= maxDepth) return []
+
+  return depts
+    .filter(d => d.parent_id === parentId)
+    .map(dept => ({
+      ...dept,
+      children: buildDepartmentTree(depts, dept.id, maxDepth, currentDepth + 1),
+    }))
+}
+
+// Helper: Generate path from parent
+function generatePath(parentId: string | null, name: string): string {
+  if (!parentId) {
+    return '/' + name.toLowerCase().replace(/\s+/g, '-')
+  }
+  const parent = departments.get(parentId)
+  if (!parent) return '/' + name.toLowerCase().replace(/\s+/g, '-')
+  return parent.path + '/' + name.toLowerCase().replace(/\s+/g, '-')
+}
+
+// Helper: Get depth from parent
+function getDepth(parentId: string | null): number {
+  if (!parentId) return 0
+  const parent = departments.get(parentId)
+  return parent ? parent.depth + 1 : 0
+}
+
+// List departments
 router.get('/admin/departments', requireAuth, (req, res) => {
-  const departmentCounts = new Map<string, number>()
-  for (const user of usersListExample.users) {
-    if (user.department) {
-      departmentCounts.set(user.department, (departmentCounts.get(user.department) || 0) + 1)
+  const { parent_id, include_children } = req.query
+  let result = Array.from(departments.values())
+
+  if (parent_id === 'root') {
+    result = result.filter(d => d.parent_id === null)
+  } else if (parent_id) {
+    result = result.filter(d => d.parent_id === parent_id)
+    if (include_children === 'true') {
+      // Include all descendants
+      const getAllDescendants = (parentId: string): Department[] => {
+        const children = Array.from(departments.values()).filter(d => d.parent_id === parentId)
+        return children.concat(children.flatMap(c => getAllDescendants(c.id)))
+      }
+      result = result.concat(getAllDescendants(parent_id as string))
     }
   }
-  const departments = Array.from(departmentCounts.entries()).map(([name, user_count]) => ({
+
+  res.json({ departments: result, total: result.length })
+})
+
+// Create department
+router.post('/admin/departments', requireAuth, (req, res) => {
+  const { name, description, parent_id, leader_ids } = req.body
+
+  if (!name) {
+    return res.status(400).json({ detail: 'Name is required' })
+  }
+
+  // Check parent exists if provided
+  if (parent_id && !departments.get(parent_id)) {
+    return res.status(400).json({ detail: 'Parent department not found' })
+  }
+
+  const id = crypto.randomUUID()
+  const now = new Date().toISOString()
+
+  const newDept: Department = {
+    id,
     name,
-    user_count,
-  }))
-  res.json({ departments })
+    description: description || null,
+    parent_id: parent_id || null,
+    path: generatePath(parent_id, name),
+    depth: getDepth(parent_id),
+    leader_ids: leader_ids || [],
+    member_count: 0,
+    total_member_count: 0,
+    child_count: 0,
+    budget_allocated: null,
+    budget_distributed: 0,
+    budget_available: 0,
+    budget_used: 0,
+    budget_period: 'monthly',
+    created_at: now,
+    updated_at: now,
+  }
+
+  departments.set(id, newDept)
+
+  // Update parent's child_count
+  if (parent_id) {
+    const parent = departments.get(parent_id)
+    if (parent) {
+      departments.set(parent_id, { ...parent, child_count: parent.child_count + 1, updated_at: now })
+    }
+  }
+
+  res.status(201).json(newDept)
+})
+
+// Get department tree
+router.get('/admin/departments/tree', requireAuth, (req, res) => {
+  const { root_id, max_depth } = req.query
+  const depth = Math.min(Math.max(parseInt(max_depth as string) || 10, 1), 10)
+
+  const allDepts = Array.from(departments.values())
+
+  if (root_id) {
+    const root = departments.get(root_id as string)
+    if (!root) {
+      return res.status(404).json({ detail: 'Department not found' })
+    }
+    const tree = buildDepartmentTree(allDepts, root_id as string, depth)
+    res.json({ tree: [{ ...root, children: tree }] })
+  } else {
+    const tree = buildDepartmentTree(allDepts, null, depth)
+    res.json({ tree })
+  }
+})
+
+// Get department by ID
+router.get('/admin/departments/:departmentId', requireAuth, (req, res) => {
+  const dept = departments.get(req.params.departmentId)
+  if (!dept) {
+    return res.status(404).json({ detail: 'Department not found' })
+  }
+  res.json(dept)
+})
+
+// Update department
+router.put('/admin/departments/:departmentId', requireAuth, (req, res) => {
+  const dept = departments.get(req.params.departmentId)
+  if (!dept) {
+    return res.status(404).json({ detail: 'Department not found' })
+  }
+
+  const { name, description, leader_ids } = req.body
+  const now = new Date().toISOString()
+
+  const updated: Department = {
+    ...dept,
+    ...(name !== undefined && { name, path: generatePath(dept.parent_id, name) }),
+    ...(description !== undefined && { description }),
+    ...(leader_ids !== undefined && { leader_ids }),
+    updated_at: now,
+  }
+
+  departments.set(req.params.departmentId, updated)
+  res.json(updated)
+})
+
+// Delete department
+router.delete('/admin/departments/:departmentId', requireAuth, (req, res) => {
+  const dept = departments.get(req.params.departmentId)
+  if (!dept) {
+    return res.status(404).json({ detail: 'Department not found' })
+  }
+
+  const { force } = req.query
+
+  // Check if has children
+  const hasChildren = Array.from(departments.values()).some(d => d.parent_id === req.params.departmentId)
+  if (hasChildren && force !== 'true') {
+    return res.status(400).json({ detail: 'Cannot delete department with children. Use force=true to reassign.' })
+  }
+
+  // Check if has members (in mock, we skip this check for simplicity)
+  if (dept.member_count > 0 && force !== 'true') {
+    return res.status(400).json({ detail: 'Cannot delete department with members. Use force=true to reassign.' })
+  }
+
+  // If force, reassign children to parent
+  if (force === 'true' && hasChildren) {
+    Array.from(departments.values())
+      .filter(d => d.parent_id === req.params.departmentId)
+      .forEach(child => {
+        const updatedChild: Department = {
+          ...child,
+          parent_id: dept.parent_id,
+          path: generatePath(dept.parent_id, child.name),
+          depth: getDepth(dept.parent_id),
+          updated_at: new Date().toISOString(),
+        }
+        departments.set(child.id, updatedChild)
+      })
+  }
+
+  // Update parent's child_count
+  if (dept.parent_id) {
+    const parent = departments.get(dept.parent_id)
+    if (parent) {
+      departments.set(dept.parent_id, {
+        ...parent,
+        child_count: Math.max(0, parent.child_count - 1),
+        updated_at: new Date().toISOString(),
+      })
+    }
+  }
+
+  departments.delete(req.params.departmentId)
+  res.status(204).send()
+})
+
+// Move department
+router.post('/admin/departments/:departmentId/move', requireAuth, (req, res) => {
+  const dept = departments.get(req.params.departmentId)
+  if (!dept) {
+    return res.status(404).json({ detail: 'Department not found' })
+  }
+
+  const { new_parent_id } = req.body
+
+  // Check for circular reference
+  if (new_parent_id) {
+    let current = departments.get(new_parent_id)
+    while (current) {
+      if (current.id === req.params.departmentId) {
+        return res.status(400).json({ detail: 'Cannot move department to its own descendant' })
+      }
+      current = current.parent_id ? departments.get(current.parent_id) : undefined
+    }
+
+    // Check new parent exists
+    if (!departments.get(new_parent_id)) {
+      return res.status(404).json({ detail: 'New parent department not found' })
+    }
+  }
+
+  const now = new Date().toISOString()
+
+  // Update old parent's child_count
+  if (dept.parent_id) {
+    const oldParent = departments.get(dept.parent_id)
+    if (oldParent) {
+      departments.set(dept.parent_id, {
+        ...oldParent,
+        child_count: Math.max(0, oldParent.child_count - 1),
+        updated_at: now,
+      })
+    }
+  }
+
+  // Update new parent's child_count
+  if (new_parent_id) {
+    const newParent = departments.get(new_parent_id)
+    if (newParent) {
+      departments.set(new_parent_id, {
+        ...newParent,
+        child_count: newParent.child_count + 1,
+        updated_at: now,
+      })
+    }
+  }
+
+  // Update the department
+  const updated: Department = {
+    ...dept,
+    parent_id: new_parent_id || null,
+    path: generatePath(new_parent_id, dept.name),
+    depth: getDepth(new_parent_id),
+    updated_at: now,
+  }
+
+  departments.set(req.params.departmentId, updated)
+
+  // Update all descendants' paths and depths
+  const updateDescendants = (parentId: string, parentPath: string, parentDepth: number) => {
+    Array.from(departments.values())
+      .filter(d => d.parent_id === parentId)
+      .forEach(child => {
+        const updatedChild: Department = {
+          ...child,
+          path: parentPath + '/' + child.name.toLowerCase().replace(/\s+/g, '-'),
+          depth: parentDepth + 1,
+          updated_at: now,
+        }
+        departments.set(child.id, updatedChild)
+        updateDescendants(child.id, updatedChild.path, updatedChild.depth)
+      })
+  }
+  updateDescendants(req.params.departmentId, updated.path, updated.depth)
+
+  res.json(updated)
+})
+
+// Get department budget
+router.get('/admin/departments/:departmentId/budget', requireAuth, (req, res) => {
+  const dept = departments.get(req.params.departmentId)
+  if (!dept) {
+    return res.status(404).json({ detail: 'Department not found' })
+  }
+
+  // Get sub-department budgets
+  const subDepts = Array.from(departments.values()).filter(d => d.parent_id === req.params.departmentId)
+
+  const budgetStatus: DepartmentBudgetStatus = {
+    department_id: dept.id,
+    budget_allocated: dept.budget_allocated || 0,
+    budget_distributed: dept.budget_distributed,
+    budget_available: dept.budget_available,
+    budget_used: dept.budget_used,
+    budget_used_total: dept.budget_used + subDepts.reduce((sum, d) => sum + d.budget_used, 0),
+    period: dept.budget_period,
+    period_start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+    period_end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString(),
+    sub_department_budgets: subDepts.map(d => ({
+      department_id: d.id,
+      name: d.name,
+      allocated: d.budget_allocated || 0,
+      used: d.budget_used,
+    })),
+  }
+
+  res.json(budgetStatus)
+})
+
+// Set department budget
+router.put('/admin/departments/:departmentId/budget', requireAuth, (req, res) => {
+  const dept = departments.get(req.params.departmentId)
+  if (!dept) {
+    return res.status(404).json({ detail: 'Department not found' })
+  }
+
+  const { budget_allocated, budget_period, action_on_exceed } = req.body
+
+  // Check parent's available budget
+  if (dept.parent_id && budget_allocated !== undefined) {
+    const parent = departments.get(dept.parent_id)
+    if (parent) {
+      const oldAllocation = dept.budget_allocated || 0
+      const newAllocation = budget_allocated
+      const parentAvailable = parent.budget_available + oldAllocation
+
+      if (newAllocation > parentAvailable) {
+        return res.status(400).json({ detail: `Budget exceeds parent's available budget (${parentAvailable})` })
+      }
+
+      // Update parent's distributed and available
+      departments.set(dept.parent_id, {
+        ...parent,
+        budget_distributed: parent.budget_distributed - oldAllocation + newAllocation,
+        budget_available: parent.budget_available + oldAllocation - newAllocation,
+        updated_at: new Date().toISOString(),
+      })
+    }
+  }
+
+  const now = new Date().toISOString()
+  const updated: Department = {
+    ...dept,
+    ...(budget_allocated !== undefined && {
+      budget_allocated,
+      budget_available: budget_allocated - dept.budget_distributed,
+    }),
+    ...(budget_period !== undefined && { budget_period }),
+    updated_at: now,
+  }
+
+  departments.set(req.params.departmentId, updated)
+  res.json(updated)
+})
+
+// List department members
+router.get('/admin/departments/:departmentId/members', requireAuth, (req, res) => {
+  const dept = departments.get(req.params.departmentId)
+  if (!dept) {
+    return res.status(404).json({ detail: 'Department not found' })
+  }
+
+  const { include_sub_departments } = req.query
+
+  // Filter users by department_id
+  let members = usersListExample.users.filter(u => u.department_id === req.params.departmentId)
+
+  if (include_sub_departments === 'true') {
+    // Get all descendant department IDs
+    const getDescendantIds = (parentId: string): string[] => {
+      const children = Array.from(departments.values()).filter(d => d.parent_id === parentId)
+      return children.map(c => c.id).concat(children.flatMap(c => getDescendantIds(c.id)))
+    }
+    const descendantIds = getDescendantIds(req.params.departmentId)
+    const subMembers = usersListExample.users.filter(u => descendantIds.includes(u.department_id))
+    members = members.concat(subMembers)
+  }
+
+  res.json({ members, total: members.length })
+})
+
+// Add members to department
+router.post('/admin/departments/:departmentId/members', requireAuth, (req, res) => {
+  const dept = departments.get(req.params.departmentId)
+  if (!dept) {
+    return res.status(404).json({ detail: 'Department not found' })
+  }
+
+  const { user_ids } = req.body
+  if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
+    return res.status(400).json({ detail: 'user_ids array is required' })
+  }
+
+  // In a real implementation, we'd update the users' department_id
+  // For mock, just increment the member count
+  const now = new Date().toISOString()
+  const updated: Department = {
+    ...dept,
+    member_count: dept.member_count + user_ids.length,
+    total_member_count: dept.total_member_count + user_ids.length,
+    updated_at: now,
+  }
+
+  departments.set(req.params.departmentId, updated)
+  res.json(updated)
+})
+
+// Remove members from department
+router.delete('/admin/departments/:departmentId/members', requireAuth, (req, res) => {
+  const dept = departments.get(req.params.departmentId)
+  if (!dept) {
+    return res.status(404).json({ detail: 'Department not found' })
+  }
+
+  const { user_ids } = req.body
+  if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
+    return res.status(400).json({ detail: 'user_ids array is required' })
+  }
+
+  // In a real implementation, we'd update the users' department_id to null
+  // For mock, just decrement the member count
+  const now = new Date().toISOString()
+  const updated: Department = {
+    ...dept,
+    member_count: Math.max(0, dept.member_count - user_ids.length),
+    total_member_count: Math.max(0, dept.total_member_count - user_ids.length),
+    updated_at: now,
+  }
+
+  departments.set(req.params.departmentId, updated)
+  res.json(updated)
 })
 
 // Organization

@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/branding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get platform branding
+         * @description Public endpoint for UI theming (login page, etc.)
+         */
+        get: operations["getBranding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -857,9 +877,33 @@ export interface paths {
         };
         /**
          * List departments
-         * @description Get list of all departments in the organization
+         * @description Get list of departments with optional filtering
          */
         get: operations["listDepartments"];
+        put?: never;
+        /**
+         * Create department
+         * @description Create a new department in the organization hierarchy
+         */
+        post: operations["createDepartment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/departments/tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get department hierarchy
+         * @description Get departments as a nested tree structure
+         */
+        get: operations["getDepartmentTree"];
         put?: never;
         post?: never;
         delete?: never;
@@ -868,7 +912,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/organization": {
+    "/admin/departments/{department_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -876,15 +920,115 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get organization settings
-         * @description Get current organization settings including SSO providers and AI engine configurations
+         * Get department
+         * @description Get details for a specific department
          */
-        get: operations["getOrganization"];
+        get: operations["getDepartment"];
         /**
-         * Update organization settings
-         * @description Update organization settings including allowed domains and AI engine configurations
+         * Update department
+         * @description Update department name, description, or leaders
          */
-        put: operations["updateOrganization"];
+        put: operations["updateDepartment"];
+        post?: never;
+        /**
+         * Delete department
+         * @description Delete a department. Use force=true to reassign members to parent.
+         */
+        delete: operations["deleteDepartment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/departments/{department_id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Move department in hierarchy
+         * @description Move a department to a new parent (or to root level)
+         */
+        post: operations["moveDepartment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/departments/{department_id}/budget": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get department budget status
+         * @description Get budget allocation and usage for a department
+         */
+        get: operations["getDepartmentBudget"];
+        /**
+         * Set department budget
+         * @description Allocate budget to a department
+         */
+        put: operations["setDepartmentBudget"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/departments/{department_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List department members
+         * @description Get users assigned to this department
+         */
+        get: operations["listDepartmentMembers"];
+        put?: never;
+        /**
+         * Add members to department
+         * @description Assign users to this department
+         */
+        post: operations["addDepartmentMembers"];
+        /**
+         * Remove members from department
+         * @description Unassign users from this department
+         */
+        delete: operations["removeDepartmentMembers"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/branding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get branding settings
+         * @description Get current platform branding configuration including name, logo, colors, and font
+         */
+        get: operations["getAdminBranding"];
+        /**
+         * Update branding settings
+         * @description Update platform branding configuration (white-label support)
+         */
+        put: operations["updateBranding"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1000,6 +1144,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/ai-engines/{engine_key}/default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set default AI engine
+         * @description Set this engine as the organization's default AI engine
+         */
+        put: operations["setDefaultEngine"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ai-engines/{engine_key}/models/{model_id}/default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set default model
+         * @description Set this model as the default for the specified AI engine
+         */
+        put: operations["setDefaultModel"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/sso-providers": {
         parameters: {
             query?: never;
@@ -1013,11 +1197,7 @@ export interface paths {
          */
         get: operations["listSsoProviders"];
         put?: never;
-        /**
-         * Add SSO provider
-         * @description Configure a new SSO/OIDC provider for the organization
-         */
-        post: operations["createSsoProvider"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1433,6 +1613,31 @@ export interface components {
             /** @default en */
             language: string;
         };
+        /** @description Platform branding configuration */
+        Branding: {
+            /**
+             * @description Platform name (white-label support)
+             * @default Grengin
+             */
+            name: string;
+            /** Format: uri */
+            logo_url?: string | null;
+            /** @default #4079c5 */
+            color_primary: string;
+            /** @default #2d906b */
+            color_accent: string;
+            /** @default Coustard */
+            font_family: string;
+        };
+        /** @description Branding update (all fields optional) */
+        BrandingUpdate: {
+            name?: string;
+            /** Format: uri */
+            logo_url?: string | null;
+            color_primary?: string;
+            color_accent?: string;
+            font_family?: string;
+        };
         /**
          * @description Identifier for the SSO/OIDC provider. This is a free-form string that
          *     serves as a display name and URL slug (e.g., /auth/google, /auth/keycloak).
@@ -1462,17 +1667,17 @@ export interface components {
         };
         AuthTokenResponse: {
             /** @description JWT access token */
-            accessToken: string;
+            access_token: string;
             /** @enum {string} */
             token_type: "Bearer";
             /** @description Token expiration time in seconds */
-            expiresIn: number;
+            expires_in: number;
             /** @description Refresh token for obtaining new access tokens */
-            refreshToken?: string;
+            refresh_token?: string;
             user?: components["schemas"]["User"];
         };
         RefreshTokenRequest: {
-            refreshToken: string;
+            refresh_token: string;
         };
         OidcProviderConfig: {
             /** Format: uuid */
@@ -1650,7 +1855,7 @@ export interface components {
             success: boolean;
             /** @description 10 single-use recovery codes (store securely!) */
             recovery_codes: string[];
-            organization: components["schemas"]["Organization"];
+            branding: components["schemas"]["Branding"];
             super_admin: components["schemas"]["User"];
             /** Format: uri */
             login_url?: string;
@@ -1667,8 +1872,8 @@ export interface components {
             /** @description Temporary token to complete MFA verification */
             mfa_token?: string;
             /** @description Only returned if MFA not required or already verified */
-            accessToken?: string;
-            refreshToken?: string;
+            access_token?: string;
+            refresh_token?: string;
             user?: components["schemas"]["User"];
         };
         MfaSetupResponse: {
@@ -1732,7 +1937,9 @@ export interface components {
             hd?: string;
             role?: components["schemas"]["UserRole"];
             status?: components["schemas"]["UserStatus"];
-            department?: string | null;
+            /** Format: uuid */
+            department_id?: string | null;
+            readonly department_name?: string;
             /** @description Super admin has full platform control and cannot be deleted */
             is_super_admin?: boolean;
             /** @description Whether user has password authentication (vs SSO-only) */
@@ -1753,13 +1960,15 @@ export interface components {
             email: string;
             name?: string;
             role?: components["schemas"]["UserRole"];
-            department?: string;
+            /** Format: uuid */
+            department_id?: string;
         };
         UserUpdate: {
             name?: string;
             role?: components["schemas"]["UserRole"];
             status?: components["schemas"]["UserStatus"];
-            department?: string;
+            /** Format: uuid */
+            department_id?: string;
         };
         UserStatusUpdate: {
             status: components["schemas"]["UserStatus"];
@@ -1881,6 +2090,7 @@ export interface components {
          *       "display_name": "Claude Sonnet 4",
          *       "engine": "anthropic",
          *       "is_active": true,
+         *       "is_default": false,
          *       "supports_vision": true,
          *       "supports_pdf_native": true,
          *       "supports_web_search": false,
@@ -1923,6 +2133,11 @@ export interface components {
             supports_web_search: boolean;
             /** @description Maximum number of images supported per request */
             max_images?: number | null;
+            /**
+             * @description Default model for this engine
+             * @default false
+             */
+            is_default: boolean;
             /** Format: date-time */
             created_at?: string;
             /** Format: date-time */
@@ -1962,6 +2177,8 @@ export interface components {
          * @example {
          *       "engine_key": "openai",
          *       "display_name": "OpenAI",
+         *       "is_default": false,
+         *       "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">...</svg>",
          *       "is_enabled": true,
          *       "api_key_configured": true,
          *       "api_key_status": "valid",
@@ -1980,6 +2197,8 @@ export interface components {
             engine_key: string;
             /** @description Human-readable name for the engine */
             display_name: string;
+            /** @description SVG icon for the engine */
+            icon?: string;
             /** @description Whether this engine is enabled for the organization */
             is_enabled: boolean;
             /** @description Whether an API key has been set for this engine */
@@ -1988,7 +2207,7 @@ export interface components {
              * @description Status of the configured API key
              * @enum {string}
              */
-            api_key_status?: "valid" | "in_valid" | "not_validated" | "not_configured";
+            api_key_status?: "valid" | "invalid" | "untested";
             /** @description Last 4 characters of the configured API key */
             api_key_preview?: string | null;
             /**
@@ -2001,10 +2220,13 @@ export interface components {
              *     Empty array means all models from this engine are allowed.
              */
             whitelisted_models?: string[];
-            /** @description Whether this engine is the default engine for the organization */
-            is_default?: boolean;
             /** @description Default model for this engine */
             default_model?: string | null;
+            /**
+             * @description Organization's default engine
+             * @default false
+             */
+            is_default: boolean;
             /** Format: date-time */
             updated_at?: string | null;
         };
@@ -2090,53 +2312,6 @@ export interface components {
         UserModelAccessUpdate: {
             whitelisted_models?: string[];
             blacklisted_models?: string[];
-        };
-        Organization: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            /** @description Primary domain for SSO */
-            domain?: string;
-            /** @description List of allowed email domains */
-            allowed_domains?: string[];
-            /** Format: uri */
-            logo_url?: string | null;
-            settings?: components["schemas"]["OrganizationSettings"];
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        /**
-         * @example {
-         *       "sso_providers": [
-         *         "google",
-         *         "keycloak"
-         *       ],
-         *       "default_engine": "anthropic",
-         *       "default_model": "claude-sonnet-4-20250514",
-         *       "data_retention_days": 90,
-         *       "require_mfa": true
-         *     }
-         */
-        OrganizationSettings: {
-            /** @description Enabled SSO providers */
-            sso_providers?: components["schemas"]["AuthProvider"][];
-            /** @description Default model_name for the organization */
-            default_model?: string;
-            /** @description Default AI engine for the organization */
-            default_engine?: string;
-            /** @default 90 */
-            data_retention_days: number;
-            /** @default false */
-            require_mfa: boolean;
-        };
-        OrganizationUpdate: {
-            name?: string;
-            allowed_domains?: string[];
-            /** Format: uri */
-            logo_url?: string;
-            settings?: components["schemas"]["OrganizationSettings"];
         };
         /** @enum {string} */
         RateLimitScope: "user" | "department" | "organization";
@@ -2253,6 +2428,121 @@ export interface components {
             costs?: components["schemas"]["CostSummary"];
             cost_trend?: components["schemas"]["CostTrend"][];
             system_health?: components["schemas"]["HealthResponse"];
+        };
+        Department: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description?: string | null;
+            /**
+             * Format: uuid
+             * @description Null for root-level departments
+             */
+            parent_id?: string | null;
+            /** @description Materialized path (e.g., "/sales/apac/india") */
+            readonly path?: string;
+            /** @description Depth in hierarchy (0 = root) */
+            readonly depth: number;
+            /** @description Users who can manage this department */
+            leader_ids?: string[];
+            /** @description Direct members in this department */
+            readonly member_count: number;
+            /** @description All members including sub-departments */
+            readonly total_member_count?: number;
+            /** @description Direct child departments */
+            readonly child_count: number;
+            /**
+             * Format: float
+             * @description Budget allocated (USD)
+             */
+            budget_allocated?: number | null;
+            /**
+             * Format: float
+             * @description Budget allocated to sub-departments
+             */
+            readonly budget_distributed?: number;
+            /**
+             * Format: float
+             * @description budget_allocated - budget_distributed
+             */
+            readonly budget_available?: number;
+            /**
+             * Format: float
+             * @description Actual spend by this department
+             */
+            readonly budget_used?: number;
+            budget_period?: components["schemas"]["BudgetPeriod"];
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        DepartmentCreate: {
+            name: string;
+            description?: string;
+            /** Format: uuid */
+            parent_id?: string | null;
+            leader_ids?: string[];
+        };
+        DepartmentUpdate: {
+            name?: string;
+            description?: string;
+            leader_ids?: string[];
+        };
+        DepartmentTree: components["schemas"]["Department"] & {
+            children?: components["schemas"]["DepartmentTree"][];
+        };
+        DepartmentBudgetAllocation: {
+            /** Format: float */
+            budget_allocated: number;
+            /** @default monthly */
+            budget_period: components["schemas"]["BudgetPeriod"];
+            /**
+             * @default warn
+             * @enum {string}
+             */
+            action_on_exceed: "warn" | "throttle" | "block";
+        };
+        DepartmentBudgetStatus: {
+            /** Format: uuid */
+            department_id?: string;
+            /** Format: float */
+            budget_allocated?: number;
+            /** Format: float */
+            budget_distributed?: number;
+            /** Format: float */
+            budget_available?: number;
+            /** Format: float */
+            budget_used?: number;
+            /**
+             * Format: float
+             * @description Including sub-departments
+             */
+            budget_used_total?: number;
+            period?: components["schemas"]["BudgetPeriod"];
+            /** Format: date-time */
+            period_start?: string;
+            /** Format: date-time */
+            period_end?: string;
+            sub_department_budgets?: {
+                /** Format: uuid */
+                department_id?: string;
+                name?: string;
+                /** Format: float */
+                allocated?: number;
+                /** Format: float */
+                used?: number;
+            }[];
+        };
+        DepartmentMove: {
+            /**
+             * Format: uuid
+             * @description New parent ID (null for root)
+             */
+            new_parent_id: string | null;
+        };
+        DepartmentMembersRequest: {
+            user_ids: string[];
         };
         CostSummary: {
             /** Format: float */
@@ -2426,6 +2716,8 @@ export interface components {
         OnboardingToken: string;
         /** @description SSO/OIDC provider identifier */
         AuthProvider: components["schemas"]["AuthProvider"];
+        /** @description Unique identifier for the department */
+        DepartmentId: string;
     };
     requestBodies: never;
     headers: never;
@@ -2433,6 +2725,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getBranding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Branding configuration */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Branding"];
+                };
+            };
+        };
+    };
     getHealth: {
         parameters: {
             query?: never;
@@ -3426,9 +3738,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        accessToken?: string;
-                        refreshToken?: string;
-                        remainingCodes?: number;
+                        access_token?: string;
+                        refresh_token?: string;
+                        remaining_codes?: number;
                         user?: components["schemas"]["User"];
                     };
                 };
@@ -3862,7 +4174,11 @@ export interface operations {
     };
     listDepartments: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Filter by parent (use 'root' for top-level) */
+                parent_id?: string;
+                include_children?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3876,12 +4192,8 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        departments: {
-                            /** @description Department name */
-                            name: string;
-                            /** @description Number of users in this department */
-                            user_count: number;
-                        }[];
+                        departments?: components["schemas"]["Department"][];
+                        total?: number;
                     };
                 };
             };
@@ -3889,29 +4201,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
         };
     };
-    getOrganization: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Organization settings */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Organization"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-        };
-    };
-    updateOrganization: {
+    createDepartment: {
         parameters: {
             query?: never;
             header?: never;
@@ -3920,17 +4210,384 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["OrganizationUpdate"];
+                "application/json": components["schemas"]["DepartmentCreate"];
             };
         };
         responses: {
-            /** @description Updated organization */
+            /** @description Department created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Department"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getDepartmentTree: {
+        parameters: {
+            query?: {
+                /** @description Start from this department (default: entire org) */
+                root_id?: string;
+                max_depth?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Department tree */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Organization"];
+                    "application/json": {
+                        tree?: components["schemas"]["DepartmentTree"][];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getDepartment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the department */
+                department_id: components["parameters"]["DepartmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Department details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Department"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateDepartment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the department */
+                department_id: components["parameters"]["DepartmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepartmentUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated department */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Department"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteDepartment: {
+        parameters: {
+            query?: {
+                /** @description Force delete (reassign members to parent) */
+                force?: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description Unique identifier for the department */
+                department_id: components["parameters"]["DepartmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Department deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cannot delete (has members or children) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    moveDepartment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the department */
+                department_id: components["parameters"]["DepartmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepartmentMove"];
+            };
+        };
+        responses: {
+            /** @description Department moved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Department"];
+                };
+            };
+            /** @description Invalid move (circular reference) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getDepartmentBudget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the department */
+                department_id: components["parameters"]["DepartmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Budget status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepartmentBudgetStatus"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    setDepartmentBudget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the department */
+                department_id: components["parameters"]["DepartmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepartmentBudgetAllocation"];
+            };
+        };
+        responses: {
+            /** @description Budget updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Department"];
+                };
+            };
+            /** @description Exceeds parent's available budget */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listDepartmentMembers: {
+        parameters: {
+            query?: {
+                include_sub_departments?: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description Unique identifier for the department */
+                department_id: components["parameters"]["DepartmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Department members */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        members?: components["schemas"]["User"][];
+                        total?: number;
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    addDepartmentMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the department */
+                department_id: components["parameters"]["DepartmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepartmentMembersRequest"];
+            };
+        };
+        responses: {
+            /** @description Members added */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Department"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    removeDepartmentMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier for the department */
+                department_id: components["parameters"]["DepartmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepartmentMembersRequest"];
+            };
+        };
+        responses: {
+            /** @description Members removed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Department"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getAdminBranding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Branding configuration */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Branding"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    updateBranding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandingUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated branding */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Branding"];
                 };
             };
             400: components["responses"]["BadRequest"];
@@ -4113,6 +4770,59 @@ export interface operations {
             404: components["responses"]["NotFound"];
         };
     };
+    setDefaultEngine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description AI engine identifier (e.g., 'openai', 'anthropic', 'groq') */
+                engine_key: components["parameters"]["EngineKey"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Engine set as default */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIEngineDetail"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    setDefaultModel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description AI engine identifier (e.g., 'openai', 'anthropic', 'groq') */
+                engine_key: components["parameters"]["EngineKey"];
+                model_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Model set as default */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIModel"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
     listSsoProviders: {
         parameters: {
             query?: never;
@@ -4131,33 +4841,6 @@ export interface operations {
                     "application/json": components["schemas"]["OidcProviderConfig"][];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-        };
-    };
-    createSsoProvider: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OidcProviderConfigCreate"];
-            };
-        };
-        responses: {
-            /** @description SSO provider configured */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OidcProviderConfig"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
         };

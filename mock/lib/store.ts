@@ -14,12 +14,19 @@ export type PaginatedFiles = components['schemas']['PaginatedFiles']
 export type UserSettings = components['schemas']['UserSettings']
 export type AIEngineDetail = components['schemas']['AIEngineDetail']
 export type AIEngineModelsResponse = components['schemas']['AIEngineModelsResponse']
+export type Department = components['schemas']['Department']
+export type DepartmentCreate = components['schemas']['DepartmentCreate']
+export type DepartmentUpdate = components['schemas']['DepartmentUpdate']
+export type DepartmentTree = components['schemas']['DepartmentTree']
+export type DepartmentBudgetStatus = components['schemas']['DepartmentBudgetStatus']
+export type BudgetPeriod = components['schemas']['BudgetPeriod']
 
 // In-memory stores
 export const conversations = new Map<string, Conversation>()
 export const messages = new Map<string, Message[]>()
 export const files = new Map<string, UserFile>()
 export const aiEngines = new Map<string, AIEngineDetail>()
+export const departments = new Map<string, Department>()
 
 export let userSettings: UserSettings = {
   models: {
@@ -92,4 +99,91 @@ export const seedData = () => {
       aiEngines.set(engine.engine_key, engine as AIEngineDetail)
     })
   }
+
+  // Seed department data (v1.2 hierarchical departments)
+  const now = new Date().toISOString()
+  const engineeringDept: Department = {
+    id: 'd0010000-0000-0000-0000-000000000001',
+    name: 'Engineering',
+    description: 'Product engineering and development team',
+    parent_id: null,
+    path: '/engineering',
+    depth: 0,
+    leader_ids: ['550e8400-e29b-41d4-a716-446655440001'],
+    member_count: 1,
+    total_member_count: 3,
+    child_count: 2,
+    budget_allocated: 50000,
+    budget_distributed: 20000,
+    budget_available: 30000,
+    budget_used: 15000,
+    budget_period: 'monthly',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: now,
+  }
+
+  const marketingDept: Department = {
+    id: 'd0020000-0000-0000-0000-000000000002',
+    name: 'Marketing',
+    description: 'Marketing and communications team',
+    parent_id: null,
+    path: '/marketing',
+    depth: 0,
+    leader_ids: [],
+    member_count: 1,
+    total_member_count: 1,
+    child_count: 0,
+    budget_allocated: 25000,
+    budget_distributed: 0,
+    budget_available: 25000,
+    budget_used: 8000,
+    budget_period: 'monthly',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: now,
+  }
+
+  const frontendDept: Department = {
+    id: 'd0030000-0000-0000-0000-000000000003',
+    name: 'Frontend',
+    description: 'Frontend development team',
+    parent_id: 'd0010000-0000-0000-0000-000000000001',
+    path: '/engineering/frontend',
+    depth: 1,
+    leader_ids: [],
+    member_count: 1,
+    total_member_count: 1,
+    child_count: 0,
+    budget_allocated: 10000,
+    budget_distributed: 0,
+    budget_available: 10000,
+    budget_used: 5000,
+    budget_period: 'monthly',
+    created_at: '2024-01-05T00:00:00Z',
+    updated_at: now,
+  }
+
+  const backendDept: Department = {
+    id: 'd0040000-0000-0000-0000-000000000004',
+    name: 'Backend',
+    description: 'Backend and infrastructure team',
+    parent_id: 'd0010000-0000-0000-0000-000000000001',
+    path: '/engineering/backend',
+    depth: 1,
+    leader_ids: [],
+    member_count: 1,
+    total_member_count: 1,
+    child_count: 0,
+    budget_allocated: 10000,
+    budget_distributed: 0,
+    budget_available: 10000,
+    budget_used: 7000,
+    budget_period: 'monthly',
+    created_at: '2024-01-05T00:00:00Z',
+    updated_at: now,
+  }
+
+  departments.set(engineeringDept.id, engineeringDept)
+  departments.set(marketingDept.id, marketingDept)
+  departments.set(frontendDept.id, frontendDept)
+  departments.set(backendDept.id, backendDept)
 }
