@@ -2,7 +2,6 @@
   import { login, ApiError } from '../index.js';
   import { setAuth } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
-  import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
   import OAuthButton from './OAuthButton.svelte';
   import { _ } from 'svelte-i18n';

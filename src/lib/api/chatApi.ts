@@ -34,7 +34,16 @@ export async function uploadDocument(options: UploadDocumentOptions): Promise<Up
   
   const token = getAccessToken();
   if (!token) {
-    throw new Error('No authentication token available');
+    throw new ApiError(401, {
+      type: 'rich',
+      code: 401,
+      description: 'No authentication token available',
+      solution: 'Please log in to continue',
+      description_key: 'error.auth.no_token.description',
+      solution_key: 'error.auth.no_token.solution',
+      params: {},
+      external_code: null,
+    });
   }
 
   const base64 = await fileToBase64(file);
@@ -80,7 +89,16 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
   try {
     const token = getAccessToken();
     if (!token) {
-      throw new Error('No authentication token available');
+      throw new ApiError(401, {
+        type: 'rich',
+        code: 401,
+        description: 'No authentication token available',
+        solution: 'Please log in to continue',
+        description_key: 'error.auth.no_token.description',
+        solution_key: 'error.auth.no_token.solution',
+        params: {},
+        external_code: null,
+      });
     }
 
     // Build the correct API URL
@@ -159,7 +177,16 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
             localStorage.removeItem('grengin_user');
             window.location.href = '/';
             // Throw error to prevent further execution
-            throw new ApiError(401, 'Session expired. Please log in again.');
+            throw new ApiError(401, {
+              type: 'rich',
+              code: 401,
+              description: 'Session expired. Please log in again.',
+              solution: 'Please log in again to continue using the application',
+              description_key: 'error.auth.invalid_token.description',
+              solution_key: 'error.auth.invalid_token.solution',
+              params: {},
+              external_code: null,
+            });
           }
         } catch (error) {
           console.log('Streaming request: Refresh error, redirecting...');
@@ -169,7 +196,16 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
           localStorage.removeItem('grengin_user');
           window.location.href = '/';
           // Throw error to prevent further execution
-          throw new ApiError(401, 'Session expired. Please log in again.');
+          throw new ApiError(401, {
+            type: 'rich',
+            code: 401,
+            description: 'Session expired. Please log in again.',
+            solution: 'Please log in again to continue using the application',
+            description_key: 'error.auth.invalid_token.description',
+            solution_key: 'error.auth.invalid_token.solution',
+            params: {},
+            external_code: null,
+          });
         }
       } else {
         console.log('Streaming request: No refresh token, redirecting...');
@@ -179,7 +215,16 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         localStorage.removeItem('grengin_user');
         window.location.href = '/';
         // Throw error to prevent further execution
-        throw new ApiError(401, 'Session expired. Please log in again.');
+        throw new ApiError(401, {
+          type: 'rich',
+          code: 401,
+          description: 'Session expired. Please log in again.',
+          solution: 'Please log in again to continue using the application',
+          description_key: 'error.auth.invalid_token.description',
+          solution_key: 'error.auth.invalid_token.solution',
+          params: {},
+          external_code: null,
+        });
       }
     }
 
@@ -191,7 +236,16 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
 
     const reader = response.body?.getReader();
     if (!reader) {
-      throw new Error('No response body');
+      throw new ApiError(500, {
+        type: 'rich',
+        code: 500,
+        description: 'No response body received',
+        solution: 'The server did not return any data. Please try again',
+        description_key: 'error.request.no_response_body.description',
+        solution_key: 'error.request.no_response_body.solution',
+        params: {},
+        external_code: null,
+      });
     }
 
     const decoder = new TextDecoder();
@@ -270,7 +324,16 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
       onError?.(apiError);
     } else {
       // Fallback for unknown error types
-      const apiError = new ApiError(500, 'Failed to send message');
+      const apiError = new ApiError(500, {
+        type: 'rich',
+        code: 500,
+        description: 'Failed to send message',
+        solution: 'Unable to send your message. Please check your connection and try again',
+        description_key: 'error.request.send_message_failed.description',
+        solution_key: 'error.request.send_message_failed.solution',
+        params: {},
+        external_code: null,
+      });
       onError?.(apiError);
     }
   }
@@ -311,7 +374,16 @@ export async function archiveConversation(conversationId: string, title: string)
   try {
     const token = getAccessToken();
     if (!token) {
-      throw new Error('No authentication token available');
+      throw new ApiError(401, {
+        type: 'rich',
+        code: 401,
+        description: 'No authentication token available',
+        solution: 'Please log in to continue',
+        description_key: 'error.auth.no_token.description',
+        solution_key: 'error.auth.no_token.solution',
+        params: {},
+        external_code: null,
+      });
     }
 
     const response = await fetch(`${API_BASE}/chat/${conversationId}`, {
@@ -338,8 +410,20 @@ export async function archiveConversation(conversationId: string, title: string)
     if (error instanceof ApiError) {
       throw error;
     }
-    const body = error instanceof Error ? { detail: error.message } : { detail: 'Failed to archive conversation' };
-    throw new ApiError(500, body.detail);
+    if (error instanceof Error) {
+      throw new ApiError(500, error.message);
+    } else {
+      throw new ApiError(500, {
+        type: 'rich',
+        code: 500,
+        description: 'Failed to archive conversation',
+        solution: 'Unable to archive the conversation. Please try again',
+        description_key: 'error.request.archive_conversation_failed.description',
+        solution_key: 'error.request.archive_conversation_failed.solution',
+        params: {},
+        external_code: null,
+      });
+    }
   }
 }
 

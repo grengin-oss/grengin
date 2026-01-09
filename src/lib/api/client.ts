@@ -185,7 +185,16 @@ export async function request<T>(
     // Redirect to root path - app will show Login component when not authenticated
     window.location.href = '/';
     // Throw error to prevent further execution (though redirect will happen)
-    throw new ApiError(401, 'Session expired. Please log in again.');
+    throw new ApiError(401, {
+      type: 'rich',
+      code: 401,
+      description: 'Session expired. Please log in again.',
+      solution: 'Please log in again to continue using the application',
+      description_key: 'error.auth.invalid_token.description',
+      solution_key: 'error.auth.invalid_token.solution',
+      params: {},
+      external_code: null,
+    });
   }
 
   if (!response.ok) {

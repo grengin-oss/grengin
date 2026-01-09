@@ -2,7 +2,6 @@
   import { initiateOAuth, ApiError } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
-  import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
 
   type OAuthProvider = 'google' | 'azure' | 'keycloak';

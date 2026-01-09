@@ -433,6 +433,24 @@
           "description": "SSO provider `{provider}` is disabled by an {app} administrator",
           "solution": "Please contact your {app} administrator to enable SSO for `{provider}` or use a different authentication method"
         }
+      },
+      "no_token": {
+        "description": "No authentication token available",
+        "solution": "Please log in to continue"
+      }
+    },
+    "request": {
+      "no_response_body": {
+        "description": "No response body received",
+        "solution": "The server did not return any data. Please try again"
+      },
+      "send_message_failed": {
+        "description": "Failed to send message",
+        "solution": "Unable to send your message. Please check your connection and try again"
+      },
+      "archive_conversation_failed": {
+        "description": "Failed to archive conversation",
+        "solution": "Unable to archive the conversation. Please try again"
       }
     },
     "fallback": {

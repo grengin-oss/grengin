@@ -433,6 +433,24 @@
           "description": "SSOプロバイダー `{provider}` は{app}管理者によって無効化されています",
           "solution": "`{provider}` のSSOを有効にするには、{app}管理者にお問い合わせするか、別の認証方法をお試しください"
         }
+      },
+      "no_token": {
+        "description": "認証トークンが利用できません",
+        "solution": "続行するにはログインしてください"
+      }
+    },
+    "request": {
+      "no_response_body": {
+        "description": "レスポンスボディが受信されませんでした",
+        "solution": "サーバーがデータを返しませんでした。もう一度お試しください"
+      },
+      "send_message_failed": {
+        "description": "メッセージの送信に失敗しました",
+        "solution": "メッセージを送信できませんでした。接続を確認してもう一度お試しください"
+      },
+      "archive_conversation_failed": {
+        "description": "会話のアーカイブに失敗しました",
+        "solution": "会話をアーカイブできませんでした。もう一度お試しください"
       }
     },
     "fallback": {
