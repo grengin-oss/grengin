@@ -195,6 +195,24 @@
           "description": "O provedor SSO `{provider}` está desabilitado por um administrador {app}",
           "solution": "Por favor, entre em contato com seu administrador {app} para habilitar SSO para `{provider}` ou use um método de autenticação diferente"
         }
+      },
+      "no_token": {
+        "description": "Nenhum token de autenticação disponível",
+        "solution": "Por favor, faça login para continuar"
+      }
+    },
+    "request": {
+      "no_response_body": {
+        "description": "Nenhum corpo de resposta recebido",
+        "solution": "O servidor não retornou nenhum dado. Por favor, tente novamente"
+      },
+      "send_message_failed": {
+        "description": "Falha ao enviar mensagem",
+        "solution": "Não foi possível enviar sua mensagem. Por favor, verifique sua conexão e tente novamente"
+      },
+      "archive_conversation_failed": {
+        "description": "Falha ao arquivar conversa",
+        "solution": "Não foi possível arquivar a conversa. Por favor, tente novamente"
       }
     },
     "fallback": {

@@ -195,6 +195,24 @@
           "description": "SSO 프로바이더 `{provider}` 가 {app} 관리자에 의해 비활성화되었습니다",
           "solution": "`{provider}` 에 대한 SSO를 활성화하려면 {app} 관리자에게 문의하거나 다른 인증 방법을 사용해 주세요"
         }
+      },
+      "no_token": {
+        "description": "인증 토큰을 사용할 수 없습니다",
+        "solution": "계속하려면 로그인하세요"
+      }
+    },
+    "request": {
+      "no_response_body": {
+        "description": "응답 본문을 받지 못했습니다",
+        "solution": "서버가 데이터를 반환하지 않았습니다. 다시 시도해 주세요"
+      },
+      "send_message_failed": {
+        "description": "메시지 전송에 실패했습니다",
+        "solution": "메시지를 보낼 수 없습니다. 연결을 확인하고 다시 시도해 주세요"
+      },
+      "archive_conversation_failed": {
+        "description": "대화 아카이브에 실패했습니다",
+        "solution": "대화를 아카이브할 수 없습니다. 다시 시도해 주세요"
       }
     },
     "fallback": {

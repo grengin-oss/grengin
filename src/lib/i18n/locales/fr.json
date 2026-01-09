@@ -195,6 +195,24 @@
           "description": "Le fournisseur SSO `{provider}` est désactivé par un administrateur {app}",
           "solution": "Veuillez contacter votre administrateur {app} pour activer SSO pour `{provider}` ou utiliser une autre méthode d'authentification"
         }
+      },
+      "no_token": {
+        "description": "Aucun jeton d'authentification disponible",
+        "solution": "Veuillez vous connecter pour continuer"
+      }
+    },
+    "request": {
+      "no_response_body": {
+        "description": "Aucun corps de réponse reçu",
+        "solution": "Le serveur n'a renvoyé aucune donnée. Veuillez réessayer"
+      },
+      "send_message_failed": {
+        "description": "Échec de l'envoi du message",
+        "solution": "Impossible d'envoyer votre message. Veuillez vérifier votre connexion et réessayer"
+      },
+      "archive_conversation_failed": {
+        "description": "Échec de l'archivage de la conversation",
+        "solution": "Impossible d'archiver la conversation. Veuillez réessayer"
       }
     },
     "fallback": {

@@ -1,4 +1,4 @@
-import { API_BASE, request } from './client';
+import { API_BASE, request, ApiError } from './client';
 import { getAccessToken } from '../features/auth';
 
 /**
@@ -15,7 +15,16 @@ export async function downloadFile(fileId: string): Promise<string | null> {
   try {
     const token = getAccessToken();
     if (!token) {
-      throw new Error('No authentication token available');
+      throw new ApiError(401, {
+        type: 'rich',
+        code: 401,
+        description: 'No authentication token available',
+        solution: 'Please log in to continue',
+        description_key: 'error.auth.no_token.description',
+        solution_key: 'error.auth.no_token.solution',
+        params: {},
+        external_code: null,
+      });
     }
 
     const downloadUrl = `${API_BASE}/files/${fileId}/download`;

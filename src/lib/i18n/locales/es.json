@@ -195,6 +195,24 @@
           "description": "El proveedor SSO `{provider}` está deshabilitado por un administrador {app}",
           "solution": "Por favor, contacte a su administrador {app} para habilitar SSO para `{provider}` o use un método de autenticación diferente"
         }
+      },
+      "no_token": {
+        "description": "No hay token de autenticación disponible",
+        "solution": "Por favor, inicie sesión para continuar"
+      }
+    },
+    "request": {
+      "no_response_body": {
+        "description": "No se recibió cuerpo de respuesta",
+        "solution": "El servidor no devolvió ningún dato. Por favor, intente de nuevo"
+      },
+      "send_message_failed": {
+        "description": "Error al enviar el mensaje",
+        "solution": "No se pudo enviar su mensaje. Por favor, verifique su conexión e intente de nuevo"
+      },
+      "archive_conversation_failed": {
+        "description": "Error al archivar la conversación",
+        "solution": "No se pudo archivar la conversación. Por favor, intente de nuevo"
       }
     },
     "fallback": {
