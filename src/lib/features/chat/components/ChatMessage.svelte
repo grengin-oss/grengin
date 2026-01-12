@@ -738,7 +738,7 @@
     position: relative;
     margin: var(--space-md) 0;
     padding: var(--space-xl);
-    background: color-mix(in oklab, var(--glass-bg-dark) 25%, var(--btn-tertiary));
+    background: color-mix(in oklab, var(--code-bg-base) 25%, var(--code-bg-tertiary));
     border-radius: var(--radius-md);
     overflow-x: auto;
     box-shadow: var(--glass-edge-glow), inset 0 1px 2px rgba(0, 0, 0, 0.04);
