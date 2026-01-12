@@ -293,8 +293,6 @@
             selectedModelInfo = providers.find(p => p.key === 'openai') || providers[0];
           }
         }
-
-        scrollToBottom(false);
       } catch (err) {
         // Convert all errors to ApiError for consistent handling
         const apiError = err instanceof ApiError 
@@ -307,6 +305,25 @@
       } finally {
         isLoading = false;
         isLoadingConversation = false;
+        
+        // Wait for Svelte to finish updating the DOM with the new messages.
+        await tick();
+        
+        if (messagesContainer) {
+          // Save the original scroll behavior (likely 'smooth' from CSS).
+          // We'll temporarily change it to 'auto' to prevent smooth scrolling animation.
+          const originalScrollBehavior = messagesContainer.style.scrollBehavior;
+          messagesContainer.style.scrollBehavior = 'auto';
+          
+          requestAnimationFrame(() => {
+            void messagesContainer.offsetHeight;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            messagesContainer.style.scrollBehavior = originalScrollBehavior;
+          });
+        }
+
+        // Focus the input field
+        messageInput?.focus();
       }
     } else {
       // No chatId in URL, clear everything
