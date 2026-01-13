@@ -17,7 +17,7 @@ type ApiKeyMode = 'cta' | 'add' | 'view' | 'update';
 function createAIEnginesStore() {
   let engines = $state<AIEngine[]>([]);
   let isLoading = $state(false);
-  let error = $state<string | null>(null);
+  let error = $state<any | null>(null);
   let defaultEngineKey = $state<string | undefined>(undefined);
 
   // Modal state
@@ -74,8 +74,7 @@ function createAIEnginesStore() {
       defaultEngineKey = organization.settings?.default_engine;
       engines = enginesData;
     } catch (err: any) {
-      const t = get(_);
-      error = err.message || t('aiEngines.toasts.failedToFetch');
+      error = err;
       throw err;
     } finally {
       isLoading = false;
@@ -110,8 +109,7 @@ function createAIEnginesStore() {
           is_enabled: originalStatus,
         };
       }
-      const t = get(_);
-      error = err.message || t('aiEngines.toasts.failedToUpdateStatus');
+      error = err;
       throw err;
     }
   }
@@ -170,8 +168,7 @@ function createAIEnginesStore() {
     try {
       availableModels = await getAIEngineModels(engine.engine_key);
     } catch (err: any) {
-      const t = get(_);
-      error = err.message || t('aiEngines.toasts.failedToLoadModels');
+      error = err;
       availableModels = null;
     } finally {
       loadingModels = false;
@@ -209,8 +206,7 @@ function createAIEnginesStore() {
       loadingModels = true;
       availableModels = await getAIEngineModels(selectedEngine.engine_key);
     } catch (err: any) {
-      const t = get(_);
-      error = err.message || t('aiEngines.toasts.failedToLoadModels');
+      error = err;
       availableModels = null;
     } finally {
       loadingModels = false;
@@ -279,8 +275,7 @@ function createAIEnginesStore() {
         await refreshSelectedEngine();
       }
     } catch (err: any) {
-      const t = get(_);
-      error = err.message || t('aiEngines.toasts.failedToUpdate');
+      error = err;
       throw err;
     } finally {
       saving = false;
@@ -359,8 +354,7 @@ function createAIEnginesStore() {
       await refreshSelectedEngine();
       await loadModelsForSelected();
     } catch (err: any) {
-      const t = get(_);
-      error = err?.message || t('aiEngines.toasts.failedToDeleteKey');
+      error = err;
       throw err;
     } finally {
       apiKeyLoading = false;

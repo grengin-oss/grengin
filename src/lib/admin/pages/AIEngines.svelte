@@ -7,6 +7,8 @@
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
   import Modal from "../components/Modal.svelte";
   import { toast } from "../../components/Toaster.svelte";
+  import { ApiError } from "../../api/client.js";
+  import { getLocalizedError } from "../../utils/errorLocalization.js";
   import type { AIEngine } from "../types.js";
   import { aiEnginesStore } from "../stores/index.js";
 
@@ -19,7 +21,8 @@
         $_('aiEngines.toasts.' + (!engine.is_enabled ? 'enabled' : 'disabled'), { values: { name: engine.display_name } }),
       );
     } catch (err: any) {
-      toast.error(err.message || $_('aiEngines.toasts.failedToUpdate'));
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error(errorMessage || $_('aiEngines.toasts.failedToUpdate'));
     }
   }
 
@@ -80,7 +83,8 @@
       toast.success(action);
       store.closeConfigModal();
     } catch (err: any) {
-      toast.error(err.message || $_('aiEngines.toasts.failedToUpdate'));
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error(errorMessage || $_('aiEngines.toasts.failedToUpdate'));
     }
   }
 
@@ -89,7 +93,8 @@
       await store.addOrUpdateApiKey();
       toast.success($_('aiEngines.apiKey.added'));
     } catch (err: any) {
-      toast.error(store.apiKeyMessage || $_('aiEngines.apiKey.invalid'));
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error( errorMessage || store.apiKeyMessage || $_('aiEngines.apiKey.invalid'));
     }
   }
 
@@ -103,7 +108,8 @@
         toast.error(message);
       }
     } catch (err: any) {
-      toast.error(store.apiKeyMessage || $_('aiEngines.apiKey.invalid'));
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error(errorMessage || store.apiKeyMessage || $_('aiEngines.apiKey.invalid'));
     }
   }
 
@@ -112,7 +118,8 @@
       await store.removeApiKey();
       toast.success($_('aiEngines.apiKey.removed'));
     } catch (err: any) {
-      toast.error(err?.message || $_('aiEngines.toasts.failedToDeleteKey'));
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error(errorMessage || $_('aiEngines.toasts.failedToDeleteKey'));
     }
   }
 
@@ -235,7 +242,8 @@
 
   onMount(() => {
     store.fetch().catch((err: any) => {
-      toast.error(err.message || $_('aiEngines.toasts.failedToLoad'));
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error(errorMessage || $_('aiEngines.toasts.failedToLoad'));
     });
   });
 </script>
