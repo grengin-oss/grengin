@@ -2,8 +2,6 @@
 import type { User } from '../types.js';
 import { getUsers, createUser, updateUser, updateUserStatus } from '../../api/admin/users.js';
 import type { CreateUserData, GetUsersParams } from '../../api/admin/users.js';
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
 
 interface UsersFilters {
   search: string;
@@ -20,7 +18,7 @@ function createUsersStore() {
   let limit = $state(20);
   let offset = $state(0);
   let isLoading = $state(false);
-  let error = $state<string | null>(null);
+  let error = $state<any | null>(null);
   let filters = $state<UsersFilters>({
     search: '',
     role: '',
@@ -63,7 +61,7 @@ function createUsersStore() {
     try {
       await fetch();
     } catch (err: any) {
-      error = err.message || get(_)('admin.users.failedToFetchUsers');
+      error = err;
     } finally {
       isLoading = false;
     }
@@ -73,7 +71,7 @@ function createUsersStore() {
     try {
       await fetch();
     } catch (err: any) {
-      error = err.message || get(_)('admin.users.failedToFetchUsers');
+      error = err;
     }
   }
 
@@ -126,7 +124,7 @@ function createUsersStore() {
         await createUser(userData);
         return updateUsersInBackground();
       } catch (err: any) {
-        error = err.message || get(_)('admin.users.failedToCreateUser');
+        error = err;
         throw err;
       }
     },
@@ -136,7 +134,7 @@ function createUsersStore() {
         await updateUser(userId, updates);
         return updateUsersInBackground();
       } catch (err: any) {
-        error = err.message || get(_)('admin.users.failedToUpdateUser');
+        error = err;
         throw err;
       }
     },
@@ -146,7 +144,7 @@ function createUsersStore() {
         await updateUserStatus(userId, status);
         return updateUsersInBackground();
       } catch (err: any) {
-        error = err.message || get(_)('admin.users.failedToUpdateUserStatus');
+        error = err;
         throw err;
       }
     },

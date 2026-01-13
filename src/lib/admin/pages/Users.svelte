@@ -6,6 +6,8 @@
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
   import Modal from "../components/Modal.svelte";
   import { toast } from "../../components/Toaster.svelte";
+  import { ApiError } from "../../api/client.js";
+  import { getLocalizedError } from "../../utils/errorLocalization.js";
   import type { User } from "../types.js";
   import UserRow from "../components/UserRow.svelte";
   import SortIcon from "../components/SortIcon.svelte";
@@ -40,7 +42,8 @@
   // Handle errors with toast
   $effect(() => {
     if (usersStore.error) {
-      toast.error(usersStore.error);
+      const errorMessage = usersStore.error instanceof ApiError ? getLocalizedError(usersStore.error, 'description', $_) : usersStore.error.message;
+      toast.error(errorMessage || $_('admin.users.failedToFetchUsers'));
       usersStore.clearError();
     }
   });
@@ -114,7 +117,8 @@
       formData = { email: "", name: "", role: "user", department: "" };
       toast.success($_('admin.users.userCreatedSuccessfully'));
     } catch (err: any) {
-      toast.error(err.message || $_('admin.users.failedToCreateUser'));
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error(errorMessage || $_('admin.users.failedToCreateUser'));
     } finally {
       isSubmitting = false;
     }
@@ -130,7 +134,8 @@
       selectedUser = null;
       toast.success($_('admin.users.userUpdatedSuccessfully'));
     } catch (err: any) {
-      toast.error(err.message || $_('admin.users.failedToUpdateUser'));
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error(errorMessage || $_('admin.users.failedToUpdateUser'));
     } finally {
       isSubmitting = false;
     }
@@ -145,7 +150,8 @@
         newStatus === "active" ? $_('admin.users.activatedMessage') : $_('admin.users.deactivatedMessage'),
       );
     } catch (err: any) {
-      throw err;
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error(errorMessage || $_('admin.users.failedToUpdateUserStatus'));
     }
   }
 
