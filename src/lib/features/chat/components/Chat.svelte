@@ -21,6 +21,7 @@
   let messagesContainer: HTMLDivElement;
   let messageInput: MessageInput;
   let currentStreamingMessage = $state<ChatMessageType | null>(null);
+  let autoScrollEnabled = true;
   let selectedModel = $state('gpt-5.2');
   let selectedProvider = $state('openai');
   let selectedModelInfo = $state<ProviderInfo | undefined>(undefined);
@@ -87,11 +88,51 @@
     }
   }
 
+  // Handle manual scrolling to detect if user wants to stop auto-scroll
+  function handleScroll() {
+    if (!messagesContainer) return;
+
+    // Check if user is near the bottom (within 100px)
+    const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 100;
+    autoScrollEnabled = isNearBottom;
+  }
+
+  // Scroll to show the top of the streaming message
+  async function scrollToStreamingMessageTop(streamingMessageId: string) {
+    await tick();
+
+    if (!messagesContainer || !autoScrollEnabled) return;
+
+    const messageIndex = messages.findIndex(m => m.id === streamingMessageId);
+    const messageElement = messagesContainer.querySelectorAll('.message')[messageIndex];
+
+    requestAnimationFrame(async () => {
+      await tick();
+      if (messageElement) {
+        // Check if the current message height is smaller than visible container height
+        const messageHeight = (messageElement as HTMLElement).offsetHeight;
+        const containerHeight = messagesContainer.clientHeight;
+
+        if (messageHeight < containerHeight) {
+          // Small message: scroll to bottom to show entire message
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        } else {
+          // Large message: use current implementation to keep at top
+          const offset = 8;
+          const scrollTop = messagesContainer.scrollTop +
+            (messageElement.getBoundingClientRect().top - messagesContainer.getBoundingClientRect().top) - offset;
+          messagesContainer.scrollTop = Math.max(0, scrollTop);
+        }
+      }
+    });
+  }
+
   async function handleSendMessage(content: string, uploadedFiles?: UploadedFile[], webSearch?: boolean) {
     if (isLoading) return;
 
     error = null;
     isLoading = true;
+    autoScrollEnabled = true; // Reset auto-scroll when starting new message
 
     // Add user message
     const userMessage: ChatMessageType = {
@@ -149,8 +190,8 @@
           if (currentStreamingMessage) {
             messages = [...messages, currentStreamingMessage];
             messageAddedToArray = true;
+            scrollToStreamingMessageTop(currentStreamingMessage.id);
           }
-          scrollToBottom();
         },
         onToken: (token) => {
           if (currentStreamingMessage) {
@@ -174,13 +215,13 @@
             const updatedMessage = messages.find(m => m.id === currentStreamingMessage?.id);
             console.log('Message in array:', updatedMessage?.content);
             console.log('Messages array length:', messages.length);
-            scrollToBottom();
+            scrollToStreamingMessageTop(currentStreamingMessage.id);
           }
         },
         onTitle: (title) => {
           console.log('Conversation title:', title);
         },
-        onDone: (data) => {
+        onDone: async (data) => {
           console.log('Stream completed:', data);
           if (currentStreamingMessage) {
             currentStreamingMessage.isStreaming = false;
@@ -192,7 +233,9 @@
           currentStreamingMessage = null;
           isLoading = false;
           isTyping = false;
+
           // Refocus input after streaming completes
+          await tick();
           messageInput?.focus();
         },
         onError: (errorMessage) => {
@@ -442,7 +485,7 @@
 {:else}
   <!-- Active chat: bottom-anchored input -->
   <div class="chat-container">
-    <div class="messages-container" bind:this={messagesContainer}>
+    <div class="messages-container" bind:this={messagesContainer} onscroll={handleScroll}>
       <div class="messages-inner">
         {#each messages as message (message.id)}
           <ChatMessage
