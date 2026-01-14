@@ -79,10 +79,6 @@
   --glass-stroke-light: rgba(255, 255, 255, 0.25);
   --glass-stroke-dark: rgba(255, 255, 255, 0.08);
 
-  /* Code block colors - always dark regardless of theme */
-  --code-bg-base: rgba(18, 18, 22, 0.7);
-  --code-bg-tertiary: #252831;
-
   /* ---------- Base theme (dark as default) ---------- */
   --bg-primary: #0d0d10;
   --text-primary: rgba(255, 255, 255, 0.95);

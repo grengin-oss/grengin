@@ -2,8 +2,25 @@
   import type { ChatMessage } from '../../../types/chat';
   import { renderMarkdown, copyToClipboard } from '../../../utils/markdown';
   import { onMount, onDestroy, tick } from 'svelte';
-  import 'highlight.js/styles/github-dark.css';
   import type { ProviderInfo } from '../../../api/models';
+
+  // Dynamic syntax highlighting theme based on color scheme
+  const loadHighlightTheme = () => {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (isDark) {
+      import('highlight.js/styles/github-dark.css');
+    } else {
+      import('highlight.js/styles/github.css');
+    }
+  };
+
+  // Load theme on mount and listen for changes
+  onMount(() => {
+    loadHighlightTheme();
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', loadHighlightTheme);
+    return () => mediaQuery.removeEventListener('change', loadHighlightTheme);
+  });
   import {
     speechSynthesisSupported,
     subscribeTTSState,
@@ -734,14 +751,18 @@
     border-radius: var(--radius-sm);
   }
 
+  @media (prefers-color-scheme: light) {
+    .assistant-message :global(code) {
+      background: #e2e8f0;
+    }
+  }
+
   .assistant-message :global(pre) {
     position: relative;
     margin: var(--space-md) 0;
     padding: var(--space-xl);
-    background: color-mix(in oklab, var(--code-bg-base) 25%, var(--code-bg-tertiary));
     border-radius: var(--radius-md);
     overflow-x: auto;
-    box-shadow: var(--glass-edge-glow), inset 0 1px 2px rgba(0, 0, 0, 0.04);
   }
 
   .assistant-message :global(pre code) {
