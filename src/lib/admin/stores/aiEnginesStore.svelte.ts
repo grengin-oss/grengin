@@ -1,5 +1,5 @@
 // AI Engines Store - AI engine management state using Svelte 5 runes
-import type { AIEngine, AIEngineModels, Organization } from '../types.js';
+import type { AIEngine, AIEngineModels, Branding } from '../types.js';
 import {
   getAIEngines,
   updateAIEngine,
@@ -7,7 +7,7 @@ import {
   getAIEngineModels,
   deleteAIEngineKey,
 } from '../../api/admin/AiEngines.js';
-import { getOrganization, updateOrganization } from '../../api/admin/organization.js';
+import { getBranding, updateBranding } from '../../api/admin/branding.js';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
@@ -64,14 +64,14 @@ function createAIEnginesStore() {
     error = null;
 
     try {
-      // Fetch engines and organization settings in parallel
-      const [enginesData, organization] = await Promise.all([
+      // Fetch engines and branding settings in parallel
+      const [enginesData, branding] = await Promise.all([
         getAIEngines(),
-        getOrganization(),
+        getBranding(),
       ]);
 
-      // Store default engine key from organization settings
-      defaultEngineKey = organization.settings?.default_engine;
+      // Store default engine key from branding settings
+      defaultEngineKey = branding.settings?.default_engine;
       engines = enginesData;
     } catch (err: any) {
       error = err;
@@ -141,13 +141,13 @@ function createAIEnginesStore() {
     // Open modal immediately
     showConfigModal = true;
 
-    // Load organization data and models asynchronously
-    // Fetch current organization settings to get accurate default engine
+    // Load branding data and models asynchronously
+    // Fetch current branding settings to get accurate default engine
     try {
-      const organization = await getOrganization();
-      const isDefault = organization.settings?.default_engine === engine.engine_key;
+      const branding = await getBranding();
+      const isDefault = branding.settings?.default_engine === engine.engine_key;
       // Update cached default engine key
-      defaultEngineKey = organization.settings?.default_engine;
+      defaultEngineKey = branding.settings?.default_engine;
       // Update form data with default engine status
       formData = {
         ...formData,
@@ -225,9 +225,9 @@ function createAIEnginesStore() {
   ) {
     saving = true;
     try {
-      // If setting default engine, update organization settings
+      // If setting default engine, update branding settings
       if (data.is_default === true) {
-        const organization = await getOrganization();
+        const branding = await getBranding();
         const engine = engines.find((e) => e.engine_key === engineKey);
         if (!engine) {
           const t = get(_);
@@ -238,11 +238,11 @@ function createAIEnginesStore() {
         // 1. Use the model from data if provided (from form)
         // 2. Fall back to engine's current default_model
         // 3. Fall back to first whitelisted model if available
-        const defaultModel = 
-          data.default_model || 
-          engine.default_model || 
-          (engine.whitelisted_models && engine.whitelisted_models.length > 0 
-            ? engine.whitelisted_models[0] 
+        const defaultModel =
+          data.default_model ||
+          engine.default_model ||
+          (engine.whitelisted_models && engine.whitelisted_models.length > 0
+            ? engine.whitelisted_models[0]
             : undefined);
 
         if (!defaultModel) {
@@ -250,15 +250,15 @@ function createAIEnginesStore() {
           throw new Error(t('aiEngines.toasts.cannotSetDefaultWithoutModel'));
         }
 
-        // Update organization with new default engine and model
+        // Update branding with new default engine and model
         // Construct the full request body as required by the API
-        await updateOrganization({
-          name: organization.name,
-          domain: organization.domain,
-          allowed_domains: organization.allowed_domains || [],
-          logo_url: organization.logo_url,
+        await updateBranding({
+          name: branding.name,
+          domain: branding.domain,
+          allowed_domains: branding.allowed_domains || [],
+          logo_url: branding.logo_url,
           settings: {
-            ...organization.settings,
+            ...branding.settings,
             default_engine: engineKey,
             default_model: defaultModel,
           },

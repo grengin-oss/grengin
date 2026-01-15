@@ -52,7 +52,7 @@ export interface AIEngineModels {
   models: AIEngineModel[];
 }
 
-export interface OrganizationSettings {
+export interface BrandingSettings {
   sso_providers?: string[];
   default_engine?: string;
   default_model?: string;
@@ -60,23 +60,23 @@ export interface OrganizationSettings {
   require_mfa?: boolean;
 }
 
-export interface Organization {
+export interface Branding {
   id?: string;
   name: string;
   domain: string;
   allowed_domains?: string[];
   logo_url?: string;
-  settings: OrganizationSettings;
+  settings: BrandingSettings;
   created_at?: string;
   updated_at?: string;
 }
 
 // Type for PUT request body (requires all fields except id, created_at, updated_at)
-export interface UpdateOrganizationRequest {
+export interface UpdateBrandingRequest {
   name: string;
   domain: string;
   allowed_domains?: string[];
   logo_url?: string;
-  settings: OrganizationSettings;
+  settings: BrandingSettings;
 }
 
