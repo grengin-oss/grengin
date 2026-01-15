@@ -792,9 +792,9 @@
   }
 
   .assistant-message :global(table) {
-    width: 100%;
     border-collapse: collapse;
     margin: var(--space-md) 0;
+    width: max-content;
   }
 
   .assistant-message :global(th),
@@ -802,6 +802,16 @@
     padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--glass-stroke-dark);
     text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    max-width: max(300px, 30vw);
+  }
+
+  /* Single column tables: allow full width */
+  .assistant-message :global(th:only-child),
+  .assistant-message :global(td:only-child) {
+    max-width: none;
   }
 
   .assistant-message :global(th) {
@@ -1099,6 +1109,7 @@
 
   .message-body {
     width: 100%;
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
