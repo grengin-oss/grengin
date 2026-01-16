@@ -23,6 +23,21 @@ export interface PaginatedUsers {
   offset: number;
 }
 
+export interface SSOProvider {
+  id: string;
+  provider: string;
+  name: string;
+  client_id: string;
+  client_secret_preview: string;
+  issuer_url: string;
+  redirect_url: string;
+  allowed_domains: string[];
+  is_enabled: boolean;
+  tenant_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AIEngine {
   engine_key: string;
   display_name: string;
