@@ -106,8 +106,6 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
       ? `${API_BASE}/chat/stream/${conversationId}`
       : `${API_BASE}/chat/stream`;
     
-    console.log('Using stream URL:', streamUrl);
-
     let response = await fetch(streamUrl, {
       method: 'POST',
       headers: {
@@ -130,7 +128,6 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
 
     // Handle token expiration for streaming requests
     if (response.status === 401) {
-      console.log('Streaming request: Token expired, attempting refresh...');
       // Try to refresh token using the same logic as client.ts
       const refreshToken = localStorage.getItem('grengin_refresh_token');
       if (refreshToken) {
@@ -147,8 +144,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
             localStorage.setItem('grengin_access_token', data.accessToken);
             localStorage.setItem('grengin_refresh_token', data.refresh_token);
             localStorage.setItem('grengin_user', JSON.stringify(data.user));
-            
-            console.log('Streaming request: Token refreshed, retrying...');
+
             // Retry the streaming request with new token
             response = await fetch(streamUrl, {
               method: 'POST',
@@ -170,7 +166,6 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
               }),
             });
           } else {
-            console.log('Streaming request: Refresh failed, redirecting...');
             // Clear auth and redirect
             localStorage.removeItem('grengin_access_token');
             localStorage.removeItem('grengin_refresh_token');
@@ -189,7 +184,6 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
             });
           }
         } catch (error) {
-          console.log('Streaming request: Refresh error, redirecting...');
           // Clear auth and redirect
           localStorage.removeItem('grengin_access_token');
           localStorage.removeItem('grengin_refresh_token');
@@ -208,7 +202,6 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
           });
         }
       } else {
-        console.log('Streaming request: No refresh token, redirecting...');
         // Clear auth and redirect
         localStorage.removeItem('grengin_access_token');
         localStorage.removeItem('grengin_refresh_token');
@@ -286,7 +279,6 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
               if (data) {
                 // Handle first chunk - extract conversation ID and call onStart
                 if (isFirstChunk) {
-                  console.log('First chunk detected:', data);
                   isFirstChunk = false;
                   
                   // Call onStart with conversation data if available

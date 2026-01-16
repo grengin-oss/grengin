@@ -141,7 +141,6 @@
   }
 
   function selectChat(chatId: string) {
-    console.log('Selected chat:', chatId);
     selectedChatId = chatId;
     // Navigate to chat with chatId parameter
     window.history.pushState({}, '', `?chatId=${chatId}`);
@@ -314,7 +313,6 @@
 
     // Listen for chat history refresh events
     const handleRefresh = () => {
-      console.log('Refreshing chat history in sidebar');
       fetchChats();
     };
 

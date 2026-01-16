@@ -106,16 +106,13 @@
 
   // Initialize OAuth callback processing on component mount
   onMount(async () => {
-    console.log('AuthCallback mounted, status:', status);
     try {
       await processOAuthCallback();
       cleanupSessionStorage();
       status = 'success';
-      console.log('AuthCallback success, status:', status);
       redirectAfterSuccess();
     } catch (err: unknown) {
       cleanupSessionStorage();
-      console.log('AuthCallback error, status:', status);
       // Convert all errors to ApiError for consistent handling
       const apiError = err instanceof ApiError 
         ? err 

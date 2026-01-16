@@ -199,7 +199,6 @@
             if (!messageAddedToArray && token.trim()) {
               messages = [...messages, currentStreamingMessage];
               messageAddedToArray = true;
-              console.log('Messages after adding on token:', messages.length);
             }
             
             // Create a new message object with updated content
@@ -207,28 +206,22 @@
               ...currentStreamingMessage,
               content: currentStreamingMessage.content + token
             };
-            console.log('Updated content:', currentStreamingMessage.content);
             // Update the message in the array
             messages = messages.map(m => 
               m.id === currentStreamingMessage?.id ? currentStreamingMessage : m
             );
-            const updatedMessage = messages.find(m => m.id === currentStreamingMessage?.id);
-            console.log('Message in array:', updatedMessage?.content);
-            console.log('Messages array length:', messages.length);
             scrollToStreamingMessageTop(currentStreamingMessage.id);
           }
         },
-        onTitle: (title) => {
-          console.log('Conversation title:', title);
+        onTitle: (_title) => {
+          // Title received from stream
         },
-        onDone: async (data) => {
-          console.log('Stream completed:', data);
+        onDone: async (_data) => {
           if (currentStreamingMessage) {
             currentStreamingMessage.isStreaming = false;
             messages = messages.map(m =>
               m.id === currentStreamingMessage?.id ? { ...currentStreamingMessage } : m
             );
-            console.log('Final message content:', currentStreamingMessage.content);
           }
           currentStreamingMessage = null;
           isLoading = false;
@@ -283,13 +276,7 @@
   async function loadConversationFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chatId');
-    
-    console.log('Loading conversation:', {
-      chatId,
-      currentMessagesCount: messages.length,
-      currentConversationId: conversationId
-    });
-    
+
     if (chatId) {
       try {
         isLoadingConversation = true;
@@ -370,7 +357,6 @@
       }
     } else {
       // No chatId in URL, clear everything
-      console.log('No chatId in URL, clearing everything');
       conversationId = null;
       messages = [];
       error = null;

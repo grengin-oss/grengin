@@ -65,14 +65,12 @@
 
   // Find the provider that matches the message's model
   const messageProvider = $derived(
-    providers?.find(provider => 
-      provider.models.some(model => 
+    providers?.find(provider =>
+      provider.models.some(model =>
         model.key === message.model || model.key === message.model
       )
     )
   );
-
-  console.log("messageProvider  " + messageProvider);
 
   function handleTTSToggle() {
     toggleSpeaking(message.id, message.content);

@@ -154,7 +154,6 @@
         const model = provider.models.find(m => m.key === selectedModel || m.name === selectedModel);
         if (model) {
           // The props are already being used in the template, so no need to update internal state
-          console.log('Model synced from props:', { provider: selectedProvider, model: selectedModel });
         }
       }
     }
