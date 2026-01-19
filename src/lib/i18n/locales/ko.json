@@ -307,6 +307,114 @@
       "noModelsAllowed": "허용된 모델 없음"
     }
   },
+  "userAnalytics": {
+    "title": "사용자 분석",
+    "subtitle": "사용자별 상세 사용 분석",
+    "filters": {
+      "startDate": "시작 날짜",
+      "endDate": "종료 날짜",
+      "search": "검색",
+      "searchPlaceholder": "이름, 이메일 또는 부서로 검색...",
+      "perPage": "페이지당"
+    },
+    "stats": {
+      "totalUsers": "총 사용자",
+      "showing": "표시 중",
+      "showingCount": "{total}개 중 {filtered}개"
+    },
+    "table": {
+      "userName": "사용자 이름",
+      "email": "이메일",
+      "department": "부서",
+      "requests": "요청",
+      "success": "성공",
+      "errors": "오류",
+      "tokens": "토큰",
+      "cost": "비용",
+      "avgLatency": "평균 지연시간",
+      "lastActivity": "마지막 활동"
+    },
+    "emptyState": {
+      "noMatch": "\"{query}\"와 일치하는 사용자를 찾을 수 없습니다",
+      "noData": "선택한 날짜 범위에 대한 사용자 분석 데이터가 없습니다"
+    },
+    "pagination": {
+      "previous": "이전",
+      "next": "다음",
+      "pageInfo": "{total}페이지 중 {current}페이지"
+    },
+    "errors": {
+      "fetchFailed": "사용자 분석 가져오기 실패"
+    }
+  },
+  "analytics": {
+    "title": "분석",
+    "subtitle": "시스템 성능 및 사용 메트릭 모니터링",
+    "filters": {
+      "to": "부터",
+      "hour": "시간",
+      "day": "일",
+      "week": "주",
+      "month": "월"
+    },
+    "loading": "분석 로딩 중...",
+    "retry": "재시도",
+    "overview": {
+      "title": "개요",
+      "totalUsers": "총 사용자",
+      "activeUsers": "{count} 활성",
+      "totalRequests": "총 요청",
+      "avgPerUser": "사용자당 평균 {count}",
+      "totalTokens": "총 토큰",
+      "totalCost": "총 비용"
+    },
+    "topModels": {
+      "title": "상위 모델",
+      "model": "모델",
+      "provider": "제공자",
+      "requests": "요청",
+      "tokens": "토큰",
+      "cost": "비용"
+    },
+    "charts": {
+      "title": "성능 추세",
+      "multiMetric": {
+        "title": "다중 메트릭 추세",
+        "subtitle": "요청 • 토큰 • 지연시간",
+        "requests": "요청",
+        "tokens": "토큰",
+        "latency": "지연시간",
+        "date": "날짜",
+        "latencyMs": "지연시간 (ms)"
+      },
+      "usageGrowth": {
+        "title": "사용량 증가",
+        "subtitle": "요청 (막대) • 토큰 (선)",
+        "requests": "요청",
+        "tokens": "토큰"
+      },
+      "apiReliability": {
+        "title": "API 신뢰성",
+        "subtitle": "성공 vs 오류",
+        "success": "성공",
+        "errors": "오류",
+        "type": "유형",
+        "count": "개수"
+      },
+      "costTrend": {
+        "title": "비용 추세",
+        "subtitle": "시간 경과에 따른 총 지출",
+        "totalCost": "총 비용"
+      },
+      "emptyState": {
+        "title": "선택한 날짜 범위에 대한 시계열 데이터가 없습니다",
+        "hint": "다른 날짜 범위를 선택하거나 나중에 다시 확인하세요"
+      }
+    },
+    "errors": {
+      "fetchFailed": "분석 데이터 가져오기 실패"
+    }
+  },
   "error": {
     "not_found": {
       "description": "요청한 리소스를 찾을 수 없습니다",

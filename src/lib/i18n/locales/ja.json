@@ -307,6 +307,114 @@
       "noModelsAllowed": "許可されたモデルがありません"
     }
   },
+  "userAnalytics": {
+    "title": "ユーザー分析",
+    "subtitle": "ユーザーごとの詳細な使用状況分析",
+    "filters": {
+      "startDate": "開始日",
+      "endDate": "終了日",
+      "search": "検索",
+      "searchPlaceholder": "名前、メール、または部門で検索...",
+      "perPage": "ページあたり"
+    },
+    "stats": {
+      "totalUsers": "総ユーザー数",
+      "showing": "表示中",
+      "showingCount": "{total}件中{filtered}件"
+    },
+    "table": {
+      "userName": "ユーザー名",
+      "email": "メール",
+      "department": "部門",
+      "requests": "リクエスト",
+      "success": "成功",
+      "errors": "エラー",
+      "tokens": "トークン",
+      "cost": "コスト",
+      "avgLatency": "平均レイテンシ",
+      "lastActivity": "最終アクティビティ"
+    },
+    "emptyState": {
+      "noMatch": "\"{query}\"に一致するユーザーが見つかりません",
+      "noData": "選択した日付範囲のユーザー分析データがありません"
+    },
+    "pagination": {
+      "previous": "前へ",
+      "next": "次へ",
+      "pageInfo": "{total}ページ中{current}ページ"
+    },
+    "errors": {
+      "fetchFailed": "ユーザー分析の取得に失敗しました"
+    }
+  },
+  "analytics": {
+    "title": "分析",
+    "subtitle": "システムのパフォーマンスと使用状況のメトリクスを監視",
+    "filters": {
+      "to": "から",
+      "hour": "時間",
+      "day": "日",
+      "week": "週",
+      "month": "月"
+    },
+    "loading": "分析を読み込み中...",
+    "retry": "再試行",
+    "overview": {
+      "title": "概要",
+      "totalUsers": "総ユーザー数",
+      "activeUsers": "{count} アクティブ",
+      "totalRequests": "総リクエスト数",
+      "avgPerUser": "ユーザーあたり平均 {count}",
+      "totalTokens": "総トークン数",
+      "totalCost": "総コスト"
+    },
+    "topModels": {
+      "title": "トップモデル",
+      "model": "モデル",
+      "provider": "プロバイダー",
+      "requests": "リクエスト",
+      "tokens": "トークン",
+      "cost": "コスト"
+    },
+    "charts": {
+      "title": "パフォーマンストレンド",
+      "multiMetric": {
+        "title": "マルチメトリックトレンド",
+        "subtitle": "リクエスト • トークン • レイテンシ",
+        "requests": "リクエスト",
+        "tokens": "トークン",
+        "latency": "レイテンシ",
+        "date": "日付",
+        "latencyMs": "レイテンシ (ms)"
+      },
+      "usageGrowth": {
+        "title": "使用量の増加",
+        "subtitle": "リクエスト（棒グラフ） • トークン（折れ線）",
+        "requests": "リクエスト",
+        "tokens": "トークン"
+      },
+      "apiReliability": {
+        "title": "API信頼性",
+        "subtitle": "成功 vs エラー",
+        "success": "成功",
+        "errors": "エラー",
+        "type": "タイプ",
+        "count": "カウント"
+      },
+      "costTrend": {
+        "title": "コストトレンド",
+        "subtitle": "時間経過に伴う総支出",
+        "totalCost": "総コスト"
+      },
+      "emptyState": {
+        "title": "選択した日付範囲の時系列データがありません",
+        "hint": "別の日付範囲を選択するか、後でもう一度お試しください"
+      }
+    },
+    "errors": {
+      "fetchFailed": "分析データの取得に失敗しました"
+    }
+  },
   "error": {
     "not_found": {
       "description": "要求されたリソースが見つかりませんでした",

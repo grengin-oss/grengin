@@ -127,8 +127,6 @@ router.post('/auth/password/change', requireAuth, (req, res) => {
 router.get('/auth/:provider', (req, res) => {
   const { provider } = req.params
 
-  console.log(`[OAuth Init] Provider: ${provider}, Redirect URI: ${req.query.redirect_uri}`)
-
   if (!SUPPORTED_PROVIDERS.includes(provider)) {
     return res.status(400).json({
       detail: 'Invalid provider or configuration'
@@ -142,9 +140,7 @@ router.get('/auth/:provider', (req, res) => {
   const callbackUrl = new URL(redirectUri)
   callbackUrl.searchParams.set('code', code)
   callbackUrl.searchParams.set('state', state)
-
-  console.log(`[OAuth Init] Redirecting to: ${callbackUrl.toString()}`)
-
+  
   res.redirect(303, callbackUrl.toString())
 })
 

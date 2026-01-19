@@ -40,6 +40,9 @@
     "highlight.js": "^11.11.1",
     "marked": "^17.0.1",
     "svelte-i18n": "^4.0.1",
-    "svelte-routing": "^2.13.0"
+    "svelte-routing": "^2.13.0",
+    "vega": "^6.2.0",
+    "vega-embed": "^7.1.0",
+    "vega-lite": "^6.4.1"
   }
 }
