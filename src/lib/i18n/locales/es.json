@@ -302,6 +302,114 @@
       "noModelsAllowed": "No hay modelos permitidos"
     }
   },
+  "userAnalytics": {
+    "title": "Analítica de usuarios",
+    "subtitle": "Analítica de uso detallada por usuario",
+    "filters": {
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
+      "search": "Buscar",
+      "searchPlaceholder": "Buscar por nombre, correo o departamento...",
+      "perPage": "Por página"
+    },
+    "stats": {
+      "totalUsers": "Usuarios totales",
+      "showing": "Mostrando",
+      "showingCount": "{filtered} de {total}"
+    },
+    "table": {
+      "userName": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "department": "Departamento",
+      "requests": "Solicitudes",
+      "success": "Éxitos",
+      "errors": "Errores",
+      "tokens": "Tokens",
+      "cost": "Costo",
+      "avgLatency": "Latencia promedio",
+      "lastActivity": "Última actividad"
+    },
+    "emptyState": {
+      "noMatch": "No se encontraron usuarios que coincidan con \"{query}\"",
+      "noData": "No hay datos de analítica de usuarios disponibles para el rango de fechas seleccionado"
+    },
+    "pagination": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "pageInfo": "Página {current} de {total}"
+    },
+    "errors": {
+      "fetchFailed": "Error al obtener analítica de usuarios"
+    }
+  },
+  "analytics": {
+    "title": "Analítica",
+    "subtitle": "Monitorear el rendimiento del sistema y las métricas de uso",
+    "filters": {
+      "to": "a",
+      "hour": "Hora",
+      "day": "Día",
+      "week": "Semana",
+      "month": "Mes"
+    },
+    "loading": "Cargando analítica...",
+    "retry": "Reintentar",
+    "overview": {
+      "title": "Resumen",
+      "totalUsers": "Usuarios totales",
+      "activeUsers": "{count} activos",
+      "totalRequests": "Solicitudes totales",
+      "avgPerUser": "{count} promedio por usuario",
+      "totalTokens": "Tokens totales",
+      "totalCost": "Costo total"
+    },
+    "topModels": {
+      "title": "Modelos principales",
+      "model": "Modelo",
+      "provider": "Proveedor",
+      "requests": "Solicitudes",
+      "tokens": "Tokens",
+      "cost": "Costo"
+    },
+    "charts": {
+      "title": "Tendencias de rendimiento",
+      "multiMetric": {
+        "title": "Tendencias multi-métricas",
+        "subtitle": "Solicitudes • Tokens • Latencia",
+        "requests": "Solicitudes",
+        "tokens": "Tokens",
+        "latency": "Latencia",
+        "date": "Fecha",
+        "latencyMs": "Latencia (ms)"
+      },
+      "usageGrowth": {
+        "title": "Crecimiento de uso",
+        "subtitle": "Solicitudes (barras) • Tokens (línea)",
+        "requests": "Solicitudes",
+        "tokens": "Tokens"
+      },
+      "apiReliability": {
+        "title": "Confiabilidad de API",
+        "subtitle": "Éxitos vs Errores",
+        "success": "Éxitos",
+        "errors": "Errores",
+        "type": "Tipo",
+        "count": "Cantidad"
+      },
+      "costTrend": {
+        "title": "Tendencia de costos",
+        "subtitle": "Gasto total a lo largo del tiempo",
+        "totalCost": "Costo total"
+      },
+      "emptyState": {
+        "title": "No hay datos de series temporales disponibles para el rango de fechas seleccionado",
+        "hint": "Intente seleccionar un rango de fechas diferente o vuelva más tarde"
+      }
+    },
+    "errors": {
+      "fetchFailed": "Error al obtener datos de analítica"
+    }
+  },
   "error": {
     "not_found": {
       "description": "El recurso solicitado no se encontró",

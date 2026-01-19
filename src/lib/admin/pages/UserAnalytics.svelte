@@ -7,6 +7,7 @@
   import { getUserAnalytics, type GetUserAnalyticsParams } from '$lib/api/admin/analytics.js';
   import type { UserAnalyticsItem } from '../types.js';
   import { toast } from "../../components/Toaster.svelte";
+  import { _ } from 'svelte-i18n';
 
   let isLoading = $state(true);
   let users = $state<UserAnalyticsItem[]>([]);
@@ -55,7 +56,7 @@
       currentPage = response.page;
     } catch (err: any) {
       const errorMessage = err?.message || err?.error;
-      toast.error(errorMessage || 'Failed to fetch user analytics');
+      toast.error(errorMessage || $_('userAnalytics.errors.fetchFailed'));
       console.error('User analytics fetch error:', err);
     } finally {
       isLoading = false;
@@ -118,7 +119,7 @@
 </script>
 
 <div class="user-analytics-page">
-  <PageHeader title="User Analytics" subtitle="Detailed usage analytics per user" />
+  <PageHeader title={$_('userAnalytics.title')} subtitle={$_('userAnalytics.subtitle')} />
 
   {#if isLoading && users.length === 0}
     <div class="loading-container">
@@ -131,7 +132,7 @@
         <div class="filters-section">
           <div class="filters-row">
             <div class="filter-group">
-              <label for="start-date">Start Date</label>
+              <label for="start-date">{$_('userAnalytics.filters.startDate')}</label>
               <input
                 id="start-date"
                 type="date"
@@ -142,7 +143,7 @@
             </div>
 
             <div class="filter-group">
-              <label for="end-date">End Date</label>
+              <label for="end-date">{$_('userAnalytics.filters.endDate')}</label>
               <input
                 id="end-date"
                 type="date"
@@ -153,18 +154,18 @@
             </div>
 
             <div class="filter-group">
-              <label for="search">Search</label>
+              <label for="search">{$_('userAnalytics.filters.search')}</label>
               <input
                 id="search"
                 type="text"
                 bind:value={searchQuery}
-                placeholder="Search by name, email, or department..."
+                placeholder={$_('userAnalytics.filters.searchPlaceholder')}
                 class="search-input"
               />
             </div>
 
             <div class="filter-group">
-              <label for="page-size">Per Page</label>
+              <label for="page-size">{$_('userAnalytics.filters.perPage')}</label>
               <select
                 id="page-size"
                 bind:value={pageSize}
@@ -181,12 +182,12 @@
 
           <div class="stats-row">
             <div class="stat-item">
-              <span class="stat-label">Total Users:</span>
+              <span class="stat-label">{$_('userAnalytics.stats.totalUsers')}:</span>
               <span class="stat-value">{formatNumber(total)}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">Showing:</span>
-              <span class="stat-value">{filteredUsers.length} of {users.length}</span>
+              <span class="stat-label">{$_('userAnalytics.stats.showing')}:</span>
+              <span class="stat-value">{$_('userAnalytics.stats.showingCount', { values: { filtered: filteredUsers.length, total: users.length } })}</span>
             </div>
           </div>
         </div>
@@ -199,46 +200,46 @@
             <thead>
               <tr>
                 <th onclick={() => handleSort('name')} class="sortable">
-                  User Name
+                  {$_('userAnalytics.table.userName')}
                   {#if sortBy === 'name'}
                     <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
                 <th onclick={() => handleSort('email')} class="sortable">
-                  Email
+                  {$_('userAnalytics.table.email')}
                   {#if sortBy === 'email'}
                     <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th>Department</th>
+                <th>{$_('userAnalytics.table.department')}</th>
                 <th onclick={() => handleSort('requests')} class="sortable numeric">
-                  Requests
+                  {$_('userAnalytics.table.requests')}
                   {#if sortBy === 'requests'}
                     <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th class="numeric">Success</th>
-                <th class="numeric">Errors</th>
+                <th class="numeric">{$_('userAnalytics.table.success')}</th>
+                <th class="numeric">{$_('userAnalytics.table.errors')}</th>
                 <th onclick={() => handleSort('tokens')} class="sortable numeric">
-                  Tokens
+                  {$_('userAnalytics.table.tokens')}
                   {#if sortBy === 'tokens'}
                     <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
                 <th onclick={() => handleSort('cost')} class="sortable numeric">
-                  Cost
+                  {$_('userAnalytics.table.cost')}
                   {#if sortBy === 'cost'}
                     <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
                 <th onclick={() => handleSort('latency')} class="sortable numeric">
-                  Avg Latency
+                  {$_('userAnalytics.table.avgLatency')}
                   {#if sortBy === 'latency'}
                     <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
                 <th onclick={() => handleSort('last_activity')} class="sortable">
-                  Last Activity
+                  {$_('userAnalytics.table.lastActivity')}
                   {#if sortBy === 'last_activity'}
                     <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   {/if}
@@ -250,9 +251,9 @@
                 <tr>
                   <td colspan="10" class="empty-state">
                     {#if searchQuery}
-                      No users found matching "{searchQuery}"
+                      {$_('userAnalytics.emptyState.noMatch', { values: { query: searchQuery } })}
                     {:else}
-                      No user analytics data available for the selected date range
+                      {$_('userAnalytics.emptyState.noData')}
                     {/if}
                   </td>
                 </tr>
@@ -284,11 +285,11 @@
               disabled={currentPage === 0}
               onclick={() => handlePageChange(currentPage - 1)}
             >
-              Previous
+              {$_('userAnalytics.pagination.previous')}
             </button>
             
             <span class="pagination-info">
-              Page {currentPage + 1} of {totalPages}
+              {$_('userAnalytics.pagination.pageInfo', { values: { current: currentPage + 1, total: totalPages } })}
             </span>
             
             <button
@@ -296,7 +297,7 @@
               disabled={currentPage >= totalPages - 1}
               onclick={() => handlePageChange(currentPage + 1)}
             >
-              Next
+              {$_('userAnalytics.pagination.next')}
             </button>
           </div>
         {/if}
