@@ -453,7 +453,6 @@
             {#if speechSynthesisSupported}
               <button
                 class="action-btn"
-                class:active={isActive}
                 onclick={handleTTSToggle}
                 title={isSpeaking ? $_('chat.message.pause') : isPaused ? $_('chat.message.resume') : $_('chat.message.listen')}
               >
@@ -476,7 +475,7 @@
               <!-- Stop Button (only shown when active) -->
               {#if isActive}
                 <button
-                  class="action-btn stop-btn"
+                  class="action-btn"
                   onclick={handleTTSStop}
                   title={$_('chat.message.stop')}
                 >
