@@ -2,7 +2,7 @@
   import { Link } from "svelte-routing";
   import { _ } from 'svelte-i18n';
   import type { User } from "../../types/auth";
-  import { listConversations, deleteConversation, archiveConversation } from '../../api/chatApi.js';
+  import { listConversations, deleteConversation, archiveConversation, renameConversation } from '../../api/chatApi.js';
   import { ApiError } from '../../api/client';
   import { getLocalizedError } from '../../utils/errorLocalization';
   import grenginLogo from '../../../assets/grengin-logo.svg';
@@ -106,6 +106,10 @@
   let chatHasMore = $state(true);
   let chatTotal = $state<number | null>(null);
   let chatContainerElement = $state<HTMLElement | null>(null);
+  let renameChatId = $state<string | null>(null);
+  let renameTitle = $state('');
+  let renamingChat = $state(false);
+  let renameInputElement = $state<HTMLInputElement | null>(null);
 
   // Filtered chats based on search query
   let filteredChats = $derived(
@@ -160,6 +164,51 @@
     chatToDelete = chatId;
     showDeleteConfirmation = true;
     activeChatMenu = null;
+  }
+
+  async function openRenameDialog(chat: any) {
+    renameChatId = chat.id;
+    renameTitle = chat.title;
+    activeChatMenu = null;
+    await tick();
+    renameInputElement?.focus();
+  }
+
+  function cancelRename() {
+    renameChatId = null;
+    renameTitle = '';
+  }
+
+  async function confirmRenameChat() {
+    if (!renameChatId) return;
+    const trimmedTitle = renameTitle.trim();
+    if (!trimmedTitle) {
+      toast.error($_('sidebar.emptyChatTitle'));
+      return;
+    }
+
+    renamingChat = true;
+    try {
+      const existingChat = chatHistory.find(chat => chat.id === renameChatId);
+      const archivedState = existingChat?.archived ?? false;
+      await renameConversation(renameChatId, { title: trimmedTitle, archived: archivedState });
+      chatHistory = chatHistory.map(chat =>
+        chat.id === renameChatId ? { ...chat, title: trimmedTitle } : chat
+      );
+      toast.success(
+        $_('sidebar.chatRenamed', {
+          values: { title: trimmedTitle },
+        })
+      );
+      cancelRename();
+    } catch (error) {
+      const errorMessage = error instanceof ApiError
+        ? getLocalizedError(error, 'description', $_) || $_('sidebar.renameChatError')
+        : $_('sidebar.renameChatError');
+      toast.error(errorMessage);
+    } finally {
+      renamingChat = false;
+    }
   }
 
   async function confirmDeleteChat() {
@@ -570,18 +619,66 @@
         {:else}
           {#each filteredChats as chat (chat.id)}
             <div class="chat-item">
-              <button class="menu-item chat-item-btn" class:selected={selectedChatId === chat.id} onclick={() => selectChat(chat.id)} title={chat.title}>
-                <span class="chat-item-title">{chat.title}</span>
-              </button>
-              <button class="chat-item-menu" onclick={(e) => { e.stopPropagation(); toggleChatMenu(chat.id); }} title={$_('sidebar.chatOptions')} aria-expanded={activeChatMenu === chat.id}>
+              {#if renameChatId === chat.id}
+                <div class="chat-rename-form">
+                  <input
+                    class="chat-rename-input"
+                    type="text"
+                    bind:value={renameTitle}
+                    bind:this={renameInputElement}
+                    aria-label={$_('sidebar.renamePlaceholder')}
+                    placeholder={$_('sidebar.renamePlaceholder')}
+                    disabled={renamingChat}
+                    onkeydown={(event: KeyboardEvent) => {
+                      if (event.key === 'Escape') {
+                        cancelRename();
+                      } else if (event.key === 'Enter') {
+                        confirmRenameChat();
+                      }
+                    }}
+                    onblur={() => {
+                      if (!renamingChat) {
+                        cancelRename();
+                      }
+                    }}
+                  />
+                </div>
+              {:else}
+                <button
+                  class="menu-item chat-item-btn"
+                  class:selected={selectedChatId === chat.id}
+                  onclick={() => selectChat(chat.id)}
+                  title={chat.title}
+                >
+                  <span class="chat-item-title">{chat.title}</span>
+                </button>
+              {/if}
+              <button
+                class="chat-item-menu"
+                onclick={(e) => {
+                  e.stopPropagation();
+                  if (renameChatId === chat.id) return;
+                  toggleChatMenu(chat.id);
+                }}
+                title={$_('sidebar.chatOptions')}
+                aria-expanded={activeChatMenu === chat.id}
+                disabled={renameChatId === chat.id}
+              >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="1"></circle>
                   <circle cx="12" cy="5" r="1"></circle>
                   <circle cx="12" cy="19" r="1"></circle>
                 </svg>
               </button>
-              {#if activeChatMenu === chat.id}
+              {#if activeChatMenu === chat.id && renameChatId !== chat.id}
                 <div class="chat-dropdown" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="menu" tabindex="-1">
+                  <button class="menu-item" onclick={() => openRenameDialog(chat)}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M4 17.25V21h3.75L17.81 10.94l-3.75-3.75L4 17.25z"></path>
+                      <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"></path>
+                    </svg>
+                    {$_('sidebar.rename')}
+                  </button>
                   <button class="menu-item menu-item--danger" onclick={() => deleteChat(chat.id)}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="3,6 5,6 21,6"></polyline>
@@ -1084,6 +1181,28 @@
     display: flex;
     flex-direction: column;
     gap: 1px;
+  }
+
+  .chat-rename-form {
+    flex: 1;
+    padding-right: 35px;
+  }
+
+  .chat-rename-input {
+    width: 100%;
+    padding: var(--space-sm);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-sm);
+    background: var(--btn-secondary);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+  }
+
+  .chat-rename-input:focus {
+    border-color: var(--brand);
+    outline: none;
+    box-shadow: inset -1px -1px 0 rgba(255, 255, 255, 0.2), inset 1px 1px 8px rgba(0, 0, 0, 0.2);
+    background: var(--bg-primary);
   }
 
   .chat-loading-more {

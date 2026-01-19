@@ -428,6 +428,19 @@ export async function archiveConversation(conversationId: string, title: string)
 }
 
 /**
+ * Rename a conversation title
+ */
+export async function renameConversation(
+  conversationId: string,
+  payload: { title: string; archived: boolean }
+): Promise<ConversationDetail> {
+  return request<ConversationDetail>(`/chat/${conversationId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
  * Convert a file to base64 string
  */
 function fileToBase64(file: File): Promise<string> {
