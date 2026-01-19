@@ -7,6 +7,7 @@
   import { getLocalizedError } from '../../utils/errorLocalization';
   import grenginLogo from '../../../assets/grengin-logo.svg';
   import { toast } from '../Toaster.svelte';
+  import { tick } from 'svelte';
 
   interface Props {
     isCollapsed?: boolean;
@@ -97,8 +98,14 @@
   // Chat data from API
   let chatHistory = $state<any[]>([]);
   let loadingChats = $state(false);
+  let loadingMoreChats = $state(false);
   let searchQuery = $state('');
   let searchFocused = $state(false);
+  const CHAT_PAGE_LIMIT = 20;
+  let chatOffset = $state(0);
+  let chatHasMore = $state(true);
+  let chatTotal = $state<number | null>(null);
+  let chatContainerElement = $state<HTMLElement | null>(null);
 
   // Filtered chats based on search query
   let filteredChats = $derived(
@@ -162,6 +169,11 @@
         await deleteConversation(chatToDelete);
         const deletedChat = chatHistory.find(chat => chat.id === chatToDelete);
         chatHistory = chatHistory.filter(chat => chat.id !== chatToDelete);
+        chatOffset = chatHistory.length;
+        if (chatTotal !== null) {
+          chatTotal = Math.max(0, chatTotal - 1);
+          chatHasMore = chatOffset < chatTotal;
+        }
         showDeleteConfirmation = false;
 
         // Clear selection if deleted chat was selected
@@ -207,6 +219,11 @@
     try {
       await archiveConversation(chatId, title);
       chatHistory = chatHistory.filter(chat => chat.id !== chatId);
+      chatOffset = chatHistory.length;
+      if (chatTotal !== null) {
+        chatTotal = Math.max(0, chatTotal - 1);
+        chatHasMore = chatOffset < chatTotal;
+      }
       toast.success($_('sidebar.chatArchived', { values: { title: `"${title}"` } }));
       
       // Clear selection if archived chat was selected
@@ -226,11 +243,23 @@
     }
   }
 
-  async function fetchChats() {
+  async function fetchChats({ reset = false } = {}) {
     try {
-      loadingChats = true;
-      const chats = await listConversations();
-      chatHistory = chats.map((chat: any) => ({
+      if (reset) {
+        loadingChats = true;
+        chatOffset = 0;
+        chatHasMore = true;
+        chatTotal = null;
+      } else {
+        loadingMoreChats = true;
+      }
+
+      const offset = reset ? 0 : chatOffset;
+      const response = await listConversations({ offset, limit: CHAT_PAGE_LIMIT });
+      const responseChats = Array.isArray(response) ? response : response?.conversations ?? [];
+      const total = !Array.isArray(response) && typeof response?.total === 'number' ? response.total : null;
+
+      const mappedChats = responseChats.map((chat: any) => ({
         id: chat.id,
         title: chat.title || $_('sidebar.untitledChat'),
         archived: chat.archived,
@@ -238,10 +267,59 @@
         lastMessageAt: chat.lastMessageAt,
         totalTokens: chat.totalTokens
       }));
+
+      if (reset) {
+        chatHistory = mappedChats;
+      } else if (mappedChats.length > 0) {
+        const existingIds = new Set(chatHistory.map(chat => chat.id));
+        chatHistory = [...chatHistory, ...mappedChats.filter(chat => !existingIds.has(chat.id))];
+      }
+
+      chatOffset = offset + mappedChats.length;
+      if (total !== null) {
+        chatTotal = total;
+        chatHasMore = chatOffset < total;
+      } else {
+        chatHasMore = mappedChats.length === CHAT_PAGE_LIMIT;
+      }
     } catch (error) {
       console.error('Failed to fetch chats:', error);
     } finally {
       loadingChats = false;
+      loadingMoreChats = false;
+      await tick();
+      ensureChatListFilled();
+    }
+  }
+
+  function loadMoreChats() {
+    if (loadingMoreChats || loadingChats || !chatHasMore) return;
+    fetchChats({ reset: false });
+  }
+
+  function ensureChatListFilled() {
+    if (
+      !chatContainerElement ||
+      !chatHasMore ||
+      loadingChats ||
+      loadingMoreChats
+    ) {
+      return;
+    }
+
+    const isScrollable =
+      chatContainerElement.scrollHeight > chatContainerElement.clientHeight;
+    if (!isScrollable) {
+      loadMoreChats();
+    }
+  }
+
+  function handleChatListScroll(event: Event) {
+    const target = event.currentTarget as HTMLElement | null;
+    if (!target) return;
+    const nearBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 160;
+    if (nearBottom) {
+      loadMoreChats();
     }
   }
 
@@ -308,12 +386,12 @@
 
   // Fetch chats on component mount
   $effect(() => {
-    fetchChats();
+    fetchChats({ reset: true });
     updateSelectedChatFromUrl();
 
     // Listen for chat history refresh events
     const handleRefresh = () => {
-      fetchChats();
+      fetchChats({ reset: true });
     };
 
     // Listen for URL changes (popstate for back/forward navigation)
@@ -470,7 +548,7 @@
 
   <!-- Chat List Section (scrollable) -->
   {#if !isCollapsed && !isAdminView}
-    <div class="chat-list-section">
+    <div class="chat-list-section" bind:this={chatContainerElement} onscroll={handleChatListScroll}>
       <div class="chat-list">
         {#if loadingChats}
           <div class="chat-loading">
@@ -521,6 +599,12 @@
               {/if}
             </div>
           {/each}
+          {#if loadingMoreChats && chatHistory.length > 0}
+            <div class="chat-loading chat-loading-more">
+              <div class="loading-spinner-small"></div>
+              <span>{$_('sidebar.loadingChats')}</span>
+            </div>
+          {/if}
         {/if}
       </div>
     </div>
@@ -1000,6 +1084,11 @@
     display: flex;
     flex-direction: column;
     gap: 1px;
+  }
+
+  .chat-loading-more {
+    justify-content: center;
+    padding: var(--space-xs) 0 var(--space-md);
   }
 
   .chat-item {
