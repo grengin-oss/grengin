@@ -8,6 +8,7 @@
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
   import embed from "vega-embed";
+  import { _ } from 'svelte-i18n';
 
   let isLoading = $state(true);
   let chartsLoading = $state(false);
@@ -54,7 +55,7 @@
     } catch (err: any) {
       const errorMessage = err instanceof ApiError ? err.message : err.message;
       error = errorMessage;
-      toast.error(errorMessage || 'Failed to fetch analytics data');
+      toast.error(errorMessage || $_('analytics.errors.fetchFailed'));
       console.error('Analytics fetch error:', err);
     } finally {
       isLoading = false;
@@ -101,10 +102,10 @@
             y: { field: 'total_requests', type: 'quantitative' },
             color: { value: '#4079c5' },
             tooltip: [
-              { field: 'timestamp', type: 'temporal', title: 'Date', format: '%b %d, %Y' },
-              { field: 'total_requests', type: 'quantitative', title: 'Requests', format: ',.0f' },
-              { field: 'total_tokens', type: 'quantitative', title: 'Tokens', format: ',.0f' },
-              { field: 'average_latency', type: 'quantitative', title: 'Latency (ms)', format: '.2f' }
+              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
+              { field: 'total_requests', type: 'quantitative', title: $_('analytics.charts.multiMetric.requests'), format: ',.0f' },
+              { field: 'total_tokens', type: 'quantitative', title: $_('analytics.charts.multiMetric.tokens'), format: ',.0f' },
+              { field: 'average_latency', type: 'quantitative', title: $_('analytics.charts.multiMetric.latencyMs'), format: '.2f' }
             ]
           }
         }
@@ -142,9 +143,9 @@
             },
             color: { value: '#4079c5' },
             tooltip: [
-              { field: 'timestamp', type: 'temporal', title: 'Date', format: '%b %d, %Y' },
-              { field: 'total_requests', type: 'quantitative', title: 'Requests', format: ',.0f' },
-              { field: 'total_tokens', type: 'quantitative', title: 'Tokens', format: ',.0f' }
+              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
+              { field: 'total_requests', type: 'quantitative', title: $_('analytics.charts.usageGrowth.requests'), format: ',.0f' },
+              { field: 'total_tokens', type: 'quantitative', title: $_('analytics.charts.usageGrowth.tokens'), format: ',.0f' }
             ]
           }
         },
@@ -206,9 +207,9 @@
           legend: null
         },
         tooltip: [
-          { field: 'timestamp', type: 'temporal', title: 'Date', format: '%b %d, %Y' },
-          { field: 'type', type: 'nominal', title: 'Type' },
-          { field: 'value', type: 'quantitative', title: 'Count', format: ',.0f' }
+          { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
+          { field: 'type', type: 'nominal', title: $_('analytics.charts.apiReliability.type') },
+          { field: 'value', type: 'quantitative', title: $_('analytics.charts.apiReliability.count'), format: ',.0f' }
         ]
       },
       transform: [
@@ -264,8 +265,8 @@
             y: { field: 'total_cost', type: 'quantitative' },
             color: { value: '#2d906b' },
             tooltip: [
-              { field: 'timestamp', type: 'temporal', title: 'Date', format: '%b %d, %Y' },
-              { field: 'total_cost', type: 'quantitative', title: 'Total Cost', format: '$,.2f' }
+              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
+              { field: 'total_cost', type: 'quantitative', title: $_('analytics.charts.costTrend.totalCost'), format: '$,.2f' }
             ]
           }
         }
@@ -297,10 +298,6 @@
     return sign + (num * 100).toFixed(1) + '%';
   }
 
-  onMount(() => {
-    fetchAnalytics();
-  });
-
   $effect(() => {
     if (startDate && endDate) {
       fetchAnalytics();
@@ -309,7 +306,7 @@
 </script>
 
 <div class="analytics-page">
-  <PageHeader title="Analytics" subtitle="Monitor system performance and usage metrics">
+  <PageHeader title={$_('analytics.title')} subtitle={$_('analytics.subtitle')}>
     <div class="filters-container">
       <div class="date-filters">
         <input 
@@ -317,7 +314,7 @@
           bind:value={startDate}
           class="date-input"
         />
-        <span class="date-separator">to</span>
+        <span class="date-separator">{$_('analytics.filters.to')}</span>
         <input 
           type="date" 
           bind:value={endDate}
@@ -331,28 +328,28 @@
           class:pill-group__item--active={granularity === 'hour'}
           onclick={() => granularity = 'hour'}
         >
-          Hour
+          {$_('analytics.filters.hour')}
         </button>
         <button 
           class="pill-group__item"
           class:pill-group__item--active={granularity === 'day'}
           onclick={() => granularity = 'day'}
         >
-          Day
+          {$_('analytics.filters.day')}
         </button>
         <button 
           class="pill-group__item"
           class:pill-group__item--active={granularity === 'week'}
           onclick={() => granularity = 'week'}
         >
-          Week
+          {$_('analytics.filters.week')}
         </button>
         <button 
           class="pill-group__item"
           class:pill-group__item--active={granularity === 'month'}
           onclick={() => granularity = 'month'}
         >
-          Month
+          {$_('analytics.filters.month')}
         </button>
       </div>
     </div>
@@ -366,19 +363,19 @@
     <AdminPanelCard>
       <div class="error-state">
         <p class="error-message">{error}</p>
-        <button class="btn-primary" onclick={fetchAnalytics}>Retry</button>
+        <button class="btn-primary" onclick={fetchAnalytics}>{$_('analytics.retry')}</button>
       </div>
     </AdminPanelCard>
   {:else if overviewData}
     <div class="analytics-content">
       <section class="overview-section">
-        <h2 class="section-title">Overview</h2>
+        <h2 class="section-title">{$_('analytics.overview.title')}</h2>
         
         <div class="metrics-grid">
           <AdminPanelCard class="metric-card">
             <div class="metric-content">
               <div class="metric-header">
-                <span class="metric-label">Total Users</span>
+                <span class="metric-label">{$_('analytics.overview.totalUsers')}</span>
                 {#if overviewData.request_growth_rate !== 0}
                   <span class="metric-growth" class:positive={overviewData.request_growth_rate > 0} class:negative={overviewData.request_growth_rate < 0}>
                     {formatPercentage(overviewData.request_growth_rate)}
@@ -386,14 +383,14 @@
                 {/if}
               </div>
               <div class="metric-value">{formatNumber(overviewData.total_users)}</div>
-              <div class="metric-subtext">{formatNumber(overviewData.active_users)} active</div>
+              <div class="metric-subtext">{$_('analytics.overview.activeUsers', { values: { count: formatNumber(overviewData.active_users) } })}</div>
             </div>
           </AdminPanelCard>
 
           <AdminPanelCard class="metric-card">
             <div class="metric-content">
               <div class="metric-header">
-                <span class="metric-label">Total Requests</span>
+                <span class="metric-label">{$_('analytics.overview.totalRequests')}</span>
                 {#if overviewData.request_growth_rate !== 0}
                   <span class="metric-growth" class:positive={overviewData.request_growth_rate > 0} class:negative={overviewData.request_growth_rate < 0}>
                     {formatPercentage(overviewData.request_growth_rate)}
@@ -401,14 +398,14 @@
                 {/if}
               </div>
               <div class="metric-value">{formatNumber(overviewData.total_requests)}</div>
-              <div class="metric-subtext">{overviewData.average_requests_per_user.toFixed(1)} avg per user</div>
+              <div class="metric-subtext">{$_('analytics.overview.avgPerUser', { values: { count: overviewData.average_requests_per_user.toFixed(1) } })}</div>
             </div>
           </AdminPanelCard>
 
           <AdminPanelCard class="metric-card">
             <div class="metric-content">
               <div class="metric-header">
-                <span class="metric-label">Total Tokens</span>
+                <span class="metric-label">{$_('analytics.overview.totalTokens')}</span>
                 {#if overviewData.token_growth_rate !== 0}
                   <span class="metric-growth" class:positive={overviewData.token_growth_rate > 0} class:negative={overviewData.token_growth_rate < 0}>
                     {formatPercentage(overviewData.token_growth_rate)}
@@ -422,7 +419,7 @@
           <AdminPanelCard class="metric-card">
             <div class="metric-content">
               <div class="metric-header">
-                <span class="metric-label">Total Cost</span>
+                <span class="metric-label">{$_('analytics.overview.totalCost')}</span>
                 {#if overviewData.cost_growth_rate !== 0}
                   <span class="metric-growth" class:positive={overviewData.cost_growth_rate > 0} class:negative={overviewData.cost_growth_rate < 0}>
                     {formatPercentage(overviewData.cost_growth_rate)}
@@ -437,17 +434,17 @@
 
       {#if overviewData.top_models && overviewData.top_models.length > 0}
         <section class="top-models-section">
-          <h2 class="section-title">Top Models</h2>
+          <h2 class="section-title">{$_('analytics.topModels.title')}</h2>
           <AdminPanelCard padded={false}>
             <div class="table-container">
               <table class="models-table">
                 <thead>
                   <tr>
-                    <th>Model</th>
-                    <th>Provider</th>
-                    <th>Requests</th>
-                    <th>Tokens</th>
-                    <th>Cost</th>
+                    <th>{$_('analytics.topModels.model')}</th>
+                    <th>{$_('analytics.topModels.provider')}</th>
+                    <th>{$_('analytics.topModels.requests')}</th>
+                    <th>{$_('analytics.topModels.tokens')}</th>
+                    <th>{$_('analytics.topModels.cost')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -469,7 +466,7 @@
 
       <section class="charts-section">
         <div class="section-header">
-          <h2 class="section-title">Performance Trends</h2>
+          <h2 class="section-title">{$_('analytics.charts.title')}</h2>
         </div>
         
         {#if !timeseriesData || !timeseriesData.data || timeseriesData.data.length === 0}
@@ -477,8 +474,8 @@
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
               <path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>
             </svg>
-            <p class="empty-state-text">No timeseries data available for the selected date range</p>
-            <p class="empty-state-hint">Try selecting a different date range or check back later</p>
+            <p class="empty-state-text">{$_('analytics.charts.emptyState.title')}</p>
+            <p class="empty-state-hint">{$_('analytics.charts.emptyState.hint')}</p>
           </div>
         {:else}
         <div class="charts-grid">
@@ -490,17 +487,17 @@
                 </svg>
               </div>
               <div>
-                <h3 class="chart-title">Multi-Metric Trends</h3>
-                <p class="chart-subtitle">Requests • Tokens • Latency</p>
+                <h3 class="chart-title">{$_('analytics.charts.multiMetric.title')}</h3>
+                <p class="chart-subtitle">{$_('analytics.charts.multiMetric.subtitle')}</p>
               </div>
             </div>
             {#if chartsLoading}
               <div class="chart-loading"><LoadingSpinner /></div>
             {:else}
               <div class="chart-legend">
-                <span class="legend-item"><span class="legend-dot" style="background: #4079c5;"></span>Requests</span>
-                <span class="legend-item"><span class="legend-dot" style="background: #2d906b;"></span>Tokens</span>
-                <span class="legend-item"><span class="legend-dot" style="background: #DF000C;"></span>Latency</span>
+                <span class="legend-item"><span class="legend-dot" style="background: #4079c5;"></span>{$_('analytics.charts.multiMetric.requests')}</span>
+                <span class="legend-item"><span class="legend-dot" style="background: #2d906b;"></span>{$_('analytics.charts.multiMetric.tokens')}</span>
+                <span class="legend-item"><span class="legend-dot" style="background: #DF000C;"></span>{$_('analytics.charts.multiMetric.latency')}</span>
               </div>
               <div id="multi-metric-chart" class="chart-container"></div>
             {/if}
@@ -514,16 +511,16 @@
                 </svg>
               </div>
               <div>
-                <h3 class="chart-title">Usage Growth</h3>
-                <p class="chart-subtitle">Requests (bars) • Tokens (line)</p>
+                <h3 class="chart-title">{$_('analytics.charts.usageGrowth.title')}</h3>
+                <p class="chart-subtitle">{$_('analytics.charts.usageGrowth.subtitle')}</p>
               </div>
             </div>
             {#if chartsLoading}
               <div class="chart-loading"><LoadingSpinner /></div>
             {:else}
               <div class="chart-legend">
-                <span class="legend-item"><span class="legend-dot" style="background: #4079c5;"></span>Requests</span>
-                <span class="legend-item"><span class="legend-dot" style="background: #2d906b;"></span>Tokens</span>
+                <span class="legend-item"><span class="legend-dot" style="background: #4079c5;"></span>{$_('analytics.charts.usageGrowth.requests')}</span>
+                <span class="legend-item"><span class="legend-dot" style="background: #2d906b;"></span>{$_('analytics.charts.usageGrowth.tokens')}</span>
               </div>
               <div id="requests-tokens-chart" class="chart-container"></div>
             {/if}
@@ -537,16 +534,16 @@
                 </svg>
               </div>
               <div>
-                <h3 class="chart-title">API Reliability</h3>
-                <p class="chart-subtitle">Success vs Errors</p>
+                <h3 class="chart-title">{$_('analytics.charts.apiReliability.title')}</h3>
+                <p class="chart-subtitle">{$_('analytics.charts.apiReliability.subtitle')}</p>
               </div>
             </div>
             {#if chartsLoading}
               <div class="chart-loading"><LoadingSpinner /></div>
             {:else}
               <div class="chart-legend">
-                <span class="legend-item"><span class="legend-dot" style="background: #00C853;"></span>Success</span>
-                <span class="legend-item"><span class="legend-dot" style="background: #DF000C;"></span>Errors</span>
+                <span class="legend-item"><span class="legend-dot" style="background: #00C853;"></span>{$_('analytics.charts.apiReliability.success')}</span>
+                <span class="legend-item"><span class="legend-dot" style="background: #DF000C;"></span>{$_('analytics.charts.apiReliability.errors')}</span>
               </div>
               <div id="success-error-chart" class="chart-container"></div>
             {/if}
@@ -560,8 +557,8 @@
                 </svg>
               </div>
               <div>
-                <h3 class="chart-title">Cost Trend</h3>
-                <p class="chart-subtitle">Total spending over time</p>
+                <h3 class="chart-title">{$_('analytics.charts.costTrend.title')}</h3>
+                <p class="chart-subtitle">{$_('analytics.charts.costTrend.subtitle')}</p>
               </div>
             </div>
             {#if chartsLoading}

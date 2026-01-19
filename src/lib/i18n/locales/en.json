@@ -302,6 +302,114 @@
       "noModelsAllowed": "No Models Allowed"
     }
   },
+  "userAnalytics": {
+    "title": "User Analytics",
+    "subtitle": "Detailed usage analytics per user",
+    "filters": {
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "search": "Search",
+      "searchPlaceholder": "Search by name, email, or department...",
+      "perPage": "Per Page"
+    },
+    "stats": {
+      "totalUsers": "Total Users",
+      "showing": "Showing",
+      "showingCount": "{filtered} of {total}"
+    },
+    "table": {
+      "userName": "User Name",
+      "email": "Email",
+      "department": "Department",
+      "requests": "Requests",
+      "success": "Success",
+      "errors": "Errors",
+      "tokens": "Tokens",
+      "cost": "Cost",
+      "avgLatency": "Avg Latency",
+      "lastActivity": "Last Activity"
+    },
+    "emptyState": {
+      "noMatch": "No users found matching \"{query}\"",
+      "noData": "No user analytics data available for the selected date range"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "pageInfo": "Page {current} of {total}"
+    },
+    "errors": {
+      "fetchFailed": "Failed to fetch user analytics"
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "Monitor system performance and usage metrics",
+    "filters": {
+      "to": "to",
+      "hour": "Hour",
+      "day": "Day",
+      "week": "Week",
+      "month": "Month"
+    },
+    "loading": "Loading analytics...",
+    "retry": "Retry",
+    "overview": {
+      "title": "Overview",
+      "totalUsers": "Total Users",
+      "activeUsers": "{count} active",
+      "totalRequests": "Total Requests",
+      "avgPerUser": "{count} avg per user",
+      "totalTokens": "Total Tokens",
+      "totalCost": "Total Cost"
+    },
+    "topModels": {
+      "title": "Top Models",
+      "model": "Model",
+      "provider": "Provider",
+      "requests": "Requests",
+      "tokens": "Tokens",
+      "cost": "Cost"
+    },
+    "charts": {
+      "title": "Performance Trends",
+      "multiMetric": {
+        "title": "Multi-Metric Trends",
+        "subtitle": "Requests • Tokens • Latency",
+        "requests": "Requests",
+        "tokens": "Tokens",
+        "latency": "Latency",
+        "date": "Date",
+        "latencyMs": "Latency (ms)"
+      },
+      "usageGrowth": {
+        "title": "Usage Growth",
+        "subtitle": "Requests (bars) • Tokens (line)",
+        "requests": "Requests",
+        "tokens": "Tokens"
+      },
+      "apiReliability": {
+        "title": "API Reliability",
+        "subtitle": "Success vs Errors",
+        "success": "Success",
+        "errors": "Errors",
+        "type": "Type",
+        "count": "Count"
+      },
+      "costTrend": {
+        "title": "Cost Trend",
+        "subtitle": "Total spending over time",
+        "totalCost": "Total Cost"
+      },
+      "emptyState": {
+        "title": "No timeseries data available for the selected date range",
+        "hint": "Try selecting a different date range or check back later"
+      }
+    },
+    "errors": {
+      "fetchFailed": "Failed to fetch analytics data"
+    }
+  },
   "error": {
     "not_found": {
       "description": "The requested resource was not found",
