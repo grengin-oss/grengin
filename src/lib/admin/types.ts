@@ -80,3 +80,60 @@ export interface UpdateBrandingRequest {
   settings: BrandingSettings;
 }
 
+export interface TopModel {
+  model_name: string;
+  model_provider: string;
+  total_cost: number;
+  total_requests: number;
+  total_tokens: number;
+}
+
+export interface AnalyticsOverview {
+  active_users: number;
+  average_requests_per_user: number;
+  cost_growth_rate: number;
+  request_growth_rate: number;
+  token_growth_rate: number;
+  top_models: TopModel[];
+  total_cost: number;
+  total_requests: number;
+  total_tokens: number;
+  total_users: number;
+}
+
+export interface TimeseriesDataPoint {
+  average_latency: number;
+  error_count: number;
+  success_count: number;
+  timestamp: string;
+  total_cost: number;
+  total_requests: number;
+  total_tokens: number;
+}
+
+export interface AnalyticsTimeseries {
+  data: TimeseriesDataPoint[];
+  granularity: string;
+}
+
+export interface UserAnalyticsItem {
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  department: string;
+  total_requests: number;
+  success_count: number;
+  error_count: number;
+  total_tokens: number;
+  total_cost: number;
+  average_latency: number;
+  last_activity: string;
+}
+
+export interface UserAnalyticsResponse {
+  users: UserAnalyticsItem[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}

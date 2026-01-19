@@ -51,7 +51,6 @@
     try {
       await initiateOAuth(provider, effectiveRedirectUri);
     } catch (err) {
-      console.log(err);
       isLoading = false;
       const errorMessage = err instanceof ApiError 
         ? getLocalizedError(err, 'description', $_) || err.description

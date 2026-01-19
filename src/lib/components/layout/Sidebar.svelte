@@ -90,6 +90,21 @@
       label: 'AI Engines',
       icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>',
     },
+    {
+      id: 'analytics',
+      path: '/admin/analytics',
+      label: 'Analytics',
+      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>',
+      submenu: [
+        
+        {
+          id: 'analytics-users',
+          path: '/admin/analytics/users',
+          label: 'User Analytics',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
+        },
+      ],
+    },
   ]);
 
   let activeItem = $state('chat');
@@ -399,16 +414,47 @@
   {#if isAdminView}
     <nav class="sidebar-nav admin-sidebar-nav">
       {#each adminMenuItems as item}
-        <Link to={item.path}>
-          <button
-            class="sidebar-item"
-            class:active={currentPath === item.path}
-            title={item.label}
-          >
-            <span class="sidebar-icon">{@html item.icon}</span>
-            <span class="sidebar-label">{item.label}</span>
-          </button>
-        </Link>
+        {#if item.submenu}
+          <div class="menu-item-with-submenu">
+            <Link to={item.path}>
+              <button
+                class="sidebar-item"
+                class:active={currentPath === item.path}
+                title={item.label}
+              >
+                <span class="sidebar-icon">{@html item.icon}</span>
+                <span class="sidebar-label">{item.label}</span>
+              </button>
+            </Link>
+            {#if !isCollapsed}
+              <div class="submenu">
+                {#each item.submenu as subitem}
+                  <Link to={subitem.path}>
+                    <button
+                      class="sidebar-item submenu-item"
+                      class:active={currentPath === subitem.path}
+                      title={subitem.label}
+                    >
+                      <span class="sidebar-icon">{@html subitem.icon}</span>
+                      <span class="sidebar-label">{subitem.label}</span>
+                    </button>
+                  </Link>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {:else}
+          <Link to={item.path}>
+            <button
+              class="sidebar-item"
+              class:active={currentPath === item.path}
+              title={item.label}
+            >
+              <span class="sidebar-icon">{@html item.icon}</span>
+              <span class="sidebar-label">{item.label}</span>
+            </button>
+          </Link>
+        {/if}
       {/each}
     </nav>
   {:else}
@@ -1006,6 +1052,7 @@
     position: relative;
     display: flex;
     align-items: center;
+    justify-content: space-between;
   }
 
   .chat-item-btn {
@@ -1018,6 +1065,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding-right: var(--space-sm);
   }
 
   .chat-item-menu {
@@ -1039,6 +1087,7 @@
     transition: all 0.2s ease;
     box-shadow: none;
     backdrop-filter: none;
+    right: 0px;
   }
 
   .chat-item:hover .chat-item-menu,
@@ -1474,6 +1523,28 @@
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+  }
+
+  /* ===== Submenu Styles ===== */
+  .menu-item-with-submenu {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .submenu {
+    display: flex;
+    flex-direction: column;
+    padding-left: var(--space-lg);
+    margin-top: 2px;
+  }
+
+  .submenu-item {
+    font-size: 0.875rem;
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .submenu-item .sidebar-label {
+    padding-left: var(--space-md);
   }
 
   /* ===== Mobile Responsiveness ===== */
