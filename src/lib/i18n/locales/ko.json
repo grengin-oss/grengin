@@ -98,7 +98,10 @@
     "deleteChatError": "채팅 삭제 실패",
     "archiveChatError": "채팅 보관 실패",
     "chat": "채팅",
-    "untitledChat": "제목 없는 채팅"
+    "untitledChat": "제목 없는 채팅",
+    "usageAnalytics": "사용 분석",
+    "userAnalytics": "사용자 분석",
+    "aiEngines": "AI 엔진"
   },
   "app": {
     "closeSidebar": "사이드바 닫기",
@@ -448,7 +451,7 @@
     }
   },
   "analytics": {
-    "title": "분석",
+    "title": "사용량 분석",
     "subtitle": "시스템 성능 및 사용 메트릭 모니터링",
     "filters": {
       "to": "부터",

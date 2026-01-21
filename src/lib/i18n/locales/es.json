@@ -98,7 +98,10 @@
     "deleteChatError": "Error al eliminar la conversación",
     "archiveChatError": "Error al archivar la conversación",
     "chat": "Conversación",
-    "untitledChat": "Conversación sin título"
+    "untitledChat": "Conversación sin título",
+    "usageAnalytics": "Analíticas de Uso",
+    "userAnalytics": "Analíticas de Usuario",
+    "aiEngines": "Motores de IA"
   },
   "app": {
     "closeSidebar": "Cerrar barra lateral",
@@ -448,7 +451,7 @@
     }
   },
   "analytics": {
-    "title": "Analítica",
+    "title": "Analítica de Uso",
     "subtitle": "Monitorear el rendimiento del sistema y las métricas de uso",
     "filters": {
       "to": "a",

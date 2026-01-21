@@ -98,7 +98,10 @@
     "deleteChatError": "チャットの削除に失敗しました",
     "archiveChatError": "チャットのアーカイブに失敗しました",
     "chat": "チャット",
-    "untitledChat": "タイトルなしチャット"
+    "untitledChat": "タイトルなしチャット",
+    "usageAnalytics": "利用分析",
+    "userAnalytics": "ユーザー分析",
+    "aiEngines": "AIエンジン"
   },
   "app": {
     "closeSidebar": "サイドバーを閉じる",
@@ -448,7 +451,7 @@
     }
   },
   "analytics": {
-    "title": "分析",
+    "title": "使用状況分析",
     "subtitle": "システムのパフォーマンスと使用状況のメトリクスを監視",
     "filters": {
       "to": "から",

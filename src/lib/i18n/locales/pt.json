@@ -98,7 +98,10 @@
     "deleteChatError": "Falha ao excluir a conversa",
     "archiveChatError": "Falha ao arquivar a conversa",
     "chat": "Conversa",
-    "untitledChat": "Conversa sem título"
+    "untitledChat": "Conversa sem título",
+    "usageAnalytics": "Análise de Uso",
+    "userAnalytics": "Análise de Usuário",
+    "aiEngines": "Motores de IA"
   },
   "app": {
     "closeSidebar": "Fechar barra lateral",
@@ -357,7 +360,7 @@
     }
   },
   "analytics": {
-    "title": "Análise",
+    "title": "Análise de Uso",
     "subtitle": "Monitorar o desempenho do sistema e métricas de uso",
     "filters": {
       "to": "até",

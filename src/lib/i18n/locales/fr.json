@@ -98,7 +98,10 @@
     "deleteChatError": "Échec de la suppression de la conversation",
     "archiveChatError": "Échec de l'archivage de la conversation",
     "chat": "Conversation",
-    "untitledChat": "Conversation sans titre"
+    "untitledChat": "Conversation sans titre",
+    "usageAnalytics": "Suivi d'Usage",
+    "userAnalytics": "Analytique Utilisateurs",
+    "aiEngines": "Moteurs IA"
   },
   "app": {
     "closeSidebar": "Fermer la barre latérale",
@@ -448,7 +451,7 @@
     }
   },
   "analytics": {
-    "title": "Analytique",
+    "title": "Suivi d'Usage",
     "subtitle": "Surveiller les performances du système et les métriques d'utilisation",
     "filters": {
       "to": "à",

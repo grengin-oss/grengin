@@ -98,7 +98,10 @@
     "deleteChatError": "Failed to delete chat",
     "archiveChatError": "Failed to archive chat",
     "chat": "Chat",
-    "untitledChat": "Untitled Chat"
+    "untitledChat": "Untitled Chat",
+    "usageAnalytics": "Usage Analytics",
+    "userAnalytics": "User Analytics",
+    "aiEngines": "AI Engines"
   },
   "app": {
     "closeSidebar": "Close sidebar",
@@ -448,7 +451,7 @@
     }
   },
   "analytics": {
-    "title": "Analytics",
+    "title": "Usage Analytics",
     "subtitle": "Monitor system performance and usage metrics",
     "filters": {
       "to": "to",

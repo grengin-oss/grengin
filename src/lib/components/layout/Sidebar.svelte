@@ -80,15 +80,15 @@
 
   let adminMenuItems = $derived([
     {
-      id: 'analytics',
+      id: 'usage-analytics',
       path: '/admin/analytics',
-      label: 'Analytics',
+      label: $_('sidebar.usageAnalytics'),
       icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>',
       submenu: [
         {
           id: 'analytics-users',
           path: '/admin/analytics/users',
-          label: 'User Analytics',
+          label: $_('sidebar.userAnalytics'),
           icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
         },
       ],
@@ -96,7 +96,7 @@
     {
       id: 'ai-engines',
       path: '/admin/ai-engines',
-      label: 'AI Engines',
+      label: $_('sidebar.aiEngines'),
       icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>',
     },
     {
