@@ -3,7 +3,19 @@ import type { components } from '../types/api.js';
 type User = components['schemas']['User'];
 
 // Always use /api - proxied by Vite dev server locally, Cloudflare Pages Function in production
-export const API_BASE = '/api';
+const defaultApiBase = '';
+const rawApiBase = import.meta.env?.VITE_API_BASE;
+
+const normalizeBase = (base: string): string => {
+  if (!base) {
+    return defaultApiBase;
+  }
+  return base.endsWith('/') ? base.slice(0, -1) : base;
+};
+
+// Use env override when provided, fall back to /api (proxied locally & via Pages Functions)
+export const API_BASE = normalizeBase(rawApiBase ?? defaultApiBase);
+
 
 export interface RichErrorDetail {
   type: 'rich';
