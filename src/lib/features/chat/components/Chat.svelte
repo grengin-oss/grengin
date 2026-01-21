@@ -202,7 +202,7 @@
             scrollToStreamingMessageTop(currentStreamingMessage.id);
           }
         },
-        onTitle: (newConversationId: string, title: string) => {
+        onTitle: ({isNewConversation, newConversationId}) => {
           // Update conversation ID and URL
           if (newConversationId && newConversationId !== conversationId) {
             conversationId = newConversationId;
@@ -210,7 +210,9 @@
           }
           
           // Refresh sidebar chat history when conversation starts
-          window.dispatchEvent(new CustomEvent('refreshChatHistory'));
+          if (isNewConversation) {
+            window.dispatchEvent(new CustomEvent('refreshChatHistory'));
+          }
         },
         onDone: async (_data) => {
           if (currentStreamingMessage) {

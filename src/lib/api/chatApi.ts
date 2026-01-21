@@ -12,7 +12,7 @@ export interface SendMessageOptions {
   webSearch?: boolean;
   onToken?: (token: string) => void;
   onStart?: () => void;
-  onTitle?: (newConversationId: string, title: string) => void;
+  onTitle?: (data: {newConversationId: string, isNewConversation: boolean}) => void;
   onDone?: (data: any) => void;
   onError?: (error: ApiError | Error) => void;
 }
@@ -264,7 +264,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
           
           switch (event) {
             case 'conversation':
-              onTitle?.(data.id, data.title);
+              onTitle?.({newConversationId: data.id, isNewConversation: data.is_new});
               break;
             case 'message_start':
               onStart?.();
