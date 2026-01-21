@@ -282,11 +282,13 @@
 
   function formatNumber(num: number): string {
     if (num >= 1000000) {
-      return (num / 1000000).toFixed(2) + 'M';
+      const val = num / 1000000;
+      return (val % 1 === 0 ? val.toString() : val.toFixed(1)) + 'M';
     } else if (num >= 1000) {
-      return (num / 1000).toFixed(2) + 'K';
+      const val = num / 1000;
+      return (val % 1 === 0 ? val.toString() : val.toFixed(1)) + 'K';
     }
-    return num.toFixed(2);
+    return Math.round(num).toString();
   }
 
   function formatCurrency(num: number): string {
