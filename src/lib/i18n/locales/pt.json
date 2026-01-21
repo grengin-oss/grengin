@@ -254,6 +254,10 @@
       "failedToRemoveMember": "Falha ao remover membro",
       "failedToFetchMembers": "Falha ao buscar membros",
       "addMemberPlaceholder": "A pesquisa e seleção de usuários será implementada aqui"
+    },
+    "settings": {
+      "title": "Configurações",
+      "subtitle": "Configurar definições do sistema e integrações"
     }
   },
   "chat": {

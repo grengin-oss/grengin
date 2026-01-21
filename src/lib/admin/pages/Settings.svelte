@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { _ } from "svelte-i18n";
   import PageHeader from "../components/PageHeader.svelte";
   import OAuthProviders from "./advanced/OAuthProviders.svelte";
 
@@ -86,17 +87,17 @@
   });
 </script>
 
-<div class="advanced-container">
+<div class="settings-container">
   <PageHeader
-    title="Advanced"
-    subtitle="Configure system advanced settings and integrations"
+    title={$_('admin.settings.title')}
+    subtitle={$_('admin.settings.subtitle')}
   />
 
   <!-- Tab navigation with proper ARIA -->
-  <div class="advanced-tabs" role="tablist" aria-label="Advanced settings tabs">
+  <div class="settings-tabs" role="tablist" aria-label="Settings tabs">
     {#each TABS as tab (tab.id)}
       <button
-        class="advanced-tab"
+        class="settings-tab"
         class:active={currentTab === tab.id}
         role="tab"
         aria-selected={currentTab === tab.id}
@@ -113,7 +114,7 @@
 
   <!-- Tab content with proper ARIA -->
   <div
-    class="advanced-content"
+    class="settings-content"
     role="tabpanel"
     id={`${currentTab}-panel`}
     aria-labelledby={currentTab}
@@ -127,7 +128,7 @@
 
 <style>
   /* Container */
-  .advanced-container {
+  .settings-container {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -137,7 +138,7 @@
   }
 
   /* Tab navigation */
-  .advanced-tabs {
+  .settings-tabs {
     display: flex;
     gap: var(--space-sm);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -145,7 +146,7 @@
     flex-wrap: wrap;
   }
 
-  .advanced-tab {
+  .settings-tab {
     padding: var(--space-md) var(--space-lg);
     color: var(--text-secondary);
     background: transparent;
@@ -162,23 +163,23 @@
     position: relative;
   }
 
-  .advanced-tab:hover:not(.active) {
+  .settings-tab:hover:not(.active) {
     color: var(--text-primary);
     background: rgba(var(--glass-tint), 0.03);
   }
 
-  .advanced-tab:focus-visible {
+  .settings-tab:focus-visible {
     outline: 2px solid var(--brand);
     outline-offset: 2px;
   }
 
-  .advanced-tab.active {
+  .settings-tab.active {
     color: var(--brand);
     border-bottom-color: var(--brand);
   }
 
   /* Tab content */
-  .advanced-content {
+  .settings-content {
     padding: var(--space-sm);
     background: rgba(var(--glass-tint), 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -188,27 +189,27 @@
 
   /* Responsive adjustments */
   @media (max-width: 768px) {
-    .advanced-container {
+    .settings-container {
       padding: var(--space-xl);
     }
 
-    .advanced-tabs {
+    .settings-tabs {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: thin;
     }
 
-    .advanced-tab {
+    .settings-tab {
       white-space: nowrap;
     }
   }
 
   @media (max-width: 480px) {
-    .advanced-container {
+    .settings-container {
       padding: var(--space-lg);
     }
 
-    .advanced-tab {
+    .settings-tab {
       padding: var(--space-sm) var(--space-md);
       font-size: 0.875rem;
     }

@@ -254,6 +254,10 @@
       "failedToRemoveMember": "구성원 제거 실패",
       "failedToFetchMembers": "구성원 가져오기 실패",
       "addMemberPlaceholder": "사용자 검색 및 선택이 여기에 구현됩니다"
+    },
+    "settings": {
+      "title": "설정",
+      "subtitle": "시스템 설정 및 연동 구성"
     }
   },
   "chat": {

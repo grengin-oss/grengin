@@ -254,6 +254,10 @@
       "failedToRemoveMember": "メンバーの削除に失敗しました",
       "failedToFetchMembers": "メンバーの取得に失敗しました",
       "addMemberPlaceholder": "ユーザー検索と選択はここに実装されます"
+    },
+    "settings": {
+      "title": "設定",
+      "subtitle": "システム設定と連携を構成"
     }
   },
   "chat": {

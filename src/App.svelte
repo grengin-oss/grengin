@@ -13,7 +13,7 @@
   import Analytics from './lib/admin/pages/Analytics.svelte';
   import UserAnalytics from './lib/admin/pages/UserAnalytics.svelte';
   import Departments from './lib/admin/pages/Departments.svelte';
-  import Advanced from '$lib/admin/pages/Advanced.svelte';
+  import Settings from '$lib/admin/pages/Settings.svelte';
   import { _ } from 'svelte-i18n';
 
   let sidebarCollapsed = $state(false);
@@ -150,7 +150,7 @@
         <Route path="/chat/:id"><Chat /></Route>
         <Route path="/admin/users"><Users /></Route>
         <Route path="/admin/departments"><Departments /></Route>
-        <Route path="/admin/advanced"><Advanced /></Route>
+        <Route path="/admin/settings"><Settings /></Route>
         <Route path="/admin/ai-engines"><AIEngines /></Route>
         <Route path="/admin/analytics" primary={false}><Analytics /></Route>
         <Route path="/admin/analytics/users"><UserAnalytics /></Route>

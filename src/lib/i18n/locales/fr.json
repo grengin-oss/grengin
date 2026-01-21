@@ -254,6 +254,10 @@
       "failedToRemoveMember": "Échec du retrait du membre",
       "failedToFetchMembers": "Échec de la récupération des membres",
       "addMemberPlaceholder": "La recherche et sélection d'utilisateurs sera implémentée ici"
+    },
+    "settings": {
+      "title": "Paramètres",
+      "subtitle": "Configurer les paramètres système et intégrations"
     }
   },
   "chat": {
