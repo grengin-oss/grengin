@@ -49,7 +49,7 @@
   "sidebar": {
     "newChat": "New Chat",
     "users": "Users",
-    "adminPanel": "Admin Panel",
+    "adminPanel": "Control Hub",
     "backToChat": "Back to Chat",
     "toggleSidebar": "Toggle sidebar",
     "expandSidebar": "Expand sidebar",
@@ -71,7 +71,7 @@
     "userMenu": "User menu",
     "user": "User",
     "settings": "Settings",
-    "admin": "Admin",
+    "admin": "Control Hub",
     "signOut": "Sign out",
     "deleteChat": "Delete Chat",
     "deleteChatConfirm": "Are you sure you want to delete this chat? This action cannot be undone.",
@@ -401,7 +401,7 @@
   },
   "adminOverview": {
     "title": "Overview",
-    "subtitle": "Admin dashboard overview",
+    "subtitle": "Control Hub dashboard overview",
     "quickStats": "Quick Stats",
     "quickLinks": "Quick Links",
     "topModels": "Top Models",

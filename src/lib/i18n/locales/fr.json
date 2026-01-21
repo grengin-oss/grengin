@@ -49,7 +49,7 @@
   "sidebar": {
     "newChat": "Nouvelle conversation",
     "users": "Utilisateurs",
-    "adminPanel": "Panneau d'administration",
+    "adminPanel": "Espace de gestion",
     "backToChat": "Retour à la conversation",
     "toggleSidebar": "Basculer la barre latérale",
     "expandSidebar": "Développer la barre latérale",
@@ -71,7 +71,7 @@
     "userMenu": "Menu utilisateur",
     "user": "Utilisateur",
     "settings": "Paramètres",
-    "admin": "Administrateur",
+    "admin": "Espace de gestion",
     "signOut": "Se déconnecter",
     "deleteChat": "Supprimer la conversation",
     "deleteChatConfirm": "Êtes-vous sûr de vouloir supprimer cette conversation ? Cette action est irréversible.",
@@ -401,7 +401,7 @@
   },
   "adminOverview": {
     "title": "Aperçu",
-    "subtitle": "Tableau de bord d'administration",
+    "subtitle": "Aperçu du Espace de gestion",
     "quickStats": "Statistiques rapides",
     "quickLinks": "Liens rapides",
     "topModels": "Modèles principaux",

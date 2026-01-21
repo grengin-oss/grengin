@@ -49,7 +49,7 @@
   "sidebar": {
     "newChat": "새 채팅",
     "users": "사용자",
-    "adminPanel": "관리자 패널",
+    "adminPanel": "관리 센터",
     "backToChat": "채팅으로 돌아가기",
     "toggleSidebar": "사이드바 토글",
     "expandSidebar": "사이드바 확장",
@@ -71,7 +71,7 @@
     "userMenu": "사용자 메뉴",
     "user": "사용자",
     "settings": "설정",
-    "admin": "관리자",
+    "admin": "관리 센터",
     "signOut": "로그아웃",
     "deleteChat": "채팅 삭제",
     "deleteChatConfirm": "이 채팅을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
@@ -401,7 +401,7 @@
   },
   "adminOverview": {
     "title": "개요",
-    "subtitle": "관리자 대시보드 개요",
+    "subtitle": "관리 센터 대시보드 개요",
     "quickStats": "빠른 통계",
     "quickLinks": "빠른 링크",
     "topModels": "인기 모델",

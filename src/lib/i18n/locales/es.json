@@ -49,7 +49,7 @@
   "sidebar": {
     "newChat": "Nueva conversación",
     "users": "Usuarios",
-    "adminPanel": "Panel de administración",
+    "adminPanel": "Control Hub",
     "backToChat": "Volver al chat",
     "toggleSidebar": "Alternar barra lateral",
     "expandSidebar": "Expandir barra lateral",
@@ -71,7 +71,7 @@
     "userMenu": "Menú de usuario",
     "user": "Usuario",
     "settings": "Configuración",
-    "admin": "Administrador",
+    "admin": "Control Hub",
     "signOut": "Cerrar sesión",
     "deleteChat": "Eliminar conversación",
     "deleteChatConfirm": "¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer.",
@@ -401,7 +401,7 @@
   },
   "adminOverview": {
     "title": "Resumen",
-    "subtitle": "Panel de administración",
+    "subtitle": "Resumen del Control Hub",
     "quickStats": "Estadísticas rápidas",
     "quickLinks": "Enlaces rápidos",
     "topModels": "Modelos principales",

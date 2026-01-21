@@ -49,7 +49,7 @@
   "sidebar": {
     "newChat": "新しいチャット",
     "users": "ユーザー",
-    "adminPanel": "管理パネル",
+    "adminPanel": "管理センター",
     "backToChat": "チャットに戻る",
     "toggleSidebar": "サイドバーを切り替え",
     "expandSidebar": "サイドバーを展開",
@@ -71,7 +71,7 @@
     "userMenu": "ユーザーメニュー",
     "user": "ユーザー",
     "settings": "設定",
-    "admin": "管理者",
+    "admin": "管理センター",
     "signOut": "サインアウト",
     "deleteChat": "チャットを削除",
     "deleteChatConfirm": "このチャットを削除してもよろしいですか？この操作は元に戻せません。",
@@ -401,7 +401,7 @@
   },
   "adminOverview": {
     "title": "概要",
-    "subtitle": "管理ダッシュボードの概要",
+    "subtitle": "管理センターのダッシュボード概要",
     "quickStats": "クイック統計",
     "quickLinks": "クイックリンク",
     "topModels": "人気モデル",
