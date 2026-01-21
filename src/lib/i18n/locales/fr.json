@@ -5,6 +5,7 @@
     "delete": "Supprimer",
     "edit": "Modifier",
     "search": "Rechercher",
+    "never": "Jamais"
   },
   "auth": {
     "signIn": "Se connecter",

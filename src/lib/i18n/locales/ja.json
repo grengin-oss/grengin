@@ -5,6 +5,7 @@
     "delete": "削除",
     "edit": "編集",
     "search": "検索",
+    "never": "なし"
   },
   "auth": {
     "signIn": "サインイン",

@@ -11,22 +11,46 @@ function getCurrentLocale(): string {
 }
 
 /**
+ * Check if a date is the Unix epoch (Jan 1, 1970) or invalid
+ * Used to detect null/unset timestamps that default to epoch
+ */
+function isEpochOrInvalid(date: Date): boolean {
+  if (isNaN(date.getTime())) return true;
+  // Check if date is within 24 hours of Unix epoch (Jan 1, 1970)
+  const epochThreshold = 24 * 60 * 60 * 1000; // 24 hours in ms
+  return date.getTime() < epochThreshold;
+}
+
+/**
  * Format a date according to the user's locale
- * @param date - Date object or ISO string
+ * @param date - Date object or ISO string (can be null/undefined)
  * @param options - Intl.DateTimeFormatOptions for customization
- * @returns Formatted date string
+ * @param fallback - Text to show for null/invalid/epoch dates (default: "Never")
+ * @returns Formatted date string or fallback text
  */
 export function formatDate(
-  date: Date | string,
+  date: Date | string | null | undefined,
   options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
-  }
+  },
+  fallback: string = 'Never'
 ): string {
+  // Handle null/undefined/empty string
+  if (!date || (typeof date === 'string' && !date.trim())) {
+    return fallback;
+  }
+
   const dateObj = typeof date === 'string' ? new Date(date) : date;
+
+  // Handle invalid dates and Unix epoch (Jan 1, 1970)
+  if (isEpochOrInvalid(dateObj)) {
+    return fallback;
+  }
+
   const currentLocale = getCurrentLocale();
-  
+
   try {
     return new Intl.DateTimeFormat(currentLocale, options).format(dateObj);
   } catch {

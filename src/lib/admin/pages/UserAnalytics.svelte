@@ -8,6 +8,7 @@
   import type { UserAnalyticsItem } from '../types.js';
   import { toast } from "../../components/Toaster.svelte";
   import { _ } from 'svelte-i18n';
+  import { formatDate } from '$lib/utils/format.js';
 
   let isLoading = $state(true);
   let users = $state<UserAnalyticsItem[]>([]);
@@ -96,15 +97,14 @@
     return `${ms.toFixed(2)}ms`;
   }
 
-  function formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
+  function formatDateTime(dateString: string | null | undefined): string {
+    return formatDate(dateString, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    }).format(date);
+    }, $_('common.never'));
   }
 
   let filteredUsers = $derived(
@@ -269,7 +269,7 @@
                     <td class="numeric">{formatNumber(user.total_tokens)}</td>
                     <td class="numeric cost">{formatCurrency(user.total_cost)}</td>
                     <td class="numeric">{formatLatency(user.average_latency)}</td>
-                    <td class="date">{formatDate(user.last_activity)}</td>
+                    <td class="date">{formatDateTime(user.last_activity)}</td>
                   </tr>
                 {/each}
               {/if}
