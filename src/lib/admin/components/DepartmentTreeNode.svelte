@@ -127,7 +127,7 @@
               <path d="M8 8C9.65685 8 11 6.65685 11 5C11 3.34315 9.65685 2 8 2C6.34315 2 5 3.34315 5 5C5 6.65685 6.34315 8 8 8Z" stroke="currentColor" stroke-width="1.5"/>
               <path d="M3 14C3 11.2386 5.23858 9 8 9C10.7614 9 13 11.2386 13 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
-            {department.total_member_count}
+            {department.member_count}
           </span>
           <span class="meta-item">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">

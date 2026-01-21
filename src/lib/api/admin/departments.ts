@@ -65,7 +65,7 @@ export async function getDepartmentMembers(
 ): Promise<DepartmentMembersResponse> {
   const params = new URLSearchParams();
   if (includeSubDepartments) {
-    params.set('include_sub_departments', 'true');
+    params.set('include_sub_department', 'true');
   }
   const query = params.toString();
   return request<DepartmentMembersResponse>(
@@ -73,21 +73,22 @@ export async function getDepartmentMembers(
   );
 }
 
-export async function addDepartmentMember(
+export async function addDepartmentMembers(
   departmentId: string,
-  userId: string
+  userIds: string[]
 ): Promise<void> {
   return request<void>(`/admin/departments/${departmentId}/members`, {
     method: 'POST',
-    body: JSON.stringify({ user_id: userId }),
+    body: JSON.stringify(userIds),
   });
 }
 
-export async function removeDepartmentMember(
+export async function removeDepartmentMembers(
   departmentId: string,
-  userId: string
+  userIds: string[]
 ): Promise<void> {
-  return request<void>(`/admin/departments/${departmentId}/members/${userId}`, {
+  return request<void>(`/admin/departments/${departmentId}/members`, {
     method: 'DELETE',
+    body: JSON.stringify(userIds),
   });
 }

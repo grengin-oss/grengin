@@ -1,12 +1,13 @@
 <script lang="ts">
   import type { Department } from "../types.js";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import * as departmentsApi from "../../api/admin/departments.js";
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
   import { _ } from "svelte-i18n";
   import LoadingSpinner from "./LoadingSpinner.svelte";
+  import AddMemberModal from "./AddMemberModal.svelte";
   
   interface Props {
     department: Department;
@@ -25,6 +26,8 @@
   });
   
   $effect(() => {
+    department.id;
+    includeSubDepartments;
     loadMembers();
   });
   
@@ -39,7 +42,7 @@
     } catch (error) {
       const errorMessage = error instanceof ApiError 
         ? getLocalizedError(error, 'description', $_) 
-        : 'Failed to load members';
+        : $_('admin.departments.failedToFetchMembers');
       toast.error(errorMessage);
     } finally {
       loading = false;
@@ -47,42 +50,41 @@
   }
   
   function toggleMemberSelection(userId: string) {
-    if (selectedMembers.has(userId)) {
-      selectedMembers.delete(userId);
+    const newSet = new Set(selectedMembers);
+    if (newSet.has(userId)) {
+      newSet.delete(userId);
     } else {
-      selectedMembers.add(userId);
+      newSet.add(userId);
     }
-    selectedMembers = selectedMembers;
+    selectedMembers = newSet;
   }
   
   function toggleSelectAll() {
-    if (selectedMembers.size === members.length) {
-      selectedMembers.clear();
+    if (selectedMembers.size === members.length && members.length > 0) {
+      selectedMembers = new Set();
     } else {
-      selectedMembers = new Set(members.map(m => m.user_id));
+      selectedMembers = new Set(members.map(m => m.id));
     }
-    selectedMembers = selectedMembers;
   }
   
   async function handleRemoveMembers() {
     if (selectedMembers.size === 0) return;
     
-    const confirmed = confirm(`Remove ${selectedMembers.size} member(s) from this department?`);
+    const confirmed = confirm($_('admin.departments.selectMembers'));
     if (!confirmed) return;
     
     loading = true;
     try {
-      for (const userId of selectedMembers) {
-        await departmentsApi.removeDepartmentMember(department.id, userId);
-      }
-      toast.success(`Removed ${selectedMembers.size} member(s) successfully`);
+      await departmentsApi.removeDepartmentMembers(department.id, Array.from(selectedMembers));
+      const count = selectedMembers.size;
+      toast.success($_('admin.departments.membersRemoved', { values: { count } }));
       selectedMembers.clear();
       selectedMembers = selectedMembers;
       await loadMembers();
     } catch (error) {
       const errorMessage = error instanceof ApiError 
         ? getLocalizedError(error, 'description', $_) 
-        : 'Failed to remove members';
+        : $_('admin.departments.failedToRemoveMember');
       toast.error(errorMessage);
     } finally {
       loading = false;
@@ -97,25 +99,27 @@
 <div class="member-management">
   <div class="member-header">
     <div class="header-left">
-      <h3>Members</h3>
+      <h3>{$_('admin.departments.members')}</h3>
       <label class="checkbox-label">
         <input 
           type="checkbox" 
           bind:checked={includeSubDepartments}
           onchange={loadMembers}
         />
-        <span>Include sub-departments</span>
+        <span>{$_('admin.departments.includeSubDepartments')}</span>
       </label>
     </div>
     
     <div class="header-actions">
       {#if selectedMembers.size > 0}
         <button class="btn-danger" onclick={handleRemoveMembers}>
-          Remove ({selectedMembers.size})
+          {$_('admin.departments.removeMembers')} ({selectedMembers.size})
         </button>
       {/if}
-      <button class="btn-primary" onclick={() => showAddMember = true}>
-        Add Members
+      <button class="btn-primary" onclick={() => {
+        showAddMember = true;
+      }}>
+        {$_('admin.departments.addMembers')}
       </button>
     </div>
   </div>
@@ -123,7 +127,7 @@
   {#if loading}
     <div class="loading-state">
       <LoadingSpinner />
-      <p>Loading members...</p>
+      <p>{$_('admin.departments.failedToFetchMembers')}</p>
     </div>
   {:else if members.length === 0}
     <div class="empty-state">
@@ -131,10 +135,10 @@
         <circle cx="32" cy="24" r="8" stroke="#d1d5db" stroke-width="2"/>
         <path d="M16 48C16 39.1634 23.1634 32 32 32C40.8366 32 48 39.1634 48 48" stroke="#d1d5db" stroke-width="2" stroke-linecap="round"/>
       </svg>
-      <h4>No Members</h4>
-      <p>This department doesn't have any members yet</p>
+      <h4>{$_('admin.departments.noMembers')}</h4>
+      <p>{$_('admin.departments.noMembersDescription')}</p>
       <button class="btn-primary" onclick={() => showAddMember = true}>
-        Add Members
+        {$_('admin.departments.addMembers')}
       </button>
     </div>
   {:else}
@@ -149,28 +153,28 @@
                 onchange={toggleSelectAll}
               />
             </th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Joined</th>
+            <th>{$_('admin.common.name')}</th>
+            <th>{$_('admin.common.email')}</th>
+            <th>{$_('admin.common.role')}</th>
+            <th>{$_('admin.departments.addedOn')}</th>
           </tr>
         </thead>
         <tbody>
-          {#each members as member (member.user_id)}
+          {#each members as member (member.id)}
             <tr>
               <td class="checkbox-col">
                 <input 
                   type="checkbox" 
-                  checked={selectedMembers.has(member.user_id)}
-                  onchange={() => toggleMemberSelection(member.user_id)}
+                  checked={selectedMembers.has(member.id)}
+                  onchange={() => toggleMemberSelection(member.id)}
                 />
               </td>
-              <td class="name-col">{member.user_name || 'N/A'}</td>
-              <td class="email-col">{member.user_email}</td>
+              <td class="name-col">{member.name || 'N/A'}</td>
+              <td class="email-col">{member.email}</td>
               <td class="role-col">
                 <span class="role-badge">{member.role || 'user'}</span>
               </td>
-              <td class="date-col">{formatDate(member.joined_at)}</td>
+              <td class="date-col">{formatDate(member.created_at)}</td>
             </tr>
           {/each}
         </tbody>
@@ -179,12 +183,11 @@
   {/if}
   
   {#if showAddMember}
-    <div class="add-member-placeholder">
-      <p>Add member interface would be displayed here</p>
-      <button class="btn-secondary" onclick={() => showAddMember = false}>
-        Close
-      </button>
-    </div>
+    <AddMemberModal
+      departmentId={department.id}
+      onclose={() => showAddMember = false}
+      onSuccess={loadMembers}
+    />
   {/if}
 </div>
 

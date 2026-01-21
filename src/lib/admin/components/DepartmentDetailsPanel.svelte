@@ -81,7 +81,7 @@
           class:active={activeTab === 'members'}
           onclick={() => activeTab = 'members'}
         >
-          {$_('admin.departments.members')} ({department.total_member_count})
+          {$_('admin.departments.members')} ({department.member_count})
         </button>
         <button 
           class="tab" 
