@@ -9,11 +9,12 @@
   import Toaster from './lib/components/Toaster.svelte';
   import grenginLogo from './assets/grengin-logo.svg';
   import Users from './lib/admin/pages/Users.svelte';
-    import AIEngines from './lib/admin/pages/AIEngines.svelte';
-    import Analytics from './lib/admin/pages/Analytics.svelte';
-    import UserAnalytics from './lib/admin/pages/UserAnalytics.svelte';
-    import Departments from './lib/admin/pages/Departments.svelte';
-    import { _ } from 'svelte-i18n';
+  import AIEngines from './lib/admin/pages/AIEngines.svelte';
+  import Analytics from './lib/admin/pages/Analytics.svelte';
+  import Departments from './lib/admin/pages/Departments.svelte';
+  import Settings from '$lib/admin/pages/Settings.svelte';
+  import Overview from '$lib/admin/pages/Overview.svelte';
+  import { _ } from 'svelte-i18n';
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
@@ -147,11 +148,12 @@
         <Route path="/"><Chat /></Route>
         <Route path="/chat"><Chat /></Route>
         <Route path="/chat/:id"><Chat /></Route>
+        <Route path="/admin/overview"><Overview /></Route>
         <Route path="/admin/users"><Users /></Route>
         <Route path="/admin/departments"><Departments /></Route>
+        <Route path="/admin/settings"><Settings /></Route>
         <Route path="/admin/ai-engines"><AIEngines /></Route>
         <Route path="/admin/analytics" primary={false}><Analytics /></Route>
-        <Route path="/admin/analytics/users"><UserAnalytics /></Route>
       </div>
     </main>
   {/if}

@@ -8,6 +8,7 @@
   import Modal from "./Modal.svelte";
   import BudgetManagement from "./BudgetManagement.svelte";
   import MemberManagement from "./MemberManagement.svelte";
+  import { formatDate } from "$lib/utils/format.js";
   
   interface Props {
     department: Department | null;
@@ -51,9 +52,6 @@
     }
   }
   
-  function formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString();
-  }
 </script>
 
 {#if department}

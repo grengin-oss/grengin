@@ -1,26 +1,11 @@
 {
   "common": {
-    "welcome": "TODO: ようこそ",
-    "login": "TODO: ログイン",
-    "logout": "TODO: ログアウト",
-    "email": "TODO: メール",
-    "password": "TODO: パスワード",
-    "submit": "TODO: 送信",
-    "cancel": "TODO: キャンセル",
-    "save": "TODO: 保存",
-    "delete": "TODO: 削除",
-    "edit": "TODO: 編集",
-    "search": "TODO: 検索",
-    "loading": "TODO: 読み込み中...",
-    "error": "TODO: エラー",
-    "success": "TODO: 成功"
-  },
-  "navigation": {
-    "home": "TODO: ホーム",
-    "dashboard": "TODO: ダッシュボード",
-    "settings": "TODO: 設定",
-    "profile": "TODO: プロフィール",
-    "users": "TODO: ユーザー"
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "search": "検索",
+    "never": "なし"
   },
   "auth": {
     "signIn": "サインイン",
@@ -64,7 +49,7 @@
   "sidebar": {
     "newChat": "新しいチャット",
     "users": "ユーザー",
-    "adminPanel": "管理パネル",
+    "adminPanel": "管理センター",
     "backToChat": "チャットに戻る",
     "toggleSidebar": "サイドバーを切り替え",
     "expandSidebar": "サイドバーを展開",
@@ -86,7 +71,7 @@
     "userMenu": "ユーザーメニュー",
     "user": "ユーザー",
     "settings": "設定",
-    "admin": "管理者",
+    "admin": "管理センター",
     "signOut": "サインアウト",
     "deleteChat": "チャットを削除",
     "deleteChatConfirm": "このチャットを削除してもよろしいですか？この操作は元に戻せません。",
@@ -98,7 +83,14 @@
     "deleteChatError": "チャットの削除に失敗しました",
     "archiveChatError": "チャットのアーカイブに失敗しました",
     "chat": "チャット",
-    "untitledChat": "タイトルなしチャット"
+    "untitledChat": "タイトルなしチャット",
+    "usageAnalytics": "利用分析",
+    "userAnalytics": "ユーザー分析",
+    "aiEngines": "AIエンジン",
+    "sectionManage": "管理",
+    "sectionMonitor": "監視",
+    "sectionConfigure": "設定",
+    "overview": "概要"
   },
   "app": {
     "closeSidebar": "サイドバーを閉じる",
@@ -254,6 +246,10 @@
       "failedToRemoveMember": "メンバーの削除に失敗しました",
       "failedToFetchMembers": "メンバーの取得に失敗しました",
       "addMemberPlaceholder": "ユーザー検索と選択はここに実装されます"
+    },
+    "settings": {
+      "title": "設定",
+      "subtitle": "システム設定と連携を構成"
     }
   },
   "chat": {
@@ -403,6 +399,27 @@
       "noModelsAllowed": "許可されたモデルがありません"
     }
   },
+  "adminOverview": {
+    "title": "概要",
+    "subtitle": "管理センターのダッシュボード概要",
+    "quickStats": "クイック統計",
+    "quickLinks": "クイックリンク",
+    "topModels": "人気モデル",
+    "totalUsers": "総ユーザー数",
+    "totalRequests": "総リクエスト数",
+    "totalTokens": "総トークン数",
+    "totalCost": "総コスト",
+    "activeUsers": "{count} アクティブ",
+    "last30Days": "過去30日間",
+    "manageUsers": "ユーザーアカウントとロールを管理",
+    "manageDepartments": "チーム構造を整理",
+    "viewAnalytics": "詳細な使用状況分析を表示",
+    "configureSettings": "システム設定を構成",
+    "retry": "再試行",
+    "errors": {
+      "fetchFailed": "概要データの取得に失敗しました"
+    }
+  },
   "userAnalytics": {
     "title": "ユーザー分析",
     "subtitle": "ユーザーごとの詳細な使用状況分析",
@@ -444,14 +461,29 @@
     }
   },
   "analytics": {
-    "title": "分析",
+    "title": "使用状況分析",
     "subtitle": "システムのパフォーマンスと使用状況のメトリクスを監視",
+    "tabs": {
+      "overview": "概要",
+      "byUser": "ユーザー別",
+      "byDepartment": "部門別",
+      "byModel": "モデル別"
+    },
     "filters": {
+      "dateRange": "期間",
+      "presets": {
+        "last7Days": "過去7日間",
+        "last30Days": "過去30日間",
+        "last90Days": "過去90日間",
+        "thisMonth": "今月",
+        "custom": "カスタム"
+      },
       "to": "から",
-      "hour": "時間",
-      "day": "日",
-      "week": "週",
-      "month": "月"
+      "aggregated": "集計単位",
+      "hour": "時間別",
+      "day": "日別",
+      "week": "週別",
+      "month": "月別"
     },
     "loading": "分析を読み込み中...",
     "retry": "再試行",
@@ -462,7 +494,8 @@
       "totalRequests": "総リクエスト数",
       "avgPerUser": "ユーザーあたり平均 {count}",
       "totalTokens": "総トークン数",
-      "totalCost": "総コスト"
+      "totalCost": "総コスト",
+      "vsPreviousDays": "前{count}日間比"
     },
     "topModels": {
       "title": "トップモデル",

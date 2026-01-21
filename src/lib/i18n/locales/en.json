@@ -1,26 +1,11 @@
 {
   "common": {
-    "welcome": "Welcome",
-    "login": "Login",
-    "logout": "Logout",
-    "email": "Email",
-    "password": "Password",
-    "submit": "Submit",
     "cancel": "Cancel",
     "save": "Save",
     "delete": "Delete",
     "edit": "Edit",
     "search": "Search",
-    "loading": "Loading...",
-    "error": "Error",
-    "success": "Success"
-  },
-  "navigation": {
-    "home": "Home",
-    "dashboard": "Dashboard",
-    "settings": "Settings",
-    "profile": "Profile",
-    "users": "Users"
+    "never": "Never"
   },
   "auth": {
     "signIn": "Sign In",
@@ -64,7 +49,7 @@
   "sidebar": {
     "newChat": "New Chat",
     "users": "Users",
-    "adminPanel": "Admin Panel",
+    "adminPanel": "Control Hub",
     "backToChat": "Back to Chat",
     "toggleSidebar": "Toggle sidebar",
     "expandSidebar": "Expand sidebar",
@@ -86,7 +71,7 @@
     "userMenu": "User menu",
     "user": "User",
     "settings": "Settings",
-    "admin": "Admin",
+    "admin": "Control Hub",
     "signOut": "Sign out",
     "deleteChat": "Delete Chat",
     "deleteChatConfirm": "Are you sure you want to delete this chat? This action cannot be undone.",
@@ -98,7 +83,14 @@
     "deleteChatError": "Failed to delete chat",
     "archiveChatError": "Failed to archive chat",
     "chat": "Chat",
-    "untitledChat": "Untitled Chat"
+    "untitledChat": "Untitled Chat",
+    "usageAnalytics": "Usage Analytics",
+    "userAnalytics": "User Analytics",
+    "aiEngines": "AI Engines",
+    "sectionManage": "Manage",
+    "sectionMonitor": "Monitor",
+    "sectionConfigure": "Configure",
+    "overview": "Overview"
   },
   "app": {
     "closeSidebar": "Close sidebar",
@@ -254,6 +246,10 @@
       "failedToRemoveMember": "Failed to remove member",
       "failedToFetchMembers": "Failed to fetch members",
       "addMemberPlaceholder": "User search and selection will be implemented here"
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Configure system settings and integrations"
     }
   },
   "chat": {
@@ -403,6 +399,27 @@
       "noModelsAllowed": "No Models Allowed"
     }
   },
+  "adminOverview": {
+    "title": "Overview",
+    "subtitle": "Control Hub dashboard overview",
+    "quickStats": "Quick Stats",
+    "quickLinks": "Quick Links",
+    "topModels": "Top Models",
+    "totalUsers": "Total Users",
+    "totalRequests": "Total Requests",
+    "totalTokens": "Total Tokens",
+    "totalCost": "Total Cost",
+    "activeUsers": "{count} active",
+    "last30Days": "Last 30 days",
+    "manageUsers": "Manage user accounts and roles",
+    "manageDepartments": "Organize your team structure",
+    "viewAnalytics": "View detailed usage analytics",
+    "configureSettings": "Configure system settings",
+    "retry": "Retry",
+    "errors": {
+      "fetchFailed": "Failed to fetch overview data"
+    }
+  },
   "userAnalytics": {
     "title": "User Analytics",
     "subtitle": "Detailed usage analytics per user",
@@ -444,14 +461,29 @@
     }
   },
   "analytics": {
-    "title": "Analytics",
+    "title": "Usage Analytics",
     "subtitle": "Monitor system performance and usage metrics",
+    "tabs": {
+      "overview": "Overview",
+      "byUser": "By User",
+      "byDepartment": "By Department",
+      "byModel": "By Model"
+    },
     "filters": {
+      "dateRange": "Date Range",
+      "presets": {
+        "last7Days": "Last 7 days",
+        "last30Days": "Last 30 days",
+        "last90Days": "Last 90 days",
+        "thisMonth": "This month",
+        "custom": "Custom"
+      },
       "to": "to",
-      "hour": "Hour",
-      "day": "Day",
-      "week": "Week",
-      "month": "Month"
+      "aggregated": "Aggregated",
+      "hour": "Hourly",
+      "day": "Daily",
+      "week": "Weekly",
+      "month": "Monthly"
     },
     "loading": "Loading analytics...",
     "retry": "Retry",
@@ -462,7 +494,8 @@
       "totalRequests": "Total Requests",
       "avgPerUser": "{count} avg per user",
       "totalTokens": "Total Tokens",
-      "totalCost": "Total Cost"
+      "totalCost": "Total Cost",
+      "vsPreviousDays": "vs prior {count} days"
     },
     "topModels": {
       "title": "Top Models",

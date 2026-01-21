@@ -1,13 +1,19 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { tick } from 'svelte';
-  import PageHeader from '../components/PageHeader.svelte';
-  import AdminPanelCard from '../components/AdminPanelCard.svelte';
-  import LoadingSpinner from "../components/LoadingSpinner.svelte";  
+  import AdminPanelCard from '../AdminPanelCard.svelte';
+  import LoadingSpinner from "../LoadingSpinner.svelte";
   import { getUserAnalytics, type GetUserAnalyticsParams } from '$lib/api/admin/analytics.js';
-  import type { UserAnalyticsItem } from '../types.js';
-  import { toast } from "../../components/Toaster.svelte";
+  import type { UserAnalyticsItem } from '../../types.js';
+  import { toast } from "$lib/components/Toaster.svelte";
   import { _ } from 'svelte-i18n';
+  import { formatDate } from '$lib/utils/format.js';
+
+  interface Props {
+    startDate: string;
+    endDate: string;
+  }
+
+  let { startDate, endDate }: Props = $props();
 
   let isLoading = $state(true);
   let users = $state<UserAnalyticsItem[]>([]);
@@ -16,28 +22,12 @@
   let pageSize = $state(20);
   let totalPages = $state(0);
 
-  // Filters
-  let startDate = $state('');
-  let endDate = $state('');
+  // Sorting & filtering
   let sortBy = $state<'name' | 'email' | 'requests' | 'tokens' | 'cost' | 'latency' | 'last_activity'>('requests');
   let sortOrder = $state<'asc' | 'desc'>('desc');
   let searchQuery = $state('');
 
-  // Set default dates (last 30 days)
-  onMount(() => {
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 30);
-    
-    endDate = today.toISOString().split('T')[0];
-    startDate = thirtyDaysAgo.toISOString().split('T')[0];
-    
-    fetchUserAnalytics();
-  });
-
   async function fetchUserAnalytics() {
-    if (!startDate || !endDate) return;
-
     isLoading = true;
     try {
       const params: GetUserAnalyticsParams = {
@@ -79,6 +69,11 @@
     fetchUserAnalytics();
   }
 
+  function handlePageSizeChange() {
+    currentPage = 0;
+    fetchUserAnalytics();
+  }
+
   function formatNumber(num: number): string {
     return new Intl.NumberFormat('en-US').format(num);
   }
@@ -96,31 +91,41 @@
     return `${ms.toFixed(2)}ms`;
   }
 
-  function formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
+  function formatDateTime(dateString: string | null | undefined): string {
+    return formatDate(dateString, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    }).format(date);
+    }, $_('common.never'));
   }
 
   let filteredUsers = $derived(
     searchQuery.trim()
-      ? users.filter(user => 
+      ? users.filter(user =>
           user.user_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           user.user_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
           user.department.toLowerCase().includes(searchQuery.toLowerCase())
         )
       : users
   );
+
+  // Fetch data on mount and when date range changes
+  onMount(() => {
+    fetchUserAnalytics();
+  });
+
+  // Re-fetch when date range changes from parent
+  $effect(() => {
+    if (startDate && endDate) {
+      currentPage = 0;
+      fetchUserAnalytics();
+    }
+  });
 </script>
 
-<div class="user-analytics-page">
-  <PageHeader title={$_('userAnalytics.title')} subtitle={$_('userAnalytics.subtitle')} />
-
+<div class="user-analytics-tab">
   {#if isLoading && users.length === 0}
     <div class="loading-container">
       <LoadingSpinner />
@@ -131,28 +136,6 @@
       <AdminPanelCard>
         <div class="filters-section">
           <div class="filters-row">
-            <div class="filter-group">
-              <label for="start-date">{$_('userAnalytics.filters.startDate')}</label>
-              <input
-                id="start-date"
-                type="date"
-                bind:value={startDate}
-                onchange={() => { currentPage = 0; fetchUserAnalytics(); }}
-                class="date-input"
-              />
-            </div>
-
-            <div class="filter-group">
-              <label for="end-date">{$_('userAnalytics.filters.endDate')}</label>
-              <input
-                id="end-date"
-                type="date"
-                bind:value={endDate}
-                onchange={() => { currentPage = 0; fetchUserAnalytics(); }}
-                class="date-input"
-              />
-            </div>
-
             <div class="filter-group">
               <label for="search">{$_('userAnalytics.filters.search')}</label>
               <input
@@ -169,7 +152,7 @@
               <select
                 id="page-size"
                 bind:value={pageSize}
-                onchange={() => { currentPage = 0; fetchUserAnalytics(); }}
+                onchange={handlePageSizeChange}
                 class="select-input"
               >
                 <option value={10}>10</option>
@@ -269,7 +252,7 @@
                     <td class="numeric">{formatNumber(user.total_tokens)}</td>
                     <td class="numeric cost">{formatCurrency(user.total_cost)}</td>
                     <td class="numeric">{formatLatency(user.average_latency)}</td>
-                    <td class="date">{formatDate(user.last_activity)}</td>
+                    <td class="date">{formatDateTime(user.last_activity)}</td>
                   </tr>
                 {/each}
               {/if}
@@ -287,11 +270,11 @@
             >
               {$_('userAnalytics.pagination.previous')}
             </button>
-            
+
             <span class="pagination-info">
               {$_('userAnalytics.pagination.pageInfo', { values: { current: currentPage + 1, total: totalPages } })}
             </span>
-            
+
             <button
               class="pagination-btn"
               disabled={currentPage >= totalPages - 1}
@@ -307,10 +290,8 @@
 </div>
 
 <style>
-  .user-analytics-page {
-    padding: var(--space-2xl);
-    max-width: 1600px;
-    margin: 0 auto;
+  .user-analytics-tab {
+    margin-top: var(--space-lg);
   }
 
   .loading-container {
@@ -327,7 +308,6 @@
   }
 
   .filters-section {
-    padding: var(--space-xl);
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
@@ -335,7 +315,7 @@
 
   .filters-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: 1fr auto;
     gap: var(--space-lg);
   }
 
@@ -351,31 +331,29 @@
     color: var(--text-secondary);
   }
 
-  .date-input,
   .search-input,
   .select-input {
     padding: 0.625rem 0.875rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--btn-secondary);
+    border: 1px solid var(--glass-stroke-dark);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: 0.9375rem;
     transition: all 0.2s ease;
   }
 
-  .date-input:focus,
   .search-input:focus,
   .select-input:focus {
     outline: none;
     border-color: var(--brand);
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--btn-tertiary);
   }
 
   .stats-row {
     display: flex;
     gap: var(--space-2xl);
     padding-top: var(--space-md);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--glass-stroke-dark);
   }
 
   .stat-item {
@@ -405,8 +383,8 @@
   }
 
   .analytics-table thead {
-    background: rgba(255, 255, 255, 0.03);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    background: var(--btn-secondary);
+    border-bottom: 2px solid var(--glass-stroke-dark);
   }
 
   .analytics-table th {
@@ -441,12 +419,12 @@
   }
 
   .analytics-table tbody tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--glass-stroke-dark);
     transition: background-color 0.2s ease;
   }
 
   .analytics-table tbody tr:hover {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--btn-tertiary);
   }
 
   .analytics-table td {
@@ -499,13 +477,13 @@
     justify-content: center;
     gap: var(--space-lg);
     padding: var(--space-xl);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--glass-stroke-dark);
   }
 
   .pagination-btn {
     padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--btn-secondary);
+    border: 1px solid var(--glass-stroke-dark);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: 0.875rem;
@@ -515,7 +493,7 @@
   }
 
   .pagination-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--btn-tertiary);
     border-color: var(--brand);
   }
 
@@ -532,10 +510,6 @@
   }
 
   @media (max-width: 768px) {
-    .user-analytics-page {
-      padding: var(--space-lg);
-    }
-
     .filters-row {
       grid-template-columns: 1fr;
     }

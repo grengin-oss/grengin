@@ -2,13 +2,30 @@
   import { onMount, tick } from "svelte";
   import PageHeader from "../components/PageHeader.svelte";
   import AdminPanelCard from "../components/AdminPanelCard.svelte";
-  import LoadingSpinner from "../components/LoadingSpinner.svelte";
   import { getAnalyticsOverview, getAnalyticsTimeseries } from "../../api/admin/analytics.js";
   import type { AnalyticsOverview, AnalyticsTimeseries } from "../types.js";
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
-  import embed from "vega-embed";
   import { _ } from 'svelte-i18n';
+  import AnalyticsOverviewTab from "../components/analytics/AnalyticsOverviewTab.svelte";
+  import UserAnalyticsTab from "../components/analytics/UserAnalyticsTab.svelte";
+
+  // Tab state
+  type AnalyticsTab = 'overview' | 'by-user' | 'by-department' | 'by-model';
+  let currentTab = $state<AnalyticsTab>('overview');
+
+  // Initialize tab from URL hash
+  onMount(() => {
+    const hash = window.location.hash.slice(1);
+    if (['overview', 'by-user', 'by-department', 'by-model'].includes(hash)) {
+      currentTab = hash as AnalyticsTab;
+    }
+  });
+
+  function setTab(tab: AnalyticsTab) {
+    currentTab = tab;
+    window.history.replaceState(null, '', `#${tab}`);
+  }
 
   let isLoading = $state(true);
   let chartsLoading = $state(false);
@@ -16,13 +33,31 @@
   let timeseriesData = $state<AnalyticsTimeseries | null>(null);
   let error = $state<string | null>(null);
 
-  let startDate = $state(getDefaultStartDate());
+  // Date preset options
+  type DatePreset = 'last7' | 'last30' | 'last90' | 'thisMonth' | 'custom';
+  let selectedPreset = $state<DatePreset>('last7');
+  let startDate = $state(getDefaultStartDate('last7'));
   let endDate = $state(getDefaultEndDate());
-  let granularity = $state<'hour' | 'day' | 'week' | 'month'>('week');
+  let granularity = $state<'hour' | 'day' | 'week' | 'month'>('day');
 
-  function getDefaultStartDate(): string {
+  function getDefaultStartDate(preset: DatePreset): string {
     const date = new Date();
-    date.setDate(date.getDate() - 30);
+    switch (preset) {
+      case 'last7':
+        date.setDate(date.getDate() - 7);
+        break;
+      case 'last30':
+        date.setDate(date.getDate() - 30);
+        break;
+      case 'last90':
+        date.setDate(date.getDate() - 90);
+        break;
+      case 'thisMonth':
+        date.setDate(1);
+        break;
+      default:
+        date.setDate(date.getDate() - 30);
+    }
     return date.toISOString().split('T')[0];
   }
 
@@ -30,25 +65,32 @@
     return new Date().toISOString().split('T')[0];
   }
 
+  function setDatePreset(preset: DatePreset) {
+    selectedPreset = preset;
+    if (preset !== 'custom') {
+      startDate = getDefaultStartDate(preset);
+      endDate = getDefaultEndDate();
+    }
+  }
+
   async function fetchAnalytics() {
     isLoading = true;
     error = null;
-    
+
     try {
       const [overview, timeseries] = await Promise.all([
         getAnalyticsOverview({ start_date: startDate, end_date: endDate }),
         getAnalyticsTimeseries({ start_date: startDate, end_date: endDate, granularity })
       ]);
-      
+
       overviewData = overview;
       timeseriesData = timeseries;
-      
+
       await tick();
-      
+
       if (timeseriesData && timeseriesData.data && timeseriesData.data.length > 0) {
         chartsLoading = true;
         setTimeout(() => {
-          renderCharts();
           chartsLoading = false;
         }, 100);
       }
@@ -62,244 +104,63 @@
     }
   }
 
-  function renderCharts() {
-    if (!timeseriesData || !timeseriesData.data || timeseriesData.data.length === 0) return;
+  // Fetch only timeseries data (for granularity changes - no full page reload)
+  async function fetchTimeseries() {
+    chartsLoading = true;
 
-    setTimeout(() => renderMultiMetricChart(), 50);
-    setTimeout(() => renderRequestsTokensChart(), 100);
-    setTimeout(() => renderSuccessErrorChart(), 150);
-    setTimeout(() => renderCostTrendChart(), 200);
-  }
+    try {
+      const timeseries = await getAnalyticsTimeseries({ start_date: startDate, end_date: endDate, granularity });
+      timeseriesData = timeseries;
 
-  function renderMultiMetricChart() {
-    const el = document.getElementById('multi-metric-chart');
-    if (!timeseriesData || !el) return;
-    
-    const spec = {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      width: 'container',
-      height: 280,
-      data: { values: timeseriesData.data },
-      layer: [
-        {
-          mark: { type: 'line', strokeWidth: 3, interpolate: 'monotone' },
-          encoding: {
-            x: { 
-              field: 'timestamp', 
-              type: 'temporal'
-            },
-            y: { 
-              field: 'total_requests', 
-              type: 'quantitative'
-            },
-            color: { value: '#4079c5' }
-          }
-        },
-        {
-          mark: { type: 'point', filled: true, size: 100 },
-          encoding: {
-            x: { field: 'timestamp', type: 'temporal' },
-            y: { field: 'total_requests', type: 'quantitative' },
-            color: { value: '#4079c5' },
-            tooltip: [
-              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
-              { field: 'total_requests', type: 'quantitative', title: $_('analytics.charts.multiMetric.requests'), format: ',.0f' },
-              { field: 'total_tokens', type: 'quantitative', title: $_('analytics.charts.multiMetric.tokens'), format: ',.0f' },
-              { field: 'average_latency', type: 'quantitative', title: $_('analytics.charts.multiMetric.latencyMs'), format: '.2f' }
-            ]
-          }
-        }
-      ],
-      config: {
-        background: 'transparent',
-        view: { stroke: null }
-      }
-    };
+      await tick();
 
-    embed(el, spec, { actions: false, renderer: 'svg' }).catch(console.error);
-  }
-
-  function renderRequestsTokensChart() {
-    const el = document.getElementById('requests-tokens-chart');
-    if (!timeseriesData || !el) return;
-    
-    const spec = {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      width: 'container',
-      height: 280,
-      data: { values: timeseriesData.data },
-      layer: [
-        {
-          mark: { type: 'bar', opacity: 0.8, cornerRadiusEnd: 4 },
-          encoding: {
-            x: { 
-              field: 'timestamp', 
-              type: 'temporal'
-            },
-            y: { 
-              field: 'total_requests', 
-              type: 'quantitative',
-              scale: { zero: true }
-            },
-            color: { value: '#4079c5' },
-            tooltip: [
-              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
-              { field: 'total_requests', type: 'quantitative', title: $_('analytics.charts.usageGrowth.requests'), format: ',.0f' },
-              { field: 'total_tokens', type: 'quantitative', title: $_('analytics.charts.usageGrowth.tokens'), format: ',.0f' }
-            ]
-          }
-        },
-        {
-          mark: { type: 'line', strokeWidth: 3, interpolate: 'monotone' },
-          encoding: {
-            x: { field: 'timestamp', type: 'temporal' },
-            y: { 
-              field: 'total_tokens', 
-              type: 'quantitative'
-            },
-            color: { value: '#2d906b' }
-          }
-        },
-        {
-          mark: { type: 'point', filled: true, size: 100 },
-          encoding: {
-            x: { field: 'timestamp', type: 'temporal' },
-            y: { field: 'total_tokens', type: 'quantitative' },
-            color: { value: '#2d906b' }
-          }
-        }
-      ],
-      config: {
-        background: 'transparent',
-        view: { stroke: null }
-      }
-    };
-
-    embed(el, spec, { actions: false, renderer: 'svg' }).catch(console.error);
-  }
-
-  function renderSuccessErrorChart() {
-    const el = document.getElementById('success-error-chart');
-    if (!timeseriesData || !el) return;
-    
-    const spec = {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      width: 'container',
-      height: 280,
-      data: { values: timeseriesData.data },
-      mark: { type: 'bar', cornerRadiusEnd: 4 },
-      encoding: {
-        x: { 
-          field: 'timestamp', 
-          type: 'temporal'
-        },
-        y: { 
-          field: 'value', 
-          type: 'quantitative'
-        },
-        color: {
-          field: 'type',
-          type: 'nominal',
-          scale: {
-            domain: ['Success', 'Errors'],
-            range: ['#00C853', '#DF000C']
-          },
-          legend: null
-        },
-        tooltip: [
-          { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
-          { field: 'type', type: 'nominal', title: $_('analytics.charts.apiReliability.type') },
-          { field: 'value', type: 'quantitative', title: $_('analytics.charts.apiReliability.count'), format: ',.0f' }
-        ]
-      },
-      transform: [
-        { fold: ['success_count', 'error_count'], as: ['type', 'value'] },
-        { calculate: "datum.type === 'success_count' ? 'Success' : 'Errors'", as: 'type' }
-      ],
-      config: {
-        background: 'transparent',
-        view: { stroke: null }
-      }
-    };
-
-    embed(el, spec, { actions: false, renderer: 'svg' }).catch(console.error);
-  }
-
-  function renderCostTrendChart() {
-    const el = document.getElementById('cost-trend-chart');
-    if (!timeseriesData || !el) return;
-    
-    const spec = {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      width: 'container',
-      height: 280,
-      data: { values: timeseriesData.data },
-      layer: [
-        {
-          mark: { type: 'area', opacity: 0.3, line: true, interpolate: 'monotone' },
-          encoding: {
-            x: { 
-              field: 'timestamp', 
-              type: 'temporal'
-            },
-            y: { 
-              field: 'total_cost', 
-              type: 'quantitative',
-              scale: { zero: true }
-            },
-            color: { value: '#2d906b' }
-          }
-        },
-        {
-          mark: { type: 'line', strokeWidth: 3, interpolate: 'monotone' },
-          encoding: {
-            x: { field: 'timestamp', type: 'temporal' },
-            y: { field: 'total_cost', type: 'quantitative' },
-            color: { value: '#2d906b' }
-          }
-        },
-        {
-          mark: { type: 'point', filled: true, size: 100 },
-          encoding: {
-            x: { field: 'timestamp', type: 'temporal' },
-            y: { field: 'total_cost', type: 'quantitative' },
-            color: { value: '#2d906b' },
-            tooltip: [
-              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
-              { field: 'total_cost', type: 'quantitative', title: $_('analytics.charts.costTrend.totalCost'), format: '$,.2f' }
-            ]
-          }
-        }
-      ],
-      config: {
-        background: 'transparent',
-        view: { stroke: null }
-      }
-    };
-
-    embed(el, spec, { actions: false, renderer: 'svg' }).catch(console.error);
-  }
-
-  function formatNumber(num: number): string {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(2) + 'M';
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(2) + 'K';
+      // Small delay to allow charts to re-render
+      setTimeout(() => {
+        chartsLoading = false;
+      }, 100);
+    } catch (err: any) {
+      const errorMessage = err instanceof ApiError ? err.message : err.message;
+      toast.error(errorMessage || $_('analytics.errors.fetchFailed'));
+      console.error('Timeseries fetch error:', err);
+      chartsLoading = false;
     }
-    return num.toFixed(2);
   }
 
-  function formatCurrency(num: number): string {
-    return '$' + num.toFixed(2);
-  }
+  // Calculate the comparison period label based on selected date range
+  const comparisonPeriodLabel = $derived(() => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end
 
-  function formatPercentage(num: number): string {
-    const sign = num >= 0 ? '+' : '';
-    return sign + (num * 100).toFixed(1) + '%';
-  }
+    return $_('analytics.overview.vsPreviousDays', { values: { count: diffDays } });
+  });
+
+  // Track previous values to detect what changed
+  let prevStartDate = $state(startDate);
+  let prevEndDate = $state(endDate);
+  let prevGranularity = $state(granularity);
 
   $effect(() => {
-    if (startDate && endDate) {
+    if (currentTab !== 'overview') return;
+    if (!startDate || !endDate) return;
+
+    const dateChanged = startDate !== prevStartDate || endDate !== prevEndDate;
+    const granularityChanged = granularity !== prevGranularity;
+
+    // Update previous values
+    prevStartDate = startDate;
+    prevEndDate = endDate;
+    prevGranularity = granularity;
+
+    if (dateChanged) {
+      // Date range changed - fetch everything
+      fetchAnalytics();
+    } else if (granularityChanged && overviewData) {
+      // Only granularity changed and we have data - just update charts
+      fetchTimeseries();
+    } else if (!overviewData) {
+      // Initial load
       fetchAnalytics();
     }
   });
@@ -307,269 +168,143 @@
 
 <div class="analytics-page">
   <PageHeader title={$_('analytics.title')} subtitle={$_('analytics.subtitle')}>
-    <div class="filters-container">
-      <div class="date-filters">
-        <input 
-          type="date" 
-          bind:value={startDate}
-          class="date-input"
-        />
-        <span class="date-separator">{$_('analytics.filters.to')}</span>
-        <input 
-          type="date" 
-          bind:value={endDate}
-          class="date-input"
-        />
+    <div class="filters-toolbar">
+      <!-- Date Range Presets -->
+      <div class="filter-section">
+        <span class="filter-label">{$_('analytics.filters.dateRange')}</span>
+        <div class="pill-group">
+          <button
+            class="pill-group__item"
+            class:pill-group__item--active={selectedPreset === 'last7'}
+            onclick={() => setDatePreset('last7')}
+          >
+            {$_('analytics.filters.presets.last7Days')}
+          </button>
+          <button
+            class="pill-group__item"
+            class:pill-group__item--active={selectedPreset === 'last30'}
+            onclick={() => setDatePreset('last30')}
+          >
+            {$_('analytics.filters.presets.last30Days')}
+          </button>
+          <button
+            class="pill-group__item"
+            class:pill-group__item--active={selectedPreset === 'last90'}
+            onclick={() => setDatePreset('last90')}
+          >
+            {$_('analytics.filters.presets.last90Days')}
+          </button>
+          <button
+            class="pill-group__item"
+            class:pill-group__item--active={selectedPreset === 'thisMonth'}
+            onclick={() => setDatePreset('thisMonth')}
+          >
+            {$_('analytics.filters.presets.thisMonth')}
+          </button>
+          <button
+            class="pill-group__item"
+            class:pill-group__item--active={selectedPreset === 'custom'}
+            onclick={() => setDatePreset('custom')}
+          >
+            {$_('analytics.filters.presets.custom')}
+          </button>
+        </div>
       </div>
-      
-      <div class="pill-group">
-        <button 
-          class="pill-group__item"
-          class:pill-group__item--active={granularity === 'hour'}
-          onclick={() => granularity = 'hour'}
-        >
-          {$_('analytics.filters.hour')}
-        </button>
-        <button 
-          class="pill-group__item"
-          class:pill-group__item--active={granularity === 'day'}
-          onclick={() => granularity = 'day'}
-        >
-          {$_('analytics.filters.day')}
-        </button>
-        <button 
-          class="pill-group__item"
-          class:pill-group__item--active={granularity === 'week'}
-          onclick={() => granularity = 'week'}
-        >
-          {$_('analytics.filters.week')}
-        </button>
-        <button 
-          class="pill-group__item"
-          class:pill-group__item--active={granularity === 'month'}
-          onclick={() => granularity = 'month'}
-        >
-          {$_('analytics.filters.month')}
-        </button>
-      </div>
+
+      <!-- Custom Date Inputs (only shown when Custom is selected) -->
+      {#if selectedPreset === 'custom'}
+        <div class="filter-section">
+          <div class="date-inputs">
+            <input
+              type="date"
+              bind:value={startDate}
+              class="date-input"
+            />
+            <span class="date-separator">{$_('analytics.filters.to')}</span>
+            <input
+              type="date"
+              bind:value={endDate}
+              class="date-input"
+            />
+          </div>
+        </div>
+      {/if}
     </div>
   </PageHeader>
 
-  {#if isLoading}
-    <div class="loading-container">
-      <LoadingSpinner />
+  <!-- Tab Navigation -->
+  <div class="tabs" role="tablist" aria-label="Analytics views">
+    <button
+      role="tab"
+      class="tab"
+      class:tab--active={currentTab === 'overview'}
+      aria-selected={currentTab === 'overview'}
+      onclick={() => setTab('overview')}
+    >
+      {$_('analytics.tabs.overview')}
+    </button>
+    <button
+      role="tab"
+      class="tab"
+      class:tab--active={currentTab === 'by-user'}
+      aria-selected={currentTab === 'by-user'}
+      onclick={() => setTab('by-user')}
+    >
+      {$_('analytics.tabs.byUser')}
+    </button>
+    <button
+      role="tab"
+      class="tab"
+      class:tab--active={currentTab === 'by-department'}
+      aria-selected={currentTab === 'by-department'}
+      onclick={() => setTab('by-department')}
+    >
+      {$_('analytics.tabs.byDepartment')}
+    </button>
+    <button
+      role="tab"
+      class="tab"
+      class:tab--active={currentTab === 'by-model'}
+      aria-selected={currentTab === 'by-model'}
+      onclick={() => setTab('by-model')}
+    >
+      {$_('analytics.tabs.byModel')}
+    </button>
+  </div>
+
+  {#if currentTab === 'overview'}
+    <AnalyticsOverviewTab
+      {overviewData}
+      {timeseriesData}
+      {isLoading}
+      {chartsLoading}
+      comparisonPeriodLabel={comparisonPeriodLabel()}
+      {error}
+      onRetry={fetchAnalytics}
+      {granularity}
+      onGranularityChange={(value) => granularity = value}
+    />
+  {:else if currentTab === 'by-user'}
+    <UserAnalyticsTab {startDate} {endDate} />
+  {:else if currentTab === 'by-department'}
+    <div class="tab-placeholder">
+      <AdminPanelCard>
+        <div class="placeholder-content">
+          <p>{$_('analytics.tabs.byDepartment')} - Coming soon</p>
+          <p class="placeholder-hint">Department analytics will be available here</p>
+        </div>
+      </AdminPanelCard>
     </div>
-  {:else if error}
-    <AdminPanelCard>
-      <div class="error-state">
-        <p class="error-message">{error}</p>
-        <button class="btn-primary" onclick={fetchAnalytics}>{$_('analytics.retry')}</button>
-      </div>
-    </AdminPanelCard>
-  {:else if overviewData}
-    <div class="analytics-content">
-      <section class="overview-section">
-        <h2 class="section-title">{$_('analytics.overview.title')}</h2>
-        
-        <div class="metrics-grid">
-          <AdminPanelCard class="metric-card">
-            <div class="metric-content">
-              <div class="metric-header">
-                <span class="metric-label">{$_('analytics.overview.totalUsers')}</span>
-                {#if overviewData.request_growth_rate !== 0}
-                  <span class="metric-growth" class:positive={overviewData.request_growth_rate > 0} class:negative={overviewData.request_growth_rate < 0}>
-                    {formatPercentage(overviewData.request_growth_rate)}
-                  </span>
-                {/if}
-              </div>
-              <div class="metric-value">{formatNumber(overviewData.total_users)}</div>
-              <div class="metric-subtext">{$_('analytics.overview.activeUsers', { values: { count: formatNumber(overviewData.active_users) } })}</div>
-            </div>
-          </AdminPanelCard>
+  {/if}
 
-          <AdminPanelCard class="metric-card">
-            <div class="metric-content">
-              <div class="metric-header">
-                <span class="metric-label">{$_('analytics.overview.totalRequests')}</span>
-                {#if overviewData.request_growth_rate !== 0}
-                  <span class="metric-growth" class:positive={overviewData.request_growth_rate > 0} class:negative={overviewData.request_growth_rate < 0}>
-                    {formatPercentage(overviewData.request_growth_rate)}
-                  </span>
-                {/if}
-              </div>
-              <div class="metric-value">{formatNumber(overviewData.total_requests)}</div>
-              <div class="metric-subtext">{$_('analytics.overview.avgPerUser', { values: { count: overviewData.average_requests_per_user.toFixed(1) } })}</div>
-            </div>
-          </AdminPanelCard>
-
-          <AdminPanelCard class="metric-card">
-            <div class="metric-content">
-              <div class="metric-header">
-                <span class="metric-label">{$_('analytics.overview.totalTokens')}</span>
-                {#if overviewData.token_growth_rate !== 0}
-                  <span class="metric-growth" class:positive={overviewData.token_growth_rate > 0} class:negative={overviewData.token_growth_rate < 0}>
-                    {formatPercentage(overviewData.token_growth_rate)}
-                  </span>
-                {/if}
-              </div>
-              <div class="metric-value">{formatNumber(overviewData.total_tokens)}</div>
-            </div>
-          </AdminPanelCard>
-
-          <AdminPanelCard class="metric-card">
-            <div class="metric-content">
-              <div class="metric-header">
-                <span class="metric-label">{$_('analytics.overview.totalCost')}</span>
-                {#if overviewData.cost_growth_rate !== 0}
-                  <span class="metric-growth" class:positive={overviewData.cost_growth_rate > 0} class:negative={overviewData.cost_growth_rate < 0}>
-                    {formatPercentage(overviewData.cost_growth_rate)}
-                  </span>
-                {/if}
-              </div>
-              <div class="metric-value">{formatCurrency(overviewData.total_cost)}</div>
-            </div>
-          </AdminPanelCard>
+  {#if currentTab === 'by-model'}
+    <div class="tab-placeholder">
+      <AdminPanelCard>
+        <div class="placeholder-content">
+          <p>{$_('analytics.tabs.byModel')} - Coming soon</p>
+          <p class="placeholder-hint">Model analytics will be available here</p>
         </div>
-      </section>
-
-      {#if overviewData.top_models && overviewData.top_models.length > 0}
-        <section class="top-models-section">
-          <h2 class="section-title">{$_('analytics.topModels.title')}</h2>
-          <AdminPanelCard padded={false}>
-            <div class="table-container">
-              <table class="models-table">
-                <thead>
-                  <tr>
-                    <th>{$_('analytics.topModels.model')}</th>
-                    <th>{$_('analytics.topModels.provider')}</th>
-                    <th>{$_('analytics.topModels.requests')}</th>
-                    <th>{$_('analytics.topModels.tokens')}</th>
-                    <th>{$_('analytics.topModels.cost')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {#each overviewData.top_models as model}
-                    <tr>
-                      <td class="model-name">{model.model_name}</td>
-                      <td class="provider-name">{model.model_provider}</td>
-                      <td>{formatNumber(model.total_requests)}</td>
-                      <td>{formatNumber(model.total_tokens)}</td>
-                      <td>{formatCurrency(model.total_cost)}</td>
-                    </tr>
-                  {/each}
-                </tbody>
-              </table>
-            </div>
-          </AdminPanelCard>
-        </section>
-      {/if}
-
-      <section class="charts-section">
-        <div class="section-header">
-          <h2 class="section-title">{$_('analytics.charts.title')}</h2>
-        </div>
-        
-        {#if !timeseriesData || !timeseriesData.data || timeseriesData.data.length === 0}
-          <div class="empty-state">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
-              <path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>
-            </svg>
-            <p class="empty-state-text">{$_('analytics.charts.emptyState.title')}</p>
-            <p class="empty-state-hint">{$_('analytics.charts.emptyState.hint')}</p>
-          </div>
-        {:else}
-        <div class="charts-grid">
-          <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-icon" style="background: rgba(64, 121, 197, 0.1);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4079c5" stroke-width="2">
-                  <path d="M3 3v18h18"/><path d="M7 12l3-3 3 3 5-5"/>
-                </svg>
-              </div>
-              <div>
-                <h3 class="chart-title">{$_('analytics.charts.multiMetric.title')}</h3>
-                <p class="chart-subtitle">{$_('analytics.charts.multiMetric.subtitle')}</p>
-              </div>
-            </div>
-            {#if chartsLoading}
-              <div class="chart-loading"><LoadingSpinner /></div>
-            {:else}
-              <div class="chart-legend">
-                <span class="legend-item"><span class="legend-dot" style="background: #4079c5;"></span>{$_('analytics.charts.multiMetric.requests')}</span>
-                <span class="legend-item"><span class="legend-dot" style="background: #2d906b;"></span>{$_('analytics.charts.multiMetric.tokens')}</span>
-                <span class="legend-item"><span class="legend-dot" style="background: #DF000C;"></span>{$_('analytics.charts.multiMetric.latency')}</span>
-              </div>
-              <div id="multi-metric-chart" class="chart-container"></div>
-            {/if}
-          </div>
-
-          <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-icon" style="background: rgba(45, 144, 107, 0.1);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2d906b" stroke-width="2">
-                  <path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="14" y="5" width="3" height="12"/>
-                </svg>
-              </div>
-              <div>
-                <h3 class="chart-title">{$_('analytics.charts.usageGrowth.title')}</h3>
-                <p class="chart-subtitle">{$_('analytics.charts.usageGrowth.subtitle')}</p>
-              </div>
-            </div>
-            {#if chartsLoading}
-              <div class="chart-loading"><LoadingSpinner /></div>
-            {:else}
-              <div class="chart-legend">
-                <span class="legend-item"><span class="legend-dot" style="background: #4079c5;"></span>{$_('analytics.charts.usageGrowth.requests')}</span>
-                <span class="legend-item"><span class="legend-dot" style="background: #2d906b;"></span>{$_('analytics.charts.usageGrowth.tokens')}</span>
-              </div>
-              <div id="requests-tokens-chart" class="chart-container"></div>
-            {/if}
-          </div>
-
-          <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-icon" style="background: rgba(0, 200, 83, 0.1);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="2">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                </svg>
-              </div>
-              <div>
-                <h3 class="chart-title">{$_('analytics.charts.apiReliability.title')}</h3>
-                <p class="chart-subtitle">{$_('analytics.charts.apiReliability.subtitle')}</p>
-              </div>
-            </div>
-            {#if chartsLoading}
-              <div class="chart-loading"><LoadingSpinner /></div>
-            {:else}
-              <div class="chart-legend">
-                <span class="legend-item"><span class="legend-dot" style="background: #00C853;"></span>{$_('analytics.charts.apiReliability.success')}</span>
-                <span class="legend-item"><span class="legend-dot" style="background: #DF000C;"></span>{$_('analytics.charts.apiReliability.errors')}</span>
-              </div>
-              <div id="success-error-chart" class="chart-container"></div>
-            {/if}
-          </div>
-
-          <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-icon" style="background: rgba(45, 144, 107, 0.1);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2d906b" stroke-width="2">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
-              </div>
-              <div>
-                <h3 class="chart-title">{$_('analytics.charts.costTrend.title')}</h3>
-                <p class="chart-subtitle">{$_('analytics.charts.costTrend.subtitle')}</p>
-              </div>
-            </div>
-            {#if chartsLoading}
-              <div class="chart-loading"><LoadingSpinner /></div>
-            {:else}
-              <div id="cost-trend-chart" class="chart-container"></div>
-            {/if}
-          </div>
-        </div>
-        {/if}
-      </section>
+      </AdminPanelCard>
     </div>
   {/if}
 </div>
@@ -581,14 +316,44 @@
     margin: 0 auto;
   }
 
-  .filters-container {
+  /* Filters Toolbar */
+  .filters-toolbar {
     display: flex;
-    align-items: center;
-    gap: var(--space-lg);
+    align-items: flex-end;
+    gap: var(--space-xl);
     flex-wrap: wrap;
   }
 
-  .date-filters {
+  .filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .filter-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Enhanced selection state for filter buttons */
+  .filter-section .pill-group__item--active {
+    background: var(--brand);
+    color: white;
+    font-weight: 600;
+    box-shadow:
+      0 2px 8px rgba(var(--brand-rgb), 0.3),
+      0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .filter-section .pill-group__item--active:hover {
+    background: color-mix(in oklab, var(--brand) 90%, white);
+    color: white;
+  }
+
+  .date-inputs {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
@@ -597,8 +362,8 @@
   .date-input {
     padding: var(--space-sm) var(--space-md);
     border-radius: var(--radius-sm);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: var(--button-bg);
+    border: 1px solid var(--glass-stroke-dark);
+    background: var(--btn-secondary);
     color: var(--text-primary);
     font-size: 0.875rem;
     font-family: inherit;
@@ -616,288 +381,27 @@
     font-size: 0.875rem;
   }
 
-  .loading-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 400px;
-  }
-
-  .error-state {
-    text-align: center;
-    padding: var(--space-3xl);
-  }
-
-  .error-message {
-    color: var(--brand-red);
-    margin-bottom: var(--space-xl);
-    font-size: 1rem;
-  }
-
-  .analytics-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3xl);
-  }
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--space-xl);
-    flex-wrap: wrap;
-    gap: var(--space-md);
-  }
-
-  .section-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
-    letter-spacing: -0.02em;
-    margin-bottom: var(--space-md);
-  }
-
-  .data-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.375rem 0.875rem;
-    background: rgba(64, 121, 197, 0.15);
-    border: 1px solid rgba(64, 121, 197, 0.3);
-    border-radius: var(--radius-full);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--brand);
-  }
-
-  .metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 0fr));
-    gap: var(--space-xl);
-  }
-
-  :global(.metric-card) {
-    transition: transform 0.2s ease;
-  }
-
-  .metric-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .metric-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .metric-label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
-
-  .metric-growth {
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-full);
-  }
-
-  .metric-growth.positive {
-    color: var(--brand-green);
-    background: color-mix(in oklab, var(--brand-green) 15%, transparent);
-  }
-
-  .metric-growth.negative {
-    color: var(--brand-red);
-    background: color-mix(in oklab, var(--brand-red) 15%, transparent);
-  }
-
-  .metric-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-  }
-
-  .metric-subtext {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-  }
-
-  .table-container {
-    overflow-x: auto;
-  }
-
-  .models-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .models-table thead {
-    background: color-mix(in oklab, var(--button-bg) 50%, var(--btn-secondary));
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .models-table th {
-    padding: var(--space-lg);
-    text-align: left;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .models-table td {
-    padding: var(--space-lg);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    font-size: 0.9375rem;
-    color: var(--text-primary);
-  }
-
-  .models-table tbody tr {
-    transition: background 0.2s ease;
-  }
-
-  .models-table tbody tr:hover {
-    background: color-mix(in oklab, var(--button-bg) 70%, var(--btn-secondary));
-  }
-
-  .model-name {
-    font-weight: 600;
-    color: var(--brand);
-  }
-
-  .provider-name {
-    color: var(--text-secondary);
-  }
-
-  .charts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
-    gap: var(--space-2xl);
-  }
-
-  .chart-card {
-    background: var(--button-bg);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-    padding: var(--space-2xl);
-    box-shadow: var(--glass-shadow-dark);
-    transition: all 0.3s ease;
-  }
-
-  .chart-card:hover {
-    box-shadow: var(--glass-shadow-emphasis);
-    transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.12);
-  }
-
-  .chart-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    margin-bottom: var(--space-2xl);
-  }
-
-  .chart-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .chart-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    line-height: 1.3;
-  }
-
-  .chart-subtitle {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-    margin: 0.25rem 0 0 0;
-    font-weight: 400;
-  }
-
-  .chart-legend {
-    display: flex;
-    gap: var(--space-lg);
-    margin-bottom: var(--space-md);
-    flex-wrap: wrap;
-  }
-
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-  }
-
-  .legend-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-  }
-
-  .chart-container {
-    min-height: 280px;
-    width: 100%;
-    position: relative;
-  }
-
-  .chart-loading {
-    min-height: 280px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-4xl) var(--space-2xl);
-    text-align: center;
-    background: var(--button-bg);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
+  /* Tab Placeholder Content */
+  .tab-placeholder {
     margin-top: var(--space-xl);
   }
 
-  .empty-state svg {
-    margin-bottom: var(--space-xl);
-    color: var(--text-secondary);
+  .placeholder-content {
+    text-align: center;
+    padding: var(--space-4xl) var(--space-2xl);
   }
 
-  .empty-state-text {
+  .placeholder-content p {
     font-size: 1.125rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: var(--space-sm);
+    margin: 0 0 var(--space-sm) 0;
   }
 
-  .empty-state-hint {
+  .placeholder-content .placeholder-hint {
     font-size: 0.9375rem;
+    font-weight: 400;
     color: var(--text-secondary);
-    margin: 0;
-  }
-
-  @media (max-width: 1200px) {
-    .charts-grid {
-      grid-template-columns: 1fr;
-    }
   }
 
   @media (max-width: 768px) {
@@ -905,22 +409,24 @@
       padding: var(--space-xl);
     }
 
-    .metrics-grid {
-      grid-template-columns: 1fr;
+    .filters-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--space-lg);
     }
 
-    .filters-container {
+    .filter-section .pill-group {
+      flex-wrap: wrap;
+    }
+
+    .date-inputs {
       flex-direction: column;
       align-items: stretch;
     }
 
-    .date-filters {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .metric-value {
-      font-size: 1.5rem;
+    .tabs {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
   }
 </style>

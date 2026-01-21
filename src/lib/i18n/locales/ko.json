@@ -1,26 +1,11 @@
 {
   "common": {
-    "welcome": "TODO: 환영합니다",
-    "login": "TODO: 로그인",
-    "logout": "TODO: 로그아웃",
-    "email": "TODO: 이메일",
-    "password": "TODO: 비밀번호",
-    "submit": "TODO: 제출",
-    "cancel": "TODO: 취소",
-    "save": "TODO: 저장",
-    "delete": "TODO: 삭제",
-    "edit": "TODO: 편집",
-    "search": "TODO: 검색",
-    "loading": "TODO: 로딩 중...",
-    "error": "TODO: 오류",
-    "success": "TODO: 성공"
-  },
-  "navigation": {
-    "home": "TODO: 홈",
-    "dashboard": "TODO: 대시보드",
-    "settings": "TODO: 설정",
-    "profile": "TODO: 프로필",
-    "users": "TODO: 사용자"
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "편집",
+    "search": "검색",
+    "never": "없음"
   },
   "auth": {
     "signIn": "로그인",
@@ -64,7 +49,7 @@
   "sidebar": {
     "newChat": "새 채팅",
     "users": "사용자",
-    "adminPanel": "관리자 패널",
+    "adminPanel": "관리 센터",
     "backToChat": "채팅으로 돌아가기",
     "toggleSidebar": "사이드바 토글",
     "expandSidebar": "사이드바 확장",
@@ -86,7 +71,7 @@
     "userMenu": "사용자 메뉴",
     "user": "사용자",
     "settings": "설정",
-    "admin": "관리자",
+    "admin": "관리 센터",
     "signOut": "로그아웃",
     "deleteChat": "채팅 삭제",
     "deleteChatConfirm": "이 채팅을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
@@ -98,7 +83,14 @@
     "deleteChatError": "채팅 삭제 실패",
     "archiveChatError": "채팅 보관 실패",
     "chat": "채팅",
-    "untitledChat": "제목 없는 채팅"
+    "untitledChat": "제목 없는 채팅",
+    "usageAnalytics": "사용 분석",
+    "userAnalytics": "사용자 분석",
+    "aiEngines": "AI 엔진",
+    "sectionManage": "관리",
+    "sectionMonitor": "모니터링",
+    "sectionConfigure": "설정",
+    "overview": "개요"
   },
   "app": {
     "closeSidebar": "사이드바 닫기",
@@ -254,6 +246,10 @@
       "failedToRemoveMember": "구성원 제거 실패",
       "failedToFetchMembers": "구성원 가져오기 실패",
       "addMemberPlaceholder": "사용자 검색 및 선택이 여기에 구현됩니다"
+    },
+    "settings": {
+      "title": "설정",
+      "subtitle": "시스템 설정 및 연동 구성"
     }
   },
   "chat": {
@@ -403,6 +399,27 @@
       "noModelsAllowed": "허용된 모델 없음"
     }
   },
+  "adminOverview": {
+    "title": "개요",
+    "subtitle": "관리 센터 대시보드 개요",
+    "quickStats": "빠른 통계",
+    "quickLinks": "빠른 링크",
+    "topModels": "인기 모델",
+    "totalUsers": "총 사용자",
+    "totalRequests": "총 요청",
+    "totalTokens": "총 토큰",
+    "totalCost": "총 비용",
+    "activeUsers": "{count} 활성",
+    "last30Days": "최근 30일",
+    "manageUsers": "사용자 계정 및 역할 관리",
+    "manageDepartments": "팀 구조 구성",
+    "viewAnalytics": "상세 사용 분석 보기",
+    "configureSettings": "시스템 설정 구성",
+    "retry": "재시도",
+    "errors": {
+      "fetchFailed": "개요 데이터를 가져오지 못했습니다"
+    }
+  },
   "userAnalytics": {
     "title": "사용자 분석",
     "subtitle": "사용자별 상세 사용 분석",
@@ -444,14 +461,29 @@
     }
   },
   "analytics": {
-    "title": "분석",
+    "title": "사용량 분석",
     "subtitle": "시스템 성능 및 사용 메트릭 모니터링",
+    "tabs": {
+      "overview": "개요",
+      "byUser": "사용자별",
+      "byDepartment": "부서별",
+      "byModel": "모델별"
+    },
     "filters": {
+      "dateRange": "기간",
+      "presets": {
+        "last7Days": "최근 7일",
+        "last30Days": "최근 30일",
+        "last90Days": "최근 90일",
+        "thisMonth": "이번 달",
+        "custom": "사용자 정의"
+      },
       "to": "부터",
-      "hour": "시간",
-      "day": "일",
-      "week": "주",
-      "month": "월"
+      "aggregated": "집계 단위",
+      "hour": "시간별",
+      "day": "일별",
+      "week": "주별",
+      "month": "월별"
     },
     "loading": "분석 로딩 중...",
     "retry": "재시도",
@@ -462,7 +494,8 @@
       "totalRequests": "총 요청",
       "avgPerUser": "사용자당 평균 {count}",
       "totalTokens": "총 토큰",
-      "totalCost": "총 비용"
+      "totalCost": "총 비용",
+      "vsPreviousDays": "이전 {count}일 대비"
     },
     "topModels": {
       "title": "상위 모델",

@@ -1,26 +1,11 @@
 {
   "common": {
-    "welcome": "TODO: Bienvenido",
-    "login": "TODO: Iniciar sesión",
-    "logout": "TODO: Cerrar sesión",
-    "email": "TODO: Correo electrónico",
-    "password": "TODO: Contraseña",
-    "submit": "TODO: Enviar",
-    "cancel": "TODO: Cancelar",
-    "save": "TODO: Guardar",
-    "delete": "TODO: Eliminar",
-    "edit": "TODO: Editar",
-    "search": "TODO: Buscar",
-    "loading": "TODO: Cargando...",
-    "error": "TODO: Error",
-    "success": "TODO: Éxito"
-  },
-  "navigation": {
-    "home": "TODO: Inicio",
-    "dashboard": "TODO: Panel",
-    "settings": "TODO: Configuración",
-    "profile": "TODO: Perfil",
-    "users": "TODO: Usuarios"
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "search": "Buscar",
+    "never": "Nunca"
   },
   "auth": {
     "signIn": "Iniciar sesión",
@@ -64,7 +49,7 @@
   "sidebar": {
     "newChat": "Nueva conversación",
     "users": "Usuarios",
-    "adminPanel": "Panel de administración",
+    "adminPanel": "Control Hub",
     "backToChat": "Volver al chat",
     "toggleSidebar": "Alternar barra lateral",
     "expandSidebar": "Expandir barra lateral",
@@ -86,7 +71,7 @@
     "userMenu": "Menú de usuario",
     "user": "Usuario",
     "settings": "Configuración",
-    "admin": "Administrador",
+    "admin": "Control Hub",
     "signOut": "Cerrar sesión",
     "deleteChat": "Eliminar conversación",
     "deleteChatConfirm": "¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer.",
@@ -98,7 +83,14 @@
     "deleteChatError": "Error al eliminar la conversación",
     "archiveChatError": "Error al archivar la conversación",
     "chat": "Conversación",
-    "untitledChat": "Conversación sin título"
+    "untitledChat": "Conversación sin título",
+    "usageAnalytics": "Analíticas de Uso",
+    "userAnalytics": "Analíticas de Usuario",
+    "aiEngines": "Motores de IA",
+    "sectionManage": "Gestionar",
+    "sectionMonitor": "Monitorear",
+    "sectionConfigure": "Configurar",
+    "overview": "Resumen"
   },
   "app": {
     "closeSidebar": "Cerrar barra lateral",
@@ -254,6 +246,10 @@
       "failedToRemoveMember": "Error al eliminar miembro",
       "failedToFetchMembers": "Error al obtener miembros",
       "addMemberPlaceholder": "La búsqueda y selección de usuarios se implementará aquí"
+    },
+    "settings": {
+      "title": "Configuración",
+      "subtitle": "Configurar ajustes del sistema e integraciones"
     }
   },
   "chat": {
@@ -403,6 +399,27 @@
       "noModelsAllowed": "No hay modelos permitidos"
     }
   },
+  "adminOverview": {
+    "title": "Resumen",
+    "subtitle": "Resumen del Control Hub",
+    "quickStats": "Estadísticas rápidas",
+    "quickLinks": "Enlaces rápidos",
+    "topModels": "Modelos principales",
+    "totalUsers": "Usuarios totales",
+    "totalRequests": "Solicitudes totales",
+    "totalTokens": "Tokens totales",
+    "totalCost": "Costo total",
+    "activeUsers": "{count} activos",
+    "last30Days": "Últimos 30 días",
+    "manageUsers": "Gestionar cuentas y roles de usuario",
+    "manageDepartments": "Organizar la estructura del equipo",
+    "viewAnalytics": "Ver análisis de uso detallado",
+    "configureSettings": "Configurar ajustes del sistema",
+    "retry": "Reintentar",
+    "errors": {
+      "fetchFailed": "Error al obtener datos del resumen"
+    }
+  },
   "userAnalytics": {
     "title": "Analítica de usuarios",
     "subtitle": "Analítica de uso detallada por usuario",
@@ -444,14 +461,29 @@
     }
   },
   "analytics": {
-    "title": "Analítica",
+    "title": "Analítica de Uso",
     "subtitle": "Monitorear el rendimiento del sistema y las métricas de uso",
+    "tabs": {
+      "overview": "Resumen",
+      "byUser": "Por Usuario",
+      "byDepartment": "Por Departamento",
+      "byModel": "Por Modelo"
+    },
     "filters": {
+      "dateRange": "Rango de fechas",
+      "presets": {
+        "last7Days": "Últimos 7 días",
+        "last30Days": "Últimos 30 días",
+        "last90Days": "Últimos 90 días",
+        "thisMonth": "Este mes",
+        "custom": "Personalizado"
+      },
       "to": "a",
-      "hour": "Hora",
-      "day": "Día",
-      "week": "Semana",
-      "month": "Mes"
+      "aggregated": "Agregado",
+      "hour": "Por hora",
+      "day": "Diario",
+      "week": "Semanal",
+      "month": "Mensual"
     },
     "loading": "Cargando analítica...",
     "retry": "Reintentar",
@@ -462,7 +494,8 @@
       "totalRequests": "Solicitudes totales",
       "avgPerUser": "{count} promedio por usuario",
       "totalTokens": "Tokens totales",
-      "totalCost": "Costo total"
+      "totalCost": "Costo total",
+      "vsPreviousDays": "vs {count} días anteriores"
     },
     "topModels": {
       "title": "Modelos principales",

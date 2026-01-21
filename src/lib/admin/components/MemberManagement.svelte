@@ -8,6 +8,7 @@
   import { _ } from "svelte-i18n";
   import LoadingSpinner from "./LoadingSpinner.svelte";
   import AddMemberModal from "./AddMemberModal.svelte";
+  import { formatDate } from "$lib/utils/format.js";
   
   interface Props {
     department: Department;
@@ -91,9 +92,6 @@
     }
   }
   
-  function formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString();
-  }
 </script>
 
 <div class="member-management">
