@@ -11,8 +11,8 @@ export interface SendMessageOptions {
   uploadedFiles?: UploadedFile[];
   webSearch?: boolean;
   onToken?: (token: string) => void;
-  onStart?: (data: any) => void;
-  onTitle?: (title: string) => void;
+  onStart?: () => void;
+  onTitle?: (newConversationId: string, title: string) => void;
   onDone?: (data: any) => void;
   onError?: (error: ApiError | Error) => void;
 }
@@ -243,7 +243,6 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
 
     const decoder = new TextDecoder();
     let buffer = '';
-    let isFirstChunk = true;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -260,43 +259,28 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         const dataMatch = line.match(/^data: (.+)$/m);
 
         if (eventMatch && dataMatch) {
-          const event = eventMatch[1];
-          const dataStr = dataMatch[1];
+          const event = JSON.parse(eventMatch[1]);
+          const data = JSON.parse(dataMatch[1]);
           
-          // Check for stream completion signal
-          if (dataStr === '[DONE]') {
-            onDone?.({});
-            break;
-          }
-          
-          const data = JSON.parse(dataStr);
-
           switch (event) {
-            case 'start':
-              onStart?.(data);
+            case 'conversation':
+              onTitle?.(data.id, data.title);
               break;
-            case 'chunk':
-              if (data) {
-                // Handle first chunk - extract conversation ID and call onStart
-                if (isFirstChunk) {
-                  isFirstChunk = false;
-                  
-                  // Call onStart with conversation data if available
-                  if (data.id && onStart) {
-                    onStart({ conversation_id: data.id });
-                  }
-                }
-                
-                onToken?.(data.content);
+            case 'message_start':
+              onStart?.();
+              break;
+            case 'delta':
+              if (data) {                
+                onToken?.(data.text);
               }
               break;
-            case 'set_title':
-              onTitle?.(data.title);
+            case 'message_end':
+              // Handle tokens usage
               break;
-            case '[DONE]':
+            case 'done':
               onDone?.(data);
               break;
-            case 'error':
+            default:
               // Parse the error detail and create an ApiError
               const errorDetail = parseErrorDetail(data);
               const streamError = new ApiError(response.status || 500, errorDetail);

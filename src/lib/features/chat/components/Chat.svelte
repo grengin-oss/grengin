@@ -174,18 +174,7 @@
         uploadedFiles: uploadedFiles,
         webSearch: webSearch,
 
-        onStart: (data) => {
-          
-          // Update conversation ID and URL
-          const newConversationId = data.conversation_id;
-          if (newConversationId && newConversationId !== conversationId) {
-            conversationId = newConversationId;
-            updateUrlWithConversationId(newConversationId);
-          }
-          
-          // Refresh sidebar chat history when conversation starts
-          window.dispatchEvent(new CustomEvent('refreshChatHistory'));
-          
+        onStart: () => {          
           isTyping = false;
           if (currentStreamingMessage) {
             messages = [...messages, currentStreamingMessage];
@@ -213,8 +202,15 @@
             scrollToStreamingMessageTop(currentStreamingMessage.id);
           }
         },
-        onTitle: (_title) => {
-          // Title received from stream
+        onTitle: (newConversationId: string, title: string) => {
+          // Update conversation ID and URL
+          if (newConversationId && newConversationId !== conversationId) {
+            conversationId = newConversationId;
+            updateUrlWithConversationId(newConversationId);
+          }
+          
+          // Refresh sidebar chat history when conversation starts
+          window.dispatchEvent(new CustomEvent('refreshChatHistory'));
         },
         onDone: async (_data) => {
           if (currentStreamingMessage) {
