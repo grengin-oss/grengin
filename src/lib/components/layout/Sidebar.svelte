@@ -462,6 +462,7 @@
     // Listen for chat history refresh events
     const handleRefresh = () => {
       fetchChats({ reset: true });
+      updateSelectedChatFromUrl();
     };
 
     // Listen for URL changes (popstate for back/forward navigation)

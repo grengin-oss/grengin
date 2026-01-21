@@ -174,18 +174,19 @@
         uploadedFiles: uploadedFiles,
         webSearch: webSearch,
 
-        onStart: (data) => {
-          
+        onConversationInitialized: ({isNewConversation, newConversationId}) => {
           // Update conversation ID and URL
-          const newConversationId = data.conversation_id;
           if (newConversationId && newConversationId !== conversationId) {
             conversationId = newConversationId;
             updateUrlWithConversationId(newConversationId);
           }
           
           // Refresh sidebar chat history when conversation starts
-          window.dispatchEvent(new CustomEvent('refreshChatHistory'));
-          
+          if (isNewConversation) {
+            window.dispatchEvent(new CustomEvent('refreshChatHistory'));
+          }
+        },
+        onStreamingStart: () => {          
           isTyping = false;
           if (currentStreamingMessage) {
             messages = [...messages, currentStreamingMessage];
@@ -193,7 +194,7 @@
             scrollToStreamingMessageTop(currentStreamingMessage.id);
           }
         },
-        onToken: (token) => {
+        onResponseDelta: (token) => {
           if (currentStreamingMessage) {
             // Add message to array on first token if not already added
             if (!messageAddedToArray && token.trim()) {
@@ -212,9 +213,6 @@
             );
             scrollToStreamingMessageTop(currentStreamingMessage.id);
           }
-        },
-        onTitle: (_title) => {
-          // Title received from stream
         },
         onDone: async (_data) => {
           if (currentStreamingMessage) {
