@@ -1,26 +1,10 @@
 {
   "common": {
-    "welcome": "TODO: ようこそ",
-    "login": "TODO: ログイン",
-    "logout": "TODO: ログアウト",
-    "email": "TODO: メール",
-    "password": "TODO: パスワード",
-    "submit": "TODO: 送信",
-    "cancel": "TODO: キャンセル",
-    "save": "TODO: 保存",
-    "delete": "TODO: 削除",
-    "edit": "TODO: 編集",
-    "search": "TODO: 検索",
-    "loading": "TODO: 読み込み中...",
-    "error": "TODO: エラー",
-    "success": "TODO: 成功"
-  },
-  "navigation": {
-    "home": "TODO: ホーム",
-    "dashboard": "TODO: ダッシュボード",
-    "settings": "TODO: 設定",
-    "profile": "TODO: プロフィール",
-    "users": "TODO: ユーザー"
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "search": "検索",
   },
   "auth": {
     "signIn": "サインイン",

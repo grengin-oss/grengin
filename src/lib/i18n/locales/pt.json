@@ -1,26 +1,10 @@
 {
   "common": {
-    "welcome": "TODO: Bem-vindo",
-    "login": "TODO: Entrar",
-    "logout": "TODO: Sair",
-    "email": "TODO: Email",
-    "password": "TODO: Senha",
-    "submit": "TODO: Enviar",
-    "cancel": "TODO: Cancelar",
-    "save": "TODO: Salvar",
-    "delete": "TODO: Excluir",
-    "edit": "TODO: Editar",
-    "search": "TODO: Pesquisar",
-    "loading": "TODO: Carregando...",
-    "error": "TODO: Erro",
-    "success": "TODO: Sucesso"
-  },
-  "navigation": {
-    "home": "TODO: Início",
-    "dashboard": "TODO: Painel",
-    "settings": "TODO: Configurações",
-    "profile": "TODO: Perfil",
-    "users": "TODO: Usuários"
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "search": "Pesquisar",
   },
   "auth": {
     "signIn": "Entrar",

@@ -1,26 +1,10 @@
 {
   "common": {
-    "welcome": "TODO: 환영합니다",
-    "login": "TODO: 로그인",
-    "logout": "TODO: 로그아웃",
-    "email": "TODO: 이메일",
-    "password": "TODO: 비밀번호",
-    "submit": "TODO: 제출",
-    "cancel": "TODO: 취소",
-    "save": "TODO: 저장",
-    "delete": "TODO: 삭제",
-    "edit": "TODO: 편집",
-    "search": "TODO: 검색",
-    "loading": "TODO: 로딩 중...",
-    "error": "TODO: 오류",
-    "success": "TODO: 성공"
-  },
-  "navigation": {
-    "home": "TODO: 홈",
-    "dashboard": "TODO: 대시보드",
-    "settings": "TODO: 설정",
-    "profile": "TODO: 프로필",
-    "users": "TODO: 사용자"
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "편집",
+    "search": "검색",
   },
   "auth": {
     "signIn": "로그인",
