@@ -137,3 +137,62 @@ export interface UserAnalyticsResponse {
   limit: number;
   total_pages: number;
 }
+
+export type BudgetPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+
+export interface Department {
+  id: string;
+  name: string;
+  description: string;
+  parent_id: string | null;
+  leader_ids: string[];
+  path: string;
+  depth: number;
+  child_count: number;
+  member_count: number;
+  total_member_count: number;
+  budget_allocated: number;
+  budget_distributed: number;
+  budget_available: number;
+  budget_used: number;
+  budget_period: BudgetPeriod;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DepartmentListResponse {
+  departments: Department[];
+  total: number;
+}
+
+export interface CreateDepartmentRequest {
+  name: string;
+  description: string;
+  parent_id?: string | null;
+  leader_ids?: string[];
+}
+
+export interface UpdateDepartmentRequest {
+  name?: string;
+  description?: string;
+  parent_id?: string | null;
+  leader_ids?: string[];
+}
+
+export interface SetBudgetRequest {
+  amount: number;
+  period: BudgetPeriod;
+}
+
+export interface DepartmentMember {
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  role: string;
+  joined_at: string;
+}
+
+export interface DepartmentMembersResponse {
+  members: DepartmentMember[];
+  total: number;
+}
