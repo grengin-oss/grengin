@@ -363,7 +363,8 @@
       "totalRequests": "Total de solicitações",
       "avgPerUser": "{count} média por usuário",
       "totalTokens": "Total de tokens",
-      "totalCost": "Custo total"
+      "totalCost": "Custo total",
+      "vsPreviousDays": "vs {count} dias anteriores"
     },
     "topModels": {
       "title": "Principais modelos",

@@ -454,7 +454,8 @@
       "totalRequests": "総リクエスト数",
       "avgPerUser": "ユーザーあたり平均 {count}",
       "totalTokens": "総トークン数",
-      "totalCost": "総コスト"
+      "totalCost": "総コスト",
+      "vsPreviousDays": "前{count}日間比"
     },
     "topModels": {
       "title": "トップモデル",

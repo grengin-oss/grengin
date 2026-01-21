@@ -300,6 +300,16 @@
     return sign + (num * 100).toFixed(1) + '%';
   }
 
+  // Calculate the comparison period label based on selected date range
+  const comparisonPeriodLabel = $derived(() => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end
+
+    return $_('analytics.overview.vsPreviousDays', { values: { count: diffDays } });
+  });
+
   $effect(() => {
     if (startDate && endDate) {
       fetchAnalytics();
@@ -379,9 +389,12 @@
               <div class="metric-header">
                 <span class="metric-label">{$_('analytics.overview.totalUsers')}</span>
                 {#if overviewData.request_growth_rate !== 0}
-                  <span class="metric-growth" class:positive={overviewData.request_growth_rate > 0} class:negative={overviewData.request_growth_rate < 0}>
-                    {formatPercentage(overviewData.request_growth_rate)}
-                  </span>
+                  <div class="metric-growth-wrapper">
+                    <span class="metric-growth" class:positive={overviewData.request_growth_rate > 0} class:negative={overviewData.request_growth_rate < 0}>
+                      {formatPercentage(overviewData.request_growth_rate)}
+                    </span>
+                    <span class="metric-growth-period">{comparisonPeriodLabel()}</span>
+                  </div>
                 {/if}
               </div>
               <div class="metric-value">{formatNumber(overviewData.total_users)}</div>
@@ -394,9 +407,12 @@
               <div class="metric-header">
                 <span class="metric-label">{$_('analytics.overview.totalRequests')}</span>
                 {#if overviewData.request_growth_rate !== 0}
-                  <span class="metric-growth" class:positive={overviewData.request_growth_rate > 0} class:negative={overviewData.request_growth_rate < 0}>
-                    {formatPercentage(overviewData.request_growth_rate)}
-                  </span>
+                  <div class="metric-growth-wrapper">
+                    <span class="metric-growth" class:positive={overviewData.request_growth_rate > 0} class:negative={overviewData.request_growth_rate < 0}>
+                      {formatPercentage(overviewData.request_growth_rate)}
+                    </span>
+                    <span class="metric-growth-period">{comparisonPeriodLabel()}</span>
+                  </div>
                 {/if}
               </div>
               <div class="metric-value">{formatNumber(overviewData.total_requests)}</div>
@@ -409,9 +425,12 @@
               <div class="metric-header">
                 <span class="metric-label">{$_('analytics.overview.totalTokens')}</span>
                 {#if overviewData.token_growth_rate !== 0}
-                  <span class="metric-growth" class:positive={overviewData.token_growth_rate > 0} class:negative={overviewData.token_growth_rate < 0}>
-                    {formatPercentage(overviewData.token_growth_rate)}
-                  </span>
+                  <div class="metric-growth-wrapper">
+                    <span class="metric-growth" class:positive={overviewData.token_growth_rate > 0} class:negative={overviewData.token_growth_rate < 0}>
+                      {formatPercentage(overviewData.token_growth_rate)}
+                    </span>
+                    <span class="metric-growth-period">{comparisonPeriodLabel()}</span>
+                  </div>
                 {/if}
               </div>
               <div class="metric-value">{formatNumber(overviewData.total_tokens)}</div>
@@ -423,9 +442,12 @@
               <div class="metric-header">
                 <span class="metric-label">{$_('analytics.overview.totalCost')}</span>
                 {#if overviewData.cost_growth_rate !== 0}
-                  <span class="metric-growth" class:positive={overviewData.cost_growth_rate > 0} class:negative={overviewData.cost_growth_rate < 0}>
-                    {formatPercentage(overviewData.cost_growth_rate)}
-                  </span>
+                  <div class="metric-growth-wrapper">
+                    <span class="metric-growth" class:positive={overviewData.cost_growth_rate > 0} class:negative={overviewData.cost_growth_rate < 0}>
+                      {formatPercentage(overviewData.cost_growth_rate)}
+                    </span>
+                    <span class="metric-growth-period">{comparisonPeriodLabel()}</span>
+                  </div>
                 {/if}
               </div>
               <div class="metric-value">{formatCurrency(overviewData.total_cost)}</div>
@@ -715,6 +737,19 @@
   .metric-growth.negative {
     color: var(--brand-red);
     background: color-mix(in oklab, var(--brand-red) 15%, transparent);
+  }
+
+  .metric-growth-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .metric-growth-period {
+    font-size: 0.625rem;
+    color: var(--text-tertiary);
+    font-weight: 400;
   }
 
   .metric-value {

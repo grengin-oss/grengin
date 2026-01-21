@@ -454,7 +454,8 @@
       "totalRequests": "Total Requests",
       "avgPerUser": "{count} avg per user",
       "totalTokens": "Total Tokens",
-      "totalCost": "Total Cost"
+      "totalCost": "Total Cost",
+      "vsPreviousDays": "vs prior {count} days"
     },
     "topModels": {
       "title": "Top Models",

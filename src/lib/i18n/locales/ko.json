@@ -454,7 +454,8 @@
       "totalRequests": "총 요청",
       "avgPerUser": "사용자당 평균 {count}",
       "totalTokens": "총 토큰",
-      "totalCost": "총 비용"
+      "totalCost": "총 비용",
+      "vsPreviousDays": "이전 {count}일 대비"
     },
     "topModels": {
       "title": "상위 모델",
