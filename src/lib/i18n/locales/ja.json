@@ -86,7 +86,11 @@
     "untitledChat": "タイトルなしチャット",
     "usageAnalytics": "利用分析",
     "userAnalytics": "ユーザー分析",
-    "aiEngines": "AIエンジン"
+    "aiEngines": "AIエンジン",
+    "sectionManage": "管理",
+    "sectionMonitor": "監視",
+    "sectionConfigure": "設定",
+    "overview": "概要"
   },
   "app": {
     "closeSidebar": "サイドバーを閉じる",
@@ -395,6 +399,27 @@
       "noModelsAllowed": "許可されたモデルがありません"
     }
   },
+  "adminOverview": {
+    "title": "概要",
+    "subtitle": "管理ダッシュボードの概要",
+    "quickStats": "クイック統計",
+    "quickLinks": "クイックリンク",
+    "topModels": "人気モデル",
+    "totalUsers": "総ユーザー数",
+    "totalRequests": "総リクエスト数",
+    "totalTokens": "総トークン数",
+    "totalCost": "総コスト",
+    "activeUsers": "{count} アクティブ",
+    "last30Days": "過去30日間",
+    "manageUsers": "ユーザーアカウントとロールを管理",
+    "manageDepartments": "チーム構造を整理",
+    "viewAnalytics": "詳細な使用状況分析を表示",
+    "configureSettings": "システム設定を構成",
+    "retry": "再試行",
+    "errors": {
+      "fetchFailed": "概要データの取得に失敗しました"
+    }
+  },
   "userAnalytics": {
     "title": "ユーザー分析",
     "subtitle": "ユーザーごとの詳細な使用状況分析",
@@ -438,12 +463,27 @@
   "analytics": {
     "title": "使用状況分析",
     "subtitle": "システムのパフォーマンスと使用状況のメトリクスを監視",
+    "tabs": {
+      "overview": "概要",
+      "byUser": "ユーザー別",
+      "byDepartment": "部門別",
+      "byModel": "モデル別"
+    },
     "filters": {
+      "dateRange": "期間",
+      "presets": {
+        "last7Days": "過去7日間",
+        "last30Days": "過去30日間",
+        "last90Days": "過去90日間",
+        "thisMonth": "今月",
+        "custom": "カスタム"
+      },
       "to": "から",
-      "hour": "時間",
-      "day": "日",
-      "week": "週",
-      "month": "月"
+      "aggregated": "集計単位",
+      "hour": "時間別",
+      "day": "日別",
+      "week": "週別",
+      "month": "月別"
     },
     "loading": "分析を読み込み中...",
     "retry": "再試行",

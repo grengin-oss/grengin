@@ -528,6 +528,48 @@ button:focus-visible, .btn:focus-visible {
     0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
 }
 
+/* ===== Underline Tabs ===== */
+.tabs {
+  display: flex;
+  gap: var(--space-sm);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: var(--space-2xl);
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: var(--space-md) var(--space-lg);
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  outline: none;
+  position: relative;
+}
+
+.tab:hover:not(.tab--active) {
+  color: var(--text-primary);
+  background: rgba(var(--glass-tint), 0.03);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.tab--active,
+.tab[aria-selected="true"] {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
 /* ===== Tag Pills (for labels, badges) ===== */
 .tag {
   display: inline-flex;

@@ -86,7 +86,11 @@
     "untitledChat": "Conversa sem título",
     "usageAnalytics": "Análise de Uso",
     "userAnalytics": "Análise de Usuário",
-    "aiEngines": "Motores de IA"
+    "aiEngines": "Motores de IA",
+    "sectionManage": "Gerenciar",
+    "sectionMonitor": "Monitorar",
+    "sectionConfigure": "Configurar",
+    "overview": "Visão Geral"
   },
   "app": {
     "closeSidebar": "Fechar barra lateral",
@@ -304,6 +308,27 @@
       "closePreview": "Fechar pré-visualização"
     }
   },
+  "adminOverview": {
+    "title": "Visão Geral",
+    "subtitle": "Painel de administração",
+    "quickStats": "Estatísticas Rápidas",
+    "quickLinks": "Links Rápidos",
+    "topModels": "Principais Modelos",
+    "totalUsers": "Total de Usuários",
+    "totalRequests": "Total de Requisições",
+    "totalTokens": "Total de Tokens",
+    "totalCost": "Custo Total",
+    "activeUsers": "{count} ativos",
+    "last30Days": "Últimos 30 dias",
+    "manageUsers": "Gerenciar contas e funções de usuários",
+    "manageDepartments": "Organizar a estrutura da equipe",
+    "viewAnalytics": "Ver análises de uso detalhadas",
+    "configureSettings": "Configurar ajustes do sistema",
+    "retry": "Tentar novamente",
+    "errors": {
+      "fetchFailed": "Falha ao buscar dados de visão geral"
+    }
+  },
   "userAnalytics": {
     "title": "Análise de usuários",
     "subtitle": "Análise de uso detalhada por usuário",
@@ -347,12 +372,27 @@
   "analytics": {
     "title": "Análise de Uso",
     "subtitle": "Monitorar o desempenho do sistema e métricas de uso",
+    "tabs": {
+      "overview": "Visão Geral",
+      "byUser": "Por Usuário",
+      "byDepartment": "Por Departamento",
+      "byModel": "Por Modelo"
+    },
     "filters": {
+      "dateRange": "Período",
+      "presets": {
+        "last7Days": "Últimos 7 dias",
+        "last30Days": "Últimos 30 dias",
+        "last90Days": "Últimos 90 dias",
+        "thisMonth": "Este mês",
+        "custom": "Personalizado"
+      },
       "to": "até",
-      "hour": "Hora",
-      "day": "Dia",
-      "week": "Semana",
-      "month": "Mês"
+      "aggregated": "Agregado",
+      "hour": "Por hora",
+      "day": "Diário",
+      "week": "Semanal",
+      "month": "Mensal"
     },
     "loading": "Carregando análise...",
     "retry": "Tentar novamente",

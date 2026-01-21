@@ -86,7 +86,11 @@
     "untitledChat": "Untitled Chat",
     "usageAnalytics": "Usage Analytics",
     "userAnalytics": "User Analytics",
-    "aiEngines": "AI Engines"
+    "aiEngines": "AI Engines",
+    "sectionManage": "Manage",
+    "sectionMonitor": "Monitor",
+    "sectionConfigure": "Configure",
+    "overview": "Overview"
   },
   "app": {
     "closeSidebar": "Close sidebar",
@@ -395,6 +399,27 @@
       "noModelsAllowed": "No Models Allowed"
     }
   },
+  "adminOverview": {
+    "title": "Overview",
+    "subtitle": "Admin dashboard overview",
+    "quickStats": "Quick Stats",
+    "quickLinks": "Quick Links",
+    "topModels": "Top Models",
+    "totalUsers": "Total Users",
+    "totalRequests": "Total Requests",
+    "totalTokens": "Total Tokens",
+    "totalCost": "Total Cost",
+    "activeUsers": "{count} active",
+    "last30Days": "Last 30 days",
+    "manageUsers": "Manage user accounts and roles",
+    "manageDepartments": "Organize your team structure",
+    "viewAnalytics": "View detailed usage analytics",
+    "configureSettings": "Configure system settings",
+    "retry": "Retry",
+    "errors": {
+      "fetchFailed": "Failed to fetch overview data"
+    }
+  },
   "userAnalytics": {
     "title": "User Analytics",
     "subtitle": "Detailed usage analytics per user",
@@ -438,12 +463,27 @@
   "analytics": {
     "title": "Usage Analytics",
     "subtitle": "Monitor system performance and usage metrics",
+    "tabs": {
+      "overview": "Overview",
+      "byUser": "By User",
+      "byDepartment": "By Department",
+      "byModel": "By Model"
+    },
     "filters": {
+      "dateRange": "Date Range",
+      "presets": {
+        "last7Days": "Last 7 days",
+        "last30Days": "Last 30 days",
+        "last90Days": "Last 90 days",
+        "thisMonth": "This month",
+        "custom": "Custom"
+      },
       "to": "to",
-      "hour": "Hour",
-      "day": "Day",
-      "week": "Week",
-      "month": "Month"
+      "aggregated": "Aggregated",
+      "hour": "Hourly",
+      "day": "Daily",
+      "week": "Weekly",
+      "month": "Monthly"
     },
     "loading": "Loading analytics...",
     "retry": "Retry",

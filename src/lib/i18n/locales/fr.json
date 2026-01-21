@@ -86,7 +86,11 @@
     "untitledChat": "Conversation sans titre",
     "usageAnalytics": "Suivi d'Usage",
     "userAnalytics": "Analytique Utilisateurs",
-    "aiEngines": "Moteurs IA"
+    "aiEngines": "Moteurs IA",
+    "sectionManage": "Gérer",
+    "sectionMonitor": "Surveiller",
+    "sectionConfigure": "Configurer",
+    "overview": "Aperçu"
   },
   "app": {
     "closeSidebar": "Fermer la barre latérale",
@@ -395,6 +399,27 @@
       "noModelsAllowed": "Aucun modèle autorisé"
     }
   },
+  "adminOverview": {
+    "title": "Aperçu",
+    "subtitle": "Tableau de bord d'administration",
+    "quickStats": "Statistiques rapides",
+    "quickLinks": "Liens rapides",
+    "topModels": "Modèles principaux",
+    "totalUsers": "Utilisateurs totaux",
+    "totalRequests": "Requêtes totales",
+    "totalTokens": "Tokens totaux",
+    "totalCost": "Coût total",
+    "activeUsers": "{count} actifs",
+    "last30Days": "30 derniers jours",
+    "manageUsers": "Gérer les comptes et rôles utilisateurs",
+    "manageDepartments": "Organiser la structure de l'équipe",
+    "viewAnalytics": "Voir les analyses d'utilisation détaillées",
+    "configureSettings": "Configurer les paramètres du système",
+    "retry": "Réessayer",
+    "errors": {
+      "fetchFailed": "Échec de la récupération des données d'aperçu"
+    }
+  },
   "userAnalytics": {
     "title": "Analytique utilisateur",
     "subtitle": "Analytique d'utilisation détaillée par utilisateur",
@@ -438,12 +463,27 @@
   "analytics": {
     "title": "Suivi d'Usage",
     "subtitle": "Surveiller les performances du système et les métriques d'utilisation",
+    "tabs": {
+      "overview": "Aperçu",
+      "byUser": "Par Utilisateur",
+      "byDepartment": "Par Département",
+      "byModel": "Par Modèle"
+    },
     "filters": {
+      "dateRange": "Plage de dates",
+      "presets": {
+        "last7Days": "7 derniers jours",
+        "last30Days": "30 derniers jours",
+        "last90Days": "90 derniers jours",
+        "thisMonth": "Ce mois-ci",
+        "custom": "Personnalisé"
+      },
       "to": "à",
-      "hour": "Heure",
-      "day": "Jour",
-      "week": "Semaine",
-      "month": "Mois"
+      "aggregated": "Agrégé",
+      "hour": "Horaire",
+      "day": "Quotidien",
+      "week": "Hebdomadaire",
+      "month": "Mensuel"
     },
     "loading": "Chargement de l'analytique...",
     "retry": "Réessayer",

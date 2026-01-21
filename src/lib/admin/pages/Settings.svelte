@@ -94,11 +94,11 @@
   />
 
   <!-- Tab navigation with proper ARIA -->
-  <div class="settings-tabs" role="tablist" aria-label="Settings tabs">
+  <div class="tabs" role="tablist" aria-label="Settings tabs">
     {#each TABS as tab (tab.id)}
       <button
-        class="settings-tab"
-        class:active={currentTab === tab.id}
+        class="tab"
+        class:tab--active={currentTab === tab.id}
         role="tab"
         aria-selected={currentTab === tab.id}
         aria-controls={`${tab.id}-panel`}
@@ -137,47 +137,6 @@
     padding: var(--space-3xl);
   }
 
-  /* Tab navigation */
-  .settings-tabs {
-    display: flex;
-    gap: var(--space-sm);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    margin-bottom: var(--space-2xl);
-    flex-wrap: wrap;
-  }
-
-  .settings-tab {
-    padding: var(--space-md) var(--space-lg);
-    color: var(--text-secondary);
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    transition:
-      color 0.2s ease,
-      background-color 0.2s ease,
-      border-color 0.2s ease;
-    font-weight: 500;
-    font-size: 0.9375rem;
-    cursor: pointer;
-    outline: none;
-    position: relative;
-  }
-
-  .settings-tab:hover:not(.active) {
-    color: var(--text-primary);
-    background: rgba(var(--glass-tint), 0.03);
-  }
-
-  .settings-tab:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-  }
-
-  .settings-tab.active {
-    color: var(--brand);
-    border-bottom-color: var(--brand);
-  }
-
   /* Tab content */
   .settings-content {
     padding: var(--space-sm);
@@ -193,13 +152,13 @@
       padding: var(--space-xl);
     }
 
-    .settings-tabs {
+    .tabs {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: thin;
     }
 
-    .settings-tab {
+    .tab {
       white-space: nowrap;
     }
   }
@@ -209,7 +168,7 @@
       padding: var(--space-lg);
     }
 
-    .settings-tab {
+    .tab {
       padding: var(--space-sm) var(--space-md);
       font-size: 0.875rem;
     }
