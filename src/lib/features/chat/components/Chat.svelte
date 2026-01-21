@@ -174,7 +174,19 @@
         uploadedFiles: uploadedFiles,
         webSearch: webSearch,
 
-        onStart: () => {          
+        onConversationInitialized: ({isNewConversation, newConversationId}) => {
+          // Update conversation ID and URL
+          if (newConversationId && newConversationId !== conversationId) {
+            conversationId = newConversationId;
+            updateUrlWithConversationId(newConversationId);
+          }
+          
+          // Refresh sidebar chat history when conversation starts
+          if (isNewConversation) {
+            window.dispatchEvent(new CustomEvent('refreshChatHistory'));
+          }
+        },
+        onStreamingStart: () => {          
           isTyping = false;
           if (currentStreamingMessage) {
             messages = [...messages, currentStreamingMessage];
@@ -182,7 +194,7 @@
             scrollToStreamingMessageTop(currentStreamingMessage.id);
           }
         },
-        onToken: (token) => {
+        onResponseDelta: (token) => {
           if (currentStreamingMessage) {
             // Add message to array on first token if not already added
             if (!messageAddedToArray && token.trim()) {
@@ -200,18 +212,6 @@
               m.id === currentStreamingMessage?.id ? currentStreamingMessage : m
             );
             scrollToStreamingMessageTop(currentStreamingMessage.id);
-          }
-        },
-        onTitle: ({isNewConversation, newConversationId}) => {
-          // Update conversation ID and URL
-          if (newConversationId && newConversationId !== conversationId) {
-            conversationId = newConversationId;
-            updateUrlWithConversationId(newConversationId);
-          }
-          
-          // Refresh sidebar chat history when conversation starts
-          if (isNewConversation) {
-            window.dispatchEvent(new CustomEvent('refreshChatHistory'));
           }
         },
         onDone: async (_data) => {

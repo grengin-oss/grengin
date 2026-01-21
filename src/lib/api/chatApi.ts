@@ -10,9 +10,9 @@ export interface SendMessageOptions {
   modelName?: string;
   uploadedFiles?: UploadedFile[];
   webSearch?: boolean;
-  onToken?: (token: string) => void;
-  onStart?: () => void;
-  onTitle?: (data: {newConversationId: string, isNewConversation: boolean}) => void;
+  onConversationInitialized?: (data: {newConversationId: string, isNewConversation: boolean}) => void;
+  onStreamingStart?: () => void;
+  onResponseDelta?: (token: string) => void;
   onDone?: (data: any) => void;
   onError?: (error: ApiError | Error) => void;
 }
@@ -84,7 +84,7 @@ export async function uploadDocument(options: UploadDocumentOptions): Promise<Up
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, onToken, onStart, onTitle, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, onResponseDelta, onStreamingStart, onConversationInitialized, onDone, onError } = options;
 
   try {
     const token = getAccessToken();
@@ -264,14 +264,14 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
           
           switch (event) {
             case 'conversation':
-              onTitle?.({newConversationId: data.id, isNewConversation: data.is_new});
+              onConversationInitialized?.({newConversationId: data.id, isNewConversation: data.is_new});
               break;
             case 'message_start':
-              onStart?.();
+              onStreamingStart?.();
               break;
             case 'delta':
               if (data) {                
-                onToken?.(data.text);
+                onResponseDelta?.(data.text);
               }
               break;
             case 'message_end':
