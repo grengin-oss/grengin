@@ -1,7 +1,7 @@
 /* ===== Root tokens ===== */
 :root {
-  /* Typography & rendering - Grengin brand fonts */
-  font-family: 'Coustard', -apple-system, BlinkMacSystemFont, system-ui, serif;
+  /* Typography & rendering - system fonts */
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 500;
   font-synthesis: none;
@@ -762,7 +762,7 @@ input::placeholder, textarea::placeholder {
 
 /* ===== Typography ===== */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-weight: 700;
   line-height: 1.2;
   color: var(--text-primary);
