@@ -168,7 +168,7 @@
 
 <div class="analytics-page">
   <PageHeader title={$_('analytics.title')} subtitle={$_('analytics.subtitle')}>
-    <div class="filters-toolbar">
+    <div class="filters-toolbar" class:filters-toolbar-custom={selectedPreset === 'custom'}>
       <!-- Date Range Presets -->
       <div class="filter-section">
         <span class="filter-label">{$_('analytics.filters.dateRange')}</span>
@@ -319,9 +319,14 @@
   /* Filters Toolbar */
   .filters-toolbar {
     display: flex;
+    flex-direction: row;
     align-items: flex-end;
     gap: var(--space-xl);
-    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .filters-toolbar-custom{
+    flex-direction: column;
   }
 
   .filter-section {

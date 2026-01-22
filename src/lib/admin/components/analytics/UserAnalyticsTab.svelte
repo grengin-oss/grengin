@@ -23,16 +23,27 @@
   let totalPages = $state(0);
 
   // Sorting & filtering
-  let sortBy = $state<'name' | 'email' | 'requests' | 'tokens' | 'cost' | 'latency' | 'last_activity'>('requests');
+  let sortBy = $state<
+    | 'name'
+    | 'email'
+    | 'totalRequests'
+    | 'totalTokens'
+    | 'totalCost'
+    | 'averageLatency'
+    | 'lastActivity'
+  >('totalRequests');
   let sortOrder = $state<'asc' | 'desc'>('desc');
   let searchQuery = $state('');
+  let pendingDate : {startDate: string, endDate: string} | null = null;
 
-  async function fetchUserAnalytics() {
+  async function fetchUserAnalytics(newStartDate: string = startDate, newEndDate: string = endDate) {    
     isLoading = true;
+    pendingDate = {startDate: newStartDate, endDate: newEndDate};
+
     try {
       const params: GetUserAnalyticsParams = {
-        start_date: startDate,
-        end_date: endDate,
+        start_date: newStartDate,
+        end_date: newEndDate,
         page: currentPage,
         limit: pageSize,
         sort_by: sortBy,
@@ -50,6 +61,7 @@
       console.error('User analytics fetch error:', err);
     } finally {
       isLoading = false;
+      pendingDate = null;
     }
   }
 
@@ -118,10 +130,26 @@
 
   // Re-fetch when date range changes from parent
   $effect(() => {
-    if (startDate && endDate) {
-      currentPage = 0;
-      fetchUserAnalytics();
+    if (!startDate || !endDate) {
+      return;
     }
+
+    if(pendingDate && pendingDate.startDate === startDate && pendingDate.endDate === endDate) {
+      return;
+    }
+
+    pendingDate = {startDate, endDate};
+
+    const pendingDateUpdateTimer = setTimeout(() => {
+      currentPage = 0;
+      fetchUserAnalytics(startDate, endDate);
+    }, 1000);
+
+    return () => {
+      if (pendingDateUpdateTimer) {
+        clearTimeout(pendingDateUpdateTimer);
+      }
+    };
   });
 </script>
 
@@ -195,35 +223,35 @@
                   {/if}
                 </th>
                 <th>{$_('userAnalytics.table.department')}</th>
-                <th onclick={() => handleSort('requests')} class="sortable numeric">
+                <th onclick={() => handleSort('totalRequests')} class="sortable numeric">
                   {$_('userAnalytics.table.requests')}
-                  {#if sortBy === 'requests'}
+                  {#if sortBy === 'totalRequests'}
                     <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
                 <th class="numeric">{$_('userAnalytics.table.success')}</th>
                 <th class="numeric">{$_('userAnalytics.table.errors')}</th>
-                <th onclick={() => handleSort('tokens')} class="sortable numeric">
+                <th onclick={() => handleSort('totalTokens')} class="sortable numeric">
                   {$_('userAnalytics.table.tokens')}
-                  {#if sortBy === 'tokens'}
+                  {#if sortBy === 'totalTokens'}
                     <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th onclick={() => handleSort('cost')} class="sortable numeric">
+                <th onclick={() => handleSort('totalCost')} class="sortable numeric">
                   {$_('userAnalytics.table.cost')}
-                  {#if sortBy === 'cost'}
+                  {#if sortBy === 'totalCost'}
                     <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th onclick={() => handleSort('latency')} class="sortable numeric">
+                <th onclick={() => handleSort('averageLatency')} class="sortable numeric">
                   {$_('userAnalytics.table.avgLatency')}
-                  {#if sortBy === 'latency'}
+                  {#if sortBy === 'averageLatency'}
                     <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th onclick={() => handleSort('last_activity')} class="sortable">
+                <th onclick={() => handleSort('lastActivity')} class="sortable">
                   {$_('userAnalytics.table.lastActivity')}
-                  {#if sortBy === 'last_activity'}
+                  {#if sortBy === 'lastActivity'}
                     <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
