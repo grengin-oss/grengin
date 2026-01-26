@@ -11,9 +11,10 @@
   interface Props {
     startDate: string;
     endDate: string;
+    onRefresh?: (callback: () => Promise<void>) => void;
   }
 
-  let { startDate, endDate }: Props = $props();
+  let { startDate, endDate, onRefresh }: Props = $props();
 
   let isLoading = $state(true);
   let users = $state<UserAnalyticsItem[]>([]);
@@ -126,6 +127,17 @@
   // Fetch data on mount and when date range changes
   onMount(() => {
     fetchUserAnalytics();
+    
+    // Register refresh callback with parent
+    if (onRefresh) {
+      onRefresh(async () => {
+        if(isLoading) {
+          return;
+        }
+        
+        await fetchUserAnalytics();
+      });
+    }
   });
 
   // Re-fetch when date range changes from parent

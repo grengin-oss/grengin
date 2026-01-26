@@ -487,6 +487,8 @@
     },
     "loading": "Cargando analítica...",
     "retry": "Reintentar",
+    "refresh": "Actualizar analítica",
+    "refreshButton": "Actualizar",
     "overview": {
       "title": "Resumen",
       "totalUsers": "Usuarios totales",

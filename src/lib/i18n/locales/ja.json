@@ -487,6 +487,8 @@
     },
     "loading": "分析を読み込み中...",
     "retry": "再試行",
+    "refresh": "分析を更新",
+    "refreshButton": "更新",
     "overview": {
       "title": "概要",
       "totalUsers": "総ユーザー数",

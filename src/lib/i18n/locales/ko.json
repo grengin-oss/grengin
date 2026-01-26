@@ -487,6 +487,8 @@
     },
     "loading": "분석 로딩 중...",
     "retry": "재시도",
+    "refresh": "분석 새로고침",
+    "refreshButton": "새로고침",
     "overview": {
       "title": "개요",
       "totalUsers": "총 사용자",

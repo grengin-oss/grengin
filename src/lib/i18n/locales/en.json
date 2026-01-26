@@ -487,6 +487,8 @@
     },
     "loading": "Loading analytics...",
     "retry": "Retry",
+    "refresh": "Refresh analytics",
+    "refreshButton": "Refresh",
     "overview": {
       "title": "Overview",
       "totalUsers": "Total Users",
