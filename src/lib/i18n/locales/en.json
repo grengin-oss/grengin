@@ -257,6 +257,19 @@
       "failedToFetchMembers": "Failed to fetch members",
       "addMemberPlaceholder": "User search and selection will be implemented here"
     },
+    "organization": {
+      "title": "Organization",
+      "subtitle": "Manage users and department structure",
+      "allUsers": "All Users",
+      "allUsersDescription": "View and manage all users in the organization",
+      "unassigned": "Unassigned",
+      "unassignedUsers": "Unassigned Users",
+      "unassignedUsersDescription": "Users not assigned to any department",
+      "departments": "Departments",
+      "noDepartments": "No departments created yet",
+      "selectItem": "Select an item",
+      "selectItemDescription": "Choose an item from the sidebar to view details"
+    },
     "settings": {
       "title": "Settings",
       "subtitle": "Configure system settings and integrations"

@@ -12,6 +12,7 @@
   import AIEngines from './lib/admin/pages/AIEngines.svelte';
   import Analytics from './lib/admin/pages/Analytics.svelte';
   import Departments from './lib/admin/pages/Departments.svelte';
+  import Organization from './lib/admin/pages/Organization.svelte';
   import Settings from '$lib/admin/pages/Settings.svelte';
   import Overview from '$lib/admin/pages/Overview.svelte';
   import { _ } from 'svelte-i18n';
@@ -149,6 +150,7 @@
         <Route path="/chat"><Chat /></Route>
         <Route path="/chat/:id"><Chat /></Route>
         <Route path="/admin/overview"><Overview /></Route>
+        <Route path="/admin/organization"><Organization /></Route>
         <Route path="/admin/users"><Users /></Route>
         <Route path="/admin/departments"><Departments /></Route>
         <Route path="/admin/settings"><Settings /></Route>

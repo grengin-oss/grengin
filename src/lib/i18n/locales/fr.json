@@ -257,6 +257,19 @@
       "failedToFetchMembers": "Échec de la récupération des membres",
       "addMemberPlaceholder": "La recherche et sélection d'utilisateurs sera implémentée ici"
     },
+    "organization": {
+      "title": "Organisation",
+      "subtitle": "Gérer les utilisateurs et la structure des départements",
+      "allUsers": "Tous les Utilisateurs",
+      "allUsersDescription": "Voir et gérer tous les utilisateurs de l'organisation",
+      "unassigned": "Non Assignés",
+      "unassignedUsers": "Utilisateurs Non Assignés",
+      "unassignedUsersDescription": "Utilisateurs non assignés à aucun département",
+      "departments": "Départements",
+      "noDepartments": "Aucun département créé pour l'instant",
+      "selectItem": "Sélectionner un élément",
+      "selectItemDescription": "Choisissez un élément dans la barre latérale pour voir les détails"
+    },
     "settings": {
       "title": "Paramètres",
       "subtitle": "Configurer les paramètres système et intégrations"

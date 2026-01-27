@@ -7,7 +7,7 @@
   import { _ } from "svelte-i18n";
   import Modal from "./Modal.svelte";
   import BudgetManagement from "./BudgetManagement.svelte";
-  import MemberManagement from "./MemberManagement.svelte";
+  import UsersPanel from "./organization/UsersPanel.svelte";
   import { formatDate } from "$lib/utils/format.js";
   
   interface Props {
@@ -192,7 +192,7 @@
       
       {#if activeTab === 'members'}
         <div class="members-tab">
-          <MemberManagement {department} />
+          <UsersPanel departmentFilter={department.id} {department} />
         </div>
       {/if}
       

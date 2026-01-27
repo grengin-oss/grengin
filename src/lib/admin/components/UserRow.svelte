@@ -8,9 +8,13 @@
         toggleUserStatus: (user: User) => Promise<void>;
         openEditModal: (user: User) => void;
         currentUserId?: string;
+        showDepartment?: boolean;
+        selectable?: boolean;
+        selected?: boolean;
+        onSelectChange?: (userId: string) => void;
     }
 
-    let { user, toggleUserStatus, openEditModal, currentUserId }: Props = $props();
+    let { user, toggleUserStatus, openEditModal, currentUserId, showDepartment = true, selectable = false, selected = false, onSelectChange }: Props = $props();
     let isPendingStatusUpdate = $state(false);
     
     // Check if this is the current user's own row
@@ -62,6 +66,15 @@
 </script>
 
 <tr class:pending={isPendingStatusUpdate}>
+    {#if selectable}
+        <td class="checkbox-col">
+            <input
+                type="checkbox"
+                checked={selected}
+                onchange={() => onSelectChange?.(user.id)}
+            />
+        </td>
+    {/if}
     <td>{user.name || "-"}</td>
     <td>{user.email}</td>
     <td>
@@ -69,7 +82,9 @@
             {user.role || "user"}
         </span>
     </td>
-    <td>{user.department || "-"}</td>
+    {#if showDepartment}
+        <td>{user.department || "-"}</td>
+    {/if}
     <td>
         {#if !user.is_super_admin}
             <label 
@@ -107,6 +122,17 @@
 </tr>
 
 <style>
+    .checkbox-col {
+        width: 40px;
+        text-align: center;
+    }
+
+    .checkbox-col input[type="checkbox"] {
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+    }
+
     .pending {
         opacity: 0.3;
         pointer-events: none;

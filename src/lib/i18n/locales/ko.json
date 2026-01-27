@@ -257,6 +257,19 @@
       "failedToFetchMembers": "구성원 가져오기 실패",
       "addMemberPlaceholder": "사용자 검색 및 선택이 여기에 구현됩니다"
     },
+    "organization": {
+      "title": "조직",
+      "subtitle": "사용자 및 부서 구조 관리",
+      "allUsers": "모든 사용자",
+      "allUsersDescription": "조직의 모든 사용자 보기 및 관리",
+      "unassigned": "미배정",
+      "unassignedUsers": "미배정 사용자",
+      "unassignedUsersDescription": "부서에 배정되지 않은 사용자",
+      "departments": "부서",
+      "noDepartments": "아직 부서가 생성되지 않았습니다",
+      "selectItem": "항목 선택",
+      "selectItemDescription": "사이드바에서 항목을 선택하여 세부 정보 보기"
+    },
     "settings": {
       "title": "설정",
       "subtitle": "시스템 설정 및 연동 구성"

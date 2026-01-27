@@ -257,6 +257,19 @@
       "failedToFetchMembers": "Falha ao buscar membros",
       "addMemberPlaceholder": "A pesquisa e seleção de usuários será implementada aqui"
     },
+    "organization": {
+      "title": "Organização",
+      "subtitle": "Gerenciar usuários e estrutura de departamentos",
+      "allUsers": "Todos os Usuários",
+      "allUsersDescription": "Visualizar e gerenciar todos os usuários da organização",
+      "unassigned": "Não Atribuídos",
+      "unassignedUsers": "Usuários Não Atribuídos",
+      "unassignedUsersDescription": "Usuários não atribuídos a nenhum departamento",
+      "departments": "Departamentos",
+      "noDepartments": "Nenhum departamento criado ainda",
+      "selectItem": "Selecionar um item",
+      "selectItemDescription": "Escolha um item na barra lateral para ver os detalhes"
+    },
     "settings": {
       "title": "Configurações",
       "subtitle": "Configurar definições do sistema e integrações"

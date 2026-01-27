@@ -257,6 +257,19 @@
       "failedToFetchMembers": "メンバーの取得に失敗しました",
       "addMemberPlaceholder": "ユーザー検索と選択はここに実装されます"
     },
+    "organization": {
+      "title": "組織",
+      "subtitle": "ユーザーと部門構造を管理",
+      "allUsers": "全ユーザー",
+      "allUsersDescription": "組織内のすべてのユーザーを表示・管理",
+      "unassigned": "未割り当て",
+      "unassignedUsers": "未割り当てユーザー",
+      "unassignedUsersDescription": "どの部門にも割り当てられていないユーザー",
+      "departments": "部門",
+      "noDepartments": "まだ部門が作成されていません",
+      "selectItem": "項目を選択",
+      "selectItemDescription": "サイドバーから項目を選択して詳細を表示"
+    },
     "settings": {
       "title": "設定",
       "subtitle": "システム設定と連携を構成"
