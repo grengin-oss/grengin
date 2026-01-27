@@ -151,7 +151,10 @@
       "deactivatedMessage": "사용자가 성공적으로 비활성화되었습니다",
       "failedToFetchUsers": "사용자 가져오기 실패",
       "failedToUpdateUserStatus": "사용자 상태 업데이트 실패",
-      "editUserTitle": "사용자 편집"
+      "editUserTitle": "사용자 편집",
+      "cannotToggleOwnStatus": "자신의 계정은 비활성화할 수 없습니다.",
+      "disableUserTooltip": "사용자 비활성화",
+      "enableUserTooltip": "사용자 활성화"
     },
     "departments": {
       "title": "부서",

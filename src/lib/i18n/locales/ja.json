@@ -151,7 +151,10 @@
       "deactivatedMessage": "ユーザーが正常に無効化されました",
       "failedToFetchUsers": "ユーザーの取得に失敗しました",
       "failedToUpdateUserStatus": "ユーザーステータスの更新に失敗しました",
-      "editUserTitle": "ユーザーを編集"
+      "editUserTitle": "ユーザーを編集",
+      "cannotToggleOwnStatus": "自分のアカウントは無効化できません。",
+      "disableUserTooltip": "ユーザーを無効化",
+      "enableUserTooltip": "ユーザーを有効化"
     },
     "departments": {
       "title": "部門",

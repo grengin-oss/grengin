@@ -151,7 +151,10 @@
       "deactivatedMessage": "Usuario desactivado exitosamente",
       "failedToFetchUsers": "Error al obtener usuarios",
       "failedToUpdateUserStatus": "Error al actualizar el estado del usuario",
-      "editUserTitle": "Editar usuario"
+      "editUserTitle": "Editar usuario",
+      "cannotToggleOwnStatus": "No puedes desactivar tu propia cuenta.",
+      "disableUserTooltip": "Desactivar usuario",
+      "enableUserTooltip": "Activar usuario"
     },
     "departments": {
       "title": "Departamentos",

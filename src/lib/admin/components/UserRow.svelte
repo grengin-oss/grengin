@@ -7,14 +7,26 @@
         user: User;
         toggleUserStatus: (user: User) => Promise<void>;
         openEditModal: (user: User) => void;
+        currentUserId?: string;
     }
 
-    let { user, toggleUserStatus, openEditModal }: Props = $props();
+    let { user, toggleUserStatus, openEditModal, currentUserId }: Props = $props();
     let isPendingStatusUpdate = $state(false);
+    
+    // Check if this is the current user's own row
+    const isSelfUser: boolean = $derived((currentUserId && user.id === currentUserId) || false);
     
     // Local checkbox state - synced with user.status
     let checkboxChecked = $state(user.status === "active");
-    
+
+    const statusToggleTooltip = $derived(
+        isSelfUser
+            ? $_('admin.users.cannotToggleOwnStatus')
+            : user.status === "active"
+                ? $_('admin.users.disableUserTooltip')
+                : $_('admin.users.enableUserTooltip')
+    );
+
     // Sync checkboxChecked when user.status changes (after successful refetch)
     $effect(() => {
         if (!isPendingStatusUpdate) {
@@ -23,6 +35,11 @@
     });
 
     async function handleToggleUserStatus() {
+        // Prevent self-lockout
+        if (isSelfUser) {
+            return;
+        }
+
         isPendingStatusUpdate = true;
 
         // Store original state BEFORE any changes
@@ -55,11 +72,16 @@
     <td>{user.department || "-"}</td>
     <td>
         {#if !user.is_super_admin}
-            <label class="status-switch">
+            <label 
+                class="status-switch" 
+                class:disabled={isSelfUser}
+                title={statusToggleTooltip}
+            >
                 <input
                     type="checkbox"
                     checked={checkboxChecked}
                     onchange={handleToggleUserStatus}
+                    disabled={isSelfUser}
                 />
                 <span class="status-slider"></span>
                 <span class="status-label">
@@ -153,11 +175,20 @@
         position: relative;
     }
 
+    .status-switch.disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
     .status-switch input[type="checkbox"] {
         position: absolute;
         opacity: 0;
         width: 0;
         height: 0;
+    }
+
+    .status-switch input[type="checkbox"]:disabled {
+        cursor: not-allowed;
     }
 
     .status-slider {

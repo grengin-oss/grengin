@@ -13,6 +13,7 @@
   import SortIcon from "../components/SortIcon.svelte";
   import { _ } from "svelte-i18n";
   import { formatNumber } from "../../utils/format.js";
+  import { getAuthState } from "../../features/auth/index.js";
 
   let isCreateModalOpen = $state(false);
   let isEditModalOpen = $state(false);
@@ -34,6 +35,9 @@
 
   let formErrors = $state<Record<string, string>>({});
   let isSubmitting = $state(false);
+
+  const authState = getAuthState();
+  const currentUserId = $derived(authState.user?.id);
 
   onMount(() => {
     usersStore.fetchUsers();
@@ -297,7 +301,7 @@
         </thead>
         <tbody>
           {#each usersStore.users as user (user.id)}
-            <UserRow {user} {toggleUserStatus} {openEditModal} />
+            <UserRow {user} {toggleUserStatus} {openEditModal} {currentUserId} />
           {:else}
             <tr>
               <td colspan="7" class="empty-state">{$_('admin.users.noUsersFound')}</td>

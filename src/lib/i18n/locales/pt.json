@@ -151,7 +151,10 @@
       "deactivatedMessage": "Usuário desativado com sucesso",
       "failedToFetchUsers": "Falha ao buscar usuários",
       "failedToUpdateUserStatus": "Falha ao atualizar status do usuário",
-      "editUserTitle": "Editar usuário"
+      "editUserTitle": "Editar usuário",
+      "cannotToggleOwnStatus": "Você não pode desativar sua própria conta.",
+      "disableUserTooltip": "Desativar usuário",
+      "enableUserTooltip": "Ativar usuário"
     },
     "departments": {
       "title": "Departamentos",
