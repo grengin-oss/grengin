@@ -36,7 +36,14 @@ export interface GetUserAnalyticsParams {
   end_date: string;
   page?: number;
   limit?: number;
-  sort_by?: 'name' | 'email' | 'requests' | 'tokens' | 'cost' | 'latency' | 'last_activity';
+  sort_by?:
+    | 'name'
+    | 'email'
+    | 'totalRequests'
+    | 'totalTokens'
+    | 'totalCost'
+    | 'averageLatency'
+    | 'lastActivity';
   order?: 'asc' | 'desc';
 }
 

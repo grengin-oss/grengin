@@ -32,6 +32,16 @@
   let overviewData = $state<AnalyticsOverview | null>(null);
   let timeseriesData = $state<AnalyticsTimeseries | null>(null);
   let error = $state<string | null>(null);
+  
+  // Refresh callbacks for different tabs
+  let userAnalyticsRefresh: (() => Promise<void>) | null = null;
+  
+  // Track loading state across all tabs
+  let isRefreshing = $state(false);
+  
+  // Polling configuration
+  const POLLING_INTERVAL = 2 * 60 * 1000; // 2 minutes in milliseconds
+  let pollingTimer: number | null = null;
 
   // Date preset options
   type DatePreset = 'last7' | 'last30' | 'last90' | 'thisMonth' | 'custom';
@@ -73,8 +83,10 @@
     }
   }
 
-  async function fetchAnalytics() {
-    isLoading = true;
+  async function fetchAnalytics({showLoading = true}) {
+    if(showLoading) {
+      isLoading = true;
+    }
     error = null;
 
     try {
@@ -86,13 +98,14 @@
       overviewData = overview;
       timeseriesData = timeseries;
 
-      await tick();
-
-      if (timeseriesData && timeseriesData.data && timeseriesData.data.length > 0) {
-        chartsLoading = true;
-        setTimeout(() => {
-          chartsLoading = false;
-        }, 100);
+      if(showLoading) {
+        await tick();
+        if (timeseriesData && timeseriesData.data && timeseriesData.data.length > 0) {
+          chartsLoading = true;
+          setTimeout(() => {
+            chartsLoading = false;
+          }, 100);
+        }
       }
     } catch (err: any) {
       const errorMessage = err instanceof ApiError ? err.message : err.message;
@@ -100,7 +113,9 @@
       toast.error(errorMessage || $_('analytics.errors.fetchFailed'));
       console.error('Analytics fetch error:', err);
     } finally {
-      isLoading = false;
+      if(showLoading) {
+        isLoading = false;
+      }
     }
   }
 
@@ -124,6 +139,62 @@
       console.error('Timeseries fetch error:', err);
       chartsLoading = false;
     }
+  }
+
+  // Handle refresh based on current tab
+  async function handleRefresh() {
+    if(isLoading) {
+        return;
+    }
+
+    isRefreshing = true;
+
+    if (currentTab === 'overview') {
+      await fetchAnalytics({showLoading: false});
+    } else if (currentTab === 'by-user' && userAnalyticsRefresh) {
+      await userAnalyticsRefresh();
+    }
+
+    isRefreshing = false;
+  }
+
+  // Background polling function (silent refresh without showing spinner)
+  async function pollAnalytics() {
+    // Don't poll if already refreshing manually
+    if (isRefreshing) return;
+
+    try {
+      if (currentTab === 'overview') {
+        await fetchAnalytics({showLoading: false});
+      } else if (currentTab === 'by-user') {
+        // Silent refresh for user analytics
+        if(userAnalyticsRefresh) {
+          await userAnalyticsRefresh();
+        }
+      }
+    } catch (err) {
+      // Silent failure - don't show error toast for background updates
+      console.error('Background analytics update failed:', err);
+    }
+  }
+
+  // Start polling
+  function startPolling() {
+    stopPolling(); // Clear any existing timer
+    pollingTimer = window.setInterval(pollAnalytics, POLLING_INTERVAL);
+  }
+
+  // Stop polling
+  function stopPolling() {
+    if (pollingTimer !== null) {
+      clearInterval(pollingTimer);
+      pollingTimer = null;
+    }
+  }
+
+  // Restart polling when tab changes
+  function restartPolling() {
+    startPolling();
   }
 
   // Calculate the comparison period label based on selected date range
@@ -155,20 +226,36 @@
 
     if (dateChanged) {
       // Date range changed - fetch everything
-      fetchAnalytics();
+      fetchAnalytics({showLoading: true});
     } else if (granularityChanged && overviewData) {
       // Only granularity changed and we have data - just update charts
       fetchTimeseries();
     } else if (!overviewData) {
       // Initial load
-      fetchAnalytics();
+      fetchAnalytics({showLoading: true});
     }
+  });
+
+  // Start polling on mount and clean up on unmount
+  onMount(() => {
+    startPolling();
+    
+    return () => {
+      stopPolling();
+    };
+  });
+
+  // Restart polling when tab changes
+  $effect(() => {
+    // Watch currentTab to restart polling
+    currentTab;
+    restartPolling();
   });
 </script>
 
 <div class="analytics-page">
   <PageHeader title={$_('analytics.title')} subtitle={$_('analytics.subtitle')}>
-    <div class="filters-toolbar">
+    <div class="filters-toolbar" class:filters-toolbar-custom={selectedPreset === 'custom'}>
       <!-- Date Range Presets -->
       <div class="filter-section">
         <span class="filter-label">{$_('analytics.filters.dateRange')}</span>
@@ -233,42 +320,58 @@
   </PageHeader>
 
   <!-- Tab Navigation -->
-  <div class="tabs" role="tablist" aria-label="Analytics views">
+  <div class="tabs-wrapper">
+    <div class="tabs" role="tablist" aria-label="Analytics views">
+      <button
+        role="tab"
+        class="tab"
+        class:tab--active={currentTab === 'overview'}
+        aria-selected={currentTab === 'overview'}
+        onclick={() => setTab('overview')}
+      >
+        {$_('analytics.tabs.overview')}
+      </button>
+      <button
+        role="tab"
+        class="tab"
+        class:tab--active={currentTab === 'by-user'}
+        aria-selected={currentTab === 'by-user'}
+        onclick={() => setTab('by-user')}
+      >
+        {$_('analytics.tabs.byUser')}
+      </button>
+      <button
+        role="tab"
+        class="tab"
+        class:tab--active={currentTab === 'by-department'}
+        aria-selected={currentTab === 'by-department'}
+        onclick={() => setTab('by-department')}
+      >
+        {$_('analytics.tabs.byDepartment')}
+      </button>
+      <button
+        role="tab"
+        class="tab"
+        class:tab--active={currentTab === 'by-model'}
+        aria-selected={currentTab === 'by-model'}
+        onclick={() => setTab('by-model')}
+      >
+        {$_('analytics.tabs.byModel')}
+      </button>
+    </div>
     <button
-      role="tab"
-      class="tab"
-      class:tab--active={currentTab === 'overview'}
-      aria-selected={currentTab === 'overview'}
-      onclick={() => setTab('overview')}
+      class="refresh-button"
+      onclick={handleRefresh}
+      disabled={isRefreshing}
+      title={$_('analytics.refresh')}
+      aria-label={$_('analytics.refresh')}
     >
-      {$_('analytics.tabs.overview')}
-    </button>
-    <button
-      role="tab"
-      class="tab"
-      class:tab--active={currentTab === 'by-user'}
-      aria-selected={currentTab === 'by-user'}
-      onclick={() => setTab('by-user')}
-    >
-      {$_('analytics.tabs.byUser')}
-    </button>
-    <button
-      role="tab"
-      class="tab"
-      class:tab--active={currentTab === 'by-department'}
-      aria-selected={currentTab === 'by-department'}
-      onclick={() => setTab('by-department')}
-    >
-      {$_('analytics.tabs.byDepartment')}
-    </button>
-    <button
-      role="tab"
-      class="tab"
-      class:tab--active={currentTab === 'by-model'}
-      aria-selected={currentTab === 'by-model'}
-      onclick={() => setTab('by-model')}
-    >
-      {$_('analytics.tabs.byModel')}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class:spinning={isRefreshing}>
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <polyline points="1 20 1 14 7 14"></polyline>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+      </svg>
+      <span class="refresh-button-text">{$_('analytics.refreshButton')}</span>
     </button>
   </div>
 
@@ -280,12 +383,16 @@
       {chartsLoading}
       comparisonPeriodLabel={comparisonPeriodLabel()}
       {error}
-      onRetry={fetchAnalytics}
+      onRetry={() => fetchAnalytics({showLoading: true})}
       {granularity}
       onGranularityChange={(value) => granularity = value}
     />
   {:else if currentTab === 'by-user'}
-    <UserAnalyticsTab {startDate} {endDate} />
+    <UserAnalyticsTab 
+      {startDate} 
+      {endDate}
+      onRefresh={(callback) => userAnalyticsRefresh = callback}
+    />
   {:else if currentTab === 'by-department'}
     <div class="tab-placeholder">
       <AdminPanelCard>
@@ -319,9 +426,14 @@
   /* Filters Toolbar */
   .filters-toolbar {
     display: flex;
+    flex-direction: row;
     align-items: flex-end;
     gap: var(--space-xl);
-    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .filters-toolbar-custom{
+    flex-direction: column;
   }
 
   .filter-section {
@@ -381,6 +493,101 @@
     font-size: 0.875rem;
   }
 
+  /* Tabs Wrapper */
+  .tabs-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-lg);
+  }
+
+  /* Refresh Button */
+  .refresh-button {
+    padding: 0.625rem 0.875rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-stroke-dark);
+    background: var(--btn-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    min-width: 44px;
+    min-height: 44px;
+    box-shadow: 
+      0 1px 2px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .refresh-button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--brand);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .refresh-button svg {
+    position: relative;
+    z-index: 1;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .refresh-button:hover:not(:disabled) {
+    background: var(--btn-tertiary);
+    border-color: var(--brand);
+    color: var(--brand);
+    transform: translateY(-1px);
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.08),
+      0 2px 4px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .refresh-button:hover:not(:disabled)::before {
+    opacity: 0.05;
+  }
+
+  .refresh-button:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 
+      0 1px 2px rgba(0, 0, 0, 0.05),
+      inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .refresh-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .refresh-button svg.spinning {
+    animation: spin 1s linear infinite;
+  }
+
+  .refresh-button-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   /* Tab Placeholder Content */
   .tab-placeholder {
     margin-top: var(--space-xl);
@@ -424,9 +631,25 @@
       align-items: stretch;
     }
 
+    .tabs-wrapper {
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
     .tabs {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
+      width: 100%;
+    }
+
+    .refresh-button {
+      width: 100%;
+      justify-content: center;
+      padding: 0.75rem 1rem;
+    }
+
+    .refresh-button-text {
+      font-size: 0.9375rem;
     }
   }
 </style>
