@@ -463,6 +463,42 @@
       "fetchFailed": "Failed to fetch user analytics"
     }
   },
+  "departmentAnalytics": {
+    "title": "Department Analytics",
+    "subtitle": "Detailed usage analytics per department",
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Search by department name...",
+      "perPage": "Per Page"
+    },
+    "stats": {
+      "totalDepartments": "Total Departments",
+      "showing": "Showing",
+      "showingCount": "{showing} of {total}"
+    },
+    "table": {
+      "department": "Department",
+      "users": "Users",
+      "requests": "Requests",
+      "success": "Success",
+      "errors": "Errors",
+      "tokens": "Tokens",
+      "cost": "Cost",
+      "avgLatency": "Avg Latency"
+    },
+    "emptyState": {
+      "noMatch": "No departments found matching \"{query}\"",
+      "noData": "No department analytics data available for the selected date range"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "pageInfo": "Page {current} of {total}"
+    },
+    "errors": {
+      "fetchFailed": "Failed to fetch department analytics"
+    }
+  },
   "analytics": {
     "title": "Usage Analytics",
     "subtitle": "Monitor system performance and usage metrics",

@@ -463,6 +463,42 @@
       "fetchFailed": "Échec de la récupération de l'analytique utilisateur"
     }
   },
+  "departmentAnalytics": {
+    "title": "Analyse par département",
+    "subtitle": "Analyses d'utilisation détaillées par département",
+    "filters": {
+      "search": "Rechercher",
+      "searchPlaceholder": "Rechercher par nom de département...",
+      "perPage": "Par page"
+    },
+    "stats": {
+      "totalDepartments": "Départements au total",
+      "showing": "Affichage",
+      "showingCount": "{showing} sur {total}"
+    },
+    "table": {
+      "department": "Département",
+      "users": "Utilisateurs",
+      "requests": "Requêtes",
+      "success": "Succès",
+      "errors": "Erreurs",
+      "tokens": "Jetons",
+      "cost": "Coût",
+      "avgLatency": "Latence moyenne"
+    },
+    "emptyState": {
+      "noMatch": "Aucun département trouvé correspondant à \"{query}\"",
+      "noData": "Aucune donnée d'analyse de département disponible pour la plage de dates sélectionnée"
+    },
+    "pagination": {
+      "previous": "Précédent",
+      "next": "Suivant",
+      "pageInfo": "Page {current} sur {total}"
+    },
+    "errors": {
+      "fetchFailed": "Échec de récupération des analyses de département"
+    }
+  },
   "analytics": {
     "title": "Suivi d'Usage",
     "subtitle": "Surveiller les performances du système et les métriques d'utilisation",

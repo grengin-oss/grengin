@@ -1,5 +1,5 @@
 import { request } from '../client.js';
-import type { AnalyticsOverview, AnalyticsTimeseries, UserAnalyticsResponse } from '../../admin/types.js';
+import type { AnalyticsOverview, AnalyticsTimeseries, UserAnalyticsResponse, DepartmentAnalyticsResponse } from '../../admin/types.js';
 
 export interface GetAnalyticsOverviewParams {
   start_date: string;
@@ -49,4 +49,16 @@ export interface GetUserAnalyticsParams {
 
 export async function getUserAnalytics(params: GetUserAnalyticsParams): Promise<UserAnalyticsResponse> {
   return request<UserAnalyticsResponse>(`/admin/analytics/users${buildQueryString(params as unknown as Record<string, string | number | boolean | undefined>)}`);
+}
+
+export interface GetDepartmentAnalyticsParams {
+  start_date: string;
+  end_date: string;
+  offset?: number;
+  limit?: number;
+  search?: string;
+}
+
+export async function getDepartmentAnalytics(params: GetDepartmentAnalyticsParams): Promise<DepartmentAnalyticsResponse> {
+  return request<DepartmentAnalyticsResponse>(`/admin/analytics/departments${buildQueryString(params as unknown as Record<string, string | number | boolean | undefined>)}`);
 }

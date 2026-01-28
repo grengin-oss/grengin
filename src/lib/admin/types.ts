@@ -211,3 +211,22 @@ export interface DepartmentMembersResponse {
   members: DepartmentMember[];
   total: number;
 }
+
+export interface DepartmentAnalyticsItem {
+  department: string;
+  total_users: number;
+  total_requests: number;
+  total_tokens: number;
+  total_cost: number;
+  average_latency: number;
+  success_count: number;
+  error_count: number;
+}
+
+export interface DepartmentAnalyticsResponse {
+  departments: DepartmentAnalyticsItem[];
+  total: number;
+  limit: number;
+  offset: number;
+  total_pages: number;
+}

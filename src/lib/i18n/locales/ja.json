@@ -463,6 +463,42 @@
       "fetchFailed": "ユーザー分析の取得に失敗しました"
     }
   },
+  "departmentAnalytics": {
+    "title": "部門別分析",
+    "subtitle": "部門ごとの詳細な利用分析",
+    "filters": {
+      "search": "検索",
+      "searchPlaceholder": "部門名で検索...",
+      "perPage": "1ページあたり"
+    },
+    "stats": {
+      "totalDepartments": "部門の総数",
+      "showing": "表示中",
+      "showingCount": "{total}中{showing}件表示"
+    },
+    "table": {
+      "department": "部門",
+      "users": "ユーザー",
+      "requests": "リクエスト",
+      "success": "成功",
+      "errors": "エラー",
+      "tokens": "トークン",
+      "cost": "コスト",
+      "avgLatency": "平均待機時間"
+    },
+    "emptyState": {
+      "noMatch": "「{query}」に一致する部門は見つかりませんでした",
+      "noData": "選択した日付範囲に部門別分析データがありません"
+    },
+    "pagination": {
+      "previous": "前へ",
+      "next": "次へ",
+      "pageInfo": "ページ {current}/{total}"
+    },
+    "errors": {
+      "fetchFailed": "部門別分析の取得に失敗しました"
+    }
+  },
   "analytics": {
     "title": "使用状況分析",
     "subtitle": "システムのパフォーマンスと使用状況のメトリクスを監視",
