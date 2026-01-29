@@ -2,6 +2,7 @@
   import type { Department } from "../types.js";
   import { onMount, untrack } from "svelte";
   import * as departmentsApi from "../../api/admin/departments.js";
+  import { departmentsStore } from "../stores/index.js";
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
@@ -79,9 +80,10 @@
       await departmentsApi.removeDepartmentMembers(department.id, Array.from(selectedMembers));
       const count = selectedMembers.size;
       toast.success($_('admin.departments.membersRemoved', { values: { count } }));
-      selectedMembers.clear();
-      selectedMembers = selectedMembers;
+      selectedMembers = new Set(); // Create new Set to trigger reactivity
       await loadMembers();
+      // Refresh departments to update member counts
+      await departmentsStore.fetchDepartments();
     } catch (error) {
       const errorMessage = error instanceof ApiError 
         ? getLocalizedError(error, 'description', $_) 
@@ -90,6 +92,12 @@
     } finally {
       loading = false;
     }
+  }
+  
+  async function handleMemberAdded() {
+    await loadMembers();
+    // Refresh departments to update member counts
+    await departmentsStore.fetchDepartments();
   }
   
 </script>
@@ -184,7 +192,7 @@
     <AddMemberModal
       departmentId={department.id}
       onclose={() => showAddMember = false}
-      onSuccess={loadMembers}
+      onSuccess={handleMemberAdded}
     />
   {/if}
 </div>
