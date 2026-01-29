@@ -463,6 +463,42 @@
       "fetchFailed": "사용자 분석 가져오기 실패"
     }
   },
+  "departmentAnalytics": {
+    "title": "부서 분석",
+    "subtitle": "부서별 사용 분석 상세 정보",
+    "filters": {
+      "search": "검색",
+      "searchPlaceholder": "부서 이름으로 검색...",
+      "perPage": "페이지당"
+    },
+    "stats": {
+      "totalDepartments": "총 부서",
+      "showing": "표시 중",
+      "showingCount": "{total}개 중 {showing}개 표시"
+    },
+    "table": {
+      "department": "부서",
+      "users": "사용자",
+      "requests": "요청",
+      "success": "성공",
+      "errors": "오류",
+      "tokens": "토큰",
+      "cost": "비용",
+      "avgLatency": "평균 지연"
+    },
+    "emptyState": {
+      "noMatch": "「{query}」과 일치하는 부서를 찾을 수 없습니다",
+      "noData": "선택한 기간에 대한 부서 분석 데이터가 없습니다"
+    },
+    "pagination": {
+      "previous": "이전",
+      "next": "다음",
+      "pageInfo": "페이지 {current}/{total}"
+    },
+    "errors": {
+      "fetchFailed": "부서 분석을 가져오지 못했습니다"
+    }
+  },
   "analytics": {
     "title": "사용량 분석",
     "subtitle": "시스템 성능 및 사용 메트릭 모니터링",

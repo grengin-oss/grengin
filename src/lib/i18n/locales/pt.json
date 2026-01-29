@@ -372,6 +372,42 @@
       "fetchFailed": "Falha ao buscar análise de usuários"
     }
   },
+  "departmentAnalytics": {
+    "title": "Análises por Departamento",
+    "subtitle": "Análises detalhadas de uso por departamento",
+    "filters": {
+      "search": "Pesquisar",
+      "searchPlaceholder": "Pesquisar por nome de departamento...",
+      "perPage": "Por página"
+    },
+    "stats": {
+      "totalDepartments": "Total de departamentos",
+      "showing": "Exibindo",
+      "showingCount": "{showing} de {total}"
+    },
+    "table": {
+      "department": "Departamento",
+      "users": "Usuários",
+      "requests": "Solicitações",
+      "success": "Sucessos",
+      "errors": "Erros",
+      "tokens": "Tokens",
+      "cost": "Custo",
+      "avgLatency": "Latência média"
+    },
+    "emptyState": {
+      "noMatch": "Nenhum departamento encontrado correspondente a \"{query}\"",
+      "noData": "Nenhum dado de análise por departamento disponível para o intervalo de datas selecionado"
+    },
+    "pagination": {
+      "previous": "Anterior",
+      "next": "Próximo",
+      "pageInfo": "Página {current} de {total}"
+    },
+    "errors": {
+      "fetchFailed": "Falha ao buscar análises por departamento"
+    }
+  },
   "analytics": {
     "title": "Análise de Uso",
     "subtitle": "Monitorar o desempenho do sistema e métricas de uso",

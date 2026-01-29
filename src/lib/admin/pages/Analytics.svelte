@@ -9,6 +9,7 @@
   import { _ } from 'svelte-i18n';
   import AnalyticsOverviewTab from "../components/analytics/AnalyticsOverviewTab.svelte";
   import UserAnalyticsTab from "../components/analytics/UserAnalyticsTab.svelte";
+  import DepartmentAnalyticsTab from "../components/analytics/DepartmentAnalyticsTab.svelte";
 
   // Tab state
   type AnalyticsTab = 'overview' | 'by-user' | 'by-department' | 'by-model';
@@ -35,6 +36,7 @@
   
   // Refresh callbacks for different tabs
   let userAnalyticsRefresh: (() => Promise<void>) | null = null;
+  let departmentAnalyticsRefresh: (() => Promise<void>) | null = null;
   
   // Track loading state across all tabs
   let isRefreshing = $state(false);
@@ -143,8 +145,8 @@
 
   // Handle refresh based on current tab
   async function handleRefresh() {
-    if(isLoading) {
-        return;
+    if(isRefreshing) {
+      return;
     }
 
     isRefreshing = true;
@@ -153,6 +155,8 @@
       await fetchAnalytics({showLoading: false});
     } else if (currentTab === 'by-user' && userAnalyticsRefresh) {
       await userAnalyticsRefresh();
+    } else if (currentTab === 'by-department' && departmentAnalyticsRefresh) {
+      await departmentAnalyticsRefresh();
     }
 
     isRefreshing = false;
@@ -170,6 +174,11 @@
         // Silent refresh for user analytics
         if(userAnalyticsRefresh) {
           await userAnalyticsRefresh();
+        }
+      } else if (currentTab === 'by-department') {
+        // Silent refresh for department analytics
+        if(departmentAnalyticsRefresh) {
+          await departmentAnalyticsRefresh();
         }
       }
     } catch (err) {
@@ -394,14 +403,11 @@
       onRefresh={(callback) => userAnalyticsRefresh = callback}
     />
   {:else if currentTab === 'by-department'}
-    <div class="tab-placeholder">
-      <AdminPanelCard>
-        <div class="placeholder-content">
-          <p>{$_('analytics.tabs.byDepartment')} - Coming soon</p>
-          <p class="placeholder-hint">Department analytics will be available here</p>
-        </div>
-      </AdminPanelCard>
-    </div>
+    <DepartmentAnalyticsTab 
+      {startDate} 
+      {endDate}
+      onRefresh={(callback) => departmentAnalyticsRefresh = callback}
+    />
   {/if}
 
   {#if currentTab === 'by-model'}
