@@ -299,7 +299,9 @@
                   class:invalid={status.type === "invalid"}
                 ></div>
                 {#if engine.icon}
-                  <div class="provider-icon">{@html engine.icon}</div>
+                  <div class="provider-icon">
+                    <img src={engine.icon} alt="" class="provider-icon-img" />
+                  </div>
                 {/if}
                 <div>
                   <h4 class="provider-name">{engine.display_name}</h4>
@@ -1159,6 +1161,12 @@
   .provider-icon :global(svg) {
     width: 100%;
     height: 100%;
+  }
+
+  .provider-icon-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 
   .provider-status-indicator {
