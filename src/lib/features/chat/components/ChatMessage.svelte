@@ -344,7 +344,9 @@
   {#if message.role !== 'user'}
     <div class="message-avatar">
       <div class="model-avatar">
-        {@html messageProvider?.icon}
+        {#if messageProvider?.icon}
+          <img src={messageProvider.icon} alt="" class="provider-icon-img" />
+        {/if}
       </div>
     </div>
   {/if}
@@ -636,6 +638,13 @@
     width: var(--space-2xl);
     height: var(--space-2xl);
     display: block;
+  }
+
+  .model-avatar .provider-icon-img {
+    width: var(--space-2xl);
+    height: var(--space-2xl);
+    display: block;
+    object-fit: contain;
   }
 
   .message-content {

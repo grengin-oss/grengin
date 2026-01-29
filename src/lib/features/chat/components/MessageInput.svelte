@@ -500,7 +500,14 @@
           >
             <div class="model-icon">
               {#if selectedProvider}
-                {@html providers.find(p => p.key === selectedProvider)?.icon || '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>'}
+                {@const providerIcon = providers.find(p => p.key === selectedProvider)?.icon}
+                {#if providerIcon}
+                  <img src={providerIcon} alt="" class="provider-icon-img" />
+                {:else}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                  </svg>
+                {/if}
               {:else}
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10"/>
@@ -529,7 +536,7 @@
                   <div class="provider-section">
                     <div class="provider-header">
                       <div class="provider-icon">
-                        {@html provider.icon}
+                        <img src={provider.icon} alt="" class="provider-icon-img" />
                       </div>
                       <span class="provider-name">{provider.name}</span>
                     </div>
@@ -1043,6 +1050,12 @@
     height: 12px;
   }
 
+  .model-icon .provider-icon-img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+  }
+
   .dropdown-arrow {
     color: var(--text-secondary);
     transition: transform 0.2s ease;
@@ -1182,8 +1195,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 12px;
-    height: 12px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
   }
 
@@ -1191,6 +1204,12 @@
     width: 12px;
     height: 12px;
     opacity: 0.7;
+  }
+
+  .provider-icon-img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
   }
 
   .provider-models {
