@@ -51,6 +51,17 @@
       }
     }
   });
+
+  // Keep selectedDepartment in sync with store updates
+  $effect(() => {
+    const current = selectedDepartment;
+    if (current) {
+      const updated = store.departments.find(d => d.id === current.id);
+      if (updated && updated !== current) {
+        selectedDepartment = updated;
+      }
+    }
+  });
   
   function handleSelectDepartment(dept: Department) {
     selectedDepartment = dept;

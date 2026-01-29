@@ -45,7 +45,7 @@ export async function moveDepartment(
 ): Promise<Department> {
   return request<Department>(`/admin/departments/${departmentId}/move`, {
     method: 'POST',
-    body: JSON.stringify({ parent_id: newParentId }),
+    body: JSON.stringify({ new_parent_id: newParentId }),
   });
 }
 
