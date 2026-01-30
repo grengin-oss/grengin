@@ -121,6 +121,8 @@
       "creating": "Creating...",
       "updating": "Updating...",
       "adding": "Adding...",
+      "saving": "Saving...",
+      "create": "Create",
       "metadata": "Metadata",
       "lastUpdated": "Last Updated"
     },
@@ -237,6 +239,9 @@
       "memberManagement": "Member Management",
       "addMembers": "Add Members",
       "removeMembers": "Remove Members",
+      "removeMembersConfirmTitle": "Remove Members?",
+      "removeMembersConfirmMessage": "Are you sure you want to remove {count} member(s) from this department?",
+      "removeMembersConfirmWarning": "This action cannot be undone.",
       "includeSubDepartments": "Include sub-departments",
       "noMembers": "No members",
       "noMembersDescription": "This department has no members yet",

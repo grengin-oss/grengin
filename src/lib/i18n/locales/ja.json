@@ -121,6 +121,8 @@
       "creating": "作成中...",
       "updating": "更新中...",
       "adding": "追加中...",
+      "saving": "保存中...",
+      "create": "作成",
       "metadata": "メタデータ",
       "lastUpdated": "最終更新日"
     },
@@ -237,6 +239,9 @@
       "memberManagement": "メンバー管理",
       "addMembers": "メンバーを追加",
       "removeMembers": "メンバーを削除",
+      "removeMembersConfirmTitle": "メンバーを削除しますか？",
+      "removeMembersConfirmMessage": "本当にこの部門から{count}人のメンバーを削除しますか？",
+      "removeMembersConfirmWarning": "この操作は元に戻せません。",
       "includeSubDepartments": "サブ部門を含む",
       "noMembers": "メンバーなし",
       "noMembersDescription": "この部門にはまだメンバーがいません",

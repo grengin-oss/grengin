@@ -121,6 +121,8 @@
       "creating": "Création...",
       "updating": "Mise à jour...",
       "adding": "Ajout...",
+      "saving": "Enregistrement...",
+      "create": "Créer",
       "metadata": "Métadonnées",
       "lastUpdated": "Dernière mise à jour"
     },
@@ -237,6 +239,9 @@
       "memberManagement": "Gestion des membres",
       "addMembers": "Ajouter des membres",
       "removeMembers": "Retirer des membres",
+      "removeMembersConfirmTitle": "Retirer les Membres?",
+      "removeMembersConfirmMessage": "Êtes-vous sûr de vouloir retirer {count} membre(s) de ce département?",
+      "removeMembersConfirmWarning": "Cette action ne peut pas être annulée.",
       "includeSubDepartments": "Inclure les sous-départements",
       "noMembers": "Aucun membre",
       "noMembersDescription": "Ce département n'a pas encore de membres",

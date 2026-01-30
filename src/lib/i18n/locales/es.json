@@ -121,6 +121,8 @@
       "creating": "Creando...",
       "updating": "Actualizando...",
       "adding": "Agregando...",
+      "saving": "Guardando...",
+      "create": "Crear",
       "metadata": "Metadatos",
       "lastUpdated": "Última actualización"
     },
@@ -237,6 +239,9 @@
       "memberManagement": "Gestión de miembros",
       "addMembers": "Agregar miembros",
       "removeMembers": "Eliminar miembros",
+      "removeMembersConfirmTitle": "¿Eliminar Miembros?",
+      "removeMembersConfirmMessage": "¿Está seguro de que desea eliminar {count} miembro(s) de este departamento?",
+      "removeMembersConfirmWarning": "Esta acción no se puede deshacer.",
       "includeSubDepartments": "Incluir subdepartamentos",
       "noMembers": "Sin miembros",
       "noMembersDescription": "Este departamento aún no tiene miembros",

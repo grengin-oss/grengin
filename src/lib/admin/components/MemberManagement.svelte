@@ -9,6 +9,7 @@
   import { _ } from "svelte-i18n";
   import LoadingSpinner from "./LoadingSpinner.svelte";
   import AddMemberModal from "./AddMemberModal.svelte";
+  import Modal from "./Modal.svelte";
   import { formatDate } from "$lib/utils/format.js";
   
   interface Props {
@@ -21,6 +22,7 @@
   let loading = $state(false);
   let includeSubDepartments = $state(false);
   let showAddMember = $state(false);
+  let showRemoveConfirm = $state(false);
   let selectedMembers = $state<Set<string>>(new Set());
   
   onMount(() => {
@@ -69,12 +71,13 @@
     }
   }
   
-  async function handleRemoveMembers() {
+  function confirmRemoveMembers() {
     if (selectedMembers.size === 0) return;
-    
-    const confirmed = confirm($_('admin.departments.selectMembers'));
-    if (!confirmed) return;
-    
+    showRemoveConfirm = true;
+  }
+  
+  async function handleRemoveMembers() {
+    showRemoveConfirm = false;
     loading = true;
     try {
       await departmentsApi.removeDepartmentMembers(department.id, Array.from(selectedMembers));
@@ -118,7 +121,7 @@
     
     <div class="header-actions">
       {#if selectedMembers.size > 0}
-        <button class="btn-danger" onclick={handleRemoveMembers}>
+        <button class="btn-danger" onclick={confirmRemoveMembers}>
           {$_('admin.departments.removeMembers')} ({selectedMembers.size})
         </button>
       {/if}
@@ -194,6 +197,28 @@
       onclose={() => showAddMember = false}
       onSuccess={handleMemberAdded}
     />
+  {/if}
+  
+  {#if showRemoveConfirm}
+    <Modal 
+      isOpen={showRemoveConfirm}
+      onclose={() => showRemoveConfirm = false}
+      title={$_('admin.departments.removeMembersConfirmTitle')}
+    >
+      <div class="remove-confirm">
+        <p>{$_('admin.departments.removeMembersConfirmMessage', { values: { count: selectedMembers.size } })}</p>
+        <p class="warning">{$_('admin.departments.removeMembersConfirmWarning')}</p>
+        
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick={() => showRemoveConfirm = false}>
+            {$_('common.cancel')}
+          </button>
+          <button class="btn-danger" onclick={handleRemoveMembers}>
+            {$_('admin.departments.removeMembers')}
+          </button>
+        </div>
+      </div>
+    </Modal>
   {/if}
 </div>
 
@@ -293,11 +318,13 @@
     background: var(--glass-bg-dark);
     border: 1px solid var(--glass-stroke-dark);
     border-radius: var(--radius-md);
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
   
   table {
     width: 100%;
+    min-width: 600px;
     border-collapse: collapse;
   }
   
@@ -393,5 +420,26 @@
   
   .btn-danger:hover {
     background: color-mix(in oklab, var(--brand-red) 90%, black);
+  }
+  
+  .remove-confirm {
+    padding: 20px;
+  }
+  
+  .remove-confirm p {
+    margin: 0 0 12px 0;
+    color: var(--text-primary);
+  }
+  
+  .remove-confirm .warning {
+    color: var(--brand-red);
+    font-size: 14px;
+  }
+  
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
   }
 </style>

@@ -121,6 +121,8 @@
       "creating": "만드는 중...",
       "updating": "업데이트 중...",
       "adding": "추가 중...",
+      "saving": "저장 중...",
+      "create": "만들기",
       "metadata": "메타데이터",
       "lastUpdated": "마지막 업데이트"
     },
@@ -237,6 +239,9 @@
       "memberManagement": "구성원 관리",
       "addMembers": "구성원 추가",
       "removeMembers": "구성원 제거",
+      "removeMembersConfirmTitle": "구성원을 제거하시겠습니까?",
+      "removeMembersConfirmMessage": "정말로 이 부서에서 {count}명의 구성원을 제거하시겠습니까?",
+      "removeMembersConfirmWarning": "이 작업은 취소할 수 없습니다.",
       "includeSubDepartments": "하위 부서 포함",
       "noMembers": "구성원 없음",
       "noMembersDescription": "이 부서에는 아직 구성원이 없습니다",
