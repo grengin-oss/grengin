@@ -133,7 +133,7 @@
   {#if loading}
     <div class="loading-state">
       <LoadingSpinner />
-      <p>{$_('admin.departments.failedToFetchMembers')}</p>
+      <p>{$_('admin.departments.loadingMembers')}</p>
     </div>
   {:else if members.length === 0}
     <div class="empty-state">
@@ -363,19 +363,6 @@
     font-size: 13px;
   }
   
-  .add-member-placeholder {
-    background: var(--btn-secondary);
-    border: 2px dashed var(--glass-stroke-dark);
-    border-radius: var(--radius-md);
-    padding: 40px;
-    text-align: center;
-  }
-  
-  .add-member-placeholder p {
-    color: var(--text-secondary);
-    margin: 0 0 16px 0;
-  }
-  
   .btn-primary {
     padding: 8px 16px;
     background: var(--brand);
@@ -390,23 +377,6 @@
   
   .btn-primary:hover {
     background: var(--brand-hover);
-  }
-  
-  .btn-secondary {
-    padding: 8px 16px;
-    background: var(--button-bg);
-    border: 1px solid var(--button-border);
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .btn-secondary:hover {
-    background: var(--btn-secondary);
-    border-color: var(--glass-stroke-light);
   }
   
   .btn-danger {

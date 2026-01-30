@@ -120,6 +120,7 @@
       "pageInfo": "Página {current} de {total} ({count} no total)",
       "creating": "Criando...",
       "updating": "Atualizando...",
+      "adding": "Adicionando...",
       "metadata": "Metadados",
       "lastUpdated": "Última atualização"
     },
@@ -133,7 +134,7 @@
       "filters": "Filtros",
       "closeFilters": "Fechar filtros",
       "openFilters": "Abrir filtros",
-      "searchByName": "Pesquisar por nome...",
+      "searchByNameOrEmail": "Pesquisar por nome ou e-mail...",
       "reset": "Redefinir",
       "loadingUsers": "Carregando usuários...",
       "noUsersFound": "Nenhum usuário encontrado",
@@ -247,6 +248,7 @@
       "membersRemoved": "{count} membros removidos com sucesso",
       "failedToAddMember": "Falha ao adicionar membro",
       "failedToRemoveMember": "Falha ao remover membro",
+      "loadingMembers": "Carregando membros...",
       "failedToFetchMembers": "Falha ao buscar membros",
       "addMemberPlaceholder": "A pesquisa e seleção de usuários será implementada aqui"
     },

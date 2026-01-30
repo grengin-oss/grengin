@@ -120,6 +120,7 @@
       "pageInfo": "{total}페이지 중 {current}페이지 (총 {count}개)",
       "creating": "만드는 중...",
       "updating": "업데이트 중...",
+      "adding": "추가 중...",
       "metadata": "메타데이터",
       "lastUpdated": "마지막 업데이트"
     },
@@ -133,7 +134,7 @@
       "filters": "필터",
       "closeFilters": "필터 닫기",
       "openFilters": "필터 열기",
-      "searchByName": "이름으로 검색...",
+      "searchByNameOrEmail": "이름 또는 이메일로 검색...",
       "reset": "재설정",
       "loadingUsers": "사용자 로딩 중...",
       "noUsersFound": "사용자를 찾을 수 없습니다",
@@ -247,6 +248,7 @@
       "membersRemoved": "{count}명의 구성원이 성공적으로 제거되었습니다",
       "failedToAddMember": "구성원 추가 실패",
       "failedToRemoveMember": "구성원 제거 실패",
+      "loadingMembers": "구성원을 불러오는 중...",
       "failedToFetchMembers": "구성원 가져오기 실패",
       "addMemberPlaceholder": "사용자 검색 및 선택이 여기에 구현됩니다"
     },

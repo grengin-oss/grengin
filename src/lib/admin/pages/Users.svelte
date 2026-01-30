@@ -230,7 +230,7 @@
     <div class="filters-grid" class:open={filtersOpen}>
       <input
         type="text"
-        placeholder={$_('admin.users.searchByName')}
+        placeholder={$_('admin.users.searchByNameOrEmail')}
         bind:value={searchQuery}
         oninput={applyFiltersDebounced}
         class="filter-input"

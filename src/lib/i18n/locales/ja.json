@@ -120,6 +120,7 @@
       "pageInfo": "{total}ページ中{current}ページ（合計{count}件）",
       "creating": "作成中...",
       "updating": "更新中...",
+      "adding": "追加中...",
       "metadata": "メタデータ",
       "lastUpdated": "最終更新日"
     },
@@ -133,7 +134,7 @@
       "filters": "フィルター",
       "closeFilters": "フィルターを閉じる",
       "openFilters": "フィルターを開く",
-      "searchByName": "名前で検索...",
+      "searchByNameOrEmail": "名前またはメールで検索...",
       "reset": "リセット",
       "loadingUsers": "ユーザーを読み込み中...",
       "noUsersFound": "ユーザーが見つかりません",
@@ -247,6 +248,7 @@
       "membersRemoved": "{count}人のメンバーが正常に削除されました",
       "failedToAddMember": "メンバーの追加に失敗しました",
       "failedToRemoveMember": "メンバーの削除に失敗しました",
+      "loadingMembers": "メンバーを読み込んでいます...",
       "failedToFetchMembers": "メンバーの取得に失敗しました",
       "addMemberPlaceholder": "ユーザー検索と選択はここに実装されます"
     },

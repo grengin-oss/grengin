@@ -120,6 +120,7 @@
       "pageInfo": "Page {current} of {total} ({count} total)",
       "creating": "Creating...",
       "updating": "Updating...",
+      "adding": "Adding...",
       "metadata": "Metadata",
       "lastUpdated": "Last Updated"
     },
@@ -133,7 +134,7 @@
       "filters": "Filters",
       "closeFilters": "Close filters",
       "openFilters": "Open filters",
-      "searchByName": "Search by name...",
+      "searchByNameOrEmail": "Search by name or email...",
       "reset": "Reset",
       "loadingUsers": "Loading users...",
       "noUsersFound": "No users found",
@@ -247,6 +248,7 @@
       "membersRemoved": "{count} members removed successfully",
       "failedToAddMember": "Failed to add member",
       "failedToRemoveMember": "Failed to remove member",
+      "loadingMembers": "Loading members...",
       "failedToFetchMembers": "Failed to fetch members",
       "addMemberPlaceholder": "User search and selection will be implemented here"
     },
