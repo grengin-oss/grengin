@@ -29,8 +29,38 @@
 
   const pageSize = 10;
 
+  let searchTimeout: ReturnType<typeof setTimeout> | undefined;
+  let isInitialLoad = true;
+
   onMount(() => {
     loadUsers();
+  });
+
+  // Debounced search effect (skip initial load)
+  $effect(() => {
+    searchQuery;
+    
+    // Skip the effect on initial load since onMount handles it
+    if (isInitialLoad) {
+      isInitialLoad = false;
+      return;
+    }
+    
+    currentPage = 1;
+    
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    searchTimeout = setTimeout(() => {
+      loadUsers();
+    }, 500);
+
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
   });
 
   async function loadUsers() {
@@ -63,11 +93,6 @@
       newSet.add(userId);
     }
     selectedUsers = newSet;
-  }
-
-  function handleSearch() {
-    currentPage = 1;
-    loadUsers();
   }
 
   function handlePreviousPage() {
@@ -115,12 +140,8 @@
         <input
           type="text"
           bind:value={searchQuery}
-          placeholder={$_('admin.users.searchByName')}
-          onkeydown={(e) => e.key === 'Enter' && handleSearch()}
+          placeholder={$_('admin.users.searchByNameOrEmail')}
         />
-        <button class="btn-secondary" onclick={handleSearch}>
-          {$_('common.search')}
-        </button>
       </div>
       {#if selectedUsers.size > 0}
         <div class="selection-info">
@@ -203,7 +224,7 @@
         disabled={saving || selectedUsers.size === 0}
       >
         {#if saving}
-          {$_('admin.common.creating')}
+          {$_('admin.common.adding')}
         {:else}
           {$_('admin.departments.addMembers')} ({selectedUsers.size})
         {/if}
@@ -228,11 +249,10 @@
 
   .search-box {
     display: flex;
-    gap: 8px;
   }
 
   .search-box input {
-    flex: 1;
+    width: 100%;
     padding: 8px 12px;
     border: 1px solid var(--glass-stroke-dark);
     border-radius: var(--radius-md);
@@ -264,6 +284,8 @@
     justify-content: center;
     padding: 40px;
     gap: 12px;
+    flex: 1;
+    min-height: 200px;
   }
 
   .loading-state p,

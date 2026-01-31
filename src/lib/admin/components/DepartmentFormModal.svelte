@@ -155,7 +155,7 @@
         class="btn-primary"
         disabled={isSubmitting}
       >
-        {isSubmitting ? $_('admin.common.creating') : (mode === 'create' ? $_('common.save') : $_('common.save'))}
+        {isSubmitting ? (mode === 'create' ? $_('admin.common.creating') : $_('admin.common.saving')) : (mode === 'create' ? $_('admin.common.create') : $_('common.save'))}
       </button>
     </div>
   </form>
