@@ -237,12 +237,12 @@ function createAIEnginesStore() {
         // Determine the default model to use:
         // 1. Use the model from data if provided (from form)
         // 2. Fall back to engine's current default_model
-        // 3. Fall back to first whitelisted model if available
+        // 3. Fall back to first whitelisted model from form data if available
         const defaultModel =
           data.default_model ||
           engine.default_model ||
-          (engine.whitelisted_models && engine.whitelisted_models.length > 0
-            ? engine.whitelisted_models[0]
+          (data.whitelisted_models && data.whitelisted_models.length > 0
+            ? data.whitelisted_models[0]
             : undefined);
 
         if (!defaultModel) {

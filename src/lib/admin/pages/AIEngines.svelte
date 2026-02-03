@@ -14,6 +14,9 @@
 
   const store = aiEnginesStore;
 
+  // Optimize .includes() lookups from O(n) to O(1)
+  const whitelistedSet = $derived(new Set(store.formData.whitelisted_models));
+
   async function toggleEngineStatus(engine: AIEngine) {
     try {
       await store.toggleEngineStatus(engine);
@@ -134,56 +137,57 @@
     }
 
     const index = store.formData.whitelisted_models.indexOf(modelId);
+
+    // Calculate new values without updating state yet
+    let newWhitelistedModels: string[];
+    let newDefaultModel = store.formData.default_model;
+
     if (index > -1) {
-      store.formData = {
-        ...store.formData,
-        whitelisted_models: store.formData.whitelisted_models.filter(
-          (id) => id !== modelId,
-        ),
-      };
+      // Removing model
+      newWhitelistedModels = store.formData.whitelisted_models.filter(
+        (id) => id !== modelId,
+      );
 
       // If we removed a model and default becomes invalid, clear default
       if (
         store.formData.default_model &&
-        !store.formData.whitelisted_models.includes(store.formData.default_model)
+        !newWhitelistedModels.includes(store.formData.default_model)
       ) {
-        store.formData = {
-          ...store.formData,
-          default_model: null,
-        };
+        newDefaultModel = null;
       }
     } else {
-      store.formData = {
-        ...store.formData,
-        whitelisted_models: [...store.formData.whitelisted_models, modelId],
-      };
+      // Adding model
+      newWhitelistedModels = [...store.formData.whitelisted_models, modelId];
 
       // Auto-select first model as default if none is set
-      if (!store.formData.default_model && store.formData.whitelisted_models.length === 1) {
-        store.formData = {
-          ...store.formData,
-          default_model: modelId,
-        };
+      if (!store.formData.default_model && newWhitelistedModels.length === 1) {
+        newDefaultModel = modelId;
       }
     }
+
+    // Single update - only one re-render
+    store.formData = {
+      ...store.formData,
+      whitelisted_models: newWhitelistedModels,
+      default_model: newDefaultModel,
+    };
   }
 
   function selectAllModels() {
     if (store.availableModels) {
+      const allModelIds = store.availableModels.models.map((m) => m.model_id);
+      
+      // Auto-select first model as default if none is set
+      const newDefaultModel = !store.formData.default_model && allModelIds.length > 0
+        ? allModelIds[0]
+        : store.formData.default_model;
+
+      // Single update
       store.formData = {
         ...store.formData,
-        whitelisted_models: store.availableModels.models.map(
-          (m) => m.model_id,
-        ),
+        whitelisted_models: allModelIds,
+        default_model: newDefaultModel,
       };
-
-      // Auto-select first model as default if none is set
-      if (!store.formData.default_model && store.formData.whitelisted_models.length > 0) {
-        store.formData = {
-          ...store.formData,
-          default_model: store.formData.whitelisted_models[0],
-        };
-      }
     }
   }
 
@@ -725,9 +729,7 @@
                 <label class="model-item" class:is-default={isDefaultModel}>
                   <input
                     type="checkbox"
-                    checked={store.formData.whitelisted_models.includes(
-                      model.model_id,
-                    )}
+                    checked={whitelistedSet.has(model.model_id)}
                     disabled={isDefaultModel}
                     onchange={() => toggleModelSelection(model.model_id)}
                     title={isDefaultModel
@@ -736,12 +738,12 @@
                   />
                   <div class="model-info">
                     <span class="model-name">
-                      {model.model_id}
+                      {model.display_name}
                       {#if isDefaultModel}
                         <span class="default-model-badge">{$_('aiEngines.modelWhitelist.defaultBadge')}</span>
                       {/if}
                     </span>
-                    <span class="model-meta">{model.display_name}</span>
+                    <span class="model-meta">{model.model_id}</span>
                   </div>
                 </label>
               {/each}
@@ -760,7 +762,7 @@
                     bind:value={store.formData.default_model}
                     required
                   >
-                    {#each store.availableModels.models.filter( (m) => store.formData.whitelisted_models.includes(m.model_id), ) as model}
+                    {#each store.availableModels?.models.filter(m => whitelistedSet.has(m.model_id)) as model}
                       <option value={model.model_id}
                         >{model.display_name}</option
                       >
