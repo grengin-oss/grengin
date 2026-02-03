@@ -155,6 +155,8 @@ export interface UserAnalyticsResponse {
 
 export type BudgetPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 
+export type ActionOnExceed = 'warn' | 'block';
+
 export interface Department {
   id: string;
   name: string;
@@ -171,6 +173,7 @@ export interface Department {
   budget_available: number;
   budget_used: number;
   budget_period: BudgetPeriod;
+  action_on_exceed?: ActionOnExceed;
   created_at: string;
   updated_at: string;
 }
@@ -195,8 +198,9 @@ export interface UpdateDepartmentRequest {
 }
 
 export interface SetBudgetRequest {
-  amount: number;
-  period: BudgetPeriod;
+  budget_allocated: number;
+  budget_period: BudgetPeriod;
+  action_on_exceed: ActionOnExceed;
 }
 
 export interface DepartmentMember {
@@ -229,4 +233,24 @@ export interface DepartmentAnalyticsResponse {
   limit: number;
   offset: number;
   total_pages: number;
+}
+
+export interface SubDepartmentBudget {
+  allocated: number;
+  department_id: string;
+  name: string;
+  used: number;
+}
+
+export interface BudgetOverview {
+  budget_allocated: number;
+  budget_available: number;
+  budget_distributed: number;
+  budget_used: number;
+  budget_used_total: number;
+  department_id: string;
+  period: BudgetPeriod;
+  period_end: string;
+  period_start: string;
+  sub_department_budgets: SubDepartmentBudget[];
 }
