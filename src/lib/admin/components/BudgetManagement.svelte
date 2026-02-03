@@ -1,48 +1,90 @@
 <script lang="ts">
-  import type { Department, BudgetPeriod } from "../types.js";
+  import type { Department, BudgetPeriod, BudgetOverview, ActionOnExceed } from "../types.js";
   import { departmentsStore } from "../stores/index.js";
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
   import { _ } from "svelte-i18n";
+  import { getBudgetOverview } from "../../api/admin/departments.js";
+  import LoadingSpinner from "./LoadingSpinner.svelte";
   
   interface Props {
     department: Department;
-    allDepartments: Department[];
   }
   
-  let { department, allDepartments }: Props = $props();
+  let { department }: Props = $props();
   
   let isEditing = $state(false);
   let budgetAmount = $state(department.budget_allocated);
   let budgetPeriod = $state<BudgetPeriod>(department.budget_period);
+  let actionOnExceed = $state<ActionOnExceed>(department.action_on_exceed || 'warn');
   let isSubmitting = $state(false);
+  let budgetOverview = $state<BudgetOverview | null>(null);
+  let isLoadingOverview = $state(false);
+  let showSaveConfirmation = $state(false);
+  
+  // Reactively fetch budget overview whenever department changes
+  $effect(() => {
+    isEditing = false;
+    showSaveConfirmation = false;
+    fetchBudgetOverview();
+  });
+   
+  async function fetchBudgetOverview() {
+    isLoadingOverview = true;
+    try {
+      budgetOverview = await getBudgetOverview(department.id);
+    } catch (error) {
+      const errorMessage = error instanceof ApiError 
+        ? getLocalizedError(error, 'description', $_) 
+        : $_('admin.departments.failedToLoadBudget');
+      toast.error(errorMessage);
+    } finally {
+      isLoadingOverview = false;
+    }
+  }
   
   const usagePercent = $derived(
-    department.budget_allocated > 0 
-      ? (department.budget_used / department.budget_allocated) * 100 
+    budgetOverview && budgetOverview.budget_allocated > 0 
+      ? (budgetOverview.budget_used / budgetOverview.budget_allocated) * 100 
+      : 0
+  );
+  
+  const usageTotalPercent = $derived(
+    budgetOverview && budgetOverview.budget_allocated > 0 
+      ? (budgetOverview.budget_used_total / budgetOverview.budget_allocated) * 100 
       : 0
   );
   
   const availablePercent = $derived(
-    department.budget_allocated > 0 
-      ? (department.budget_available / department.budget_allocated) * 100 
+    budgetOverview && budgetOverview.budget_allocated > 0 
+      ? (budgetOverview.budget_available / budgetOverview.budget_allocated) * 100 
       : 0
   );
   
   const distributedPercent = $derived(
-    department.budget_allocated > 0 
-      ? (department.budget_distributed / department.budget_allocated) * 100 
+    budgetOverview && budgetOverview.budget_allocated > 0 
+      ? (budgetOverview.budget_distributed / budgetOverview.budget_allocated) * 100 
       : 0
   );
   
-  const childDepartments = $derived(
-    allDepartments.filter(d => d.parent_id === department.id)
-  );
+  // Helper to get status color classes based on usage percentage
+  const getUsageColorClass = (percent: number) => {
+    if (percent >= 80) return 'danger';
+    if (percent >= 60) return 'warning';
+    return 'ok';
+  };
   
   function startEditing() {
-    budgetAmount = department.budget_allocated;
-    budgetPeriod = department.budget_period;
+    // Use budgetOverview data if available (most recent), otherwise fall back to department data
+    if (budgetOverview) {
+      budgetAmount = budgetOverview.budget_allocated;
+      budgetPeriod = budgetOverview.period;
+    } else {
+      budgetAmount = department.budget_allocated;
+      budgetPeriod = department.budget_period;
+    }
+    actionOnExceed = department.action_on_exceed || 'warn';
     isEditing = true;
   }
   
@@ -50,26 +92,40 @@
     isEditing = false;
   }
   
-  async function saveBudget() {
+  function saveBudget() {
     if (budgetAmount < 0) {
-      toast.error('Budget amount must be positive');
+      toast.error($_('admin.departments.budgetMustBePositive'));
       return;
     }
     
-    if (budgetAmount < department.budget_distributed) {
-      toast.error('Budget cannot be less than already distributed amount');
+    if (budgetOverview && budgetAmount < budgetOverview.budget_distributed) {
+      toast.error($_('admin.departments.budgetCannotBeLessThanDistributed'));
       return;
     }
     
+    // Show confirmation UI
+    showSaveConfirmation = true;
+  }
+  
+  function cancelSaveConfirmation() {
+    showSaveConfirmation = false;
+  }
+  
+  async function confirmSave() {
     isSubmitting = true;
     try {
-      await departmentsStore.setBudget(department.id, budgetAmount, budgetPeriod);
-      toast.success('Budget updated successfully');
+      await departmentsStore.setBudget(department.id, {
+        budget_allocated: budgetAmount,
+        budget_period: budgetPeriod,
+        action_on_exceed: actionOnExceed,
+      });
+      toast.success($_('admin.departments.budgetUpdated'));
       isEditing = false;
+      showSaveConfirmation = false;
     } catch (error) {
       const errorMessage = error instanceof ApiError 
         ? getLocalizedError(error, 'description', $_) 
-        : 'Failed to update budget';
+        : $_('admin.departments.failedToUpdateBudget');
       toast.error(errorMessage);
     } finally {
       isSubmitting = false;
@@ -83,143 +139,234 @@
 
 <div class="budget-management">
   <div class="budget-header">
-    <h3>Budget Overview</h3>
+    <h3>{$_('admin.departments.budgetOverview')}</h3>
     {#if !isEditing}
-      <button class="btn-secondary" onclick={startEditing}>Edit Budget</button>
+      <button class="btn-secondary" onclick={startEditing}>{$_('admin.departments.editBudget')}</button>
     {/if}
   </div>
   
   {#if isEditing}
     <div class="budget-form">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="budget-amount">Budget Amount</label>
-          <input
-            id="budget-amount"
-            type="number"
-            step="0.01"
-            min="0"
-            bind:value={budgetAmount}
-            disabled={isSubmitting}
-          />
+      {#if !showSaveConfirmation}
+        <div class="form-row">
+          <div class="form-group">
+            <label for="budget-amount">{$_('admin.departments.budgetAmount')}</label>
+            <input
+              id="budget-amount"
+              type="number"
+              step="0.01"
+              min="0"
+              bind:value={budgetAmount}
+              disabled={isSubmitting}
+            />
+          </div>
+          
+          <div class="form-group">
+            <label for="budget-period">{$_('admin.departments.budgetPeriod')}</label>
+            <select
+              id="budget-period"
+              bind:value={budgetPeriod}
+              disabled={isSubmitting}
+            >
+              <option value="daily">{$_('admin.departments.budgetPeriods.daily')}</option>
+              <option value="weekly">{$_('admin.departments.budgetPeriods.weekly')}</option>
+              <option value="monthly">{$_('admin.departments.budgetPeriods.monthly')}</option>
+              <option value="quarterly">{$_('admin.departments.budgetPeriods.quarterly')}</option>
+              <option value="yearly">{$_('admin.departments.budgetPeriods.yearly')}</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="action-on-exceed">{$_('admin.departments.actionOnExceed')}</label>
+            <select
+              id="action-on-exceed"
+              bind:value={actionOnExceed}
+              disabled={isSubmitting}
+            >
+              <option value="warn">{$_('admin.departments.actionOnExceedWarn')}</option>
+              <option value="block">{$_('admin.departments.actionOnExceedBlock')}</option>
+            </select>
+          </div>
         </div>
-        
-        <div class="form-group">
-          <label for="budget-period">Period</label>
-          <select
-            id="budget-period"
-            bind:value={budgetPeriod}
+      {/if}
+      
+      {#if !showSaveConfirmation}
+        <div class="form-actions">
+          <button 
+            class="btn-secondary" 
+            onclick={cancelEditing}
             disabled={isSubmitting}
           >
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="quarterly">Quarterly</option>
-            <option value="yearly">Yearly</option>
-          </select>
+            {$_('common.cancel')}
+          </button>
+          <button 
+            class="btn-primary" 
+            onclick={saveBudget}
+            disabled={isSubmitting}
+          >
+            {$_('admin.departments.saveBudget')}
+          </button>
         </div>
-      </div>
-      
-      <div class="form-actions">
-        <button 
-          class="btn-secondary" 
-          onclick={cancelEditing}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </button>
-        <button 
-          class="btn-primary" 
-          onclick={saveBudget}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Saving...' : 'Save Budget'}
-        </button>
-      </div>
+      {:else}
+        <div class="save-confirmation">
+          <div class="confirmation-message">
+            <h4>{$_('admin.departments.confirmBudgetUpdate')}</h4>
+            <p>{$_('admin.departments.confirmBudgetMessage')}</p>
+            <div class="confirmation-details">
+              <div class="detail-row">
+                <span class="detail-label">{$_('admin.departments.budgetAmount')}:</span>
+                <span class="detail-value">{formatCurrency(budgetAmount)}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">{$_('admin.departments.budgetPeriod')}:</span>
+                <span class="detail-value">{$_(`admin.departments.budgetPeriods.${budgetPeriod}`)}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">{$_('admin.departments.actionOnExceed')}:</span>
+                <span class="detail-value">{actionOnExceed === 'warn' ? $_('admin.departments.actionOnExceedWarn') : $_('admin.departments.actionOnExceedBlock')}</span>
+              </div>
+            </div>
+          </div>
+          <div class="confirmation-actions">
+            <button 
+              class="btn-secondary" 
+              onclick={cancelSaveConfirmation}
+              disabled={isSubmitting}
+            >
+              {$_('common.cancel')}
+            </button>
+            <button 
+              class="btn-primary danger" 
+              onclick={confirmSave}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? $_('admin.common.saving') : $_('admin.departments.confirmAndSave')}
+            </button>
+          </div>
+        </div>
+      {/if}
     </div>
   {:else}
-    <div class="budget-stats">
-      <div class="stat-row">
-        <div class="stat-item">
-          <span class="stat-label">Allocated</span>
-          <span class="stat-value">{formatCurrency(department.budget_allocated)}</span>
-          <span class="stat-period">per {department.budget_period}</span>
+    {#if isLoadingOverview}
+      <div class="loading-state">
+        <LoadingSpinner size="md" text={$_('admin.departments.loadingBudgets')} />
+      </div>
+    {:else if budgetOverview}
+      <div class="budget-stats">
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-label">{$_('admin.departments.budgetAllocated')}</span>
+            <span class="stat-value">{formatCurrency(budgetOverview.budget_allocated)}</span>
+            <span class="stat-period">per {$_(`admin.departments.budgetPeriods.${budgetOverview.period}`)}</span>
+          </div>
+          
+          <div class="stat-item">
+            <span class="stat-label">{$_('admin.departments.budgetUsedDirect')}</span>
+            <span class="stat-value {getUsageColorClass(usagePercent)}">
+              {formatCurrency(budgetOverview.budget_used)}
+            </span>
+            <span class="stat-period {getUsageColorClass(usagePercent)}">{usagePercent.toFixed(1)}%</span>
+          </div>
+          
+          <div class="stat-item">
+            <span class="stat-label">{$_('admin.departments.budgetUsedTotal')}</span>
+            <span class="stat-value {getUsageColorClass(usageTotalPercent)}">
+              {formatCurrency(budgetOverview.budget_used_total)}
+            </span>
+            <span class="stat-period {getUsageColorClass(usageTotalPercent)}">{usageTotalPercent.toFixed(1)}%</span>
+          </div>
+          
+          <div class="stat-item">
+            <span class="stat-label">{$_('admin.departments.budgetDistributed')}</span>
+            <span class="stat-value">{formatCurrency(budgetOverview.budget_distributed)}</span>
+            <span class="stat-period">{distributedPercent.toFixed(1)}%</span>
+          </div>
+          
+          <div class="stat-item">
+            <span class="stat-label">{$_('admin.departments.budgetAvailable')}</span>
+            <span class="stat-value success">{formatCurrency(budgetOverview.budget_available)}</span>
+            <span class="stat-period">{availablePercent.toFixed(1)}%</span>
+          </div>
         </div>
         
-        <div class="stat-item">
-          <span class="stat-label">Used</span>
-          <span class="stat-value" class:warning={usagePercent >= 80} class:danger={usagePercent >= 100}>
-            {formatCurrency(department.budget_used)}
-          </span>
-          <span class="stat-period">{usagePercent.toFixed(1)}%</span>
-        </div>
-        
-        <div class="stat-item">
-          <span class="stat-label">Distributed</span>
-          <span class="stat-value">{formatCurrency(department.budget_distributed)}</span>
-          <span class="stat-period">{distributedPercent.toFixed(1)}%</span>
-        </div>
-        
-        <div class="stat-item">
-          <span class="stat-label">Available</span>
-          <span class="stat-value success">{formatCurrency(department.budget_available)}</span>
-          <span class="stat-period">{availablePercent.toFixed(1)}%</span>
+        <div class="period-info">
+          <div class="period-row">
+            <span class="period-label">{$_('admin.departments.budgetPeriodLabel')}:</span>
+            <span class="period-date">{new Date(budgetOverview.period_start).toLocaleDateString()}</span>
+            <span class="period-separator">—</span>
+            <span class="period-date">{new Date(budgetOverview.period_end).toLocaleDateString()}</span>
+          </div>
+          {#if department.action_on_exceed}
+            <div class="period-row">
+              <span class="period-label">{$_('admin.departments.actionOnExceed')}:</span>
+              <span class="period-value" class:warn-badge={department.action_on_exceed === 'warn'} class:block-badge={department.action_on_exceed === 'block'}>
+                {department.action_on_exceed === 'warn' ? $_('admin.departments.actionOnExceedWarn') : $_('admin.departments.actionOnExceedBlock')}
+              </span>
+            </div>
+          {/if}
         </div>
       </div>
-    </div>
+    {:else}
+      <div class="empty-state">
+        <p>{$_('admin.departments.noBudgetData')}</p>
+      </div>
+    {/if}
     
-    <div class="budget-visualization">
-      <div class="progress-bar">
-        <div 
-          class="progress-segment used" 
-          style="width: {Math.min(usagePercent, 100)}%"
-          title="Used: {formatCurrency(department.budget_used)}"
-        ></div>
-        <div 
-          class="progress-segment distributed" 
-          style="width: {Math.min(distributedPercent - usagePercent, 100 - usagePercent)}%"
-          title="Distributed: {formatCurrency(department.budget_distributed)}"
-        ></div>
+    {#if budgetOverview}
+      <div class="budget-visualization">
+        <div class="progress-bar">
+          <div 
+            class="progress-segment used {getUsageColorClass(usagePercent)}" 
+            style="width: {Math.min(usagePercent, 100)}%"
+            title="Used (Direct): {formatCurrency(budgetOverview.budget_used)} ({usagePercent.toFixed(1)}%)"
+          ></div>
+          <div 
+            class="progress-segment distributed" 
+            style="width: {Math.min(distributedPercent, 100 - usagePercent)}%"
+            title="Distributed: {formatCurrency(budgetOverview.budget_distributed)}"
+          ></div>
+        </div>
+        
+        <div class="progress-legend">
+          <div class="legend-item">
+            <span class="legend-color used {getUsageColorClass(usagePercent)}"></span>
+            <span>{$_('admin.departments.legendUsedDirect')}</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color distributed"></span>
+            <span>{$_('admin.departments.legendDistributed')}</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color available"></span>
+            <span>{$_('admin.departments.legendAvailable')}</span>
+          </div>
+        </div>
       </div>
-      
-      <div class="progress-legend">
-        <div class="legend-item">
-          <span class="legend-color used"></span>
-          <span>Used</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color distributed"></span>
-          <span>Distributed to children</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color available"></span>
-          <span>Available</span>
-        </div>
-      </div>
-    </div>
+    {/if}
   {/if}
   
-  {#if childDepartments.length > 0}
+  {#if budgetOverview && budgetOverview.sub_department_budgets.length > 0}
     <div class="child-budgets">
-      <h4>Child Department Budgets</h4>
+      <h4>{$_('admin.departments.childBudgets')}</h4>
       <div class="child-budget-list">
-        {#each childDepartments as child}
+        {#each budgetOverview.sub_department_budgets as subDept}
+          {@const subDeptPercent = subDept.allocated > 0 ? (subDept.used / subDept.allocated) * 100 : 0}
           <div class="child-budget-item">
             <div class="child-info">
-              <span class="child-name">{child.name}</span>
-              <span class="child-budget">{formatCurrency(child.budget_allocated)} / {child.budget_period}</span>
+              <span class="child-name">{subDept.name}</span>
+              <span class="child-budget">{formatCurrency(subDept.allocated)}</span>
             </div>
             <div class="child-progress">
               <div class="mini-progress-bar">
                 <div 
-                  class="mini-progress-fill"
-                  class:ok={child.budget_allocated > 0 && (child.budget_used / child.budget_allocated) < 0.8}
-                  class:warning={child.budget_allocated > 0 && (child.budget_used / child.budget_allocated) >= 0.8 && (child.budget_used / child.budget_allocated) < 1}
-                  class:danger={child.budget_allocated > 0 && (child.budget_used / child.budget_allocated) >= 1}
-                  style="width: {child.budget_allocated > 0 ? Math.min((child.budget_used / child.budget_allocated) * 100, 100) : 0}%"
+                  class="mini-progress-fill {getUsageColorClass(subDeptPercent)}"
+                  style="width: {Math.min(subDeptPercent, 100)}%"
                 ></div>
               </div>
-              <span class="child-usage">{formatCurrency(child.budget_used)}</span>
+              <span class="child-usage {getUsageColorClass(subDeptPercent)}">{formatCurrency(subDept.used)}</span>
+              <span class="child-percentage {getUsageColorClass(subDeptPercent)}">
+                {subDeptPercent.toFixed(1)}%
+              </span>
             </div>
           </div>
         {/each}
@@ -256,9 +403,15 @@
   
   .form-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr;
     gap: 16px;
     margin-bottom: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
   }
   
   .form-group {
@@ -306,6 +459,70 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 20px;
+    margin-bottom: 16px;
+  }
+  
+  .period-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--glass-stroke-light);
+    font-size: 13px;
+  }
+  
+  .period-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .period-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  
+  .period-date {
+    color: var(--text-primary);
+  }
+  
+  .period-separator {
+    color: var(--text-secondary);
+  }
+  
+  .period-value {
+    color: var(--text-primary);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .period-value.warn-badge {
+    background: rgba(251, 191, 36, 0.15);
+    color: #f59e0b;
+  }
+  
+  .period-value.block-badge {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--brand-red);
+  }
+  
+  .loading-state {
+    background: var(--btn-secondary);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+  
+  .empty-state {
+    background: var(--btn-secondary);
+    border-radius: var(--radius-md);
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-secondary);
   }
   
   .stat-item {
@@ -328,6 +545,10 @@
     color: var(--text-primary);
   }
   
+  .stat-value.ok {
+    color: var(--brand-green);
+  }
+  
   .stat-value.success {
     color: var(--brand-green);
   }
@@ -343,6 +564,21 @@
   .stat-period {
     font-size: 12px;
     color: var(--text-secondary);
+  }
+  
+  .stat-period.ok {
+    color: var(--brand-green);
+    font-weight: 600;
+  }
+  
+  .stat-period.warning {
+    color: #f59e0b;
+    font-weight: 600;
+  }
+  
+  .stat-period.danger {
+    color: var(--brand-red);
+    font-weight: 600;
   }
   
   .budget-visualization {
@@ -361,11 +597,23 @@
   
   .progress-segment {
     height: 100%;
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, background 0.3s ease;
   }
   
   .progress-segment.used {
     background: linear-gradient(90deg, var(--brand), var(--brand-hover));
+  }
+  
+  .progress-segment.used.ok {
+    background: linear-gradient(90deg, #10b981, #059669);
+  }
+  
+  .progress-segment.used.warning {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+  }
+  
+  .progress-segment.used.danger {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
   }
   
   .progress-segment.distributed {
@@ -390,10 +638,23 @@
     width: 12px;
     height: 12px;
     border-radius: 2px;
+    transition: background 0.3s ease;
   }
   
   .legend-color.used {
     background: var(--brand);
+  }
+  
+  .legend-color.used.ok {
+    background: #10b981;
+  }
+  
+  .legend-color.used.warning {
+    background: #f59e0b;
+  }
+  
+  .legend-color.used.danger {
+    background: #ef4444;
   }
   
   .legend-color.distributed {
@@ -469,11 +730,11 @@
   
   .mini-progress-fill {
     height: 100%;
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, background 0.3s ease;
   }
   
   .mini-progress-fill.ok {
-    background: var(--brand-green);
+    background: #10b981;
   }
   
   .mini-progress-fill.warning {
@@ -481,13 +742,50 @@
   }
   
   .mini-progress-fill.danger {
-    background: var(--brand-red);
+    background: #ef4444;
   }
   
   .child-usage {
     font-size: 12px;
     color: var(--text-secondary);
     white-space: nowrap;
+  }
+  
+  .child-usage.ok {
+    color: var(--brand-green);
+    font-weight: 600;
+  }
+  
+  .child-usage.warning {
+    color: #f59e0b;
+    font-weight: 600;
+  }
+  
+  .child-usage.danger {
+    color: var(--brand-red);
+    font-weight: 600;
+  }
+  
+  .child-percentage {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  
+  .child-percentage.ok {
+    color: var(--brand-green);
+    font-weight: 600;
+  }
+  
+  .child-percentage.warning {
+    color: #f59e0b;
+    font-weight: 600;
+  }
+  
+  .child-percentage.danger {
+    color: var(--brand-red);
+    font-weight: 600;
   }
   
   .btn-secondary {
@@ -531,5 +829,71 @@
   .btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+  
+  .btn-primary.danger {
+    background: var(--brand-red);
+  }
+  
+  .btn-primary.danger:hover:not(:disabled) {
+    background: #dc2626;
+  }
+  
+  .save-confirmation {
+    background: var(--glass-bg-dark);
+    border: 1px solid var(--glass-stroke-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .confirmation-message h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+  }
+  
+  .confirmation-message p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0 0 16px 0;
+  }
+  
+  .confirmation-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(var(--glass-tint), 0.03);
+    border: 1px solid var(--glass-stroke-light);
+    border-radius: var(--radius-sm);
+  }
+  
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .detail-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  
+  .detail-value {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  
+  .confirmation-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
   }
 </style>

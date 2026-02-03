@@ -1,5 +1,5 @@
 import { writable, derived } from 'svelte/store';
-import type { Department } from '../types.js';
+import type { Department, SetBudgetRequest } from '../types.js';
 import * as departmentsApi from '../../api/admin/departments.js';
 
 interface DepartmentsState {
@@ -155,10 +155,10 @@ function createDepartmentsStore() {
       }
     },
 
-    async setBudget(departmentId: string, amount: number, period: string) {
+    async setBudget(departmentId: string, data: SetBudgetRequest) {
       update(state => ({ ...state, loading: true, error: null }));
       try {
-        const updatedDepartment = await departmentsApi.setBudget(departmentId, { amount, period: period as any });
+        const updatedDepartment = await departmentsApi.setBudget(departmentId, data);
         const response = await departmentsApi.getDepartments();
         update(state => ({
           ...state,

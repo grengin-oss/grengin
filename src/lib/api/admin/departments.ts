@@ -5,7 +5,8 @@ import type {
   CreateDepartmentRequest, 
   UpdateDepartmentRequest,
   SetBudgetRequest,
-  DepartmentMembersResponse
+  DepartmentMembersResponse,
+  BudgetOverview
 } from '../../admin/types.js';
 
 export async function getDepartments(): Promise<DepartmentListResponse> {
@@ -53,10 +54,14 @@ export async function setBudget(
   departmentId: string,
   data: SetBudgetRequest
 ): Promise<Department> {
-  return request<Department>(`/admin/departments/${departmentId}/budget`, {
-    method: 'POST',
+  return request<Department>(`/admin/departments/${departmentId}`, {
+    method: 'PUT',
     body: JSON.stringify(data),
   });
+}
+
+export async function getBudgetOverview(departmentId: string): Promise<BudgetOverview> {
+  return request<BudgetOverview>(`/admin/departments/${departmentId}/budget`);
 }
 
 export async function getDepartmentMembers(

@@ -198,7 +198,7 @@
       
       {#if activeTab === 'budget'}
         <div class="budget-tab">
-          <BudgetManagement {department} {allDepartments} />
+          <BudgetManagement {department}/>
         </div>
       {/if}
     </div>
