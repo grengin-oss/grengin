@@ -341,6 +341,11 @@
       "listen": "Ouvir",
       "stop": "Parar",
       "closePreview": "Fechar pré-visualização"
+    },
+    "toolCalls": {
+      "searching": "Pesquisando na web",
+      "searchedTheWeb": "Pesquisou na web",
+      "results": "resultados"
     }
   },
   "adminOverview": {

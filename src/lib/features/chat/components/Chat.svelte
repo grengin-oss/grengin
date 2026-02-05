@@ -3,6 +3,8 @@
   import ChatMessage from './ChatMessage.svelte';
   import MessageInput from './MessageInput.svelte';
   import TypingIndicator from './TypingIndicator.svelte';
+  import ToolCallDisplay from './ToolCallDisplay.svelte';
+  import type { ToolCall } from '../../../types/toolCall';
   import type { BudgetWarningMessage, ChatMessage as ChatMessageType } from '../../../types/chat';
   import { sendMessage, getConversation, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
@@ -186,6 +188,7 @@
       timestamp: new Date().toISOString(),
       isStreaming: true,
       model: selectedModel,
+      toolCalls: [] as ToolCall[],
     };
 
     let messageAddedToArray = $state(false);
@@ -242,11 +245,56 @@
         onBudgetWarning: (data) => {
           handleBudgetWarning(data);
         },
+        onToolCall: (toolCall) => {
+          if (currentStreamingMessage) {            
+            // Initialize tool call - this happens once per tool
+            // Set status to 'pending' until results are received
+            currentStreamingMessage = {
+              ...currentStreamingMessage,
+              toolCalls: [...(currentStreamingMessage.toolCalls || []), { ...toolCall, status: 'pending' }],
+            };
+
+            // Update the message in the array
+            messages = messages.map(m => 
+              m.id === currentStreamingMessage?.id ? currentStreamingMessage : m
+            );
+            scrollToStreamingMessageTop(currentStreamingMessage.id);
+          }
+        },
+        onToolResult: (toolResult) => {
+          if (currentStreamingMessage) {
+            // Update tool call with progressive results - this can happen multiple times
+            // Each call may have more results in the web_search.results array
+            // Set status to 'running' once results start arriving
+            currentStreamingMessage = {
+              ...currentStreamingMessage,
+              toolCalls: (currentStreamingMessage.toolCalls || []).map(tc => 
+                tc.tool_id === toolResult.tool_id 
+                  ? { ...toolResult, status: 'running' } : tc
+              ),
+            };
+            
+            // Update the message in the array
+            messages = messages.map(m => 
+              m.id === currentStreamingMessage?.id ? currentStreamingMessage : m
+            );
+            scrollToStreamingMessageTop(currentStreamingMessage.id);
+          }
+        },
         onDone: async (_data) => {
           if (currentStreamingMessage) {
-            currentStreamingMessage.isStreaming = false;
+            // Mark all tool calls as completed when stream ends
+            const updatedMessage = {
+              ...currentStreamingMessage,
+              isStreaming: false,
+              toolCalls: (currentStreamingMessage.toolCalls || []).map(tc => ({
+                ...tc,
+                status: 'completed' as const
+              }))
+            };
+            currentStreamingMessage = updatedMessage;
             messages = messages.map(m =>
-              m.id === currentStreamingMessage?.id ? { ...currentStreamingMessage } : m
+              m.id === currentStreamingMessage?.id ? updatedMessage : m
             );
           }
           currentStreamingMessage = null;
@@ -508,6 +556,16 @@
     <div class="messages-container" bind:this={messagesContainer} onscroll={handleScroll}>
       <div class="messages-inner">
         {#each messages as message (message.id)}
+          <!-- Tool calls display (if any) -->
+          {#if message.toolCalls && message.toolCalls.length > 0}
+            <div class="tool-calls-container">
+              {#each message.toolCalls as toolCall (toolCall.tool_id)}
+                <ToolCallDisplay {toolCall} />
+              {/each}
+            </div>
+          {/if}
+          
+          <!-- Chat message -->
           <ChatMessage
             {message}
             onEdit={handleEditMessage}
@@ -895,6 +953,26 @@
 
     .empty-content p {
       font-size: 0.875rem;
+    }
+  }
+
+  .tool-calls-container {
+    max-width: 80%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+  }
+
+  @media (max-width: 768px) {
+    .tool-calls-container {
+      max-width: 92%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .tool-calls-container {
+      max-width: 95%;
     }
   }
 </style>

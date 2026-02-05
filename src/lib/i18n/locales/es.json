@@ -341,6 +341,11 @@
       "listen": "Escuchar",
       "stop": "Detener",
       "closePreview": "Cerrar vista previa"
+    },
+    "toolCalls": {
+      "searching": "Buscando en la web",
+      "searchedTheWeb": "Buscó en la web",
+      "results": "resultados"
     }
   },
   "aiEngines": {

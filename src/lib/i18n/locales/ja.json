@@ -341,6 +341,11 @@
       "listen": "聞く",
       "stop": "停止",
       "closePreview": "プレビューを閉じる"
+    },
+    "toolCalls": {
+      "searching": "ウェブを検索中",
+      "searchedTheWeb": "ウェブを検索しました",
+      "results": "件の結果"
     }
   },
   "aiEngines": {
