@@ -4,6 +4,7 @@ import * as departmentsApi from '../../api/admin/departments.js';
 
 interface DepartmentsState {
   departments: Department[];
+  departmentsTree: Department[];
   selectedDepartment: Department | null;
   loading: boolean;
   error: Error | null;
@@ -13,6 +14,7 @@ interface DepartmentsState {
 function createDepartmentsStore() {
   const { subscribe, set, update } = writable<DepartmentsState>({
     departments: [],
+    departmentsTree: [],
     selectedDepartment: null,
     loading: false,
     error: null,
@@ -23,13 +25,29 @@ function createDepartmentsStore() {
     subscribe,
     
     async fetchDepartments() {
-      update(state => ({ ...state, loading: true, error: null }));
+      update(state => ({ ...state, error: null }));
       try {
         const response = await departmentsApi.getDepartments();
         update(state => ({
           ...state,
           departments: response.departments,
           total: response.total,
+        }));
+      } catch (error) {
+        update(state => ({
+          ...state,
+          error: error as Error,
+        }));
+      }
+    },
+
+    async fetchDepartmentsTree() {
+      update(state => ({ ...state, loading: true, error: null }));
+      try {
+        const response = await departmentsApi.getDepartmentsTree();
+        update(state => ({
+          ...state,
+          departmentsTree: response.tree,
           loading: false,
         }));
       } catch (error) {
@@ -63,11 +81,15 @@ function createDepartmentsStore() {
       update(state => ({ ...state, loading: true, error: null }));
       try {
         const newDepartment = await departmentsApi.createDepartment(data);
-        const response = await departmentsApi.getDepartments();
+        const [flatResponse, treeResponse] = await Promise.all([
+          departmentsApi.getDepartments(),
+          departmentsApi.getDepartmentsTree(),
+        ]);
         update(state => ({
           ...state,
-          departments: response.departments,
-          total: response.total,
+          departments: flatResponse.departments,
+          departmentsTree: treeResponse.tree,
+          total: flatResponse.total,
           loading: false,
         }));
         return newDepartment;
@@ -85,11 +107,15 @@ function createDepartmentsStore() {
       update(state => ({ ...state, loading: true, error: null }));
       try {
         const updatedDepartment = await departmentsApi.updateDepartment(departmentId, data);
-        const response = await departmentsApi.getDepartments();
+        const [flatResponse, treeResponse] = await Promise.all([
+          departmentsApi.getDepartments(),
+          departmentsApi.getDepartmentsTree(),
+        ]);
         update(state => ({
           ...state,
-          departments: response.departments,
-          total: response.total,
+          departments: flatResponse.departments,
+          departmentsTree: treeResponse.tree,
+          total: flatResponse.total,
           selectedDepartment: state.selectedDepartment?.id === departmentId 
             ? updatedDepartment 
             : state.selectedDepartment,
@@ -110,11 +136,15 @@ function createDepartmentsStore() {
       update(state => ({ ...state, loading: true, error: null }));
       try {
         await departmentsApi.deleteDepartment(departmentId);
-        const response = await departmentsApi.getDepartments();
+        const [flatResponse, treeResponse] = await Promise.all([
+          departmentsApi.getDepartments(),
+          departmentsApi.getDepartmentsTree(),
+        ]);
         update(state => ({
           ...state,
-          departments: response.departments,
-          total: response.total,
+          departments: flatResponse.departments,
+          departmentsTree: treeResponse.tree,
+          total: flatResponse.total,
           selectedDepartment: state.selectedDepartment?.id === departmentId 
             ? null 
             : state.selectedDepartment,
@@ -134,11 +164,15 @@ function createDepartmentsStore() {
       update(state => ({ ...state, loading: true, error: null }));
       try {
         const movedDepartment = await departmentsApi.moveDepartment(departmentId, newParentId);
-        const response = await departmentsApi.getDepartments();
+        const [flatResponse, treeResponse] = await Promise.all([
+          departmentsApi.getDepartments(),
+          departmentsApi.getDepartmentsTree(),
+        ]);
         update(state => ({
           ...state,
-          departments: response.departments,
-          total: response.total,
+          departments: flatResponse.departments,
+          departmentsTree: treeResponse.tree,
+          total: flatResponse.total,
           selectedDepartment: state.selectedDepartment?.id === departmentId 
             ? movedDepartment 
             : state.selectedDepartment,
@@ -159,11 +193,15 @@ function createDepartmentsStore() {
       update(state => ({ ...state, loading: true, error: null }));
       try {
         const updatedDepartment = await departmentsApi.setBudget(departmentId, data);
-        const response = await departmentsApi.getDepartments();
+        const [flatResponse, treeResponse] = await Promise.all([
+          departmentsApi.getDepartments(),
+          departmentsApi.getDepartmentsTree(),
+        ]);
         update(state => ({
           ...state,
-          departments: response.departments,
-          total: response.total,
+          departments: flatResponse.departments,
+          departmentsTree: treeResponse.tree,
+          total: flatResponse.total,
           selectedDepartment: state.selectedDepartment?.id === departmentId 
             ? updatedDepartment 
             : state.selectedDepartment,
@@ -191,6 +229,7 @@ function createDepartmentsStore() {
     reset() {
       set({
         departments: [],
+        departmentsTree: [],
         selectedDepartment: null,
         loading: false,
         error: null,

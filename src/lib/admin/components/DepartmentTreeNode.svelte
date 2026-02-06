@@ -1,24 +1,19 @@
 <script lang="ts">
   import type { Department } from "../types.js";
-  import { departmentsStore } from "../stores/index.js";
+  import DepartmentTreeNode from './DepartmentTreeNode.svelte';
   
   interface Props {
     department: Department;
-    allDepartments: Department[];
+    allDepartments?: Department[];
     onSelect: (dept: Department) => void;
     selectedId?: string;
     onMove?: (deptId: string, newParentId: string | null) => void;
   }
   
-  let { department, allDepartments, onSelect, selectedId, onMove }: Props = $props();
+  let { department, allDepartments = [], onSelect, selectedId, onMove }: Props = $props();
   
   let isExpanded = $state(true);
   let isDragOver = $state(false);
-  
-  const children = $derived(
-    allDepartments.filter(d => d.parent_id === department.id)
-      .sort((a, b) => a.name.localeCompare(b.name))
-  );
   
   const budgetStatus = $derived(() => {
     const usagePercent = department.budget_allocated > 0 
@@ -96,7 +91,7 @@
     onkeydown={(e) => e.key === 'Enter' && handleSelect()}
   >
     <div class="department-header">
-      {#if children.length > 0}
+      {#if department.children && department.children.length > 0}
         <button 
           class="expand-btn" 
           onclick={(e) => { e.stopPropagation(); toggleExpand(); }}
@@ -141,10 +136,10 @@
     </div>
   </div>
   
-  {#if isExpanded && children.length > 0}
+  {#if isExpanded && department.children && department.children.length > 0}
     <div class="children">
-      {#each children as child (child.id)}
-        <svelte:self 
+      {#each department.children as child (child.id)}
+        <DepartmentTreeNode 
           department={child} 
           {allDepartments}
           {onSelect}

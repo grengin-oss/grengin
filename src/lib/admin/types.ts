@@ -176,11 +176,16 @@ export interface Department {
   action_on_exceed?: ActionOnExceed;
   created_at: string;
   updated_at: string;
+  children?: Department[];
 }
 
 export interface DepartmentListResponse {
   departments: Department[];
   total: number;
+}
+
+export interface DepartmentTreeResponse {
+  tree: Department[];
 }
 
 export interface CreateDepartmentRequest {

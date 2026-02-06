@@ -6,11 +6,16 @@ import type {
   UpdateDepartmentRequest,
   SetBudgetRequest,
   DepartmentMembersResponse,
-  BudgetOverview
+  BudgetOverview,
+  DepartmentTreeResponse
 } from '../../admin/types.js';
 
 export async function getDepartments(): Promise<DepartmentListResponse> {
   return request<DepartmentListResponse>('/admin/departments');
+}
+
+export async function getDepartmentsTree(): Promise<DepartmentTreeResponse> {
+  return request<DepartmentTreeResponse>('/admin/departments/tree');
 }
 
 export async function getDepartment(departmentId: string): Promise<Department> {
