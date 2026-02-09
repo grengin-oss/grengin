@@ -294,7 +294,11 @@
       "dismissError": "Descartar error",
       "failedToLoadModels": "Error al cargar modelos",
       "failedToLoadConversation": "Error al cargar conversación",
-      "failedToSendMessage": "Error al enviar mensaje"
+      "failedToSendMessage": "Error al enviar mensaje",
+      "budgetAboutToExhaust": "El presupuesto del departamento está a punto de agotarse.",
+      "budgetExhaustedWarn": "El presupuesto del departamento está agotado para el periodo actual. El chat continuará, pero el uso podría exceder el presupuesto.",
+      "budgetExhaustedBlock": "El presupuesto está agotado y no se aceptan nuevas solicitudes",
+      "budgetExhaustedBlockSolution": "Contacte a su administrador para solicitar presupuesto adicional o intente más tarde"
     },
     "messageInput": {
       "placeholder": "Pregunta cualquier cosa",

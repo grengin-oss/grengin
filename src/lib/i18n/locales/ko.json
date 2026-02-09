@@ -294,7 +294,11 @@
       "dismissError": "오류 닫기",
       "failedToLoadModels": "모델 로드 실패",
       "failedToLoadConversation": "대화 로드 실패",
-      "failedToSendMessage": "메시지 전송 실패"
+      "failedToSendMessage": "메시지 전송 실패",
+      "budgetAboutToExhaust": "부서 예산이 곧 고갈됩니다.",
+      "budgetExhaustedWarn": "이번 기간의 부서 예산이 고갈되었습니다. 채팅은 계속되지만 사용량이 예산을 초과할 수 있습니다.",
+      "budgetExhaustedBlock": "예산이 고갈되어 새 요청을 받을 수 없습니다.",
+      "budgetExhaustedBlockSolution": "추가 예산을 요청하려면 관리자에게 문의하거나 나중에 다시 시도하세요."
     },
     "messageInput": {
       "placeholder": "무엇이든 물어보세요",

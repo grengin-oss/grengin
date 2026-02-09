@@ -1,4 +1,4 @@
-import type { StreamEvent, ConversationDetail, ConversationList } from '../types/chat';
+import type { StreamEvent, ConversationDetail, ConversationList, BudgetWarningMessage } from '../types/chat';
 
 import { API_BASE, request, ApiError, parseErrorDetail } from './client';
 import { getAccessToken } from '../features/auth';
@@ -13,6 +13,7 @@ export interface SendMessageOptions {
   onConversationInitialized?: (data: {newConversationId: string, isNewConversation: boolean}) => void;
   onStreamingStart?: () => void;
   onResponseDelta?: (token: string) => void;
+  onBudgetWarning?: (data: BudgetWarningMessage) => void;
   onDone?: (data: any) => void;
   onError?: (error: ApiError | Error) => void;
 }
@@ -84,7 +85,7 @@ export async function uploadDocument(options: UploadDocumentOptions): Promise<Up
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, onResponseDelta, onStreamingStart, onConversationInitialized, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onDone, onError } = options;
 
   try {
     const token = getAccessToken();
@@ -268,6 +269,9 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
               break;
             case 'message_start':
               onStreamingStart?.();
+              break;
+            case 'budget_warning':
+              onBudgetWarning?.(data);
               break;
             case 'delta':
               if (data) {                

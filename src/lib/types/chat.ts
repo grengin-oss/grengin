@@ -10,6 +10,13 @@ export type ConversationList = components['schemas']['ConversationList'];
 export type FileAttachment = components['schemas']['FileAttachment'];
 
 // UI-specific types
+export interface BudgetWarningMessage {
+  department_id: string;
+  budget_available: string;
+  action: 'warn' | 'block';
+  message: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: MessageRole;

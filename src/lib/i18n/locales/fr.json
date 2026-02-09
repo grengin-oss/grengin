@@ -294,7 +294,11 @@
       "dismissError": "Ignorer l'erreur",
       "failedToLoadModels": "Échec du chargement des modèles",
       "failedToLoadConversation": "Échec du chargement de la conversation",
-      "failedToSendMessage": "Échec de l'envoi du message"
+      "failedToSendMessage": "Échec de l'envoi du message",
+      "budgetAboutToExhaust": "Le budget du département est sur le point d'être épuisé.",
+      "budgetExhaustedWarn": "Le budget du département est épuisé pour la période en cours. Le chat continuera, mais l'utilisation risque de dépasser le budget.",
+      "budgetExhaustedBlock": "Budget épuisé et aucune nouvelle requête n'est acceptée",
+      "budgetExhaustedBlockSolution": "Contactez votre administrateur pour demander un budget supplémentaire ou réessayez plus tard"
     },
     "messageInput": {
       "placeholder": "Demander n'importe quoi",
