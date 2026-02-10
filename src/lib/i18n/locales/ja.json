@@ -294,7 +294,11 @@
       "dismissError": "エラーを閉じる",
       "failedToLoadModels": "モデルの読み込みに失敗しました",
       "failedToLoadConversation": "会話の読み込みに失敗しました",
-      "failedToSendMessage": "メッセージの送信に失敗しました"
+      "failedToSendMessage": "メッセージの送信に失敗しました",
+      "budgetAboutToExhaust": "部署の予算がもうすぐ不足します。",
+      "budgetExhaustedWarn": "今期間の部署の予算は使い果たされました。チャットは続行されますが、利用が予算を超える可能性があります。",
+      "budgetExhaustedBlock": "予算が使い果たされ、新しいリクエストは受け付けられません。",
+      "budgetExhaustedBlockSolution": "追加の予算を申請するか、後でもう一度お試しください。"
     },
     "messageInput": {
       "placeholder": "何でも聞いてください",

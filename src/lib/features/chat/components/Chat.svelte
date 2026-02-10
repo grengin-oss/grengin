@@ -3,7 +3,7 @@
   import ChatMessage from './ChatMessage.svelte';
   import MessageInput from './MessageInput.svelte';
   import TypingIndicator from './TypingIndicator.svelte';
-  import type { ChatMessage as ChatMessageType } from '../../../types/chat';
+  import type { BudgetWarningMessage, ChatMessage as ChatMessageType } from '../../../types/chat';
   import { sendMessage, getConversation, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
   import { getModels } from '../../../api/models';
@@ -76,6 +76,31 @@
     selectedProvider = '';
   }
 
+  function handleBudgetWarning(data: BudgetWarningMessage) {
+    let budgetAvailable = parseInt(data.budget_available, 10);
+    let description_key = '';
+    let solution_key = '';
+
+    if (budgetAvailable > 0) {
+      description_key = 'chat.errors.budgetAboutToExhaust';
+    } else if (data.action === 'block') {
+      description_key = 'chat.errors.budgetExhaustedBlock';
+      solution_key = 'chat.errors.budgetExhaustedBlockSolution';
+    } else {
+      description_key = 'chat.errors.budgetExhaustedWarn';
+    }
+
+    error = new ApiError(200, {
+      type: 'rich',
+      code: 200,
+      description: data.message,
+      solution: '',
+      description_key: description_key,
+      solution_key: solution_key,
+      params: {},
+      external_code: 'budget_warning',
+    });
+  }
 
   // Auto-scroll to bottom when new messages arrive
   async function scrollToBottom(smooth = true) {
@@ -213,6 +238,9 @@
             );
             scrollToStreamingMessageTop(currentStreamingMessage.id);
           }
+        },
+        onBudgetWarning: (data) => {
+          handleBudgetWarning(data);
         },
         onDone: async (_data) => {
           if (currentStreamingMessage) {
@@ -439,13 +467,21 @@
     </div>
 
     {#if error && !currentStreamingMessage}
-      <div class="error-banner error-banner--centered">
+      <div class="error-banner error-banner--centered" class:error-banner--warning={error.externalCode === 'budget_warning'}>
         <div class="error-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
+          {#if error.externalCode === 'budget_warning'}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05l-8.47-14.14a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          {:else}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          {/if}
         </div>
         <div class="error-content">
           <span class="error-title">
@@ -485,13 +521,21 @@
         {/if}
 
         {#if error && !currentStreamingMessage}
-          <div class="error-banner">
+          <div class="error-banner" class:error-banner--warning={error.externalCode === 'budget_warning'}>
             <div class="error-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
+              {#if error.externalCode === 'budget_warning'}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05l-8.47-14.14a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              {:else}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              {/if}
             </div>
             <div class="error-content">
               <span class="error-title">
@@ -674,6 +718,37 @@
     right: 0;
     height: 2px;
     background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+  }
+
+  .error-banner--warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+  }
+
+  .error-banner--warning::before {
+    background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+  }
+
+  .error-banner--warning .error-icon {
+    background: rgba(245, 158, 11, 0.1);
+  }
+
+  .error-banner--warning .error-title {
+    color: #f59e0b;
+  }
+
+  .error-banner--warning .error-message {
+    color: rgba(245, 158, 11, 0.8);
+  }
+
+  .error-banner--warning .dismiss-btn {
+    color: rgba(245, 158, 11, 0.6);
+  }
+
+  .error-banner--warning .dismiss-btn:hover {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
   }
 
   @keyframes slideIn {

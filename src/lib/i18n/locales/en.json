@@ -294,7 +294,11 @@
       "dismissError": "Dismiss error",
       "failedToLoadModels": "Failed to load models",
       "failedToLoadConversation": "Failed to load conversation",
-      "failedToSendMessage": "Failed to send message"
+      "failedToSendMessage": "Failed to send message",
+      "budgetAboutToExhaust": "Department budget is about to exhaust.",
+      "budgetExhaustedWarn": "Department budget is exhausted for the current period. The chat will proceed, but usage may exceed the budget.",
+      "budgetExhaustedBlock": "Budget exhausted and no new requests are accepted",
+      "budgetExhaustedBlockSolution": "Contact your administrator to request additional budget or try again later"
     },
     "messageInput": {
       "placeholder": "Ask anything",
