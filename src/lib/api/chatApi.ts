@@ -329,13 +329,16 @@ export async function getConversation(conversationId: string): Promise<Conversat
 /**
  * List all conversations
  */
-export async function listConversations(params?: { offset?: number; limit?: number }): Promise<ConversationList> {
+export async function listConversations(params?: { offset?: number; limit?: number, search?: string }): Promise<ConversationList> {
   const searchParams = new URLSearchParams();
   if (params?.offset !== undefined) {
     searchParams.set('offset', String(params.offset));
   }
   if (params?.limit !== undefined) {
     searchParams.set('limit', String(params.limit));
+  }
+  if (params?.search !== undefined && params.search.trim()) {
+    searchParams.set('search', params.search);
   }
   const query = searchParams.toString();
   return request<ConversationList>(`/chat${query ? `?${query}` : ''}`);
