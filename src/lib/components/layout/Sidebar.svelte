@@ -169,15 +169,6 @@
   let renamingChat = $state(false);
   let renameInputElement = $state<HTMLInputElement | null>(null);
 
-  // Filtered chats based on search query
-  let filteredChats = $derived(
-    searchQuery.trim()
-      ? chatHistory.filter(chat =>
-          chat.title.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : chatHistory
-  );
-
   function handleItemClick(itemId: string) {
     activeItem = itemId;
 
@@ -352,17 +343,28 @@
 
   async function fetchChats({ reset = false } = {}) {
     try {
+      const trimmedSearchQuery = searchQuery.trim();
+
       if (reset) {
-        loadingChats = true;
+        // show loading spinner if the chat history is empty
+        if (chatHistory.length === 0) {
+          loadingChats = true;
+        }
         chatOffset = 0;
-        chatHasMore = true;
         chatTotal = null;
       } else {
         loadingMoreChats = true;
       }
 
+      chatHasMore = false;
       const offset = reset ? 0 : chatOffset;
-      const response = await listConversations({ offset, limit: CHAT_PAGE_LIMIT });
+      const response = await listConversations({ offset, limit: CHAT_PAGE_LIMIT, search: trimmedSearchQuery});
+
+      // if the search query has changed, ignore the response
+      if (searchQuery.trim() !== trimmedSearchQuery) {
+        return;
+      }
+      
       const responseChats = Array.isArray(response) ? response : response?.conversations ?? [];
       const total = !Array.isArray(response) && typeof response?.total === 'number' ? response.total : null;
 
@@ -493,11 +495,10 @@
 
   // Fetch chats on component mount
   $effect(() => {
-    fetchChats({ reset: true });
     updateSelectedChatFromUrl();
 
     // Listen for chat history refresh events
-    const handleRefresh = () => {
+    const handleAddNewConversation = () => {
       fetchChats({ reset: true });
       updateSelectedChatFromUrl();
     };
@@ -507,12 +508,26 @@
       updateSelectedChatFromUrl();
     };
 
-    window.addEventListener('refreshChatHistory', handleRefresh);
+    window.addEventListener('refreshChatHistory', handleAddNewConversation);
     window.addEventListener('popstate', handlePopState);
 
     return () => {
-      window.removeEventListener('refreshChatHistory', handleRefresh);
+      window.removeEventListener('refreshChatHistory', handleAddNewConversation);
       window.removeEventListener('popstate', handlePopState);
+    };
+  });
+
+  // Listen for search query changes
+  $effect(() => {
+    // call the fetchChats function when the search query changes
+    searchQuery;
+
+    const searchTimeout = setTimeout(() => {  
+      fetchChats({ reset: true });
+    }, 200);
+
+    return () => {
+      clearTimeout(searchTimeout);
     };
   });
 </script>
@@ -635,6 +650,11 @@
               placeholder={$_('sidebar.searchPlaceholder')}
               bind:value={searchQuery}
               class="chat-search-input"
+              onkeydown={(event: KeyboardEvent) => {
+                if (event.key === 'Escape') {
+                  clearSearch();
+                }
+              }}
               onfocus={() => searchFocused = true}
               onblur={() => searchFocused = false}
               title={$_('sidebar.searchTitle')}
@@ -662,7 +682,12 @@
   <!-- Chat List Header (non-scrollable, but below the elevated area) -->
   {#if !isCollapsed && !isAdminView}
     <div class="chat-section-title">
-      <span>{$_('sidebar.chats')} {#if chatHistory.length > 0}({filteredChats.length}){/if}</span>
+      <span>
+        {$_('sidebar.chats')}
+        {#if chatTotal}
+          ({chatTotal})
+        {/if}
+      </span>
     </div>
   {/if}
 
@@ -679,7 +704,7 @@
           <div class="chat-empty">
             <span>{$_('sidebar.noChatsYet')}</span>
           </div>
-        {:else if filteredChats.length === 0 && searchQuery}
+        {:else if chatHistory.length === 0 && searchQuery}
           <div class="no-results">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/>
@@ -688,7 +713,7 @@
             <span>{$_('sidebar.noChatsFound')}</span>
           </div>
         {:else}
-          {#each filteredChats as chat (chat.id)}
+          {#each chatHistory as chat (chat.id)}
             <div class="chat-item">
               {#if renameChatId === chat.id}
                 <div class="chat-rename-form">
