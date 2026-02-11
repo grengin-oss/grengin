@@ -246,12 +246,19 @@
           handleBudgetWarning(data);
         },
         onToolCall: (toolCall) => {
-          if (currentStreamingMessage) {            
-            // Initialize tool call - this happens once per tool
-            // Set status to 'pending' until results are received
+          if (currentStreamingMessage) {
+            // Initialize or replace the tool call entry; status remains 'pending' until results arrive
+            const existingCalls = currentStreamingMessage.toolCalls || [];
+            const toolCallWithStatus = { ...toolCall, status: 'pending' };
+            const updatedToolCalls = existingCalls.some(tc => tc.tool_id === toolCall.tool_id)
+              ? existingCalls.map(tc => 
+                  tc.tool_id === toolCall.tool_id ? toolCallWithStatus : tc
+                )
+              : [...existingCalls, toolCallWithStatus];
+
             currentStreamingMessage = {
               ...currentStreamingMessage,
-              toolCalls: [...(currentStreamingMessage.toolCalls || []), { ...toolCall, status: 'pending' }],
+              toolCalls: updatedToolCalls,
             };
 
             // Update the message in the array
