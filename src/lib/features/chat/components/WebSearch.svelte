@@ -1,38 +1,41 @@
 <script lang="ts">
-  import type { ToolCall } from '../../../types/toolCall';
-  import { _ } from 'svelte-i18n';
+  import type { MergedToolResult } from "../../../types/toolCall";
+  import { _ } from "svelte-i18n";
 
   interface Props {
-    toolCall: ToolCall;
+    mergedWebSearch: MergedToolResult;
   }
 
-  let { toolCall }: Props = $props();
+  let { mergedWebSearch }: Props = $props();
 
   // Determine tool status based on the status field
-  const isCompleted = $derived(toolCall.status === 'completed');
-  const isPending = $derived(toolCall.status === 'pending');
-  const isRunning = $derived(toolCall.status === 'running');
-  const hasWebSearch = $derived(toolCall.kind === 'web_search' && !!toolCall.web_search);
-  const hasResults = $derived(toolCall.web_search?.results && toolCall.web_search.results.length > 0);
-  
+  const isCompleted = $derived(mergedWebSearch.status === 'completed');
+  const isRunning = $derived(mergedWebSearch.status === 'running');
+  const hasResults = $derived(
+    mergedWebSearch.web_search?.results &&
+      mergedWebSearch.web_search?.results.length > 0,
+  );
+
   // Get the latest result title while running
   const latestResultTitle = $derived(
-    hasResults && toolCall.web_search?.results 
-      ? toolCall.web_search.results[toolCall.web_search.results.length - 1]?.title 
-      : null
+    hasResults && mergedWebSearch.web_search?.results
+      ? mergedWebSearch.web_search?.results[
+          mergedWebSearch.web_search?.results.length - 1
+        ]?.title
+      : null,
   );
-  
+
   let isExpanded = $state(false);
 
   function toggleExpanded() {
     // Allow expanding when we have web search data (even if still in progress)
-    if (hasWebSearch) {
+    if (hasResults) {
       isExpanded = !isExpanded;
     }
   }
 
   function handleKeyDown(e: KeyboardEvent) {
-    if ((e.key === 'Enter' || e.key === ' ') && hasWebSearch) {
+    if ((e.key === "Enter" || e.key === " ") && hasResults) {
       e.preventDefault();
       isExpanded = !isExpanded;
     }
@@ -40,70 +43,108 @@
 </script>
 
 <div class="tool-call-container">
-  <button 
+  <button
     class="tool-call-toggle"
     class:completed={isCompleted}
-    class:pending={isPending}
     class:running={isRunning}
-    class:clickable={hasWebSearch}
+    class:clickable={hasResults}
     onclick={toggleExpanded}
     onkeydown={handleKeyDown}
-    disabled={!hasWebSearch}
+    disabled={!hasResults}
     aria-expanded={isExpanded}
   >
     {#if isCompleted}
-      <svg class="status-icon check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <circle cx="12" cy="12" r="10" fill="var(--brand-green)" stroke="var(--brand-green)"></circle>
+      <svg
+        class="status-icon check"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+      >
+        <circle
+          cx="12"
+          cy="12"
+          r="10"
+          fill="var(--brand-green)"
+          stroke="var(--brand-green)"
+        ></circle>
         <polyline points="8 12 11 15 16 9" stroke="white"></polyline>
       </svg>
-    {:else if isPending || isRunning}
+    {:else if isRunning}
       <div class="spinner-small"></div>
     {/if}
-    
+
     <span class="toggle-text">
       {#if isCompleted}
-        {$_('chat.toolCalls.searchedTheWeb')}
+        {$_("chat.toolCalls.searchedTheWeb")}
       {:else if isRunning && latestResultTitle}
         {latestResultTitle}
       {:else}
-        {$_('chat.toolCalls.searching')}
+        {$_("chat.toolCalls.searching")}
       {/if}
     </span>
-    
-    {#if hasWebSearch}
-      <svg class="chevron" class:rotated={isExpanded} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="6,9 12,15 18,9"></polyline>
-      </svg>
-    {/if}
+
+    <svg
+      class="chevron"
+      class:rotated={isExpanded}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <polyline points="6,9 12,15 18,9"></polyline>
+    </svg>
   </button>
 
-  {#if isExpanded && hasWebSearch && toolCall.web_search}
+  {#if isExpanded && mergedWebSearch.web_search}
     <div class="tool-details">
-      {#if toolCall.web_search.query}
+      {#if mergedWebSearch.web_search?.query}
         <div class="search-query">
-          <svg class="globe-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="globe-icon"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="2" y1="12" x2="22" y2="12"></line>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            <path
+              d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+            ></path>
           </svg>
-          <span class="query-text">{toolCall.web_search.query}</span>
+          <span class="query-text">{mergedWebSearch.web_search?.query}</span>
         </div>
       {/if}
-      
+
       {#if hasResults}
         <div class="sources-list">
-          <div class="sources-count">{toolCall.web_search.results.length} {$_('chat.toolCalls.results')}</div>
-          {#each toolCall.web_search.results as result}
+          <div class="sources-count">
+            {mergedWebSearch.web_search?.results.length}
+            {$_("chat.toolCalls.results")}
+          </div>
+          {#each mergedWebSearch.web_search?.results || [] as result}
             {@const urlObj = new URL(result.url)}
-            <a href={result.url} target="_blank" rel="noopener noreferrer" class="source-item">
+            <a
+              href={result.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="source-item"
+            >
               <div class="source-favicon">
-                <img 
+                <img
                   src={`https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`}
                   alt=""
                   loading="lazy"
                   onerror={(e) => {
                     const img = e.currentTarget as HTMLImageElement;
-                    img.style.display = 'none';
+                    img.style.display = "none";
                   }}
                 />
               </div>
@@ -121,7 +162,6 @@
 
 <style>
   .tool-call-container {
-    margin: 0.75rem 0;
     border: 1px solid var(--glass-stroke-light);
     border-radius: 0.75rem;
     background: var(--surface-elevated);

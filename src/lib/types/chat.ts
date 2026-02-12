@@ -1,5 +1,5 @@
 import type { components } from '../../../mock/types/api';
-import type { ToolCall } from './toolCall';
+import type { MergedToolResult, ToolCall, ToolResult } from './toolCall';
 
 // Re-export API types
 export type Message = components['schemas']['Message'];
@@ -29,6 +29,8 @@ export interface ChatMessage {
   isEditing?: boolean;
   model?: string | null;
   toolCalls?: ToolCall[];
+  toolsResults?: ToolResult[];
+  mergedWebSearch?: MergedToolResult | null;
 }
 
 export interface StreamEvent {

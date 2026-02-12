@@ -2017,6 +2017,8 @@ export interface components {
             created_at: string;
             /** Format: date-time */
             updated_at?: string;
+            /** @description Whether web search is enabled for the conversation */
+            webSearchEnabled?: boolean;
         };
         /** @enum {string} */
         MessageRole: "user" | "assistant" | "system" | "tool";
@@ -2047,8 +2049,7 @@ export interface components {
             parts: components["schemas"]["MessagePart"];
             model?: string | null;
             model_params?: Record<string, never> | null;
-            tool_calls?: Record<string, never>[] | null;
-            tool_results?: Record<string, never>[] | null;
+
             usage?: components["schemas"]["TokenUsage"];
             /**
              * Format: float
