@@ -341,6 +341,11 @@
       "listen": "듣기",
       "stop": "중지",
       "closePreview": "미리보기 닫기"
+    },
+    "toolCalls": {
+      "searching": "웹 검색 중",
+      "searchedTheWeb": "웹을 검색했습니다",
+      "results": "개 결과"
     }
   },
   "aiEngines": {

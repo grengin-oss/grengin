@@ -16,9 +16,11 @@
     providers?: ProviderInfo[];
     loadingModels?: boolean;
     modelsError?: string | null;
+    webSearchEnabled?: boolean;
+    onWebSearchToggle?: () => void;
   }
 
-  let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null }: MessageInputProps = $props();
+  let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, webSearchEnabled = false, onWebSearchToggle }: MessageInputProps = $props();
 
   let textarea: HTMLTextAreaElement;
   let fileInput: HTMLInputElement;
@@ -34,7 +36,6 @@
   let currentPreviewImage = $state<{ file: File; url: string } | null>(null);
   let showPlusMenu = $state(false);
   let showModelDropdown = $state(false);
-  let webSearchEnabled = $state(false);
 
   // Voice input state
   let isRecording = $state(false);
@@ -569,7 +570,7 @@
         <button
           class="toggle-btn"
           class:active={webSearchEnabled}
-          onclick={() => { webSearchEnabled = !webSearchEnabled; }}
+          onclick={onWebSearchToggle}
           title={webSearchEnabled ? $_('chat.messageInput.disableWebSearch') : $_('chat.messageInput.enableWebSearch')}
           aria-label={webSearchEnabled ? $_('chat.messageInput.disableWebSearch') : $_('chat.messageInput.enableWebSearch')}
           aria-pressed={webSearchEnabled}

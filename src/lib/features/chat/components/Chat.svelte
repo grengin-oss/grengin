@@ -3,6 +3,7 @@
   import ChatMessage from './ChatMessage.svelte';
   import MessageInput from './MessageInput.svelte';
   import TypingIndicator from './TypingIndicator.svelte';
+  import type { MergedToolResult, ToolCall, ToolResult, WebSearchResult } from '../../../types/toolCall';
   import type { BudgetWarningMessage, ChatMessage as ChatMessageType } from '../../../types/chat';
   import { sendMessage, getConversation, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
@@ -25,6 +26,7 @@
   let selectedModel = $state('gpt-5.2');
   let selectedProvider = $state('openai');
   let selectedModelInfo = $state<ProviderInfo | undefined>(undefined);
+  let webSearchEnabled = $state(false);
 
   // Models state
   let providers = $state<ProviderInfo[]>([]);
@@ -186,6 +188,9 @@
       timestamp: new Date().toISOString(),
       isStreaming: true,
       model: selectedModel,
+      toolCalls: [] as ToolCall[],
+      toolsResults: [] as ToolResult[],
+      mergedWebSearch: null as MergedToolResult | null,
     };
 
     let messageAddedToArray = $state(false);
@@ -242,11 +247,61 @@
         onBudgetWarning: (data) => {
           handleBudgetWarning(data);
         },
+        onToolCall: (toolCall) => {
+          if (currentStreamingMessage) {
+            // Initialize or replace the tool call entry; status remains 'pending' until results arrive
+            const updatedToolCalls = [...(currentStreamingMessage.toolCalls || []), toolCall];
+            const mergedWebSearch = mergeWebSearchResults(updatedToolCalls, currentStreamingMessage.toolsResults || [], 'running');
+
+            currentStreamingMessage = {
+              ...currentStreamingMessage,
+              toolCalls: updatedToolCalls,
+              mergedWebSearch: mergedWebSearch,
+            };
+
+            // Update the message in the array
+            messages = messages.map(m => 
+              m.id === currentStreamingMessage?.id ? currentStreamingMessage : m
+            );
+            scrollToStreamingMessageTop(currentStreamingMessage.id);
+          }
+        },
+        onToolResult: (toolResult) => {
+          if (currentStreamingMessage) {
+            // update tool result
+            const updatedToolResults =[...currentStreamingMessage.toolsResults || [], toolResult];
+            const mergedWebSearch = mergeWebSearchResults(currentStreamingMessage.toolCalls || [], updatedToolResults || [], 'running');
+
+            currentStreamingMessage = {
+              ...currentStreamingMessage,
+              toolsResults: updatedToolResults,
+              mergedWebSearch
+            };
+
+            // Update the message in the array
+            messages = messages.map(m => 
+              m.id === currentStreamingMessage?.id ? currentStreamingMessage : m
+            );
+            scrollToStreamingMessageTop(currentStreamingMessage.id);
+          }
+        },
         onDone: async (_data) => {
           if (currentStreamingMessage) {
-            currentStreamingMessage.isStreaming = false;
+            let updatedMergedWebSearch = null;
+            if(currentStreamingMessage.mergedWebSearch) {
+              updatedMergedWebSearch = {...currentStreamingMessage.mergedWebSearch, status: 'completed'};
+            }
+
+            // Mark all tool calls as completed when stream ends
+            const updatedMessage = {
+              ...currentStreamingMessage,
+              isStreaming: false,
+              mergedWebSearch: updatedMergedWebSearch as MergedToolResult
+            };
+
+            currentStreamingMessage = updatedMessage;
             messages = messages.map(m =>
-              m.id === currentStreamingMessage?.id ? { ...currentStreamingMessage } : m
+              m.id === currentStreamingMessage?.id ? updatedMessage : m
             );
           }
           currentStreamingMessage = null;
@@ -299,6 +354,82 @@
     );
   }
 
+  function filterLatestById<T extends { tool_id: string }>(arr?: T[] | null): T[] {
+    if(!arr || !arr.length){
+      return arr || [];
+    }
+
+    const uniqueIds = new Set<string>();
+    const result: T[] = [];
+
+    for(let i = arr.length - 1; i >= 0; i--) {
+      if(!uniqueIds.has(arr[i].tool_id)) {
+        uniqueIds.add(arr[i].tool_id);
+        result.push(arr[i]);
+      }
+    }
+
+    return result.reverse();
+  }
+
+  function mergeWebSearchResults(toolCalls: ToolCall[], toolsResults: ToolResult[], status: 'completed' | 'running' = 'completed'): MergedToolResult | null {
+    // Get only web search tools
+    const webSearchToolCalls = toolCalls.filter(tc => tc.kind === 'web_search');
+    const webSearchToolResults = toolsResults.filter(tr => tr.kind === 'web_search');
+
+    // If no web calls, return null
+    if(!webSearchToolCalls || !webSearchToolCalls.length) {
+      return null;
+    }
+
+    // If no results, return the last tool call
+    if(!webSearchToolResults || !webSearchToolResults.length) {
+      return {
+        tool_name: toolCalls[toolCalls.length - 1].tool_name,
+        kind: toolCalls[toolCalls.length - 1].kind,
+        status
+      }
+    }
+
+    // Remove duplicates having same tool_id
+    const latestResultsByToolId = filterLatestById(webSearchToolResults);
+
+    // Merge results
+    const tool_name = latestResultsByToolId[0].tool_name; 
+    const kind = latestResultsByToolId[0].kind;
+    let query = latestResultsByToolId[0].web_search?.query || '';
+    const queries = new Set<string>([]);
+    const results = new Set<WebSearchResult>([]);
+
+    latestResultsByToolId.forEach(curr => {
+      // Update query
+      if(curr.web_search?.query) {
+        query = curr.web_search?.query;
+      }
+
+      // Add new queries
+      curr.web_search?.queries?.forEach(query => {
+        queries.add(query);
+      });
+      
+      // Add new results
+      curr.web_search?.results?.forEach(result => {
+        results.add(result);
+      });
+    });
+
+    return {
+      tool_name,
+      kind,
+      web_search: {
+        query,
+        queries: Array.from(queries),
+        results: Array.from(results)
+      },
+      status
+    };
+  }
+
   async function loadConversationFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chatId');
@@ -320,8 +451,14 @@
           timestamp: msg.created_at || new Date().toISOString(),
           model: msg.model,
           usage: msg.usage,
-          files: msg.parts.files || []
+          files: msg.parts.files || [],
+          toolCalls: msg.toolCalls || [],
+          toolsResults: msg.toolsResults || [],
+          mergedWebSearch: mergeWebSearchResults(msg.toolCalls || [], msg.toolsResults || [], 'completed')
         }));
+
+        // Web search enabled
+        webSearchEnabled = conversation.webSearchEnabled ?? false;
 
         // Extract model and provider from conversation
         // Use last message model if messages exist, otherwise use conversation model
@@ -391,6 +528,7 @@
       selectedModel = 'gpt-5.2';
       selectedProvider = 'openai';
       selectedModelInfo = providers.find(p => p.key === 'openai') || providers[0];
+      webSearchEnabled = false;
     }
   }
 
@@ -456,6 +594,8 @@
           placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
           {selectedModel}
           {selectedProvider}
+          {webSearchEnabled}
+          onWebSearchToggle={() => webSearchEnabled = !webSearchEnabled}
           onRemoveModel={handleRemoveModel}
           onModelSelect={selectModel}
           {providers}
@@ -507,7 +647,8 @@
   <div class="chat-container">
     <div class="messages-container" bind:this={messagesContainer} onscroll={handleScroll}>
       <div class="messages-inner">
-        {#each messages as message (message.id)}
+        {#each messages as message (message.id)}          
+          <!-- Chat message -->
           <ChatMessage
             {message}
             onEdit={handleEditMessage}
@@ -566,6 +707,8 @@
         placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
         {selectedModel}
         {selectedProvider}
+        {webSearchEnabled}
+        onWebSearchToggle={() => webSearchEnabled = !webSearchEnabled}
         onRemoveModel={handleRemoveModel}
         onModelSelect={selectModel}
         {providers}

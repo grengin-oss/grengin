@@ -31,6 +31,7 @@
   import { downloadFile } from '../../../api/fileApi';
   import { _ } from 'svelte-i18n';
   import { get } from 'svelte/store';
+  import WebSearch from './WebSearch.svelte';
 
   interface Props {
     message: ChatMessage & { files?: Array<{ id: string; name?: string; type?: string }> };
@@ -352,6 +353,13 @@
   {/if}
 
   <div class="message-content">
+    <!-- Tool calls display (if any) -->
+    {#if message.mergedWebSearch}
+      <div class="tool-calls-container">
+        <WebSearch mergedWebSearch={message.mergedWebSearch}/>
+      </div>
+    {/if}
+
     {#if message.role === 'user'}
       <!-- Edit mode UI hidden for now
       {#if isEditing}
@@ -1361,5 +1369,25 @@
 
   .file-box {
     cursor: pointer;
+  }
+
+  .tool-calls-container {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+  }
+
+  @media (max-width: 768px) {
+    .tool-calls-container {
+      max-width: 92%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .tool-calls-container {
+      max-width: 95%;
+    }
   }
 </style>

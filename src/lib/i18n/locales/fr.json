@@ -341,6 +341,11 @@
       "listen": "Écouter",
       "stop": "Arrêter",
       "closePreview": "Fermer l'aperçu"
+    },
+    "toolCalls": {
+      "searching": "Recherche sur le web",
+      "searchedTheWeb": "Recherché sur le web",
+      "results": "résultats"
     }
   },
   "aiEngines": {
