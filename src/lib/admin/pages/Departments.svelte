@@ -22,6 +22,9 @@
   });
   
   onMount(() => {
+    // Use the optimized tree API for better performance
+    departmentsStore.fetchDepartmentsTree();
+    // Also fetch flat list for operations like moving departments
     departmentsStore.fetchDepartments();
   });
   
@@ -35,20 +38,10 @@
     }
   });
   
-  const rootDepartments = $derived(
-    store.departments
-      .filter(d => d.parent_id === null)
-      .sort((a, b) => a.name.localeCompare(b.name))
-  );
   
   $effect(() => {
-    if (!selectedDepartment && store.departments.length > 0 && !store.loading) {
-      const firstDept = store.departments
-        .filter(d => d.parent_id === null)
-        .sort((a, b) => a.name.localeCompare(b.name))[0];
-      if (firstDept) {
-        selectedDepartment = firstDept;
-      }
+    if (!selectedDepartment && store.departmentsTree.length > 0 && !store.loading) {
+      selectedDepartment = store.departmentsTree[0];
     }
   });
 
@@ -162,12 +155,12 @@
         </div>
         
         <div class="tree-container">
-          {#if store.loading && store.departments.length === 0}
+          {#if store.loading && store.departmentsTree.length === 0}
             <div class="loading-state">
               <LoadingSpinner />
               <p>{$_('admin.departments.loading')}</p>
             </div>
-          {:else if store.departments.length === 0}
+          {:else if store.departmentsTree.length === 0}
             <div class="empty-state">
               <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
                 <path d="M32 8L8 20V36C8 47.0457 17.9543 56 32 56C46.0457 56 56 47.0457 56 36V20L32 8Z" stroke="#d1d5db" stroke-width="2"/>
@@ -182,7 +175,7 @@
             </div>
           {:else}
             <div class="tree-list">
-              {#each rootDepartments as dept (dept.id)}
+              {#each store.departmentsTree as dept (dept.id)}
                 <DepartmentTreeNode 
                   department={dept}
                   allDepartments={store.departments}
