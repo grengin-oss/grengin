@@ -177,11 +177,8 @@
     messages = [...messages, userMessage];
     await scrollToBottom();
 
-    // Show typing indicator
-    isTyping = true;
-
     // Prepare streaming message
-    currentStreamingMessage = {
+    let pendingStreamingMessage: ChatMessageType | null = {
       id: crypto.randomUUID(),
       role: 'assistant',
       content: '',
@@ -194,6 +191,14 @@
     };
 
     let messageAddedToArray = $state(false);
+    let pendingConversationId = conversationId;
+    isTyping = true;
+
+    // Update ui with a copy of the pending streaming message
+    currentStreamingMessage = {...pendingStreamingMessage};
+
+    // Disables switching conversation while initializing new conversation
+    window.dispatchEvent(new CustomEvent('initializingConversation'));
 
     try {
       await sendMessage({
@@ -204,113 +209,132 @@
         uploadedFiles: uploadedFiles,
         webSearch: webSearch,
 
-        onConversationInitialized: ({isNewConversation, newConversationId}) => {
+        onConversationInitialized: ({newConversationId}) => {
           // Update conversation ID and URL
           if (newConversationId && newConversationId !== conversationId) {
             conversationId = newConversationId;
+            pendingConversationId = newConversationId;
             updateUrlWithConversationId(newConversationId);
-          }
-          
-          // Refresh sidebar chat history when conversation starts
-          if (isNewConversation) {
-            window.dispatchEvent(new CustomEvent('refreshChatHistory'));
-          }
+          }        
+
+          // Update loading and typing states
+          isLoading = true;
+          isTyping = true;
+
+          // Refresh chats list
+          window.dispatchEvent(new CustomEvent('refreshChatHistory'));
         },
-        onStreamingStart: () => {          
-          isTyping = false;
-          if (currentStreamingMessage) {
-            messages = [...messages, currentStreamingMessage];
+        onStreamingStart: (messageId) => {              
+          if (pendingStreamingMessage) {
             messageAddedToArray = true;
-            scrollToStreamingMessageTop(currentStreamingMessage.id);
+            pendingStreamingMessage = {...pendingStreamingMessage, id: messageId};
+            currentStreamingMessage = {...pendingStreamingMessage};
+            messages = [...messages, currentStreamingMessage as ChatMessageType];
+
+            // Update loading and typing states
+            isTyping = false;
+            isLoading = true;
+
+            scrollToStreamingMessageTop(pendingStreamingMessage.id);
           }
         },
         onResponseDelta: (token) => {
-          if (currentStreamingMessage) {
+          if (pendingStreamingMessage) {
             // Add message to array on first token if not already added
             if (!messageAddedToArray && token.trim()) {
-              messages = [...messages, currentStreamingMessage];
+              messages = [...messages, pendingStreamingMessage];
               messageAddedToArray = true;
             }
             
             // Create a new message object with updated content
-            currentStreamingMessage = {
-              ...currentStreamingMessage,
-              content: currentStreamingMessage.content + token
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              content: pendingStreamingMessage.content + token
             };
+
+            // Update the current streaming message
+            currentStreamingMessage = {...pendingStreamingMessage};
+
             // Update the message in the array
             messages = messages.map(m => 
-              m.id === currentStreamingMessage?.id ? currentStreamingMessage : m
+              m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
-            scrollToStreamingMessageTop(currentStreamingMessage.id);
+
+            isLoading = true;
+            scrollToStreamingMessageTop(pendingStreamingMessage.id);
           }
         },
         onBudgetWarning: (data) => {
-          handleBudgetWarning(data);
+          if(pendingStreamingMessage){
+            handleBudgetWarning(data);
+            isLoading = true;
+          }
         },
         onToolCall: (toolCall) => {
-          if (currentStreamingMessage) {
+          if (pendingStreamingMessage) {
             // Initialize or replace the tool call entry; status remains 'pending' until results arrive
-            const updatedToolCalls = [...(currentStreamingMessage.toolCalls || []), toolCall];
-            const mergedWebSearch = mergeWebSearchResults(updatedToolCalls, currentStreamingMessage.toolsResults || [], 'running');
+            const updatedToolCalls = [...(pendingStreamingMessage.toolCalls || []), toolCall];
+            const mergedWebSearch = mergeWebSearchResults(updatedToolCalls, pendingStreamingMessage.toolsResults || [], 'running');
 
-            currentStreamingMessage = {
-              ...currentStreamingMessage,
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
               toolCalls: updatedToolCalls,
               mergedWebSearch: mergedWebSearch,
             };
 
             // Update the message in the array
             messages = messages.map(m => 
-              m.id === currentStreamingMessage?.id ? currentStreamingMessage : m
+              m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
-            scrollToStreamingMessageTop(currentStreamingMessage.id);
+
+            isLoading = true;
+            scrollToStreamingMessageTop(pendingStreamingMessage.id);
           }
         },
         onToolResult: (toolResult) => {
-          if (currentStreamingMessage) {
+          if (pendingStreamingMessage) {
             // update tool result
-            const updatedToolResults =[...currentStreamingMessage.toolsResults || [], toolResult];
-            const mergedWebSearch = mergeWebSearchResults(currentStreamingMessage.toolCalls || [], updatedToolResults || [], 'running');
+            const updatedToolResults = [...pendingStreamingMessage.toolsResults || [], toolResult];
+            const mergedWebSearch = mergeWebSearchResults(pendingStreamingMessage.toolCalls || [], updatedToolResults || [], 'running');
 
-            currentStreamingMessage = {
-              ...currentStreamingMessage,
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
               toolsResults: updatedToolResults,
               mergedWebSearch
             };
 
+            currentStreamingMessage = {...pendingStreamingMessage};
+
             // Update the message in the array
             messages = messages.map(m => 
-              m.id === currentStreamingMessage?.id ? currentStreamingMessage : m
+              m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
-            scrollToStreamingMessageTop(currentStreamingMessage.id);
+
+            isLoading = true;
+            scrollToStreamingMessageTop(pendingStreamingMessage.id);
           }
         },
         onDone: async (_data) => {
-          if (currentStreamingMessage) {
+          if (pendingStreamingMessage) {
             let updatedMergedWebSearch = null;
-            if(currentStreamingMessage.mergedWebSearch) {
-              updatedMergedWebSearch = {...currentStreamingMessage.mergedWebSearch, status: 'completed'};
+            if(pendingStreamingMessage.mergedWebSearch) {
+              updatedMergedWebSearch = {...pendingStreamingMessage.mergedWebSearch, status: 'completed'};
             }
 
             // Mark all tool calls as completed when stream ends
-            const updatedMessage = {
-              ...currentStreamingMessage,
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
               isStreaming: false,
               mergedWebSearch: updatedMergedWebSearch as MergedToolResult
             };
 
-            currentStreamingMessage = updatedMessage;
-            messages = messages.map(m =>
-              m.id === currentStreamingMessage?.id ? updatedMessage : m
+            currentStreamingMessage = {...pendingStreamingMessage};
+
+            // Update the message in the array
+            messages = messages.map(m => 
+              m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
           }
-          currentStreamingMessage = null;
-          isLoading = false;
-          isTyping = false;
-
-          // Refocus input after streaming completes
-          await tick();
-          messageInput?.focus();
         },
         onError: (errorMessage) => {
           // Store the error - it should be an ApiError instance
@@ -319,18 +343,23 @@
             : new ApiError(500, errorMessage instanceof Error ? errorMessage.message : String(errorMessage));
           
           error = apiError;
-          isTyping = false;
-          if (currentStreamingMessage) {
-            currentStreamingMessage.error = getLocalizedError(apiError, 'description', $_) || apiError.description;
-            currentStreamingMessage.isStreaming = false;
-            messages = messages.map(m =>
-              m.id === currentStreamingMessage?.id ? { ...currentStreamingMessage } : m
+          if (pendingStreamingMessage) {
+            // Update the error in the message
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              error: getLocalizedError(apiError, 'description', $_) || apiError.description,
+              isStreaming: false,
+            };
+            
+            // Update the message in the array
+            currentStreamingMessage = {...pendingStreamingMessage};
+            messages = messages.map(m => 
+              m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
+
+            isLoading = true;
+            scrollToStreamingMessageTop(pendingStreamingMessage.id);
           }
-          currentStreamingMessage = null;
-          isLoading = false;
-          // Refocus input after error
-          messageInput?.focus();
         },
       });
     } catch (err) {
@@ -340,10 +369,15 @@
         : new ApiError(500, err instanceof Error ? err.message : $_('chat.errors.failedToSendMessage'));
       
       error = apiError;
+    } finally {
+      // Reset states      
       isTyping = false;
       isLoading = false;
       currentStreamingMessage = null;
+      pendingStreamingMessage = null;
+
       // Refocus input after exception
+      await tick();
       messageInput?.focus();
     }
   }
@@ -452,13 +486,13 @@
           model: msg.model,
           usage: msg.usage,
           files: msg.parts.files || [],
-          toolCalls: msg.toolCalls || [],
-          toolsResults: msg.toolsResults || [],
-          mergedWebSearch: mergeWebSearchResults(msg.toolCalls || [], msg.toolsResults || [], 'completed')
+          toolCalls: msg.tool_calls || [],
+          toolsResults: msg.tools_results || [],
+          mergedWebSearch: mergeWebSearchResults(msg.tool_calls || [], msg.tools_results || [], 'completed')
         }));
 
         // Web search enabled
-        webSearchEnabled = conversation.webSearchEnabled ?? false;
+        webSearchEnabled = conversation.web_search_enabled || false;
 
         // Extract model and provider from conversation
         // Use last message model if messages exist, otherwise use conversation model

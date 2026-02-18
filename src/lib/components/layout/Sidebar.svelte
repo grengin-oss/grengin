@@ -33,6 +33,7 @@
   let activeChatMenu = $state<string | null>(null);
   let showDeleteConfirmation = $state(false);
   let selectedChatId = $state<string | null>(null);
+  let initializingConversation = $state(false);
   let chatToDelete = $state<string | null>(null);
   let deletingChat = $state(false);
 
@@ -201,6 +202,8 @@
   }
 
   function selectChat(chatId: string) {
+    if(initializingConversation) return;
+    
     selectedChatId = chatId;
     // Navigate to chat with chatId parameter
     window.history.pushState({}, '', `?chatId=${chatId}`);
@@ -372,9 +375,9 @@
         id: chat.id,
         title: chat.title || $_('sidebar.untitledChat'),
         archived: chat.archived,
-        createdAt: chat.createdAt,
-        lastMessageAt: chat.lastMessageAt,
-        totalTokens: chat.totalTokens
+        createdAt: chat.created_at,
+        lastMessageAt: chat.last_message_at,
+        totalTokens: chat.total_tokens
       }));
 
       if (reset) {
@@ -498,7 +501,8 @@
     updateSelectedChatFromUrl();
 
     // Listen for chat history refresh events
-    const handleAddNewConversation = () => {
+    const handleRefreshChatHistory = () => {
+      initializingConversation = false;
       fetchChats({ reset: true });
       updateSelectedChatFromUrl();
     };
@@ -508,12 +512,19 @@
       updateSelectedChatFromUrl();
     };
 
-    window.addEventListener('refreshChatHistory', handleAddNewConversation);
+    // Listen for starting new conversation events
+    function handleInitializingConversation() {
+      initializingConversation = true;
+    }
+
+    window.addEventListener('refreshChatHistory', handleRefreshChatHistory);
     window.addEventListener('popstate', handlePopState);
+    window.addEventListener('initializingConversation', handleInitializingConversation);
 
     return () => {
-      window.removeEventListener('refreshChatHistory', handleAddNewConversation);
+      window.removeEventListener('refreshChatHistory', handleRefreshChatHistory);
       window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('initializingConversation', handleInitializingConversation);
     };
   });
 
