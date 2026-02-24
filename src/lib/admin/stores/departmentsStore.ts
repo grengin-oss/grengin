@@ -5,6 +5,7 @@ import * as departmentsApi from '../../api/admin/departments.js';
 interface DepartmentsState {
   departments: Department[];
   departmentsTree: Department[];
+  administeredDepartmentIds: string[];
   selectedDepartment: Department | null;
   loading: boolean;
   error: Error | null;
@@ -15,6 +16,7 @@ function createDepartmentsStore() {
   const { subscribe, set, update } = writable<DepartmentsState>({
     departments: [],
     departmentsTree: [],
+    administeredDepartmentIds: [],
     selectedDepartment: null,
     loading: false,
     error: null,
@@ -33,6 +35,23 @@ function createDepartmentsStore() {
           departments: response.departments,
           total: response.total,
         }));
+      } catch (error) {
+        update(state => ({
+          ...state,
+          error: error as Error,
+        }));
+      }
+    },
+
+    async fetchAdministeredDepartments() {
+      update(state => ({ ...state, error: null }));
+      try {
+        const response = await departmentsApi.getAdministeredDepartments();
+
+        update(state => ({
+          ...state,
+          administeredDepartmentIds: response.administered_departments
+        }));        
       } catch (error) {
         update(state => ({
           ...state,
@@ -103,7 +122,7 @@ function createDepartmentsStore() {
       }
     },
 
-    async updateDepartment(departmentId: string, data: { name?: string; description?: string; parent_id?: string | null; leader_ids?: string[] }) {
+    async updateDepartment(departmentId: string, data: { name?: string; description?: string; parent_id?: string | null; admin_ids?: string[] }) {
       update(state => ({ ...state, loading: true, error: null }));
       try {
         const updatedDepartment = await departmentsApi.updateDepartment(departmentId, data);
@@ -230,6 +249,7 @@ function createDepartmentsStore() {
       set({
         departments: [],
         departmentsTree: [],
+        administeredDepartmentIds: [],
         selectedDepartment: null,
         loading: false,
         error: null,

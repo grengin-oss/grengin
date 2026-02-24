@@ -124,7 +124,8 @@
       "saving": "Enregistrement...",
       "create": "Créer",
       "metadata": "Métadonnées",
-      "lastUpdated": "Dernière mise à jour"
+      "lastUpdated": "Dernière mise à jour",
+      "removing": "Suppression"
     },
     "users": {
       "userManagement": "Gestion des utilisateurs",
@@ -276,7 +277,23 @@
       "failedToRemoveMember": "Échec du retrait du membre",
       "loadingMembers": "Chargement des membres...",
       "failedToFetchMembers": "Échec de la récupération des membres",
-      "addMemberPlaceholder": "La recherche et sélection d'utilisateurs sera implémentée ici"
+      "addMemberPlaceholder": "La recherche et sélection d'utilisateurs sera implémentée ici",
+      "departmentAdmins": "Administrateurs du département",
+      "departmentAdminsDescription": "Gérer les utilisateurs qui peuvent administrer ce département",
+      "addAdmin": "Ajouter un admin",
+      "searchUsersToAdd": "Rechercher des utilisateurs à ajouter comme admin...",
+      "noUsersFound": "Aucun utilisateur trouvé",
+      "removeAdmin": "Retirer l'admin",
+      "noAdmins": "Aucun admin assigné",
+      "adminAdded": "Admin ajouté avec succès",
+      "adminRemoved": "Admin retiré avec succès",
+      "failedToAddAdmin": "Échec de l'ajout de l'admin",
+      "failedToRemoveAdmin": "Échec du retrait de l'admin",
+      "failedToLoadAdmins": "Échec du chargement des administrateurs du département",
+      "failedToSearchUsers": "Échec de la recherche d'utilisateurs",
+      "removeAdminConfirmTitle": "Retirer l'accès administrateur",
+      "removeAdminConfirmMessage": "Êtes-vous sûr de vouloir retirer l'accès administrateur à {name} ?",
+      "removeAdminConfirmWarning": "Cette personne ne pourra plus gérer ce département."
     },
     "settings": {
       "title": "Paramètres",

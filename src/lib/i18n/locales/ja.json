@@ -124,7 +124,8 @@
       "saving": "保存中...",
       "create": "作成",
       "metadata": "メタデータ",
-      "lastUpdated": "最終更新日"
+      "lastUpdated": "最終更新日",
+      "removing": "削除中"
     },
     "users": {
       "userManagement": "ユーザー管理",
@@ -276,7 +277,23 @@
       "failedToRemoveMember": "メンバーの削除に失敗しました",
       "loadingMembers": "メンバーを読み込んでいます...",
       "failedToFetchMembers": "メンバーの取得に失敗しました",
-      "addMemberPlaceholder": "ユーザー検索と選択はここに実装されます"
+      "addMemberPlaceholder": "ユーザー検索と選択はここに実装されます",
+      "departmentAdmins": "部門管理者",
+      "departmentAdminsDescription": "この部門を管理できるユーザーを管理",
+      "addAdmin": "管理者を追加",
+      "searchUsersToAdd": "管理者として追加するユーザーを検索...",
+      "noUsersFound": "ユーザーが見つかりません",
+      "removeAdmin": "管理者を削除",
+      "noAdmins": "管理者が割り当てられていません",
+      "adminAdded": "管理者が正常に追加されました",
+      "adminRemoved": "管理者が正常に削除されました",
+      "failedToAddAdmin": "管理者の追加に失敗しました",
+      "failedToRemoveAdmin": "管理者の削除に失敗しました",
+      "failedToLoadAdmins": "部門管理者の読み込みに失敗しました",
+      "failedToSearchUsers": "ユーザー検索に失敗しました",
+      "removeAdminConfirmTitle": "管理者アクセスを削除",
+      "removeAdminConfirmMessage": "{name}の管理者アクセスを削除してもよろしいですか？",
+      "removeAdminConfirmWarning": "このユーザーはこの部門を管理できなくなります。"
     },
     "settings": {
       "title": "設定",

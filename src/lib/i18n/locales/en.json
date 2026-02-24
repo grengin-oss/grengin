@@ -124,7 +124,8 @@
       "saving": "Saving...",
       "create": "Create",
       "metadata": "Metadata",
-      "lastUpdated": "Last Updated"
+      "lastUpdated": "Last Updated",
+      "removing": "Removing"
     },
     "users": {
       "userManagement": "User Management",
@@ -276,7 +277,23 @@
       "failedToRemoveMember": "Failed to remove member",
       "loadingMembers": "Loading members...",
       "failedToFetchMembers": "Failed to fetch members",
-      "addMemberPlaceholder": "User search and selection will be implemented here"
+      "addMemberPlaceholder": "User search and selection will be implemented here",
+      "departmentAdmins": "Department Admins",
+      "departmentAdminsDescription": "Manage users who can administer this department",
+      "addAdmin": "Add Admin",
+      "searchUsersToAdd": "Search users to add as admin...",
+      "noUsersFound": "No users found",
+      "removeAdmin": "Remove Admin",
+      "noAdmins": "No admins assigned",
+      "adminAdded": "Admin added successfully",
+      "adminRemoved": "Admin removed successfully",
+      "failedToAddAdmin": "Failed to add admin",
+      "failedToRemoveAdmin": "Failed to remove admin",
+      "failedToLoadAdmins": "Failed to load department admins",
+      "failedToSearchUsers": "Failed to search users",
+      "removeAdminConfirmTitle": "Remove Admin Access",
+      "removeAdminConfirmMessage": "Are you sure you want to remove admin access for {name}?",
+      "removeAdminConfirmWarning": "They will no longer be able to manage this department."
     },
     "settings": {
       "title": "Settings",

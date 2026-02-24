@@ -21,10 +21,28 @@
     store = $departmentsStore;
   });
   
+  function filterDepartmentTree(departments: Department[], permittedIds: Set<string>): Department[] {
+    if(!departments || departments.length === 0) return []; 
+
+    const newTree = [];
+    for (const dept of departments) {
+      if (permittedIds.has(dept.id)) {
+        newTree.push(dept);
+      }else if(dept.children && dept.children.length > 0){
+        newTree.push(...filterDepartmentTree(dept.children, permittedIds));
+      }
+    }
+
+    return newTree;
+  }
+  
+  const filteredDepartmentsTree = $derived(
+    filterDepartmentTree(store.departmentsTree, new Set(store.administeredDepartmentIds))
+  );
+  
   onMount(() => {
-    // Use the optimized tree API for better performance
     departmentsStore.fetchDepartmentsTree();
-    // Also fetch flat list for operations like moving departments
+    departmentsStore.fetchAdministeredDepartments();
     departmentsStore.fetchDepartments();
   });
   
@@ -40,8 +58,8 @@
   
   
   $effect(() => {
-    if (!selectedDepartment && store.departmentsTree.length > 0 && !store.loading) {
-      selectedDepartment = store.departmentsTree[0];
+    if (!selectedDepartment && filteredDepartmentsTree.length > 0 && !store.loading) {
+      selectedDepartment = filteredDepartmentsTree[0];
     }
   });
 
@@ -155,12 +173,12 @@
         </div>
         
         <div class="tree-container">
-          {#if store.loading && store.departmentsTree.length === 0}
+          {#if store.loading && filteredDepartmentsTree.length === 0}
             <div class="loading-state">
               <LoadingSpinner />
               <p>{$_('admin.departments.loading')}</p>
             </div>
-          {:else if store.departmentsTree.length === 0}
+          {:else if filteredDepartmentsTree.length === 0}
             <div class="empty-state">
               <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
                 <path d="M32 8L8 20V36C8 47.0457 17.9543 56 32 56C46.0457 56 56 47.0457 56 36V20L32 8Z" stroke="#d1d5db" stroke-width="2"/>
@@ -175,7 +193,7 @@
             </div>
           {:else}
             <div class="tree-list">
-              {#each store.departmentsTree as dept (dept.id)}
+              {#each filteredDepartmentsTree as dept (dept.id)}
                 <DepartmentTreeNode 
                   department={dept}
                   allDepartments={store.departments}

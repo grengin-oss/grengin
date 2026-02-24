@@ -124,7 +124,8 @@
       "saving": "Salvando...",
       "create": "Criar",
       "metadata": "Metadados",
-      "lastUpdated": "Última atualização"
+      "lastUpdated": "Última atualização",
+      "removing": "Removendo"
     },
     "users": {
       "userManagement": "Gerenciamento de usuários",
@@ -276,7 +277,23 @@
       "failedToRemoveMember": "Falha ao remover membro",
       "loadingMembers": "Carregando membros...",
       "failedToFetchMembers": "Falha ao buscar membros",
-      "addMemberPlaceholder": "A pesquisa e seleção de usuários será implementada aqui"
+      "addMemberPlaceholder": "A pesquisa e seleção de usuários será implementada aqui",
+      "departmentAdmins": "Administradores do Departamento",
+      "departmentAdminsDescription": "Gerir utilizadores que podem administrar este departamento",
+      "addAdmin": "Adicionar Admin",
+      "searchUsersToAdd": "Pesquisar utilizadores para adicionar como admin...",
+      "noUsersFound": "Nenhum utilizador encontrado",
+      "removeAdmin": "Remover Admin",
+      "noAdmins": "Nenhum admin atribuído",
+      "adminAdded": "Admin adicionado com sucesso",
+      "adminRemoved": "Admin removido com sucesso",
+      "failedToAddAdmin": "Falha ao adicionar admin",
+      "failedToRemoveAdmin": "Falha ao remover admin",
+      "failedToLoadAdmins": "Falha ao carregar administradores do departamento",
+      "failedToSearchUsers": "Falha ao pesquisar utilizadores",
+      "removeAdminConfirmTitle": "Remover Acesso de Admin",
+      "removeAdminConfirmMessage": "Tem a certeza que deseja remover o acesso de admin de {name}?",
+      "removeAdminConfirmWarning": "Esta pessoa deixará de poder gerir este departamento."
     },
     "settings": {
       "title": "Configurações",
