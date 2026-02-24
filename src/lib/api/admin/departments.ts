@@ -7,7 +7,8 @@ import type {
   SetBudgetRequest,
   DepartmentMembersResponse,
   BudgetOverview,
-  DepartmentTreeResponse
+  DepartmentTreeResponse,
+  AdministeredDepartmentsResponse
 } from '../../admin/types.js';
 
 export async function getDepartments(): Promise<DepartmentListResponse> {
@@ -101,4 +102,8 @@ export async function removeDepartmentMembers(
     method: 'DELETE',
     body: JSON.stringify(userIds),
   });
+}
+
+export async function getAdministeredDepartments(): Promise<AdministeredDepartmentsResponse> {
+  return request<AdministeredDepartmentsResponse>('/me/administered-departments');
 }

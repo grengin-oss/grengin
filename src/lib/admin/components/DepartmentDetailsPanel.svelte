@@ -1,13 +1,10 @@
 <script lang="ts">
   import type { Department } from "../types.js";
-  import { departmentsStore } from "../stores/index.js";
-  import { toast } from "../../components/Toaster.svelte";
-  import { ApiError } from "../../api/client.js";
-  import { getLocalizedError } from "../../utils/errorLocalization.js";
   import { _ } from "svelte-i18n";
   import Modal from "./Modal.svelte";
   import BudgetManagement from "./BudgetManagement.svelte";
   import MemberManagement from "./MemberManagement.svelte";
+  import DepartmentAdminsSection from "./DepartmentAdminsSection.svelte";
   import { formatDate } from "$lib/utils/format.js";
   
   interface Props {
@@ -129,6 +126,8 @@
               <div class="field-value">Level {department.depth}</div>
             </div>
           </div>
+          
+          <DepartmentAdminsSection {department} />
           
           <div class="section">
             <h3>{$_('admin.departments.statistics')}</h3>

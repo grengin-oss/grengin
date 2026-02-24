@@ -124,7 +124,8 @@
       "saving": "저장 중...",
       "create": "만들기",
       "metadata": "메타데이터",
-      "lastUpdated": "마지막 업데이트"
+      "lastUpdated": "마지막 업데이트",
+      "removing": "제거 중"
     },
     "users": {
       "userManagement": "사용자 관리",
@@ -276,7 +277,23 @@
       "failedToRemoveMember": "구성원 제거 실패",
       "loadingMembers": "구성원을 불러오는 중...",
       "failedToFetchMembers": "구성원 가져오기 실패",
-      "addMemberPlaceholder": "사용자 검색 및 선택이 여기에 구현됩니다"
+      "addMemberPlaceholder": "사용자 검색 및 선택이 여기에 구현됩니다",
+      "departmentAdmins": "부서 관리자",
+      "departmentAdminsDescription": "이 부서를 관리할 수 있는 사용자 관리",
+      "addAdmin": "관리자 추가",
+      "searchUsersToAdd": "관리자로 추가할 사용자 검색...",
+      "noUsersFound": "사용자를 찾을 수 없습니다",
+      "removeAdmin": "관리자 제거",
+      "noAdmins": "지정된 관리자 없음",
+      "adminAdded": "관리자가 성공적으로 추가되었습니다",
+      "adminRemoved": "관리자가 성공적으로 제거되었습니다",
+      "failedToAddAdmin": "관리자 추가 실패",
+      "failedToRemoveAdmin": "관리자 제거 실패",
+      "failedToLoadAdmins": "부서 관리자 로드 실패",
+      "failedToSearchUsers": "사용자 검색 실패",
+      "removeAdminConfirmTitle": "관리자 액세스 제거",
+      "removeAdminConfirmMessage": "{name}의 관리자 액세스를 제거하시겠습니까?",
+      "removeAdminConfirmWarning": "이 사용자는 더 이상 이 부서를 관리할 수 없습니다."
     },
     "settings": {
       "title": "설정",

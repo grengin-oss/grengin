@@ -124,7 +124,8 @@
       "saving": "Guardando...",
       "create": "Crear",
       "metadata": "Metadatos",
-      "lastUpdated": "Última actualización"
+      "lastUpdated": "Última actualización",
+      "removing": "Eliminando"
     },
     "users": {
       "userManagement": "Gestión de usuarios",
@@ -276,7 +277,23 @@
       "failedToRemoveMember": "Error al eliminar miembro",
       "loadingMembers": "Cargando miembros...",
       "failedToFetchMembers": "Error al obtener miembros",
-      "addMemberPlaceholder": "La búsqueda y selección de usuarios se implementará aquí"
+      "addMemberPlaceholder": "La búsqueda y selección de usuarios se implementará aquí",
+      "departmentAdmins": "Administradores del Departamento",
+      "departmentAdminsDescription": "Gestionar usuarios que pueden administrar este departamento",
+      "addAdmin": "Añadir Admin",
+      "searchUsersToAdd": "Buscar usuarios para añadir como admin...",
+      "noUsersFound": "No se encontraron usuarios",
+      "removeAdmin": "Quitar Admin",
+      "noAdmins": "Ningún admin asignado",
+      "adminAdded": "Admin añadido correctamente",
+      "adminRemoved": "Admin eliminado correctamente",
+      "failedToAddAdmin": "Error al añadir admin",
+      "failedToRemoveAdmin": "Error al quitar admin",
+      "failedToLoadAdmins": "Error al cargar administradores del departamento",
+      "failedToSearchUsers": "Error al buscar usuarios",
+      "removeAdminConfirmTitle": "Quitar acceso de administrador",
+      "removeAdminConfirmMessage": "¿Está seguro de que desea quitar el acceso de administrador a {name}?",
+      "removeAdminConfirmWarning": "Ya no podrá gestionar este departamento."
     },
     "settings": {
       "title": "Configuración",

@@ -162,7 +162,7 @@ export interface Department {
   name: string;
   description: string;
   parent_id: string | null;
-  leader_ids: string[];
+  admin_ids: string[];
   path: string;
   depth: number;
   child_count: number;
@@ -199,7 +199,7 @@ export interface UpdateDepartmentRequest {
   name?: string;
   description?: string;
   parent_id?: string | null;
-  leader_ids?: string[];
+  admin_ids?: string[];
 }
 
 export interface SetBudgetRequest {
@@ -258,4 +258,8 @@ export interface BudgetOverview {
   period_end: string;
   period_start: string;
   sub_department_budgets: SubDepartmentBudget[];
+}
+
+export interface AdministeredDepartmentsResponse {
+  administered_departments: string[];
 }
