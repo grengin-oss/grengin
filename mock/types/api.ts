@@ -2018,7 +2018,7 @@ export interface components {
             /** Format: date-time */
             updated_at?: string;
             /** @description Whether web search is enabled for the conversation */
-            webSearchEnabled?: boolean;
+            web_search_enabled?: boolean;
         };
         /** @enum {string} */
         MessageRole: "user" | "assistant" | "system" | "tool";

@@ -10,8 +10,8 @@ export interface SendMessageOptions {
   modelName?: string;
   uploadedFiles?: UploadedFile[];
   webSearch?: boolean;
-  onConversationInitialized?: (data: {newConversationId: string, isNewConversation: boolean}) => void;
-  onStreamingStart?: () => void;
+  onConversationInitialized?: (data: {newConversationId: string}) => void;
+  onStreamingStart?: (messageId: string) => void;
   onResponseDelta?: (token: string) => void;
   onBudgetWarning?: (data: BudgetWarningMessage) => void;
   onToolCall?: (toolCall: any) => void;
@@ -267,10 +267,10 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
           
           switch (event) {
             case 'conversation':
-              onConversationInitialized?.({newConversationId: data.id, isNewConversation: data.is_new});
+              onConversationInitialized?.({newConversationId: data.id});
               break;
             case 'message_start':
-              onStreamingStart?.();
+              onStreamingStart?.(data.message_id);
               break;
             case 'budget_warning':
               onBudgetWarning?.(data);
