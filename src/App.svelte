@@ -14,6 +14,7 @@
   import Departments from './lib/admin/pages/Departments.svelte';
   import Settings from '$lib/admin/pages/Settings.svelte';
   import Overview from '$lib/admin/pages/Overview.svelte';
+  import AccessControl from '$lib/admin/pages/AccessControl.svelte';
   import { _ } from 'svelte-i18n';
 
   let sidebarCollapsed = $state(false);
@@ -151,6 +152,7 @@
         <Route path="/admin/overview"><Overview /></Route>
         <Route path="/admin/users"><Users /></Route>
         <Route path="/admin/departments"><Departments /></Route>
+        <Route path="/admin/access-control"><AccessControl /></Route>
         <Route path="/admin/settings"><Settings /></Route>
         <Route path="/admin/ai-engines"><AIEngines /></Route>
         <Route path="/admin/analytics" primary={false}><Analytics /></Route>

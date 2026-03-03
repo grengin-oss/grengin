@@ -90,7 +90,8 @@
     "sectionManage": "管理",
     "sectionMonitor": "監視",
     "sectionConfigure": "設定",
-    "overview": "概要"
+    "overview": "概要",
+    "accessControl": "アクセス制御"
   },
   "app": {
     "closeSidebar": "サイドバーを閉じる",
@@ -101,6 +102,7 @@
   "admin": {
     "common": {
       "closeModal": "モーダルを閉じる",
+      "done": "完了",
       "name": "名前",
       "email": "メール",
       "role": "役割",
@@ -298,6 +300,137 @@
     "settings": {
       "title": "設定",
       "subtitle": "システム設定と連携を構成"
+    },
+    "accessControl": {
+      "title": "アクセス制御",
+      "subtitle": "ロールと権限を管理",
+      "tabs": {
+        "roles": "ロール",
+        "permissions": "権限"
+      },
+      "loadingRoles": "ロールを読み込み中…",
+      "noRolesTitle": "ロールがありません",
+      "noRolesMessage": "ロールはまだ設定されていません。カスタムロールを作成して始めてください。",
+      "addRoleButton": "新しいロールを追加",
+      "systemRoleLabel": "システム",
+      "userCountLabel": "{count}人のユーザー",
+      "closeSearch": "検索を閉じる",
+      "usersWithRole": "このロールを持つユーザー",
+      "addUser": "ユーザーを追加",
+      "searchUsersToAdd": "追加するユーザーを検索...",
+      "searchDepartments": "部門を検索",
+      "searchDepartmentsHint": "名前やキーワードで部門を見つけてから割り当ててください。",
+      "noUsersFound": "ユーザーが見つかりません",
+      "noUsersInRole": "このロールのユーザーはいません",
+      "userAdded": "ロールにユーザーを追加しました",
+      "userRemoved": "ロールからユーザーを削除しました",
+      "removeUser": "削除",
+      "removeUserConfirmTitle": "ロールから削除",
+      "removeUserConfirmMessage": "{name}をこのロールから削除しますか？",
+      "removeUserConfirmWarning": "このロールで付与された権限を失います。",
+      "loadingUsers": "ユーザーを読み込み中…",
+      "failedToLoadUsers": "ロールのユーザーを読み込めませんでした",
+      "failedToSearchUsers": "ユーザー検索に失敗しました",
+      "failedToAddUser": "ロールへのユーザー追加に失敗しました",
+      "failedToRemoveUser": "ロールからのユーザー削除に失敗しました",
+      "failedToLoadPermissions": "権限の読み込みに失敗しました",
+      "failedToLoadRoles": "ロールの読み込みに失敗しました",
+      "addRoleTitle": "新しいロールを追加",
+      "roleName": "ロール名",
+      "roleNamePlaceholder": "例：プロジェクトマネージャー",
+      "roleNameRequired": "ロール名は必須です",
+      "permissionsLabel": "権限",
+      "selectAll": "すべて選択",
+      "clearSelection": "クリア",
+      "permissionsSelected": "{count} 件選択中",
+      "createRole": "ロールを作成",
+      "creating": "作成中…",
+      "roleCreated": "ロールを作成しました",
+      "failedToCreateRole": "ロールの作成に失敗しました",
+      "permissionsInRole": "このロールの権限",
+      "editPermissions": "権限を編集",
+      "editRoleTitle": "ロールを編集",
+      "roleUpdated": "ロールを更新しました",
+      "failedToUpdateRole": "ロールの更新に失敗しました",
+      "systemRoleNameLocked": "システムロール名は変更できません",
+      "noPermissionsInRole": "権限が割り当てられていません",
+      "editRole": "ロールを編集",
+      "deleteRole": "ロールを削除",
+      "deleteRoleConfirmTitle": "ロールを削除",
+      "deleteRoleConfirmMessage": "ロール「{name}」を削除しますか？",
+      "deleteRoleConfirmWarning": "この操作は元に戻せません。このロールを持つユーザーは権限を失います。",
+      "roleDeleted": "ロールを削除しました",
+      "failedToDeleteRole": "ロールの削除に失敗しました",
+      "deleting": "削除中…",
+      "manageScoping": "部門を編集",
+      "manageDepartmentsTitle": "{user}の{role}ロールに対する部門スコープを管理",
+      "assignedDepartments": "割り当てられた部門",
+      "assignedDepartmentsHint": "各行はこのロールに紐づく部門のスコープです。",
+      "loadingAssignedDepartments": "割り当てられた部門を読み込み中…",
+      "noDepartmentsAssigned": "まだ部門が割り当てられていません",
+      "globalScope": "すべての部門",
+      "departmentScopeSupport": "部門スコープに対応",
+      "departmentScopeSupportTooltip": "部門に限定できます",
+      "departmentSearchPlaceholder": "部門を検索...",
+      "loadingDepartments": "部門を読み込んでいます...",
+      "noDepartmentsFound": "部門が見つかりません",
+      "addDepartmentScope": "追加",
+      "removeDepartmentScope": "削除",
+      "departmentAssigned": "部門のスコープを追加しました",
+      "departmentRemoved": "部門のスコープを削除しました",
+      "failedToAssignDepartment": "部門をユーザーに割り当てられませんでした",
+      "failedToRemoveDepartment": "部門をユーザーから削除できませんでした",
+      "failedToSearchDepartments": "部門の検索に失敗しました",
+      "failedToLoadAssignments": "部門スコープの読み込みに失敗しました",
+      "departmentLabel": "部門",
+      "permissionsTab": {
+        "loading": "権限を読み込み中…",
+        "noPermissionsTitle": "権限がありません",
+        "noPermissionsDescription": "システムに権限がまだ設定されていません。",
+        "columns": {
+          "action": "操作",
+          "scope": "範囲"
+        },
+        "scopeableBadge": "範囲指定可",
+        "scopeableBadgeTitle": "部門に限定できます",
+        "globalBadge": "グローバル",
+        "domainCount": "{count} 件の権限"
+      }
+    }
+  },
+  "permissions": {
+    "users": {
+      "view": { "description": "組織内のユーザーを表示" },
+      "manage": { "description": "ユーザーの作成、編集、無効化" }
+    },
+    "analytics": {
+      "view": { "description": "利用状況の分析とレポートを表示" }
+    },
+    "budget": {
+      "view": { "description": "予算の割り当てと使用状況を表示" },
+      "allocate": { "description": "部門予算の割り当てと調整" }
+    },
+    "mcp_servers": {
+      "view": { "description": "MCPサーバーの設定を表示" },
+      "admin": { "description": "MCPサーバーの設定とデプロイを管理" },
+      "delegate": { "description": "部門へのMCPサーバーアクセス委譲" }
+    },
+    "departments": {
+      "view": { "description": "部門の構成とメンバーを表示" },
+      "manage": { "description": "部門の作成、編集、管理" }
+    },
+    "roles": {
+      "view": { "description": "ロールとその権限を表示" },
+      "manage": { "description": "ロールの作成、編集、削除" },
+      "assign": { "description": "ユーザーにロールを割り当て" }
+    },
+    "ai_platform": {
+      "view": { "description": "AIエンジンの設定を表示" },
+      "manage": { "description": "AIエンジンとモデルを設定" }
+    },
+    "sso_providers": {
+      "view": { "description": "SSOプロバイダーの設定を表示" },
+      "manage": { "description": "SSOプロバイダーの設定と管理" }
     }
   },
   "chat": {

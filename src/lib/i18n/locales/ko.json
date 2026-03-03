@@ -90,7 +90,8 @@
     "sectionManage": "관리",
     "sectionMonitor": "모니터링",
     "sectionConfigure": "설정",
-    "overview": "개요"
+    "overview": "개요",
+    "accessControl": "액세스 제어"
   },
   "app": {
     "closeSidebar": "사이드바 닫기",
@@ -101,6 +102,7 @@
   "admin": {
     "common": {
       "closeModal": "모달 닫기",
+      "done": "완료",
       "name": "이름",
       "email": "이메일",
       "role": "역할",
@@ -298,6 +300,137 @@
     "settings": {
       "title": "설정",
       "subtitle": "시스템 설정 및 연동 구성"
+    },
+    "accessControl": {
+      "title": "액세스 제어",
+      "subtitle": "역할 및 권한 관리",
+      "tabs": {
+        "roles": "역할",
+        "permissions": "권한"
+      },
+      "loadingRoles": "역할을 로딩 중...",
+      "noRolesTitle": "역할 없음",
+      "noRolesMessage": "아직 역할이 구성되지 않았습니다. 사용자 지정 역할을 만들어 시작하세요.",
+      "addRoleButton": "새 역할 추가",
+      "systemRoleLabel": "시스템",
+      "userCountLabel": "{count}명 사용자",
+      "closeSearch": "검색 닫기",
+      "usersWithRole": "이 역할을 가진 사용자",
+      "addUser": "사용자 추가",
+      "searchUsersToAdd": "추가할 사용자 검색...",
+      "searchDepartments": "부서 검색",
+      "searchDepartmentsHint": "이름 또는 키워드로 부서를 찾아 할당하세요.",
+      "noUsersFound": "사용자를 찾을 수 없습니다",
+      "noUsersInRole": "이 역할의 사용자가 없습니다",
+      "userAdded": "역할에 사용자가 추가되었습니다",
+      "userRemoved": "역할에서 사용자가 제거되었습니다",
+      "removeUser": "제거",
+      "removeUserConfirmTitle": "역할에서 제거",
+      "removeUserConfirmMessage": "{name}을(를) 이 역할에서 제거하시겠습니까?",
+      "removeUserConfirmWarning": "이 역할로 부여된 권한을 잃게 됩니다.",
+      "loadingUsers": "사용자 로딩 중…",
+      "failedToLoadUsers": "역할의 사용자를 불러오지 못했습니다",
+      "failedToSearchUsers": "사용자 검색에 실패했습니다",
+      "failedToAddUser": "역할에 사용자 추가에 실패했습니다",
+      "failedToRemoveUser": "역할에서 사용자 제거에 실패했습니다",
+      "failedToLoadPermissions": "권한을 불러오는 데 실패했습니다",
+      "failedToLoadRoles": "역할을 불러오는 데 실패했습니다",
+      "addRoleTitle": "새 역할 추가",
+      "roleName": "역할 이름",
+      "roleNamePlaceholder": "예: 프로젝트 관리자",
+      "roleNameRequired": "역할 이름은 필수입니다",
+      "permissionsLabel": "권한",
+      "selectAll": "모두 선택",
+      "clearSelection": "지우기",
+      "permissionsSelected": "{count}개 선택됨",
+      "createRole": "역할 만들기",
+      "creating": "만드는 중…",
+      "roleCreated": "역할이 생성되었습니다",
+      "failedToCreateRole": "역할 생성에 실패했습니다",
+      "permissionsInRole": "이 역할의 권한",
+      "editPermissions": "권한 편집",
+      "editRoleTitle": "역할 편집",
+      "roleUpdated": "역할이 업데이트되었습니다",
+      "failedToUpdateRole": "역할 업데이트에 실패했습니다",
+      "systemRoleNameLocked": "시스템 역할 이름은 변경할 수 없습니다",
+      "noPermissionsInRole": "할당된 권한 없음",
+      "editRole": "역할 편집",
+      "deleteRole": "역할 삭제",
+      "deleteRoleConfirmTitle": "역할 삭제",
+      "deleteRoleConfirmMessage": "역할 \"{name}\"을(를) 삭제하시겠습니까?",
+      "deleteRoleConfirmWarning": "이 작업은 취소할 수 없습니다. 이 역할을 가진 사용자는 권한을 잃게 됩니다.",
+      "roleDeleted": "역할이 삭제되었습니다",
+      "failedToDeleteRole": "역할 삭제에 실패했습니다",
+      "deleting": "삭제 중…",
+      "manageScoping": "부서 편집",
+      "manageDepartmentsTitle": "{user} 사용자에 대해 {role} 역할의 부서 범위를 관리",
+      "assignedDepartments": "지정된 부서",
+      "assignedDepartmentsHint": "각 항목은 이 역할에 연결된 부서 범위를 나타냅니다.",
+      "loadingAssignedDepartments": "지정된 부서를 로딩 중...",
+      "noDepartmentsAssigned": "아직 할당된 부서가 없습니다",
+      "globalScope": "모든 부서",
+      "departmentScopeSupport": "부서 범위 지원",
+      "departmentScopeSupportTooltip": "부서에 맞게 제한할 수 있습니다",
+      "departmentSearchPlaceholder": "부서 검색...",
+      "loadingDepartments": "부서 로딩 중...",
+      "noDepartmentsFound": "부서를 찾을 수 없습니다",
+      "addDepartmentScope": "추가",
+      "removeDepartmentScope": "제거",
+      "departmentAssigned": "부서 범위가 추가되었습니다",
+      "departmentRemoved": "부서 범위가 제거되었습니다",
+      "failedToAssignDepartment": "사용자에게 부서를 할당하지 못했습니다",
+      "failedToRemoveDepartment": "사용자에서 부서를 제거하지 못했습니다",
+      "failedToSearchDepartments": "부서 검색에 실패했습니다",
+      "failedToLoadAssignments": "부서 범위 로딩에 실패했습니다",
+      "departmentLabel": "부서",
+      "permissionsTab": {
+        "loading": "권한을 로딩 중...",
+        "noPermissionsTitle": "권한이 없습니다",
+        "noPermissionsDescription": "시스템에 권한이 아직 구성되지 않았습니다.",
+        "columns": {
+          "action": "작업",
+          "scope": "범위"
+        },
+        "scopeableBadge": "범위 지정 가능",
+        "scopeableBadgeTitle": "부서에 맞게 제한할 수 있습니다",
+        "globalBadge": "전체",
+        "domainCount": "{count}개 권한"
+      }
+    }
+  },
+  "permissions": {
+    "users": {
+      "view": { "description": "조직 내 사용자 보기" },
+      "manage": { "description": "사용자 생성, 편집 및 비활성화" }
+    },
+    "analytics": {
+      "view": { "description": "사용 현황 분석 및 보고서 보기" }
+    },
+    "budget": {
+      "view": { "description": "예산 배정 및 사용 현황 보기" },
+      "allocate": { "description": "부서 예산 배정 및 조정" }
+    },
+    "mcp_servers": {
+      "view": { "description": "MCP 서버 설정 보기" },
+      "admin": { "description": "MCP 서버 설정 및 배포 관리" },
+      "delegate": { "description": "부서에 MCP 서버 액세스 위임" }
+    },
+    "departments": {
+      "view": { "description": "부서 구조 및 구성원 보기" },
+      "manage": { "description": "부서 생성, 편집 및 관리" }
+    },
+    "roles": {
+      "view": { "description": "역할 및 권한 보기" },
+      "manage": { "description": "역할 생성, 편집 및 삭제" },
+      "assign": { "description": "사용자에게 역할 할당" }
+    },
+    "ai_platform": {
+      "view": { "description": "AI 엔진 설정 보기" },
+      "manage": { "description": "AI 엔진 및 모델 구성" }
+    },
+    "sso_providers": {
+      "view": { "description": "SSO 공급자 설정 보기" },
+      "manage": { "description": "SSO 공급자 구성 및 관리" }
     }
   },
   "chat": {

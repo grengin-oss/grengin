@@ -23,6 +23,15 @@ export interface PaginatedUsers {
   offset: number;
 }
 
+export interface RoleUserAssignment {
+  id: string;
+  role_id: string;
+  role_name: string;
+  scope_department_id?: string;
+  assigned_by: string;
+  created_at: string;
+}
+
 export interface SSOProvider {
   id: string;
   provider: string;

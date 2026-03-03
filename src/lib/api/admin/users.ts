@@ -5,10 +5,10 @@ export interface GetUsersParams {
   limit?: number;
   offset?: number;
   search?: string;
-  role?: string;
+  role_id?: string;
   status?: string;
   department?: string;
-  sort?: 'name' | 'email' | 'created_at';
+  sort?: 'name' | 'email' | 'created_at' | 'updated_at';
   ascending?: boolean;
 }
 

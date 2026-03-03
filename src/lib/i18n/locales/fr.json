@@ -90,7 +90,8 @@
     "sectionManage": "Gérer",
     "sectionMonitor": "Surveiller",
     "sectionConfigure": "Configurer",
-    "overview": "Aperçu"
+    "overview": "Aperçu",
+    "accessControl": "Contrôle d'accès"
   },
   "app": {
     "closeSidebar": "Fermer la barre latérale",
@@ -101,6 +102,7 @@
   "admin": {
     "common": {
       "closeModal": "Fermer la fenêtre",
+      "done": "Terminé",
       "name": "Nom",
       "email": "E-mail",
       "role": "Rôle",
@@ -298,6 +300,137 @@
     "settings": {
       "title": "Paramètres",
       "subtitle": "Configurer les paramètres système et intégrations"
+    },
+    "accessControl": {
+      "title": "Contrôle d'accès",
+      "subtitle": "Gérer les rôles et les permissions",
+      "tabs": {
+        "roles": "Rôles",
+        "permissions": "Permissions"
+      },
+      "loadingRoles": "Chargement des rôles…",
+      "noRolesTitle": "Aucun rôle",
+      "noRolesMessage": "Aucun rôle n’a été configuré. Créez un rôle personnalisé pour commencer.",
+      "addRoleButton": "Ajouter un rôle",
+      "systemRoleLabel": "Système",
+      "userCountLabel": "{count} utilisateurs",
+      "closeSearch": "Fermer la recherche",
+      "usersWithRole": "Utilisateurs avec ce rôle",
+      "addUser": "Ajouter un utilisateur",
+      "searchUsersToAdd": "Rechercher des utilisateurs à ajouter...",
+      "searchDepartments": "Rechercher des départements",
+      "searchDepartmentsHint": "Trouvez un département par nom ou mot-clé avant de l'assigner.",
+      "noUsersFound": "Aucun utilisateur trouvé",
+      "noUsersInRole": "Aucun utilisateur avec ce rôle",
+      "userAdded": "Utilisateur ajouté au rôle",
+      "userRemoved": "Utilisateur retiré du rôle",
+      "removeUser": "Retirer",
+      "removeUserConfirmTitle": "Retirer du rôle",
+      "removeUserConfirmMessage": "Retirer {name} de ce rôle ?",
+      "removeUserConfirmWarning": "Ils perdront les permissions accordées par ce rôle.",
+      "loadingUsers": "Chargement des utilisateurs…",
+      "failedToLoadUsers": "Échec du chargement des utilisateurs du rôle",
+      "failedToSearchUsers": "Échec de la recherche d'utilisateurs",
+      "failedToAddUser": "Échec de l'ajout de l'utilisateur au rôle",
+      "failedToRemoveUser": "Échec du retrait de l'utilisateur du rôle",
+      "failedToLoadPermissions": "Échec du chargement des permissions",
+      "failedToLoadRoles": "Échec du chargement des rôles",
+      "addRoleTitle": "Ajouter un nouveau rôle",
+      "roleName": "Nom du rôle",
+      "roleNamePlaceholder": "ex. Chef de projet",
+      "roleNameRequired": "Le nom du rôle est obligatoire",
+      "permissionsLabel": "Autorisations",
+      "selectAll": "Tout sélectionner",
+      "clearSelection": "Effacer",
+      "permissionsSelected": "{count} sélectionné(s)",
+      "createRole": "Créer le rôle",
+      "creating": "Création…",
+      "roleCreated": "Rôle créé",
+      "failedToCreateRole": "Échec de la création du rôle",
+      "permissionsInRole": "Autorisations dans ce rôle",
+      "editPermissions": "Modifier les autorisations",
+      "editRoleTitle": "Modifier le rôle",
+      "roleUpdated": "Rôle mis à jour",
+      "failedToUpdateRole": "Échec de la mise à jour du rôle",
+      "systemRoleNameLocked": "Les noms des rôles système ne peuvent pas être modifiés",
+      "noPermissionsInRole": "Aucune autorisation assignée",
+      "editRole": "Modifier le rôle",
+      "deleteRole": "Supprimer le rôle",
+      "deleteRoleConfirmTitle": "Supprimer le rôle",
+      "deleteRoleConfirmMessage": "Supprimer le rôle « {name} » ?",
+      "deleteRoleConfirmWarning": "Cette action est irréversible. Les utilisateurs avec ce rôle perdront ses autorisations.",
+      "roleDeleted": "Rôle supprimé",
+      "failedToDeleteRole": "Échec de la suppression du rôle",
+      "deleting": "Suppression…",
+      "manageScoping": "Modifier les départements",
+      "manageDepartmentsTitle": "Gérer l’étendue des départements pour {user} dans le rôle {role}",
+      "assignedDepartments": "Départements attribués",
+      "assignedDepartmentsHint": "Chaque entrée représente un périmètre de département lié à ce rôle.",
+      "loadingAssignedDepartments": "Chargement des départements attribués...",
+      "noDepartmentsAssigned": "Aucun département attribué pour l’instant",
+      "globalScope": "Tous les départements",
+      "departmentScopeSupport": "Prend en charge les périmètres de département",
+      "departmentScopeSupportTooltip": "Peut être limité à des départements",
+      "departmentSearchPlaceholder": "Rechercher des départements...",
+      "loadingDepartments": "Chargement des départements...",
+      "noDepartmentsFound": "Aucun département trouvé",
+      "addDepartmentScope": "Ajouter",
+      "removeDepartmentScope": "Supprimer",
+      "departmentAssigned": "Portée du département ajoutée",
+      "departmentRemoved": "Portée du département supprimée",
+      "failedToAssignDepartment": "Impossible d’attribuer le département à l’utilisateur",
+      "failedToRemoveDepartment": "Impossible de supprimer le département de l’utilisateur",
+      "failedToSearchDepartments": "Échec de la recherche de départements",
+      "failedToLoadAssignments": "Impossible de charger les périmètres de département",
+      "departmentLabel": "Département",
+      "permissionsTab": {
+        "loading": "Chargement des permissions…",
+        "noPermissionsTitle": "Aucune permission",
+        "noPermissionsDescription": "Aucune permission n’a été configurée dans le système.",
+        "columns": {
+          "action": "Action",
+          "scope": "Portée"
+        },
+        "scopeableBadge": "Limitable",
+        "scopeableBadgeTitle": "Peut être limité à des départements",
+        "globalBadge": "Global",
+        "domainCount": "{count} autorisations"
+      }
+    }
+  },
+  "permissions": {
+    "users": {
+      "view": { "description": "Voir les utilisateurs de l'organisation" },
+      "manage": { "description": "Créer, modifier et désactiver des utilisateurs" }
+    },
+    "analytics": {
+      "view": { "description": "Voir les analyses d'utilisation et les rapports" }
+    },
+    "budget": {
+      "view": { "description": "Voir les allocations et l'utilisation du budget" },
+      "allocate": { "description": "Allouer et ajuster les budgets des départements" }
+    },
+    "mcp_servers": {
+      "view": { "description": "Voir les configurations des serveurs MCP" },
+      "admin": { "description": "Gérer les paramètres et déploiements des serveurs MCP" },
+      "delegate": { "description": "Déléguer l'accès aux serveurs MCP aux départements" }
+    },
+    "departments": {
+      "view": { "description": "Voir la structure et les membres des départements" },
+      "manage": { "description": "Créer, modifier et gérer les départements" }
+    },
+    "roles": {
+      "view": { "description": "Voir les rôles et leurs permissions" },
+      "manage": { "description": "Créer, modifier et supprimer des rôles" },
+      "assign": { "description": "Attribuer des rôles aux utilisateurs" }
+    },
+    "ai_platform": {
+      "view": { "description": "Voir les configurations des moteurs IA" },
+      "manage": { "description": "Configurer les moteurs et modèles IA" }
+    },
+    "sso_providers": {
+      "view": { "description": "Voir les configurations des fournisseurs SSO" },
+      "manage": { "description": "Configurer et gérer les fournisseurs SSO" }
     }
   },
   "chat": {

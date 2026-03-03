@@ -11,8 +11,26 @@ import type {
   AdministeredDepartmentsResponse
 } from '../../admin/types.js';
 
-export async function getDepartments(): Promise<DepartmentListResponse> {
-  return request<DepartmentListResponse>('/admin/departments');
+export interface GetDepartmentsParams {
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+function buildQueryString(params?: Record<string, string | number | boolean | undefined>): string {
+  if (!params) return '';
+  const queryParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) {
+      queryParams.set(key, String(value));
+    }
+  }
+  const query = queryParams.toString();
+  return query ? `?${query}` : '';
+}
+
+export async function getDepartments(params?: GetDepartmentsParams): Promise<DepartmentListResponse> {
+  return request<DepartmentListResponse>(`/admin/departments${buildQueryString(params as Record<string, string | number | boolean | undefined>)}`);
 }
 
 export async function getDepartmentsTree(): Promise<DepartmentTreeResponse> {
@@ -20,7 +38,7 @@ export async function getDepartmentsTree(): Promise<DepartmentTreeResponse> {
 }
 
 export async function getDepartment(departmentId: string): Promise<Department> {
-  return request<Department>(`/admin/department/${departmentId}`);
+  return request<Department>(`/admin/departments/${departmentId}`);
 }
 
 export async function createDepartment(data: CreateDepartmentRequest): Promise<Department> {

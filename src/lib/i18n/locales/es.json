@@ -90,7 +90,8 @@
     "sectionManage": "Gestionar",
     "sectionMonitor": "Monitorear",
     "sectionConfigure": "Configurar",
-    "overview": "Resumen"
+    "overview": "Resumen",
+    "accessControl": "Control de acceso"
   },
   "app": {
     "closeSidebar": "Cerrar barra lateral",
@@ -101,6 +102,7 @@
   "admin": {
     "common": {
       "closeModal": "Cerrar ventana",
+      "done": "Hecho",
       "name": "Nombre",
       "email": "Correo electrónico",
       "role": "Rol",
@@ -298,6 +300,137 @@
     "settings": {
       "title": "Configuración",
       "subtitle": "Configurar ajustes del sistema e integraciones"
+    },
+    "accessControl": {
+      "title": "Control de acceso",
+      "subtitle": "Gestionar roles y permisos",
+      "tabs": {
+        "roles": "Roles",
+        "permissions": "Permisos"
+      },
+      "loadingRoles": "Cargando roles…",
+      "noRolesTitle": "Sin roles",
+      "noRolesMessage": "No se han configurado roles. Crea un rol personalizado para empezar.",
+      "addRoleButton": "Agregar nuevo rol",
+      "systemRoleLabel": "Sistema",
+      "userCountLabel": "{count} usuarios",
+      "closeSearch": "Cerrar búsqueda",
+      "usersWithRole": "Usuarios con este rol",
+      "addUser": "Añadir usuario",
+      "searchUsersToAdd": "Buscar usuarios para añadir...",
+      "searchDepartments": "Buscar departamentos",
+      "searchDepartmentsHint": "Encuentra departamentos por nombre o palabra clave antes de asignarlos.",
+      "noUsersFound": "No se encontraron usuarios",
+      "noUsersInRole": "No hay usuarios con este rol",
+      "userAdded": "Usuario añadido al rol",
+      "userRemoved": "Usuario eliminado del rol",
+      "removeUser": "Quitar",
+      "removeUserConfirmTitle": "Quitar del rol",
+      "removeUserConfirmMessage": "¿Quitar a {name} de este rol?",
+      "removeUserConfirmWarning": "Perderá los permisos concedidos por este rol.",
+      "loadingUsers": "Cargando usuarios…",
+      "failedToLoadUsers": "Error al cargar usuarios del rol",
+      "failedToSearchUsers": "Error al buscar usuarios",
+      "failedToAddUser": "Error al añadir usuario al rol",
+      "failedToRemoveUser": "Error al quitar usuario del rol",
+      "failedToLoadPermissions": "Error al cargar los permisos",
+      "failedToLoadRoles": "Error al cargar los roles",
+      "addRoleTitle": "Añadir nuevo rol",
+      "roleName": "Nombre del rol",
+      "roleNamePlaceholder": "ej. Gestor de proyectos",
+      "roleNameRequired": "El nombre del rol es obligatorio",
+      "permissionsLabel": "Permisos",
+      "selectAll": "Seleccionar todo",
+      "clearSelection": "Borrar",
+      "permissionsSelected": "{count} seleccionados",
+      "createRole": "Crear rol",
+      "creating": "Creando…",
+      "roleCreated": "Rol creado",
+      "failedToCreateRole": "Error al crear el rol",
+      "permissionsInRole": "Permisos en este rol",
+      "editPermissions": "Editar permisos",
+      "editRoleTitle": "Editar rol",
+      "roleUpdated": "Rol actualizado",
+      "failedToUpdateRole": "Error al actualizar el rol",
+      "systemRoleNameLocked": "Los nombres de roles del sistema no se pueden cambiar",
+      "noPermissionsInRole": "Sin permisos asignados",
+      "editRole": "Editar rol",
+      "deleteRole": "Eliminar rol",
+      "deleteRoleConfirmTitle": "Eliminar rol",
+      "deleteRoleConfirmMessage": "¿Eliminar el rol \"{name}\"?",
+      "deleteRoleConfirmWarning": "Esta acción no se puede deshacer. Los usuarios con este rol perderán sus permisos.",
+      "roleDeleted": "Rol eliminado",
+      "failedToDeleteRole": "Error al eliminar el rol",
+      "deleting": "Eliminando…",
+      "manageScoping": "Editar departamentos",
+      "manageDepartmentsTitle": "Administrar alcance de departamentos para {user} en el rol {role}",
+      "assignedDepartments": "Departamentos asignados",
+      "assignedDepartmentsHint": "Cada entrada representa un alcance de departamento ya vinculado con este rol.",
+      "loadingAssignedDepartments": "Cargando departamentos asignados...",
+      "noDepartmentsAssigned": "No hay departamentos asignados aún",
+      "globalScope": "Todos los departamentos",
+      "departmentScopeSupport": "Admite alcance por departamento",
+      "departmentScopeSupportTooltip": "Puede asignarse a departamentos",
+      "departmentSearchPlaceholder": "Buscar departamentos...",
+      "loadingDepartments": "Cargando departamentos...",
+      "noDepartmentsFound": "No se encontraron departamentos",
+      "addDepartmentScope": "Agregar",
+      "removeDepartmentScope": "Eliminar",
+      "departmentAssigned": "Alcance de departamento agregado",
+      "departmentRemoved": "Alcance de departamento eliminado",
+      "failedToAssignDepartment": "Error al asignar el departamento al usuario",
+      "failedToRemoveDepartment": "Error al eliminar el departamento del usuario",
+      "failedToSearchDepartments": "Error al buscar departamentos",
+      "failedToLoadAssignments": "Error al cargar los alcances de departamentos",
+      "departmentLabel": "Departamento",
+      "permissionsTab": {
+        "loading": "Cargando permisos…",
+        "noPermissionsTitle": "Sin permisos",
+        "noPermissionsDescription": "No se han configurado permisos en el sistema.",
+        "columns": {
+          "action": "Acción",
+          "scope": "Alcance"
+        },
+        "scopeableBadge": "Con alcance",
+        "scopeableBadgeTitle": "Puede asignarse a departamentos",
+        "globalBadge": "Global",
+        "domainCount": "{count} permisos"
+      }
+    }
+  },
+  "permissions": {
+    "users": {
+      "view": { "description": "Ver usuarios de la organización" },
+      "manage": { "description": "Crear, editar y desactivar usuarios" }
+    },
+    "analytics": {
+      "view": { "description": "Ver análisis de uso e informes" }
+    },
+    "budget": {
+      "view": { "description": "Ver asignaciones y uso del presupuesto" },
+      "allocate": { "description": "Asignar y ajustar presupuestos de departamentos" }
+    },
+    "mcp_servers": {
+      "view": { "description": "Ver configuraciones de servidores MCP" },
+      "admin": { "description": "Gestionar configuraciones e implementaciones de servidores MCP" },
+      "delegate": { "description": "Delegar acceso a servidores MCP a departamentos" }
+    },
+    "departments": {
+      "view": { "description": "Ver estructura y miembros de departamentos" },
+      "manage": { "description": "Crear, editar y gestionar departamentos" }
+    },
+    "roles": {
+      "view": { "description": "Ver roles y sus permisos" },
+      "manage": { "description": "Crear, editar y eliminar roles" },
+      "assign": { "description": "Asignar roles a usuarios" }
+    },
+    "ai_platform": {
+      "view": { "description": "Ver configuraciones de motores de IA" },
+      "manage": { "description": "Configurar motores y modelos de IA" }
+    },
+    "sso_providers": {
+      "view": { "description": "Ver configuraciones de proveedores SSO" },
+      "manage": { "description": "Configurar y gestionar proveedores SSO" }
     }
   },
   "chat": {

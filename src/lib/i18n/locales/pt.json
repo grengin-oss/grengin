@@ -90,7 +90,8 @@
     "sectionManage": "Gerenciar",
     "sectionMonitor": "Monitorar",
     "sectionConfigure": "Configurar",
-    "overview": "Visão Geral"
+    "overview": "Visão Geral",
+    "accessControl": "Controlo de acesso"
   },
   "app": {
     "closeSidebar": "Fechar barra lateral",
@@ -101,6 +102,7 @@
   "admin": {
     "common": {
       "closeModal": "Fechar janela",
+      "done": "Concluído",
       "name": "Nome",
       "email": "E-mail",
       "role": "Função",
@@ -298,6 +300,137 @@
     "settings": {
       "title": "Configurações",
       "subtitle": "Configurar definições do sistema e integrações"
+    },
+    "accessControl": {
+      "title": "Controlo de acesso",
+      "subtitle": "Gerir funções e permissões",
+      "tabs": {
+        "roles": "Funções",
+        "permissions": "Permissões"
+      },
+      "loadingRoles": "Carregando funções…",
+      "noRolesTitle": "Sem funções",
+      "noRolesMessage": "Nenhuma função foi configurada. Crie uma função personalizada para começar.",
+      "addRoleButton": "Adicionar nova função",
+      "systemRoleLabel": "Sistema",
+      "userCountLabel": "{count} usuários",
+      "closeSearch": "Fechar pesquisa",
+      "usersWithRole": "Utilizadores com esta função",
+      "addUser": "Adicionar utilizador",
+      "searchUsersToAdd": "Pesquisar utilizadores para adicionar...",
+      "searchDepartments": "Pesquisar departamentos",
+      "searchDepartmentsHint": "Encontre departamentos por nome ou palavra-chave antes de atribuir.",
+      "noUsersFound": "Nenhum utilizador encontrado",
+      "noUsersInRole": "Nenhum utilizador com esta função",
+      "userAdded": "Utilizador adicionado à função",
+      "userRemoved": "Utilizador removido da função",
+      "removeUser": "Remover",
+      "removeUserConfirmTitle": "Remover da função",
+      "removeUserConfirmMessage": "Remover {name} desta função?",
+      "removeUserConfirmWarning": "Perderá as permissões concedidas por esta função.",
+      "loadingUsers": "A carregar utilizadores…",
+      "failedToLoadUsers": "Falha ao carregar utilizadores da função",
+      "failedToSearchUsers": "Falha na pesquisa de utilizadores",
+      "failedToAddUser": "Falha ao adicionar utilizador à função",
+      "failedToRemoveUser": "Falha ao remover utilizador da função",
+      "failedToLoadPermissions": "Falha ao carregar permissões",
+      "failedToLoadRoles": "Falha ao carregar funções",
+      "addRoleTitle": "Adicionar nova função",
+      "roleName": "Nome da função",
+      "roleNamePlaceholder": "ex. Gestor de projeto",
+      "roleNameRequired": "O nome da função é obrigatório",
+      "permissionsLabel": "Permissões",
+      "selectAll": "Selecionar tudo",
+      "clearSelection": "Limpar",
+      "permissionsSelected": "{count} selecionado(s)",
+      "createRole": "Criar função",
+      "creating": "A criar…",
+      "roleCreated": "Função criada",
+      "failedToCreateRole": "Falha ao criar função",
+      "permissionsInRole": "Permissões neste papel",
+      "editPermissions": "Editar permissões",
+      "editRoleTitle": "Editar papel",
+      "roleUpdated": "Papel atualizado",
+      "failedToUpdateRole": "Falha ao atualizar papel",
+      "systemRoleNameLocked": "Nomes de papéis do sistema não podem ser alterados",
+      "noPermissionsInRole": "Nenhuma permissão atribuída",
+      "editRole": "Editar papel",
+      "deleteRole": "Excluir papel",
+      "deleteRoleConfirmTitle": "Excluir papel",
+      "deleteRoleConfirmMessage": "Excluir o papel \"{name}\"?",
+      "deleteRoleConfirmWarning": "Esta ação não pode ser desfeita. Os usuários com este papel perderão suas permissões.",
+      "roleDeleted": "Papel excluído",
+      "failedToDeleteRole": "Falha ao excluir papel",
+      "deleting": "Excluindo…",
+      "manageScoping": "Editar departamentos",
+      "manageDepartmentsTitle": "Gerenciar o escopo de departamentos para {user} no papel {role}",
+      "assignedDepartments": "Departamentos atribuídos",
+      "assignedDepartmentsHint": "Cada entrada representa um escopo de departamento vinculado a esta função.",
+      "loadingAssignedDepartments": "Carregando departamentos atribuídos...",
+      "noDepartmentsAssigned": "Nenhum departamento atribuído ainda",
+      "globalScope": "Todos os departamentos",
+      "departmentScopeSupport": "Compatível com escopo de departamento",
+      "departmentScopeSupportTooltip": "Pode ser limitado a departamentos",
+      "departmentSearchPlaceholder": "Pesquisar departamentos...",
+      "loadingDepartments": "Carregando departamentos...",
+      "noDepartmentsFound": "Nenhum departamento encontrado",
+      "addDepartmentScope": "Adicionar",
+      "removeDepartmentScope": "Remover",
+      "departmentAssigned": "Escopo do departamento adicionado",
+      "departmentRemoved": "Escopo do departamento removido",
+      "failedToAssignDepartment": "Falha ao atribuir departamento ao usuário",
+      "failedToRemoveDepartment": "Falha ao remover departamento do usuário",
+      "failedToSearchDepartments": "Falha ao pesquisar departamentos",
+      "failedToLoadAssignments": "Falha ao carregar escopos do departamento",
+      "departmentLabel": "Departamento",
+      "permissionsTab": {
+        "loading": "Carregando permissões…",
+        "noPermissionsTitle": "Sem permissões",
+        "noPermissionsDescription": "Nenhuma permissão foi configurada no sistema.",
+        "columns": {
+          "action": "Ação",
+          "scope": "Escopo"
+        },
+        "scopeableBadge": "Escopo configurável",
+        "scopeableBadgeTitle": "Pode ser limitado a departamentos",
+        "globalBadge": "Global",
+        "domainCount": "{count} permissões"
+      }
+    }
+  },
+  "permissions": {
+    "users": {
+      "view": { "description": "Ver utilizadores da organização" },
+      "manage": { "description": "Criar, editar e desativar utilizadores" }
+    },
+    "analytics": {
+      "view": { "description": "Ver análises de utilização e relatórios" }
+    },
+    "budget": {
+      "view": { "description": "Ver alocações e utilização do orçamento" },
+      "allocate": { "description": "Alocar e ajustar orçamentos de departamentos" }
+    },
+    "mcp_servers": {
+      "view": { "description": "Ver configurações de servidores MCP" },
+      "admin": { "description": "Gerir configurações e implementações de servidores MCP" },
+      "delegate": { "description": "Delegar acesso a servidores MCP a departamentos" }
+    },
+    "departments": {
+      "view": { "description": "Ver estrutura e membros dos departamentos" },
+      "manage": { "description": "Criar, editar e gerir departamentos" }
+    },
+    "roles": {
+      "view": { "description": "Ver funções e respetivas permissões" },
+      "manage": { "description": "Criar, editar e eliminar funções" },
+      "assign": { "description": "Atribuir funções a utilizadores" }
+    },
+    "ai_platform": {
+      "view": { "description": "Ver configurações de motores de IA" },
+      "manage": { "description": "Configurar motores e modelos de IA" }
+    },
+    "sso_providers": {
+      "view": { "description": "Ver configurações de fornecedores SSO" },
+      "manage": { "description": "Configurar e gerir fornecedores SSO" }
     }
   },
   "chat": {

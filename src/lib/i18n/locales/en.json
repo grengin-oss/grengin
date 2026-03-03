@@ -90,7 +90,8 @@
     "sectionManage": "Manage",
     "sectionMonitor": "Monitor",
     "sectionConfigure": "Configure",
-    "overview": "Overview"
+    "overview": "Overview",
+    "accessControl": "Access Control"
   },
   "app": {
     "closeSidebar": "Close sidebar",
@@ -101,6 +102,7 @@
   "admin": {
     "common": {
       "closeModal": "Close modal",
+      "done": "Done",
       "name": "Name",
       "email": "Email",
       "role": "Role",
@@ -298,6 +300,137 @@
     "settings": {
       "title": "Settings",
       "subtitle": "Configure system settings and integrations"
+    },
+    "accessControl": {
+      "title": "Access Control",
+      "subtitle": "Manage roles and permissions",
+      "tabs": {
+        "roles": "Roles",
+        "permissions": "Permissions"
+      },
+      "loadingRoles": "Loading roles…",
+      "noRolesTitle": "No roles",
+      "noRolesMessage": "No roles have been configured. Create a custom role to get started.",
+      "addRoleButton": "Add new role",
+      "systemRoleLabel": "System",
+      "userCountLabel": "{count} users",
+      "closeSearch": "Close search",
+      "usersWithRole": "Users with this role",
+      "addUser": "Add user",
+      "searchUsersToAdd": "Search users to add...",
+      "searchDepartments": "Search departments",
+      "searchDepartmentsHint": "Find departments by name or keyword before assigning.",
+      "noUsersFound": "No users found",
+      "noUsersInRole": "No users with this role",
+      "userAdded": "User added to role",
+      "userRemoved": "User removed from role",
+      "removeUser": "Remove",
+      "removeUserConfirmTitle": "Remove from role",
+      "removeUserConfirmMessage": "Remove {name} from this role?",
+      "removeUserConfirmWarning": "They will lose the permissions granted by this role.",
+      "loadingUsers": "Loading users…",
+      "failedToLoadUsers": "Failed to load users in role",
+      "failedToSearchUsers": "Failed to search users",
+      "failedToAddUser": "Failed to add user to role",
+      "failedToRemoveUser": "Failed to remove user from role",
+      "failedToLoadPermissions": "Failed to load permissions",
+      "failedToLoadRoles": "Failed to load roles",
+      "addRoleTitle": "Add new role",
+      "roleName": "Role name",
+      "roleNamePlaceholder": "e.g. Project Manager",
+      "roleNameRequired": "Role name is required",
+      "permissionsLabel": "Permissions",
+      "selectAll": "Select all",
+      "clearSelection": "Clear",
+      "permissionsSelected": "{count} selected",
+      "createRole": "Create role",
+      "creating": "Creating…",
+      "roleCreated": "Role created",
+      "failedToCreateRole": "Failed to create role",
+      "permissionsInRole": "Permissions in this role",
+      "editPermissions": "Edit permissions",
+      "editRoleTitle": "Edit role",
+      "roleUpdated": "Role updated",
+      "failedToUpdateRole": "Failed to update role",
+      "systemRoleNameLocked": "System role names cannot be changed",
+      "noPermissionsInRole": "No permissions assigned",
+      "editRole": "Edit role",
+      "deleteRole": "Delete role",
+      "deleteRoleConfirmTitle": "Delete role",
+      "deleteRoleConfirmMessage": "Delete role \"{name}\"?",
+      "deleteRoleConfirmWarning": "This cannot be undone. Users with this role will lose its permissions.",
+      "roleDeleted": "Role deleted",
+      "failedToDeleteRole": "Failed to delete role",
+      "deleting": "Deleting…",
+      "manageScoping": "Manage scoping",
+      "manageDepartmentsTitle": "Manage department scoping for user {user} on role {role}",
+      "assignedDepartments": "Assigned departments",
+      "assignedDepartmentsHint": "Each entry represents a department scope already tied to this role.",
+      "loadingAssignedDepartments": "Loading assigned departments...",
+      "noDepartmentsAssigned": "No departments assigned yet",
+      "globalScope": "All departments",
+      "departmentScopeSupport": "Supports department scoping",
+      "departmentScopeSupportTooltip": "Can be scoped to departments",
+      "departmentSearchPlaceholder": "Search departments...",
+      "loadingDepartments": "Loading departments...",
+      "noDepartmentsFound": "No departments found",
+      "addDepartmentScope": "Add",
+      "removeDepartmentScope": "Remove",
+      "departmentAssigned": "Department scope added",
+      "departmentRemoved": "Department scope removed",
+      "failedToAssignDepartment": "Failed to assign department to user",
+      "failedToRemoveDepartment": "Failed to remove department from user",
+      "failedToSearchDepartments": "Failed to search departments",
+      "failedToLoadAssignments": "Failed to load department scopes",
+      "departmentLabel": "Department",
+      "permissionsTab": {
+        "loading": "Loading permissions…",
+        "noPermissionsTitle": "No permissions",
+        "noPermissionsDescription": "No permissions have been configured in the system.",
+        "columns": {
+          "action": "Action",
+          "scope": "Scope"
+        },
+        "scopeableBadge": "Scopeable",
+        "scopeableBadgeTitle": "Can be scoped to departments",
+        "globalBadge": "Global",
+        "domainCount": "{count} permissions"
+      }
+    }
+  },
+  "permissions": {
+    "users": {
+      "view": { "description": "View users in the organization" },
+      "manage": { "description": "Create, edit, and deactivate users" }
+    },
+    "analytics": {
+      "view": { "description": "View usage analytics and reports" }
+    },
+    "budget": {
+      "view": { "description": "View budget allocations and usage" },
+      "allocate": { "description": "Allocate and adjust department budgets" }
+    },
+    "mcp_servers": {
+      "view": { "description": "View MCP server configurations" },
+      "admin": { "description": "Manage MCP server settings and deployments" },
+      "delegate": { "description": "Delegate MCP server access to departments" }
+    },
+    "departments": {
+      "view": { "description": "View department structure and members" },
+      "manage": { "description": "Create, edit, and manage departments" }
+    },
+    "roles": {
+      "view": { "description": "View roles and their permissions" },
+      "manage": { "description": "Create, edit, and delete roles" },
+      "assign": { "description": "Assign roles to users" }
+    },
+    "ai_platform": {
+      "view": { "description": "View AI engine configurations" },
+      "manage": { "description": "Configure AI engines and models" }
+    },
+    "sso_providers": {
+      "view": { "description": "View SSO provider configurations" },
+      "manage": { "description": "Configure and manage SSO providers" }
     }
   },
   "chat": {

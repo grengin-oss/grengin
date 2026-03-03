@@ -160,6 +160,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Reserve scrollbar space so 100vw doesn't cause horizontal overflow when vertical scrollbar appears */
+  scrollbar-gutter: stable;
 }
 
 body {

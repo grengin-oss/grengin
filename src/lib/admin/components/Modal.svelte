@@ -38,7 +38,7 @@
       portal = document.createElement("div");
       portal.id = "modal-portal";
       portal.style.position = "relative";
-      portal.style.zIndex = "9999";
+      portal.style.zIndex = "1000";
       document.body.appendChild(portal);
     }
     return portal;
@@ -133,7 +133,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: 1000;
     padding: var(--space-xl);
     animation: fadeIn 0.2s ease;
   }
