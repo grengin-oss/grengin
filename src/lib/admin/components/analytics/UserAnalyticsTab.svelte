@@ -36,6 +36,7 @@
   let sortOrder = $state<'asc' | 'desc'>('desc');
   let searchQuery = $state('');
   let pendingDate : {startDate: string, endDate: string} | null = null;
+  let isInitialLoadCompleted = $state(false);
 
   async function fetchUserAnalytics(newStartDate: string = startDate, newEndDate: string = endDate) {    
     isLoading = true;
@@ -48,7 +49,8 @@
         page: currentPage,
         limit: pageSize,
         sort_by: sortBy,
-        order: sortOrder
+        order: sortOrder,
+        search: searchQuery.trim() || undefined
       };
 
       const response = await getUserAnalytics(params);
@@ -63,6 +65,7 @@
     } finally {
       isLoading = false;
       pendingDate = null;
+      isInitialLoadCompleted = true;
     }
   }
 
@@ -114,16 +117,6 @@
     }, $_('common.never'));
   }
 
-  let filteredUsers = $derived(
-    searchQuery.trim()
-      ? users.filter(user =>
-          user.user_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.user_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.department.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : users
-  );
-
   // Fetch data on mount and when date range changes
   onMount(() => {
     fetchUserAnalytics();
@@ -161,6 +154,22 @@
       if (pendingDateUpdateTimer) {
         clearTimeout(pendingDateUpdateTimer);
       }
+    };
+  });
+
+  // Auto-search when search query changes (with 300ms debounce)
+  $effect(() => {
+    if (!isInitialLoadCompleted || searchQuery === null || searchQuery === undefined) {
+      return;
+    }
+
+    const searchTimer = setTimeout(() => {
+      currentPage = 0;
+      fetchUserAnalytics();
+    }, 300);
+
+    return () => {
+      clearTimeout(searchTimer);
     };
   });
 </script>
@@ -210,7 +219,7 @@
             </div>
             <div class="stat-item">
               <span class="stat-label">{$_('userAnalytics.stats.showing')}:</span>
-              <span class="stat-value">{$_('userAnalytics.stats.showingCount', { values: { filtered: filteredUsers.length, total: users.length } })}</span>
+              <span class="stat-value">{$_('userAnalytics.stats.showingCount', { values: { filtered: users.length, total } })}</span>
             </div>
           </div>
         </div>
@@ -270,7 +279,7 @@
               </tr>
             </thead>
             <tbody>
-              {#if filteredUsers.length === 0}
+              {#if users.length === 0}
                 <tr>
                   <td colspan="10" class="empty-state">
                     {#if searchQuery}
@@ -281,7 +290,7 @@
                   </td>
                 </tr>
               {:else}
-                {#each filteredUsers as user (user.user_id)}
+                {#each users as user (user.user_id)}
                   <tr>
                     <td class="user-name">{user.user_name}</td>
                     <td class="user-email">{user.user_email}</td>

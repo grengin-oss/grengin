@@ -7,6 +7,14 @@
     "search": "검색",
     "never": "없음"
   },
+  "errors": {
+    "forbidden": {
+      "title": "액세스 거부",
+      "message": "이 페이지를 볼 권한이 없습니다.",
+      "back": "채팅으로 돌아가기",
+      "iconAlt": "액세스 거부"
+    }
+  },
   "auth": {
     "signIn": "로그인",
     "signUp": "회원가입",
@@ -128,6 +136,11 @@
       "metadata": "메타데이터",
       "lastUpdated": "마지막 업데이트",
       "removing": "제거 중"
+    },
+    "tabListLabels": {
+      "accessControl": "액세스 제어 탭",
+      "settings": "설정 탭",
+      "analytics": "분석 보기"
     },
     "users": {
       "userManagement": "사용자 관리",

@@ -270,5 +270,5 @@ export interface BudgetOverview {
 }
 
 export interface AdministeredDepartmentsResponse {
-  administered_departments: string[];
+  departments: Department[];
 }

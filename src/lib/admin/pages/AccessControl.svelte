@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { _ } from "svelte-i18n";
   import PageHeader from "../components/PageHeader.svelte";
+  import AdminTabs from "../components/AdminTabs.svelte";
   import PermissionsTab from "../components/access-control/PermissionsTab.svelte";
   import RolesTab from "../components/access-control/RolesTab.svelte";
   import {
@@ -36,50 +36,8 @@
   ]);
 
   const DEFAULT_TAB: TabId = "roles";
-  let availableTabIds = $derived(TABS.map((t) => t.id));
-
   // State
   let currentTab = $state<TabId>(DEFAULT_TAB);
-
-  // URL utilities
-  function getTabFromQuery(): TabId {
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get("tab");
-
-    if (!tabParam) return DEFAULT_TAB;
-
-    const normalized = tabParam.toLowerCase() as TabId;
-    return availableTabIds.includes(normalized) ? normalized : DEFAULT_TAB;
-  }
-
-  function syncQueryToUrl(tab: TabId, replace = false): void {
-    const url = new URL(window.location.href);
-    url.searchParams.set("tab", tab);
-
-    if (replace) {
-      history.replaceState(null, "", url.toString());
-    } else {
-      history.pushState(null, "", url.toString());
-    }
-  }
-
-  // Event handlers
-  function handleTabClick(tab: TabId): void {
-    if (currentTab === tab) return;
-    currentTab = tab;
-    syncQueryToUrl(tab);
-  }
-
-  function handleKeydown(event: KeyboardEvent, tab: TabId): void {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      handleTabClick(tab);
-    }
-  }
-
-  function handlePopState(): void {
-    currentTab = getTabFromQuery();
-  }
 
   // Permissions state (fetched when permissions or roles tab is shown - roles need it for Add Role)
   let permissionsLoading = $state(false);
@@ -146,21 +104,6 @@
     }
   });
 
-  // Initialize on mount
-  onMount(() => {
-    const initialTab = getTabFromQuery();
-    currentTab = initialTab;
-
-    if (!window.location.search.includes("tab=")) {
-      syncQueryToUrl(initialTab, true);
-    }
-
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  });
 </script>
 
 <div class="access-control-container">
@@ -169,24 +112,12 @@
     subtitle={$_("admin.accessControl.subtitle")}
   />
 
-  <!-- Tab navigation -->
-  <div class="tabs" role="tablist" aria-label="Access Control tabs">
-    {#each TABS as tab (tab.id)}
-      <button
-        class="tab"
-        class:tab--active={currentTab === tab.id}
-        role="tab"
-        aria-selected={currentTab === tab.id}
-        aria-controls={`${tab.id}-panel`}
-        aria-label={tab.ariaLabel}
-        tabindex={currentTab === tab.id ? 0 : -1}
-        onclick={() => handleTabClick(tab.id)}
-        onkeydown={(e) => handleKeydown(e, tab.id)}
-      >
-        {tab.label}
-      </button>
-    {/each}
-  </div>
+  <AdminTabs
+    tabs={TABS}
+    defaultTab={DEFAULT_TAB}
+    tabListLabel={$_("admin.tabListLabels.accessControl")}
+    bind:currentTab
+  />
 
   <!-- Tab content -->
   <div
@@ -232,26 +163,11 @@
     .access-control-container {
       padding: var(--space-xl);
     }
-
-    .tabs {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-    }
-
-    .tab {
-      white-space: nowrap;
-    }
   }
 
   @media (max-width: 480px) {
     .access-control-container {
       padding: var(--space-lg);
-    }
-
-    .tab {
-      padding: var(--space-sm) var(--space-md);
-      font-size: 0.875rem;
     }
   }
 </style>

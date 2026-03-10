@@ -10,40 +10,22 @@
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
   import { _ } from "svelte-i18n";
+  import { permissionsStore } from "$lib/features/auth/index.js";
   
   let store = $state($departmentsStore);
   let selectedDepartment = $state<Department | null>(null);
   let showCreateModal = $state(false);
   let showEditModal = $state(false);
   let editingDepartment = $state<Department | null>(null);
+  const canManageDepartments = $derived(permissionsStore.canManageDepartments());
   
   $effect(() => {
     store = $departmentsStore;
   });
   
-  function filterDepartmentTree(departments: Department[], permittedIds: Set<string>): Department[] {
-    if(!departments || departments.length === 0) return []; 
-
-    const newTree = [];
-    for (const dept of departments) {
-      if (permittedIds.has(dept.id)) {
-        newTree.push(dept);
-      }else if(dept.children && dept.children.length > 0){
-        newTree.push(...filterDepartmentTree(dept.children, permittedIds));
-      }
-    }
-
-    return newTree;
-  }
-  
-  const filteredDepartmentsTree = $derived(
-    filterDepartmentTree(store.departmentsTree, new Set(store.administeredDepartmentIds))
-  );
-  
   onMount(() => {
     departmentsStore.fetchDepartmentsTree();
     departmentsStore.fetchAdministeredDepartments();
-    departmentsStore.fetchDepartments();
   });
   
   $effect(() => {
@@ -58,8 +40,8 @@
   
   
   $effect(() => {
-    if (!selectedDepartment && filteredDepartmentsTree.length > 0 && !store.loading) {
-      selectedDepartment = filteredDepartmentsTree[0];
+    if (!selectedDepartment && store.departmentsTree.length > 0 && !store.loading) {
+      selectedDepartment = store.departmentsTree[0];
     }
   });
 
@@ -67,7 +49,7 @@
   $effect(() => {
     const current = selectedDepartment;
     if (current) {
-      const updated = store.departments.find(d => d.id === current.id);
+      const updated = store.administeredDepartments.find(d => d.id === current.id);
       if (updated && updated !== current) {
         selectedDepartment = updated;
       }
@@ -164,21 +146,23 @@
       <div class="tree-section">
         <div class="tree-header">
           <h2>{$_('admin.departments.organization')}</h2>
-          <button class="btn-primary" onclick={openCreateModal}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            {$_('admin.departments.createDepartment')}
-          </button>
+          {#if canManageDepartments}
+            <button class="btn-primary" onclick={openCreateModal}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              {$_('admin.departments.createDepartment')}
+            </button>
+          {/if}
         </div>
         
         <div class="tree-container">
-          {#if store.loading && filteredDepartmentsTree.length === 0}
+          {#if store.loading && store.departmentsTree.length === 0}
             <div class="loading-state">
               <LoadingSpinner />
               <p>{$_('admin.departments.loading')}</p>
             </div>
-          {:else if filteredDepartmentsTree.length === 0}
+          {:else if store.departmentsTree.length === 0}
             <div class="empty-state">
               <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
                 <path d="M32 8L8 20V36C8 47.0457 17.9543 56 32 56C46.0457 56 56 47.0457 56 36V20L32 8Z" stroke="#d1d5db" stroke-width="2"/>
@@ -187,16 +171,18 @@
               </svg>
               <h3>{$_('admin.departments.noDepartments')}</h3>
               <p>{$_('admin.departments.noDepartmentsDescription')}</p>
-              <button class="btn-primary" onclick={openCreateModal}>
-                {$_('admin.departments.createDepartment')}
-              </button>
+              {#if canManageDepartments}
+                <button class="btn-primary" onclick={openCreateModal}>
+                  {$_('admin.departments.createDepartment')}
+                </button>
+              {/if}
             </div>
           {:else}
             <div class="tree-list">
-              {#each filteredDepartmentsTree as dept (dept.id)}
+              {#each store.departmentsTree as dept (dept.id)}
                 <DepartmentTreeNode 
                   department={dept}
-                  allDepartments={store.departments}
+                  allDepartments={store.administeredDepartments}
                   onSelect={handleSelectDepartment}
                   selectedId={selectedDepartment?.id}
                   onMove={handleMoveDepartment}
@@ -211,7 +197,7 @@
         <div class="details-section">
           <DepartmentDetailsPanel 
             department={selectedDepartment}
-            allDepartments={store.departments}
+            allDepartments={store.administeredDepartments}
             onClose={handleCloseDetails}
             onEdit={openEditModal}
             onDelete={handleDeleteDepartment}
@@ -239,7 +225,7 @@
     isOpen={showCreateModal}
     onClose={() => showCreateModal = false}
     onSubmit={handleCreateDepartment}
-    allDepartments={store.departments}
+    allDepartments={store.administeredDepartments}
     mode="create"
   />
 {/if}
@@ -250,7 +236,7 @@
     onClose={() => { showEditModal = false; editingDepartment = null; }}
     onSubmit={handleUpdateDepartment}
     department={editingDepartment}
-    allDepartments={store.departments}
+    allDepartments={store.administeredDepartments}
     mode="edit"
   />
 {/if}
@@ -390,9 +376,7 @@
     color: var(--text-secondary);
     font-size: 14px;
     margin: 0;
-  }
-  
- 
+  } 
   
   @media (max-width: 1024px) {
     .departments-layout {

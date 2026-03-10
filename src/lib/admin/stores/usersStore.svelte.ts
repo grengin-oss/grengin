@@ -1,11 +1,12 @@
 // Users Store - User management state using Svelte 5 runes
 import type { User } from '../types.js';
-import { getUsers, createUser, updateUser, updateUserStatus } from '../../api/admin/users.js';
+import { getUsers, getScopedUsers, createUser, updateUser, updateUserStatus } from '../../api/admin/users.js';
 import type { CreateUserData, GetUsersParams } from '../../api/admin/users.js';
+import { permissionsStore } from '../../features/auth/index.js';
 
 interface UsersFilters {
   search: string;
-  role: string;
+  role_id: string;
   status: string;
   department: string;
 }
@@ -21,7 +22,7 @@ function createUsersStore() {
   let error = $state<any | null>(null);
   let filters = $state<UsersFilters>({
     search: '',
-    role: '',
+    role_id: '',
     status: '',
     department: '',
   });
@@ -35,7 +36,7 @@ function createUsersStore() {
     };
 
     if (filters.search) params.search = filters.search;
-    if (filters.role) params.role = filters.role;
+    if (filters.role_id) params.role_id = filters.role_id;
     if (filters.status) params.status = filters.status;
     if (filters.department) params.department = filters.department;
     
@@ -49,7 +50,8 @@ function createUsersStore() {
       params.ascending = false;
     }
 
-    const data = await getUsers(params);
+    const useScopedEndpoint = permissionsStore.hasScopedUsersView();
+    const data = useScopedEndpoint ? await getScopedUsers(params) : await getUsers(params);
     users = data.users;
     total = data.total;
   }
@@ -162,7 +164,7 @@ function createUsersStore() {
       error = null;
       filters = {
         search: '',
-        role: '',
+        role_id: '',
         status: '',
         department: '',
       };

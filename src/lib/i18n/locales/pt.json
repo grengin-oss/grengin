@@ -7,6 +7,14 @@
     "search": "Pesquisar",
     "never": "Nunca"
   },
+  "errors": {
+    "forbidden": {
+      "title": "Acesso negado",
+      "message": "Você não tem permissão para ver esta página.",
+      "back": "Voltar ao chat",
+      "iconAlt": "Acesso negado"
+    }
+  },
   "auth": {
     "signIn": "Entrar",
     "signUp": "Cadastrar",
@@ -128,6 +136,11 @@
       "metadata": "Metadados",
       "lastUpdated": "Última atualização",
       "removing": "Removendo"
+    },
+    "tabListLabels": {
+      "accessControl": "Abas de controle de acesso",
+      "settings": "Abas de configurações",
+      "analytics": "Visualizações de análise"
     },
     "users": {
       "userManagement": "Gerenciamento de usuários",

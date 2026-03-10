@@ -8,9 +8,10 @@
         toggleUserStatus: (user: User) => Promise<void>;
         openEditModal: (user: User) => void;
         currentUserId?: string;
+        canManageUsers: boolean;
     }
 
-    let { user, toggleUserStatus, openEditModal, currentUserId }: Props = $props();
+    let { user, toggleUserStatus, openEditModal, currentUserId, canManageUsers }: Props = $props();
     let isPendingStatusUpdate = $state(false);
     
     // Check if this is the current user's own row
@@ -72,38 +73,46 @@
     <td>{user.department || "-"}</td>
     <td>
         {#if !user.is_super_admin}
-            <label 
-                class="status-switch" 
-                class:disabled={isSelfUser}
-                title={statusToggleTooltip}
-            >
-                <input
-                    type="checkbox"
-                    checked={checkboxChecked}
-                    onchange={handleToggleUserStatus}
-                    disabled={isSelfUser}
-                />
-                <span class="status-slider"></span>
+            {#if canManageUsers}
+                <label 
+                    class="status-switch" 
+                    class:disabled={isSelfUser}
+                    title={statusToggleTooltip}
+                >
+                    <input
+                        type="checkbox"
+                        checked={checkboxChecked}
+                        onchange={handleToggleUserStatus}
+                        disabled={isSelfUser}
+                    />
+                    <span class="status-slider"></span>
+                    <span class="status-label">
+                        {user.status === "active" ? $_('admin.common.active') : $_('admin.common.deactivated')}
+                    </span>
+                </label>
+            {:else}
                 <span class="status-label">
                     {user.status === "active" ? $_('admin.common.active') : $_('admin.common.deactivated')}
                 </span>
-            </label>
+            {/if}
         {:else}
             <span class="status-badge active">{$_('admin.common.active')}</span>
         {/if}
     </td>
     <td>{user.created_at ? formatDate(user.created_at) : "-"}</td>
-    <td>
-        <div class="actions">
-            <button
-                class="action-btn edit"
-                onclick={() => openEditModal(user)}
-                title={$_('admin.users.editUserTitle')}
-            >
-                ✏️
-            </button>
-        </div>
-    </td>
+    {#if canManageUsers}
+        <td>
+            <div class="actions">
+                <button
+                    class="action-btn edit"
+                    onclick={() => openEditModal(user)}
+                    title={$_('admin.users.editUserTitle')}
+                >
+                    ✏️
+                </button>
+            </div>
+        </td>
+    {/if}
 </tr>
 
 <style>

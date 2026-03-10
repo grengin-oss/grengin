@@ -6,6 +6,7 @@
   import MemberManagement from "./MemberManagement.svelte";
   import DepartmentAdminsSection from "./DepartmentAdminsSection.svelte";
   import { formatDate } from "$lib/utils/format.js";
+  import { permissionsStore } from "$lib/features/auth/index.js";
   
   interface Props {
     department: Department | null;
@@ -31,6 +32,24 @@
       ? allDepartments.filter(d => d.parent_id === department.id)
       : []
   );
+  
+  const canViewBudget = $derived(
+    department ? permissionsStore.canViewBudgetForDepartment(department.id) : false
+  );
+
+  const canEditBudget = $derived(
+    department ? permissionsStore.canAllocateBudgetForDepartment(department.id) : false
+  );
+
+  const canManageDepartments = $derived(
+    permissionsStore.canManageDepartments()
+  );
+
+  $effect(() => {
+    if (activeTab === 'budget' && !canViewBudget) {
+      activeTab = 'overview';
+    }
+  });
   
   function handleEdit() {
     if (department) {
@@ -78,13 +97,15 @@
         >
           {$_('admin.departments.members')} ({department.member_count})
         </button>
-        <button 
-          class="tab" 
-          class:active={activeTab === 'budget'}
-          onclick={() => activeTab = 'budget'}
-        >
-          {$_('admin.departments.budget')}
-        </button>
+        {#if canViewBudget}
+          <button 
+            class="tab" 
+            class:active={activeTab === 'budget'}
+            onclick={() => activeTab = 'budget'}
+          >
+            {$_('admin.departments.budget')}
+          </button>
+        {/if}
       </div>
     </div>
     
@@ -94,9 +115,11 @@
           <div class="section">
             <div class="section-header">
               <h3>{$_('admin.departments.details')}</h3>
-              <button class="btn-secondary" onclick={handleEdit}>
-                {$_('common.edit')}
-              </button>
+              {#if canManageDepartments}
+                <button class="btn-secondary" onclick={handleEdit}>
+                  {$_('common.edit')}
+                </button>
+              {/if}
             </div>
             
             <div class="field-group">
@@ -127,7 +150,7 @@
             </div>
           </div>
           
-          <DepartmentAdminsSection {department} />
+          <DepartmentAdminsSection {department} canManage={canManageDepartments} />
           
           <div class="section">
             <h3>{$_('admin.departments.statistics')}</h3>
@@ -180,24 +203,26 @@
             </div>
           </div>
           
-          <div class="section danger-zone">
-            <h3>{$_('admin.departments.deleteDepartment')}</h3>
-            <button class="btn-danger" onclick={confirmDelete}>
-              {$_('admin.departments.deleteDepartment')}
-            </button>
-          </div>
+          {#if canManageDepartments}
+            <div class="section danger-zone">
+              <h3>{$_('admin.departments.deleteDepartment')}</h3>
+              <button class="btn-danger" onclick={confirmDelete}>
+                {$_('admin.departments.deleteDepartment')}
+              </button>
+            </div>
+          {/if}
         </div>
       {/if}
       
       {#if activeTab === 'members'}
         <div class="members-tab">
-          <MemberManagement {department} />
+          <MemberManagement {department} canManage={canManageDepartments} />
         </div>
       {/if}
       
-      {#if activeTab === 'budget'}
+      {#if activeTab === 'budget' && canViewBudget}
         <div class="budget-tab">
-          <BudgetManagement {department}/>
+          <BudgetManagement {department} canEdit={canEditBudget}/>
         </div>
       {/if}
     </div>

@@ -7,6 +7,14 @@
     "search": "検索",
     "never": "なし"
   },
+  "errors": {
+    "forbidden": {
+      "title": "アクセスが拒否されました",
+      "message": "このページを表示する権限がありません。",
+      "back": "チャットに戻る",
+      "iconAlt": "アクセス拒否"
+    }
+  },
   "auth": {
     "signIn": "サインイン",
     "signUp": "サインアップ",
@@ -128,6 +136,11 @@
       "metadata": "メタデータ",
       "lastUpdated": "最終更新日",
       "removing": "削除中"
+    },
+    "tabListLabels": {
+      "accessControl": "アクセス制御タブ",
+      "settings": "設定タブ",
+      "analytics": "分析ビュー"
     },
     "users": {
       "userManagement": "ユーザー管理",

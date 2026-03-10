@@ -14,9 +14,10 @@
   
   interface Props {
     department: Department;
+    canManage?: boolean;
   }
   
-  let { department }: Props = $props();
+  let { department, canManage = true }: Props = $props();
   
   let members = $state<any[]>([]);
   let loading = $state(false);
@@ -86,7 +87,7 @@
       selectedMembers = new Set(); // Create new Set to trigger reactivity
       await loadMembers();
       // Refresh departments to update member counts
-      await departmentsStore.fetchDepartments();
+      await departmentsStore.fetchAdministeredDepartments();
     } catch (error) {
       const errorMessage = error instanceof ApiError 
         ? getLocalizedError(error, 'description', $_) 
@@ -100,7 +101,7 @@
   async function handleMemberAdded() {
     await loadMembers();
     // Refresh departments to update member counts
-    await departmentsStore.fetchDepartments();
+    await departmentsStore.fetchAdministeredDepartments();
   }
   
 </script>
@@ -120,16 +121,18 @@
     </div>
     
     <div class="header-actions">
-      {#if selectedMembers.size > 0}
-        <button class="btn-danger" onclick={confirmRemoveMembers}>
-          {$_('admin.departments.removeMembers')} ({selectedMembers.size})
+      {#if canManage}
+        {#if selectedMembers.size > 0}
+          <button class="btn-danger" onclick={confirmRemoveMembers}>
+            {$_('admin.departments.removeMembers')} ({selectedMembers.size})
+          </button>
+        {/if}
+        <button class="btn-primary" onclick={() => {
+          showAddMember = true;
+        }}>
+          {$_('admin.departments.addMembers')}
         </button>
       {/if}
-      <button class="btn-primary" onclick={() => {
-        showAddMember = true;
-      }}>
-        {$_('admin.departments.addMembers')}
-      </button>
     </div>
   </div>
   
@@ -146,22 +149,26 @@
       </svg>
       <h4>{$_('admin.departments.noMembers')}</h4>
       <p>{$_('admin.departments.noMembersDescription')}</p>
-      <button class="btn-primary" onclick={() => showAddMember = true}>
-        {$_('admin.departments.addMembers')}
-      </button>
+      {#if canManage}
+        <button class="btn-primary" onclick={() => showAddMember = true}>
+          {$_('admin.departments.addMembers')}
+        </button>
+      {/if}
     </div>
   {:else}
     <div class="member-table">
       <table>
         <thead>
           <tr>
-            <th class="checkbox-col">
-              <input 
-                type="checkbox" 
-                checked={selectedMembers.size === members.length && members.length > 0}
-                onchange={toggleSelectAll}
-              />
-            </th>
+            {#if canManage}
+              <th class="checkbox-col">
+                <input 
+                  type="checkbox" 
+                  checked={selectedMembers.size === members.length && members.length > 0}
+                  onchange={toggleSelectAll}
+                />
+              </th>
+            {/if}
             <th>{$_('admin.common.name')}</th>
             <th>{$_('admin.common.email')}</th>
             <th>{$_('admin.common.role')}</th>
@@ -171,13 +178,15 @@
         <tbody>
           {#each members as member (member.id)}
             <tr>
-              <td class="checkbox-col">
-                <input 
-                  type="checkbox" 
-                  checked={selectedMembers.has(member.id)}
-                  onchange={() => toggleMemberSelection(member.id)}
-                />
-              </td>
+              {#if canManage}
+                <td class="checkbox-col">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedMembers.has(member.id)}
+                    onchange={() => toggleMemberSelection(member.id)}
+                  />
+                </td>
+              {/if}
               <td class="name-col">{member.name || 'N/A'}</td>
               <td class="email-col">{member.email}</td>
               <td class="role-col">

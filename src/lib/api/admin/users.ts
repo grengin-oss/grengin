@@ -35,6 +35,10 @@ export async function getUsers(params?: GetUsersParams): Promise<PaginatedUsers>
   return request<PaginatedUsers>(`/admin/users${buildQueryString(params as Record<string, string | number | boolean | undefined>)}`);
 }
 
+export async function getScopedUsers(params?: GetUsersParams): Promise<PaginatedUsers> {
+  return request<PaginatedUsers>(`/me/administered-departments/users${buildQueryString(params as Record<string, string | number | boolean | undefined>)}`);
+}
+
 export async function getUser(userId: string): Promise<User> {
   return request<User>(`/admin/users/${userId}`);
 }

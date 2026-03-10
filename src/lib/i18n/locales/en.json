@@ -7,6 +7,14 @@
     "search": "Search",
     "never": "Never"
   },
+  "errors": {
+    "forbidden": {
+      "title": "Access denied",
+      "message": "You do not have permission to view this page.",
+      "back": "Back to chat",
+      "iconAlt": "Access denied"
+    }
+  },
   "auth": {
     "signIn": "Sign In",
     "signUp": "Sign Up",
@@ -128,6 +136,11 @@
       "metadata": "Metadata",
       "lastUpdated": "Last Updated",
       "removing": "Removing"
+    },
+    "tabListLabels": {
+      "accessControl": "Access Control tabs",
+      "settings": "Settings tabs",
+      "analytics": "Analytics views"
     },
     "users": {
       "userManagement": "User Management",

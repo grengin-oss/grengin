@@ -16,6 +16,7 @@
   import { getUsers } from "../../../api/admin/users.js";
   import * as rolesApi from "../../../api/admin/roles.js";
   import { formatAction, formatDomain } from "./permissionGroups";
+  import { permissionsStore } from "../../../features/auth/index.js";
 
   interface Props {
     roles: Role[];
@@ -25,6 +26,8 @@
   }
 
   let { roles, permissions, loading, onRolesChange }: Props = $props();
+  const canManageRoles = $derived(permissionsStore.canManageRoles());
+  const canAssignRoles = $derived(permissionsStore.canAssignRoles());
 
   const sortedRoles = $derived(
     [...roles].sort((a, b) => {
@@ -119,6 +122,7 @@
   }
 
   function openEditRole(role: Role) {
+    if (!canManageRoles) return;
     roleFormOpen = role;
   }
 
@@ -161,6 +165,7 @@
   }
 
   function toggleAddUserSearch(roleId: string) {
+    if (!canAssignRoles) return;
     if (showAddUserSearch === roleId) {
       resetAddUserSearch();
     } else {
@@ -172,6 +177,7 @@
   }
 
   function openAddUser(roleId: string) {
+    if (!canAssignRoles) return;
     expandedUsersSections = { ...expandedUsersSections, [roleId]: true };
     toggleAddUserSearch(roleId);
   }
@@ -230,6 +236,7 @@
   }
 
   async function handleAddUser(user: User) {
+    if (!canAssignRoles) return;
     const roleId = showAddUserSearch;
     if (!roleId) return;
 
@@ -252,6 +259,7 @@
   }
 
   function confirmRemoveUser(user: User, roleId: string) {
+    if (!canAssignRoles) return;
     userToRemove = { user, roleId };
   }
 
@@ -292,6 +300,7 @@
   }
 
   function openDepartmentModal(role: Role, user: User) {
+    if (!canAssignRoles) return;
     departmentScopingContext = { role, user };
   }
 
@@ -314,6 +323,7 @@
   }
 
   async function handleDeleteRole() {
+    if (!canManageRoles) return;
     if (!roleToDelete) return;
     deletingRole = true;
     try {
@@ -342,28 +352,30 @@
   />
 {:else}
   <div class="roles-tab">
-    <div class="roles-header">
-      <button
-        class="btn-add-role btn-primary"
-        onclick={() => (roleFormOpen = "add")}
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 14 14"
-          fill="none"
-          aria-hidden="true"
+    {#if canManageRoles}
+      <div class="roles-header">
+        <button
+          class="btn-add-role btn-primary"
+          onclick={() => (roleFormOpen = "add")}
         >
-          <path
-            d="M7 3v8M3 7h8"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-          />
-        </svg>
-        {$_("admin.accessControl.addRoleButton")}
-      </button>
-    </div>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M7 3v8M3 7h8"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+          {$_("admin.accessControl.addRoleButton")}
+        </button>
+      </div>
+    {/if}
 
     <div class="roles-list">
       {#each sortedRoles as role (role.id)}
@@ -385,24 +397,26 @@
               })}
             </span>
             <div class="role-actions">
-              <button
-                class="btn-role-action btn-add"
-                onclick={() => openAddUser(role.id)}
-                title={$_("admin.accessControl.addUser")}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
+              {#if canAssignRoles}
+                <button
+                  class="btn-role-action btn-add"
+                  onclick={() => openAddUser(role.id)}
+                  title={$_("admin.accessControl.addUser")}
                 >
-                  <path d="M8 3v10M3 8h10" stroke-linecap="round" />
-                </svg>
-                {$_("admin.accessControl.addUser")}
-              </button>
-              {#if canEditRole(role)}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path d="M8 3v10M3 8h10" stroke-linecap="round" />
+                  </svg>
+                  {$_("admin.accessControl.addUser")}
+                </button>
+              {/if}
+              {#if canManageRoles && canEditRole(role)}
                 <button
                   class="btn-role-action"
                   onclick={() => openEditRole(role)}
@@ -423,7 +437,7 @@
                   {$_("common.edit")}
                 </button>
               {/if}
-              {#if canDeleteRole(role)}
+              {#if canManageRoles && canDeleteRole(role)}
                 <button
                   class="btn-role-action btn-delete"
                   onclick={() => (roleToDelete = role)}
@@ -613,23 +627,25 @@
                             </span>
                             <span class="user-email">{user.email}</span>
                           </div>
-                          <div class="user-actions">
-                            <button
-                              class="btn-edit-departments"
-                              onclick={() => openDepartmentModal(role, user)}
-                            >
-                              {$_("admin.accessControl.manageScoping")}
-                            </button>
-                            <button
-                              class="btn-remove-user"
-                              onclick={(e) => {
-                                e.stopPropagation();
-                                confirmRemoveUser(user, role.id);
-                              }}
-                            >
-                              {$_("admin.accessControl.removeUser")}
-                            </button>
-                          </div>
+                          {#if canAssignRoles}
+                            <div class="user-actions">
+                              <button
+                                class="btn-edit-departments"
+                                onclick={() => openDepartmentModal(role, user)}
+                              >
+                                {$_("admin.accessControl.manageScoping")}
+                              </button>
+                              <button
+                                class="btn-remove-user"
+                                onclick={(e) => {
+                                  e.stopPropagation();
+                                  confirmRemoveUser(user, role.id);
+                                }}
+                              >
+                                {$_("admin.accessControl.removeUser")}
+                              </button>
+                            </div>
+                          {/if}
                         </li>
                       {/each}
                     </ul>

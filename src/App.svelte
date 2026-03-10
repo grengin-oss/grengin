@@ -1,16 +1,19 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { Router, Route } from 'svelte-routing';
+  import { Router, Route, navigate } from 'svelte-routing';
   import { Sidebar } from './lib/components/layout/index.js';
   import Login from './lib/features/auth/components/Login.svelte';
   import Chat from './lib/features/chat/components/Chat.svelte';
   import AuthCallback from './lib/features/auth/components/AuthCallback.svelte';
-  import { initAuth, getAuthState, logout } from './lib/features/auth/index.js';
+  import { initAuth, getAuthState, logout, permissionsStore } from './lib/features/auth/index.js';
+  import { PERMISSIONS } from './lib/features/auth/permissions.js';
   import Toaster from './lib/components/Toaster.svelte';
   import grenginLogo from './assets/grengin-logo.svg';
   import Users from './lib/admin/pages/Users.svelte';
   import AIEngines from './lib/admin/pages/AIEngines.svelte';
   import Analytics from './lib/admin/pages/Analytics.svelte';
+  import Forbidden from './lib/components/Forbidden.svelte';
+  import PermissionGuard from './lib/components/PermissionGuard.svelte';
   import Departments from './lib/admin/pages/Departments.svelte';
   import Settings from '$lib/admin/pages/Settings.svelte';
   import Overview from '$lib/admin/pages/Overview.svelte';
@@ -43,6 +46,7 @@
 
   onMount(() => {
     initAuth();
+    permissionsStore.init();
     sidebarCollapsed = isMobile();
     window.addEventListener('resize', handleResize);
 
@@ -68,6 +72,21 @@
   onDestroy(() => {
     if (typeof window !== 'undefined') {
       window.removeEventListener('resize', handleResize);
+    }
+  });
+
+  // Redirect to first available admin page
+  $effect(() => {
+    if (
+      authState.isAuthenticated &&
+      currentPath === '/admin' &&
+      permissionsStore.hasFetched &&
+      !permissionsStore.isLoading
+    ) {
+      const nextPath = permissionsStore.getAdminLandingPath();
+      if (nextPath !== currentPath) {
+        navigate(nextPath, { replace: true });
+      }
     }
   });
 
@@ -149,13 +168,56 @@
         <Route path="/"><Chat /></Route>
         <Route path="/chat"><Chat /></Route>
         <Route path="/chat/:id"><Chat /></Route>
-        <Route path="/admin/overview"><Overview /></Route>
-        <Route path="/admin/users"><Users /></Route>
-        <Route path="/admin/departments"><Departments /></Route>
-        <Route path="/admin/access-control"><AccessControl /></Route>
-        <Route path="/admin/settings"><Settings /></Route>
-        <Route path="/admin/ai-engines"><AIEngines /></Route>
-        <Route path="/admin/analytics" primary={false}><Analytics /></Route>
+        <Route path="/admin/overview">
+          <PermissionGuard permission={PERMISSIONS.analytics.view} requireGlobal={true}>
+            {#snippet children()}
+              <Overview />
+            {/snippet}
+          </PermissionGuard>
+        </Route>
+        <Route path="/admin/users">
+          <PermissionGuard permission={PERMISSIONS.users.view}>
+            {#snippet children()}
+              <Users />
+            {/snippet}
+          </PermissionGuard>
+        </Route>
+        <Route path="/admin/departments">
+          <PermissionGuard permission={PERMISSIONS.departments.view}>
+            {#snippet children()}
+              <Departments />
+            {/snippet}
+          </PermissionGuard>
+        </Route>
+        <Route path="/admin/access-control">
+          <PermissionGuard permission={PERMISSIONS.roles.view}>
+            {#snippet children()}
+              <AccessControl />
+            {/snippet}
+          </PermissionGuard>
+        </Route>
+        <Route path="/admin/settings">
+          <PermissionGuard permission={PERMISSIONS.ssoProviders.view}>
+            {#snippet children()}
+              <Settings />
+            {/snippet}
+          </PermissionGuard>
+        </Route>
+        <Route path="/admin/ai-engines">
+          <PermissionGuard permission={PERMISSIONS.aiPlatform.view}>
+            {#snippet children()}
+              <AIEngines />
+            {/snippet}
+          </PermissionGuard>
+        </Route>
+        <Route path="/admin/analytics" primary={false}>
+          <PermissionGuard permission={PERMISSIONS.analytics.view}>
+            {#snippet children()}
+              <Analytics />
+            {/snippet}
+          </PermissionGuard>
+        </Route>
+        <Route path="/forbidden"><Forbidden /></Route>
       </div>
     </main>
   {/if}

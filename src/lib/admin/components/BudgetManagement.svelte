@@ -10,9 +10,10 @@
   
   interface Props {
     department: Department;
+    canEdit?: boolean;
   }
   
-  let { department }: Props = $props();
+  let { department, canEdit = true }: Props = $props();
   
   let isEditing = $state(false);
   let budgetAmount = $state(department.budget_allocated);
@@ -76,6 +77,7 @@
   };
   
   function startEditing() {
+    if (!canEdit) return;
     // Use budgetOverview data if available (most recent), otherwise fall back to department data
     if (budgetOverview) {
       budgetAmount = budgetOverview.budget_allocated;
@@ -140,8 +142,10 @@
 <div class="budget-management">
   <div class="budget-header">
     <h3>{$_('admin.departments.budgetOverview')}</h3>
-    {#if !isEditing}
-      <button class="btn-secondary" onclick={startEditing}>{$_('admin.departments.editBudget')}</button>
+    {#if !isEditing && canEdit}
+      <button class="btn-secondary" onclick={startEditing}>
+        {$_('admin.departments.editBudget')}
+      </button>
     {/if}
   </div>
   

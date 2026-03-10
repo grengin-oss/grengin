@@ -13,7 +13,7 @@
   import SortIcon from "../components/SortIcon.svelte";
   import { _ } from "svelte-i18n";
   import { formatNumber } from "../../utils/format.js";
-  import { getAuthState } from "../../features/auth/index.js";
+  import { getAuthState, permissionsStore } from "../../features/auth/index.js";
 
   let isCreateModalOpen = $state(false);
   let isEditModalOpen = $state(false);
@@ -38,6 +38,7 @@
 
   const authState = getAuthState();
   const currentUserId = $derived(authState.user?.id);
+  const canManageUsers = $derived(permissionsStore.canManageUsers());
 
   onMount(() => {
     usersStore.fetchUsers();
@@ -55,7 +56,7 @@
   function applyFilters() {
     usersStore.setFilters({
       search: searchQuery,
-      role: filterRole,
+      role_id: filterRole,
       status: filterStatus,
       department: filterDepartment,
     });
@@ -75,7 +76,7 @@
     filterDepartment = "";
     usersStore.setFilters({
       search: "",
-      role: "",
+      role_id: "",
       status: "",
       department: "",
     });
@@ -176,9 +177,11 @@
 <div class="users-container">
   <PageHeader title={$_('admin.users.userManagement')} subtitle={$_('admin.users.manageUsersAndRoles')}>
     {#snippet children()}
-      <button class="btn-primary" onclick={openCreateModal}>
-        + {$_('admin.users.createUserButton')}
-      </button>
+      {#if canManageUsers}
+        <button class="btn-primary" onclick={openCreateModal}>
+          + {$_('admin.users.createUserButton')}
+        </button>
+      {/if}
     {/snippet}
   </PageHeader>
 
@@ -296,15 +299,25 @@
                 <SortIcon sort="created_at" currentSort={usersStore.sort} ascending={usersStore.ascending} />
               </span>
             </th>
-            <th>{$_('admin.common.actions')}</th>
+            {#if canManageUsers}
+              <th>{$_('admin.common.actions')}</th>
+            {/if}
           </tr>
         </thead>
         <tbody>
           {#each usersStore.users as user (user.id)}
-            <UserRow {user} {toggleUserStatus} {openEditModal} {currentUserId} />
+            <UserRow
+              {user}
+              {toggleUserStatus}
+              {openEditModal}
+              {currentUserId}
+              {canManageUsers}
+            />
           {:else}
             <tr>
-              <td colspan="7" class="empty-state">{$_('admin.users.noUsersFound')}</td>
+              <td colspan={canManageUsers ? 7 : 6} class="empty-state">
+                {$_('admin.users.noUsersFound')}
+              </td>
             </tr>
           {/each}
         </tbody>

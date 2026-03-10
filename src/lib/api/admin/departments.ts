@@ -30,12 +30,12 @@ function buildQueryString(params?: Record<string, string | number | boolean | un
 }
 
 export async function getDepartments(params?: GetDepartmentsParams): Promise<DepartmentListResponse> {
-  return request<DepartmentListResponse>(`/admin/departments${buildQueryString(params as Record<string, string | number | boolean | undefined>)}`);
+  return request<DepartmentListResponse>(`/me/administered-departments${buildQueryString(params as Record<string, string | number | boolean | undefined>)}`);
 }
 
 export async function getDepartmentsTree(): Promise<DepartmentTreeResponse> {
-  return request<DepartmentTreeResponse>('/admin/departments/tree');
-}
+  return request<DepartmentTreeResponse>('/me/administered-departments/tree');
+} 
 
 export async function getDepartment(departmentId: string): Promise<Department> {
   return request<Department>(`/admin/departments/${departmentId}`);

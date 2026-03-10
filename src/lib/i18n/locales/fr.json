@@ -7,6 +7,14 @@
     "search": "Rechercher",
     "never": "Jamais"
   },
+  "errors": {
+    "forbidden": {
+      "title": "Accès refusé",
+      "message": "Vous n'avez pas la permission d'accéder à cette page.",
+      "back": "Retour au chat",
+      "iconAlt": "Accès refusé"
+    }
+  },
   "auth": {
     "signIn": "Se connecter",
     "signUp": "S'inscrire",
@@ -128,6 +136,11 @@
       "metadata": "Métadonnées",
       "lastUpdated": "Dernière mise à jour",
       "removing": "Suppression"
+    },
+    "tabListLabels": {
+      "accessControl": "Onglets Contrôle d'accès",
+      "settings": "Onglets Paramètres",
+      "analytics": "Vues Analytiques"
     },
     "users": {
       "userManagement": "Gestion des utilisateurs",

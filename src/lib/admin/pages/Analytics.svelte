@@ -2,6 +2,7 @@
   import { onMount, tick } from "svelte";
   import PageHeader from "../components/PageHeader.svelte";
   import AdminPanelCard from "../components/AdminPanelCard.svelte";
+  import AdminTabs from "../components/AdminTabs.svelte";
   import { getAnalyticsOverview, getAnalyticsTimeseries } from "../../api/admin/analytics.js";
   import type { AnalyticsOverview, AnalyticsTimeseries } from "../types.js";
   import { toast } from "../../components/Toaster.svelte";
@@ -10,23 +11,51 @@
   import AnalyticsOverviewTab from "../components/analytics/AnalyticsOverviewTab.svelte";
   import UserAnalyticsTab from "../components/analytics/UserAnalyticsTab.svelte";
   import DepartmentAnalyticsTab from "../components/analytics/DepartmentAnalyticsTab.svelte";
+  import { permissionsStore } from "../../features/auth/index.js";
 
   // Tab state
-  type AnalyticsTab = 'overview' | 'by-user' | 'by-department' | 'by-model';
-  let currentTab = $state<AnalyticsTab>('overview');
+  type AnalyticsTab = "overview" | "by-user" | "by-department" | "by-model";
+  interface TabConfig {
+    id: AnalyticsTab;
+    label: string;
+    ariaLabel: string;
+  }
 
-  // Initialize tab from URL hash
-  onMount(() => {
-    const hash = window.location.hash.slice(1);
-    if (['overview', 'by-user', 'by-department', 'by-model'].includes(hash)) {
-      currentTab = hash as AnalyticsTab;
+  let currentTab = $state<AnalyticsTab>("overview");
+  const canViewOverview = $derived(
+    permissionsStore.isPermissionGlobal("analytics:view")
+  );
+  let defaultTab = $derived<AnalyticsTab>(
+    canViewOverview ? "overview" : "by-user"
+  );
+
+  function makeTab(
+    id: AnalyticsTab,
+    label: string,
+    ariaLabel: string
+  ): TabConfig {
+    return { id, label, ariaLabel };
+  }
+
+  let tabs = $derived<TabConfig[]>([
+    ...(canViewOverview
+      ? [makeTab("overview", $_("analytics.tabs.overview"), "Overview analytics")]
+      : []),
+    makeTab("by-user", $_("analytics.tabs.byUser"), "User analytics"),
+    makeTab(
+      "by-department",
+      $_("analytics.tabs.byDepartment"),
+      "Department analytics"
+    ),
+    makeTab("by-model", $_("analytics.tabs.byModel"), "Model analytics"),
+  ]);
+
+  // Redirect to by-user tab if user does not have overview permission
+  $effect(() => {
+    if (!canViewOverview && currentTab === "overview") {
+      currentTab = "by-user";
     }
   });
-
-  function setTab(tab: AnalyticsTab) {
-    currentTab = tab;
-    window.history.replaceState(null, '', `#${tab}`);
-  }
 
   let isLoading = $state(true);
   let chartsLoading = $state(false);
@@ -330,44 +359,12 @@
 
   <!-- Tab Navigation -->
   <div class="tabs-wrapper">
-    <div class="tabs" role="tablist" aria-label="Analytics views">
-      <button
-        role="tab"
-        class="tab"
-        class:tab--active={currentTab === 'overview'}
-        aria-selected={currentTab === 'overview'}
-        onclick={() => setTab('overview')}
-      >
-        {$_('analytics.tabs.overview')}
-      </button>
-      <button
-        role="tab"
-        class="tab"
-        class:tab--active={currentTab === 'by-user'}
-        aria-selected={currentTab === 'by-user'}
-        onclick={() => setTab('by-user')}
-      >
-        {$_('analytics.tabs.byUser')}
-      </button>
-      <button
-        role="tab"
-        class="tab"
-        class:tab--active={currentTab === 'by-department'}
-        aria-selected={currentTab === 'by-department'}
-        onclick={() => setTab('by-department')}
-      >
-        {$_('analytics.tabs.byDepartment')}
-      </button>
-      <button
-        role="tab"
-        class="tab"
-        class:tab--active={currentTab === 'by-model'}
-        aria-selected={currentTab === 'by-model'}
-        onclick={() => setTab('by-model')}
-      >
-        {$_('analytics.tabs.byModel')}
-      </button>
-    </div>
+    <AdminTabs
+      tabs={tabs}
+      defaultTab={defaultTab}
+      tabListLabel={$_("admin.tabListLabels.analytics")}
+      bind:currentTab
+    />
     <button
       class="refresh-button"
       onclick={handleRefresh}
@@ -384,7 +381,7 @@
     </button>
   </div>
 
-  {#if currentTab === 'overview'}
+  {#if currentTab === 'overview' && canViewOverview}
     <AnalyticsOverviewTab
       {overviewData}
       {timeseriesData}
@@ -640,12 +637,6 @@
     .tabs-wrapper {
       flex-direction: column;
       gap: var(--space-md);
-    }
-
-    .tabs {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      width: 100%;
     }
 
     .refresh-button {

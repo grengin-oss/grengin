@@ -13,9 +13,10 @@
   
   interface Props {
     department: Department;
+    canManage?: boolean;
   }
   
-  let { department }: Props = $props();
+  let { department, canManage = true }: Props = $props();
   
   let adminUsers = $state<any[]>([]);
   let loadingAdmins = $state(false);
@@ -73,7 +74,7 @@
   
   function handleAdminsUpdated() {
     Promise.all([
-      departmentsStore.fetchDepartments(),
+      departmentsStore.fetchAdministeredDepartments(),
       departmentsStore.fetchDepartmentsTree(),
     ]);
   }
@@ -175,16 +176,18 @@
 <div class="section">
   <div class="section-header">
     <h3>{$_('admin.departments.departmentAdmins')}</h3>
-    <button class="btn-add-admin" onclick={toggleAddAdminSearch}>
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      {$_('admin.departments.addAdmin')}
-    </button>
+    {#if canManage}
+      <button class="btn-add-admin" onclick={toggleAddAdminSearch}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        {$_('admin.departments.addAdmin')}
+      </button>
+    {/if}
   </div>
   <p class="section-description">{$_('admin.departments.departmentAdminsDescription')}</p>
   
-  {#if showAddAdminSearch}
+  {#if canManage && showAddAdminSearch}
     <div class="admin-search-wrapper">
       <div class="admin-search-box">
         <svg class="search-icon" width="18" height="18" viewBox="0 0 18 18" fill="none">

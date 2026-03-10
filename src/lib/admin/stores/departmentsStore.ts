@@ -1,11 +1,10 @@
-import { writable, derived } from 'svelte/store';
+import { writable } from 'svelte/store';
 import type { Department, SetBudgetRequest } from '../types.js';
 import * as departmentsApi from '../../api/admin/departments.js';
 
 interface DepartmentsState {
-  departments: Department[];
   departmentsTree: Department[];
-  administeredDepartmentIds: string[];
+  administeredDepartments: Department[];
   selectedDepartment: Department | null;
   loading: boolean;
   error: Error | null;
@@ -14,9 +13,8 @@ interface DepartmentsState {
 
 function createDepartmentsStore() {
   const { subscribe, set, update } = writable<DepartmentsState>({
-    departments: [],
+    administeredDepartments: [],
     departmentsTree: [],
-    administeredDepartmentIds: [],
     selectedDepartment: null,
     loading: false,
     error: null,
@@ -25,23 +23,6 @@ function createDepartmentsStore() {
 
   return {
     subscribe,
-    
-    async fetchDepartments() {
-      update(state => ({ ...state, error: null }));
-      try {
-        const response = await departmentsApi.getDepartments();
-        update(state => ({
-          ...state,
-          departments: response.departments,
-          total: response.total,
-        }));
-      } catch (error) {
-        update(state => ({
-          ...state,
-          error: error as Error,
-        }));
-      }
-    },
 
     async fetchAdministeredDepartments() {
       update(state => ({ ...state, error: null }));
@@ -50,7 +31,7 @@ function createDepartmentsStore() {
 
         update(state => ({
           ...state,
-          administeredDepartmentIds: response.administered_departments
+          administeredDepartments: response.departments
         }));        
       } catch (error) {
         update(state => ({
@@ -247,9 +228,8 @@ function createDepartmentsStore() {
 
     reset() {
       set({
-        departments: [],
+        administeredDepartments: [],
         departmentsTree: [],
-        administeredDepartmentIds: [],
         selectedDepartment: null,
         loading: false,
         error: null,
@@ -261,15 +241,3 @@ function createDepartmentsStore() {
 
 export const departmentsStore = createDepartmentsStore();
 
-export const departmentTree = derived(
-  departmentsStore,
-  $store => {
-    const buildTree = (parentId: string | null = null): Department[] => {
-      return $store.departments
-        .filter(dept => dept.parent_id === parentId)
-        .sort((a, b) => a.name.localeCompare(b.name));
-    };
-    
-    return buildTree();
-  }
-);

@@ -7,6 +7,14 @@
     "search": "Buscar",
     "never": "Nunca"
   },
+  "errors": {
+    "forbidden": {
+      "title": "Acceso denegado",
+      "message": "No tiene permiso para ver esta página.",
+      "back": "Volver al chat",
+      "iconAlt": "Acceso denegado"
+    }
+  },
   "auth": {
     "signIn": "Iniciar sesión",
     "signUp": "Registrarse",
@@ -128,6 +136,11 @@
       "metadata": "Metadatos",
       "lastUpdated": "Última actualización",
       "removing": "Eliminando"
+    },
+    "tabListLabels": {
+      "accessControl": "Pestañas de control de acceso",
+      "settings": "Pestañas de configuración",
+      "analytics": "Vistas de análisis"
     },
     "users": {
       "userManagement": "Gestión de usuarios",
