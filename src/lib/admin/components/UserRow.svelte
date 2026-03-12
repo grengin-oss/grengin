@@ -2,6 +2,7 @@
     import type { User } from "../types.js";
     import { _ } from "svelte-i18n";
     import { formatDate } from "../../utils/format.js";
+    import RolesBadgeList from "./RolesBadgeList.svelte";
 
     interface Props {
         user: User;
@@ -16,7 +17,7 @@
     
     // Check if this is the current user's own row
     const isSelfUser: boolean = $derived((currentUserId && user.id === currentUserId) || false);
-    
+
     // Local checkbox state - synced with user.status
     let checkboxChecked = $state(user.status === "active");
 
@@ -66,9 +67,7 @@
     <td>{user.name || "-"}</td>
     <td>{user.email}</td>
     <td>
-        <span class="role-badge {user.role}">
-            {user.role || "user"}
-        </span>
+        <RolesBadgeList roles={user.roles}/>
     </td>
     <td>{user.department || "-"}</td>
     <td>
@@ -121,34 +120,18 @@
         pointer-events: none;
     }
 
-    .role-badge,
     .status-badge {
         display: inline-block;
         padding: var(--space-xs) var(--space-sm);
         border-radius: var(--radius-sm);
         font-size: 0.8125rem;
         font-weight: 600;
-        text-transform: uppercase;
-    }
-
-    .role-badge.admin {
-        background: rgba(var(--brand-rgb), 0.15);
-        color: var(--brand);
-    }
-
-    .role-badge.user {
-        background: rgba(var(--glass-tint), 0.1);
-        color: var(--text-secondary);
+        text-transform: none;
     }
 
     .status-badge.active {
         background: rgba(var(--brand-green-rgb), 0.15);
         color: var(--brand-green);
-    }
-
-    .status-badge.deactivated {
-        background: rgba(var(--brand-red-rgb), 0.15);
-        color: var(--brand-red);
     }
 
     .actions {
@@ -164,10 +147,6 @@
         border-radius: var(--radius-sm);
         transition: all 0.2s ease;
         font-size: 1rem;
-    }
-
-    .reset-btn {
-        max-width: 100px;
     }
 
     .action-btn:hover {

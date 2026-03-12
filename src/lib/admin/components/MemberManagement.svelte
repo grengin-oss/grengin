@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Department } from "../types.js";
-  import { onMount, untrack } from "svelte";
+  import type { Department, User } from "../types.js";
+  import { onMount } from "svelte";
   import * as departmentsApi from "../../api/admin/departments.js";
   import { departmentsStore } from "../stores/index.js";
   import { toast } from "../../components/Toaster.svelte";
@@ -10,6 +10,7 @@
   import LoadingSpinner from "./LoadingSpinner.svelte";
   import AddMemberModal from "./AddMemberModal.svelte";
   import Modal from "./Modal.svelte";
+  import RolesBadgeList from "./RolesBadgeList.svelte";
   import { formatDate } from "$lib/utils/format.js";
   
   interface Props {
@@ -19,7 +20,7 @@
   
   let { department, canManage = true }: Props = $props();
   
-  let members = $state<any[]>([]);
+  let members = $state<User[]>([]);
   let loading = $state(false);
   let includeSubDepartments = $state(false);
   let showAddMember = $state(false);
@@ -190,7 +191,7 @@
               <td class="name-col">{member.name || 'N/A'}</td>
               <td class="email-col">{member.email}</td>
               <td class="role-col">
-                <span class="role-badge">{member.role || 'user'}</span>
+                <RolesBadgeList roles={member.roles}/>
               </td>
               <td class="date-col">{formatDate(member.created_at)}</td>
             </tr>
@@ -382,16 +383,6 @@
   
   .email-col {
     color: var(--text-secondary);
-  }
-  
-  .role-badge {
-    display: inline-block;
-    padding: 4px 8px;
-    background: color-mix(in oklab, var(--brand) 20%, transparent);
-    color: var(--brand);
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
   }
   
   .date-col {

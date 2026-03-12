@@ -5,7 +5,7 @@ export interface User {
   sub: string;
   email: string;
   name?: string;
-  role?: string;
+  roles?: string[];
   status?: string;
   department?: string;
   is_super_admin?: boolean;
@@ -217,16 +217,8 @@ export interface SetBudgetRequest {
   action_on_exceed: ActionOnExceed;
 }
 
-export interface DepartmentMember {
-  user_id: string;
-  user_name: string;
-  user_email: string;
-  role: string;
-  joined_at: string;
-}
-
 export interface DepartmentMembersResponse {
-  members: DepartmentMember[];
+  members: User[];
   total: number;
 }
 

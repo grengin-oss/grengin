@@ -4,16 +4,25 @@
   import AdminTableCard from "../components/AdminTableCard.svelte";
   import PageHeader from "../components/PageHeader.svelte";
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
-  import Modal from "../components/Modal.svelte";
+  import UserFormModal from "../components/UserFormModal.svelte";
+  import DepartmentScopingModal from "../components/access-control/DepartmentScopingModal.svelte";
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
-  import type { User } from "../types.js";
+  import type { Department, RoleUserAssignment, User } from "../types.js";
   import UserRow from "../components/UserRow.svelte";
   import SortIcon from "../components/SortIcon.svelte";
   import { _ } from "svelte-i18n";
   import { formatNumber } from "../../utils/format.js";
   import { getAuthState, permissionsStore } from "../../features/auth/index.js";
+  import {
+    addRoleToUser,
+    getUserRoleAssignments,
+    removeRoleFromUser,
+    getRoles,
+    type Role,
+  } from "../../api/admin/roles.js";
+  import { getDepartment } from "../../api/admin/departments.js";
 
   let isCreateModalOpen = $state(false);
   let isEditModalOpen = $state(false);
@@ -24,12 +33,19 @@
   let filterDepartment = $state("");
   let debounceTimeout: number | null = null;
   let filtersOpen = $state(false);
+  let roles = $state<Role[]>([]);
+  let roleAssignments = $state<RoleUserAssignment[]>([]);
+  let roleAssignmentsLoading = $state(false);
+  let roleScopingContext = $state<{ role: Role; user: User } | null>(null);
+  let rolesOpen = $state(true);
+  let addRoleOpen = $state(false);
+  let roleSearchQuery = $state("");
+  let departmentCache = $state<Record<string, Department>>({});
 
   // Form state
   let formData = $state({
     email: "",
     name: "",
-    role: "user",
     department: "",
   });
 
@@ -42,6 +58,7 @@
 
   onMount(() => {
     usersStore.fetchUsers();
+    fetchRoles();
   });
 
   // Handle errors with toast
@@ -69,6 +86,16 @@
     }, 500); // ms
   }
 
+  async function fetchRoles() {
+    try {
+      const res = await getRoles();
+      roles = res.roles;
+    } catch (err: any) {
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error(errorMessage || $_("admin.accessControl.failedToLoadRoles"));
+    }
+  }
+
   function clearFilters() {
     searchQuery = "";
     filterRole = "";
@@ -83,21 +110,27 @@
   }
 
   function openCreateModal() {
-    formData = { email: "", name: "", role: "user", department: "" };
+    formData = { email: "", name: "", department: "" };
     formErrors = {};
+    rolesOpen = true;
+    addRoleOpen = false;
+    roleSearchQuery = "";
     isCreateModalOpen = true;
   }
 
-  function openEditModal(user: User) {
+  async function openEditModal(user: User) {
     selectedUser = user;
     formData = {
       email: user.email,
       name: user.name || "",
-      role: user.role || "user",
       department: user.department || "",
     };
     formErrors = {};
     isEditModalOpen = true;
+    rolesOpen = true;
+    addRoleOpen = false;
+    roleSearchQuery = "";
+    await loadUserRoles(user.id);
   }
 
   function validateForm(): boolean {
@@ -119,7 +152,7 @@
     try {
       await usersStore.create(formData);
       isCreateModalOpen = false;
-      formData = { email: "", name: "", role: "user", department: "" };
+      formData = { email: "", name: "", department: "" };
       toast.success($_('admin.users.userCreatedSuccessfully'));
     } catch (err: any) {
       const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
@@ -166,6 +199,85 @@
 
   function handleSort(field: 'name' | 'email' | 'created_at') {
     usersStore.setSort(field);
+  }
+
+  async function loadUserRoles(userId: string) {
+    try {
+      roleAssignmentsLoading = true;
+      const { assignments } = await getUserRoleAssignments(userId);
+      roleAssignments = assignments;
+      const departmentIds = [
+        ...new Set(
+          assignments
+            .map((assignment) => assignment.scope_department_id)
+            .filter(Boolean),
+        ),
+      ] as string[];
+      await ensureDepartments(departmentIds);
+    } catch (err: any) {
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error(errorMessage || $_("admin.accessControl.failedToLoadAssignments"));
+      roleAssignments = [];
+    } finally {
+      roleAssignmentsLoading = false;
+    }
+  }
+
+  async function ensureDepartments(ids: string[]) {
+    const missingIds = ids.filter((id) => id && !(id in departmentCache));
+    if (missingIds.length === 0) return;
+    await Promise.all(
+      missingIds.map(async (id) => {
+        try {
+          const department = await getDepartment(id);
+          departmentCache = { ...departmentCache, [id]: department };
+        } catch {
+          // ignore; fallback to id if lookup fails
+        }
+      }),
+    );
+  }
+
+  function openRoleScoping(role: Role) {
+    if (!selectedUser) return;
+    roleScopingContext = { role, user: selectedUser };
+  }
+
+  function closeRoleScoping() {
+    roleScopingContext = null;
+  }
+
+  async function handleScopingUpdate() {
+    const userId = roleScopingContext?.user?.id;
+    if (!userId) return;
+    await loadUserRoles(userId);
+  }
+
+  async function handleAddRoleGlobal(roleId: string) {
+    if (!selectedUser) return;
+    try {
+      await addRoleToUser(selectedUser.id, { role_id: roleId });
+      await loadUserRoles(selectedUser.id);
+    } catch (err: any) {
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error(errorMessage || $_("admin.users.failedToAssignRoles"));
+    }
+  }
+
+  async function handleRemoveAssignment(assignmentId: string) {
+    if (!selectedUser) return;
+    try {
+      await removeRoleFromUser(selectedUser.id, assignmentId);
+      await loadUserRoles(selectedUser.id);
+    } catch (err: any) {
+      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
+      toast.error(errorMessage || $_("admin.accessControl.failedToRemoveUser"));
+    }
+  }
+
+  function closeRoleSearch() {
+    roleSearchQuery = "";
+    addRoleOpen = false;
   }
 
   const currentPage = $derived(
@@ -244,9 +356,9 @@
         onchange={applyFilters}
       >
         <option value="">{$_('admin.common.allRoles')}</option>
-        <option value="superadmin">{$_('admin.common.superAdmin')}</option>
-        <option value="admin">{$_('admin.common.admin')}</option>
-        <option value="user">{$_('admin.common.user')}</option>
+        {#each roles as role (role.id)}
+          <option value={role.id}>{role.name}</option>
+        {/each}
       </select>
       <select
         bind:value={filterStatus}
@@ -348,147 +460,53 @@
     {/if}
   {/if}
 
-  <!-- Create Modal -->
-  <Modal
+  <!-- Create User Modal -->
+  <UserFormModal
     isOpen={isCreateModalOpen}
-    title={$_('admin.users.createNewUser')}
-    onclose={() => (isCreateModalOpen = false)}
-  >
-    {#snippet children()}
-      <form
-        onsubmit={(e) => {
-          e.preventDefault();
-          handleCreate();
-        }}
-        class="user-form"
-      >
-        <div class="form-group">
-          <label for="create-email">{$_('admin.common.email')} <span class="required">*</span></label
-          >
-          <input
-            id="create-email"
-            type="email"
-            bind:value={formData.email}
-            placeholder="user@example.com"
-            required
-            class:error={formErrors.email}
-          />
-          {#if formErrors.email}
-            <span class="error-text">{formErrors.email}</span>
-          {/if}
-        </div>
+    mode="create"
+    bind:formData
+    {formErrors}
+    {isSubmitting}
+    {roles}
+    roleAssignments={[]}
+    roleAssignmentsLoading={false}
+    bind:rolesOpen
+    bind:addRoleOpen
+    bind:roleSearchQuery
+    onClose={() => (isCreateModalOpen = false)}
+    onSubmit={handleCreate}
+    {closeRoleSearch}
+  />
 
-        <div class="form-group">
-          <label for="create-name">{$_('admin.common.name')}</label>
-          <input
-            id="create-name"
-            type="text"
-            bind:value={formData.name}
-            placeholder={$_('admin.users.namePlaceholder')}
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="create-role">{$_('admin.common.role')}</label>
-          <select id="create-role" bind:value={formData.role}>
-            <option value="user">{$_('admin.common.user')}</option>
-            <option value="admin">{$_('admin.common.admin')}</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="create-department">{$_('admin.common.department')}</label>
-          <input
-            id="create-department"
-            type="text"
-            bind:value={formData.department}
-            placeholder={$_('admin.users.departmentPlaceholder')}
-          />
-        </div>
-
-        <div class="form-actions">
-          <button
-            type="button"
-            class="btn"
-            onclick={() => (isCreateModalOpen = false)}
-          >
-            {$_('common.cancel')}
-          </button>
-          <button type="submit" class="btn-primary" disabled={isSubmitting}>
-            {isSubmitting ? $_('admin.common.creating') : $_('admin.users.createUser')}
-          </button>
-        </div>
-      </form>
-    {/snippet}
-  </Modal>
-
-  <!-- Edit Modal -->
-  <Modal
+  <!-- Edit User Modal -->
+  <UserFormModal
     isOpen={isEditModalOpen}
-    title={$_('admin.users.editUser')}
-    onclose={() => (isEditModalOpen = false)}
-  >
-    {#snippet children()}
-      <form
-        onsubmit={(e) => {
-          e.preventDefault();
-          handleUpdate();
-        }}
-        class="user-form"
-      >
-        <div class="form-group">
-          <label for="edit-email">{$_('admin.common.email')}</label>
-          <input
-            id="edit-email"
-            type="email"
-            bind:value={formData.email}
-            disabled
-          />
-        </div>
+    mode="edit"
+    bind:formData
+    {formErrors}
+    {isSubmitting}
+    {roles}
+    {roleAssignments}
+    {roleAssignmentsLoading}
+    bind:rolesOpen
+    bind:addRoleOpen
+    bind:roleSearchQuery
+    onClose={() => (isEditModalOpen = false)}
+    onSubmit={handleUpdate}
+    {handleAddRoleGlobal}
+    {openRoleScoping}
+    {handleRemoveAssignment}
+    {closeRoleSearch}
+  />
 
-        <div class="form-group">
-          <label for="edit-name">{$_('admin.common.name')}</label>
-          <input
-            id="edit-name"
-            type="text"
-            bind:value={formData.name}
-            placeholder={$_('admin.users.namePlaceholder')}
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="edit-role">{$_('admin.common.role')}</label>
-          <select id="edit-role" bind:value={formData.role}>
-            <option value="user">{$_('admin.common.user')}</option>
-            <option value="admin">{$_('admin.common.admin')}</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="edit-department">{$_('admin.common.department')}</label>
-          <input
-            id="edit-department"
-            type="text"
-            bind:value={formData.department}
-            placeholder={$_('admin.users.departmentPlaceholder')}
-          />
-        </div>
-
-        <div class="form-actions">
-          <button
-            type="button"
-            class="btn"
-            onclick={() => (isEditModalOpen = false)}
-          >
-            {$_('common.cancel')}
-          </button>
-          <button type="submit" class="btn-primary" disabled={isSubmitting}>
-            {isSubmitting ? $_('admin.common.updating') : $_('admin.users.updateUser')}
-          </button>
-        </div>
-      </form>
-    {/snippet}
-  </Modal>
+  <!-- Department Scoping Modal -->
+  <DepartmentScopingModal
+    role={roleScopingContext?.role ?? null}
+    user={roleScopingContext?.user ?? null}
+    isOpen={!!roleScopingContext}
+    onclose={closeRoleScoping}
+    onUpdate={handleScopingUpdate}
+  />
 </div>
 
 <style>
@@ -571,45 +589,6 @@
   .pagination-info {
     color: var(--text-secondary);
     font-size: 0.875rem;
-  }
-
-  .user-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xl);
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .form-group label {
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 0.9375rem;
-  }
-
-  .required {
-    color: var(--brand-red);
-  }
-
-  .form-group input.error {
-    border-color: var(--brand-red);
-  }
-
-  .error-text {
-    color: var(--brand-red);
-    font-size: 0.8125rem;
-  }
-
-  .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-md);
-    padding-top: var(--space-lg);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .sortable {

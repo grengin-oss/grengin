@@ -123,8 +123,9 @@ function createUsersStore() {
 
     async create(userData: CreateUserData) {
       try {
-        await createUser(userData);
-        return updateUsersInBackground();
+        const created = await createUser(userData);
+        await updateUsersInBackground();
+        return created;
       } catch (err: any) {
         error = err;
         throw err;

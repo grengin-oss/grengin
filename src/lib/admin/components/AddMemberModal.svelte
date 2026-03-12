@@ -9,6 +9,7 @@
   import { getLocalizedError } from "../../utils/errorLocalization.js";
   import LoadingSpinner from "./LoadingSpinner.svelte";
   import type { User } from "../types.js";
+  import RolesBadgeList from "./RolesBadgeList.svelte";
 
   interface Props {
     departmentId: string;
@@ -118,7 +119,6 @@
     saving = true;
     try {
       await departmentsApi.addDepartmentMembers(departmentId, Array.from(selectedUsers));
-      const count = selectedUsers.size;
       toast.success($_('admin.departments.memberAdded'));
       onSuccess();
       onclose();
@@ -183,7 +183,7 @@
                 <td class="name-col">{user.name || 'N/A'}</td>
                 <td class="email-col">{user.email}</td>
                 <td class="role-col">
-                  <span class="role-badge">{user.role}</span>
+                  <RolesBadgeList roles={user.roles}/>
                 </td>
               </tr>
             {/each}
@@ -349,18 +349,6 @@
     cursor: pointer;
     width: 16px;
     height: 16px;
-  }
-
-  .role-badge {
-    display: inline-block;
-    padding: 4px 8px;
-    background: var(--glass-bg-dark);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-primary);
-    text-transform: capitalize;
   }
 
   .pagination {
