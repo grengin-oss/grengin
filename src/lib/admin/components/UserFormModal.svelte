@@ -66,15 +66,25 @@
     return resultList;
   });
 
+  // Remove duplicate role assignments by role_id, keeping the one with the scope_department_id if it exists
   const uniqueRoleAssignments = $derived(() => {
-    const seen = new Set<string>();
-    return roleAssignments.filter((assignment) => {
-      if (seen.has(assignment.role_id)) {
-        return false;
+    const byRole = new Map<string, RoleUserAssignment>();
+    for (const assignment of roleAssignments) {
+      const existing = byRole.get(assignment.role_id);
+      if (!existing) {
+        byRole.set(assignment.role_id, assignment);
+        continue;
       }
-      seen.add(assignment.role_id);
-      return true;
-    });
+
+      if (!existing.scope_department_id && assignment.scope_department_id) {
+        continue;
+      }
+
+      if (existing.scope_department_id && !assignment.scope_department_id) {
+        byRole.set(assignment.role_id, assignment);
+      }
+    }
+    return Array.from(byRole.values());
   });
   let roleSearchInput = $state<HTMLInputElement | null>(null);
   let showRemoveRoleConfirm = $state(false);

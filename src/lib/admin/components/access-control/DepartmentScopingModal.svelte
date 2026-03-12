@@ -36,6 +36,11 @@
         ),
     ),
   );
+  const hasGlobalScopeAssignment = $derived(
+    departmentModalAssignments.some(
+      (assignment) => !assignment.scope_department_id,
+    ),
+  );
 
   let departmentSearching = $state(false);
   let departmentSearchTimeout: number | undefined;
@@ -45,6 +50,7 @@
   let departmentCache = $state<Record<string, Department>>({});
   let assignedSectionExpanded = $state(true);
   let searchSectionExpanded = $state(false);
+  let globalScopeLoading = $state(false);
 
   function resetModalState() {
     departmentModalAssignments = [];
@@ -108,11 +114,11 @@
 
   function getDepartmentInfo(departmentId?: string) {
     if (!departmentId)
-      return { name: $_("admin.accessControl.globalScope"), description: "" };
+      return { name: $_("admin.accessControl.globalScope"), description: $_("admin.accessControl.globalScopeDescription") };
     const department = departmentCache[departmentId];
     return {
       name: department?.name ?? $_("admin.accessControl.globalScope"),
-      description: department?.description ?? "",
+      description: department?.description ?? $_("admin.accessControl.globalScopeDescription"),
     };
   }
 
@@ -200,6 +206,27 @@
         ...departmentAdditionLoading,
         [department.id]: false,
       };
+    }
+  }
+
+  async function addGlobalScope() {
+    if (!role || !user || hasGlobalScopeAssignment) return;
+    globalScopeLoading = true;
+    try {
+      await rolesApi.addRoleToUser(user.id, {
+        role_id: role.id,
+      });
+      toast.success($_("admin.accessControl.departmentAssigned"));
+      await loadAssignments();
+      await onUpdate?.();
+    } catch (err) {
+      const msg =
+        err instanceof ApiError
+          ? getLocalizedError(err, "description", $_)
+          : (err as Error).message;
+      toast.error(msg || $_("admin.accessControl.failedToAssignDepartment"));
+    } finally {
+      globalScopeLoading = false;
     }
   }
 
@@ -294,14 +321,19 @@
               {@const departmentInfo = getDepartmentInfo(
                 assignment.scope_department_id,
               )}
-              <div class="assigned-item">
+              <div
+                class="assigned-item"
+              >
                 <div>
-                  <span class="assigned-name">{departmentInfo.name}</span>
-                  {#if departmentInfo.description}
-                    <span class="assigned-description"
-                      >{departmentInfo.description}</span
-                    >
-                  {/if}
+                  <span
+                    class="assigned-name"
+                    class:assigned-global={!assignment.scope_department_id}
+                  >
+                    {departmentInfo.name}
+                  </span>
+                  <p class="assigned-description">
+                    {departmentInfo.description}
+                  </p>
                 </div>
                 <button
                   class="assigned-remove"
@@ -367,6 +399,29 @@
               oninput={handleDepartmentSearchInput}
             />
           </div>
+          {#if !assignmentsLoading && !departmentSearching && !hasGlobalScopeAssignment}
+            <div class="department-global-option">
+              <div class="department-global-details">
+                <span class="department-search-name">
+                  {$_("admin.accessControl.globalScope")}
+                </span>
+                <p class="department-global-description">
+                  {$_("admin.accessControl.globalScopeHint")}
+                </p>
+              </div>
+              <button
+                class="btn-edit-departments"
+                onclick={addGlobalScope}
+                disabled={hasGlobalScopeAssignment || globalScopeLoading}
+              >
+                {#if globalScopeLoading}
+                  <LoadingSpinner size="sm" />
+                {:else}
+                  {$_("admin.accessControl.assignAllDepartments")}
+                {/if}
+              </button>
+            </div>
+          {/if}
           {#if departmentSearching}
             <div class="department-search-loading">
               <LoadingSpinner />
@@ -464,6 +519,10 @@
     margin-top: 0.1rem;
   }
 
+  .assigned-global {
+    color: var(--brand-green-accent);
+  }
+
   .assigned-remove {
     border: none;
     background: transparent;
@@ -523,6 +582,34 @@
     border: 1px solid var(--glass-stroke-dark);
     border-radius: var(--radius-md);
     background: var(--glass-bg-dark);
+  }
+
+  .department-global-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-xl);
+    background: var(--surface-card, rgba(255, 255, 255, 0.04));
+  }
+
+  .department-global-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .department-global-description {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  .department-global-option button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .department-search-input {
