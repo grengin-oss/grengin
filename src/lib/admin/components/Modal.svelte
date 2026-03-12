@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { _ } from "svelte-i18n";
 
   interface Props {
@@ -18,6 +18,9 @@
     parseInt(document.body.getAttribute("data-modal-count") || "0", 10);
   const setModalCount = (count: number) =>
     document.body.setAttribute("data-modal-count", count.toString());
+  const updateBodyScrollLock = (count: number) => {
+    document.body.style.overflow = count > 0 ? "hidden" : "";
+  };
 
   function handleEscape(event: KeyboardEvent) {
     if (event.key === "Escape" && isOpen) {
@@ -52,6 +55,20 @@
     };
   });
 
+  let wasOpen = $state(false);
+
+  function incrementModalCount() {
+    const count = getModalCount() + 1;
+    setModalCount(count);
+    updateBodyScrollLock(count);
+  }
+
+  function decrementModalCount() {
+    const count = Math.max(0, getModalCount() - 1);
+    setModalCount(count);
+    updateBodyScrollLock(count);
+  }
+
   // Move modal to portal when open
   $effect(() => {
     const portal = getOrCreatePortal();
@@ -62,27 +79,29 @@
         portal.appendChild(modalContainer);
 
         // Increment modal count and lock body scroll
-        const count = getModalCount() + 1;
-        setModalCount(count);
-        if (count === 1) {
-          document.body.style.overflow = "hidden";
+        if (!wasOpen) {
+          incrementModalCount();
+          wasOpen = true;
         }
       }
+    } else if (!isOpen && wasOpen) {
+      decrementModalCount();
+      wasOpen = false;
     }
 
     return () => {
       // Cleanup: remove from portal when closing or unmounting
       if (modalContainer && portal.contains(modalContainer)) {
         portal.removeChild(modalContainer);
-
-        // Decrement modal count and restore scroll only if no modals left
-        const count = Math.max(0, getModalCount() - 1);
-        setModalCount(count);
-        if (count === 0) {
-          document.body.style.overflow = "";
-        }
       }
     };
+  });
+
+  onDestroy(() => {
+    if (wasOpen) {
+      decrementModalCount();
+      wasOpen = false;
+    }
   });
 </script>
 
