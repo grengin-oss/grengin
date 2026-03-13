@@ -153,7 +153,7 @@
       "filters": "Filtros",
       "closeFilters": "Cerrar filtros",
       "openFilters": "Abrir filtros",
-      "searchByNameOrEmail": "Buscar por nombre o correo...",
+      "searchByNameOrEmail": "Buscar por nombre, correo o departamento...",
       "reset": "Restablecer",
       "loadingUsers": "Cargando usuarios...",
       "noUsersFound": "No se encontraron usuarios",

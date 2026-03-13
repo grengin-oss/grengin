@@ -8,6 +8,7 @@ export interface User {
   roles?: string[];
   status?: string;
   department?: string;
+  department_id?: string;
   is_super_admin?: boolean;
   has_password?: boolean;
   mfa_enabled?: boolean;

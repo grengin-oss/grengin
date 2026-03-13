@@ -153,7 +153,7 @@
       "filters": "フィルター",
       "closeFilters": "フィルターを閉じる",
       "openFilters": "フィルターを開く",
-      "searchByNameOrEmail": "名前またはメールで検索...",
+      "searchByNameOrEmail": "名前、メール、または部署で検索...",
       "reset": "リセット",
       "loadingUsers": "ユーザーを読み込み中...",
       "noUsersFound": "ユーザーが見つかりません",

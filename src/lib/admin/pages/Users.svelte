@@ -46,7 +46,8 @@
   let formData = $state({
     email: "",
     name: "",
-    department: "",
+    department_id: "",
+    department_name: "",
   });
 
   let formErrors = $state<Record<string, string>>({});
@@ -110,7 +111,7 @@
   }
 
   function openCreateModal() {
-    formData = { email: "", name: "", department: "" };
+    formData = { email: "", name: "", department_id: "", department_name: "" };
     formErrors = {};
     rolesOpen = true;
     addRoleOpen = false;
@@ -123,7 +124,8 @@
     formData = {
       email: user.email,
       name: user.name || "",
-      department: user.department || "",
+      department_id: user.department_id || "",
+      department_name: user.department || "",
     };
     formErrors = {};
     isEditModalOpen = true;
@@ -150,9 +152,13 @@
 
     isSubmitting = true;
     try {
-      await usersStore.create(formData);
+      await usersStore.create({
+        email: formData.email,
+        name: formData.name,
+        department_id: formData.department_id ?? null,
+      });
       isCreateModalOpen = false;
-      formData = { email: "", name: "", department: "" };
+      formData = { email: "", name: "", department_id: "", department_name: "" };
       toast.success($_('admin.users.userCreatedSuccessfully'));
     } catch (err: any) {
       const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
@@ -167,7 +173,11 @@
 
     isSubmitting = true;
     try {
-      await usersStore.update(selectedUser.id, formData);
+      await usersStore.update(selectedUser.id, {
+        email: formData.email,
+        name: formData.name,
+        department_id: formData.department_id ?? null,
+      });
       isEditModalOpen = false;
       selectedUser = null;
       toast.success($_('admin.users.userUpdatedSuccessfully'));
@@ -369,13 +379,6 @@
         <option value="active">{$_('admin.common.active')}</option>
         <option value="deactivated">{$_('admin.common.deactivated')}</option>
       </select>
-      <input
-        type="text"
-        placeholder={$_('admin.common.department')}
-        bind:value={filterDepartment}
-        onkeyup={(e) => e.key === "Enter" && applyFilters()}
-        class="filter-input"
-      />
       <button class="btn-secondary reset-btn" onclick={clearFilters}
         >{$_('admin.users.reset')}</button
       >
@@ -559,7 +562,7 @@
 
   .filters-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: var(--space-md);
   }
 

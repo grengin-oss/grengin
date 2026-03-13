@@ -2,7 +2,11 @@
   import Modal from "./Modal.svelte";
   import LoadingSpinner from "./LoadingSpinner.svelte";
   import type { Role } from "../../api/admin/roles.js";
-  import type { RoleUserAssignment } from "../types.js";
+  import { getDepartments } from "../../api/admin/departments.js";
+  import { ApiError } from "../../api/client.js";
+  import type { Department, RoleUserAssignment } from "../types.js";
+  import { toast } from "../../components/Toaster.svelte";
+  import { getLocalizedError } from "../../utils/errorLocalization.js";
   import { tick } from "svelte";
   import { _ } from "svelte-i18n";
 
@@ -11,7 +15,8 @@
   interface FormData {
     email: string;
     name: string;
-    department: string;
+    department_id?: string | null;
+    department_name?: string;
   }
 
   interface Props {
@@ -91,6 +96,23 @@
   let pendingRemoval = $state<{ id: string; roleName: string } | null>(null);
   let isRemovingRole = $state(false);
   let addingRoleId = $state<string | null>(null);
+  let departmentSearchQuery = $state("");
+  let departmentSearchResults = $state<Department[]>([]);
+  let departmentSearching = $state(false);
+  let departmentSearchTimeout: number | undefined;
+  let departmentSearchInputRef = $state<HTMLInputElement | null>(null);
+
+  $effect(() => {
+    if (isOpen) {
+      departmentSearchQuery = formData.department_name ?? "";
+      departmentSearchResults = [];
+      departmentSearching = false;
+    } else {
+      departmentSearchQuery = "";
+      departmentSearchResults = [];
+      departmentSearching = false;
+    }
+  });
 
   async function toggleRoleSearch(): Promise<void> {
     addRoleOpen = !addRoleOpen;
@@ -141,6 +163,64 @@
     } finally {
       isRemovingRole = false;
     }
+  }
+
+  function handleDepartmentSearchInput(e: Event) {
+    const target = e.target as HTMLInputElement;
+    const query = target.value;
+    departmentSearchQuery = query;
+    if (!query.trim()) {
+      departmentSearchResults = [];
+      formData.department_id = null;
+      formData.department_name = "";
+      if (departmentSearchTimeout) {
+        clearTimeout(departmentSearchTimeout);
+      }
+      return;
+    }
+    formData.department_id = null;
+    formData.department_name = query;
+    if (departmentSearchTimeout) {
+      clearTimeout(departmentSearchTimeout);
+    }
+    departmentSearchTimeout = setTimeout(() => {
+      searchDepartments(query);
+    }, 300);
+  }
+
+  async function searchDepartments(query: string) {
+    if (!query.trim()) {
+      departmentSearchResults = [];
+      return;
+    }
+    departmentSearching = true;
+    try {
+      const response = await getDepartments({ search: query, limit: 10 });
+      departmentSearchResults = response.departments;
+    } catch (err) {
+      const msg =
+        err instanceof ApiError
+          ? getLocalizedError(err, "description", $_)
+          : (err as Error).message;
+      toast.error(msg || $_("admin.accessControl.failedToSearchDepartments"));
+      departmentSearchResults = [];
+    } finally {
+      departmentSearching = false;
+    }
+  }
+
+  function selectDepartment(department: Department) {
+    formData.department_id = department.id;
+    formData.department_name = department.name;
+    departmentSearchQuery = department.name;
+    departmentSearchResults = [];
+  }
+
+  function clearDepartmentSelection() {
+    formData.department_id = null;
+    formData.department_name = "";
+    departmentSearchQuery = "";
+    departmentSearchResults = [];
   }
 </script>
 
@@ -344,12 +424,68 @@
         <label for={isCreate ? "create-department" : "edit-department"}>
           {$_("admin.common.department")}
         </label>
-        <input
-          id={isCreate ? "create-department" : "edit-department"}
-          type="text"
-          bind:value={formData.department}
-          placeholder={$_("admin.users.departmentPlaceholder")}
-        />
+        <div class="department-search">
+          <div class="input-with-clear">
+          <input
+            id={isCreate ? "create-department" : "edit-department"}
+            type="text"
+            placeholder={$_("admin.users.departmentPlaceholder")}
+            value={departmentSearchQuery}
+            bind:this={departmentSearchInputRef}
+            oninput={handleDepartmentSearchInput}
+          />
+          {#if formData.department_id}
+            <button
+              type="button"
+              class="input-clear-btn"
+              onclick={clearDepartmentSelection}
+              aria-label={$_("common.clear")}
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path
+                  d="M6 6l8 8M14 6l-8 8"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          {/if}
+          </div>
+          {#if departmentSearching}
+            <div class="department-search-loading">
+              <LoadingSpinner size="sm" />
+              <span>{$_("admin.accessControl.loadingDepartments")}</span>
+            </div>
+          {:else if departmentSearchQuery && departmentSearchResults.length === 0 && !formData.department_id}
+            <div class="department-search-empty">
+              <span>{$_("admin.accessControl.noDepartmentsFound")}</span>
+            </div>
+          {:else if departmentSearchResults.length > 0}
+            <ul class="department-search-results">
+              {#each departmentSearchResults as department (department.id)}
+                <li class="department-search-result">
+                  <div class="department-search-info">
+                    <span class="department-search-name">{department.name}</span>
+                    {#if department.description}
+                      <span class="department-search-description">
+                        {department.description}
+                      </span>
+                    {/if}
+                  </div>
+                  <button
+                    type="button"
+                    class="btn-department-select"
+                    onclick={() => selectDepartment(department)}
+                  >
+                    Select
+                  </button>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        </div>
       </div>
 
       <div class="form-actions">
@@ -650,6 +786,113 @@
   .role-search-close svg {
     width: 16px;
     height: 16px;
+  }
+
+  .department-search {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .input-with-clear {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-with-clear input {
+    width: 100%;
+    padding-right: 2rem;
+  }
+
+  .input-clear-btn {
+    position: absolute;
+    right: var(--space-sm);
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    padding: var(--space-xs);
+  }
+
+  .input-clear-btn:hover {
+    color: var(--text-primary);
+  }
+
+  .input-clear-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .department-search-loading,
+  .department-search-empty {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+  }
+
+  .department-search-results {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .department-search-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-md);
+    background: var(--surface-subtle);
+    border: 1px solid var(--surface-border);
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .department-search-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .department-search-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .department-search-description {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  .btn-department-select {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+
+  .btn-department-select:hover {
+    color: var(--text-primary);
   }
 
   .roles-selector {

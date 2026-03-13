@@ -15,8 +15,7 @@ export interface GetUsersParams {
 export interface CreateUserData {
   email: string;
   name?: string;
-  role?: string;
-  department?: string;
+  department_id?: string | null;
 }
 
 function buildQueryString(params?: Record<string, string | number | boolean | undefined>): string {
