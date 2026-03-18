@@ -52,6 +52,32 @@ export interface AIEngine {
   updated_at?: string | null;
 }
 
+export interface MCPServer {
+  id: string;
+  name: string;
+  description: string | null;
+  transport_type: string;
+  connection_config: Record<string, unknown>;
+  client_id: string | null;
+  client_secret_configured: boolean;
+  client_secret_preview: string;
+  url: string | null;
+  enabled: boolean;
+  status: string;
+  status_message: string | null;
+  tool_count: number;
+  default_access: string | null;
+  last_connected_at: string | null;
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MCPServerListResponse {
+  servers: MCPServer[];
+  total: number;
+}
+
 export interface AIEngineModel {
   model_id: string;
   display_name: string;

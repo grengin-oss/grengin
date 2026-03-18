@@ -10,6 +10,7 @@ export interface SendMessageOptions {
   modelName?: string;
   uploadedFiles?: UploadedFile[];
   webSearch?: boolean;
+  selectedMcpServers?: string[];
   onConversationInitialized?: (data: {newConversationId: string}) => void;
   onStreamingStart?: (messageId: string) => void;
   onResponseDelta?: (token: string) => void;
@@ -87,7 +88,7 @@ export async function uploadDocument(options: UploadDocumentOptions): Promise<Up
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onDone, onError } = options;
 
   try {
     const token = getAccessToken();
@@ -121,6 +122,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         config: {},
         web_search: webSearch || false,
         selected_tools: [],
+        selected_mcp_servers: selectedMcpServers || [],
         messages: [{
           role: 'user',
           content: message,
@@ -161,6 +163,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
                 config: {},
                 web_search: webSearch || false,
                 selected_tools: [],
+                selected_mcp_servers: selectedMcpServers || [],
                 messages: [{
                   role: 'user',
                   content: message,

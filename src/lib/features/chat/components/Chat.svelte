@@ -8,6 +8,8 @@
   import { sendMessage, getConversation, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
   import { getModels } from '../../../api/models';
+  import type { MCPServer } from '../../../admin/types.js';
+  import { getMcpServers } from '../../../api/admin/mcpServers.js';
   import { _ } from 'svelte-i18n';
   import { ApiError } from '../../../api/client';
   import { getLocalizedError } from '../../../utils/errorLocalization';
@@ -27,6 +29,10 @@
   let selectedProvider = $state('openai');
   let selectedModelInfo = $state<ProviderInfo | undefined>(undefined);
   let webSearchEnabled = $state(false);
+  let mcpServers = $state<MCPServer[]>([]);
+  let selectedMcpServers = $state<string[]>([]);
+  let loadingMcpServers = $state(false);
+  let mcpServersError = $state<string | null>(null);
 
   // Models state
   let providers = $state<ProviderInfo[]>([]);
@@ -44,6 +50,20 @@
       modelsError = $_('chat.errors.failedToLoadModels');
     } finally {
       loadingModels = false;
+    }
+  }
+
+  async function loadMcpServers() {
+    loadingMcpServers = true;
+    mcpServersError = null;
+    try {
+      const response = await getMcpServers();
+      mcpServers = response.servers;
+    } catch (error) {
+      console.error('Failed to load connectors:', error);
+      mcpServersError = $_('chat.errors.failedToLoadConnectors');
+    } finally {
+      loadingMcpServers = false;
     }
   }
 
@@ -76,6 +96,14 @@
   function handleRemoveModel() {
     selectedModel = '';
     selectedProvider = '';
+  }
+
+  function toggleMcpServer(serverId: string) {
+    if (selectedMcpServers.includes(serverId)) {
+      selectedMcpServers = selectedMcpServers.filter(id => id !== serverId);
+    } else {
+      selectedMcpServers = [...selectedMcpServers, serverId];
+    }
   }
 
   function handleBudgetWarning(data: BudgetWarningMessage) {
@@ -208,6 +236,7 @@
         modelName: selectedModel,
         uploadedFiles: uploadedFiles,
         webSearch: webSearch,
+        selectedMcpServers,
 
         onConversationInitialized: ({newConversationId}) => {
           // Update conversation ID and URL
@@ -575,6 +604,7 @@
     scrollToBottom(false);
     loadConversationFromUrl();
     loadModels();
+    loadMcpServers();
 
     // Focus the chat input if nothing else is focused
     if (!document.activeElement || document.activeElement === document.body) {
@@ -628,8 +658,13 @@
           placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
           {selectedModel}
           {selectedProvider}
+          {mcpServers}
+          {selectedMcpServers}
+          {loadingMcpServers}
+          {mcpServersError}
           {webSearchEnabled}
           onWebSearchToggle={() => webSearchEnabled = !webSearchEnabled}
+          onMcpToggle={toggleMcpServer}
           onRemoveModel={handleRemoveModel}
           onModelSelect={selectModel}
           {providers}
@@ -741,8 +776,13 @@
         placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
         {selectedModel}
         {selectedProvider}
+        {mcpServers}
+        {selectedMcpServers}
+        {loadingMcpServers}
+        {mcpServersError}
         {webSearchEnabled}
         onWebSearchToggle={() => webSearchEnabled = !webSearchEnabled}
+        onMcpToggle={toggleMcpServer}
         onRemoveModel={handleRemoveModel}
         onModelSelect={selectModel}
         {providers}
