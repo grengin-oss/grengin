@@ -90,7 +90,23 @@
     "sectionManage": "Manage",
     "sectionMonitor": "Monitor",
     "sectionConfigure": "Configure",
-    "overview": "Overview"
+    "overview": "Overview",
+    "openAlerts": "Open alerts",
+    "viewAllAlerts": "View all alerts",
+    "noRecentAlerts": "No alerts yet",
+    "newAlert": "New alert"
+  },
+  "alerts": {
+    "title": "Alerts",
+    "subtitle": "Your notifications and updates",
+    "filterAll": "All",
+    "filterUnread": "Unread",
+    "empty": "No alerts to show",
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "unread": "Unread",
+    "loadError": "Failed to load alerts",
+    "markReadError": "Could not mark alert as read"
   },
   "app": {
     "closeSidebar": "Close sidebar",

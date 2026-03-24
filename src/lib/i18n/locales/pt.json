@@ -90,7 +90,23 @@
     "sectionManage": "Gerenciar",
     "sectionMonitor": "Monitorar",
     "sectionConfigure": "Configurar",
-    "overview": "Visão Geral"
+    "overview": "Visão Geral",
+    "openAlerts": "Abrir alertas",
+    "viewAllAlerts": "Ver todos os alertas",
+    "noRecentAlerts": "Ainda não há alertas",
+    "newAlert": "Novo alerta"
+  },
+  "alerts": {
+    "title": "Alertas",
+    "subtitle": "Suas notificações e atualizações",
+    "filterAll": "Todas",
+    "filterUnread": "Não lidas",
+    "empty": "Nenhum alerta para exibir",
+    "loading": "Carregando...",
+    "loadMore": "Carregar mais",
+    "unread": "Não lida",
+    "loadError": "Falha ao carregar alertas",
+    "markReadError": "Não foi possível marcar o alerta como lido"
   },
   "app": {
     "closeSidebar": "Fechar barra lateral",
