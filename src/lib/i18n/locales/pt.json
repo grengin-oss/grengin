@@ -357,6 +357,74 @@
         "connected": "Conectado",
         "disconnected": "Desconectado"
       }
+    },
+    "viewMode": {
+      "grid": "Vista em grade",
+      "table": "Vista em tabela",
+      "tool": "ferramenta",
+      "tools": "ferramentas"
+    }
+  },
+  "userSettings": {
+    "title": "Configurações",
+    "subtitle": "Gerencie suas preferências pessoais e integrações conectadas.",
+    "tabs": {
+      "integrations": "Integrações",
+      "integrationsAria": "Integrações conectadas"
+    }
+  },
+  "userIntegrations": {
+    "loading": "Carregando integrações...",
+    "failedToLoad": "Falha ao carregar integrações",
+    "failedToGetAuthUrl": "Falha ao obter URL de autorização",
+    "failedToConnect": "Falha ao conectar {name}",
+    "failedToDisconnect": "Falha ao desconectar {name}",
+    "disconnected": "{name} desconectado",
+    "stats": {
+      "connected": "Conectados",
+      "available": "Disponíveis",
+      "total": "Total"
+    },
+    "filters": {
+      "all": "Todos",
+      "connected": "Conectados",
+      "available": "Disponíveis",
+      "filterAria": "Filtrar integrações"
+    },
+    "empty": {
+      "title": "Nenhuma integração encontrada",
+      "noConnected": "Você ainda não conectou nenhuma integração.",
+      "noAvailable": "Nenhuma integração disponível para conectar no momento.",
+      "noConfigured": "Nenhuma integração foi configurada pela sua organização.",
+      "viewAll": "Ver todas as integrações"
+    },
+    "columns": {
+      "name": "Nome",
+      "transport": "Transporte",
+      "status": "Status",
+      "tools": "Ferramentas",
+      "connectedAt": "Conectado em",
+      "actions": "Ações"
+    },
+    "status": {
+      "connected": "Conectado",
+      "disconnected": "Desconectado"
+    },
+    "actions": {
+      "connect": "Conectar",
+      "connecting": "Conectando...",
+      "disconnect": "Desconectar",
+      "disconnectConfirm": "Desconectar?",
+      "yes": "Sim",
+      "no": "Não",
+      "viewTools": "Ver ferramentas"
+    },
+    "connectedSince": "Conectado desde {date}",
+    "toolCount": "{count} {count, plural, one {ferramenta} other {ferramentas}}",
+    "tools": {
+      "modalTitle": "{name} — Ferramentas",
+      "loading": "Carregando ferramentas...",
+      "empty": "Nenhuma ferramenta disponível para este servidor."
     }
   },
   "chat": {

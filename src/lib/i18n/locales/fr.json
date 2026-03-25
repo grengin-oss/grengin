@@ -357,6 +357,74 @@
         "connected": "Connecté",
         "disconnected": "Déconnecté"
       }
+    },
+    "viewMode": {
+      "grid": "Vue grille",
+      "table": "Vue tableau",
+      "tool": "outil",
+      "tools": "outils"
+    }
+  },
+  "userSettings": {
+    "title": "Paramètres",
+    "subtitle": "Gérez vos préférences personnelles et vos intégrations connectées.",
+    "tabs": {
+      "integrations": "Intégrations",
+      "integrationsAria": "Intégrations connectées"
+    }
+  },
+  "userIntegrations": {
+    "loading": "Chargement des intégrations...",
+    "failedToLoad": "Échec du chargement des intégrations",
+    "failedToGetAuthUrl": "Échec de l'obtention de l'URL d'autorisation",
+    "failedToConnect": "Échec de la connexion à {name}",
+    "failedToDisconnect": "Échec de la déconnexion de {name}",
+    "disconnected": "{name} déconnecté",
+    "stats": {
+      "connected": "Connectés",
+      "available": "Disponibles",
+      "total": "Total"
+    },
+    "filters": {
+      "all": "Tous",
+      "connected": "Connectés",
+      "available": "Disponibles",
+      "filterAria": "Filtrer les intégrations"
+    },
+    "empty": {
+      "title": "Aucune intégration trouvée",
+      "noConnected": "Vous n'avez pas encore connecté d'intégration.",
+      "noAvailable": "Aucune intégration n'est disponible pour le moment.",
+      "noConfigured": "Aucune intégration n'a été configurée par votre organisation.",
+      "viewAll": "Voir toutes les intégrations"
+    },
+    "columns": {
+      "name": "Nom",
+      "transport": "Transport",
+      "status": "État",
+      "tools": "Outils",
+      "connectedAt": "Connecté le",
+      "actions": "Actions"
+    },
+    "status": {
+      "connected": "Connecté",
+      "disconnected": "Déconnecté"
+    },
+    "actions": {
+      "connect": "Connecter",
+      "connecting": "Connexion...",
+      "disconnect": "Déconnecter",
+      "disconnectConfirm": "Déconnecter ?",
+      "yes": "Oui",
+      "no": "Non",
+      "viewTools": "Voir les outils"
+    },
+    "connectedSince": "Connecté depuis {date}",
+    "toolCount": "{count} {count, plural, one {outil} other {outils}}",
+    "tools": {
+      "modalTitle": "{name} — Outils",
+      "loading": "Chargement des outils...",
+      "empty": "Aucun outil disponible pour ce serveur."
     }
   },
   "chat": {

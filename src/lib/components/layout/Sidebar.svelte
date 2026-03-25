@@ -851,10 +851,10 @@
 
 {#if showUserMenu}
   <div class="user-menu-dropdown">
-    <button class="menu-item">
+    <a href="/settings" class="menu-item" onclick={() => closeUserMenu()}>
       <span class="user-menu-icon">⚙️</span>
       <span>{$_('sidebar.settings')}</span>
-    </button>
+    </a>
     {#if user?.role && (user?.role === 'superadmin' || user?.role === 'admin')}
       <a href="/admin/users" class="menu-item">
         <span class="menu-item-icon">🔒</span>

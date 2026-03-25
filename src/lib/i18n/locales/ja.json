@@ -357,6 +357,74 @@
         "connected": "接続済み",
         "disconnected": "未接続"
       }
+    },
+    "viewMode": {
+      "grid": "グリッド表示",
+      "table": "テーブル表示",
+      "tool": "ツール",
+      "tools": "ツール"
+    }
+  },
+  "userSettings": {
+    "title": "設定",
+    "subtitle": "個人設定と接続済みの連携を管理します。",
+    "tabs": {
+      "integrations": "連携",
+      "integrationsAria": "接続済みの連携"
+    }
+  },
+  "userIntegrations": {
+    "loading": "連携を読み込み中...",
+    "failedToLoad": "連携の読み込みに失敗しました",
+    "failedToGetAuthUrl": "認証URLの取得に失敗しました",
+    "failedToConnect": "{name}の接続に失敗しました",
+    "failedToDisconnect": "{name}の切断に失敗しました",
+    "disconnected": "{name}が切断されました",
+    "stats": {
+      "connected": "接続済み",
+      "available": "利用可能",
+      "total": "合計"
+    },
+    "filters": {
+      "all": "すべて",
+      "connected": "接続済み",
+      "available": "利用可能",
+      "filterAria": "連携をフィルタ"
+    },
+    "empty": {
+      "title": "連携が見つかりません",
+      "noConnected": "まだ連携を接続していません。",
+      "noAvailable": "現在接続可能な連携はありません。",
+      "noConfigured": "組織で設定された連携はありません。",
+      "viewAll": "すべての連携を表示"
+    },
+    "columns": {
+      "name": "名前",
+      "transport": "トランスポート",
+      "status": "ステータス",
+      "tools": "ツール",
+      "connectedAt": "接続日",
+      "actions": "操作"
+    },
+    "status": {
+      "connected": "接続済み",
+      "disconnected": "未接続"
+    },
+    "actions": {
+      "connect": "接続",
+      "connecting": "接続中...",
+      "disconnect": "切断",
+      "disconnectConfirm": "切断しますか？",
+      "yes": "はい",
+      "no": "いいえ",
+      "viewTools": "ツールを表示"
+    },
+    "connectedSince": "{date}から接続中",
+    "toolCount": "{count}個のツール",
+    "tools": {
+      "modalTitle": "{name} — ツール",
+      "loading": "ツールを読み込み中...",
+      "empty": "このサーバーで利用可能なツールはありません。"
     }
   },
   "chat": {

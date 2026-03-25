@@ -32,6 +32,7 @@
   let togglingServerId = $state<string | null>(null);
   let connectingServerId = $state<string | null>(null);
   let showClientSecret = $state(false);
+  let viewMode = $state<"grid" | "table">("table");
 
   let formData = $state({
     name: "",
@@ -322,6 +323,35 @@
     {/snippet}
   </PageHeader>
 
+  {#if !isLoading && servers.length > 0}
+    <div class="view-toggle-bar">
+      <div class="view-toggle" role="group" aria-label="View mode">
+        <button
+          class="view-toggle-btn"
+          class:view-toggle-btn--active={viewMode === "grid"}
+          onclick={() => (viewMode = "grid")}
+          aria-label={$_("admin.viewMode.grid")}
+          title={$_("admin.viewMode.grid")}
+        >
+        <span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </span>
+        </button>
+        <button
+          class="view-toggle-btn"
+          class:view-toggle-btn--active={viewMode === "table"}
+          onclick={() => (viewMode = "table")}
+          aria-label={$_("admin.viewMode.table")}
+          title={$_("admin.viewMode.table")}
+        >
+          <span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+         </span>
+        </button>
+      </div>
+    </div>
+  {/if}
+
   {#if isLoading}
     <LoadingSpinner text={$_("admin.mcpServers.loading")} size="lg" />
   {:else if servers.length === 0}
@@ -345,7 +375,7 @@
         {/snippet}
       </AdminEmptyState>
     </AdminTableCard>
-  {:else}
+  {:else if viewMode === "table"}
     <AdminTableCard minWidth="960px">
       <table class="admin-table mcp-servers-table">
         <thead>
@@ -522,6 +552,113 @@
         </tbody>
       </table>
     </AdminTableCard>
+  {:else}
+    <!-- Grid View -->
+    <div class="mcp-grid">
+      {#each servers as server (server.id)}
+        {@const oauthConfig = (server.connection_config as { oauth?: Record<string, unknown> })?.oauth}
+        {@const hasOauthConfig = Boolean(oauthConfig && Object.keys(oauthConfig).length)}
+        <div class="mcp-card" class:mcp-card--connected={server.status === "connected"}>
+          <div class="mcp-card-header">
+            <div class="mcp-card-title-group">
+              <h3 class="mcp-card-name">{server.name}</h3>
+              <span
+                class="mcp-card-status"
+                class:mcp-card-status--connected={server.status === "connected"}
+                class:mcp-card-status--disconnected={server.status === "disconnected"}
+              >
+                <span class="mcp-status-dot"></span>
+                {getLocalizedStatus(server.status)}
+              </span>
+            </div>
+            <div class="toggle-switch">
+              <button
+                type="button"
+                class="status-toggle"
+                class:active={server.enabled}
+                onclick={() => toggleServerEnabled(server)}
+                aria-label={server.enabled ? $_("admin.mcpServers.enabled") : $_("admin.mcpServers.disabled")}
+                disabled={togglingServerId === server.id}
+              >
+                <span class="toggle-slider"></span>
+              </button>
+            </div>
+          </div>
+
+          {#if server.description}
+            <p class="mcp-card-desc">{server.description}</p>
+          {/if}
+
+          <div class="mcp-card-meta">
+            <span class="mcp-card-badge">{server.transport_type}</span>
+            <span class="mcp-card-badge">{server.tool_count} {server.tool_count === 1 ? $_("admin.viewMode.tool") : $_("admin.viewMode.tools")}</span>
+            <span class="mcp-card-badge">{server.enabled ? $_("admin.mcpServers.enabled") : $_("admin.mcpServers.disabled")}</span>
+          </div>
+
+          <div class="mcp-card-actions">
+            {#if server.status === "disconnected" && hasOauthConfig}
+              <button
+                type="button"
+                class="mcp-oauth-button"
+                class:is-loading={connectingServerId === server.id}
+                onclick={() => handleConnect(server)}
+                disabled={connectingServerId === server.id}
+              >
+                {#if connectingServerId === server.id}
+                  <span class="mcp-oauth-spinner" aria-hidden="true"></span>
+                {:else}
+                  <svg class="mcp-oauth-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M3.9 12a5 5 0 0 1 5-5h3v2h-3a3 3 0 1 0 0 6h3v2h-3a5 5 0 0 1-5-5Zm7-1h2v2h-2v-2Zm4.2-4h3a5 5 0 0 1 0 10h-3v-2h3a3 3 0 1 0 0-6h-3V7Z" />
+                  </svg>
+                  <span>{$_("admin.mcpServers.connect")}</span>
+                {/if}
+              </button>
+            {/if}
+            <button
+              class="icon-btn"
+              onclick={() => handleSyncTools(server)}
+              aria-label={$_("admin.mcpServers.syncTools")}
+              title={$_("admin.mcpServers.syncTools")}
+              disabled={syncingServerId === server.id}
+            >
+              {#if syncingServerId === server.id}
+                <span class="icon-spinner" aria-hidden="true"></span>
+              {:else}
+                <span class="icon-symbol icon-symbol--sync" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M12 6V3L8 7l4 4V8c2.76 0 5 2.24 5 5a5 5 0 1 1-9.9-1h-2.02A7 7 0 1 0 19 13c0-3.87-3.13-7-7-7z" />
+                  </svg>
+                </span>
+              {/if}
+            </button>
+            <button
+              class="icon-btn"
+              onclick={() => openEditModal(server)}
+              aria-label={$_("admin.mcpServers.edit")}
+              title={$_("admin.mcpServers.edit")}
+            >
+              <span class="icon-symbol icon-symbol--edit" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83l3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z" />
+                </svg>
+              </span>
+            </button>
+            <button
+              class="icon-btn icon-btn--danger"
+              onclick={() => promptDelete(server)}
+              aria-label={$_("admin.mcpServers.delete")}
+              title={$_("admin.mcpServers.delete")}
+            >
+              <span class="icon-symbol icon-symbol--delete" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6z" />
+                </svg>
+              </span>
+            </button>
+          </div>
+        </div>
+      {/each}
+    </div>
   {/if}
 
   <Modal
@@ -1117,5 +1254,246 @@
     display: flex;
     justify-content: flex-end;
     gap: var(--space-md);
+  }
+
+  /* View toggle */
+  .view-toggle-bar {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .view-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    padding: var(--space-2xs);
+    background: rgba(var(--glass-tint), 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-md);
+  }
+
+  .view-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    line-height: 0;
+  }
+
+  .view-toggle-btn:hover:not(.view-toggle-btn--active) {
+    color: var(--text-primary);
+    background: rgba(var(--glass-tint), 0.05);
+  }
+
+  .view-toggle-btn--active {
+    color: var(--text-primary);
+    background: rgba(var(--glass-tint), 0.1);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .icon-grid,
+  .icon-table {
+    display: block;
+    width: 18px;
+    height: 18px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.7;
+  }
+
+  .view-toggle-btn--active .icon-grid,
+  .view-toggle-btn--active .icon-table,
+  .view-toggle-btn:hover .icon-grid,
+  .view-toggle-btn:hover .icon-table {
+    opacity: 1;
+  }
+
+  .icon-grid {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='7' height='7'/%3E%3Crect x='14' y='3' width='7' height='7'/%3E%3Crect x='14' y='14' width='7' height='7'/%3E%3Crect x='3' y='14' width='7' height='7'/%3E%3C/svg%3E");
+  }
+
+  .icon-table {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round'%3E%3Cline x1='4' y1='6' x2='20' y2='6'/%3E%3Cline x1='4' y1='12' x2='20' y2='12'/%3E%3Cline x1='4' y1='18' x2='20' y2='18'/%3E%3C/svg%3E");
+  }
+
+  /* Grid View */
+  .mcp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: var(--space-xl);
+  }
+
+  .mcp-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-xl);
+    background: rgba(var(--glass-tint), 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-lg);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mcp-card:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(var(--glass-tint), 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .mcp-card--connected {
+    border-color: color-mix(in oklab, var(--brand-green) 20%, transparent);
+  }
+
+  .mcp-card--connected:hover {
+    border-color: color-mix(in oklab, var(--brand-green) 35%, transparent);
+  }
+
+  .mcp-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-md);
+  }
+
+  .mcp-card-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    min-width: 0;
+  }
+
+  .mcp-card-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .mcp-card-status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .mcp-card-status--connected {
+    color: var(--brand-green);
+  }
+
+  .mcp-card-status--disconnected {
+    color: var(--text-secondary);
+  }
+
+  .mcp-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .mcp-card-status--connected .mcp-status-dot {
+    background: var(--brand-green);
+    box-shadow: 0 0 6px rgba(var(--brand-green-rgb), 0.4);
+  }
+
+  .mcp-card-status--disconnected .mcp-status-dot {
+    background: var(--text-secondary);
+    opacity: 0.5;
+  }
+
+  .mcp-card-desc {
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 0;
+    flex: 1;
+  }
+
+  .mcp-card-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+  }
+
+  .mcp-card-badge {
+    display: inline-block;
+    padding: var(--space-2xs) var(--space-sm);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: rgba(var(--glass-tint), 0.06);
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .mcp-card-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding-top: var(--space-sm);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: auto;
+  }
+
+  @media (max-width: 768px) {
+    .mcp-grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-md);
+    }
+
+    .mcp-card {
+      padding: var(--space-lg);
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .mcp-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (prefers-color-scheme: light) {
+    .mcp-card {
+      background: rgba(0, 0, 0, 0.02);
+      border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .mcp-card:hover {
+      background: rgba(0, 0, 0, 0.03);
+      border-color: rgba(0, 0, 0, 0.12);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .mcp-card--connected {
+      border-color: color-mix(in oklab, var(--brand-green) 25%, transparent);
+    }
+
+    .view-toggle {
+      background: rgba(0, 0, 0, 0.03);
+      border-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .view-toggle-btn--active {
+      background: white;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .mcp-card-actions {
+      border-top-color: rgba(0, 0, 0, 0.06);
+    }
   }
 </style>

@@ -16,6 +16,7 @@
   import Overview from '$lib/admin/pages/Overview.svelte';
   import MCPServers from '$lib/admin/pages/MCPServers.svelte';
   import McpOAuthCallback from '$lib/admin/pages/McpOAuthCallback.svelte';
+  import UserSettings from '$lib/pages/UserSettings.svelte';
   import { _ } from 'svelte-i18n';
 
   let sidebarCollapsed = $state(false);
@@ -153,6 +154,7 @@
         <Route path="/admin/overview"><Overview /></Route>
         <Route path="/admin/users"><Users /></Route>
         <Route path="/admin/departments"><Departments /></Route>
+        <Route path="/settings"><UserSettings /></Route>
         <Route path="/admin/settings"><Settings /></Route>
         <Route path="/admin/ai-engines"><AIEngines /></Route>
         <Route path="/admin/connectors"><MCPServers /></Route>
