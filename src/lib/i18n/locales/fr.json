@@ -99,7 +99,23 @@
     "sectionMonitor": "Surveiller",
     "sectionConfigure": "Configurer",
     "overview": "Aperçu",
-    "accessControl": "Contrôle d'accès"
+    "accessControl": "Contrôle d'accès",
+    "openAlerts": "Ouvrir les alertes",
+    "viewAllAlerts": "Voir toutes les alertes",
+    "noRecentAlerts": "Pas encore d'alertes",
+    "newAlert": "Nouvelle alerte"
+  },
+  "alerts": {
+    "title": "Alertes",
+    "subtitle": "Vos notifications et mises à jour",
+    "filterAll": "Toutes",
+    "filterUnread": "Non lues",
+    "empty": "Aucune alerte à afficher",
+    "loading": "Chargement...",
+    "loadMore": "Charger plus",
+    "unread": "Non lue",
+    "loadError": "Échec du chargement des alertes",
+    "markReadError": "Impossible de marquer l'alerte comme lue"
   },
   "app": {
     "closeSidebar": "Fermer la barre latérale",

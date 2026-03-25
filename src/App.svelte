@@ -1,14 +1,21 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, untrack } from 'svelte';
   import { Router, Route, navigate } from 'svelte-routing';
-  import { Sidebar } from './lib/components/layout/index.js';
+  import { Sidebar, MobileHeader } from './lib/components/layout/index.js';
+  import Toaster from './lib/components/Toaster.svelte';
   import Login from './lib/features/auth/components/Login.svelte';
   import Chat from './lib/features/chat/components/Chat.svelte';
   import AuthCallback from './lib/features/auth/components/AuthCallback.svelte';
   import { initAuth, getAuthState, logout, permissionsStore } from './lib/features/auth/index.js';
   import { PERMISSIONS } from './lib/features/auth/permissions.js';
-  import Toaster from './lib/components/Toaster.svelte';
-  import grenginLogo from './assets/grengin-logo.svg';
+  import {
+    dismissStreamToast,
+    fetchNotificationFeed,
+    getNotificationsState,
+    startNotificationsStream,
+    stopNotificationsStream,
+  } from './lib/features/notifications/index.js';
+  import { NOTIFICATIONS_STREAM_TOAST_ID, toast } from '$lib/components/Toaster.svelte';
   import Users from './lib/admin/pages/Users.svelte';
   import AIEngines from './lib/admin/pages/AIEngines.svelte';
   import Analytics from './lib/admin/pages/Analytics.svelte';
@@ -17,6 +24,7 @@
   import Departments from './lib/admin/pages/Departments.svelte';
   import Settings from '$lib/admin/pages/Settings.svelte';
   import Overview from '$lib/admin/pages/Overview.svelte';
+  import AlertsPage from '$lib/features/notifications/AlertsPage.svelte';
   import AccessControl from '$lib/admin/pages/AccessControl.svelte';
   import { _ } from 'svelte-i18n';
 
@@ -24,6 +32,65 @@
   let currentPath = $state(window.location.pathname);
 
   const authState = getAuthState();
+  const notifState = getNotificationsState();
+
+  // Load notifications
+  $effect(() => {
+    const uid = authState.user?.id;
+    if (uid == null || uid === '') return;
+    const fetchTimer = window.setTimeout(() => {
+      void fetchNotificationFeed();
+    }, 2000);
+    return () => {
+      window.clearTimeout(fetchTimer);
+    };
+  });
+
+  // Start notifications stream
+  $effect(() => {
+    if (authState.user?.id == null || authState.user?.id === '') return;
+    let streamStarted = false;
+    const streamTimer = window.setTimeout(() => {
+      startNotificationsStream();
+      streamStarted = true;
+    }, 2000);
+    return () => {
+      window.clearTimeout(streamTimer);
+      if (streamStarted) {
+        stopNotificationsStream();
+      }
+    };
+  });
+
+  function isAdminView(): boolean {
+    return currentPath.startsWith('/admin');
+  }
+
+  // Handle stream toast
+  $effect(() => {
+    const n = notifState.streamToast;
+
+    // Avoid subscribing this effect to toaster's internal module state.
+    untrack(() => {
+      if (n == null) {
+        toast.remove(NOTIFICATIONS_STREAM_TOAST_ID);
+        return;
+      }
+
+      const description = n.body?.trim() ? n.body : undefined;
+      toast.custom(n.title, 'blank', {
+        id: NOTIFICATIONS_STREAM_TOAST_ID,
+        duration: 5000,
+        description,
+        streamAlert: true,
+        onClick: () => {
+          dismissStreamToast();
+          navigate(isAdminView() ? '/admin/alerts' : '/alerts');
+        },
+        onDismiss: () => dismissStreamToast(),
+      });
+    });
+  });
 
   function isAuthCallback(): boolean {
     // Match only /auth/{provider}/callback pattern
@@ -125,7 +192,7 @@
     </div>
   {:else if isAdminLogin() && !authState.isAuthenticated}
     <!-- Admin login route -->
-    <Login mode="admin" onLoginSuccess={handleLoginSuccess} />
+    <Login modes={['admin']} onLoginSuccess={handleLoginSuccess} />
   {:else if authState.isLoading}
     <div class="loading-screen">
       <div class="loading-spinner"></div>
@@ -152,22 +219,14 @@
     {/if}
 
     <main class="main-content" class:collapsed={sidebarCollapsed}>
-      <div class="mobile-header">
-        <button
-          class="mobile-menu-btn"
-          onclick={toggleSidebarFromMain}
-          aria-label={sidebarCollapsed ? $_('app.openMenu') : $_('app.closeMenu')}
-          title={sidebarCollapsed ? $_('app.openMenu') : $_('app.closeMenu')}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
-        </button>
-        <img src={grenginLogo} alt="Grengin" class="mobile-header-logo" />
-      </div>
+      <MobileHeader sidebarCollapsed={sidebarCollapsed} onToggleMenu={toggleSidebarFromMain} />
 
       <div class="main-content-body">
         <Route path="/"><Chat /></Route>
         <Route path="/chat"><Chat /></Route>
         <Route path="/chat/:id"><Chat /></Route>
+        <Route path="/alerts"><AlertsPage /></Route>
+        <Route path="/admin/alerts"><AlertsPage /></Route>
         <Route path="/admin/overview">
           <PermissionGuard permission={PERMISSIONS.analytics.view} requireGlobal={true}>
             {#snippet children()}
@@ -271,50 +330,6 @@
     max-width: calc(100vw - 80px);
   }
 
-  .mobile-header {
-    display: none;
-    align-items: center;
-    padding: var(--space-md);
-    background: var(--bg-primary);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-    z-index: 10;
-  }
-
-  .mobile-menu-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: 1px solid transparent;
-    background: var(--btn-secondary);
-    border-radius: var(--radius-sm);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    flex-shrink: 0;
-  }
-
-  .mobile-menu-btn:hover {
-    background: var(--btn-tertiary);
-    border-color: var(--brand);
-    color: var(--brand);
-    transform: translateY(-1px);
-  }
-
-  .mobile-menu-btn:active {
-    transform: translateY(0);
-  }
-
-  .mobile-header-logo {
-    height: 22px;
-    width: auto;
-    object-fit: contain;
-    margin-left: var(--space-sm);
-  }
-
   .main-content-body {
     flex: 1;
     overflow-y: auto;
@@ -336,10 +351,6 @@
   }
 
   @media (max-width: 768px) {
-    .mobile-header {
-      display: flex;
-    }
-
     .mobile-overlay {
       display: block;
       opacity: 1;
@@ -366,19 +377,6 @@
   }
 
   @media (max-width: 480px) {
-    .mobile-header {
-      padding: var(--space-sm);
-    }
-
-    .mobile-menu-btn {
-      width: 28px;
-      height: 28px;
-    }
-
-    .mobile-header-logo {
-      height: 18px;
-    }
-
     .mobile-overlay {
       background: rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(8px);

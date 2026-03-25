@@ -99,7 +99,23 @@
     "sectionMonitor": "監視",
     "sectionConfigure": "設定",
     "overview": "概要",
-    "accessControl": "アクセス制御"
+    "accessControl": "アクセス制御",
+    "openAlerts": "アラートを開く",
+    "viewAllAlerts": "すべてのアラートを見る",
+    "noRecentAlerts": "まだアラートはありません",
+    "newAlert": "新しいアラート"
+  },
+  "alerts": {
+    "title": "アラート",
+    "subtitle": "通知と更新",
+    "filterAll": "すべて",
+    "filterUnread": "未読",
+    "empty": "表示するアラートがありません",
+    "loading": "読み込み中...",
+    "loadMore": "さらに読み込む",
+    "unread": "未読",
+    "loadError": "アラートの読み込みに失敗しました",
+    "markReadError": "アラートを既読にできませんでした"
   },
   "app": {
     "closeSidebar": "サイドバーを閉じる",

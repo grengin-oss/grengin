@@ -99,7 +99,23 @@
     "sectionMonitor": "모니터링",
     "sectionConfigure": "설정",
     "overview": "개요",
-    "accessControl": "액세스 제어"
+    "accessControl": "액세스 제어",
+    "openAlerts": "알림 열기",
+    "viewAllAlerts": "모든 알림 보기",
+    "noRecentAlerts": "아직 알림이 없습니다",
+    "newAlert": "새 알림"
+  },
+  "alerts": {
+    "title": "알림",
+    "subtitle": "알림 및 업데이트",
+    "filterAll": "전체",
+    "filterUnread": "읽지 않음",
+    "empty": "표시할 알림이 없습니다",
+    "loading": "로딩 중...",
+    "loadMore": "더 보기",
+    "unread": "읽지 않음",
+    "loadError": "알림을 불러오지 못했습니다",
+    "markReadError": "알림을 읽음으로 표시할 수 없습니다"
   },
   "app": {
     "closeSidebar": "사이드바 닫기",
