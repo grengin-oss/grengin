@@ -117,11 +117,13 @@
 
   // Handle manual scrolling to detect if user wants to stop auto-scroll
   function handleScroll() {
-    if (!messagesContainer) return;
+    if (!messagesContainer || isTyping) return;
 
     // Check if user is near the bottom (within 100px)
-    const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 100;
-    autoScrollEnabled = isNearBottom;
+    const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 80;
+    if(!isNearBottom) {
+      autoScrollEnabled = false;
+    }
   }
 
   // Scroll to show the top of the streaming message
@@ -175,7 +177,6 @@
       })) || []
     };
     messages = [...messages, userMessage];
-    await scrollToBottom();
 
     // Prepare streaming message
     let pendingStreamingMessage: ChatMessageType | null = {
@@ -193,6 +194,7 @@
     let messageAddedToArray = $state(false);
     let pendingConversationId = conversationId;
     isTyping = true;
+    scrollToBottom();
 
     // Update ui with a copy of the pending streaming message
     currentStreamingMessage = {...pendingStreamingMessage};
@@ -992,6 +994,7 @@
   .input-container {
     flex-shrink: 0;
     padding: 1.25rem 1.5rem;
+    padding-top: 0;
     background: var(--bg-primary);
     position: relative;
     max-width: clamp(600px, 90ch, 65vw);
@@ -1047,6 +1050,7 @@
 
     .input-container {
       padding: 0.75rem 1rem;
+      padding-top: 0;
       max-width: 100%;
     }
 

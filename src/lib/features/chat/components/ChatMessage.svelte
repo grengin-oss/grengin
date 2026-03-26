@@ -408,7 +408,7 @@
           {#if !message.isStreaming}
             <div class="message-actions">
               <button
-                class="action-btn"
+                class="action-btn user-copy-btn"
                 class:success={copySuccess}
                 onclick={copyMessageContent}
                 title={$_('chat.message.copyContent')}
@@ -600,7 +600,7 @@
     display: flex;
     gap: var(--space-md);
     align-items: flex-start;
-    max-width: 80%;
+    max-width: 90%;
     animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -733,6 +733,16 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.2),
       0 4px 20px rgba(0, 0, 0, 0.1),
       0 2px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .assistant-message {
+      background: rgba(var(--glass-tint), 0.08);
+    }
+
+    .assistant-message:hover {
+      background: rgba(var(--glass-tint), 0.12);
+    }
   }
 
   .assistant-message :global(p) {
@@ -928,19 +938,21 @@
     transform: scale(0.95);
   }
 
-  /* High contrast action button for user messages (dark background) */
-  .user-message .action-btn {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.4);
-    color: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  /* User bubble copy button needs stronger contrast than the bubble fill */
+  .user-message .action-btn.user-copy-btn {
+    background: rgba(17, 24, 39, 0.45);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
   }
 
-  .user-message .action-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.4);
+  .user-message .action-btn.user-copy-btn:hover:not(:disabled) {
+    background: rgba(17, 24, 39, 0.62);
+    border-color: rgba(255, 255, 255, 0.52);
     color: white;
-    border-color: rgba(255, 255, 255, 0.6);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
   }
 
   /* Success state for action buttons */
@@ -950,10 +962,10 @@
     border-color: color-mix(in oklab, var(--brand-green) 25%, transparent);
   }
 
-  .user-message .action-btn.success {
-    background: rgba(255, 255, 255, 0.35);
-    color: white;
-    border-color: rgba(255, 255, 255, 0.5);
+  .user-message .action-btn.user-copy-btn.success {
+    background: rgba(var(--brand-green-rgb, 34, 197, 94), 0.32);
+    border-color: rgba(var(--brand-green-rgb, 34, 197, 94), 0.65);
+    color: #f0fdf4;
   }
 
   /* TTS active state - always visible when speaking */
