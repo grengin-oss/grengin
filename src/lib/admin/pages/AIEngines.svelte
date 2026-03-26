@@ -15,6 +15,17 @@
 
   const store = aiEnginesStore;
   const canManageEngines = $derived(permissionsStore.canManageAiEngines());
+  let isDarkMode = $state(false);
+
+  function syncThemeState() {
+    isDarkMode = document.documentElement.classList.contains("dark")
+      || window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+
+  function getIconForTheme(iconSource?: { icon?: string; icon_dark?: string }): string | undefined {
+    if (!iconSource) return undefined;
+    return isDarkMode ? (iconSource.icon_dark || iconSource.icon) : iconSource.icon;
+  }
 
   // Optimize .includes() lookups from O(n) to O(1)
   const whitelistedSet = $derived(new Set(store.formData.whitelisted_models));
@@ -247,10 +258,16 @@
   }
 
   onMount(() => {
+    syncThemeState();
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    mediaQuery.addEventListener("change", syncThemeState);
+
     store.fetch().catch((err: any) => {
       const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
       toast.error(errorMessage || $_('aiEngines.toasts.failedToLoad'));
     });
+
+    return () => mediaQuery.removeEventListener("change", syncThemeState);
   });
 </script>
 
@@ -306,7 +323,7 @@
                 ></div>
                 {#if engine.icon}
                   <div class="provider-icon">
-                    <img src={engine.icon} alt="" class="provider-icon-img" />
+                    <img src={getIconForTheme(engine)} alt="" class="provider-icon-img" />
                   </div>
                 {/if}
                 <div>

@@ -19,6 +19,7 @@ export interface ProviderInfo {
   key: string;
   name: string;
   icon: string;
+  icon_dark?: string;
   models: ModelInfo[];
 }
 

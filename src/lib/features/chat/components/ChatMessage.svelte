@@ -4,10 +4,21 @@
   import { onMount, onDestroy, tick } from 'svelte';
   import type { ProviderInfo } from '../../../api/models';
 
+  let isDarkMode = $state(false);
+
+  function syncThemeState() {
+    isDarkMode = document.documentElement.classList.contains('dark')
+      || window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function getIconForTheme(provider?: ProviderInfo): string | undefined {
+    if (!provider) return undefined;
+    return isDarkMode ? (provider.icon_dark || provider.icon) : provider.icon;
+  }
+
   // Dynamic syntax highlighting theme based on color scheme
   const loadHighlightTheme = () => {
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (isDark) {
+    if (isDarkMode) {
       import('highlight.js/styles/github-dark.css');
     } else {
       import('highlight.js/styles/github.css');
@@ -16,10 +27,15 @@
 
   // Load theme on mount and listen for changes
   onMount(() => {
+    syncThemeState();
     loadHighlightTheme();
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', loadHighlightTheme);
-    return () => mediaQuery.removeEventListener('change', loadHighlightTheme);
+    const handleThemeChange = () => {
+      syncThemeState();
+      loadHighlightTheme();
+    };
+    mediaQuery.addEventListener('change', handleThemeChange);
+    return () => mediaQuery.removeEventListener('change', handleThemeChange);
   });
   import {
     speechSynthesisSupported,
@@ -346,7 +362,7 @@
     <div class="message-avatar">
       <div class="model-avatar">
         {#if messageProvider?.icon}
-          <img src={messageProvider.icon} alt="" class="provider-icon-img" />
+          <img src={getIconForTheme(messageProvider)} alt="" class="provider-icon-img" />
         {/if}
       </div>
     </div>

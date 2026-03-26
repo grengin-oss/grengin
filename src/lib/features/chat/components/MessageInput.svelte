@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { ProviderInfo, ModelInfo, SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from '../../../api/models';
-  import { getModels } from '../../../api/models';
   import { uploadDocument, type UploadedFile } from '../../../api/chatApi';
   import { _ } from 'svelte-i18n';
 
@@ -21,6 +20,17 @@
   }
 
   let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, webSearchEnabled = false, onWebSearchToggle }: MessageInputProps = $props();
+  let isDarkMode = $state(false);
+
+  function syncThemeState() {
+    isDarkMode = document.documentElement.classList.contains('dark')
+      || window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function getIconForTheme(provider?: ProviderInfo): string | undefined {
+    if (!provider) return undefined;
+    return isDarkMode ? (provider.icon_dark || provider.icon) : provider.icon;
+  }
 
   let textarea: HTMLTextAreaElement;
   let fileInput: HTMLInputElement;
@@ -132,10 +142,14 @@
   }
 
   onMount(() => {
+    syncThemeState();
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', syncThemeState);
     autoResize();
 
     // Cleanup speech recognition on unmount
     return () => {
+      mediaQuery.removeEventListener('change', syncThemeState);
       if (recognition) {
         try {
           recognition.stop();
@@ -501,7 +515,7 @@
           >
             <div class="model-icon">
               {#if selectedProvider}
-                {@const providerIcon = providers.find(p => p.key === selectedProvider)?.icon}
+                {@const providerIcon = getIconForTheme(providers.find(p => p.key === selectedProvider))}
                 {#if providerIcon}
                   <img src={providerIcon} alt="" class="provider-icon-img" />
                 {:else}
@@ -537,7 +551,7 @@
                   <div class="provider-section">
                     <div class="provider-header">
                       <div class="provider-icon">
-                        <img src={provider.icon} alt="" class="provider-icon-img" />
+                        <img src={getIconForTheme(provider)} alt="" class="provider-icon-img" />
                       </div>
                       <span class="provider-name">{provider.name}</span>
                     </div>
