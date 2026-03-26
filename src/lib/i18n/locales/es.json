@@ -7,6 +7,14 @@
     "search": "Buscar",
     "never": "Nunca"
   },
+  "errors": {
+    "forbidden": {
+      "title": "Acceso denegado",
+      "message": "No tiene permiso para ver esta página.",
+      "back": "Volver al chat",
+      "iconAlt": "Acceso denegado"
+    }
+  },
   "auth": {
     "signIn": "Iniciar sesión",
     "signUp": "Registrarse",
@@ -87,11 +95,27 @@
     "usageAnalytics": "Analíticas de Uso",
     "userAnalytics": "Analíticas de Usuario",
     "aiEngines": "Motores de IA",
-    "connectors": "Conectores",
     "sectionManage": "Gestionar",
     "sectionMonitor": "Monitorear",
     "sectionConfigure": "Configurar",
-    "overview": "Resumen"
+    "overview": "Resumen",
+    "accessControl": "Control de acceso",
+    "openAlerts": "Abrir alertas",
+    "viewAllAlerts": "Ver todas las alertas",
+    "noRecentAlerts": "Aún no hay alertas",
+    "newAlert": "Nueva alerta"
+  },
+  "alerts": {
+    "title": "Alertas",
+    "subtitle": "Tus notificaciones y actualizaciones",
+    "filterAll": "Todas",
+    "filterUnread": "Sin leer",
+    "empty": "No hay alertas que mostrar",
+    "loading": "Cargando...",
+    "loadMore": "Cargar más",
+    "unread": "Sin leer",
+    "loadError": "Error al cargar las alertas",
+    "markReadError": "No se pudo marcar la alerta como leída"
   },
   "app": {
     "closeSidebar": "Cerrar barra lateral",
@@ -102,9 +126,11 @@
   "admin": {
     "common": {
       "closeModal": "Cerrar ventana",
+      "done": "Hecho",
       "name": "Nombre",
       "email": "Correo electrónico",
       "role": "Rol",
+      "roles": "Roles",
       "status": "Estado",
       "active": "Activo",
       "deactivated": "Desactivado",
@@ -112,7 +138,6 @@
       "previous": "Anterior",
       "next": "Siguiente",
       "allRoles": "Todos los roles",
-      "superAdmin": "Super administrador",
       "admin": "Administrador",
       "user": "Usuario",
       "allStatuses": "Todos los estados",
@@ -122,10 +147,17 @@
       "creating": "Creando...",
       "updating": "Actualizando...",
       "adding": "Agregando...",
+      "deleting": "Eliminando...",
       "saving": "Guardando...",
       "create": "Crear",
       "metadata": "Metadatos",
-      "lastUpdated": "Última actualización"
+      "lastUpdated": "Última actualización",
+      "removing": "Eliminando"
+    },
+    "tabListLabels": {
+      "accessControl": "Pestañas de control de acceso",
+      "settings": "Pestañas de configuración",
+      "analytics": "Vistas de análisis"
     },
     "users": {
       "userManagement": "Gestión de usuarios",
@@ -137,7 +169,7 @@
       "filters": "Filtros",
       "closeFilters": "Cerrar filtros",
       "openFilters": "Abrir filtros",
-      "searchByNameOrEmail": "Buscar por nombre o correo...",
+      "searchByNameOrEmail": "Buscar por nombre, correo o departamento...",
       "reset": "Restablecer",
       "loadingUsers": "Cargando usuarios...",
       "noUsersFound": "No se encontraron usuarios",
@@ -151,6 +183,7 @@
       "failedToCreateUser": "Error al crear usuario",
       "userUpdatedSuccessfully": "Usuario actualizado exitosamente",
       "failedToUpdateUser": "Error al actualizar usuario",
+      "failedToAssignRoles": "Error al asignar roles",
       "activatedMessage": "Usuario activado exitosamente",
       "deactivatedMessage": "Usuario desactivado exitosamente",
       "failedToFetchUsers": "Error al obtener usuarios",
@@ -158,7 +191,17 @@
       "editUserTitle": "Editar usuario",
       "cannotToggleOwnStatus": "No puedes desactivar tu propia cuenta.",
       "disableUserTooltip": "Desactivar usuario",
-      "enableUserTooltip": "Activar usuario"
+      "enableUserTooltip": "Activar usuario",
+      "moreRoles": "Ver {count} roles más",
+      "showRoles": "Mostrar roles",
+      "hideRoles": "Ocultar roles",
+      "noRolesAssigned": "No hay roles asignados",
+      "addRole": "Agregar rol",
+      "addRoleGlobal": "Agregar global",
+      "addRoleScoped": "Agregar con alcance",
+      "searchRoles": "Buscar roles...",
+      "confirmRemoveRoleTitle": "¿Eliminar rol?",
+      "confirmRemoveRoleMessage": "¿Seguro que quieres eliminar {role} de este usuario?"
     },
     "departments": {
       "title": "Departamentos",
@@ -277,154 +320,281 @@
       "failedToRemoveMember": "Error al eliminar miembro",
       "loadingMembers": "Cargando miembros...",
       "failedToFetchMembers": "Error al obtener miembros",
-      "addMemberPlaceholder": "La búsqueda y selección de usuarios se implementará aquí"
+      "addMemberPlaceholder": "La búsqueda y selección de usuarios se implementará aquí",
+      "departmentAdmins": "Administradores del Departamento",
+      "departmentAdminsDescription": "Gestionar usuarios que pueden administrar este departamento",
+      "addAdmin": "Añadir Admin",
+      "searchUsersToAdd": "Buscar usuarios para añadir como admin...",
+      "noUsersFound": "No se encontraron usuarios",
+      "removeAdmin": "Quitar Admin",
+      "noAdmins": "Ningún admin asignado",
+      "adminAdded": "Admin añadido correctamente",
+      "adminRemoved": "Admin eliminado correctamente",
+      "failedToAddAdmin": "Error al añadir admin",
+      "failedToRemoveAdmin": "Error al quitar admin",
+      "failedToLoadAdmins": "Error al cargar administradores del departamento",
+      "failedToSearchUsers": "Error al buscar usuarios",
+      "removeAdminConfirmTitle": "Quitar acceso de administrador",
+      "removeAdminConfirmMessage": "¿Está seguro de que desea quitar el acceso de administrador a {name}?",
+      "removeAdminConfirmWarning": "Ya no podrá gestionar este departamento."
     },
     "settings": {
       "title": "Configuración",
       "subtitle": "Configurar ajustes del sistema e integraciones"
     },
-    "mcpServers": {
-      "title": "Conectores",
-      "subtitle": "Administra conexiones y credenciales",
-      "loading": "Cargando conectores...",
-      "addServer": "Agregar conector",
-      "addModalTitle": "Agregar conector",
-      "editModalTitle": "Editar conector",
-      "name": "Nombre",
-      "description": "Descripción",
-      "transport": "Tipo de transporte",
-      "url": "URL",
-      "clientId": "ID de cliente",
-      "clientSecret": "Secreto del cliente",
-      "defaultAccess": "Acceso predeterminado",
-      "enabledLabel": "Habilitado",
-      "connectionConfig": "Configuración de conexión (JSON)",
-      "namePlaceholder": "Introduce el nombre del conector",
-      "descriptionPlaceholder": "Introduce la descripción",
-      "urlPlaceholder": "Introduce la URL del conector",
-      "clientIdPlaceholder": "Introduce el ID de cliente",
-      "clientSecretPlaceholder": "Introduce el secreto del cliente",
-      "showSecret": "Mostrar secreto",
-      "hideSecret": "Ocultar secreto",
-      "defaultAccessPlaceholder": "Introduce el acceso predeterminado o deja vacío",
-      "connectionConfigPlaceholder": "{\n  \"key\": \"value\"\n}",
-      "nameRequired": "El nombre es obligatorio",
-      "transportRequired": "El tipo de transporte es obligatorio",
-      "urlInvalid": "La URL debe ser válida",
-      "connectionConfigRequired": "La configuración es obligatoria",
-      "connectionConfigInvalid": "La configuración debe ser un JSON válido",
-      "create": "Crear",
-      "creating": "Creando...",
-      "edit": "Editar",
-      "syncTools": "Sincronizar herramientas",
-      "save": "Guardar",
-      "saving": "Guardando...",
-      "delete": "Eliminar",
-      "deleting": "Eliminando...",
-      "enabled": "Activo",
-      "disabled": "Inactivo",
-      "emptyTitle": "Sin conectores",
-      "emptyMessage": "Agrega tu primer conector para comenzar.",
-      "failedToLoad": "Error al cargar conectores",
-      "failedToCreate": "Error al crear el conector",
-      "failedToUpdate": "Error al actualizar el conector",
-      "failedToDelete": "Error al eliminar el conector",
-      "failedToSyncTools": "Error al sincronizar herramientas",
-      "created": "Conector creado",
-      "updated": "Conector actualizado",
-      "deleted": "Conector eliminado",
-      "syncedTools": "Herramientas sincronizadas",
-      "connect": "Conectar",
-      "connectingTitle": "Conectando...",
-      "connectingMessage": "Terminando tu conexión. Por favor espera.",
-      "redirecting": "Redirigiendo de vuelta a los conectores...",
-      "connected": "Conexión completada",
-      "connectFailed": "Conexión fallida",
-      "callbackMissingParams": "Faltan detalles de conexión",
-      "deleteTitle": "Eliminar conector",
-      "deleteConfirm": "¿Seguro que quieres eliminar {name}?",
-      "transportStdio": "stdio",
-      "transportHttp": "http",
-      "columns": {
-        "name": "Nombre",
-        "transport": "Tipo de conexión",
-        "enabled": "Activo",
-        "status": "Estado",
-        "tools": "Herramientas",
-        "actions": "Acciones"
+    "accessControl": {
+      "title": "Control de acceso",
+      "subtitle": "Gestionar roles y permisos",
+      "tabs": {
+        "roles": "Roles",
+        "permissions": "Permisos"
       },
-      "status": {
-        "connected": "Conectado",
-        "disconnected": "Desconectado"
+      "loadingRoles": "Cargando roles…",
+      "noRolesTitle": "Sin roles",
+      "noRolesMessage": "No se han configurado roles. Crea un rol personalizado para empezar.",
+      "addRoleButton": "Agregar nuevo rol",
+      "systemRoleLabel": "Sistema",
+      "userCountLabel": "{count} usuarios",
+      "closeSearch": "Cerrar búsqueda",
+      "usersWithRole": "Usuarios con este rol",
+      "addUser": "Añadir usuario",
+      "searchUsersToAdd": "Buscar usuarios para añadir...",
+      "searchDepartments": "Buscar departamentos",
+      "searchDepartmentsHint": "Encuentra departamentos por nombre o palabra clave antes de asignarlos.",
+      "noUsersFound": "No se encontraron usuarios",
+      "noUsersInRole": "No hay usuarios con este rol",
+      "userAdded": "Usuario añadido al rol",
+      "userRemoved": "Usuario eliminado del rol",
+      "removeUser": "Quitar",
+      "removeUserConfirmTitle": "Quitar del rol",
+      "removeUserConfirmMessage": "¿Quitar a {name} de este rol?",
+      "removeUserConfirmWarning": "Perderá los permisos concedidos por este rol.",
+      "loadingUsers": "Cargando usuarios…",
+      "failedToLoadUsers": "Error al cargar usuarios del rol",
+      "failedToSearchUsers": "Error al buscar usuarios",
+      "failedToAddUser": "Error al añadir usuario al rol",
+      "failedToRemoveUser": "Error al quitar usuario del rol",
+      "failedToLoadPermissions": "Error al cargar los permisos",
+      "failedToLoadRoles": "Error al cargar los roles",
+      "addRoleTitle": "Añadir nuevo rol",
+      "roleName": "Nombre del rol",
+      "roleNamePlaceholder": "ej. Gestor de proyectos",
+      "roleNameRequired": "El nombre del rol es obligatorio",
+      "permissionsLabel": "Permisos",
+      "selectAll": "Seleccionar todo",
+      "clearSelection": "Borrar",
+      "permissionsSelected": "{count} seleccionados",
+      "createRole": "Crear rol",
+      "creating": "Creando…",
+      "roleCreated": "Rol creado",
+      "failedToCreateRole": "Error al crear el rol",
+      "permissionsInRole": "Permisos en este rol",
+      "editPermissions": "Editar permisos",
+      "editRoleTitle": "Editar rol",
+      "roleUpdated": "Rol actualizado",
+      "failedToUpdateRole": "Error al actualizar el rol",
+      "systemRoleNameLocked": "Los nombres de roles del sistema no se pueden cambiar",
+      "noPermissionsInRole": "Sin permisos asignados",
+      "editRole": "Editar rol",
+      "deleteRole": "Eliminar rol",
+      "deleteRoleConfirmTitle": "Eliminar rol",
+      "deleteRoleConfirmMessage": "¿Eliminar el rol \"{name}\"?",
+      "deleteRoleConfirmWarning": "Esta acción no se puede deshacer. Los usuarios con este rol perderán sus permisos.",
+      "roleDeleted": "Rol eliminado",
+      "failedToDeleteRole": "Error al eliminar el rol",
+      "deleting": "Eliminando…",
+      "manageScoping": "Editar departamentos",
+      "manageDepartmentsTitle": "Administrar alcance de departamentos para {user} en el rol {role}",
+      "assignedDepartments": "Departamentos asignados",
+      "assignedDepartmentsHint": "Cada entrada representa un alcance de departamento ya vinculado con este rol.",
+      "loadingAssignedDepartments": "Cargando departamentos asignados...",
+      "noDepartmentsAssigned": "No hay departamentos asignados aún",
+      "globalScope": "Todos los departamentos",
+      "globalScopeDescription": "Este rol se aplica a todos los departamentos.",
+      "globalScopeHint": "Da acceso a este rol en todos los departamentos.",
+      "assignAllDepartments": "Asignar todos los departamentos",
+      "departmentScopeSupport": "Admite alcance por departamento",
+      "departmentScopeSupportTooltip": "Puede asignarse a departamentos",
+      "departmentSearchPlaceholder": "Buscar departamentos...",
+      "loadingDepartments": "Cargando departamentos...",
+      "noDepartmentsFound": "No se encontraron departamentos",
+      "addDepartmentScope": "Agregar",
+      "removeDepartmentScope": "Eliminar",
+      "departmentAssigned": "Alcance de departamento agregado",
+      "departmentRemoved": "Alcance de departamento eliminado",
+      "failedToAssignDepartment": "Error al asignar el departamento al usuario",
+      "failedToRemoveDepartment": "Error al eliminar el departamento del usuario",
+      "failedToSearchDepartments": "Error al buscar departamentos",
+      "failedToLoadAssignments": "Error al cargar los alcances de departamentos",
+      "departmentLabel": "Departamento",
+      "permissionsTab": {
+        "loading": "Cargando permisos…",
+        "noPermissionsTitle": "Sin permisos",
+        "noPermissionsDescription": "No se han configurado permisos en el sistema.",
+        "columns": {
+          "action": "Acción",
+          "scope": "Alcance"
+        },
+        "scopeableBadge": "Con alcance",
+        "scopeableBadgeTitle": "Puede asignarse a departamentos",
+        "globalBadge": "Global",
+        "domainCount": "{count} permisos"
       }
     },
+    "mcpServers": {
+      "title": "MCP Servers",
+      "subtitle": "Manage MCP server connections and configurations",
+      "addServer": "Add Server",
+      "loading": "Loading MCP servers...",
+      "failedToLoad": "Failed to load MCP servers",
+      "created": "MCP server created",
+      "failedToCreate": "Failed to create MCP server",
+      "updated": "MCP server updated",
+      "failedToUpdate": "Failed to update MCP server",
+      "deleted": "MCP server deleted",
+      "failedToDelete": "Failed to delete MCP server",
+      "syncedTools": "Tools synced successfully",
+      "failedToSyncTools": "Failed to sync tools",
+      "connected": "Connected successfully",
+      "connectFailed": "Connection failed",
+      "connectingTitle": "Connecting...",
+      "connectingMessage": "Please wait while we establish the connection",
+      "redirecting": "Redirecting...",
+      "callbackMissingParams": "Missing required parameters",
+      "name": "Name",
+      "nameRequired": "Name is required",
+      "namePlaceholder": "Enter server name",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter server description",
+      "transport": "Transport",
+      "transportRequired": "Transport is required",
+      "transportHttp": "HTTP",
+      "transportStdio": "STDIO",
+      "url": "URL",
+      "urlInvalid": "Invalid URL",
+      "urlPlaceholder": "https://example.com/mcp",
+      "clientId": "Client ID",
+      "clientIdPlaceholder": "Enter client ID",
+      "clientSecret": "Client Secret",
+      "clientSecretPlaceholder": "Enter client secret",
+      "showSecret": "Show secret",
+      "hideSecret": "Hide secret",
+      "defaultAccess": "Default Access",
+      "defaultAccessPlaceholder": "allow/deny",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "enabledLabel": "Status",
+      "connectionConfig": "Connection Config",
+      "connectionConfigRequired": "Connection config is required",
+      "connectionConfigInvalid": "Invalid JSON format",
+      "connectionConfigPlaceholder": "{\"oauth\": {\"redirect_url\": \"...\"}}",
+      "emptyTitle": "No MCP servers",
+      "emptyMessage": "Get started by adding your first MCP server",
+      "columns": {
+        "name": "Name",
+        "transport": "Transport",
+        "enabled": "Status",
+        "status": "Connection",
+        "tools": "Tools",
+        "actions": "Actions"
+      },
+      "status": {
+        "connected": "Connected",
+        "disconnected": "Disconnected"
+      },
+      "actions": {
+        "connect": "Connect",
+        "edit": "Edit",
+        "delete": "Delete",
+        "syncTools": "Sync Tools"
+      },
+      "connect": "Connect",
+      "addModalTitle": "Add MCP Server",
+      "editModalTitle": "Edit MCP Server",
+      "deleteTitle": "Delete MCP Server",
+      "deleteConfirm": "Are you sure you want to delete {name}?",
+      "create": "Create Server",
+      "creating": "Creating...",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "deleting": "Deleting...",
+      "yes": "Yes",
+      "no": "No"
+    },
     "viewMode": {
-      "grid": "Vista cuadrícula",
-      "table": "Vista tabla",
-      "tool": "herramienta",
-      "tools": "herramientas"
+      "grid": "Grid view",
+      "table": "Table view",
+      "tool": "tool",
+      "tools": "tools"
     }
   },
-  "userSettings": {
-    "title": "Configuración",
-    "subtitle": "Administra tus preferencias personales e integraciones conectadas.",
-    "tabs": {
-      "integrations": "Integraciones",
-      "integrationsAria": "Integraciones conectadas"
-    }
-  },
-  "userIntegrations": {
-    "loading": "Cargando integraciones...",
-    "failedToLoad": "Error al cargar integraciones",
-    "failedToGetAuthUrl": "Error al obtener la URL de autorización",
-    "failedToConnect": "Error al conectar {name}",
-    "failedToDisconnect": "Error al desconectar {name}",
-    "disconnected": "{name} desconectado",
-    "stats": {
-      "connected": "Conectados",
-      "available": "Disponibles",
-      "total": "Total"
+  "permissions": {
+    "users": {
+      "view": {
+        "description": "Ver usuarios de la organización"
+      },
+      "manage": {
+        "description": "Crear, editar y desactivar usuarios"
+      }
     },
-    "filters": {
-      "all": "Todos",
-      "connected": "Conectados",
-      "available": "Disponibles",
-      "filterAria": "Filtrar integraciones"
+    "analytics": {
+      "view": {
+        "description": "Ver análisis de uso e informes"
+      }
     },
-    "empty": {
-      "title": "No se encontraron integraciones",
-      "noConnected": "Aún no has conectado ninguna integración.",
-      "noAvailable": "No hay integraciones disponibles para conectar en este momento.",
-      "noConfigured": "Tu organización no ha configurado ninguna integración.",
-      "viewAll": "Ver todas las integraciones"
+    "budget": {
+      "view": {
+        "description": "Ver asignaciones y uso del presupuesto"
+      },
+      "allocate": {
+        "description": "Asignar y ajustar presupuestos de departamentos"
+      }
     },
-    "columns": {
-      "name": "Nombre",
-      "transport": "Transporte",
-      "status": "Estado",
-      "tools": "Herramientas",
-      "connectedAt": "Conectado el",
-      "actions": "Acciones"
+    "mcp_servers": {
+      "view": {
+        "description": "Ver configuraciones de servidores MCP"
+      },
+      "admin": {
+        "description": "Gestionar configuraciones e implementaciones de servidores MCP"
+      },
+      "delegate": {
+        "description": "Delegar acceso a servidores MCP a departamentos"
+      }
     },
-    "status": {
-      "connected": "Conectado",
-      "disconnected": "Desconectado"
+    "departments": {
+      "view": {
+        "description": "Ver estructura y miembros de departamentos"
+      },
+      "manage": {
+        "description": "Crear, editar y gestionar departamentos"
+      }
     },
-    "actions": {
-      "connect": "Conectar",
-      "connecting": "Conectando...",
-      "disconnect": "Desconectar",
-      "disconnectConfirm": "¿Desconectar?",
-      "yes": "Sí",
-      "no": "No",
-      "viewTools": "Ver herramientas"
+    "roles": {
+      "view": {
+        "description": "Ver roles y sus permisos"
+      },
+      "manage": {
+        "description": "Crear, editar y eliminar roles"
+      },
+      "assign": {
+        "description": "Asignar roles a usuarios"
+      }
     },
-    "connectedSince": "Conectado desde {date}",
-    "toolCount": "{count} {count, plural, one {herramienta} other {herramientas}}",
-    "tools": {
-      "modalTitle": "{name} — Herramientas",
-      "loading": "Cargando herramientas...",
-      "empty": "No hay herramientas disponibles para este servidor."
+    "ai_platform": {
+      "view": {
+        "description": "Ver configuraciones de motores de IA"
+      },
+      "manage": {
+        "description": "Configurar motores y modelos de IA"
+      }
+    },
+    "sso_providers": {
+      "view": {
+        "description": "Ver configuraciones de proveedores SSO"
+      },
+      "manage": {
+        "description": "Configurar y gestionar proveedores SSO"
+      }
     }
   },
   "chat": {
@@ -437,7 +607,6 @@
       "somethingWentWrong": "Algo salió mal",
       "dismissError": "Descartar error",
       "failedToLoadModels": "Error al cargar modelos",
-      "failedToLoadConnectors": "Error al cargar conectores",
       "failedToLoadConversation": "Error al cargar conversación",
       "failedToSendMessage": "Error al enviar mensaje",
       "budgetAboutToExhaust": "El presupuesto del departamento está a punto de agotarse.",
@@ -454,11 +623,6 @@
       "addFiles": "Agregar archivos",
       "selectModel": "Seleccionar modelo",
       "selectModelFallback": "Seleccionar Modelo",
-      "selectConnectors": "Seleccionar conectores",
-      "selectConnectorsFallback": "Conectores",
-      "connectors": "Conectores",
-      "loadingConnectors": "Cargando conectores...",
-      "noConnectors": "No hay conectores disponibles",
       "loadingModels": "Cargando modelos...",
       "enableWebSearch": "Habilitar búsqueda web",
       "disableWebSearch": "Deshabilitar búsqueda web",
@@ -926,6 +1090,68 @@
     "fallback": {
       "description": "Algo salió mal",
       "solution": "Ocurrió un error inesperado. Por favor, intente de nuevo"
+    }
+  },
+  "userSettings": {
+    "title": "Settings",
+    "subtitle": "Manage your personal preferences and connected integrations.",
+    "tabs": {
+      "integrations": "Integrations",
+      "integrationsAria": "Connected integrations"
+    }
+  },
+  "userIntegrations": {
+    "loading": "Loading integrations...",
+    "failedToLoad": "Failed to load integrations",
+    "failedToGetAuthUrl": "Failed to get authorization URL",
+    "failedToConnect": "Failed to connect {name}",
+    "failedToDisconnect": "Failed to disconnect {name}",
+    "disconnected": "{name} disconnected",
+    "stats": {
+      "connected": "Connected",
+      "available": "Available",
+      "total": "Total"
+    },
+    "filters": {
+      "all": "All",
+      "connected": "Connected",
+      "available": "Available",
+      "filterAria": "Filter integrations"
+    },
+    "empty": {
+      "title": "No integrations found",
+      "noConnected": "You haven't connected any integrations yet.",
+      "noAvailable": "There are no integrations available to connect at the moment.",
+      "noConfigured": "No integrations have been configured by your organization.",
+      "viewAll": "View all integrations"
+    },
+    "columns": {
+      "name": "Name",
+      "transport": "Transport",
+      "status": "Status",
+      "tools": "Tools",
+      "connectedAt": "Connected",
+      "actions": "Actions"
+    },
+    "status": {
+      "connected": "Connected",
+      "disconnected": "Disconnected"
+    },
+    "actions": {
+      "connect": "Connect",
+      "connecting": "Connecting...",
+      "disconnect": "Disconnect",
+      "disconnectConfirm": "Disconnect?",
+      "yes": "Yes",
+      "no": "No",
+      "viewTools": "View tools"
+    },
+    "connectedSince": "Connected since {date}",
+    "toolCount": "{count} {count, plural, one {tool} other {tools}}",
+    "tools": {
+      "modalTitle": "{name} — Tools",
+      "loading": "Loading tools...",
+      "empty": "No tools available for this server."
     }
   }
 }

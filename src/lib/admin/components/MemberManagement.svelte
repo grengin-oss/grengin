@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Department } from "../types.js";
-  import { onMount, untrack } from "svelte";
+  import type { Department, User } from "../types.js";
+  import { onMount } from "svelte";
   import * as departmentsApi from "../../api/admin/departments.js";
   import { departmentsStore } from "../stores/index.js";
   import { toast } from "../../components/Toaster.svelte";
@@ -10,15 +10,17 @@
   import LoadingSpinner from "./LoadingSpinner.svelte";
   import AddMemberModal from "./AddMemberModal.svelte";
   import Modal from "./Modal.svelte";
+  import RolesBadgeList from "./RolesBadgeList.svelte";
   import { formatDate } from "$lib/utils/format.js";
   
   interface Props {
     department: Department;
+    canManage?: boolean;
   }
   
-  let { department }: Props = $props();
+  let { department, canManage = true }: Props = $props();
   
-  let members = $state<any[]>([]);
+  let members = $state<User[]>([]);
   let loading = $state(false);
   let includeSubDepartments = $state(false);
   let showAddMember = $state(false);
@@ -86,7 +88,7 @@
       selectedMembers = new Set(); // Create new Set to trigger reactivity
       await loadMembers();
       // Refresh departments to update member counts
-      await departmentsStore.fetchDepartments();
+      await departmentsStore.fetchAdministeredDepartments();
     } catch (error) {
       const errorMessage = error instanceof ApiError 
         ? getLocalizedError(error, 'description', $_) 
@@ -100,7 +102,7 @@
   async function handleMemberAdded() {
     await loadMembers();
     // Refresh departments to update member counts
-    await departmentsStore.fetchDepartments();
+    await departmentsStore.fetchAdministeredDepartments();
   }
   
 </script>
@@ -120,16 +122,18 @@
     </div>
     
     <div class="header-actions">
-      {#if selectedMembers.size > 0}
-        <button class="btn-danger" onclick={confirmRemoveMembers}>
-          {$_('admin.departments.removeMembers')} ({selectedMembers.size})
+      {#if canManage}
+        {#if selectedMembers.size > 0}
+          <button class="btn-danger" onclick={confirmRemoveMembers}>
+            {$_('admin.departments.removeMembers')} ({selectedMembers.size})
+          </button>
+        {/if}
+        <button class="btn-primary" onclick={() => {
+          showAddMember = true;
+        }}>
+          {$_('admin.departments.addMembers')}
         </button>
       {/if}
-      <button class="btn-primary" onclick={() => {
-        showAddMember = true;
-      }}>
-        {$_('admin.departments.addMembers')}
-      </button>
     </div>
   </div>
   
@@ -146,22 +150,26 @@
       </svg>
       <h4>{$_('admin.departments.noMembers')}</h4>
       <p>{$_('admin.departments.noMembersDescription')}</p>
-      <button class="btn-primary" onclick={() => showAddMember = true}>
-        {$_('admin.departments.addMembers')}
-      </button>
+      {#if canManage}
+        <button class="btn-primary" onclick={() => showAddMember = true}>
+          {$_('admin.departments.addMembers')}
+        </button>
+      {/if}
     </div>
   {:else}
     <div class="member-table">
       <table>
         <thead>
           <tr>
-            <th class="checkbox-col">
-              <input 
-                type="checkbox" 
-                checked={selectedMembers.size === members.length && members.length > 0}
-                onchange={toggleSelectAll}
-              />
-            </th>
+            {#if canManage}
+              <th class="checkbox-col">
+                <input 
+                  type="checkbox" 
+                  checked={selectedMembers.size === members.length && members.length > 0}
+                  onchange={toggleSelectAll}
+                />
+              </th>
+            {/if}
             <th>{$_('admin.common.name')}</th>
             <th>{$_('admin.common.email')}</th>
             <th>{$_('admin.common.role')}</th>
@@ -171,17 +179,19 @@
         <tbody>
           {#each members as member (member.id)}
             <tr>
-              <td class="checkbox-col">
-                <input 
-                  type="checkbox" 
-                  checked={selectedMembers.has(member.id)}
-                  onchange={() => toggleMemberSelection(member.id)}
-                />
-              </td>
+              {#if canManage}
+                <td class="checkbox-col">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedMembers.has(member.id)}
+                    onchange={() => toggleMemberSelection(member.id)}
+                  />
+                </td>
+              {/if}
               <td class="name-col">{member.name || 'N/A'}</td>
               <td class="email-col">{member.email}</td>
               <td class="role-col">
-                <span class="role-badge">{member.role || 'user'}</span>
+                <RolesBadgeList roles={member.roles}/>
               </td>
               <td class="date-col">{formatDate(member.created_at)}</td>
             </tr>
@@ -373,16 +383,6 @@
   
   .email-col {
     color: var(--text-secondary);
-  }
-  
-  .role-badge {
-    display: inline-block;
-    padding: 4px 8px;
-    background: color-mix(in oklab, var(--brand) 20%, transparent);
-    color: var(--brand);
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
   }
   
   .date-col {

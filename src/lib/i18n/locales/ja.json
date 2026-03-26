@@ -7,6 +7,14 @@
     "search": "検索",
     "never": "なし"
   },
+  "errors": {
+    "forbidden": {
+      "title": "アクセスが拒否されました",
+      "message": "このページを表示する権限がありません。",
+      "back": "チャットに戻る",
+      "iconAlt": "アクセス拒否"
+    }
+  },
   "auth": {
     "signIn": "サインイン",
     "signUp": "サインアップ",
@@ -87,11 +95,27 @@
     "usageAnalytics": "利用分析",
     "userAnalytics": "ユーザー分析",
     "aiEngines": "AIエンジン",
-    "connectors": "コネクタ",
     "sectionManage": "管理",
     "sectionMonitor": "監視",
     "sectionConfigure": "設定",
-    "overview": "概要"
+    "overview": "概要",
+    "accessControl": "アクセス制御",
+    "openAlerts": "アラートを開く",
+    "viewAllAlerts": "すべてのアラートを見る",
+    "noRecentAlerts": "まだアラートはありません",
+    "newAlert": "新しいアラート"
+  },
+  "alerts": {
+    "title": "アラート",
+    "subtitle": "通知と更新",
+    "filterAll": "すべて",
+    "filterUnread": "未読",
+    "empty": "表示するアラートがありません",
+    "loading": "読み込み中...",
+    "loadMore": "さらに読み込む",
+    "unread": "未読",
+    "loadError": "アラートの読み込みに失敗しました",
+    "markReadError": "アラートを既読にできませんでした"
   },
   "app": {
     "closeSidebar": "サイドバーを閉じる",
@@ -102,9 +126,11 @@
   "admin": {
     "common": {
       "closeModal": "モーダルを閉じる",
+      "done": "完了",
       "name": "名前",
       "email": "メール",
       "role": "役割",
+      "roles": "役割",
       "status": "ステータス",
       "active": "アクティブ",
       "deactivated": "無効化",
@@ -112,7 +138,6 @@
       "previous": "前へ",
       "next": "次へ",
       "allRoles": "すべての役割",
-      "superAdmin": "スーパー管理者",
       "admin": "管理者",
       "user": "ユーザー",
       "allStatuses": "すべてのステータス",
@@ -122,10 +147,17 @@
       "creating": "作成中...",
       "updating": "更新中...",
       "adding": "追加中...",
+      "deleting": "削除中...",
       "saving": "保存中...",
       "create": "作成",
       "metadata": "メタデータ",
-      "lastUpdated": "最終更新日"
+      "lastUpdated": "最終更新日",
+      "removing": "削除中"
+    },
+    "tabListLabels": {
+      "accessControl": "アクセス制御タブ",
+      "settings": "設定タブ",
+      "analytics": "分析ビュー"
     },
     "users": {
       "userManagement": "ユーザー管理",
@@ -137,7 +169,7 @@
       "filters": "フィルター",
       "closeFilters": "フィルターを閉じる",
       "openFilters": "フィルターを開く",
-      "searchByNameOrEmail": "名前またはメールで検索...",
+      "searchByNameOrEmail": "名前、メール、または部署で検索...",
       "reset": "リセット",
       "loadingUsers": "ユーザーを読み込み中...",
       "noUsersFound": "ユーザーが見つかりません",
@@ -151,6 +183,7 @@
       "failedToCreateUser": "ユーザーの作成に失敗しました",
       "userUpdatedSuccessfully": "ユーザーが正常に更新されました",
       "failedToUpdateUser": "ユーザーの更新に失敗しました",
+      "failedToAssignRoles": "ロールの割り当てに失敗しました",
       "activatedMessage": "ユーザーが正常に有効化されました",
       "deactivatedMessage": "ユーザーが正常に無効化されました",
       "failedToFetchUsers": "ユーザーの取得に失敗しました",
@@ -158,7 +191,17 @@
       "editUserTitle": "ユーザーを編集",
       "cannotToggleOwnStatus": "自分のアカウントは無効化できません。",
       "disableUserTooltip": "ユーザーを無効化",
-      "enableUserTooltip": "ユーザーを有効化"
+      "enableUserTooltip": "ユーザーを有効化",
+      "moreRoles": "{count} 個の役割を表示",
+      "showRoles": "ロールを表示",
+      "hideRoles": "ロールを隠す",
+      "noRolesAssigned": "ロールが割り当てられていません",
+      "addRole": "ロールを追加",
+      "addRoleGlobal": "グローバルを追加",
+      "addRoleScoped": "スコープ付きで追加",
+      "searchRoles": "ロールを検索...",
+      "confirmRemoveRoleTitle": "ロールを削除しますか？",
+      "confirmRemoveRoleMessage": "このユーザーから{role}を削除してもよろしいですか？"
     },
     "departments": {
       "title": "部門",
@@ -277,154 +320,281 @@
       "failedToRemoveMember": "メンバーの削除に失敗しました",
       "loadingMembers": "メンバーを読み込んでいます...",
       "failedToFetchMembers": "メンバーの取得に失敗しました",
-      "addMemberPlaceholder": "ユーザー検索と選択はここに実装されます"
+      "addMemberPlaceholder": "ユーザー検索と選択はここに実装されます",
+      "departmentAdmins": "部門管理者",
+      "departmentAdminsDescription": "この部門を管理できるユーザーを管理",
+      "addAdmin": "管理者を追加",
+      "searchUsersToAdd": "管理者として追加するユーザーを検索...",
+      "noUsersFound": "ユーザーが見つかりません",
+      "removeAdmin": "管理者を削除",
+      "noAdmins": "管理者が割り当てられていません",
+      "adminAdded": "管理者が正常に追加されました",
+      "adminRemoved": "管理者が正常に削除されました",
+      "failedToAddAdmin": "管理者の追加に失敗しました",
+      "failedToRemoveAdmin": "管理者の削除に失敗しました",
+      "failedToLoadAdmins": "部門管理者の読み込みに失敗しました",
+      "failedToSearchUsers": "ユーザー検索に失敗しました",
+      "removeAdminConfirmTitle": "管理者アクセスを削除",
+      "removeAdminConfirmMessage": "{name}の管理者アクセスを削除してもよろしいですか？",
+      "removeAdminConfirmWarning": "このユーザーはこの部門を管理できなくなります。"
     },
     "settings": {
       "title": "設定",
       "subtitle": "システム設定と連携を構成"
     },
-    "mcpServers": {
-      "title": "コネクタ",
-      "subtitle": "接続と認証情報を管理",
-      "loading": "コネクタを読み込み中...",
-      "addServer": "コネクタを追加",
-      "addModalTitle": "コネクタを追加",
-      "editModalTitle": "コネクタを編集",
-      "name": "名前",
-      "description": "説明",
-      "transport": "トランスポートタイプ",
-      "url": "URL",
-      "clientId": "クライアントID",
-      "clientSecret": "クライアントシークレット",
-      "defaultAccess": "デフォルトアクセス",
-      "enabledLabel": "有効",
-      "connectionConfig": "接続構成（JSON）",
-      "namePlaceholder": "コネクタ名を入力",
-      "descriptionPlaceholder": "説明を入力",
-      "urlPlaceholder": "コネクタのURLを入力",
-      "clientIdPlaceholder": "クライアントIDを入力",
-      "clientSecretPlaceholder": "クライアントシークレットを入力",
-      "showSecret": "シークレットを表示",
-      "hideSecret": "シークレットを非表示",
-      "defaultAccessPlaceholder": "デフォルトアクセスを入力するか空欄のままにします",
-      "connectionConfigPlaceholder": "{\n  \"key\": \"value\"\n}",
-      "nameRequired": "名前は必須です",
-      "transportRequired": "トランスポートタイプは必須です",
-      "urlInvalid": "URLは有効である必要があります",
-      "connectionConfigRequired": "接続構成は必須です",
-      "connectionConfigInvalid": "接続構成は有効なJSONである必要があります",
-      "create": "作成",
-      "creating": "作成中...",
-      "edit": "編集",
-      "syncTools": "ツールを同期",
-      "save": "保存",
-      "saving": "保存中...",
-      "delete": "削除",
-      "deleting": "削除中...",
-      "enabled": "有効",
-      "disabled": "無効",
-      "emptyTitle": "コネクタがありません",
-      "emptyMessage": "最初のコネクタを追加して始めましょう。",
-      "failedToLoad": "コネクタの読み込みに失敗しました",
-      "failedToCreate": "コネクタの作成に失敗しました",
-      "failedToUpdate": "コネクタの更新に失敗しました",
-      "failedToDelete": "コネクタの削除に失敗しました",
-      "failedToSyncTools": "ツールの同期に失敗しました",
-      "created": "コネクタが作成されました",
-      "updated": "コネクタが更新されました",
-      "deleted": "コネクタが削除されました",
-      "syncedTools": "ツールを同期しました",
-      "connect": "接続",
-      "connectingTitle": "接続中...",
-      "connectingMessage": "接続を完了しています。お待ちください。",
-      "redirecting": "コネクタにリダイレクトしています...",
-      "connected": "接続が完了しました",
-      "connectFailed": "接続に失敗しました",
-      "callbackMissingParams": "接続情報が不足しています",
-      "deleteTitle": "コネクタを削除",
-      "deleteConfirm": "{name}を削除してもよろしいですか？",
-      "transportStdio": "stdio",
-      "transportHttp": "http",
-      "columns": {
-        "name": "名前",
-        "transport": "接続タイプ",
-        "enabled": "有効",
-        "status": "ステータス",
-        "tools": "ツール",
-        "actions": "操作"
+    "accessControl": {
+      "title": "アクセス制御",
+      "subtitle": "ロールと権限を管理",
+      "tabs": {
+        "roles": "ロール",
+        "permissions": "権限"
       },
-      "status": {
-        "connected": "接続済み",
-        "disconnected": "未接続"
+      "loadingRoles": "ロールを読み込み中…",
+      "noRolesTitle": "ロールがありません",
+      "noRolesMessage": "ロールはまだ設定されていません。カスタムロールを作成して始めてください。",
+      "addRoleButton": "新しいロールを追加",
+      "systemRoleLabel": "システム",
+      "userCountLabel": "{count}人のユーザー",
+      "closeSearch": "検索を閉じる",
+      "usersWithRole": "このロールを持つユーザー",
+      "addUser": "ユーザーを追加",
+      "searchUsersToAdd": "追加するユーザーを検索...",
+      "searchDepartments": "部門を検索",
+      "searchDepartmentsHint": "名前やキーワードで部門を見つけてから割り当ててください。",
+      "noUsersFound": "ユーザーが見つかりません",
+      "noUsersInRole": "このロールのユーザーはいません",
+      "userAdded": "ロールにユーザーを追加しました",
+      "userRemoved": "ロールからユーザーを削除しました",
+      "removeUser": "削除",
+      "removeUserConfirmTitle": "ロールから削除",
+      "removeUserConfirmMessage": "{name}をこのロールから削除しますか？",
+      "removeUserConfirmWarning": "このロールで付与された権限を失います。",
+      "loadingUsers": "ユーザーを読み込み中…",
+      "failedToLoadUsers": "ロールのユーザーを読み込めませんでした",
+      "failedToSearchUsers": "ユーザー検索に失敗しました",
+      "failedToAddUser": "ロールへのユーザー追加に失敗しました",
+      "failedToRemoveUser": "ロールからのユーザー削除に失敗しました",
+      "failedToLoadPermissions": "権限の読み込みに失敗しました",
+      "failedToLoadRoles": "ロールの読み込みに失敗しました",
+      "addRoleTitle": "新しいロールを追加",
+      "roleName": "ロール名",
+      "roleNamePlaceholder": "例：プロジェクトマネージャー",
+      "roleNameRequired": "ロール名は必須です",
+      "permissionsLabel": "権限",
+      "selectAll": "すべて選択",
+      "clearSelection": "クリア",
+      "permissionsSelected": "{count} 件選択中",
+      "createRole": "ロールを作成",
+      "creating": "作成中…",
+      "roleCreated": "ロールを作成しました",
+      "failedToCreateRole": "ロールの作成に失敗しました",
+      "permissionsInRole": "このロールの権限",
+      "editPermissions": "権限を編集",
+      "editRoleTitle": "ロールを編集",
+      "roleUpdated": "ロールを更新しました",
+      "failedToUpdateRole": "ロールの更新に失敗しました",
+      "systemRoleNameLocked": "システムロール名は変更できません",
+      "noPermissionsInRole": "権限が割り当てられていません",
+      "editRole": "ロールを編集",
+      "deleteRole": "ロールを削除",
+      "deleteRoleConfirmTitle": "ロールを削除",
+      "deleteRoleConfirmMessage": "ロール「{name}」を削除しますか？",
+      "deleteRoleConfirmWarning": "この操作は元に戻せません。このロールを持つユーザーは権限を失います。",
+      "roleDeleted": "ロールを削除しました",
+      "failedToDeleteRole": "ロールの削除に失敗しました",
+      "deleting": "削除中…",
+      "manageScoping": "部門を編集",
+      "manageDepartmentsTitle": "{user}の{role}ロールに対する部門スコープを管理",
+      "assignedDepartments": "割り当てられた部門",
+      "assignedDepartmentsHint": "各行はこのロールに紐づく部門のスコープです。",
+      "loadingAssignedDepartments": "割り当てられた部門を読み込み中…",
+      "noDepartmentsAssigned": "まだ部門が割り当てられていません",
+      "globalScope": "すべての部門",
+      "globalScopeDescription": "このロールはすべての部門に適用されます。",
+      "globalScopeHint": "このロールがすべての部門にアクセスできるようにします。",
+      "assignAllDepartments": "すべての部門を割り当てる",
+      "departmentScopeSupport": "部門スコープに対応",
+      "departmentScopeSupportTooltip": "部門に限定できます",
+      "departmentSearchPlaceholder": "部門を検索...",
+      "loadingDepartments": "部門を読み込んでいます...",
+      "noDepartmentsFound": "部門が見つかりません",
+      "addDepartmentScope": "追加",
+      "removeDepartmentScope": "削除",
+      "departmentAssigned": "部門のスコープを追加しました",
+      "departmentRemoved": "部門のスコープを削除しました",
+      "failedToAssignDepartment": "部門をユーザーに割り当てられませんでした",
+      "failedToRemoveDepartment": "部門をユーザーから削除できませんでした",
+      "failedToSearchDepartments": "部門の検索に失敗しました",
+      "failedToLoadAssignments": "部門スコープの読み込みに失敗しました",
+      "departmentLabel": "部門",
+      "permissionsTab": {
+        "loading": "権限を読み込み中…",
+        "noPermissionsTitle": "権限がありません",
+        "noPermissionsDescription": "システムに権限がまだ設定されていません。",
+        "columns": {
+          "action": "操作",
+          "scope": "範囲"
+        },
+        "scopeableBadge": "範囲指定可",
+        "scopeableBadgeTitle": "部門に限定できます",
+        "globalBadge": "グローバル",
+        "domainCount": "{count} 件の権限"
       }
     },
+    "mcpServers": {
+      "title": "MCP Servers",
+      "subtitle": "Manage MCP server connections and configurations",
+      "addServer": "Add Server",
+      "loading": "Loading MCP servers...",
+      "failedToLoad": "Failed to load MCP servers",
+      "created": "MCP server created",
+      "failedToCreate": "Failed to create MCP server",
+      "updated": "MCP server updated",
+      "failedToUpdate": "Failed to update MCP server",
+      "deleted": "MCP server deleted",
+      "failedToDelete": "Failed to delete MCP server",
+      "syncedTools": "Tools synced successfully",
+      "failedToSyncTools": "Failed to sync tools",
+      "connected": "Connected successfully",
+      "connectFailed": "Connection failed",
+      "connectingTitle": "Connecting...",
+      "connectingMessage": "Please wait while we establish the connection",
+      "redirecting": "Redirecting...",
+      "callbackMissingParams": "Missing required parameters",
+      "name": "Name",
+      "nameRequired": "Name is required",
+      "namePlaceholder": "Enter server name",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter server description",
+      "transport": "Transport",
+      "transportRequired": "Transport is required",
+      "transportHttp": "HTTP",
+      "transportStdio": "STDIO",
+      "url": "URL",
+      "urlInvalid": "Invalid URL",
+      "urlPlaceholder": "https://example.com/mcp",
+      "clientId": "Client ID",
+      "clientIdPlaceholder": "Enter client ID",
+      "clientSecret": "Client Secret",
+      "clientSecretPlaceholder": "Enter client secret",
+      "showSecret": "Show secret",
+      "hideSecret": "Hide secret",
+      "defaultAccess": "Default Access",
+      "defaultAccessPlaceholder": "allow/deny",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "enabledLabel": "Status",
+      "connectionConfig": "Connection Config",
+      "connectionConfigRequired": "Connection config is required",
+      "connectionConfigInvalid": "Invalid JSON format",
+      "connectionConfigPlaceholder": "{\"oauth\": {\"redirect_url\": \"...\"}}",
+      "emptyTitle": "No MCP servers",
+      "emptyMessage": "Get started by adding your first MCP server",
+      "columns": {
+        "name": "Name",
+        "transport": "Transport",
+        "enabled": "Status",
+        "status": "Connection",
+        "tools": "Tools",
+        "actions": "Actions"
+      },
+      "status": {
+        "connected": "Connected",
+        "disconnected": "Disconnected"
+      },
+      "actions": {
+        "connect": "Connect",
+        "edit": "Edit",
+        "delete": "Delete",
+        "syncTools": "Sync Tools"
+      },
+      "connect": "Connect",
+      "addModalTitle": "Add MCP Server",
+      "editModalTitle": "Edit MCP Server",
+      "deleteTitle": "Delete MCP Server",
+      "deleteConfirm": "Are you sure you want to delete {name}?",
+      "create": "Create Server",
+      "creating": "Creating...",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "deleting": "Deleting...",
+      "yes": "Yes",
+      "no": "No"
+    },
     "viewMode": {
-      "grid": "グリッド表示",
-      "table": "テーブル表示",
-      "tool": "ツール",
-      "tools": "ツール"
+      "grid": "Grid view",
+      "table": "Table view",
+      "tool": "tool",
+      "tools": "tools"
     }
   },
-  "userSettings": {
-    "title": "設定",
-    "subtitle": "個人設定と接続済みの連携を管理します。",
-    "tabs": {
-      "integrations": "連携",
-      "integrationsAria": "接続済みの連携"
-    }
-  },
-  "userIntegrations": {
-    "loading": "連携を読み込み中...",
-    "failedToLoad": "連携の読み込みに失敗しました",
-    "failedToGetAuthUrl": "認証URLの取得に失敗しました",
-    "failedToConnect": "{name}の接続に失敗しました",
-    "failedToDisconnect": "{name}の切断に失敗しました",
-    "disconnected": "{name}が切断されました",
-    "stats": {
-      "connected": "接続済み",
-      "available": "利用可能",
-      "total": "合計"
+  "permissions": {
+    "users": {
+      "view": {
+        "description": "組織内のユーザーを表示"
+      },
+      "manage": {
+        "description": "ユーザーの作成、編集、無効化"
+      }
     },
-    "filters": {
-      "all": "すべて",
-      "connected": "接続済み",
-      "available": "利用可能",
-      "filterAria": "連携をフィルタ"
+    "analytics": {
+      "view": {
+        "description": "利用状況の分析とレポートを表示"
+      }
     },
-    "empty": {
-      "title": "連携が見つかりません",
-      "noConnected": "まだ連携を接続していません。",
-      "noAvailable": "現在接続可能な連携はありません。",
-      "noConfigured": "組織で設定された連携はありません。",
-      "viewAll": "すべての連携を表示"
+    "budget": {
+      "view": {
+        "description": "予算の割り当てと使用状況を表示"
+      },
+      "allocate": {
+        "description": "部門予算の割り当てと調整"
+      }
     },
-    "columns": {
-      "name": "名前",
-      "transport": "トランスポート",
-      "status": "ステータス",
-      "tools": "ツール",
-      "connectedAt": "接続日",
-      "actions": "操作"
+    "mcp_servers": {
+      "view": {
+        "description": "MCPサーバーの設定を表示"
+      },
+      "admin": {
+        "description": "MCPサーバーの設定とデプロイを管理"
+      },
+      "delegate": {
+        "description": "部門へのMCPサーバーアクセス委譲"
+      }
     },
-    "status": {
-      "connected": "接続済み",
-      "disconnected": "未接続"
+    "departments": {
+      "view": {
+        "description": "部門の構成とメンバーを表示"
+      },
+      "manage": {
+        "description": "部門の作成、編集、管理"
+      }
     },
-    "actions": {
-      "connect": "接続",
-      "connecting": "接続中...",
-      "disconnect": "切断",
-      "disconnectConfirm": "切断しますか？",
-      "yes": "はい",
-      "no": "いいえ",
-      "viewTools": "ツールを表示"
+    "roles": {
+      "view": {
+        "description": "ロールとその権限を表示"
+      },
+      "manage": {
+        "description": "ロールの作成、編集、削除"
+      },
+      "assign": {
+        "description": "ユーザーにロールを割り当て"
+      }
     },
-    "connectedSince": "{date}から接続中",
-    "toolCount": "{count}個のツール",
-    "tools": {
-      "modalTitle": "{name} — ツール",
-      "loading": "ツールを読み込み中...",
-      "empty": "このサーバーで利用可能なツールはありません。"
+    "ai_platform": {
+      "view": {
+        "description": "AIエンジンの設定を表示"
+      },
+      "manage": {
+        "description": "AIエンジンとモデルを設定"
+      }
+    },
+    "sso_providers": {
+      "view": {
+        "description": "SSOプロバイダーの設定を表示"
+      },
+      "manage": {
+        "description": "SSOプロバイダーの設定と管理"
+      }
     }
   },
   "chat": {
@@ -437,7 +607,6 @@
       "somethingWentWrong": "問題が発生しました",
       "dismissError": "エラーを閉じる",
       "failedToLoadModels": "モデルの読み込みに失敗しました",
-      "failedToLoadConnectors": "コネクタの読み込みに失敗しました",
       "failedToLoadConversation": "会話の読み込みに失敗しました",
       "failedToSendMessage": "メッセージの送信に失敗しました",
       "budgetAboutToExhaust": "部署の予算がもうすぐ不足します。",
@@ -454,11 +623,6 @@
       "addFiles": "ファイルを追加",
       "selectModel": "モデルを選択",
       "selectModelFallback": "モデルを選択",
-      "selectConnectors": "コネクタを選択",
-      "selectConnectorsFallback": "コネクタ",
-      "connectors": "コネクタ",
-      "loadingConnectors": "コネクタを読み込み中...",
-      "noConnectors": "利用可能なコネクタはありません",
       "loadingModels": "モデルを読み込み中...",
       "enableWebSearch": "ウェブ検索を有効にする",
       "disableWebSearch": "ウェブ検索を無効にする",
@@ -926,6 +1090,68 @@
     "fallback": {
       "description": "問題が発生しました",
       "solution": "予期しないエラーが発生しました。もう一度お試しください"
+    }
+  },
+  "userSettings": {
+    "title": "Settings",
+    "subtitle": "Manage your personal preferences and connected integrations.",
+    "tabs": {
+      "integrations": "Integrations",
+      "integrationsAria": "Connected integrations"
+    }
+  },
+  "userIntegrations": {
+    "loading": "Loading integrations...",
+    "failedToLoad": "Failed to load integrations",
+    "failedToGetAuthUrl": "Failed to get authorization URL",
+    "failedToConnect": "Failed to connect {name}",
+    "failedToDisconnect": "Failed to disconnect {name}",
+    "disconnected": "{name} disconnected",
+    "stats": {
+      "connected": "Connected",
+      "available": "Available",
+      "total": "Total"
+    },
+    "filters": {
+      "all": "All",
+      "connected": "Connected",
+      "available": "Available",
+      "filterAria": "Filter integrations"
+    },
+    "empty": {
+      "title": "No integrations found",
+      "noConnected": "You haven't connected any integrations yet.",
+      "noAvailable": "There are no integrations available to connect at the moment.",
+      "noConfigured": "No integrations have been configured by your organization.",
+      "viewAll": "View all integrations"
+    },
+    "columns": {
+      "name": "Name",
+      "transport": "Transport",
+      "status": "Status",
+      "tools": "Tools",
+      "connectedAt": "Connected",
+      "actions": "Actions"
+    },
+    "status": {
+      "connected": "Connected",
+      "disconnected": "Disconnected"
+    },
+    "actions": {
+      "connect": "Connect",
+      "connecting": "Connecting...",
+      "disconnect": "Disconnect",
+      "disconnectConfirm": "Disconnect?",
+      "yes": "Yes",
+      "no": "No",
+      "viewTools": "View tools"
+    },
+    "connectedSince": "Connected since {date}",
+    "toolCount": "{count} {count, plural, one {tool} other {tools}}",
+    "tools": {
+      "modalTitle": "{name} — Tools",
+      "loading": "Loading tools...",
+      "empty": "No tools available for this server."
     }
   }
 }

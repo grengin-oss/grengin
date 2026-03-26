@@ -5,6 +5,7 @@
   import AdminTableCard from "../../components/AdminTableCard.svelte";
   import Modal from "../../components/Modal.svelte";
   import { toast } from "../../../components/Toaster.svelte";
+  import { permissionsStore } from "../../../features/auth/index.js";
   import {
     getSSOProviders,
     deleteSSOProvider,
@@ -47,6 +48,9 @@
   let clientSecretPreview = $state("");
   let isTenantFieldAvailable = $state(false);
   let showClientSecret = $state(false);
+  const canManageSsoProviders = $derived(
+    permissionsStore.canManageSsoProviders()
+  );
 
   async function loadProviders() {
     if (isLoading) return;
@@ -301,7 +305,9 @@
               <th>Provider</th>
               <th>Allowed domains</th>
               <th>Status</th>
-              <th>Actions</th>
+              {#if canManageSsoProviders}
+                <th>Actions</th>
+              {/if}
             </tr>
           </thead>
           <tbody>
@@ -334,73 +340,81 @@
                 </td>
                 <td>
                   <div class="provider-status">
-                    <label class="status-switch">
-                      <input
-                        type="checkbox"
-                        checked={provider.is_enabled}
-                        disabled={pendingToggleId !== null}
-                        onchange={() => toggleProvider(provider)}
-                      />
-                      <span class="status-slider"></span>
+                    {#if canManageSsoProviders}
+                      <label class="status-switch">
+                        <input
+                          type="checkbox"
+                          checked={provider.is_enabled}
+                          disabled={pendingToggleId !== null}
+                          onchange={() => toggleProvider(provider)}
+                        />
+                        <span class="status-slider"></span>
+                        <span class="status-label">
+                          {provider.is_enabled ? "Enabled" : "Disabled"}
+                        </span>
+                      </label>
+                    {:else}
                       <span class="status-label">
                         {provider.is_enabled ? "Enabled" : "Disabled"}
                       </span>
-                    </label>
+                    {/if}
                   </div>
                 </td>
-                <td>
-                  <div class="provider-actions">
-                    <button
-                      class="icon-btn"
-                      type="button"
-                      aria-label={`Configure ${provider.name}`}
-                      onclick={() => openEditModal(provider)}
-                      disabled={isEditLoading}
-                    >
-                      <span
-                        class="icon-symbol icon-symbol--edit"
-                        aria-hidden="true"
+                {#if canManageSsoProviders}
+                  <td>
+                    <div class="provider-actions">
+                      <button
+                        class="icon-btn"
+                        type="button"
+                        aria-label={`Configure ${provider.name}`}
+                        onclick={() => openEditModal(provider)}
+                        disabled={isEditLoading}
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
+                        <span
+                          class="icon-symbol icon-symbol--edit"
+                          aria-hidden="true"
                         >
-                          <path
-                            fill="currentColor"
-                            d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83l3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"
-                          />
-                        </svg>
-                      </span>
-                    </button>
-                    <button
-                      class="icon-btn icon-btn--danger"
-                      type="button"
-                      aria-label={`Delete ${provider.name}`}
-                      onclick={() => promptDelete(provider)}
-                      disabled={isDeleting &&
-                        providerToDelete?.id === provider.id}
-                    >
-                      <span
-                        class="icon-symbol icon-symbol--delete"
-                        aria-hidden="true"
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              fill="currentColor"
+                              d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83l3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"
+                            />
+                          </svg>
+                        </span>
+                      </button>
+                      <button
+                        class="icon-btn icon-btn--danger"
+                        type="button"
+                        aria-label={`Delete ${provider.name}`}
+                        onclick={() => promptDelete(provider)}
+                        disabled={isDeleting &&
+                          providerToDelete?.id === provider.id}
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
+                        <span
+                          class="icon-symbol icon-symbol--delete"
+                          aria-hidden="true"
                         >
-                          <path
-                            fill="currentColor"
-                            d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6z"
-                          />
-                        </svg>
-                      </span>
-                    </button>
-                  </div>
-                </td>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              fill="currentColor"
+                              d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6z"
+                            />
+                          </svg>
+                        </span>
+                      </button>
+                    </div>
+                  </td>
+                {/if}
               </tr>
             {/each}
           </tbody>

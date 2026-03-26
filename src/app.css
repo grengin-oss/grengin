@@ -84,6 +84,14 @@
   --text-primary: rgba(255, 255, 255, 0.95);
   --text-secondary: rgba(255, 255, 255, 0.7);
 
+  /* Content surfaces */
+  --surface-elevated: #16181f;
+  --surface-card: #12141a;
+  --surface-card-interactive: #181b22;
+  --surface-subtle: #0f1115;
+  --surface-accent: color-mix(in oklab, var(--brand) 12%, #101218);
+  --surface-border: rgba(255, 255, 255, 0.08);
+
   /* Links/buttons */
   --link-color: var(--brand);
   --link-hover: var(--brand-hover);
@@ -111,6 +119,13 @@
     --bg-primary: #fcfcfc;
     --text-primary: #1a1d23;
     --text-secondary: #111827;
+
+    --surface-elevated: #ffffff;
+    --surface-card: #f6f7fb;
+    --surface-card-interactive: #ffffff;
+    --surface-subtle: #f1f5f9;
+    --surface-accent: color-mix(in oklab, var(--brand) 8%, #ffffff);
+    --surface-border: #e5e7eb;
 
     --link-color: var(--brand);
     --link-hover: color-mix(in oklab, var(--brand) 80%, black);
@@ -160,6 +175,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Reserve scrollbar space so 100vw doesn't cause horizontal overflow when vertical scrollbar appears */
+  scrollbar-gutter: stable;
 }
 
 body {

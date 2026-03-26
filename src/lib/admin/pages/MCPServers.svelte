@@ -1299,32 +1299,6 @@
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   }
 
-  .icon-grid,
-  .icon-table {
-    display: block;
-    width: 18px;
-    height: 18px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    opacity: 0.7;
-  }
-
-  .view-toggle-btn--active .icon-grid,
-  .view-toggle-btn--active .icon-table,
-  .view-toggle-btn:hover .icon-grid,
-  .view-toggle-btn:hover .icon-table {
-    opacity: 1;
-  }
-
-  .icon-grid {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='7' height='7'/%3E%3Crect x='14' y='3' width='7' height='7'/%3E%3Crect x='14' y='14' width='7' height='7'/%3E%3Crect x='3' y='14' width='7' height='7'/%3E%3C/svg%3E");
-  }
-
-  .icon-table {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round'%3E%3Cline x1='4' y1='6' x2='20' y2='6'/%3E%3Cline x1='4' y1='12' x2='20' y2='12'/%3E%3Cline x1='4' y1='18' x2='20' y2='18'/%3E%3C/svg%3E");
-  }
-
   /* Grid View */
   .mcp-grid {
     display: grid;

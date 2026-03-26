@@ -11,8 +11,10 @@
   import { getLocalizedError } from "../../utils/errorLocalization.js";
   import type { AIEngine } from "../types.js";
   import { aiEnginesStore } from "../stores/index.js";
+  import { permissionsStore } from "../../features/auth/index.js";
 
   const store = aiEnginesStore;
+  const canManageEngines = $derived(permissionsStore.canManageAiEngines());
 
   // Optimize .includes() lookups from O(n) to O(1)
   const whitelistedSet = $derived(new Set(store.formData.whitelisted_models));
@@ -314,14 +316,16 @@
                   {/if}
                 </div>
               </div>
-              <button
-                class="status-toggle"
-                class:active={engine.is_enabled}
-                onclick={() => toggleEngineStatus(engine)}
-                aria-label={engine.is_enabled ? $_('aiEngines.engineStatus.enabled') : $_('aiEngines.engineStatus.disabled')}
-              >
-                <span class="toggle-slider"></span>
-              </button>
+              {#if canManageEngines}
+                <button
+                  class="status-toggle"
+                  class:active={engine.is_enabled}
+                  onclick={() => toggleEngineStatus(engine)}
+                  aria-label={engine.is_enabled ? $_('aiEngines.engineStatus.enabled') : $_('aiEngines.engineStatus.disabled')}
+                >
+                  <span class="toggle-slider"></span>
+                </button>
+              {/if}
             </div>
 
             <div class="provider-details">
@@ -448,11 +452,13 @@
               {/if}
             </div>
 
-            <div class="provider-actions">
-              <button class="btn-glass" onclick={() => store.openConfigModal(engine)}>
-                {$_('aiEngines.configureEngine')}
-              </button>
-            </div>
+            {#if canManageEngines}
+              <div class="provider-actions">
+                <button class="btn-glass" onclick={() => store.openConfigModal(engine)}>
+                  {$_('aiEngines.configureEngine')}
+                </button>
+              </div>
+            {/if}
           </div>
         {/each}
       </div>

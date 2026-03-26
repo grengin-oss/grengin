@@ -1,10 +1,10 @@
-import { writable, derived } from 'svelte/store';
+import { writable } from 'svelte/store';
 import type { Department, SetBudgetRequest } from '../types.js';
 import * as departmentsApi from '../../api/admin/departments.js';
 
 interface DepartmentsState {
-  departments: Department[];
   departmentsTree: Department[];
+  administeredDepartments: Department[];
   selectedDepartment: Department | null;
   loading: boolean;
   error: Error | null;
@@ -13,7 +13,7 @@ interface DepartmentsState {
 
 function createDepartmentsStore() {
   const { subscribe, set, update } = writable<DepartmentsState>({
-    departments: [],
+    administeredDepartments: [],
     departmentsTree: [],
     selectedDepartment: null,
     loading: false,
@@ -23,16 +23,16 @@ function createDepartmentsStore() {
 
   return {
     subscribe,
-    
-    async fetchDepartments() {
+
+    async fetchAdministeredDepartments() {
       update(state => ({ ...state, error: null }));
       try {
-        const response = await departmentsApi.getDepartments();
+        const response = await departmentsApi.getAdministeredDepartments();
+
         update(state => ({
           ...state,
-          departments: response.departments,
-          total: response.total,
-        }));
+          administeredDepartments: response.departments
+        }));        
       } catch (error) {
         update(state => ({
           ...state,
@@ -103,7 +103,7 @@ function createDepartmentsStore() {
       }
     },
 
-    async updateDepartment(departmentId: string, data: { name?: string; description?: string; parent_id?: string | null; leader_ids?: string[] }) {
+    async updateDepartment(departmentId: string, data: { name?: string; description?: string; parent_id?: string | null; admin_ids?: string[] }) {
       update(state => ({ ...state, loading: true, error: null }));
       try {
         const updatedDepartment = await departmentsApi.updateDepartment(departmentId, data);
@@ -228,7 +228,7 @@ function createDepartmentsStore() {
 
     reset() {
       set({
-        departments: [],
+        administeredDepartments: [],
         departmentsTree: [],
         selectedDepartment: null,
         loading: false,
@@ -241,15 +241,3 @@ function createDepartmentsStore() {
 
 export const departmentsStore = createDepartmentsStore();
 
-export const departmentTree = derived(
-  departmentsStore,
-  $store => {
-    const buildTree = (parentId: string | null = null): Department[] => {
-      return $store.departments
-        .filter(dept => dept.parent_id === parentId)
-        .sort((a, b) => a.name.localeCompare(b.name));
-    };
-    
-    return buildTree();
-  }
-);

@@ -36,6 +36,7 @@ export interface GetUserAnalyticsParams {
   end_date: string;
   page?: number;
   limit?: number;
+  search?: string;
   sort_by?:
     | 'name'
     | 'email'
@@ -48,7 +49,7 @@ export interface GetUserAnalyticsParams {
 }
 
 export async function getUserAnalytics(params: GetUserAnalyticsParams): Promise<UserAnalyticsResponse> {
-  return request<UserAnalyticsResponse>(`/admin/analytics/users${buildQueryString(params as unknown as Record<string, string | number | boolean | undefined>)}`);
+  return request<UserAnalyticsResponse>(`/me/analytics/administered-departments/users${buildQueryString(params as unknown as Record<string, string | number | boolean | undefined>)}`);
 }
 
 export interface GetDepartmentAnalyticsParams {
@@ -60,5 +61,5 @@ export interface GetDepartmentAnalyticsParams {
 }
 
 export async function getDepartmentAnalytics(params: GetDepartmentAnalyticsParams): Promise<DepartmentAnalyticsResponse> {
-  return request<DepartmentAnalyticsResponse>(`/admin/analytics/departments${buildQueryString(params as unknown as Record<string, string | number | boolean | undefined>)}`);
+  return request<DepartmentAnalyticsResponse>(`/me/analytics/administered-departments${buildQueryString(params as unknown as Record<string, string | number | boolean | undefined>)}`);
 }

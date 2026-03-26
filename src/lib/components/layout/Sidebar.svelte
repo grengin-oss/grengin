@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Link } from "svelte-routing";
+  import { Link, navigate } from "svelte-routing";
   import { _ } from 'svelte-i18n';
   import type { User } from "../../types/auth";
   import { listConversations, deleteConversation, archiveConversation, renameConversation } from '../../api/chatApi.js';
@@ -7,17 +7,20 @@
   import { getLocalizedError } from '../../utils/errorLocalization';
   import grenginLogo from '../../../assets/grengin-logo.svg';
   import { toast } from '../Toaster.svelte';
+  import { permissionsStore } from '../../features/auth/index.js';
+  import { PERMISSIONS } from '../../features/auth/permissions.js';
   import { tick } from 'svelte';
+  import { getNotificationsState } from '../../features/notifications/index.js';
+  import AlertsPopover from '../../features/notifications/AlertsPopover.svelte';
 
   interface Props {
     isCollapsed?: boolean;
     onsidebarToggle?: (collapsed: boolean) => void;
-    onnavigate?: (itemId: string) => void;
     user?: User | null;
     onlogout?: () => void;
   }
 
-  let { isCollapsed = $bindable(false), onsidebarToggle, onnavigate, user = null, onlogout }: Props = $props();
+  let { isCollapsed = $bindable(false), onsidebarToggle, user = null, onlogout }: Props = $props();
 
   // Auto-collapse sidebar on mobile after navigation actions
   function collapseSidebarOnMobile() {
@@ -37,10 +40,33 @@
   let chatToDelete = $state<string | null>(null);
   let deletingChat = $state(false);
 
+  const notifState = getNotificationsState();
+  let showAlertsPopover = $state(false);
+  let alertsAnchorChat = $state.raw<HTMLElement | undefined>(undefined);
+
   // Detect if we're in admin view
   let currentPath = $state(window.location.pathname);
   let isAdminView = $derived(currentPath.startsWith('/admin'));
-
+  let hasAdminPermissions = $derived(permissionsStore.hasAnyPermissions());
+  let canViewAnalytics = $derived(
+    permissionsStore.hasPermission(PERMISSIONS.analytics.view)
+  );
+  let canViewOverview = $derived(
+    permissionsStore.isPermissionGlobal(PERMISSIONS.analytics.view)
+  );
+  let canViewDepartments = $derived(
+    permissionsStore.hasPermission(PERMISSIONS.departments.view)
+  );
+  let canViewUsers = $derived(permissionsStore.canViewUsers());
+  let canViewAiEngines = $derived(permissionsStore.canViewAiEngines());
+  let canViewRoles = $derived(
+    permissionsStore.hasPermission(PERMISSIONS.roles.view)
+  );
+  let canViewSettings = $derived(permissionsStore.canViewSsoProviders());
+  let canViewMcpServers = $derived(
+    permissionsStore.hasPermission(PERMISSIONS.mcpServers.view)
+  );
+  
   // Update currentPath on navigation
   $effect(() => {
     const updatePath = () => {
@@ -88,75 +114,102 @@
     type: 'section-header' | 'item';
   }
 
+  const analyticsMenuItem: AdminMenuItem = {
+    id: 'usage-analytics',
+    path: '/admin/analytics',
+    label: $_('sidebar.usageAnalytics'),
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>',
+    type: 'item',
+  };
+  const overviewMenuItem: AdminMenuItem = {
+    id: 'overview',
+    path: '/admin/overview',
+    label: $_('sidebar.overview'),
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
+    type: 'item',
+  };
+  const departmentsMenuItem: AdminMenuItem = {
+    id: 'departments',
+    path: '/admin/departments',
+    label: $_('admin.departments.title'),
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
+    type: 'item',
+  };
+  const usersMenuItem: AdminMenuItem = {
+    id: 'users',
+    path: '/admin/users',
+    label: $_('sidebar.users'),
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
+    type: 'item',
+  };
+  const aiEnginesMenuItem: AdminMenuItem = {
+    id: 'ai-engines',
+    path: '/admin/ai-engines',
+    label: $_('sidebar.aiEngines'),
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>',
+    type: 'item',
+  };
+  const manageSectionItem: AdminMenuItem = {
+    id: 'section-manage',
+    label: $_('sidebar.sectionManage'),
+    type: 'section-header',
+  };
+  const configureSectionItem: AdminMenuItem = {
+    id: 'section-configure',
+    label: $_('sidebar.sectionConfigure'),
+    type: 'section-header',
+  };
+  const settingsSectionItem: AdminMenuItem = {
+    id: 'settings',
+    path: '/admin/settings',
+    label: $_('sidebar.settings'),
+    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 8a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 2a2 2 0 0 0-2 2a2 2 0 0 0 2 2a2 2 0 0 0 2-2a2 2 0 0 0-2-2m-2 12c-.25 0-.46-.18-.5-.42l-.37-2.65c-.63-.25-1.17-.59-1.69-.99l-2.49 1.01c-.22.08-.49 0-.61-.22l-2-3.46a.493.493 0 0 1 .12-.64l2.11-1.66L4.5 12l.07-1l-2.11-1.63a.493.493 0 0 1-.12-.64l2-3.46c.12-.22.39-.31.61-.22l2.49 1c.52-.39 1.06-.73 1.69-.98l.37-2.65c.04-.24.25-.42.5-.42h4c.25 0 .46.18.5.42l.37 2.65c.63.25 1.17.59 1.69.98l2.49-1c.22-.09.49 0 .61.22l2 3.46c.13.22.07.49-.12.64L19.43 11l.07 1l-.07 1l2.11 1.63c.19.15.25.42.12.64l-2 3.46c-.12.22-.39.31-.61.22l-2.49-1c-.52.39-1.06.73-1.69.98l-.37 2.65c-.04.24-.25.42-.5.42zm1.25-18l-.37 2.61c-1.2.25-2.26.89-3.03 1.78L5.44 7.35l-.75 1.3L6.8 10.2a5.55 5.55 0 0 0 0 3.6l-2.12 1.56l.75 1.3l2.43-1.04c.77.88 1.82 1.52 3.01 1.76l.37 2.62h1.52l.37-2.61c1.19-.25 2.24-.89 3.01-1.77l2.43 1.04l.75-1.3l-2.12-1.55c.4-1.17.4-2.44 0-3.61l2.11-1.55l-.75-1.3l-2.41 1.04a5.42 5.42 0 0 0-3.03-1.77L12.75 4z"/></svg>',
+    type: 'item',
+  };
+  const accessControlMenuItem: AdminMenuItem = {
+    id: 'access-control',
+    path: '/admin/access-control',
+    label: $_('sidebar.accessControl'),
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
+    type: 'item',
+  };
+  const connectorsMenuItem: AdminMenuItem = {
+    id: 'connectors',
+    path: '/admin/connectors',
+    label: $_('sidebar.connectors'),
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101"/><path d="M10.172 13.828a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1"/></svg>',
+    type: 'item',
+  };
+
+  function isMenuItem(value: AdminMenuItem | null): value is AdminMenuItem {
+    return value !== null;
+  }
+
+  let manageItems = $derived<AdminMenuItem[]>(
+    [
+      canViewUsers ? usersMenuItem : null,
+      canViewDepartments ? departmentsMenuItem : null,
+      canViewAiEngines ? aiEnginesMenuItem : null,
+      canViewMcpServers ? connectorsMenuItem : null,
+      canViewAnalytics ? analyticsMenuItem : null,
+    ].filter(isMenuItem),
+  );
+
+  let configureItems = $derived<AdminMenuItem[]>(
+    [canViewRoles ? accessControlMenuItem : null].filter(isMenuItem),
+  );
+
   let adminMenuItems = $derived<AdminMenuItem[]>([
     // Overview dashboard (standalone at top)
-    {
-      id: 'overview',
-      path: '/admin/overview',
-      label: $_('sidebar.overview'),
-      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
-      type: 'item',
-    },
+    ...(canViewOverview ? [overviewMenuItem] : []),
     // MANAGE section
-    {
-      id: 'section-manage',
-      label: $_('sidebar.sectionManage'),
-      type: 'section-header',
-    },
-    {
-      id: 'users',
-      path: '/admin/users',
-      label: $_('sidebar.users'),
-      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
-      type: 'item',
-    },
-    {
-      id: 'departments',
-      path: '/admin/departments',
-      label: $_('admin.departments.title'),
-      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
-      type: 'item',
-    },
-    {
-      id: 'ai-engines',
-      path: '/admin/ai-engines',
-      label: $_('sidebar.aiEngines'),
-      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>',
-      type: 'item',
-    },
-    // MONITOR section
-    {
-      id: 'section-monitor',
-      label: $_('sidebar.sectionMonitor'),
-      type: 'section-header',
-    },
-    {
-      id: 'usage-analytics',
-      path: '/admin/analytics',
-      label: $_('sidebar.usageAnalytics'),
-      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>',
-      type: 'item',
-    },
+    ...(manageItems.length ? [manageSectionItem, ...manageItems] : []),
     // CONFIGURE section
-    {
-      id: 'section-configure',
-      label: $_('sidebar.sectionConfigure'),
-      type: 'section-header',
-    },
-    {
-      id: 'connectors',
-      path: '/admin/connectors',
-      label: $_('sidebar.connectors'),
-      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"></rect><rect x="3" y="14" width="18" height="6" rx="2"></rect><line x1="7" y1="7" x2="7.01" y2="7"></line><line x1="7" y1="17" x2="7.01" y2="17"></line></svg>',
-      type: 'item',
-    },
-    {
-      id: 'settings',
-      path: '/admin/settings',
-      label: $_('sidebar.settings'),
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 8a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 2a2 2 0 0 0-2 2a2 2 0 0 0 2 2a2 2 0 0 0 2-2a2 2 0 0 0-2-2m-2 12c-.25 0-.46-.18-.5-.42l-.37-2.65c-.63-.25-1.17-.59-1.69-.99l-2.49 1.01c-.22.08-.49 0-.61-.22l-2-3.46a.493.493 0 0 1 .12-.64l2.11-1.66L4.5 12l.07-1l-2.11-1.63a.493.493 0 0 1-.12-.64l2-3.46c.12-.22.39-.31.61-.22l2.49 1c.52-.39 1.06-.73 1.69-.98l.37-2.65c.04-.24.25-.42.5-.42h4c.25 0 .46.18.5.42l.37 2.65c.63.25 1.17.59 1.69.98l2.49-1c.22-.09.49 0 .61.22l2 3.46c.13.22.07.49-.12.64L19.43 11l.07 1l-.07 1l2.11 1.63c.19.15.25.42.12.64l-2 3.46c-.12.22-.39.31-.61.22l-2.49-1c-.52.39-1.06.73-1.69.98l-.37 2.65c-.04.24-.25.42-.5.42zm1.25-18l-.37 2.61c-1.2.25-2.26.89-3.03 1.78L5.44 7.35l-.75 1.3L6.8 10.2a5.55 5.55 0 0 0 0 3.6l-2.12 1.56l.75 1.3l2.43-1.04c.77.88 1.82 1.52 3.01 1.76l.37 2.62h1.52l.37-2.61c1.19-.25 2.24-.89 3.01-1.77l2.43 1.04l.75-1.3l-2.12-1.55c.4-1.17.4-2.44 0-3.61l2.11-1.55l-.75-1.3l-2.41 1.04a5.42 5.42 0 0 0-3.03-1.77L12.75 4z"/></svg>',
-      type: 'item',
-    },
+    ...(configureItems.length
+      ? [configureSectionItem, ...configureItems]
+      : []),
+    // SETTINGS section
+    ...(canViewSettings ? [settingsSectionItem] : []),
   ]);
 
   let activeItem = $state('chat');
@@ -183,8 +236,7 @@
     if (itemId === 'chat') {
       // Remove chatId from URL and open fresh chat
       selectedChatId = null;
-      window.history.pushState({}, '', window.location.pathname);
-      onnavigate?.(itemId);
+      navigate('/');
       // Focus the chat input after a short delay to allow state to settle
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('focusChatInput'));
@@ -194,7 +246,6 @@
       return;
     }
 
-    onnavigate?.(itemId);
     collapseSidebarOnMobile();
   }
 
@@ -213,8 +264,7 @@
     
     selectedChatId = chatId;
     // Navigate to chat with chatId parameter
-    window.history.pushState({}, '', `?chatId=${chatId}`);
-    onnavigate?.(`chat-${chatId}`);
+    navigate(`/?chatId=${chatId}`);
     activeChatMenu = null;
     collapseSidebarOnMobile();
   }
@@ -290,8 +340,7 @@
           const chatTitle = deletedChat?.title || $_('sidebar.chat');
           toast.success($_('sidebar.chatDeleted', { values: { title: `"${chatTitle}"` } }));
           // Navigate to fresh chat after deletion
-          window.history.pushState({}, '', window.location.pathname);
-          onnavigate?.('chat');
+          navigate('/');
           collapseSidebarOnMobile();
         }
 
@@ -338,8 +387,7 @@
       if (selectedChatId === chatId) {
         selectedChatId = null;
         // Navigate to fresh chat after archiving
-        window.history.pushState({}, '', window.location.pathname);
-        onnavigate?.('chat');
+        navigate('/');
         collapseSidebarOnMobile();
       }
     } catch (error) {
@@ -454,9 +502,25 @@
     if (showUserMenu && userMenuElement && !userMenuElement.contains(event.target as Node)) {
       closeUserMenu();
     }
+    if (showAlertsPopover) {
+      const t = event.target as Node | null;
+      if (!alertsAnchorChat?.contains(t)) {
+        showAlertsPopover = false;
+      }
+    }
     if (activeChatMenu) {
       activeChatMenu = null;
     }
+  }
+
+  function toggleAlertsPopover() {
+    showAlertsPopover = !showAlertsPopover;
+  }
+
+  function goToAlertsPage() {
+    showAlertsPopover = false;
+    navigate(isAdminView ? '/admin/alerts' : '/alerts');
+    collapseSidebarOnMobile();
   }
 
   function getUserInitials(): string {
@@ -553,52 +617,102 @@
 <svelte:window onclick={handleClickOutside} onresize={handleResize} />
 
 <aside class="sidebar" class:collapsed={isCollapsed}>
+  {#snippet alertsUi()}
+    <button
+      type="button"
+      class="alerts-btn burger-btn"
+      class:alerts-btn-active={showAlertsPopover}
+      onclick={(e) => {
+        e.stopPropagation();
+        toggleAlertsPopover();
+      }}
+      aria-expanded={showAlertsPopover}
+      aria-label={$_('sidebar.openAlerts')}
+      title={$_('sidebar.openAlerts')}
+    >
+      <svg
+        class="alerts-bell-icon"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      </svg>
+      {#if notifState.unreadCount > 0}
+        <span class="alerts-badge">{notifState.unreadCount > 99 ? '99+' : notifState.unreadCount}</span>
+      {/if}
+    </button>
+  {/snippet}
+
+  <AlertsPopover
+    open={showAlertsPopover}
+    anchorEl={alertsAnchorChat}
+    align={isCollapsed ? 'center' : 'start'}
+    onClose={() => {
+      showAlertsPopover = false;
+    }}
+    onNavigate={goToAlertsPage}
+  />
+
   <div class="sidebar-elevated-top">
     <div class="sidebar-header">
-    <div class="sidebar-brand">
-      {#if !isCollapsed}
-        <img src={grenginLogo} alt="Grengin" class="brand-logo" />
-        <div class="spacer"></div>
-        <button
-          class="burger-btn"
-          onclick={toggleSidebar}
-          aria-label={$_('sidebar.toggleSidebar')}
-          title={$_('sidebar.toggleSidebar')}
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" data-rtl-flip="" class="icon max-md:hidden"><path d="M6.83496 3.99992C6.38353 4.00411 6.01421 4.0122 5.69824 4.03801C5.31232 4.06954 5.03904 4.12266 4.82227 4.20012L4.62207 4.28606C4.18264 4.50996 3.81498 4.85035 3.55859 5.26848L3.45605 5.45207C3.33013 5.69922 3.25006 6.01354 3.20801 6.52824C3.16533 7.05065 3.16504 7.71885 3.16504 8.66301V11.3271C3.16504 12.2712 3.16533 12.9394 3.20801 13.4618C3.25006 13.9766 3.33013 14.2909 3.45605 14.538L3.55859 14.7216C3.81498 15.1397 4.18266 15.4801 4.62207 15.704L4.82227 15.79C5.03904 15.8674 5.31234 15.9205 5.69824 15.9521C6.01398 15.9779 6.383 15.986 6.83398 15.9902L6.83496 3.99992ZM18.165 11.3271C18.165 12.2493 18.1653 12.9811 18.1172 13.5702C18.0745 14.0924 17.9916 14.5472 17.8125 14.9648L17.7295 15.1415C17.394 15.8 16.8834 16.3511 16.2568 16.7353L15.9814 16.8896C15.5157 17.1268 15.0069 17.2285 14.4102 17.2773C13.821 17.3254 13.0893 17.3251 12.167 17.3251H7.83301C6.91071 17.3251 6.17898 17.3254 5.58984 17.2773C5.06757 17.2346 4.61294 17.1508 4.19531 16.9716L4.01855 16.8896C3.36014 16.5541 2.80898 16.0434 2.4248 15.4169L2.27051 15.1415C2.03328 14.6758 1.93158 14.167 1.88281 13.5702C1.83468 12.9811 1.83496 12.2493 1.83496 11.3271V8.66301C1.83496 7.74072 1.83468 7.00898 1.88281 6.41985C1.93157 5.82309 2.03329 5.31432 2.27051 4.84856L2.4248 4.57317C2.80898 3.94666 3.36012 3.436 4.01855 3.10051L4.19531 3.0175C4.61285 2.83843 5.06771 2.75548 5.58984 2.71281C6.17898 2.66468 6.91071 2.66496 7.83301 2.66496H12.167C13.0893 2.66496 13.821 2.66468 14.4102 2.71281C15.0069 2.76157 15.5157 2.86329 15.9814 3.10051L16.2568 3.25481C16.8833 3.63898 17.394 4.19012 17.7295 4.84856L17.8125 5.02531C17.9916 5.44285 18.0745 5.89771 18.1172 6.41985C18.1653 7.00898 18.165 7.74072 18.165 8.66301V11.3271ZM8.16406 15.995H12.167C13.1112 15.995 13.7794 15.9947 14.3018 15.9521C14.8164 15.91 15.1308 15.8299 15.3779 15.704L15.5615 15.6015C15.9797 15.3451 16.32 14.9774 16.5439 14.538L16.6299 14.3378C16.7074 14.121 16.7605 13.8478 16.792 13.4618C16.8347 12.9394 16.835 12.2712 16.835 11.3271V8.66301C16.835 7.71885 16.8347 7.05065 16.792 6.52824C16.7605 6.14232 16.7073 5.86904 16.6299 5.65227L16.5439 5.45207C16.32 5.01264 15.9796 4.64498 15.5615 4.3886L15.3779 4.28606C15.1308 4.16013 14.8165 4.08006 14.3018 4.03801C13.7794 3.99533 13.1112 3.99504 12.167 3.99504H8.16406C8.16407 3.99667 8.16504 3.99829 8.16504 3.99992L8.16406 15.995Z"></path></svg>
-        </button>
-        {:else}
-        <div class="collapsed-logo-container">
+      <div class="sidebar-brand">
+        {#if !isCollapsed}
+          <img src={grenginLogo} alt="Grengin" class="brand-logo" />
+          <div class="spacer"></div>
+          <div class="notifications-anchor brand-row-actions" bind:this={alertsAnchorChat}>
+            {@render alertsUi()}
+          </div>
           <button
-            class="logo-btn"
+            class="burger-btn"
             onclick={toggleSidebar}
             aria-label={$_('sidebar.toggleSidebar')}
             title={$_('sidebar.toggleSidebar')}
           >
-            <img src="/grengin-icon.svg" alt="Grengin" class="logo-icon" />
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" data-rtl-flip="" class="icon max-md:hidden"><path d="M6.83496 3.99992C6.38353 4.00411 6.01421 4.0122 5.69824 4.03801C5.31232 4.06954 5.03904 4.12266 4.82227 4.20012L4.62207 4.28606C4.18264 4.50996 3.81498 4.85035 3.55859 5.26848L3.45605 5.45207C3.33013 5.69922 3.25006 6.01354 3.20801 6.52824C3.16533 7.05065 3.16504 7.71885 3.16504 8.66301V11.3271C3.16504 12.2712 3.16533 12.9394 3.20801 13.4618C3.25006 13.9766 3.33013 14.2909 3.45605 14.538L3.55859 14.7216C3.81498 15.1397 4.18266 15.4801 4.62207 15.704L4.82227 15.79C5.03904 15.8674 5.31234 15.9205 5.69824 15.9521C6.01398 15.9779 6.383 15.986 6.83398 15.9902L6.83496 3.99992ZM18.165 11.3271C18.165 12.2493 18.1653 12.9811 18.1172 13.5702C18.0745 14.0924 17.9916 14.5472 17.8125 14.9648L17.7295 15.1415C17.394 15.8 16.8834 16.3511 16.2568 16.7353L15.9814 16.8896C15.5157 17.1268 15.0069 17.2285 14.4102 17.2773C13.821 17.3254 13.0893 17.3251 12.167 17.3251H7.83301C6.91071 17.3251 6.17898 17.3254 5.58984 17.2773C5.06757 17.2346 4.61294 17.1508 4.19531 16.9716L4.01855 16.8896C3.36014 16.5541 2.80898 16.0434 2.4248 15.4169L2.27051 15.1415C2.03328 14.6758 1.93158 14.167 1.88281 13.5702C1.83468 12.9811 1.83496 12.2493 1.83496 11.3271V8.66301C1.83496 7.74072 1.83468 7.00898 1.88281 6.41985C1.93157 5.82309 2.03329 5.31432 2.27051 4.84856L2.4248 4.57317C2.80898 3.94666 3.36012 3.436 4.01855 3.10051L4.19531 3.0175C4.61285 2.83843 5.06771 2.75548 5.58984 2.71281C6.17898 2.66468 6.91071 2.66496 7.83301 2.66496H12.167C13.0893 2.66496 13.821 2.66468 14.4102 2.71281C15.0069 2.76157 15.5157 2.86329 15.9814 3.10051L16.2568 3.25481C16.8833 3.63898 17.394 4.19012 17.7295 4.84856L17.8125 5.02531C17.9916 5.44285 18.0745 5.89771 18.1172 6.41985C18.1653 7.00898 18.165 7.74072 18.165 8.66301V11.3271ZM8.16406 15.995H12.167C13.1112 15.995 13.7794 15.9947 14.3018 15.9521C14.8164 15.91 15.1308 15.8299 15.3779 15.704L15.5615 15.6015C15.9797 15.3451 16.32 14.9774 16.5439 14.538L16.6299 14.3378C16.7074 14.121 16.7605 13.8478 16.792 13.4618C16.8347 12.9394 16.835 12.2712 16.835 11.3271V8.66301C16.835 7.71885 16.8347 7.05065 16.792 6.52824C16.7605 6.14232 16.7073 5.86904 16.6299 5.65227L16.5439 5.45207C16.32 5.01264 15.9796 4.64498 15.5615 4.3886L15.3779 4.28606C15.1308 4.16013 14.8165 4.08006 14.3018 4.03801C13.7794 3.99533 13.1112 3.99504 12.167 3.99504H8.16406C8.16407 3.99667 8.16504 3.99829 8.16504 3.99992L8.16406 15.995Z"></path></svg>
           </button>
-          <button
-            class="expand-btn"
-            onclick={toggleSidebar}
-            aria-label={$_('sidebar.expandSidebar')}
-            title={$_('sidebar.expandSidebar')}
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6.83496 3.99992C6.38353 4.00411 6.01421 4.0122 5.69824 4.03801C5.31232 4.06954 5.03904 4.12266 4.82227 4.20012L4.62207 4.28606C4.18264 4.50996 3.81498 4.85035 3.55859 5.26848L3.45605 5.45207C3.33013 5.69922 3.25006 6.01354 3.20801 6.52824C3.16533 7.05065 3.16504 7.71885 3.16504 8.66301V11.3271C3.16504 12.2712 3.16533 12.9394 3.20801 13.4618C3.25006 13.9766 3.33013 14.2909 3.45605 14.538L3.55859 14.7216C3.81498 15.1397 4.18266 15.4801 4.62207 15.704L4.82227 15.79C5.03904 15.8674 5.31234 15.9205 5.69824 15.9521C6.01398 15.9779 6.383 15.986 6.83398 15.9902L6.83496 3.99992ZM18.165 11.3271C18.165 12.2493 18.1653 12.9811 18.1172 13.5702C18.0745 14.0924 17.9916 14.5472 17.8125 14.9648L17.7295 15.1415C17.394 15.8 16.8834 16.3511 16.2568 16.7353L15.9814 16.8896C15.5157 17.1268 15.0069 17.2285 14.4102 17.2773C13.821 17.3254 13.0893 17.3251 12.167 17.3251H7.83301C6.91071 17.3251 6.17898 17.3254 5.58984 17.2773C5.06757 17.2346 4.61294 17.1508 4.19531 16.9716L4.01855 16.8896C3.36014 16.5541 2.80898 16.0434 2.4248 15.4169L2.27051 15.1415C2.03328 14.6758 1.93158 14.167 1.88281 13.5702C1.83468 12.9811 1.83496 12.2493 1.83496 11.3271V8.66301C1.83496 7.74072 1.83468 7.00898 1.88281 6.41985C1.93157 5.82309 2.03329 5.31432 2.27051 4.84856L2.4248 4.57317C2.80898 3.94666 3.36012 3.436 4.01855 3.10051L4.19531 3.0175C4.61285 2.83843 5.06771 2.75548 5.58984 2.71281C6.17898 2.66468 6.91071 2.66496 7.83301 2.66496H12.167C13.0893 2.66496 13.821 2.66468 14.4102 2.71281C15.0069 2.76157 15.5157 2.86329 15.9814 3.10051L16.2568 3.25481C16.8833 3.63898 17.394 4.19012 17.7295 4.84856L17.8125 5.02531C17.9916 5.44285 18.0745 5.89771 18.1172 6.41985C18.1653 7.00898 18.165 7.74072 18.165 8.66301V11.3271ZM8.16406 15.995H12.167C13.1112 15.995 13.7794 15.9947 14.3018 15.9521C14.8164 15.91 15.1308 15.8299 15.3779 15.704L15.5615 15.6015C15.9797 15.3451 16.32 14.9774 16.5439 14.538L16.6299 14.3378C16.7074 14.121 16.7605 13.8478 16.792 13.4618C16.8347 12.9394 16.835 12.2712 16.835 11.3271V8.66301C16.835 7.71885 16.8347 7.05065 16.792 6.52824C16.7605 6.14232 16.7073 5.86904 16.6299 5.65227L16.5439 5.45207C16.32 5.01264 15.9796 4.64498 15.5615 4.3886L15.3779 4.28606C15.1308 4.16013 14.8165 4.08006 14.3018 4.03801C13.7794 3.99533 13.1112 3.99504 12.167 3.99504H8.16406C8.16407 3.99667 8.16504 3.99829 8.16504 3.99992L8.16406 15.995Z"></path>
-            </svg>
-          </button>
-        </div>
-      {/if}
+        {:else}
+          <div class="collapsed-logo-container">
+            <button
+              class="logo-btn"
+              onclick={toggleSidebar}
+              aria-label={$_('sidebar.toggleSidebar')}
+              title={$_('sidebar.toggleSidebar')}
+            >
+              <img src="/grengin-icon.svg" alt="Grengin" class="logo-icon" />
+            </button>
+            <button
+              class="expand-btn"
+              onclick={toggleSidebar}
+              aria-label={$_('sidebar.expandSidebar')}
+              title={$_('sidebar.expandSidebar')}
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6.83496 3.99992C6.38353 4.00411 6.01421 4.0122 5.69824 4.03801C5.31232 4.06954 5.03904 4.12266 4.82227 4.20012L4.62207 4.28606C4.18264 4.50996 3.81498 4.85035 3.55859 5.26848L3.45605 5.45207C3.33013 5.69922 3.25006 6.01354 3.20801 6.52824C3.16533 7.05065 3.16504 7.71885 3.16504 8.66301V11.3271C3.16504 12.2712 3.16533 12.9394 3.20801 13.4618C3.25006 13.9766 3.33013 14.2909 3.45605 14.538L3.55859 14.7216C3.81498 15.1397 4.18266 15.4801 4.62207 15.704L4.82227 15.79C5.03904 15.8674 5.31234 15.9205 5.69824 15.9521C6.01398 15.9779 6.383 15.986 6.83398 15.9902L6.83496 3.99992ZM18.165 11.3271C18.165 12.2493 18.1653 12.9811 18.1172 13.5702C18.0745 14.0924 17.9916 14.5472 17.8125 14.9648L17.7295 15.1415C17.394 15.8 16.8834 16.3511 16.2568 16.7353L15.9814 16.8896C15.5157 17.1268 15.0069 17.2285 14.4102 17.2773C13.821 17.3254 13.0893 17.3251 12.167 17.3251H7.83301C6.91071 17.3251 6.17898 17.3254 5.58984 17.2773C5.06757 17.2346 4.61294 17.1508 4.19531 16.9716L4.01855 16.8896C3.36014 16.5541 2.80898 16.0434 2.4248 15.4169L2.27051 15.1415C2.03328 14.6758 1.93158 14.167 1.88281 13.5702C1.83468 12.9811 1.83496 12.2493 1.83496 11.3271V8.66301C1.83496 7.74072 1.83468 7.00898 1.88281 6.41985C1.93157 5.82309 2.03329 5.31432 2.27051 4.84856L2.4248 4.57317C2.80898 3.94666 3.36012 3.436 4.01855 3.10051L4.19531 3.0175C4.61285 2.83843 5.06771 2.75548 5.58984 2.71281C6.17898 2.66468 6.91071 2.66496 7.83301 2.66496H12.167C13.0893 2.66496 13.821 2.66468 14.4102 2.71281C15.0069 2.76157 15.5157 2.86329 15.9814 3.10051L16.2568 3.25481C16.8833 3.63898 17.394 4.19012 17.7295 4.84856L17.8125 5.02531C17.9916 5.44285 18.0745 5.89771 18.1172 6.41985C18.1653 7.00898 18.165 7.74072 18.165 8.66301V11.3271ZM8.16406 15.995H12.167C13.1112 15.995 13.7794 15.9947 14.3018 15.9521C14.8164 15.91 15.1308 15.8299 15.3779 15.704L15.5615 15.6015C15.9797 15.3451 16.32 14.9774 16.5439 14.538L16.6299 14.3378C16.7074 14.121 16.7605 13.8478 16.792 13.4618C16.8347 12.9394 16.835 12.2712 16.835 11.3271V8.66301C16.835 7.71885 16.8347 7.05065 16.792 6.52824C16.7605 6.14232 16.7073 5.86904 16.6299 5.65227L16.5439 5.45207C16.32 5.01264 15.9796 4.64498 15.5615 4.3886L15.3779 4.28606C15.1308 4.16013 14.8165 4.08006 14.3018 4.03801C13.7794 3.99533 13.1112 3.99504 12.167 3.99504H8.16406C8.16407 3.99667 8.16504 3.99829 8.16504 3.99992L8.16406 15.995Z"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="notifications-anchor notifications-anchor-collapsed" bind:this={alertsAnchorChat}>
+            {@render alertsUi()}
+          </div>
+        {/if}
+      </div>
     </div>
   </div>
 
-  <!-- Admin Header with back button -->
   {#if isAdminView}
     <div class="admin-sidebar-header">
       <div class="header-top">
         <button
           class="back-btn"
-          onclick={() => window.location.href = '/'}
+          onclick={() => (window.location.href = '/')}
           title={$_('sidebar.backToChat')}
           aria-label={$_('sidebar.backToChat')}
         >
@@ -690,7 +804,6 @@
 
     </nav>
   {/if}
-  </div>
 
   <!-- Divider between elevated top and scrollable content -->
   {#if !isCollapsed}
@@ -851,12 +964,12 @@
 
 {#if showUserMenu}
   <div class="user-menu-dropdown">
-    <a href="/settings" class="menu-item" onclick={() => closeUserMenu()}>
+    <a href="/settings" class="menu-item">
       <span class="user-menu-icon">⚙️</span>
       <span>{$_('sidebar.settings')}</span>
     </a>
-    {#if user?.role && (user?.role === 'superadmin' || user?.role === 'admin')}
-      <a href="/admin/users" class="menu-item">
+    {#if hasAdminPermissions}
+      <a href="/admin" class="menu-item">
         <span class="menu-item-icon">🔒</span>
         <span class="menu-item-label">{$_('sidebar.admin')}</span>
       </a>
@@ -1037,10 +1150,6 @@
     flex: 1;
   }
 
-  .admin-sidebar-nav a {
-    text-decoration: none;
-  }
-
   .sidebar-brand {
     display: flex;
     align-items: center;
@@ -1172,6 +1281,53 @@
     height: 28px;
     width: auto;
     object-fit: contain;
+  }
+
+  .notifications-anchor {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  /* Bell sits with the sidebar toggle on the right, like the legacy header */
+  .brand-row-actions {
+    display: flex;
+    align-items: center;
+  }
+
+  .notifications-anchor-collapsed {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .alerts-btn {
+    position: relative;
+  }
+
+  .alerts-btn-active {
+    background: var(--btn-quaternary);
+    color: var(--brand);
+  }
+
+  .alerts-bell-icon {
+    display: block;
+  }
+
+  .alerts-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 1.125rem;
+    height: 1.125rem;
+    padding: 0 4px;
+    border-radius: var(--radius-full);
+    background: var(--brand);
+    color: var(--bg-primary);
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1.125rem;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   }
 
   /* ===== Sidebar Navigation ===== */
@@ -1565,8 +1721,10 @@
   .chat-search-container .search-icon {
     position: absolute;
     left: var(--space-sm);
+    z-index: 1;
+    display: block;
     color: var(--text-secondary);
-    opacity: 0.6;
+    opacity: 0.75;
     transition: all 0.2s ease;
     pointer-events: none;
   }
@@ -1844,6 +2002,11 @@
 
     .user-menu-dropdown {
       left: var(--space-md);
+    }
+
+    /* Mobile notifications live in App's mobile header */
+    .alerts-btn {
+      display: none;
     }
   }
 

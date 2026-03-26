@@ -10,22 +10,22 @@
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
   import { _ } from "svelte-i18n";
+  import { permissionsStore } from "$lib/features/auth/index.js";
   
   let store = $state($departmentsStore);
   let selectedDepartment = $state<Department | null>(null);
   let showCreateModal = $state(false);
   let showEditModal = $state(false);
   let editingDepartment = $state<Department | null>(null);
+  const canManageDepartments = $derived(permissionsStore.canManageDepartments());
   
   $effect(() => {
     store = $departmentsStore;
   });
   
   onMount(() => {
-    // Use the optimized tree API for better performance
     departmentsStore.fetchDepartmentsTree();
-    // Also fetch flat list for operations like moving departments
-    departmentsStore.fetchDepartments();
+    departmentsStore.fetchAdministeredDepartments();
   });
   
   $effect(() => {
@@ -49,7 +49,7 @@
   $effect(() => {
     const current = selectedDepartment;
     if (current) {
-      const updated = store.departments.find(d => d.id === current.id);
+      const updated = store.administeredDepartments.find(d => d.id === current.id);
       if (updated && updated !== current) {
         selectedDepartment = updated;
       }
@@ -146,12 +146,14 @@
       <div class="tree-section">
         <div class="tree-header">
           <h2>{$_('admin.departments.organization')}</h2>
-          <button class="btn-primary" onclick={openCreateModal}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            {$_('admin.departments.createDepartment')}
-          </button>
+          {#if canManageDepartments}
+            <button class="btn-primary" onclick={openCreateModal}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              {$_('admin.departments.createDepartment')}
+            </button>
+          {/if}
         </div>
         
         <div class="tree-container">
@@ -169,16 +171,18 @@
               </svg>
               <h3>{$_('admin.departments.noDepartments')}</h3>
               <p>{$_('admin.departments.noDepartmentsDescription')}</p>
-              <button class="btn-primary" onclick={openCreateModal}>
-                {$_('admin.departments.createDepartment')}
-              </button>
+              {#if canManageDepartments}
+                <button class="btn-primary" onclick={openCreateModal}>
+                  {$_('admin.departments.createDepartment')}
+                </button>
+              {/if}
             </div>
           {:else}
             <div class="tree-list">
               {#each store.departmentsTree as dept (dept.id)}
                 <DepartmentTreeNode 
                   department={dept}
-                  allDepartments={store.departments}
+                  allDepartments={store.administeredDepartments}
                   onSelect={handleSelectDepartment}
                   selectedId={selectedDepartment?.id}
                   onMove={handleMoveDepartment}
@@ -193,7 +197,7 @@
         <div class="details-section">
           <DepartmentDetailsPanel 
             department={selectedDepartment}
-            allDepartments={store.departments}
+            allDepartments={store.administeredDepartments}
             onClose={handleCloseDetails}
             onEdit={openEditModal}
             onDelete={handleDeleteDepartment}
@@ -221,7 +225,7 @@
     isOpen={showCreateModal}
     onClose={() => showCreateModal = false}
     onSubmit={handleCreateDepartment}
-    allDepartments={store.departments}
+    allDepartments={store.administeredDepartments}
     mode="create"
   />
 {/if}
@@ -232,7 +236,7 @@
     onClose={() => { showEditModal = false; editingDepartment = null; }}
     onSubmit={handleUpdateDepartment}
     department={editingDepartment}
-    allDepartments={store.departments}
+    allDepartments={store.administeredDepartments}
     mode="edit"
   />
 {/if}
@@ -372,9 +376,7 @@
     color: var(--text-secondary);
     font-size: 14px;
     margin: 0;
-  }
-  
- 
+  } 
   
   @media (max-width: 1024px) {
     .departments-layout {
