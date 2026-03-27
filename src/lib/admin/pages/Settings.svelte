@@ -62,6 +62,7 @@
     width: 100%;
     background: var(--bg-primary);
     padding: var(--space-3xl);
+    overflow-y: auto;
   }
 
   /* Tab content */

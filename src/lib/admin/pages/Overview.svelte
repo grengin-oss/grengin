@@ -290,6 +290,8 @@
     padding: var(--space-3xl);
     max-width: 1600px;
     margin: 0 auto;
+    overflow-y: auto;
+    height: 100%;
   }
 
   .loading-container {

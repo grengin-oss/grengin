@@ -549,7 +549,6 @@ button:focus-visible, .btn:focus-visible {
 .tabs {
   display: flex;
   gap: var(--space-sm);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: var(--space-2xl);
   flex-wrap: wrap;
 }
@@ -629,8 +628,8 @@ button:focus-visible, .btn:focus-visible {
 }
 
 .tag--danger {
-  background: color-mix(in oklab, var(--glass-bg-dark) 90%, var(--danger-surface));
-  border-color: color-mix(in oklab, var(--brand-red) 15%, transparent);
+  background: color-mix(in oklab, var(--glass-bg-dark) 50%, var(--danger-surface));
+  border-color: color-mix(in oklab, var(--brand-red) 50%, transparent);
   color: var(--brand-red);
   box-shadow:
     var(--glass-highlight),

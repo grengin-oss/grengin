@@ -734,6 +734,7 @@
             <button
               class="sidebar-item"
               class:active={currentPath === item.path || currentPath.startsWith(item.path + '/')}
+              onclick={collapseSidebarOnMobile}
               title={item.label}
             >
               {#if item.icon}
@@ -1086,7 +1087,6 @@
   /* ===== Admin Sidebar Header ===== */
   .admin-sidebar-header {
     padding: 1rem 1rem 0 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .header-top {

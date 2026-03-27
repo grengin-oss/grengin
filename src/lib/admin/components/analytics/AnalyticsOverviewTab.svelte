@@ -19,6 +19,8 @@
   }
 
   let { overviewData, timeseriesData, isLoading, chartsLoading, comparisonPeriodLabel, error, onRetry, granularity, onGranularityChange }: Props = $props();
+  let chartsGridEl = $state<HTMLDivElement | null>(null);
+  let resizeRerenderTimer: ReturnType<typeof setTimeout> | null = null;
 
   function formatNumber(num: number): string {
     if (num >= 1000000) {
@@ -49,11 +51,46 @@
     setTimeout(() => renderCostTrendChart(), 200);
   }
 
+  function scheduleChartsRerender() {
+    if (chartsLoading || !timeseriesData || !timeseriesData.data || timeseriesData.data.length === 0) return;
+    if (resizeRerenderTimer) clearTimeout(resizeRerenderTimer);
+
+    // Debounce resize-driven renders to prevent thrashing while dragging window size.
+    resizeRerenderTimer = setTimeout(() => {
+      tick().then(() => renderCharts());
+    }, 120);
+  }
+
+  function getChartConfig() {
+    const styles = getComputedStyle(document.documentElement);
+    const textPrimary = styles.getPropertyValue('--text-primary').trim() || '#111827';
+    const textSecondary = styles.getPropertyValue('--text-secondary').trim() || '#6b7280';
+    const gridStroke = styles.getPropertyValue('--glass-stroke-dark').trim() || 'rgba(148, 163, 184, 0.24)';
+
+    return {
+      background: 'transparent',
+      view: { stroke: null },
+      axis: {
+        domainColor: gridStroke,
+        tickColor: gridStroke,
+        gridColor: gridStroke,
+        labelColor: textSecondary,
+        titleColor: textPrimary,
+        labelFontSize: 11,
+        titleFontSize: 12
+      },
+      legend: {
+        labelColor: textSecondary,
+        titleColor: textPrimary
+      }
+    };
+  }
+
   function renderMultiMetricChart() {
     const el = document.getElementById('multi-metric-chart');
     if (!timeseriesData || !el) return;
 
-    const spec = {
+    const spec: any = {
       $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
       width: 'container',
       height: 280,
@@ -88,10 +125,7 @@
           }
         }
       ],
-      config: {
-        background: 'transparent',
-        view: { stroke: null }
-      }
+      config: getChartConfig()
     };
 
     embed(el, spec, { actions: false, renderer: 'svg' }).catch(console.error);
@@ -101,7 +135,7 @@
     const el = document.getElementById('requests-tokens-chart');
     if (!timeseriesData || !el) return;
 
-    const spec = {
+    const spec: any = {
       $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
       width: 'container',
       height: 280,
@@ -147,10 +181,7 @@
           }
         }
       ],
-      config: {
-        background: 'transparent',
-        view: { stroke: null }
-      }
+      config: getChartConfig()
     };
 
     embed(el, spec, { actions: false, renderer: 'svg' }).catch(console.error);
@@ -160,7 +191,7 @@
     const el = document.getElementById('success-error-chart');
     if (!timeseriesData || !el) return;
 
-    const spec = {
+    const spec: any = {
       $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
       width: 'container',
       height: 280,
@@ -194,10 +225,7 @@
         { fold: ['success_count', 'error_count'], as: ['type', 'value'] },
         { calculate: "datum.type === 'success_count' ? 'Success' : 'Errors'", as: 'type' }
       ],
-      config: {
-        background: 'transparent',
-        view: { stroke: null }
-      }
+      config: getChartConfig()
     };
 
     embed(el, spec, { actions: false, renderer: 'svg' }).catch(console.error);
@@ -207,7 +235,7 @@
     const el = document.getElementById('cost-trend-chart');
     if (!timeseriesData || !el) return;
 
-    const spec = {
+    const spec: any = {
       $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
       width: 'container',
       height: 280,
@@ -249,10 +277,7 @@
           }
         }
       ],
-      config: {
-        background: 'transparent',
-        view: { stroke: null }
-      }
+      config: getChartConfig()
     };
 
     embed(el, spec, { actions: false, renderer: 'svg' }).catch(console.error);
@@ -263,6 +288,27 @@
     if (!chartsLoading && timeseriesData && timeseriesData.data && timeseriesData.data.length > 0) {
       tick().then(() => renderCharts());
     }
+  });
+
+  // Keep Vega charts in sync with card width changes.
+  $effect(() => {
+    if (!chartsGridEl || chartsLoading || !timeseriesData || !timeseriesData.data || timeseriesData.data.length === 0) {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      scheduleChartsRerender();
+    });
+
+    observer.observe(chartsGridEl);
+
+    return () => {
+      observer.disconnect();
+      if (resizeRerenderTimer) {
+        clearTimeout(resizeRerenderTimer);
+        resizeRerenderTimer = null;
+      }
+    };
   });
 </script>
 
@@ -434,7 +480,7 @@
           <p class="empty-state-hint">{$_('analytics.charts.emptyState.hint')}</p>
         </div>
       {:else}
-      <div class="charts-grid">
+      <div class="charts-grid" bind:this={chartsGridEl}>
         <div class="chart-card">
           <div class="chart-header">
             <div class="chart-icon" style="background: rgba(64, 121, 197, 0.1);">
@@ -746,6 +792,8 @@
     box-shadow: var(--glass-shadow-dark);
     transition: all 0.3s ease;
     min-height: 420px; /* Prevent layout shift during loading/re-render */
+    min-width: 0;
+    overflow: hidden;
   }
 
   .chart-card:hover {
@@ -812,6 +860,22 @@
     min-height: 280px;
     width: 100%;
     position: relative;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  :global(.chart-container .vega-embed) {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  :global(.chart-container .vega-embed > *) {
+    max-width: 100%;
+  }
+
+  :global(.chart-container svg) {
+    display: block;
+    max-width: 100%;
   }
 
   .chart-loading {
