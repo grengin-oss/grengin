@@ -12,18 +12,80 @@
   import { _ } from "svelte-i18n";
   import { permissionsStore } from "$lib/features/auth/index.js";
   
-  let store = $state($departmentsStore);
-  let selectedDepartment = $state<Department | null>(null);
+  const SELECTED_DEPARTMENT_QUERY_KEY = "departmentId";
+  const store = $derived($departmentsStore);
+  /** Selection is id-only; full row comes from store via $derived (no sync effect). */
+  let selectedDepartmentId = $state<string | null>(null);
+  let requestedDepartmentId = $state<string | null>(null);
+  let initialExpandedDepartmentIds = $state<Set<string>>(new Set());
+  let hasAppliedInitialExpansion = $state(false);
+  let hasResolvedInitialSelection = $state(false);
+
+  const selectedDepartment = $derived.by((): Department | null => {
+    const id = selectedDepartmentId;
+    if (!id) return null;
+    const fromAdmin = store.administeredDepartments.find((d) => d.id === id);
+    if (fromAdmin) return fromAdmin;
+    return findDepartmentInTree(store.departmentsTree, id);
+  });
   let showCreateModal = $state(false);
   let showEditModal = $state(false);
   let editingDepartment = $state<Department | null>(null);
   const canManageDepartments = $derived(permissionsStore.canManageDepartments());
-  
-  $effect(() => {
-    store = $departmentsStore;
-  });
+
+  function findDepartmentInTree(
+    departments: Department[],
+    departmentId: string
+  ): Department | null {
+    for (const department of departments) {
+      if (department.id === departmentId) {
+        return department;
+      }
+      if (department.children?.length) {
+        const nestedMatch = findDepartmentInTree(department.children, departmentId);
+        if (nestedMatch) {
+          return nestedMatch;
+        }
+      }
+    }
+    return null;
+  }
+
+  function syncSelectedDepartmentToUrl(departmentId: string | null) {
+    const url = new URL(window.location.href);
+    const current = url.searchParams.get(SELECTED_DEPARTMENT_QUERY_KEY);
+    if (departmentId) {
+      if (current !== departmentId) {
+        url.searchParams.set(SELECTED_DEPARTMENT_QUERY_KEY, departmentId);
+        window.history.replaceState(window.history.state, "", url.toString());
+      }
+    } else if (current != null) {
+      url.searchParams.delete(SELECTED_DEPARTMENT_QUERY_KEY);
+      window.history.replaceState(window.history.state, "", url.toString());
+    }
+  }
+
+  function getExpandedPathIds(
+    department: Department | null,
+    allDepartments: Department[]
+  ): Set<string> {
+    const expandedIds = new Set<string>();
+    if (!department) return expandedIds;
+
+    const byId = new Map(allDepartments.map((d) => [d.id, d]));
+    let current: Department | undefined = department;
+
+    while (current && current.parent_id) {
+      expandedIds.add(current.parent_id);
+      current = current.parent_id ? byId.get(current.parent_id) : undefined;
+    }
+
+    return expandedIds;
+  }
   
   onMount(() => {
+    const params = new URLSearchParams(window.location.search);
+    requestedDepartmentId = params.get(SELECTED_DEPARTMENT_QUERY_KEY);
     departmentsStore.fetchDepartmentsTree();
     departmentsStore.fetchAdministeredDepartments();
   });
@@ -38,30 +100,45 @@
     }
   });
   
-  
+  // Initial selection + one-shot URL expansion path
   $effect(() => {
-    if (!selectedDepartment && store.departmentsTree.length > 0 && !store.loading) {
-      selectedDepartment = store.departmentsTree[0];
+    if (!hasResolvedInitialSelection && store.departmentsTree.length > 0 && !store.loading) {
+      let picked: Department | null = null;
+      if (requestedDepartmentId) {
+        picked = findDepartmentInTree(store.departmentsTree, requestedDepartmentId);
+      }
+      if (!picked) {
+        picked = store.departmentsTree[0];
+      }
+      selectedDepartmentId = picked.id;
+      hasResolvedInitialSelection = true;
+      syncSelectedDepartmentToUrl(selectedDepartmentId);
     }
-  });
 
-  // Keep selectedDepartment in sync with store updates
-  $effect(() => {
-    const current = selectedDepartment;
-    if (current) {
-      const updated = store.administeredDepartments.find(d => d.id === current.id);
-      if (updated && updated !== current) {
-        selectedDepartment = updated;
+    if (
+      !hasAppliedInitialExpansion &&
+      requestedDepartmentId &&
+      selectedDepartmentId === requestedDepartmentId &&
+      store.administeredDepartments.length > 0
+    ) {
+      const dept =
+        store.administeredDepartments.find((d) => d.id === selectedDepartmentId) ??
+        findDepartmentInTree(store.departmentsTree, selectedDepartmentId);
+      if (dept) {
+        initialExpandedDepartmentIds = getExpandedPathIds(dept, store.administeredDepartments);
+        hasAppliedInitialExpansion = true;
       }
     }
   });
   
   function handleSelectDepartment(dept: Department) {
-    selectedDepartment = dept;
+    selectedDepartmentId = dept.id;
+    syncSelectedDepartmentToUrl(dept.id);
   }
   
   function handleCloseDetails() {
-    selectedDepartment = null;
+    selectedDepartmentId = null;
+    syncSelectedDepartmentToUrl(null);
   }
   
   function openCreateModal() {
@@ -77,7 +154,7 @@
     name: string; 
     description: string; 
     parent_id: string | null; 
-    leader_ids: string[] 
+    admin_ids: string[] 
   }) {
     try {
       await departmentsStore.createDepartment(data);
@@ -96,7 +173,7 @@
     name: string; 
     description: string; 
     parent_id: string | null; 
-    leader_ids: string[] 
+    admin_ids: string[] 
   }) {
     if (!editingDepartment) return;
     
@@ -118,7 +195,8 @@
     try {
       await departmentsStore.deleteDepartment(dept.id);
       toast.success($_('admin.departments.departmentDeleted'));
-      selectedDepartment = null;
+      selectedDepartmentId = null;
+      syncSelectedDepartmentToUrl(null);
     } catch (error) {
       const errorMessage = error instanceof ApiError 
         ? getLocalizedError(error, 'description', $_) 
@@ -185,6 +263,8 @@
                   allDepartments={store.administeredDepartments}
                   onSelect={handleSelectDepartment}
                   selectedId={selectedDepartment?.id}
+                  shouldExpandOnInitialRender={initialExpandedDepartmentIds.has(dept.id)}
+                  {initialExpandedDepartmentIds}
                   onMove={handleMoveDepartment}
                 />
               {/each}

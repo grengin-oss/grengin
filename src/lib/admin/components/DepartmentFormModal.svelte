@@ -6,7 +6,7 @@
   interface Props {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: { name: string; description: string; parent_id: string | null; leader_ids: string[] }) => Promise<void>;
+    onSubmit: (data: { name: string; description: string; parent_id: string | null; admin_ids: string[] }) => Promise<void>;
     department?: Department | null;
     allDepartments: Department[];
     mode: 'create' | 'edit';
@@ -18,7 +18,7 @@
     name: '',
     description: '',
     parent_id: null as string | null,
-    leader_ids: [] as string[],
+    admin_ids: [] as string[],
   });
   
   let formErrors = $state<Record<string, string>>({});
@@ -31,14 +31,14 @@
           name: department.name,
           description: department.description,
           parent_id: department.parent_id,
-          leader_ids: [...department.leader_ids],
+          admin_ids: [...department.admin_ids],
         };
       } else {
         formData = {
           name: '',
           description: '',
           parent_id: null,
-          leader_ids: [],
+          admin_ids: [],
         };
       }
       formErrors = {};

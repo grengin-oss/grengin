@@ -87,7 +87,7 @@ function createDepartmentsStore() {
         ]);
         update(state => ({
           ...state,
-          departments: flatResponse.departments,
+          administeredDepartments: flatResponse.departments,
           departmentsTree: treeResponse.tree,
           total: flatResponse.total,
           loading: false,
@@ -113,7 +113,7 @@ function createDepartmentsStore() {
         ]);
         update(state => ({
           ...state,
-          departments: flatResponse.departments,
+          administeredDepartments: flatResponse.departments,
           departmentsTree: treeResponse.tree,
           total: flatResponse.total,
           selectedDepartment: state.selectedDepartment?.id === departmentId 
@@ -142,7 +142,7 @@ function createDepartmentsStore() {
         ]);
         update(state => ({
           ...state,
-          departments: flatResponse.departments,
+          administeredDepartments: flatResponse.departments,
           departmentsTree: treeResponse.tree,
           total: flatResponse.total,
           selectedDepartment: state.selectedDepartment?.id === departmentId 
@@ -170,7 +170,7 @@ function createDepartmentsStore() {
         ]);
         update(state => ({
           ...state,
-          departments: flatResponse.departments,
+          administeredDepartments: flatResponse.departments,
           departmentsTree: treeResponse.tree,
           total: flatResponse.total,
           selectedDepartment: state.selectedDepartment?.id === departmentId 
@@ -199,7 +199,7 @@ function createDepartmentsStore() {
         ]);
         update(state => ({
           ...state,
-          departments: flatResponse.departments,
+          administeredDepartments: flatResponse.departments,
           departmentsTree: treeResponse.tree,
           total: flatResponse.total,
           selectedDepartment: state.selectedDepartment?.id === departmentId 

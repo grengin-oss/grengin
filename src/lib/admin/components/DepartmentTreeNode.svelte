@@ -7,12 +7,14 @@
     allDepartments?: Department[];
     onSelect: (dept: Department) => void;
     selectedId?: string;
+    shouldExpandOnInitialRender?: boolean;
+    initialExpandedDepartmentIds?: Set<string>;
     onMove?: (deptId: string, newParentId: string | null) => void;
   }
   
-  let { department, allDepartments = [], onSelect, selectedId, onMove }: Props = $props();
+  let { department, allDepartments = [], onSelect, selectedId, shouldExpandOnInitialRender = false, initialExpandedDepartmentIds = new Set<string>(), onMove }: Props = $props();
   
-  let isExpanded = $state(true);
+  let isExpanded = $state(shouldExpandOnInitialRender);
   let isDragOver = $state(false);
   
   const budgetStatus = $derived(() => {
@@ -73,6 +75,13 @@
     }
     return false;
   }
+
+  // Expand this node only from initial, precomputed selected path.
+  $effect(() => {
+    if (shouldExpandOnInitialRender && department.children?.length) {
+      isExpanded = true;
+    }
+  });
 </script>
 
 <div class="department-node">
@@ -144,6 +153,8 @@
           {allDepartments}
           {onSelect}
           {selectedId}
+          shouldExpandOnInitialRender={initialExpandedDepartmentIds.has(child.id)}
+          {initialExpandedDepartmentIds}
           {onMove}
         />
       {/each}
