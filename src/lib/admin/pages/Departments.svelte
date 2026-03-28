@@ -31,6 +31,8 @@
   let showCreateModal = $state(false);
   let showEditModal = $state(false);
   let editingDepartment = $state<Department | null>(null);
+  /** Narrow layout only: collapsible org tree (CSS gates visibility of toggle + collapsed body). */
+  let mobileTreeExpanded = $state(true);
   const canManageDepartments = $derived(permissionsStore.canManageDepartments());
 
   function findDepartmentInTree(
@@ -221,8 +223,35 @@
 <div class="departments-page">
   <div class="page-content">
     <div class="departments-layout">
-      <div class="tree-section">
+      <div class="tree-section" class:mobile-tree-collapsed={!mobileTreeExpanded}>
         <div class="tree-header">
+          <button
+            type="button"
+            class="tree-mobile-toggle"
+            onclick={() => (mobileTreeExpanded = !mobileTreeExpanded)}
+            aria-expanded={mobileTreeExpanded}
+            aria-controls="departments-tree-panel"
+            aria-label={mobileTreeExpanded
+              ? $_("admin.departments.collapseOrganizationTree")
+              : $_("admin.departments.expandOrganizationTree")}
+          >
+            <svg
+              class="tree-mobile-toggle-chevron"
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M6 8L10 12L14 8"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
           <h2>{$_('admin.departments.organization')}</h2>
           {#if canManageDepartments}
             <button class="btn-primary" onclick={openCreateModal}>
@@ -234,7 +263,7 @@
           {/if}
         </div>
         
-        <div class="tree-container">
+        <div class="tree-container" id="departments-tree-panel">
           {#if store.loading && store.departmentsTree.length === 0}
             <div class="loading-state">
               <LoadingSpinner />
@@ -331,15 +360,18 @@
   
   .page-content {
     flex: 1;
-    overflow: hidden;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 24px;
   }
   
   .departments-layout {
     display: grid;
-    grid-template-columns: 400px 1fr;
+    grid-template-columns: minmax(260px, 400px) minmax(0, 1fr);
     gap: 24px;
-    height: 100%;
+    align-items: start;
   }
   
   .tree-section {
@@ -355,22 +387,60 @@
   
   .tree-header {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
     align-items: center;
+    gap: 10px;
     padding: 20px;
     border-bottom: 1px solid var(--glass-stroke-dark);
   }
+
+  .tree-mobile-toggle {
+    display: none;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin: -8px 0 -8px -8px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--btn-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .tree-mobile-toggle:hover {
+    background: var(--button-bg);
+  }
+
+  .tree-mobile-toggle:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  .tree-mobile-toggle-chevron {
+    transition: transform 0.2s ease;
+  }
+
+  .tree-section.mobile-tree-collapsed .tree-mobile-toggle-chevron {
+    transform: rotate(-90deg);
+  }
   
   .tree-header h2 {
+    flex: 1;
     font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
   }
+
+  .tree-header .btn-primary {
+    align-self: flex-end;
+  }
   
   .tree-container {
-    flex: 1;
-    overflow-y: auto;
     padding: 16px;
   }
   
@@ -422,6 +492,7 @@
   }
   
   .details-section {
+    min-width: 0;
     background: var(--glass-bg-dark);
     backdrop-filter: blur(var(--glass-blur));
     border-radius: var(--radius-lg);
@@ -429,7 +500,7 @@
     border: 1px solid var(--glass-stroke-dark);
     overflow: hidden;
   }
-  
+
   .details-section.placeholder {
     display: flex;
     align-items: center;
@@ -459,23 +530,34 @@
   } 
   
   @media (max-width: 1024px) {
-    .departments-layout {
-      grid-template-columns: 1fr;
+    .page-content {
+      padding: 16px;
     }
-    
-    .details-section {
+
+    .departments-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tree-section, .details-section {
+      width: 100%;
+    }
+
+    .tree-mobile-toggle {
+      display: flex;
+    }
+
+    .tree-section.mobile-tree-collapsed .tree-container {
       display: none;
     }
-    
-    .details-section:not(.placeholder) {
-      display: block;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 50;
-      border-radius: 0;
+
+    .tree-section.mobile-tree-collapsed .tree-header {
+      border-bottom: none;
+    }
+
+    .tree-header {
+      flex-wrap: wrap;
     }
   }
 </style>

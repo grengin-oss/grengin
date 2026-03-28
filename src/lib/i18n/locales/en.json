@@ -252,6 +252,8 @@
       "failedToDelete": "Failed to delete department",
       "failedToMove": "Failed to move department",
       "failedToFetch": "Failed to fetch departments",
+      "expandOrganizationTree": "Show organization tree",
+      "collapseOrganizationTree": "Hide organization tree",
       "budgetManagement": "Budget Management",
       "budgetOverview": "Budget Overview",
       "currentBudget": "Current Budget",

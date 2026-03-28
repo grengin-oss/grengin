@@ -252,6 +252,8 @@
       "failedToDelete": "Falha ao excluir departamento",
       "failedToMove": "Falha ao mover departamento",
       "failedToFetch": "Falha ao buscar departamentos",
+      "expandOrganizationTree": "Mostrar árvore da organização",
+      "collapseOrganizationTree": "Ocultar árvore da organização",
       "budgetManagement": "Gerenciamento de orçamento",
       "budgetOverview": "Visão geral do orçamento",
       "currentBudget": "Orçamento atual",

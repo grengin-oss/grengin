@@ -252,6 +252,8 @@
       "failedToDelete": "부서 삭제 실패",
       "failedToMove": "부서 이동 실패",
       "failedToFetch": "부서 가져오기 실패",
+      "expandOrganizationTree": "조직 트리 표시",
+      "collapseOrganizationTree": "조직 트리 숨기기",
       "budgetManagement": "예산 관리",
       "budgetOverview": "예산 개요",
       "currentBudget": "현재 예산",

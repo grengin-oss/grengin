@@ -252,6 +252,8 @@
       "failedToDelete": "Échec de la suppression du département",
       "failedToMove": "Échec du déplacement du département",
       "failedToFetch": "Échec de la récupération des départements",
+      "expandOrganizationTree": "Afficher l’arborescence",
+      "collapseOrganizationTree": "Masquer l’arborescence",
       "budgetManagement": "Gestion du budget",
       "budgetOverview": "Vue d'ensemble du budget",
       "currentBudget": "Budget actuel",
