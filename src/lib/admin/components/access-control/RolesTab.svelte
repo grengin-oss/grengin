@@ -399,9 +399,11 @@
             <div class="role-actions">
               {#if canAssignRoles}
                 <button
+                  type="button"
                   class="btn-role-action btn-add"
                   onclick={() => openAddUser(role.id)}
                   title={$_("admin.accessControl.addUser")}
+                  aria-label={$_("admin.accessControl.addUser")}
                 >
                   <svg
                     width="16"
@@ -410,17 +412,20 @@
                     fill="none"
                     stroke="currentColor"
                     stroke-width="1.5"
+                    aria-hidden="true"
                   >
                     <path d="M8 3v10M3 8h10" stroke-linecap="round" />
                   </svg>
-                  {$_("admin.accessControl.addUser")}
+                  <span class="btn-role-action-label">{$_("admin.accessControl.addUser")}</span>
                 </button>
               {/if}
               {#if canManageRoles && canEditRole(role)}
                 <button
+                  type="button"
                   class="btn-role-action"
                   onclick={() => openEditRole(role)}
                   title={$_("admin.accessControl.editRole")}
+                  aria-label={$_("admin.accessControl.editRole")}
                 >
                   <svg
                     width="16"
@@ -429,19 +434,22 @@
                     fill="none"
                     stroke="currentColor"
                     stroke-width="1.5"
+                    aria-hidden="true"
                   >
                     <path
                       d="M11.5 2.5a1.5 1.5 0 0 1 2.12 2.12L5 11.25v2.25h2.25l6.62-6.62a1.5 1.5 0 0 0-2.12-2.12L5.25 11"
                     />
                   </svg>
-                  {$_("common.edit")}
+                  <span class="btn-role-action-label">{$_("common.edit")}</span>
                 </button>
               {/if}
               {#if canManageRoles && canDeleteRole(role)}
                 <button
+                  type="button"
                   class="btn-role-action btn-delete"
                   onclick={() => (roleToDelete = role)}
                   title={$_("admin.accessControl.deleteRole")}
+                  aria-label={$_("admin.accessControl.deleteRole")}
                 >
                   <svg
                     width="16"
@@ -450,13 +458,14 @@
                     fill="none"
                     stroke="currentColor"
                     stroke-width="1.5"
+                    aria-hidden="true"
                   >
                     <path
                       d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1m2 0v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4h10z"
                     />
                     <path d="M6 7v4M10 7v4" />
                   </svg>
-                  {$_("common.delete")}
+                  <span class="btn-role-action-label">{$_("common.delete")}</span>
                 </button>
               {/if}
             </div>
@@ -928,6 +937,18 @@
     background: rgba(var(--brand-red-rgb), 0.1);
     color: var(--brand-red);
     border-color: rgba(var(--brand-red-rgb), 0.3);
+  }
+
+  @media (max-width: 640px) {
+    .btn-role-action-label {
+      display: none;
+    }
+
+    .btn-role-action {
+      gap: 0;
+      padding: var(--space-xs);
+      justify-content: center;
+    }
   }
 
   .role-name {

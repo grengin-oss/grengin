@@ -131,6 +131,11 @@
 </div>
 
 <style>
+  /* Keep tab list visible in column flex layouts (e.g. admin pages with height: 100%) */
+  .tabs {
+    flex-shrink: 0;
+  }
+
   @media (max-width: 768px) {
     .tabs {
       overflow-x: auto;

@@ -153,8 +153,6 @@
 
   .access-control-content {
     padding: var(--space-sm);
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-lg);
     outline: none;
     min-height: 200px;
