@@ -553,8 +553,16 @@
   function updateSelectedChatFromUrl() {
     const params = new URLSearchParams(window.location.search);
     const chatId = params.get('chatId');
-    selectedChatId = chatId;
+    
+    // Only the chat page (`/`) should display a selected chat.
+    selectedChatId = currentPath === '/' && !isAdminView ? chatId : null;
   }
+
+  // Keep chat selection in sync with route changes (e.g. navigating to `/alerts` clears selection)
+  $effect(() => {
+    currentPath;
+    void updateSelectedChatFromUrl();
+  });
 
   // Fetch chats on component mount
   $effect(() => {
