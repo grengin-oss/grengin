@@ -637,6 +637,18 @@ button:focus-visible, .btn:focus-visible {
     0 0.125rem 0.5rem rgba(var(--brand-red-rgb), 0.08);
 }
 
+@media (prefers-color-scheme: dark) {
+  .tag--danger {
+    background: color-mix(in oklab, #FFD4D4 90%, var(--danger-surface));
+    color: color-mix(in oklab, #520000 90%, var(--brand-red) 10%);
+    border: 1px solid color-mix(in oklab, #420000 90%, var(--brand-red) 10%);
+    box-shadow:
+      var(--glass-highlight),
+      0 0 0 1px color-mix(in oklab, #712020 35%, transparent),
+      0 0.125rem 0.5rem rgba(var(--brand-red-rgb), 0.12);
+  }
+}
+
 /* Removable tag with close button */
 .tag--removable {
   padding-right: 0.375rem;

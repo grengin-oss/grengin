@@ -27,20 +27,19 @@ function createPermissionsStore() {
   }
 
   async function fetchPermissions() {
-    if (isLoading || !authState.isAuthenticated) return;
+    if (isLoading || !authState.isAuthenticated || hasFetched) return;
     isLoading = true;
     error = null;
     try {
       const response = await getMyPermissions();
       permissions = response.permissions ?? {};
-      hasFetched = true;
     } catch (err) {
       error = err;
       permissions = {};
-      hasFetched = false;
       throw err;
     } finally {
       isLoading = false;
+      hasFetched = true;
     }
   }
 
