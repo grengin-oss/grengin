@@ -6,6 +6,8 @@
   import AdminEmptyState from "../components/AdminEmptyState.svelte";
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
   import Modal from "../components/Modal.svelte";
+  import ServerAccessPanel from "../components/mcp/ServerAccessPanel.svelte";
+  import ToolAccessPanel from "../components/mcp/ToolAccessPanel.svelte";
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
@@ -33,6 +35,8 @@
   let connectingServerId = $state<string | null>(null);
   let showClientSecret = $state(false);
   let viewMode = $state<"grid" | "table">("table");
+  let selectedServer = $state<MCPServer | null>(null);
+  let detailTab = $state<"access" | "tools">("access");
 
   let formData = $state({
     name: "",
@@ -73,6 +77,15 @@
     }
 
     return status ?? "";
+  }
+
+  function openServerDetail(server: MCPServer) {
+    selectedServer = server;
+    detailTab = "access";
+  }
+
+  function closeServerDetail() {
+    selectedServer = null;
   }
 
   function openCreateModal() {
@@ -309,23 +322,94 @@
   onMount(() => {
     loadServers();
   });
+
+  async function handleDeleteFromDetail() {
+    if (!selectedServer || isDeleting) return;
+    serverToDelete = selectedServer;
+    isConfirmOpen = true;
+  }
 </script>
 
 <div class="mcp-servers-container">
-  <PageHeader
-    title={$_("admin.mcpServers.title")}
-    subtitle={$_("admin.mcpServers.subtitle")}
-  >
-    {#snippet children()}
-      <button class="btn-primary" onclick={openCreateModal}>
-        + {$_("admin.mcpServers.addServer")}
-      </button>
-    {/snippet}
-  </PageHeader>
+  {#if selectedServer}
+    <!-- Server Detail View -->
+    <div class="detail-view">
+      <div class="detail-header">
+        <button class="detail-back-btn" onclick={closeServerDetail}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          <span>{$_("admin.mcpAccess.backToServers")}</span>
+        </button>
+        <div class="detail-title-row">
+          <div class="detail-title-group">
+            <h2 class="detail-server-name">{selectedServer.name}</h2>
+            <span
+              class="detail-status"
+              class:detail-status--connected={selectedServer.status === "connected"}
+              class:detail-status--disconnected={selectedServer.status === "disconnected"}
+            >
+              <span class="detail-status-dot"></span>
+              {getLocalizedStatus(selectedServer.status)}
+            </span>
+          </div>
+          {#if selectedServer.description}
+            <p class="detail-description">{selectedServer.description}</p>
+          {/if}
+        </div>
+      </div>
 
-  {#if !isLoading && servers.length > 0}
-    <div class="view-toggle-bar">
-      <div class="view-toggle" role="group" aria-label="View mode">
+      <div class="detail-tabs" role="tablist">
+        <button
+          class="detail-tab"
+          class:detail-tab--active={detailTab === "access"}
+          onclick={() => detailTab = "access"}
+          role="tab"
+          aria-selected={detailTab === "access"}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span>{$_("admin.mcpAccess.tabAccess")}</span>
+        </button>
+        <button
+          class="detail-tab"
+          class:detail-tab--active={detailTab === "tools"}
+          onclick={() => detailTab = "tools"}
+          role="tab"
+          aria-selected={detailTab === "tools"}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg>
+          <span>{$_("admin.mcpAccess.tabTools")}</span>
+        </button>
+      </div>
+
+      <div class="detail-content">
+        {#if detailTab === "access"}
+          <ServerAccessPanel server={selectedServer} />
+        {:else if detailTab === "tools"}
+          <ToolAccessPanel server={selectedServer} />
+        {/if}
+      </div>
+    </div>
+  {:else}
+    <!-- Server List View -->
+    <PageHeader
+      title={$_("admin.mcpServers.title")}
+      subtitle={$_("admin.mcpServers.subtitle")}
+    >
+      {#snippet children()}
+        <button class="btn-primary" onclick={openCreateModal}>
+          + {$_("admin.mcpServers.addServer")}
+        </button>
+      {/snippet}
+    </PageHeader>
+
+    {#if !isLoading && servers.length > 0}
+      <div class="view-toggle-bar">
+        <div class="view-toggle" role="group" aria-label="View mode">
         <button
           class="view-toggle-btn"
           class:view-toggle-btn--active={viewMode === "grid"}
@@ -472,6 +556,18 @@
                     </button>
                   {/if}
                   <button
+                    class="icon-btn icon-btn--access"
+                    onclick={() => openServerDetail(server)}
+                    aria-label={$_("admin.mcpAccess.accessControl")}
+                    title={$_("admin.mcpAccess.accessControl")}
+                  >
+                    <span class="icon-symbol icon-symbol--access" aria-hidden="true">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      </svg>
+                    </span>
+                  </button>
+                  <button
                     class="icon-btn"
                     onclick={() => handleSyncTools(server)}
                     aria-label={$_("admin.mcpServers.syncTools")}
@@ -615,6 +711,18 @@
               </button>
             {/if}
             <button
+              class="icon-btn icon-btn--access"
+              onclick={() => openServerDetail(server)}
+              aria-label={$_("admin.mcpAccess.accessControl")}
+              title={$_("admin.mcpAccess.accessControl")}
+            >
+              <span class="icon-symbol icon-symbol--access" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </span>
+            </button>
+            <button
               class="icon-btn"
               onclick={() => handleSyncTools(server)}
               aria-label={$_("admin.mcpServers.syncTools")}
@@ -659,6 +767,7 @@
         </div>
       {/each}
     </div>
+  {/if}
   {/if}
 
   <Modal
@@ -1468,6 +1577,214 @@
 
     .mcp-card-actions {
       border-top-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .detail-view {
+      background: rgba(0, 0, 0, 0.01);
+    }
+
+    .detail-header {
+      border-bottom-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .detail-tabs {
+      border-bottom-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .detail-tab:hover:not(.detail-tab--active) {
+      color: var(--text-primary);
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    .detail-tab--active {
+      border-bottom-color: var(--brand);
+    }
+  }
+
+  /* Detail View */
+  .detail-view {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    height: 100%;
+    animation: fadeSlideIn 0.25s ease;
+  }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .detail-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .detail-back-btn {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    margin-left: calc(-1 * var(--space-sm));
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .detail-back-btn:hover {
+    color: var(--text-primary);
+    background: rgba(var(--glass-tint), 0.05);
+  }
+
+  .detail-title-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .detail-title-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .detail-server-name {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .detail-status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: var(--space-2xs) var(--space-sm);
+    border-radius: var(--radius-full, 9999px);
+  }
+
+  .detail-status--connected {
+    color: var(--brand-green);
+    background: rgba(var(--brand-green-rgb), 0.1);
+  }
+
+  .detail-status--disconnected {
+    color: var(--text-secondary);
+    background: rgba(var(--glass-tint), 0.06);
+  }
+
+  .detail-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .detail-status--connected .detail-status-dot {
+    background: var(--brand-green);
+    box-shadow: 0 0 6px rgba(var(--brand-green-rgb), 0.4);
+  }
+
+  .detail-status--disconnected .detail-status-dot {
+    background: var(--text-secondary);
+    opacity: 0.5;
+  }
+
+  .detail-description {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .detail-tabs {
+    display: flex;
+    gap: var(--space-md);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-top: var(--space-lg);
+  }
+
+  .detail-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-md) var(--space-lg);
+    border: none;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: -1px;
+  }
+
+  .detail-tab:hover:not(.detail-tab--active) {
+    color: var(--text-primary);
+    background: rgba(var(--glass-tint), 0.04);
+  }
+
+  .detail-tab--active {
+    color: var(--brand);
+    border-bottom-color: var(--brand);
+    font-weight: 600;
+  }
+
+  .detail-content {
+    padding-top: var(--space-xl);
+    flex: 1;
+  }
+
+  .icon-btn--access {
+    border-color: rgba(139, 92, 246, 0.2);
+  }
+
+  .icon-btn--access:hover {
+    background: rgba(139, 92, 246, 0.08);
+    border-color: rgba(139, 92, 246, 0.4);
+  }
+
+  .icon-symbol--access {
+    color: #a78bfa;
+  }
+
+  .icon-symbol--access svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .detail-title-group {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-xs);
+    }
+
+    .detail-server-name {
+      font-size: 1.125rem;
+    }
+
+    .detail-tabs {
+      overflow-x: auto;
+    }
+
+    .detail-tab {
+      padding: var(--space-sm) var(--space-md);
+      font-size: 0.8125rem;
+      white-space: nowrap;
     }
   }
 </style>

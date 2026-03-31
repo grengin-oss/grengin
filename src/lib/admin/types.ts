@@ -78,6 +78,71 @@ export interface MCPServerListResponse {
   total: number;
 }
 
+export type McpAccessType = 'role' | 'department' | 'user';
+export type McpPermission = 'full' | 'read_only' | 'denied';
+export type McpDefaultAccess = 'all_users' | 'admin_only' | 'explicit_only';
+
+export interface McpAccessRule {
+  id: string;
+  access_type: McpAccessType;
+  permission: McpPermission;
+  role_id: string | null;
+  role_name: string | null;
+  department_id: string | null;
+  department_name: string | null;
+  user_id: string | null;
+  user_email: string | null;
+  inherit_departments: boolean;
+  priority: number;
+}
+
+export interface McpServerAccessResponse {
+  server_id: string;
+  default_access: McpDefaultAccess | null;
+  rules: McpAccessRule[];
+}
+
+export interface McpAccessRuleCreatePayload {
+  access_type: McpAccessType;
+  permission: McpPermission;
+  role_id?: string;
+  role_name?: string;
+  department_id?: string;
+  user_id?: string;
+  inherit_departments?: boolean;
+}
+
+export interface McpServerAccessUpdatePayload {
+  default_access: McpDefaultAccess | null;
+  rules: McpAccessRuleCreatePayload[];
+}
+
+export interface McpToolAccess {
+  tool_id: string;
+  tool_name: string;
+  server_id: string;
+  inherit_from_server: boolean;
+  rules: McpAccessRule[];
+}
+
+export interface McpToolAccessUpdatePayload {
+  inherit_from_server: boolean;
+  rules: McpAccessRuleCreatePayload[];
+}
+
+export interface McpBulkToolAccessUpdatePayload {
+  tools: Array<{
+    tool_id: string;
+    inherit_from_server: boolean;
+    rules: McpAccessRuleCreatePayload[];
+  }>;
+}
+
+export interface McpBulkToolAccessResponse {
+  tools: McpToolAccess[];
+  updated_count: number;
+}
+
 export interface AIEngineModel {
   model_id: string;
   display_name: string;

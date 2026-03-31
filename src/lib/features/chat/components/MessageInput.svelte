@@ -62,7 +62,6 @@
       : $_('chat.messageInput.selectConnectorsFallback')
   );
 
-  const activeMCPServers = $derived(mcpServers.filter(server => server.enabled && server.status === 'connected'));
 
   function autoResize() {
     if (!textarea) return;
@@ -614,11 +613,11 @@
                   </div>
                 {:else if mcpServersError}
                   <div class="dropdown-error">{mcpServersError}</div>
-                {:else if activeMCPServers.length === 0}
+                {:else if mcpServers.length === 0}
                   <div class="dropdown-empty">{$_('chat.messageInput.noConnectors')}</div>
                 {:else}
                   <div class="connectors-list">
-                    {#each activeMCPServers as server (server.id)}
+                    {#each mcpServers as server (server.id)}
                       <div class="connectors-row-item" class:selected={selectedMcpServers.includes(server.id)}>
                         <div class="connectors-info">
                           <span class="connectors-name">{server.name}</span>

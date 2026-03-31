@@ -5,7 +5,8 @@
     "delete": "Supprimer",
     "edit": "Modifier",
     "search": "Rechercher",
-    "never": "Jamais"
+    "never": "Jamais",
+    "loading": "Loading..."
   },
   "errors": {
     "forbidden": {
@@ -521,6 +522,70 @@
       "yes": "Yes",
       "no": "No"
     },
+    "mcpAccess": {
+      "accessControl": "Access Control",
+      "backToServers": "Back to Servers",
+      "tabAccess": "Access Control",
+      "tabTools": "Tool Access",
+      "loading": "Loading access rules...",
+      "loadingTools": "Loading tool access...",
+      "failedToLoad": "Failed to load access rules",
+      "failedToLoadTools": "Failed to load tool access",
+      "defaultAccessTitle": "Default Access",
+      "defaultAccessUpdated": "Default access updated",
+      "failedToUpdateDefault": "Failed to update default access",
+      "defaultAccess": {
+        "allUsers": "All Users",
+        "allUsersDesc": "Anyone in the organization can use this server",
+        "adminOnly": "Admin Only",
+        "adminOnlyDesc": "Only administrators can use this server",
+        "explicitOnly": "Explicit Only",
+        "explicitOnlyDesc": "Only users, roles, or departments with explicit rules"
+      },
+      "accessRules": "Access Rules",
+      "addRule": "Add Rule",
+      "adding": "Adding...",
+      "ruleAdded": "Access rule added",
+      "failedToAddRule": "Failed to add access rule",
+      "ruleRemoved": "Access rule removed",
+      "failedToRemoveRule": "Failed to remove access rule",
+      "removeRule": "Remove rule",
+      "noRules": "No access rules configured",
+      "noRulesHint": "Add rules to control who can access this server",
+      "ruleType": "Rule Type",
+      "selectRole": "Select Role",
+      "selectDepartment": "Select Department",
+      "searchUser": "Search User",
+      "permission": "Permission",
+      "includeSubDepartments": "Include sub-departments",
+      "includesSubDepts": "Includes sub-depts",
+      "inherited": "Inherited",
+      "types": { "role": "Role", "department": "Department", "user": "User" },
+      "permissions": {
+        "full": "Full Access",
+        "fullDesc": "Can use all tools (read and write)",
+        "readOnly": "Read Only",
+        "readOnlyDesc": "Can only use read-only tools",
+        "denied": "Denied",
+        "deniedDesc": "Cannot access this server"
+      },
+      "placeholders": { "role": "Choose a role...", "department": "Choose a department...", "user": "Search by name or email..." },
+      "validation": { "selectRole": "Please select a role", "selectDepartment": "Please select a department", "selectUser": "Please search and select a user" },
+      "serverTools": "Server Tools ({count} total)",
+      "noTools": "No tools available",
+      "noToolsHint": "Sync tools from the server list to see them here",
+      "configureTool": "Configure access",
+      "toolStatus": { "inherit": "Inherit", "custom": "{count} custom rules", "noRules": "No rules", "customBadge": "Custom" },
+      "inheritFromServer": "Inherit from server",
+      "inheritFromServerDesc": "Use the same access rules configured at the server level",
+      "customRules": "Custom rules",
+      "customRulesDesc": "Configure specific access rules for this tool",
+      "noCustomRules": "No custom rules. Add rules to restrict access to this tool.",
+      "toolAccessSaved": "Tool access saved",
+      "failedToSaveToolAccess": "Failed to save tool access",
+      "save": "Save",
+      "saving": "Saving..."
+    },
     "viewMode": {
       "grid": "Grid view",
       "table": "Table view",
@@ -660,6 +725,18 @@
       "searching": "Recherche sur le web",
       "searchedTheWeb": "Recherché sur le web",
       "results": "résultats"
+    },
+    "mcpAuth": {
+      "connectTo": "Connect to {name}",
+      "connectedTo": "Connected to {name}",
+      "description": "To use {tool}, I need access to your {name} account. Your permissions will apply to all actions.",
+      "connectAccount": "Connect {name} Account",
+      "connecting": "Connecting...",
+      "connectionFailed": "Connection failed",
+      "failedToGetAuthUrl": "Failed to get authorization URL",
+      "popupBlocked": "Popup was blocked. Please allow popups for this site.",
+      "retry": "Try again",
+      "manageInSettings": "You can manage connected accounts in Settings."
     }
   },
   "aiEngines": {

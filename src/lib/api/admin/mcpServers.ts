@@ -1,5 +1,15 @@
 import { request } from '../client.js';
-import type { MCPServer, MCPServerListResponse } from '../../admin/types.js';
+import type {
+  MCPServer,
+  MCPServerListResponse,
+  McpServerAccessResponse,
+  McpAccessRuleCreatePayload,
+  McpToolAccess,
+  McpToolAccessUpdatePayload,
+  McpBulkToolAccessUpdatePayload,
+  McpBulkToolAccessResponse,
+  McpDefaultAccess,
+} from '../../admin/types.js';
 
 export type McpAuthorizeConnectionResponse = {
   success: boolean;
@@ -90,4 +100,71 @@ export async function completeMcpOAuth(
       method: 'GET',
     }
   );
+}
+
+export async function getServerAccess(serverId: string): Promise<McpServerAccessResponse> {
+  return request<McpServerAccessResponse>(`/admin/mcp-servers/${serverId}/access`, {
+    method: 'GET',
+  });
+}
+
+export async function updateServerDefaultAccess(
+  serverId: string,
+  defaultAccess: McpDefaultAccess | null
+): Promise<McpServerAccessResponse> {
+  return request<McpServerAccessResponse>(`/admin/mcp-servers/${serverId}/access/default`, {
+    method: 'PUT',
+    body: JSON.stringify({ default_access: defaultAccess }),
+  });
+}
+
+export async function createServerAccessRule(
+  serverId: string,
+  rule: McpAccessRuleCreatePayload
+): Promise<McpServerAccessResponse> {
+  return request<McpServerAccessResponse>(`/admin/mcp-servers/${serverId}/access/rules`, {
+    method: 'POST',
+    body: JSON.stringify(rule),
+  });
+}
+
+export async function deleteServerAccessRule(
+  serverId: string,
+  ruleId: string
+): Promise<void> {
+  await request<void>(`/admin/mcp-servers/${serverId}/access/rules/${ruleId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getServerToolsAccess(serverId: string): Promise<McpToolAccess[]> {
+  return request<McpToolAccess[]>(`/admin/mcp-servers/${serverId}/tools/access`, {
+    method: 'GET',
+  });
+}
+
+export async function updateServerToolsAccess(
+  serverId: string,
+  payload: McpBulkToolAccessUpdatePayload
+): Promise<McpBulkToolAccessResponse> {
+  return request<McpBulkToolAccessResponse>(`/admin/mcp-servers/${serverId}/tools/access`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getToolAccess(toolId: string): Promise<McpToolAccess> {
+  return request<McpToolAccess>(`/admin/mcp-tools/${toolId}/access`, {
+    method: 'GET',
+  });
+}
+
+export async function updateToolAccess(
+  toolId: string,
+  payload: McpToolAccessUpdatePayload
+): Promise<McpToolAccess> {
+  return request<McpToolAccess>(`/admin/mcp-tools/${toolId}/access`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
 }
