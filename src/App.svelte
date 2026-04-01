@@ -34,31 +34,14 @@
   const authState = getAuthState();
   const notifState = getNotificationsState();
 
-  // Load notifications
   $effect(() => {
     const uid = authState.user?.id;
     if (uid == null || uid === '') return;
-    const fetchTimer = window.setTimeout(() => {
-      void fetchNotificationFeed();
-    }, 2000);
-    return () => {
-      window.clearTimeout(fetchTimer);
-    };
-  });
+    void fetchNotificationFeed();
+    startNotificationsStream();
 
-  // Start notifications stream
-  $effect(() => {
-    if (authState.user?.id == null || authState.user?.id === '') return;
-    let streamStarted = false;
-    const streamTimer = window.setTimeout(() => {
-      startNotificationsStream();
-      streamStarted = true;
-    }, 2000);
     return () => {
-      window.clearTimeout(streamTimer);
-      if (streamStarted) {
-        stopNotificationsStream();
-      }
+      stopNotificationsStream();
     };
   });
 
