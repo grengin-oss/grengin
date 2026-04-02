@@ -4,10 +4,9 @@
   import { Sidebar, MobileHeader } from './lib/components/layout/index.js';
   import Toaster from './lib/components/Toaster.svelte';
   import Login from './lib/features/auth/components/Login.svelte';
-  import Chat from './lib/features/chat/components/Chat.svelte';
   import AuthCallback from './lib/features/auth/components/AuthCallback.svelte';
+  import MainAreaRoutes from '$lib/bundles/MainAreaRoutes.svelte';
   import { initAuth, getAuthState, logout, permissionsStore } from './lib/features/auth/index.js';
-  import { PERMISSIONS } from './lib/features/auth/permissions.js';
   import {
     dismissStreamToast,
     fetchNotificationFeed,
@@ -16,16 +15,6 @@
     stopNotificationsStream,
   } from './lib/features/notifications/index.js';
   import { NOTIFICATIONS_STREAM_TOAST_ID, toast } from '$lib/components/Toaster.svelte';
-  import Users from './lib/admin/pages/Users.svelte';
-  import AIEngines from './lib/admin/pages/AIEngines.svelte';
-  import Analytics from './lib/admin/pages/Analytics.svelte';
-  import Forbidden from './lib/components/Forbidden.svelte';
-  import PermissionGuard from './lib/components/PermissionGuard.svelte';
-  import Departments from './lib/admin/pages/Departments.svelte';
-  import Settings from '$lib/admin/pages/Settings.svelte';
-  import Overview from '$lib/admin/pages/Overview.svelte';
-  import AlertsPage from '$lib/features/notifications/AlertsPage.svelte';
-  import AccessControl from '$lib/admin/pages/AccessControl.svelte';
   import { _ } from 'svelte-i18n';
 
   let sidebarCollapsed = $state(false);
@@ -94,21 +83,39 @@
     }
   }
 
+  // Keep currentPath in sync with client navigation (Link / navigate), not only back/forward.
+  $effect(() => {
+    const updatePath = () => {
+      currentPath = window.location.pathname;
+    };
+
+    window.addEventListener('popstate', updatePath);
+
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+
+    history.pushState = function (...args: Parameters<History['pushState']>) {
+      originalPushState.apply(this, args);
+      updatePath();
+    };
+
+    history.replaceState = function (...args: Parameters<History['replaceState']>) {
+      originalReplaceState.apply(this, args);
+      updatePath();
+    };
+
+    return () => {
+      window.removeEventListener('popstate', updatePath);
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
+    };
+  });
+
   onMount(() => {
     initAuth();
     permissionsStore.init();
     sidebarCollapsed = isMobile();
     window.addEventListener('resize', handleResize);
-
-    // Update currentPath on navigation
-    const handlePopState = () => {
-      currentPath = window.location.pathname;
-    };
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
   });
 
   async function handleLogout() {
@@ -205,61 +212,7 @@
       <MobileHeader sidebarCollapsed={sidebarCollapsed} onToggleMenu={toggleSidebarFromMain} />
 
       <div class="main-content-body">
-        <Route path="/"><Chat /></Route>
-        <Route path="/chat"><Chat /></Route>
-        <Route path="/chat/:id"><Chat /></Route>
-        <Route path="/alerts"><AlertsPage /></Route>
-        <Route path="/admin/alerts"><AlertsPage /></Route>
-        <Route path="/admin/overview">
-          <PermissionGuard permission={PERMISSIONS.analytics.view} requireGlobal={true}>
-            {#snippet children()}
-              <Overview />
-            {/snippet}
-          </PermissionGuard>
-        </Route>
-        <Route path="/admin/users">
-          <PermissionGuard permission={PERMISSIONS.users.view}>
-            {#snippet children()}
-              <Users />
-            {/snippet}
-          </PermissionGuard>
-        </Route>
-        <Route path="/admin/departments">
-          <PermissionGuard permission={PERMISSIONS.departments.view}>
-            {#snippet children()}
-              <Departments />
-            {/snippet}
-          </PermissionGuard>
-        </Route>
-        <Route path="/admin/access-control">
-          <PermissionGuard permission={PERMISSIONS.roles.view}>
-            {#snippet children()}
-              <AccessControl />
-            {/snippet}
-          </PermissionGuard>
-        </Route>
-        <Route path="/admin/settings">
-          <PermissionGuard permission={PERMISSIONS.ssoProviders.view}>
-            {#snippet children()}
-              <Settings />
-            {/snippet}
-          </PermissionGuard>
-        </Route>
-        <Route path="/admin/ai-engines">
-          <PermissionGuard permission={PERMISSIONS.aiPlatform.view}>
-            {#snippet children()}
-              <AIEngines />
-            {/snippet}
-          </PermissionGuard>
-        </Route>
-        <Route path="/admin/analytics" primary={false}>
-          <PermissionGuard permission={PERMISSIONS.analytics.view}>
-            {#snippet children()}
-              <Analytics />
-            {/snippet}
-          </PermissionGuard>
-        </Route>
-        <Route path="/forbidden"><Forbidden /></Route>
+        <MainAreaRoutes />
       </div>
     </main>
   {/if}
