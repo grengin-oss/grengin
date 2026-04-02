@@ -3,3 +3,4 @@ export { default as Chat } from '$lib/features/chat/components/Chat.svelte';
 export { default as AlertsPage } from '$lib/features/notifications/AlertsPage.svelte';
 export { default as SidebarChatSection } from '$lib/components/layout/SidebarChatSection.svelte';
 export { default as Forbidden } from '$lib/components/Forbidden.svelte';
+export { default as UserSettings } from '$lib/pages/UserSettings.svelte';

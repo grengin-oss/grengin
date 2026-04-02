@@ -461,10 +461,10 @@
 
 {#if showUserMenu}
   <div class="user-menu-dropdown">
-    <a href="/settings" class="menu-item">
+    <Link to="/settings" class="menu-item">
       <span class="user-menu-icon">⚙️</span>
       <span>{$_('sidebar.settings')}</span>
-    </a>
+    </Link>
     {#if hasAdminPermissions}
       <Link to="/admin" class="menu-item" onclick={collapseSidebarOnMobile}>
         <span class="menu-item-icon">🔒</span>
