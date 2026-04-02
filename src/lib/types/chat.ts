@@ -18,6 +18,16 @@ export interface BudgetWarningMessage {
   message: string;
 }
 
+export interface McpAuthRequest {
+  server_id: string;
+  server_name: string;
+  tool_name: string;
+  authorization_url?: string;
+  status: 'pending' | 'connecting' | 'connected' | 'error';
+  error?: string;
+  connected_as?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: MessageRole;
@@ -31,10 +41,11 @@ export interface ChatMessage {
   toolCalls?: ToolCall[];
   toolsResults?: ToolResult[];
   mergedWebSearch?: MergedToolResult | null;
+  mcpAuthRequests?: McpAuthRequest[];
 }
 
 export interface StreamEvent {
-  event: 'conversation' | 'delta' | 'done' | 'event' | 'message_end' | 'message_start' | 'tool_call' | 'tool_result' | 'error';
+  event: 'conversation' | 'delta' | 'done' | 'event' | 'message_end' | 'message_start' | 'tool_call' | 'tool_result' | 'mcp_oauth_required' | 'error';
   data: any;
 }
 

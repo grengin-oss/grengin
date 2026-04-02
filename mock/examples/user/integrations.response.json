@@ -1,0 +1,74 @@
+[
+  {
+    "id": "int-001",
+    "type": "slack",
+    "name": "Slack",
+    "description": "Connect your Slack account to receive notifications and interact with Grengin directly from Slack.",
+    "icon": "/integrations/slack.svg",
+    "is_enabled_by_org": true,
+    "user_status": "connected",
+    "connected_at": "2024-12-20T10:30:00Z",
+    "external_user_id": "U04ABCDEF12",
+    "external_display_name": "admin@grengin-workspace"
+  },
+  {
+    "id": "int-002",
+    "type": "github",
+    "name": "GitHub",
+    "description": "Link your GitHub account to enable code-aware conversations and repository access.",
+    "icon": "/integrations/github.svg",
+    "is_enabled_by_org": true,
+    "user_status": "disconnected",
+    "connected_at": null,
+    "external_user_id": null,
+    "external_display_name": null
+  },
+  {
+    "id": "int-003",
+    "type": "jira",
+    "name": "Jira",
+    "description": "Connect Jira to create, update, and track issues directly within your conversations.",
+    "icon": "/integrations/jira.svg",
+    "is_enabled_by_org": true,
+    "user_status": "disconnected",
+    "connected_at": null,
+    "external_user_id": null,
+    "external_display_name": null
+  },
+  {
+    "id": "int-004",
+    "type": "notion",
+    "name": "Notion",
+    "description": "Sync with Notion to search and reference your workspace pages and databases.",
+    "icon": "/integrations/notion.svg",
+    "is_enabled_by_org": true,
+    "user_status": "connected",
+    "connected_at": "2025-01-05T14:15:00Z",
+    "external_user_id": "usr_notion_xyz",
+    "external_display_name": "Admin's Workspace"
+  },
+  {
+    "id": "int-005",
+    "type": "google_drive",
+    "name": "Google Drive",
+    "description": "Access and search your Google Drive files to bring relevant documents into conversations.",
+    "icon": "/integrations/google-drive.svg",
+    "is_enabled_by_org": false,
+    "user_status": "unavailable",
+    "connected_at": null,
+    "external_user_id": null,
+    "external_display_name": null
+  },
+  {
+    "id": "int-006",
+    "type": "confluence",
+    "name": "Confluence",
+    "description": "Search and reference your Confluence pages and spaces within Grengin conversations.",
+    "icon": "/integrations/confluence.svg",
+    "is_enabled_by_org": false,
+    "user_status": "unavailable",
+    "connected_at": null,
+    "external_user_id": null,
+    "external_display_name": null
+  }
+]

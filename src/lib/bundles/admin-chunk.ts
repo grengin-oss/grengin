@@ -7,3 +7,5 @@ export { default as Settings } from '$lib/admin/pages/Settings.svelte';
 export { default as AIEngines } from '$lib/admin/pages/AIEngines.svelte';
 export { default as Analytics } from '$lib/admin/pages/Analytics.svelte';
 export { default as AlertsPage } from '$lib/features/notifications/AlertsPage.svelte';
+export { default as MCPServers } from '$lib/admin/pages/MCPServers.svelte';
+export { default as McpOAuthCallback } from '$lib/admin/pages/McpOAuthCallback.svelte';

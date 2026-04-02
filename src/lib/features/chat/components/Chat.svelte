@@ -4,10 +4,12 @@
   import MessageInput from './MessageInput.svelte';
   import TypingIndicator from './TypingIndicator.svelte';
   import type { MergedToolResult, ToolCall, ToolResult, WebSearchResult } from '../../../types/toolCall';
-  import type { BudgetWarningMessage, ChatMessage as ChatMessageType } from '../../../types/chat';
-  import { sendMessage, getConversation, type UploadedFile } from '../../../api/chatApi';
+  import type { BudgetWarningMessage, ChatMessage as ChatMessageType, McpAuthRequest } from '../../../types/chat';
+  import { sendMessage, getConversation, getChatMcpServers, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
   import { getModels } from '../../../api/models';
+  import type { MCPServer } from '../../../admin/types.js';
+  import { getMcpServers } from '../../../api/admin/mcpServers.js';
   import { _ } from 'svelte-i18n';
   import { ApiError } from '../../../api/client';
   import { getLocalizedError } from '../../../utils/errorLocalization';
@@ -27,6 +29,10 @@
   let selectedProvider = $state('openai');
   let selectedModelInfo = $state<ProviderInfo | undefined>(undefined);
   let webSearchEnabled = $state(false);
+  let mcpServers = $state<MCPServer[]>([]);
+  let selectedMcpServers = $state<string[]>([]);
+  let loadingMcpServers = $state(false);
+  let mcpServersError = $state<string | null>(null);
 
   // Models state
   let providers = $state<ProviderInfo[]>([]);
@@ -44,6 +50,20 @@
       modelsError = $_('chat.errors.failedToLoadModels');
     } finally {
       loadingModels = false;
+    }
+  }
+
+  async function loadMcpServers() {
+    loadingMcpServers = true;
+    mcpServersError = null;
+    try {
+      const response = await getChatMcpServers();
+      mcpServers = response.servers;
+    } catch (error) {
+      console.error('Failed to load connectors:', error);
+      mcpServersError = $_('chat.errors.failedToLoadConnectors');
+    } finally {
+      loadingMcpServers = false;
     }
   }
 
@@ -76,6 +96,14 @@
   function handleRemoveModel() {
     selectedModel = '';
     selectedProvider = '';
+  }
+
+  function toggleMcpServer(serverId: string) {
+    if (selectedMcpServers.includes(serverId)) {
+      selectedMcpServers = selectedMcpServers.filter(id => id !== serverId);
+    } else {
+      selectedMcpServers = [...selectedMcpServers, serverId];
+    }
   }
 
   function handleBudgetWarning(data: BudgetWarningMessage) {
@@ -210,6 +238,7 @@
         modelName: selectedModel,
         uploadedFiles: uploadedFiles,
         webSearch: webSearch,
+        selectedMcpServers,
 
         onConversationInitialized: ({newConversationId}) => {
           // Update conversation ID and URL
@@ -316,6 +345,27 @@
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
           }
         },
+        onMcpAuthRequired: (authRequest: McpAuthRequest) => {
+          if (pendingStreamingMessage) {
+            const existingRequests = pendingStreamingMessage.mcpAuthRequests || [];
+            const alreadyExists = existingRequests.some(r => r.server_id === authRequest.server_id);
+            if (!alreadyExists) {
+              pendingStreamingMessage = {
+                ...pendingStreamingMessage,
+                mcpAuthRequests: [...existingRequests, authRequest],
+              };
+
+              currentStreamingMessage = {...pendingStreamingMessage};
+
+              messages = messages.map(m =>
+                m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
+              );
+
+              isLoading = true;
+              scrollToStreamingMessageTop(pendingStreamingMessage.id);
+            }
+          }
+        },
         onDone: async (_data) => {
           if (pendingStreamingMessage) {
             let updatedMergedWebSearch = null;
@@ -387,6 +437,67 @@
   function handleEditMessage(id: string, newContent: string) {
     messages = messages.map(msg => 
       msg.id === id ? { ...msg, content: newContent } : msg
+    );
+  }
+
+  function handleMcpAuthStatusChange(messageId: string, serverId: string, status: McpAuthRequest['status']) {
+    messages = messages.map(msg => {
+      if (msg.id !== messageId || !msg.mcpAuthRequests) return msg;
+      return {
+        ...msg,
+        mcpAuthRequests: msg.mcpAuthRequests.map(r =>
+          r.server_id === serverId ? { ...r, status } : r
+        ),
+      };
+    });
+  }
+
+  function handleMcpAuthConnected(messageId: string, serverId: string) {
+    messages = messages.map(msg => {
+      if (msg.id !== messageId || !msg.mcpAuthRequests) return msg;
+      return {
+        ...msg,
+        mcpAuthRequests: msg.mcpAuthRequests.map(r =>
+          r.server_id === serverId ? { ...r, status: 'connected' as const } : r
+        ),
+      };
+    });
+
+    // Check if all auth requests for this message are now connected
+    const msg = messages.find(m => m.id === messageId);
+    if (msg?.mcpAuthRequests?.every(r => r.status === 'connected')) {
+      resendAfterAuth(messageId);
+    }
+  }
+
+  function handleMcpAuthError(messageId: string, serverId: string, errorMsg: string) {
+    messages = messages.map(msg => {
+      if (msg.id !== messageId || !msg.mcpAuthRequests) return msg;
+      return {
+        ...msg,
+        mcpAuthRequests: msg.mcpAuthRequests.map(r =>
+          r.server_id === serverId ? { ...r, status: 'error' as const, error: errorMsg } : r
+        ),
+      };
+    });
+  }
+
+  async function resendAfterAuth(assistantMessageId: string) {
+    // Find the user message that preceded this assistant message
+    const msgIndex = messages.findIndex(m => m.id === assistantMessageId);
+    if (msgIndex <= 0) return;
+
+    const userMessage = messages[msgIndex - 1];
+    if (userMessage?.role !== 'user') return;
+
+    // Resend by calling handleSendMessage with the original content
+    // First, remove the assistant message with the auth prompt
+    messages = messages.filter(m => m.id !== assistantMessageId);
+
+    await handleSendMessage(
+      userMessage.content,
+      userMessage.files?.map(f => ({ id: f.id, name: f.name || '', size: 0, type: f.type || '' })),
+      webSearchEnabled,
     );
   }
 
@@ -577,6 +688,7 @@
     scrollToBottom(false);
     loadConversationFromUrl();
     loadModels();
+    loadMcpServers();
 
     // Focus the chat input if nothing else is focused
     if (!document.activeElement || document.activeElement === document.body) {
@@ -630,8 +742,13 @@
           placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
           {selectedModel}
           {selectedProvider}
+          {mcpServers}
+          {selectedMcpServers}
+          {loadingMcpServers}
+          {mcpServersError}
           {webSearchEnabled}
           onWebSearchToggle={() => webSearchEnabled = !webSearchEnabled}
+          onMcpToggle={toggleMcpServer}
           onRemoveModel={handleRemoveModel}
           onModelSelect={selectModel}
           {providers}
@@ -690,6 +807,9 @@
             onEdit={handleEditMessage}
             selectedModelInfo={selectedModelInfo}
             providers={providers}
+            onMcpAuthConnected={(serverId) => handleMcpAuthConnected(message.id, serverId)}
+            onMcpAuthError={(serverId, err) => handleMcpAuthError(message.id, serverId, err)}
+            onMcpAuthStatusChange={(serverId, status) => handleMcpAuthStatusChange(message.id, serverId, status)}
           />
         {/each}
 
@@ -743,8 +863,13 @@
         placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
         {selectedModel}
         {selectedProvider}
+        {mcpServers}
+        {selectedMcpServers}
+        {loadingMcpServers}
+        {mcpServersError}
         {webSearchEnabled}
         onWebSearchToggle={() => webSearchEnabled = !webSearchEnabled}
+        onMcpToggle={toggleMcpServer}
         onRemoveModel={handleRemoveModel}
         onModelSelect={selectModel}
         {providers}

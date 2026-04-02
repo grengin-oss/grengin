@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ChatMessage } from '../../../types/chat';
+  import type { ChatMessage, McpAuthRequest } from '../../../types/chat';
   import { renderMarkdown, copyToClipboard } from '../../../utils/markdown';
   import { onMount, onDestroy, tick } from 'svelte';
   import type { ProviderInfo } from '../../../api/models';
@@ -48,15 +48,19 @@
   import { _ } from 'svelte-i18n';
   import { get } from 'svelte/store';
   import WebSearch from './WebSearch.svelte';
+  import McpOAuthPrompt from './McpOAuthPrompt.svelte';
 
   interface Props {
     message: ChatMessage & { files?: Array<{ id: string; name?: string; type?: string }> };
     onEdit?: (id: string, newContent: string) => void;
     selectedModelInfo?: ProviderInfo;
     providers?: ProviderInfo[];
+    onMcpAuthConnected?: (serverId: string) => void;
+    onMcpAuthError?: (serverId: string, error: string) => void;
+    onMcpAuthStatusChange?: (serverId: string, status: McpAuthRequest['status']) => void;
   }
 
-  let { message, onEdit, selectedModelInfo, providers }: Props = $props();
+  let { message, onEdit, selectedModelInfo, providers, onMcpAuthConnected, onMcpAuthError, onMcpAuthStatusChange }: Props = $props();
   let isEditing = $state(false);
   let editContent = $state(message.content);
   let showActions = $state(false);
@@ -569,6 +573,19 @@
       </div>
     {/if}
 
+    {#if message.mcpAuthRequests && message.mcpAuthRequests.length > 0}
+      <div class="mcp-auth-container">
+        {#each message.mcpAuthRequests as authRequest (authRequest.server_id)}
+          <McpOAuthPrompt
+            {authRequest}
+            onConnected={(serverId) => onMcpAuthConnected?.(serverId)}
+            onError={(serverId, err) => onMcpAuthError?.(serverId, err)}
+            onStatusChange={(serverId, status) => onMcpAuthStatusChange?.(serverId, status)}
+          />
+        {/each}
+      </div>
+    {/if}
+
     {#if message.error}
       <div class="error-message">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -868,6 +885,13 @@
   @keyframes blink {
     0%, 50% { opacity: 1; }
     51%, 100% { opacity: 0; }
+  }
+
+  .mcp-auth-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
   }
 
   .error-message {

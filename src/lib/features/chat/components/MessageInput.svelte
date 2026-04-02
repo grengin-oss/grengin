@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import type { ProviderInfo, ModelInfo, SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from '../../../api/models';
   import { uploadDocument, type UploadedFile } from '../../../api/chatApi';
+  import type { MCPServer } from '../../../admin/types.js';
   import { _ } from 'svelte-i18n';
 
   interface MessageInputProps {
@@ -15,11 +16,16 @@
     providers?: ProviderInfo[];
     loadingModels?: boolean;
     modelsError?: string | null;
+    mcpServers?: MCPServer[];
+    selectedMcpServers?: string[];
+    loadingMcpServers?: boolean;
+    mcpServersError?: string | null;
+    onMcpToggle?: (serverId: string) => void;
     webSearchEnabled?: boolean;
     onWebSearchToggle?: () => void;
   }
 
-  let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, webSearchEnabled = false, onWebSearchToggle }: MessageInputProps = $props();
+let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, mcpServers = [], selectedMcpServers = [], loadingMcpServers = false, mcpServersError = null, onMcpToggle, webSearchEnabled = false, onWebSearchToggle }: MessageInputProps = $props();
   let isDarkMode = $state(false);
 
   function syncThemeState() {
@@ -46,6 +52,7 @@
   let currentPreviewImage = $state<{ file: File; url: string } | null>(null);
   let showPlusMenu = $state(false);
   let showModelDropdown = $state(false);
+  let showConnectorsDropdown = $state(false);
 
   // Voice input state
   let isRecording = $state(false);
@@ -58,6 +65,13 @@
       ? $_('chat.messageInput.recordingPlaceholder') 
       : (placeholder || $_('chat.messageInput.placeholder'))
   );
+
+  const connectorsLabel = $derived(
+    selectedMcpServers.length > 0
+      ? `${selectedMcpServers.length} ${$_('chat.messageInput.connectors')}`
+      : $_('chat.messageInput.selectConnectorsFallback')
+  );
+
 
   function autoResize() {
     if (!textarea) return;
@@ -376,6 +390,9 @@
     if (!target.closest('.model-dropdown-container') && !target.closest('.model-selector-btn')) {
       showModelDropdown = false;
     }
+    if (!target.closest('.connectors-dropdown-container') && !target.closest('.connectors-selector-btn')) {
+      showConnectorsDropdown = false;
+    }
   }
 
   onMount(() => {
@@ -579,6 +596,62 @@
               {/if}
             </div>
           {/if}
+        </div>
+
+        <div class="connectors-row">
+          <div class="connectors-dropdown-container">
+            <button
+              class="connectors-trigger connectors-selector-btn"
+              onclick={() => { showConnectorsDropdown = !showConnectorsDropdown; }}
+              title={$_('chat.messageInput.selectConnectors')}
+              aria-label={$_('chat.messageInput.selectConnectors')}
+            >
+              <div class="connectors-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" />
+                  <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" />
+                </svg>
+              </div>
+              <span class="connectors-label">{connectorsLabel}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow" class:open={showConnectorsDropdown}>
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+        
+            {#if showConnectorsDropdown}
+              <div class="connectors-menu">
+                {#if loadingMcpServers}
+                  <div class="dropdown-loading">
+                    <div class="loading-spinner"></div>
+                    <span>{$_('chat.messageInput.loadingConnectors')}</span>
+                  </div>
+                {:else if mcpServersError}
+                  <div class="dropdown-error">{mcpServersError}</div>
+                {:else if mcpServers.length === 0}
+                  <div class="dropdown-empty">{$_('chat.messageInput.noConnectors')}</div>
+                {:else}
+                  <div class="connectors-list">
+                    {#each mcpServers as server (server.id)}
+                      <div class="connectors-row-item" class:selected={selectedMcpServers.includes(server.id)}>
+                        <div class="connectors-info">
+                          <span class="connectors-name">{server.name}</span>
+                        </div>
+                        <button
+                          type="button"
+                          class="connectors-switch"
+                          class:active={selectedMcpServers.includes(server.id)}
+                          onclick={() => onMcpToggle?.(server.id)}
+                          aria-label={selectedMcpServers.includes(server.id) ? $_('admin.mcpServers.enabled') : $_('admin.mcpServers.disabled')}
+                        >
+                          <span class="switch-thumb"></span>
+                        </button>
+                      </div>
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+            {/if}
+          </div>
         </div>
 
         <button
@@ -1065,6 +1138,20 @@
     height: 12px;
   }
 
+  .connectors-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+  }
+
+  .connectors-icon :global(svg) {
+    width: 12px;
+    height: 12px;
+  }
+
   .model-icon .provider-icon-img {
     width: 16px;
     height: 16px;
@@ -1083,12 +1170,14 @@
 
   /* ===== Plus Menu ===== */
   .plus-menu-container,
-  .model-dropdown-container {
+  .model-dropdown-container,
+  .connectors-dropdown-container {
     position: relative;
   }
 
   .plus-menu,
-  .model-menu {
+  .model-menu,
+  .connectors-menu {
     position: absolute;
     bottom: calc(100% + var(--space-sm));
     left: 0;
@@ -1114,7 +1203,8 @@
   }
 
   .plus-menu::before,
-  .model-menu::before {
+  .model-menu::before,
+  .connectors-menu::before {
     content: '';
     position: absolute;
     top: 0;
@@ -1137,7 +1227,8 @@
   }
 
   .plus-menu::after,
-  .model-menu::after {
+  .model-menu::after,
+  .connectors-menu::after {
     content: '';
     position: absolute;
     top: 0;
@@ -1156,7 +1247,8 @@
 
 
   /* ===== Model Menu ===== */
-  .model-menu {
+  .model-menu,
+  .connectors-menu {
     min-width: 14rem;
     max-height: 20rem;
     overflow-y: auto;
@@ -1179,6 +1271,13 @@
 
   .model-menu::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
+  }
+
+  .dropdown-empty {
+    padding: var(--space-lg);
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
   }
 
   .provider-section {
@@ -1235,6 +1334,128 @@
 
   .model-option {
     justify-content: space-between;
+  }
+
+  .connectors-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .connectors-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: var(--space-xs) var(--space-sm) 0;
+  }
+
+  .connectors-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-full);
+    background: var(--btn-secondary);
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--glass-edge-glow);
+  }
+
+  .connectors-trigger:hover {
+    background: var(--btn-tertiary);
+    border-color: color-mix(in oklab, var(--brand) 30%, transparent);
+    color: var(--link-color);
+  }
+
+  .connectors-label {
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .connectors-menu {
+    min-width: 16rem;
+  }
+
+  .connectors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .connectors-row-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    text-align: left;
+    width: 100%;
+  }
+
+  .connectors-row-item:hover {
+    background: var(--glass-stroke-light);
+    color: var(--text-primary);
+  }
+
+  .connectors-row-item.selected {
+    background: rgba(var(--brand-rgb), 0.12);
+    color: var(--text-primary);
+  }
+
+  .connectors-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .connectors-switch {
+    position: relative;
+    width: 2rem;
+    height: 1.25rem;
+    background: rgba(88 88 88 / 0.3);
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .connectors-switch:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .connectors-switch.active {
+    background: var(--brand-teal);
+  }
+
+  .switch-thumb {
+    position: absolute;
+    top: 0.125rem;
+    left: 0.125rem;
+    width: 1rem;
+    height: 1rem;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .connectors-switch.active .switch-thumb {
+    transform: translateX(1.25rem);
   }
 
   .model-option .model-name {

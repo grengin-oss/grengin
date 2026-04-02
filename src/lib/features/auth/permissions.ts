@@ -27,6 +27,10 @@ export const PERMISSIONS = {
     view: "budget:view",
     allocate: "budget:allocate",
   },
+  mcpServers: {
+    view: "mcp_servers:view",
+    manage: "mcp_servers:manage",
+  },
 } as const;
 
 export type PermissionKey =
@@ -36,4 +40,5 @@ export type PermissionKey =
   | (typeof PERMISSIONS.ssoProviders)[keyof typeof PERMISSIONS.ssoProviders]
   | (typeof PERMISSIONS.users)[keyof typeof PERMISSIONS.users]
   | (typeof PERMISSIONS.roles)[keyof typeof PERMISSIONS.roles]
-  | (typeof PERMISSIONS.budget)[keyof typeof PERMISSIONS.budget];
+  | (typeof PERMISSIONS.budget)[keyof typeof PERMISSIONS.budget]
+  | (typeof PERMISSIONS.mcpServers)[keyof typeof PERMISSIONS.mcpServers];

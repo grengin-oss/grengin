@@ -11,6 +11,8 @@
     AIEngines,
     Analytics,
     AlertsPage,
+    MCPServers,
+    McpOAuthCallback,
   } from './admin-chunk';
 </script>
 
@@ -63,4 +65,14 @@
       <Analytics />
     {/snippet}
   </PermissionGuard>
+</Route>
+<Route path="/admin/mcp-servers">
+  <PermissionGuard permission={PERMISSIONS.mcpServers.view}>
+    {#snippet children()}
+      <MCPServers />
+    {/snippet}
+  </PermissionGuard>
+</Route>
+<Route path="/mcp/oauth/callback">
+  <McpOAuthCallback />
 </Route>

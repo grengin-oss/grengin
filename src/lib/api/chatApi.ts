@@ -1,4 +1,4 @@
-import type { StreamEvent, ConversationDetail, ConversationList, BudgetWarningMessage } from '../types/chat';
+import type { StreamEvent, ConversationDetail, ConversationList, BudgetWarningMessage, McpAuthRequest } from '../types/chat';
 
 import { API_BASE, request, ApiError, parseErrorDetail } from './client';
 import { getAccessToken } from '../features/auth';
@@ -10,12 +10,14 @@ export interface SendMessageOptions {
   modelName?: string;
   uploadedFiles?: UploadedFile[];
   webSearch?: boolean;
+  selectedMcpServers?: string[];
   onConversationInitialized?: (data: {newConversationId: string}) => void;
   onStreamingStart?: (messageId: string) => void;
   onResponseDelta?: (token: string) => void;
   onBudgetWarning?: (data: BudgetWarningMessage) => void;
   onToolCall?: (toolCall: any) => void;
   onToolResult?: (toolResult: any) => void;
+  onMcpAuthRequired?: (authRequest: McpAuthRequest) => void;
   onDone?: (data: any) => void;
   onError?: (error: ApiError | Error) => void;
 }
@@ -30,6 +32,10 @@ export interface UploadedFile {
 export interface UploadDocumentOptions {
   file: File;
   provider?: string;
+}
+
+export async function getChatMcpServers(): Promise<{servers: any[]}> {
+  return request<{servers: any[]}>('/mcp-servers', {});
 }
 
 export async function uploadDocument(options: UploadDocumentOptions): Promise<UploadedFile> {
@@ -87,7 +93,7 @@ export async function uploadDocument(options: UploadDocumentOptions): Promise<Up
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onMcpAuthRequired, onDone, onError } = options;
 
   try {
     const token = getAccessToken();
@@ -121,6 +127,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         config: {},
         web_search: webSearch || false,
         selected_tools: [],
+        selected_mcp_servers: selectedMcpServers || [],
         messages: [{
           role: 'user',
           content: message,
@@ -161,6 +168,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
                 config: {},
                 web_search: webSearch || false,
                 selected_tools: [],
+                selected_mcp_servers: selectedMcpServers || [],
                 messages: [{
                   role: 'user',
                   content: message,
@@ -262,7 +270,8 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         const dataMatch = line.match(/^data: (.+)$/m);
 
         if (eventMatch && dataMatch) {
-          const event = JSON.parse(eventMatch[1]);
+          const raw = eventMatch[1];
+          const event = raw.startsWith('"') ? JSON.parse(raw) : raw;
           const data = JSON.parse(dataMatch[1]);
           
           switch (event) {
@@ -288,6 +297,17 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
             case 'tool_result':
               if (data?.tool_result) {
                 onToolResult?.(data.tool_result);
+              }
+              break;
+            case 'mcp_oauth_required':
+              if (data) {
+                onMcpAuthRequired?.({
+                  server_id: data.server_id,
+                  server_name: data.server_name,
+                  tool_name: data.tool_name,
+                  authorization_url: data.authorization_url,
+                  status: 'pending',
+                });
               }
               break;
             case 'message_end':

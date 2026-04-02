@@ -5,10 +5,9 @@ export interface User {
   sub: string;
   email: string;
   name?: string;
-  roles?: string[];
+  role?: string;
   status?: string;
   department?: string;
-  department_id?: string;
   is_super_admin?: boolean;
   has_password?: boolean;
   mfa_enabled?: boolean;
@@ -22,15 +21,6 @@ export interface PaginatedUsers {
   total: number;
   limit: number;
   offset: number;
-}
-
-export interface RoleUserAssignment {
-  id: string;
-  role_id: string;
-  role_name: string;
-  scope_department_id?: string;
-  assigned_by: string;
-  created_at: string;
 }
 
 export interface SSOProvider {
@@ -60,6 +50,117 @@ export interface AIEngine {
   whitelisted_models?: string[];
   default_model?: string | null;
   updated_at?: string | null;
+}
+
+export type McpAuthType = 'none' | 'api_key' | 'oauth2';
+export type McpAuthMode = 'organization' | 'per_user';
+export type McpOAuthProvider = 'atlassian' | 'google' | 'github' | 'slack' | 'custom';
+
+export interface McpOrgConnection {
+  connected: boolean;
+  connected_as: string | null;
+  connected_at: string | null;
+  token_expires_at: string | null;
+  scopes: string[];
+}
+
+export interface MCPServer {
+  id: string;
+  name: string;
+  description: string | null;
+  transport_type: string;
+  connection_config: Record<string, unknown>;
+  client_id: string | null;
+  client_secret_configured: boolean;
+  client_secret_preview: string;
+  url: string | null;
+  enabled: boolean;
+  status: string;
+  status_message: string | null;
+  tool_count: number;
+  default_access: string | null;
+  last_connected_at: string | null;
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+  auth_type: McpAuthType;
+  auth_mode: McpAuthMode | null;
+  oauth_provider: McpOAuthProvider | null;
+  scopes: string[] | null;
+  auth_url: string | null;
+  token_url: string | null;
+  org_connection: McpOrgConnection | null;
+  connected_users_count: number | null;
+}
+
+export interface MCPServerListResponse {
+  servers: MCPServer[];
+  total: number;
+}
+
+export type McpAccessType = 'role' | 'department' | 'user';
+export type McpPermission = 'full' | 'read_only' | 'denied';
+export type McpDefaultAccess = 'all_users' | 'admin_only' | 'explicit_only';
+
+export interface McpAccessRule {
+  id: string;
+  access_type: McpAccessType;
+  permission: McpPermission;
+  role_id: string | null;
+  role_name: string | null;
+  department_id: string | null;
+  department_name: string | null;
+  user_id: string | null;
+  user_email: string | null;
+  inherit_departments: boolean;
+  priority: number;
+}
+
+export interface McpServerAccessResponse {
+  server_id: string;
+  default_access: McpDefaultAccess | null;
+  rules: McpAccessRule[];
+}
+
+export interface McpAccessRuleCreatePayload {
+  access_type: McpAccessType;
+  permission: McpPermission;
+  role_id?: string;
+  role_name?: string;
+  department_id?: string;
+  user_id?: string;
+  inherit_departments?: boolean;
+}
+
+export interface McpServerAccessUpdatePayload {
+  default_access: McpDefaultAccess | null;
+  rules: McpAccessRuleCreatePayload[];
+}
+
+export interface McpToolAccess {
+  tool_id: string;
+  tool_name: string;
+  server_id: string;
+  inherit_from_server: boolean;
+  rules: McpAccessRule[];
+}
+
+export interface McpToolAccessUpdatePayload {
+  inherit_from_server: boolean;
+  rules: McpAccessRuleCreatePayload[];
+}
+
+export interface McpBulkToolAccessUpdatePayload {
+  tools: Array<{
+    tool_id: string;
+    inherit_from_server: boolean;
+    rules: McpAccessRuleCreatePayload[];
+  }>;
+}
+
+export interface McpBulkToolAccessResponse {
+  tools: McpToolAccess[];
+  updated_count: number;
 }
 
 export interface AIEngineModel {
@@ -172,7 +273,7 @@ export interface Department {
   name: string;
   description: string;
   parent_id: string | null;
-  admin_ids: string[];
+  leader_ids: string[];
   path: string;
   depth: number;
   child_count: number;
@@ -209,7 +310,7 @@ export interface UpdateDepartmentRequest {
   name?: string;
   description?: string;
   parent_id?: string | null;
-  admin_ids?: string[];
+  leader_ids?: string[];
 }
 
 export interface SetBudgetRequest {
@@ -218,8 +319,16 @@ export interface SetBudgetRequest {
   action_on_exceed: ActionOnExceed;
 }
 
+export interface DepartmentMember {
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  role: string;
+  joined_at: string;
+}
+
 export interface DepartmentMembersResponse {
-  members: User[];
+  members: DepartmentMember[];
   total: number;
 }
 
@@ -260,8 +369,4 @@ export interface BudgetOverview {
   period_end: string;
   period_start: string;
   sub_department_budgets: SubDepartmentBudget[];
-}
-
-export interface AdministeredDepartmentsResponse {
-  departments: Department[];
 }

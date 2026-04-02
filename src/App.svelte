@@ -212,7 +212,7 @@
       <MobileHeader sidebarCollapsed={sidebarCollapsed} onToggleMenu={toggleSidebarFromMain} />
 
       <div class="main-content-body">
-        <MainAreaRoutes />
+<MainAreaRoutes />
       </div>
     </main>
   {/if}

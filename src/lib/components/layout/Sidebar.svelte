@@ -52,6 +52,9 @@
     permissionsStore.hasPermission(PERMISSIONS.roles.view)
   );
   let canViewSettings = $derived(permissionsStore.canViewSsoProviders());
+  let canViewMcpServers = $derived(
+    permissionsStore.hasPermission(PERMISSIONS.mcpServers.view)
+  );
   
   // Update currentPath on navigation
   $effect(() => {
@@ -151,6 +154,13 @@
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
     type: 'item',
   };
+  const connectorsMenuItem: AdminMenuItem = {
+    id: 'connectors',
+    path: '/admin/connectors',
+    label: $_('sidebar.connectors'),
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101"/><path d="M10.172 13.828a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1"/></svg>',
+    type: 'item',
+  };
 
   function isMenuItem(value: AdminMenuItem | null): value is AdminMenuItem {
     return value !== null;
@@ -161,6 +171,7 @@
       canViewUsers ? usersMenuItem : null,
       canViewDepartments ? departmentsMenuItem : null,
       canViewAiEngines ? aiEnginesMenuItem : null,
+      canViewMcpServers ? connectorsMenuItem : null,
       canViewAnalytics ? analyticsMenuItem : null,
     ].filter(isMenuItem),
   );
@@ -450,10 +461,10 @@
 
 {#if showUserMenu}
   <div class="user-menu-dropdown">
-    <button class="menu-item">
+    <a href="/settings" class="menu-item">
       <span class="user-menu-icon">⚙️</span>
       <span>{$_('sidebar.settings')}</span>
-    </button>
+    </a>
     {#if hasAdminPermissions}
       <Link to="/admin" class="menu-item" onclick={collapseSidebarOnMobile}>
         <span class="menu-item-icon">🔒</span>
