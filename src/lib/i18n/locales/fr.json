@@ -766,6 +766,8 @@
       "selectModel": "Sélectionner un modèle",
       "selectModelFallback": "Sélectionner un modèle",
       "loadingModels": "Chargement des modèles...",
+      "selectConnectorsFallback": "Connecteurs",
+      "connectors": "connecteurs",
       "enableWebSearch": "Activer la recherche web",
       "disableWebSearch": "Désactiver la recherche web",
       "search": "Rechercher",

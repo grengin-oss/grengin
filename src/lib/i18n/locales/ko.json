@@ -766,6 +766,8 @@
       "selectModel": "모델 선택",
       "selectModelFallback": "모델 선택",
       "loadingModels": "모델 로딩 중...",
+      "selectConnectorsFallback": "커넥터",
+      "connectors": "커넥터",
       "enableWebSearch": "웹 검색 사용",
       "disableWebSearch": "웹 검색 비활성화",
       "search": "검색",

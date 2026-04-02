@@ -766,6 +766,8 @@
       "selectModel": "モデルを選択",
       "selectModelFallback": "モデルを選択",
       "loadingModels": "モデルを読み込み中...",
+      "selectConnectorsFallback": "コネクタ",
+      "connectors": "コネクタ",
       "enableWebSearch": "ウェブ検索を有効にする",
       "disableWebSearch": "ウェブ検索を無効にする",
       "search": "検索",

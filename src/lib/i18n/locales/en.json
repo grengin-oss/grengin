@@ -813,6 +813,7 @@
       "selectModelFallback": "Select Model",
       "loadingModels": "Loading models...",
       "selectConnectorsFallback": "Connectors",
+      "connectors": "connectors",
       "enableWebSearch": "Enable web search",
       "disableWebSearch": "Disable web search",
       "search": "Search",

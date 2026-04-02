@@ -780,8 +780,8 @@
                   <button
                     class="icon-btn"
                     onclick={() => handleSyncTools(server)}
-                    aria-label={$_("admin.mcpServers.syncTools")}
-                    title={$_("admin.mcpServers.syncTools")}
+                    aria-label={$_("admin.mcpServers.actions.syncTools")}
+                    title={$_("admin.mcpServers.actions.syncTools")}
                     disabled={syncingServerId === server.id}
                   >
                     {#if syncingServerId === server.id}
@@ -808,8 +808,8 @@
                   <button
                     class="icon-btn"
                     onclick={() => openEditModal(server)}
-                    aria-label={$_("admin.mcpServers.edit")}
-                    title={$_("admin.mcpServers.edit")}
+                    aria-label={$_("admin.mcpServers.actions.edit")}
+                    title={$_("admin.mcpServers.actions.edit")}
                   >
                     <span
                       class="icon-symbol icon-symbol--edit"
@@ -831,8 +831,8 @@
                   <button
                     class="icon-btn icon-btn--danger"
                     onclick={() => promptDelete(server)}
-                    aria-label={$_("admin.mcpServers.delete")}
-                    title={$_("admin.mcpServers.delete")}
+                    aria-label={$_("admin.mcpServers.actions.delete")}
+                    title={$_("admin.mcpServers.actions.delete")}
                   >
                     <span
                       class="icon-symbol icon-symbol--delete"
@@ -953,8 +953,8 @@
             <button
               class="icon-btn"
               onclick={() => handleSyncTools(server)}
-              aria-label={$_("admin.mcpServers.syncTools")}
-              title={$_("admin.mcpServers.syncTools")}
+              aria-label={$_("admin.mcpServers.actions.syncTools")}
+              title={$_("admin.mcpServers.actions.syncTools")}
               disabled={syncingServerId === server.id}
             >
               {#if syncingServerId === server.id}
@@ -970,8 +970,8 @@
             <button
               class="icon-btn"
               onclick={() => openEditModal(server)}
-              aria-label={$_("admin.mcpServers.edit")}
-              title={$_("admin.mcpServers.edit")}
+              aria-label={$_("admin.mcpServers.actions.edit")}
+              title={$_("admin.mcpServers.actions.edit")}
             >
               <span class="icon-symbol icon-symbol--edit" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
@@ -982,8 +982,8 @@
             <button
               class="icon-btn icon-btn--danger"
               onclick={() => promptDelete(server)}
-              aria-label={$_("admin.mcpServers.delete")}
-              title={$_("admin.mcpServers.delete")}
+              aria-label={$_("admin.mcpServers.actions.delete")}
+              title={$_("admin.mcpServers.actions.delete")}
             >
               <span class="icon-symbol icon-symbol--delete" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
@@ -1201,7 +1201,7 @@
           >
             {isDeleting
               ? $_("admin.mcpServers.deleting")
-              : $_("admin.mcpServers.delete")}
+              : $_("admin.mcpServers.actions.delete")}
           </button>
         </div>
       </div>
