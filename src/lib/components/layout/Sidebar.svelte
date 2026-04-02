@@ -461,7 +461,7 @@
 
 {#if showUserMenu}
   <div class="user-menu-dropdown">
-    <Link to="/settings" class="menu-item">
+    <Link to="/settings" class="menu-item" onclick={collapseSidebarOnMobile}>
       <span class="user-menu-icon">⚙️</span>
       <span>{$_('sidebar.settings')}</span>
     </Link>
