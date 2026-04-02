@@ -500,6 +500,7 @@
         "enabled": "Status",
         "status": "Connection",
         "tools": "Tools",
+        "auth": "Auth",
         "actions": "Actions"
       },
       "status": {
@@ -523,7 +524,18 @@
       "saving": "Saving...",
       "deleting": "Deleting...",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "testConnection": "Test Connection",
+      "testing": "Testing...",
+      "testSuccess": "Connection successful",
+      "testSuccessWithLatency": "Connection successful ({latency}ms)",
+      "testFailed": "Connection test failed",
+      "authBadge": {
+        "none": "No Auth",
+        "apiKey": "API Key",
+        "oauthOrg": "OAuth (Org)",
+        "oauthUser": "OAuth (User)"
+      }
     },
     "mcpOAuth": {
       "authentication": "Authentication",
@@ -801,6 +813,7 @@
       "selectModelFallback": "Select Model",
       "loadingModels": "Loading models...",
       "selectConnectorsFallback": "Connectors",
+      "connectors": "connectors",
       "enableWebSearch": "Enable web search",
       "disableWebSearch": "Disable web search",
       "search": "Search",

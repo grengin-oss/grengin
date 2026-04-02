@@ -94,6 +94,21 @@ export async function syncMcpServerTools(serverId: string): Promise<void> {
   });
 }
 
+export type McpTestConnectionResponse = {
+  success: boolean;
+  message?: string;
+  latency_ms?: number;
+};
+
+export async function testMcpConnection(
+  serverId: string
+): Promise<McpTestConnectionResponse> {
+  return request<McpTestConnectionResponse>(
+    `/admin/mcp-servers/${serverId}/test`,
+    { method: 'POST' }
+  );
+}
+
 export async function authorizeMcpConnection(
   serverId: string
 ): Promise<McpAuthorizeConnectionResponse> {

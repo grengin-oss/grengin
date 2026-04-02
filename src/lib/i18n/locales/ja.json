@@ -499,6 +499,7 @@
         "enabled": "Status",
         "status": "Connection",
         "tools": "Tools",
+        "auth": "Auth",
         "actions": "Actions"
       },
       "status": {
@@ -522,7 +523,18 @@
       "saving": "Saving...",
       "deleting": "Deleting...",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "testConnection": "Test Connection",
+      "testing": "Testing...",
+      "testSuccess": "Connection successful",
+      "testSuccessWithLatency": "Connection successful ({latency}ms)",
+      "testFailed": "Connection test failed",
+      "authBadge": {
+        "none": "No Auth",
+        "apiKey": "API Key",
+        "oauthOrg": "OAuth (Org)",
+        "oauthUser": "OAuth (User)"
+      }
     },
     "mcpOAuth": {
       "authentication": "Authentication",
@@ -754,6 +766,8 @@
       "selectModel": "モデルを選択",
       "selectModelFallback": "モデルを選択",
       "loadingModels": "モデルを読み込み中...",
+      "selectConnectorsFallback": "コネクタ",
+      "connectors": "コネクタ",
       "enableWebSearch": "ウェブ検索を有効にする",
       "disableWebSearch": "ウェブ検索を無効にする",
       "search": "検索",

@@ -499,6 +499,7 @@
         "enabled": "Status",
         "status": "Connection",
         "tools": "Tools",
+        "auth": "Auth",
         "actions": "Actions"
       },
       "status": {
@@ -522,7 +523,18 @@
       "saving": "Saving...",
       "deleting": "Deleting...",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "testConnection": "Test Connection",
+      "testing": "Testing...",
+      "testSuccess": "Connection successful",
+      "testSuccessWithLatency": "Connection successful ({latency}ms)",
+      "testFailed": "Connection test failed",
+      "authBadge": {
+        "none": "No Auth",
+        "apiKey": "API Key",
+        "oauthOrg": "OAuth (Org)",
+        "oauthUser": "OAuth (User)"
+      }
     },
     "mcpOAuth": {
       "authentication": "Authentication",
@@ -754,6 +766,8 @@
       "selectModel": "모델 선택",
       "selectModelFallback": "모델 선택",
       "loadingModels": "모델 로딩 중...",
+      "selectConnectorsFallback": "커넥터",
+      "connectors": "커넥터",
       "enableWebSearch": "웹 검색 사용",
       "disableWebSearch": "웹 검색 비활성화",
       "search": "검색",

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { _ } from "svelte-i18n";
   import PageHeader from "../components/PageHeader.svelte";
   import AdminTableCard from "../components/AdminTableCard.svelte";
@@ -21,6 +21,7 @@
     deleteMcpServer,
     getMcpServers,
     syncMcpServerTools,
+    testMcpConnection,
     updateMcpServer,
   } from "../../api/admin/mcpServers.js";
 
@@ -36,7 +37,10 @@
   let syncingServerId = $state<string | null>(null);
   let togglingServerId = $state<string | null>(null);
   let connectingServerId = $state<string | null>(null);
+  let testingServerId = $state<string | null>(null);
   let showClientSecret = $state(false);
+  let pollInterval: ReturnType<typeof setInterval> | null = null;
+  const POLL_INTERVAL_MS = 30_000;
   let viewMode = $state<"grid" | "table">("table");
   let selectedServer = $state<MCPServer | null>(null);
   let detailTab = $state<"access" | "tools" | "connection">("access");
@@ -90,13 +94,69 @@
     return status ?? "";
   }
 
+  function getAuthBadgeLabel(server: MCPServer): string {
+    if (server.auth_type === "oauth2") {
+      return server.auth_mode === "organization"
+        ? $_("admin.mcpServers.authBadge.oauthOrg")
+        : $_("admin.mcpServers.authBadge.oauthUser");
+    }
+    if (server.auth_type === "api_key") {
+      return $_("admin.mcpServers.authBadge.apiKey");
+    }
+    return $_("admin.mcpServers.authBadge.none");
+  }
+
+  async function handleTestConnection(server: MCPServer) {
+    if (testingServerId) return;
+    testingServerId = server.id;
+    try {
+      const result = await testMcpConnection(server.id);
+      if (result.success) {
+        const msg = result.latency_ms != null
+          ? $_("admin.mcpServers.testSuccessWithLatency", { values: { latency: result.latency_ms } })
+          : $_("admin.mcpServers.testSuccess");
+        toast.success(msg);
+      } else {
+        toast.error(result.message || $_("admin.mcpServers.testFailed"));
+      }
+      await loadServers();
+    } catch (err: any) {
+      const errorMessage =
+        err instanceof ApiError
+          ? getLocalizedError(err, "description", $_)
+          : err.message;
+      toast.error(errorMessage || $_("admin.mcpServers.testFailed"));
+    } finally {
+      testingServerId = null;
+    }
+  }
+
+  function startPolling() {
+    stopPolling();
+    pollInterval = setInterval(() => {
+      if (!isLoading && !selectedServer) {
+        loadServers();
+      }
+    }, POLL_INTERVAL_MS);
+  }
+
+  function stopPolling() {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+  }
+
   function openServerDetail(server: MCPServer) {
     selectedServer = server;
     detailTab = "access";
+    stopPolling();
   }
 
   function closeServerDetail() {
     selectedServer = null;
+    loadServers();
+    startPolling();
   }
 
   function openCreateModal() {
@@ -422,6 +482,12 @@
 
   onMount(() => {
     loadServers();
+    startPolling();
+  });
+
+  onDestroy(() => {
+    stopPolling();
+    cleanupOAuthPopup();
   });
 
   async function handleDeleteFromDetail() {
@@ -588,9 +654,10 @@
           <tr>
             <th>{$_("admin.mcpServers.columns.name")}</th>
             <th>{$_("admin.mcpServers.columns.transport")}</th>
+            <th class="hide-mobile">{$_("admin.mcpServers.columns.auth")}</th>
             <th>{$_("admin.mcpServers.columns.enabled")}</th>
             <th>{$_("admin.mcpServers.columns.status")}</th>
-            <th>{$_("admin.mcpServers.columns.tools")}</th>
+            <th class="hide-mobile">{$_("admin.mcpServers.columns.tools")}</th>
             <th>{$_("admin.mcpServers.columns.actions")}</th>
           </tr>
         </thead>
@@ -612,6 +679,9 @@
                 </div>
               </td>
               <td>{server.transport_type}</td>
+              <td class="hide-mobile">
+                <span class="auth-badge">{getAuthBadgeLabel(server)}</span>
+              </td>
               <td>
                 <div class="toggle-switch">
                   <button
@@ -644,7 +714,7 @@
                   </span>
                 </div>
               </td>
-              <td>{server.tool_count}</td>
+              <td class="hide-mobile">{server.tool_count}</td>
               <td>
                 <div class="action-buttons">
                   {#if server.status === "disconnected" && hasOauthConfig}
@@ -678,6 +748,24 @@
                     </button>
                   {/if}
                   <button
+                    class="icon-btn icon-btn--test"
+                    onclick={() => handleTestConnection(server)}
+                    aria-label={$_("admin.mcpServers.testConnection")}
+                    title={$_("admin.mcpServers.testConnection")}
+                    disabled={testingServerId === server.id}
+                  >
+                    {#if testingServerId === server.id}
+                      <span class="icon-spinner" aria-hidden="true"></span>
+                    {:else}
+                      <span class="icon-symbol icon-symbol--test" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                          <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                      </span>
+                    {/if}
+                  </button>
+                  <button
                     class="icon-btn icon-btn--access"
                     onclick={() => openServerDetail(server)}
                     aria-label={$_("admin.mcpAccess.accessControl")}
@@ -692,8 +780,8 @@
                   <button
                     class="icon-btn"
                     onclick={() => handleSyncTools(server)}
-                    aria-label={$_("admin.mcpServers.syncTools")}
-                    title={$_("admin.mcpServers.syncTools")}
+                    aria-label={$_("admin.mcpServers.actions.syncTools")}
+                    title={$_("admin.mcpServers.actions.syncTools")}
                     disabled={syncingServerId === server.id}
                   >
                     {#if syncingServerId === server.id}
@@ -720,8 +808,8 @@
                   <button
                     class="icon-btn"
                     onclick={() => openEditModal(server)}
-                    aria-label={$_("admin.mcpServers.edit")}
-                    title={$_("admin.mcpServers.edit")}
+                    aria-label={$_("admin.mcpServers.actions.edit")}
+                    title={$_("admin.mcpServers.actions.edit")}
                   >
                     <span
                       class="icon-symbol icon-symbol--edit"
@@ -743,8 +831,8 @@
                   <button
                     class="icon-btn icon-btn--danger"
                     onclick={() => promptDelete(server)}
-                    aria-label={$_("admin.mcpServers.delete")}
-                    title={$_("admin.mcpServers.delete")}
+                    aria-label={$_("admin.mcpServers.actions.delete")}
+                    title={$_("admin.mcpServers.actions.delete")}
                   >
                     <span
                       class="icon-symbol icon-symbol--delete"
@@ -809,11 +897,29 @@
 
           <div class="mcp-card-meta">
             <span class="mcp-card-badge">{server.transport_type}</span>
+            <span class="mcp-card-badge">{getAuthBadgeLabel(server)}</span>
             <span class="mcp-card-badge">{server.tool_count} {server.tool_count === 1 ? $_("admin.viewMode.tool") : $_("admin.viewMode.tools")}</span>
-            <span class="mcp-card-badge">{server.enabled ? $_("admin.mcpServers.enabled") : $_("admin.mcpServers.disabled")}</span>
           </div>
 
           <div class="mcp-card-actions">
+            <button
+              class="icon-btn icon-btn--test"
+              onclick={() => handleTestConnection(server)}
+              aria-label={$_("admin.mcpServers.testConnection")}
+              title={$_("admin.mcpServers.testConnection")}
+              disabled={testingServerId === server.id}
+            >
+              {#if testingServerId === server.id}
+                <span class="icon-spinner" aria-hidden="true"></span>
+              {:else}
+                <span class="icon-symbol icon-symbol--test" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                </span>
+              {/if}
+            </button>
             {#if server.status === "disconnected" && hasOauthConfig}
               <button
                 type="button"
@@ -847,8 +953,8 @@
             <button
               class="icon-btn"
               onclick={() => handleSyncTools(server)}
-              aria-label={$_("admin.mcpServers.syncTools")}
-              title={$_("admin.mcpServers.syncTools")}
+              aria-label={$_("admin.mcpServers.actions.syncTools")}
+              title={$_("admin.mcpServers.actions.syncTools")}
               disabled={syncingServerId === server.id}
             >
               {#if syncingServerId === server.id}
@@ -864,8 +970,8 @@
             <button
               class="icon-btn"
               onclick={() => openEditModal(server)}
-              aria-label={$_("admin.mcpServers.edit")}
-              title={$_("admin.mcpServers.edit")}
+              aria-label={$_("admin.mcpServers.actions.edit")}
+              title={$_("admin.mcpServers.actions.edit")}
             >
               <span class="icon-symbol icon-symbol--edit" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
@@ -876,8 +982,8 @@
             <button
               class="icon-btn icon-btn--danger"
               onclick={() => promptDelete(server)}
-              aria-label={$_("admin.mcpServers.delete")}
-              title={$_("admin.mcpServers.delete")}
+              aria-label={$_("admin.mcpServers.actions.delete")}
+              title={$_("admin.mcpServers.actions.delete")}
             >
               <span class="icon-symbol icon-symbol--delete" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
@@ -1095,7 +1201,7 @@
           >
             {isDeleting
               ? $_("admin.mcpServers.deleting")
-              : $_("admin.mcpServers.delete")}
+              : $_("admin.mcpServers.actions.delete")}
           </button>
         </div>
       </div>
@@ -1358,6 +1464,37 @@
     color: var(--brand-red);
   }
 
+  .icon-symbol--test {
+    color: var(--brand-green, #22c55e);
+  }
+
+  .icon-symbol--test svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .icon-btn--test {
+    border-color: rgba(34, 197, 94, 0.2);
+  }
+
+  .icon-btn--test:hover {
+    background: rgba(34, 197, 94, 0.08);
+    border-color: rgba(34, 197, 94, 0.4);
+  }
+
+  .auth-badge {
+    display: inline-block;
+    padding: var(--space-2xs) var(--space-sm);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: rgba(var(--glass-tint), 0.06);
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
   .icon-btn--danger {
     border-color: rgba(239, 68, 68, 0.3);
   }
@@ -1609,6 +1746,18 @@
   }
 
   @media (max-width: 768px) {
+    .mcp-servers-container {
+      padding: var(--space-lg);
+    }
+
+    .hide-mobile {
+      display: none;
+    }
+
+    .action-buttons {
+      flex-wrap: wrap;
+    }
+
     .mcp-grid {
       grid-template-columns: 1fr;
       gap: var(--space-md);
@@ -1616,6 +1765,14 @@
 
     .mcp-card {
       padding: var(--space-lg);
+    }
+
+    .mcp-card-actions {
+      flex-wrap: wrap;
+    }
+
+    .mcp-form {
+      gap: var(--space-md);
     }
   }
 
