@@ -8,10 +8,13 @@
   import Modal from "../components/Modal.svelte";
   import ServerAccessPanel from "../components/mcp/ServerAccessPanel.svelte";
   import ToolAccessPanel from "../components/mcp/ToolAccessPanel.svelte";
+  import OAuthConfigSection from "../components/mcp/OAuthConfigSection.svelte";
+  import OrgConnectionPanel from "../components/mcp/OrgConnectionPanel.svelte";
+  import PerUserConnectionPanel from "../components/mcp/PerUserConnectionPanel.svelte";
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
-  import type { MCPServer } from "../types.js";
+  import type { MCPServer, McpAuthType, McpAuthMode, McpOAuthProvider } from "../types.js";
   import {
     authorizeMcpConnection,
     createMcpServer,
@@ -36,7 +39,7 @@
   let showClientSecret = $state(false);
   let viewMode = $state<"grid" | "table">("table");
   let selectedServer = $state<MCPServer | null>(null);
-  let detailTab = $state<"access" | "tools">("access");
+  let detailTab = $state<"access" | "tools" | "connection">("access");
 
   let formData = $state({
     name: "",
@@ -48,6 +51,14 @@
     default_access: "",
     enabled: true,
     connection_config: "{}",
+  });
+  let oauthForm = $state({
+    auth_type: 'none' as McpAuthType,
+    auth_mode: 'per_user' as McpAuthMode,
+    oauth_provider: null as McpOAuthProvider | null,
+    scopes: '',
+    auth_url: '',
+    token_url: '',
   });
   let formErrors = $state<Record<string, string>>({});
 
@@ -100,6 +111,14 @@
       enabled: true,
       connection_config: "{}",
     };
+    oauthForm = {
+      auth_type: 'none',
+      auth_mode: 'per_user',
+      oauth_provider: null,
+      scopes: '',
+      auth_url: '',
+      token_url: '',
+    };
     formErrors = {};
     serverToEdit = null;
     showClientSecret = false;
@@ -121,6 +140,14 @@
         null,
         2,
       ),
+    };
+    oauthForm = {
+      auth_type: server.auth_type ?? 'none',
+      auth_mode: server.auth_mode ?? 'per_user',
+      oauth_provider: server.oauth_provider ?? null,
+      scopes: (server.scopes ?? []).join(', '),
+      auth_url: server.auth_url ?? '',
+      token_url: server.token_url ?? '',
     };
     formErrors = {};
     serverToEdit = server;
@@ -161,6 +188,25 @@
         );
       }
     }
+    if (oauthForm.auth_type === 'oauth2') {
+      if (!oauthForm.oauth_provider) {
+        errors.oauth_provider = $_("admin.mcpOAuth.validation.providerRequired");
+      }
+      if (!formData.client_id.trim()) {
+        errors.client_id = $_("admin.mcpOAuth.validation.clientIdRequired");
+      }
+      if (!formData.client_secret.trim() && !serverToEdit?.client_secret_configured) {
+        errors.client_secret = $_("admin.mcpOAuth.validation.clientSecretRequired");
+      }
+      if (oauthForm.oauth_provider === 'custom') {
+        if (!oauthForm.auth_url.trim()) {
+          errors.auth_url = $_("admin.mcpOAuth.validation.authUrlRequired");
+        }
+        if (!oauthForm.token_url.trim()) {
+          errors.token_url = $_("admin.mcpOAuth.validation.tokenUrlRequired");
+        }
+      }
+    }
     formErrors = errors;
     return Object.keys(errors).length === 0;
   }
@@ -169,6 +215,25 @@
     if (!validateForm() || isSubmitting) return;
     isSubmitting = true;
     try {
+      const scopesArray = oauthForm.scopes.trim()
+        ? oauthForm.scopes.split(',').map(s => s.trim()).filter(Boolean)
+        : null;
+      const oauthPayload = oauthForm.auth_type === 'oauth2' ? {
+        auth_type: oauthForm.auth_type,
+        auth_mode: oauthForm.auth_mode,
+        oauth_provider: oauthForm.oauth_provider,
+        scopes: scopesArray,
+        auth_url: oauthForm.auth_url.trim() || null,
+        token_url: oauthForm.token_url.trim() || null,
+      } : {
+        auth_type: oauthForm.auth_type,
+        auth_mode: null,
+        oauth_provider: null,
+        scopes: null,
+        auth_url: null,
+        token_url: null,
+      };
+
       if (serverToEdit) {
         await updateMcpServer(serverToEdit.id, {
           name: formData.name.trim(),
@@ -180,6 +245,7 @@
           default_access: formData.default_access.trim() || null,
           enabled: formData.enabled,
           connection_config: JSON.parse(formData.connection_config),
+          ...oauthPayload,
         });
         toast.success($_("admin.mcpServers.updated"));
       } else {
@@ -193,6 +259,7 @@
           default_access: formData.default_access.trim() || null,
           enabled: true,
           connection_config: JSON.parse(formData.connection_config),
+          ...oauthPayload,
         });
         toast.success($_("admin.mcpServers.created"));
       }
@@ -257,6 +324,17 @@
     }
   }
 
+  let oauthPopup: Window | null = null;
+  let oauthPollTimer: ReturnType<typeof setInterval> | null = null;
+
+  function cleanupOAuthPopup() {
+    if (oauthPollTimer) {
+      clearInterval(oauthPollTimer);
+      oauthPollTimer = null;
+    }
+    oauthPopup = null;
+  }
+
   async function handleConnect(server: MCPServer) {
     if (connectingServerId) return;
     const redirectUrl = `${window.location.origin}/mcp/oauth/callback`;
@@ -278,7 +356,30 @@
       if (!response?.authorization_url) {
         throw new Error($_("admin.mcpServers.connectFailed"));
       }
-      window.location.href = response.authorization_url;
+
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+
+      oauthPopup = window.open(
+        response.authorization_url,
+        `mcp_oauth_${server.id}`,
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`,
+      );
+
+      if (!oauthPopup) {
+        window.location.href = response.authorization_url;
+        return;
+      }
+
+      oauthPollTimer = setInterval(() => {
+        if (!oauthPopup || oauthPopup.closed) {
+          cleanupOAuthPopup();
+          connectingServerId = null;
+          loadServers();
+        }
+      }, 500);
     } catch (err: any) {
       const errorMessage =
         err instanceof ApiError
@@ -384,6 +485,21 @@
           </svg>
           <span>{$_("admin.mcpAccess.tabTools")}</span>
         </button>
+        {#if selectedServer.auth_type === "oauth2"}
+          <button
+            class="detail-tab"
+            class:detail-tab--active={detailTab === "connection"}
+            onclick={() => detailTab = "connection"}
+            role="tab"
+            aria-selected={detailTab === "connection"}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101"/>
+              <path d="M10.172 13.828a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1"/>
+            </svg>
+            <span>{$_("admin.mcpOAuth.tabConnection")}</span>
+          </button>
+        {/if}
       </div>
 
       <div class="detail-content">
@@ -391,6 +507,12 @@
           <ServerAccessPanel server={selectedServer} />
         {:else if detailTab === "tools"}
           <ToolAccessPanel server={selectedServer} />
+        {:else if detailTab === "connection" && selectedServer.auth_type === "oauth2"}
+          {#if selectedServer.auth_mode === "organization"}
+            <OrgConnectionPanel server={selectedServer} />
+          {:else}
+            <PerUserConnectionPanel server={selectedServer} />
+          {/if}
         {/if}
       </div>
     </div>
@@ -842,73 +964,27 @@
           {/if}
         </div>
 
-        <div class="form-group">
-          <label for="mcp-client-id">{$_("admin.mcpServers.clientId")}</label>
-          <input
-            id="mcp-client-id"
-            type="text"
-            bind:value={formData.client_id}
-            class:error={Boolean(formErrors.client_id)}
-            placeholder={$_("admin.mcpServers.clientIdPlaceholder")}
-          />
-          {#if formErrors.client_id}
-            <span class="error-text">{formErrors.client_id}</span>
-          {/if}
-        </div>
-
-        <div class="form-group">
-          <label for="mcp-client-secret"
-            >{$_("admin.mcpServers.clientSecret")}</label
-          >
-          <div class="client-secret-input-row">
-            <input
-              id="mcp-client-secret"
-              type={showClientSecret ? "text" : "password"}
-              bind:value={formData.client_secret}
-              class:error={Boolean(formErrors.client_secret)}
-              placeholder={$_("admin.mcpServers.clientSecretPlaceholder")}
-              autocomplete="off"
-              spellcheck="false"
-            />
-            <button
-              type="button"
-              class="client-secret-visibility"
-              onclick={() => (showClientSecret = !showClientSecret)}
-              aria-label={showClientSecret
-                ? $_("admin.mcpServers.hideSecret")
-                : $_("admin.mcpServers.showSecret")}
-            >
-              {#if showClientSecret}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    fill="currentColor"
-                    d="M2 5.27L3.28 4 20 20.72 18.73 22l-3.08-3.08c-1.15.38-2.37.58-3.65.58-5 0-9.27-3.11-11-7.5.69-1.76 1.79-3.31 3.19-4.54zM12 9a3 3 0 0 1 3 3 3 3 0 0 1-.17 1L11 9.17A3 3 0 0 1 12 9m0-4.5c5 0 9.27 3.11 11 7.5a11.8 11.8 0 0 1-4 5.19l-1.42-1.43A9.86 9.86 0 0 0 20.82 12A9.82 9.82 0 0 0 12 6.5c-1.09 0-2.16.18-3.16.5L7.3 5.47c1.44-.62 3.03-.97 4.7-.97M3.18 12A9.82 9.82 0 0 0 12 17.5c.69 0 1.37-.07 2-.21L11.72 15A3.064 3.064 0 0 1 9 12.28L5.6 8.87c-.99.85-1.82 1.91-2.42 3.13"
-                  />
-                </svg>
-              {:else}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    fill="currentColor"
-                    d="M12 9a3 3 0 1 1 0 6a3 3 0 0 1 0-6zm0-4.5c5 0 9.27 3.11 11 7.5-1.73 4.39-6 7.5-11 7.5S2.73 16.39 1 12c1.73-4.39 6-7.5 11-7.5zM3.18 12a9.821 9.821 0 0 0 17.64 0a9.821 9.821 0 0 0-17.64 0"
-                  />
-                </svg>
-              {/if}
-            </button>
-          </div>
-          {#if formErrors.client_secret}
-            <span class="error-text">{formErrors.client_secret}</span>
-          {/if}
-        </div>
+        <OAuthConfigSection
+          authType={oauthForm.auth_type}
+          authMode={oauthForm.auth_mode}
+          oauthProvider={oauthForm.oauth_provider}
+          clientId={formData.client_id}
+          clientSecret={formData.client_secret}
+          scopes={oauthForm.scopes}
+          authUrl={oauthForm.auth_url}
+          tokenUrl={oauthForm.token_url}
+          {showClientSecret}
+          errors={formErrors}
+          onAuthTypeChange={(v) => oauthForm.auth_type = v}
+          onAuthModeChange={(v) => oauthForm.auth_mode = v}
+          onProviderChange={(v) => oauthForm.oauth_provider = v}
+          onClientIdChange={(v) => formData.client_id = v}
+          onClientSecretChange={(v) => formData.client_secret = v}
+          onScopesChange={(v) => oauthForm.scopes = v}
+          onAuthUrlChange={(v) => oauthForm.auth_url = v}
+          onTokenUrlChange={(v) => oauthForm.token_url = v}
+          onToggleSecret={() => showClientSecret = !showClientSecret}
+        />
 
         <div class="form-group">
           <label for="mcp-default-access"

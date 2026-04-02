@@ -52,6 +52,18 @@ export interface AIEngine {
   updated_at?: string | null;
 }
 
+export type McpAuthType = 'none' | 'api_key' | 'oauth2';
+export type McpAuthMode = 'organization' | 'per_user';
+export type McpOAuthProvider = 'atlassian' | 'google' | 'github' | 'slack' | 'custom';
+
+export interface McpOrgConnection {
+  connected: boolean;
+  connected_as: string | null;
+  connected_at: string | null;
+  token_expires_at: string | null;
+  scopes: string[];
+}
+
 export interface MCPServer {
   id: string;
   name: string;
@@ -71,6 +83,14 @@ export interface MCPServer {
   last_synced_at: string | null;
   created_at: string;
   updated_at: string;
+  auth_type: McpAuthType;
+  auth_mode: McpAuthMode | null;
+  oauth_provider: McpOAuthProvider | null;
+  scopes: string[] | null;
+  auth_url: string | null;
+  token_url: string | null;
+  org_connection: McpOrgConnection | null;
+  connected_users_count: number | null;
 }
 
 export interface MCPServerListResponse {

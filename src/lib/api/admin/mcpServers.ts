@@ -9,6 +9,10 @@ import type {
   McpBulkToolAccessUpdatePayload,
   McpBulkToolAccessResponse,
   McpDefaultAccess,
+  McpAuthType,
+  McpAuthMode,
+  McpOAuthProvider,
+  McpOrgConnection,
 } from '../../admin/types.js';
 
 export type McpAuthorizeConnectionResponse = {
@@ -39,6 +43,12 @@ export async function createMcpServer(payload: {
   name: string;
   transport_type: string;
   url: string | null;
+  auth_type?: McpAuthType;
+  auth_mode?: McpAuthMode | null;
+  oauth_provider?: McpOAuthProvider | null;
+  scopes?: string[] | null;
+  auth_url?: string | null;
+  token_url?: string | null;
 }): Promise<MCPServer> {
   return request<MCPServer>('/admin/mcp-servers', {
     method: 'POST',
@@ -58,6 +68,12 @@ export async function updateMcpServer(
     name: string;
     transport_type: string;
     url: string | null;
+    auth_type: McpAuthType;
+    auth_mode: McpAuthMode | null;
+    oauth_provider: McpOAuthProvider | null;
+    scopes: string[] | null;
+    auth_url: string | null;
+    token_url: string | null;
   }>
 ): Promise<MCPServer> {
   return request<MCPServer>(`/admin/mcp-servers/${serverId}`, {
@@ -99,6 +115,33 @@ export async function completeMcpOAuth(
     {
       method: 'GET',
     }
+  );
+}
+
+export async function getOrgConnection(
+  serverId: string
+): Promise<McpOrgConnection> {
+  return request<McpOrgConnection>(
+    `/admin/mcp-servers/${serverId}/connection`,
+    { method: 'GET' }
+  );
+}
+
+export async function disconnectOrgConnection(
+  serverId: string
+): Promise<{ success: boolean }> {
+  return request<{ success: boolean }>(
+    `/admin/mcp-servers/${serverId}/connection/disconnect`,
+    { method: 'POST' }
+  );
+}
+
+export async function getConnectedUsersCount(
+  serverId: string
+): Promise<{ count: number }> {
+  return request<{ count: number }>(
+    `/admin/mcp-servers/${serverId}/connections/count`,
+    { method: 'GET' }
   );
 }
 

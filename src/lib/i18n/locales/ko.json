@@ -522,6 +522,69 @@
       "yes": "Yes",
       "no": "No"
     },
+    "mcpOAuth": {
+      "authentication": "Authentication",
+      "authType": "Auth Type",
+      "authTypes": {
+        "none": "None",
+        "apiKey": "API Key",
+        "oauth2": "OAuth 2.0"
+      },
+      "provider": "Provider",
+      "selectProvider": "Select a provider...",
+      "custom": "Custom",
+      "authMode": "Auth Mode",
+      "authModes": {
+        "organization": "Organization",
+        "organizationDesc": "Admin connects once for the entire org",
+        "perUser": "Per-user",
+        "perUserDesc": "Each user connects their own account"
+      },
+      "clientId": "Client ID",
+      "clientIdPlaceholder": "Enter OAuth client ID",
+      "clientSecret": "Client Secret",
+      "clientSecretPlaceholder": "Enter OAuth client secret",
+      "showSecret": "Show secret",
+      "hideSecret": "Hide secret",
+      "scopes": "Scopes",
+      "scopesPlaceholder": "read:jira-work, write:jira-work, ...",
+      "scopesHint": "Comma-separated list of OAuth scopes",
+      "advanced": "Advanced — Custom Provider",
+      "authUrl": "Authorization URL",
+      "tokenUrl": "Token URL",
+      "tabConnection": "Connection",
+      "validation": {
+        "providerRequired": "OAuth provider is required",
+        "clientIdRequired": "Client ID is required for OAuth",
+        "clientSecretRequired": "Client secret is required for OAuth",
+        "authUrlRequired": "Authorization URL is required for custom providers",
+        "tokenUrlRequired": "Token URL is required for custom providers"
+      },
+      "orgConnection": {
+        "title": "Organization Connection",
+        "status": "Status:",
+        "connectedAs": "Connected as {email}",
+        "notConnected": "Not connected",
+        "expires": "Expires:",
+        "expiresIn": "in {days} days",
+        "expired": "Expired",
+        "scopes": "Scopes:",
+        "connect": "Connect",
+        "reconnect": "Reconnect",
+        "disconnect": "Disconnect",
+        "disconnected": "Disconnected successfully",
+        "connectFailed": "Failed to connect",
+        "disconnectFailed": "Failed to disconnect",
+        "connectHint": "Connect your organization account to enable this MCP server for all users.",
+        "failedToGetUrl": "Failed to get authorization URL",
+        "popupBlocked": "Popup was blocked. Please allow popups for this site."
+      },
+      "perUserConnection": {
+        "title": "User Connections",
+        "description": "This server requires each user to connect their own {provider} account. Users will be prompted to connect when they first use {provider} tools.",
+        "connectedUsers": "Connected users:"
+      }
+    },
     "mcpAccess": {
       "accessControl": "Access Control",
       "backToServers": "Back to Servers",

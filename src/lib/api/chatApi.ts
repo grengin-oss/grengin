@@ -270,7 +270,8 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         const dataMatch = line.match(/^data: (.+)$/m);
 
         if (eventMatch && dataMatch) {
-          const event = JSON.parse(eventMatch[1]);
+          const raw = eventMatch[1];
+          const event = raw.startsWith('"') ? JSON.parse(raw) : raw;
           const data = JSON.parse(dataMatch[1]);
           
           switch (event) {
@@ -298,7 +299,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
                 onToolResult?.(data.tool_result);
               }
               break;
-            case 'mcp_auth_required':
+            case 'mcp_oauth_required':
               if (data) {
                 onMcpAuthRequired?.({
                   server_id: data.server_id,
