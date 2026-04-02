@@ -37,13 +37,13 @@
 
   function redirectAfterSuccess(): void {
     setTimeout(() => {
-      navigate("/admin/connectors", { replace: true });
+      navigate("/admin/mcp-servers", { replace: true });
     }, REDIRECT_DELAY_SUCCESS);
   }
 
   function redirectAfterError(): void {
     setTimeout(() => {
-      navigate("/admin/connectors", { replace: true });
+      navigate("/admin/mcp-servers", { replace: true });
     }, REDIRECT_DELAY_ERROR);
   }
 
