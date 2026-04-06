@@ -219,18 +219,20 @@
 </script>
 
 <svelte:window on:scroll={handleAlertListScroll} />
-<div class="alerts-page surface-elevated">
+<div class="alerts-page surface-elevated" role="main" aria-label={$_('alerts.title') || 'Alerts'}>
   <header class="alerts-header">
     <h1 class="alerts-title">{$_('alerts.title')}</h1>
     <p class="alerts-subtitle">{$_('alerts.subtitle')}</p>
   </header>
 
-  <div class="filter-row">
+  <div class="filter-row" role="group" aria-label={$_('alerts.filterLabel') || 'Filter alerts'}>
     <button
       type="button"
       class="filter-btn"
       class:active={filter === 'all'}
       onclick={() => setFilter('all')}
+      aria-label={$_('alerts.filterAll')}
+      aria-pressed={filter === 'all'}
     >
       {$_('alerts.filterAll')}
     </button>
@@ -239,29 +241,34 @@
       class="filter-btn"
       class:active={filter === 'unread'}
       onclick={() => setFilter('unread')}
+      aria-label={$_('alerts.filterUnread')}
+      aria-pressed={filter === 'unread'}
     >
       {$_('alerts.filterUnread')}
     </button>
   </div>
 
   {#if initialLoading}
-    <div class="loading-wrap">
+    <div class="loading-wrap" role="status" aria-live="polite" aria-label={$_('alerts.loading') || 'Loading alerts'}>
       <LoadingSpinner size="md" />
     </div>
   {:else if activeItems.length === 0}
-    <div class="surface-card empty-card">
+    <div class="surface-card empty-card" role="status" aria-label={$_('alerts.empty') || 'No alerts found'}>
       <p class="muted">{$_('alerts.empty')}</p>
     </div>
   {:else}
     <ul
       class="alert-list"
+      role="list"
+      aria-label={$_('alerts.notificationsList') || 'Notifications list'}
     >
       {#each activeItems as n (n.id)}
         <li>
-          <article
+          <div
             class="surface-card-interactive alert-row"
             class:unread={isUnread(n)}
             use:autoReadOnVisible={isUnread(n) ? n.id : null}
+            aria-label={`${n.title}${n.body ? ': ' + n.body : ''}`}
           >
             <div class="alert-row-inner">
               <div class="alert-row-main">
@@ -281,11 +288,11 @@
                 {/if}
               </div>
             </div>
-          </article>
+          </div>
         </li>
       {/each}
       {#if showLoadMoreSentinel}
-        <li class="loading-item">
+        <li class="loading-item" aria-live="polite" aria-busy={activeLoadingMore}>
           <div class="loading-indicator">
             {#if activeLoadingMore}
               <span class="load-more-spinner" aria-hidden="true"></span>

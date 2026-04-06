@@ -257,9 +257,13 @@
 
 </script>
 
-<svelte:window onclick={handleClickOutside} onresize={handleResize} />
+<svelte:window onclick={handleClickOutside} onresize={handleResize} onkeydown={(e) => {
+  if (e.key === 'Escape' && showUserMenu) {
+    closeUserMenu();
+  }
+}} />
 
-<aside class="sidebar" class:collapsed={isCollapsed}>
+<aside class="sidebar" class:collapsed={isCollapsed} role="navigation" aria-label={$_('sidebar.navigation') || 'Main navigation'}>
   {#snippet alertsUi()}
     <button
       type="button"
@@ -426,6 +430,8 @@
         <button
           class="user-menu-trigger sidebar-item"
           onclick={toggleUserMenu}
+          aria-label={$_('sidebar.userMenu')}
+          aria-expanded={showUserMenu}
           title={$_('sidebar.userMenu')}
         >
           <div class="user-avatar">
@@ -437,7 +443,7 @@
             <div class="user-info">
               <span class="user-name">{user?.name || $_('sidebar.user')}</span>
             </div>
-            <svg class="dropdown-arrow" class:rotated={showUserMenu} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="dropdown-arrow" class:rotated={showUserMenu} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <polyline points="6,15 12,9 18,15"/>
             </svg>
           {/if}
@@ -449,19 +455,23 @@
 
 
 {#if showUserMenu}
-  <div class="user-menu-dropdown">
-    <button class="menu-item">
+  <div class="user-menu-dropdown" role="menu" tabindex="-1" onkeydown={(e) => {
+    if (e.key === 'Escape') {
+      closeUserMenu();
+    }
+  }}>
+    <button class="menu-item" role="menuitem" aria-label={$_('sidebar.settings')} title={$_('sidebar.settings')}>
       <span class="user-menu-icon">⚙️</span>
       <span>{$_('sidebar.settings')}</span>
     </button>
     {#if hasAdminPermissions}
-      <Link to="/admin" class="menu-item" onclick={collapseSidebarOnMobile}>
+      <Link to="/admin" class="menu-item" role="menuitem" onclick={collapseSidebarOnMobile}>
         <span class="menu-item-icon">🔒</span>
         <span class="menu-item-label">{$_('sidebar.admin')}</span>
       </Link>
     {/if}
-    <button class="menu-item menu-item--danger" onclick={handleLogout}>
-      <svg class="user-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <button class="menu-item menu-item--danger" role="menuitem" onclick={handleLogout} aria-label={$_('sidebar.signOut')} title={$_('sidebar.signOut')}>
+      <svg class="user-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
         <polyline points="16,17 21,12 16,7"/>
         <line x1="21" y1="12" x2="9" y2="12"/>

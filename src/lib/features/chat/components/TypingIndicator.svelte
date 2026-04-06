@@ -1,10 +1,10 @@
 <script lang="ts">
-  // Simple typing indicator component
+  import { _ } from 'svelte-i18n';
 </script>
 
-<div class="typing-indicator">
+<div class="typing-indicator" role="status" aria-label={$_('components.typingIndicator')} aria-live="polite">
   <div class="typing-content">
-    <div class="typing-dots">
+    <div class="typing-dots" aria-hidden="true">
       <span class="dot"></span>
       <span class="dot"></span>
       <span class="dot"></span>

@@ -2,6 +2,7 @@
   import { navigate } from 'svelte-routing';
   import { _ } from 'svelte-i18n';
   import { tick } from 'svelte';
+  import Modal from '$lib/admin/components/Modal.svelte';
   import {
     listConversations,
     deleteConversation,
@@ -356,8 +357,8 @@
 
 <nav class="sidebar-nav">
   {#each menuItems as item}
-    <button class="sidebar-item" onclick={() => handleItemClick(item.id)} title={item.label}>
-      <span class="sidebar-icon">{@html item.icon}</span>
+    <button class="sidebar-item" onclick={() => handleItemClick(item.id)} aria-label={item.label} title={item.label}>
+      <span class="sidebar-icon" aria-hidden="true">{@html item.icon}</span>
       <span class="sidebar-label">{item.label}</span>
     </button>
   {/each}
@@ -373,6 +374,7 @@
           stroke="currentColor"
           stroke-width="2"
           class="search-icon"
+          aria-hidden="true"
         >
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.35-4.35" />
@@ -382,6 +384,8 @@
           placeholder={$_('sidebar.searchPlaceholder')}
           bind:value={searchQuery}
           class="chat-search-input"
+          aria-label={$_('sidebar.searchTitle')}
+          title={$_('sidebar.searchTitle')}
           onkeydown={(event: KeyboardEvent) => {
             if (event.key === 'Escape') {
               clearSearch();
@@ -389,7 +393,6 @@
           }}
           onfocus={() => (searchFocused = true)}
           onblur={() => (searchFocused = false)}
-          title={$_('sidebar.searchTitle')}
         />
         {#if searchQuery}
           <button
@@ -488,6 +491,7 @@
                 toggleChatMenu(chat.id);
               }}
               title={$_('sidebar.chatOptions')}
+              aria-label={$_('sidebar.chatOptions')}
               aria-expanded={activeChatMenu === chat.id}
               disabled={renameChatId === chat.id}
             >
@@ -505,8 +509,8 @@
                 role="menu"
                 tabindex="-1"
               >
-                <button class="menu-item" onclick={() => openRenameDialog(chat)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button class="menu-item" onclick={() => openRenameDialog(chat)} aria-label={$_('sidebar.rename')} title={$_('sidebar.rename')}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M4 17.25V21h3.75L17.81 10.94l-3.75-3.75L4 17.25z"></path>
                     <path
                       d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"
@@ -514,15 +518,15 @@
                   </svg>
                   {$_('sidebar.rename')}
                 </button>
-                <button class="menu-item menu-item--danger" onclick={() => deleteChat(chat.id)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button class="menu-item menu-item--danger" onclick={() => deleteChat(chat.id)} aria-label={$_('sidebar.delete')} title={$_('sidebar.delete')}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <polyline points="3,6 5,6 21,6"></polyline>
                     <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
                   </svg>
                   {$_('sidebar.delete')}
                 </button>
-                <button class="menu-item" onclick={() => archiveChat(chat.id, chat.title)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button class="menu-item" onclick={() => archiveChat(chat.id, chat.title)} aria-label={$_('sidebar.archive')} title={$_('sidebar.archive')}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                   </svg>
                   {$_('sidebar.archive')}
@@ -543,27 +547,22 @@
 {/if}
 
 {#if showDeleteConfirmation}
-  <div class="confirmation-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-title">
-    <div class="confirmation-dialog">
-      <div class="confirmation-header">
-        <h3 id="delete-title">{$_('sidebar.deleteChat')}</h3>
-        <button class="close-btn" onclick={cancelDeleteChat} aria-label={$_('sidebar.close')}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
+  <Modal 
+    isOpen={showDeleteConfirmation} 
+    title={$_('sidebar.deleteChat')} 
+    onclose={cancelDeleteChat}
+  >
+    {#snippet children()}
       <div class="confirmation-content">
         <p>{$_('sidebar.deleteChatConfirm')}</p>
       </div>
       <div class="confirmation-actions">
-        <button class="cancel-btn" onclick={cancelDeleteChat} disabled={deletingChat}>
+        <button class="cancel-btn" onclick={cancelDeleteChat} disabled={deletingChat} aria-label={$_('sidebar.cancel')}>
           {$_('sidebar.cancel')}
         </button>
-        <button class="delete-btn" onclick={confirmDeleteChat} disabled={deletingChat}>
+        <button class="delete-btn" onclick={confirmDeleteChat} disabled={deletingChat} aria-label={deletingChat ? $_('sidebar.deleting') : $_('sidebar.delete')}>
           {#if deletingChat}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spinner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spinner" aria-hidden="true">
               <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
               <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"></path>
             </svg> &nbsp;
@@ -573,8 +572,8 @@
           {/if}
         </button>
       </div>
-    </div>
-  </div>
+    {/snippet}
+  </Modal>
 {/if}
 
 <style>
@@ -768,12 +767,14 @@
   }
 
   .chat-item:hover .chat-item-menu,
-  .chat-item-menu[aria-expanded='true'] {
+  .chat-item-menu[aria-expanded='true'],
+  .chat-item-menu:focus-visible {
     opacity: 1;
     pointer-events: auto;
   }
 
-  .chat-item-menu:hover {
+  .chat-item-menu:hover,
+  .chat-item-menu:focus-visible {
     background: var(--btn-quaternary);
     color: var(--brand);
   }
@@ -914,70 +915,9 @@
     justify-content: center;
   }
 
-  .close-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: all 0.15s ease;
-  }
-
-  .close-btn:hover {
-    background: var(--btn-tertiary);
-    color: var(--text-primary);
-  }
-
-  /* ===== Confirmation Dialog ===== */
-  .confirmation-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    backdrop-filter: blur(4px);
-    animation: fadeIn 0.2s ease;
-  }
-
-  .confirmation-dialog {
-    background: var(--bg-primary);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--glass-shadow-emphasis);
-    width: 90%;
-    max-width: 400px;
-    overflow: hidden;
-    animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .confirmation-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-lg) var(--space-xl);
-    border-bottom: 1px solid var(--glass-stroke-dark);
-  }
-
-  .confirmation-header h3 {
-    margin: 0;
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
+  /* ===== Confirmation Dialog Actions (with Modal component) ===== */
   .confirmation-content {
-    padding: var(--space-lg) var(--space-xl);
+    padding: 0;
   }
 
   .confirmation-content p {
@@ -992,7 +932,6 @@
     justify-content: flex-end;
     gap: var(--space-md);
     padding: var(--space-lg) var(--space-xl);
-    border-top: 1px solid var(--glass-stroke-dark);
   }
 
   .cancel-btn {
@@ -1043,26 +982,6 @@
 
   .spinner {
     animation: spin 1s linear infinite;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
   }
 
   @keyframes spin {

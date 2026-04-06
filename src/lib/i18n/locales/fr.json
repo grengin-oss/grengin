@@ -52,7 +52,12 @@
     "oauthProviderNotFound": "Fournisseur OAuth introuvable. Veuillez réessayer de vous connecter.",
     "invalidAuthResponse": "Réponse d'authentification invalide du serveur",
     "unexpectedAuthError": "Une erreur inattendue s'est produite lors de l'authentification",
-    "failedToInitiateLogin": "Échec de l'initiation de la connexion {provider}"
+    "failedToInitiateLogin": "Échec de l'initiation de la connexion {provider}",
+    "socialLogin": "Options de connexion sociale",
+    "legalLinks": "Mentions légales"
+  },
+  "components": {
+    "typingIndicator": "L'assistant écrit"
   },
   "sidebar": {
     "newChat": "Nouvelle conversation",
@@ -84,6 +89,8 @@
     "deleteChat": "Supprimer la conversation",
     "deleteChatConfirm": "Êtes-vous sûr de vouloir supprimer cette conversation ? Cette action est irréversible.",
     "cancel": "Annuler",
+    "navigation": "Navigation principale",
+    "openAlerts": "Ouvrir les alertes",
     "deleting": "Suppression...",
     "close": "Fermer",
     "chatDeleted": "{title} supprimé avec succès",
@@ -100,7 +107,6 @@
     "sectionConfigure": "Configurer",
     "overview": "Aperçu",
     "accessControl": "Contrôle d'accès",
-    "openAlerts": "Ouvrir les alertes",
     "viewAllAlerts": "Voir toutes les alertes",
     "noRecentAlerts": "Pas encore d'alertes",
     "newAlert": "Nouvelle alerte"
@@ -110,8 +116,10 @@
     "subtitle": "Vos notifications et mises à jour",
     "filterAll": "Toutes",
     "filterUnread": "Non lues",
+    "filterLabel": "Filtrer les alertes par statut",
+    "notificationsList": "Liste des notifications",
     "empty": "Aucune alerte à afficher",
-    "loading": "Chargement...",
+    "loading": "Chargement des alertes...",
     "loadMore": "Charger plus",
     "unread": "Non lue",
     "loadError": "Échec du chargement des alertes",

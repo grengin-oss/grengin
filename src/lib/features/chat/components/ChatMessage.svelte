@@ -446,16 +446,27 @@
                     {:else if fileBlobUrls.has(file.id)}
                       {@const blobUrl = fileBlobUrls.get(file.id)}
                       {#if blobUrl}
-                        <img 
-                          src={blobUrl} 
-                          alt={file.name || $_('chat.message.imageAlt')} 
-                          class="message-image"
+                        <button 
+                          class="message-image-btn"
                           onclick={() => openImagePreview(blobUrl, file.name || $_('chat.message.imageAlt'))}
-                        />
+                          aria-label={file.name || $_('chat.message.imageAlt')}
+                          title={file.name || $_('chat.message.imageAlt')}
+                        >
+                          <img 
+                            src={blobUrl} 
+                            alt={file.name || $_('chat.message.imageAlt')} 
+                            class="message-image"
+                          />
+                        </button>
                       {/if}
                     {/if}
                   {:else}
-                    <div class="file-box" onclick={() => handleFileClick(file.id, file.name || $_('chat.message.fileFallback'))}>
+                    <button 
+                      class="file-box"
+                      onclick={() => handleFileClick(file.id, file.name || $_('chat.message.fileFallback'))}
+                      aria-label={file.name || $_('chat.message.fileFallback')}
+                      title={file.name || $_('chat.message.fileFallback')}
+                    >
                       <div class="file-icon-large">{getFileIcon(file.type)}</div>
                       <div class="file-info">
                         <div class="file-name">{file.name || $_('chat.message.fileFallback')}</div>
@@ -463,7 +474,7 @@
                           <div class="file-type">{file.type}</div>
                         {/if}
                       </div>
-                    </div>
+                    </button>
                   {/if}
                 {/each}
               </div>
@@ -480,6 +491,7 @@
               <button
                 class="action-btn"
                 onclick={handleTTSToggle}
+                aria-label={isSpeaking ? $_('chat.message.pause') : isPaused ? $_('chat.message.resume') : $_('chat.message.listen')}
                 title={isSpeaking ? $_('chat.message.pause') : isPaused ? $_('chat.message.resume') : $_('chat.message.listen')}
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -503,6 +515,7 @@
                 <button
                   class="action-btn"
                   onclick={handleTTSStop}
+                  aria-label={$_('chat.message.stop')}
                   title={$_('chat.message.stop')}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -516,6 +529,7 @@
               class="action-btn"
               class:success={copySuccess}
               onclick={copyMessageContent}
+              aria-label={$_('chat.message.copyContent')}
               title={$_('chat.message.copyContent')}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -543,16 +557,27 @@
                   {:else if fileBlobUrls.has(file.id)}
                     {@const blobUrl = fileBlobUrls.get(file.id)}
                     {#if blobUrl}
-                      <img 
-                        src={blobUrl} 
-                        alt={file.name || $_('chat.message.imageAlt')} 
-                        class="message-image"
+                      <button 
+                        class="message-image-btn"
                         onclick={() => openImagePreview(blobUrl, file.name || $_('chat.message.imageAlt'))}
-                      />
+                        aria-label={file.name || $_('chat.message.imageAlt')}
+                        title={file.name || $_('chat.message.imageAlt')}
+                      >
+                        <img 
+                          src={blobUrl} 
+                          alt={file.name || $_('chat.message.imageAlt')} 
+                          class="message-image"
+                        />
+                      </button>
                     {/if}
                   {/if}
                 {:else}
-                  <div class="file-box" onclick={() => handleFileClick(file.id, file.name || $_('chat.message.fileFallback'))}>
+                  <button 
+                    class="file-box"
+                    onclick={() => handleFileClick(file.id, file.name || $_('chat.message.fileFallback'))}
+                    aria-label={file.name || $_('chat.message.fileFallback')}
+                    title={file.name || $_('chat.message.fileFallback')}
+                  >
                     <div class="file-icon-large">{getFileIcon(file.type)}</div>
                     <div class="file-info">
                       <div class="file-name">{file.name || $_('chat.message.fileFallback')}</div>
@@ -560,7 +585,7 @@
                         <div class="file-type">{file.type}</div>
                       {/if}
                     </div>
-                  </div>
+                  </button>
                 {/if}
               {/each}
             </div>
@@ -584,8 +609,24 @@
 
 <!-- Image Preview Modal -->
 {#if previewImage}
-  <div class="modal-backdrop" onclick={closeImagePreview}>
-    <div class="modal-content" onclick={(e) => e.stopPropagation()}>
+  <div 
+    class="modal-backdrop" 
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    aria-label={$_('chat.message.imagePreview') || 'Image preview'}
+    onclick={closeImagePreview}
+    onkeydown={(e) => {
+      if (e.key === 'Escape') closeImagePreview();
+    }}
+  >
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <div 
+      class="modal-content" 
+      role="document"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.key === 'Escape' && closeImagePreview()}
+    >
       <button class="modal-close" onclick={closeImagePreview} aria-label={$_('chat.message.closePreview')}>
         ✕
       </button>
@@ -893,6 +934,7 @@
     opacity: 0;
     transform: scale(0.9);
     transition: all 0.2s ease;
+    pointer-events: none;
   }
 
   /* Desktop: show on hover */
@@ -900,6 +942,15 @@
   .assistant-message:hover .message-actions {
     opacity: 1;
     transform: scale(1);
+    pointer-events: auto;
+  }
+
+  /* Keyboard: show on focus-within */
+  .user-message .message-actions:focus-within,
+  .assistant-message .message-actions:focus-within {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
   }
 
   /* Mobile: show on tap via actions-visible class */
@@ -907,6 +958,7 @@
   .message.actions-visible .assistant-message .message-actions {
     opacity: 1;
     transform: scale(1);
+    pointer-events: auto;
   }
 
   /* Action button - glass style */
@@ -924,6 +976,11 @@
     align-items: center;
     justify-content: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .action-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
 
   .action-btn:hover:not(:disabled) {
@@ -1172,6 +1229,20 @@
     overflow: hidden;
   }
 
+  .message-image-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: block;
+  }
+
+  .message-image-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: var(--radius-md);
+  }
+
   /* Responsive image sizing */
   @media (max-width: 768px) {
     .message-image {
@@ -1209,6 +1280,15 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     max-width: 300px;
     transition: all 0.2s ease;
+    cursor: pointer;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  .file-box:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
 
   .file-box:hover {

@@ -52,7 +52,12 @@
     "oauthProviderNotFound": "Proveedor OAuth no encontrado. Por favor, intente iniciar sesión nuevamente.",
     "invalidAuthResponse": "Respuesta de autenticación inválida del servidor",
     "unexpectedAuthError": "Ocurrió un error inesperado durante la autenticación",
-    "failedToInitiateLogin": "Error al iniciar el inicio de sesión con {provider}"
+    "failedToInitiateLogin": "Error al iniciar el inicio de sesión con {provider}",
+    "socialLogin": "Opciones de inicio de sesión social",
+    "legalLinks": "Legal"
+  },
+  "components": {
+    "typingIndicator": "El asistente está escribiendo"
   },
   "sidebar": {
     "newChat": "Nueva conversación",
@@ -84,6 +89,8 @@
     "deleteChat": "Eliminar conversación",
     "deleteChatConfirm": "¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer.",
     "cancel": "Cancelar",
+    "navigation": "Navegación principal",
+    "openAlerts": "Abrir alertas",
     "deleting": "Eliminando...",
     "close": "Cerrar",
     "chatDeleted": "{title} eliminado correctamente",
@@ -100,7 +107,6 @@
     "sectionConfigure": "Configurar",
     "overview": "Resumen",
     "accessControl": "Control de acceso",
-    "openAlerts": "Abrir alertas",
     "viewAllAlerts": "Ver todas las alertas",
     "noRecentAlerts": "Aún no hay alertas",
     "newAlert": "Nueva alerta"
@@ -110,8 +116,10 @@
     "subtitle": "Tus notificaciones y actualizaciones",
     "filterAll": "Todas",
     "filterUnread": "Sin leer",
+    "filterLabel": "Filtrar alertas por estado",
+    "notificationsList": "Lista de notificaciones",
     "empty": "No hay alertas que mostrar",
-    "loading": "Cargando...",
+    "loading": "Cargando alertas...",
     "loadMore": "Cargar más",
     "unread": "Sin leer",
     "loadError": "Error al cargar las alertas",

@@ -52,7 +52,12 @@
     "oauthProviderNotFound": "OAuthプロバイダーが見つかりません。再度ログインをお試しください。",
     "invalidAuthResponse": "サーバーからの認証応答が無効です",
     "unexpectedAuthError": "認証中に予期しないエラーが発生しました",
-    "failedToInitiateLogin": "{provider}ログインの開始に失敗しました"
+    "failedToInitiateLogin": "{provider}ログインの開始に失敗しました",
+    "socialLogin": "ソーシャルログインのオプション",
+    "legalLinks": "法的情報"
+  },
+  "components": {
+    "typingIndicator": "アシスタントが入力しています"
   },
   "sidebar": {
     "newChat": "新しいチャット",
@@ -84,6 +89,8 @@
     "deleteChat": "チャットを削除",
     "deleteChatConfirm": "このチャットを削除してもよろしいですか？この操作は元に戻せません。",
     "cancel": "キャンセル",
+    "navigation": "メインナビゲーション",
+    "openAlerts": "アラートを開く",
     "deleting": "削除中...",
     "close": "閉じる",
     "chatDeleted": "{title} を削除しました",
@@ -100,7 +107,6 @@
     "sectionConfigure": "設定",
     "overview": "概要",
     "accessControl": "アクセス制御",
-    "openAlerts": "アラートを開く",
     "viewAllAlerts": "すべてのアラートを見る",
     "noRecentAlerts": "まだアラートはありません",
     "newAlert": "新しいアラート"
@@ -110,8 +116,10 @@
     "subtitle": "通知と更新",
     "filterAll": "すべて",
     "filterUnread": "未読",
+    "filterLabel": "アラートを状態で絞り込む",
+    "notificationsList": "通知リスト",
     "empty": "表示するアラートがありません",
-    "loading": "読み込み中...",
+    "loading": "アラートを読み込み中...",
     "loadMore": "さらに読み込む",
     "unread": "未読",
     "loadError": "アラートの読み込みに失敗しました",

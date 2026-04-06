@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, tick } from "svelte";
   import { _ } from "svelte-i18n";
 
   interface Props {
@@ -12,6 +12,7 @@
   let { isOpen = $bindable(), title, onclose, children }: Props = $props();
 
   let modalContainer = $state<HTMLDivElement | null>(null);
+  let modalBackdrop = $state<HTMLDivElement | null>(null);
 
   // Track number of open modals globally
   const getModalCount = () =>
@@ -84,6 +85,13 @@
           wasOpen = true;
         }
       }
+
+      // Focus the modal for keyboard accessibility
+      if (modalBackdrop) {
+        tick().then(() => {
+          modalBackdrop?.focus();
+        });
+      }
     } else if (!isOpen && wasOpen) {
       decrementModalCount();
       wasOpen = false;
@@ -108,13 +116,14 @@
 {#if isOpen}
   <div bind:this={modalContainer}>
     <div
+      bind:this={modalBackdrop}
       class="modal-backdrop"
       onclick={handleBackdropClick}
       onkeydown={(e) => e.key === "Enter" && handleBackdropClick(e as any)}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      tabindex="-1"
+      tabindex="0"
     >
       <div class="modal-content">
         <div class="modal-header">
@@ -155,6 +164,17 @@
     z-index: 1000;
     padding: var(--space-xl);
     animation: fadeIn 0.2s ease;
+    outline: none;
+  }
+
+  .modal-backdrop:focus {
+    outline: 2px solid var(--brand-blue);
+    outline-offset: 2px;
+  }
+
+  .modal-backdrop:focus-visible {
+    outline: 2px solid var(--brand-blue);
+    outline-offset: 2px;
   }
 
   @keyframes fadeIn {
@@ -224,6 +244,16 @@
   .modal-close:hover {
     background: rgba(255, 255, 255, 0.08);
     color: var(--text-primary);
+  }
+
+  .modal-close:focus {
+    background: var(--brand-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  }
+
+  .modal-close:focus-visible {
+    background: var(--brand-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
   }
 
   .modal-close svg {
