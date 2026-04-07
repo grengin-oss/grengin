@@ -35,15 +35,32 @@
     await completeMcpOAuth(code, state);
   }
 
+  function getRedirectPath(): string {
+    const origin = sessionStorage.getItem('mcp_oauth_origin');
+    const redirectUrl = sessionStorage.getItem('mcp_oauth_redirect_url');
+    sessionStorage.removeItem('mcp_oauth_origin');
+    sessionStorage.removeItem('mcp_oauth_redirect_url');
+    
+    // If we have a stored URL, redirect there
+    if (redirectUrl) {
+      return redirectUrl;
+    }
+    
+    // Fallback to default paths
+    return origin === 'user' ? '/settings' : '/admin/connectors';
+  }
+
   function redirectAfterSuccess(): void {
+    const path = getRedirectPath();
     setTimeout(() => {
-      navigate("/admin/mcp-servers", { replace: true });
+      navigate(path, { replace: true });
     }, REDIRECT_DELAY_SUCCESS);
   }
 
   function redirectAfterError(): void {
+    const path = getRedirectPath();
     setTimeout(() => {
-      navigate("/admin/mcp-servers", { replace: true });
+      navigate(path, { replace: true });
     }, REDIRECT_DELAY_ERROR);
   }
 

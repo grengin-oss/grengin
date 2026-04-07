@@ -4,3 +4,4 @@ export { default as AlertsPage } from '$lib/features/notifications/AlertsPage.sv
 export { default as SidebarChatSection } from '$lib/components/layout/SidebarChatSection.svelte';
 export { default as Forbidden } from '$lib/components/Forbidden.svelte';
 export { default as UserSettings } from '$lib/pages/UserSettings.svelte';
+export { default as McpOAuthCallback } from '$lib/admin/pages/McpOAuthCallback.svelte';

@@ -417,6 +417,10 @@
         throw new Error($_("admin.mcpServers.connectFailed"));
       }
 
+      // Store current URL for OAuth callback redirect
+      sessionStorage.setItem('mcp_oauth_origin', 'admin');
+      sessionStorage.setItem('mcp_oauth_redirect_url', window.location.pathname + window.location.search);
+
       const width = 600;
       const height = 700;
       const left = window.screenX + (window.outerWidth - width) / 2;

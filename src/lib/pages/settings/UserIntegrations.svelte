@@ -104,6 +104,7 @@
       const response = await authorizeMcpConnection(server.id);
       if (response?.authorization_url) {
         sessionStorage.setItem('mcp_oauth_origin', 'user');
+        sessionStorage.setItem('mcp_oauth_redirect_url', window.location.pathname + window.location.search);
         window.location.href = response.authorization_url;
       } else {
         toast.error($_("userIntegrations.failedToGetAuthUrl"));
