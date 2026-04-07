@@ -77,74 +77,74 @@
   />
 
   {#if isLoading}
-    <div class="loading-container">
+    <div class="loading-container" role="status" aria-live="polite" aria-label={$_('admin.common.loading')}>
       <LoadingSpinner />
     </div>
   {:else if error}
     <AdminPanelCard>
-      <div class="error-state">
+      <div class="error-state" role="alert" aria-live="assertive">
         <p class="error-message">{error}</p>
-        <button class="btn-primary" onclick={fetchOverview}>{$_('adminOverview.retry')}</button>
+        <button class="btn-primary" onclick={fetchOverview} aria-label={$_('adminOverview.retry')}>{$_('adminOverview.retry')}</button>
       </div>
     </AdminPanelCard>
   {:else if overviewData}
     <div class="overview-content">
       <!-- Quick Stats Section -->
-      <section class="quick-stats-section">
-        <h2 class="section-title">{$_('adminOverview.quickStats')}</h2>
+      <section class="quick-stats-section" aria-labelledby="quick-stats-title">
+        <h2 class="section-title" id="quick-stats-title">{$_('adminOverview.quickStats')}</h2>
 
-        <div class="metrics-grid">
-          <AdminPanelCard class="metric-card">
+        <div class="metrics-grid" role="region" aria-label={$_('adminOverview.quickStats')}>
+          <AdminPanelCard class="metric-card" ariaLabel={$_('adminOverview.totalUsers')}>
             <div class="metric-content">
               <div class="metric-header">
                 <span class="metric-label">{$_('adminOverview.totalUsers')}</span>
               </div>
-              <div class="metric-value">{formatNumber(overviewData.total_users)}</div>
+              <div class="metric-value" aria-label={$_('adminOverview.totalUsers')}>{formatNumber(overviewData.total_users)}</div>
               <div class="metric-subtext">{$_('adminOverview.activeUsers', { values: { count: formatNumber(overviewData.active_users) } })}</div>
             </div>
           </AdminPanelCard>
 
-          <AdminPanelCard class="metric-card">
+          <AdminPanelCard class="metric-card" ariaLabel={$_('adminOverview.totalRequests')}>
             <div class="metric-content">
               <div class="metric-header">
                 <span class="metric-label">{$_('adminOverview.totalRequests')}</span>
                 {#if overviewData.request_growth_rate !== 0}
-                  <span class="tag" class:tag--success={overviewData.request_growth_rate > 0} class:tag--danger={overviewData.request_growth_rate < 0}>
+                  <span class="tag" class:tag--success={overviewData.request_growth_rate > 0} class:tag--danger={overviewData.request_growth_rate < 0} aria-label={$_('adminOverview.growthRate')}>
                     {formatPercentage(overviewData.request_growth_rate)}
                   </span>
                 {/if}
               </div>
-              <div class="metric-value">{formatNumber(overviewData.total_requests)}</div>
+              <div class="metric-value" aria-label={$_('adminOverview.totalRequests')}>{formatNumber(overviewData.total_requests)}</div>
               <div class="metric-subtext">{$_('adminOverview.last30Days')}</div>
             </div>
           </AdminPanelCard>
 
-          <AdminPanelCard class="metric-card">
+          <AdminPanelCard class="metric-card" ariaLabel={$_('adminOverview.totalTokens')}>
             <div class="metric-content">
               <div class="metric-header">
                 <span class="metric-label">{$_('adminOverview.totalTokens')}</span>
                 {#if overviewData.token_growth_rate !== 0}
-                  <span class="tag" class:tag--success={overviewData.token_growth_rate > 0} class:tag--danger={overviewData.token_growth_rate < 0}>
+                  <span class="tag" class:tag--success={overviewData.token_growth_rate > 0} class:tag--danger={overviewData.token_growth_rate < 0} aria-label={$_('adminOverview.growthRate')}>
                     {formatPercentage(overviewData.token_growth_rate)}
                   </span>
                 {/if}
               </div>
-              <div class="metric-value">{formatNumber(overviewData.total_tokens)}</div>
+              <div class="metric-value" aria-label={$_('adminOverview.totalTokens')}>{formatNumber(overviewData.total_tokens)}</div>
               <div class="metric-subtext">{$_('adminOverview.last30Days')}</div>
             </div>
           </AdminPanelCard>
 
-          <AdminPanelCard class="metric-card">
+          <AdminPanelCard class="metric-card" ariaLabel={$_('adminOverview.totalCost')}>
             <div class="metric-content">
               <div class="metric-header">
                 <span class="metric-label">{$_('adminOverview.totalCost')}</span>
                 {#if overviewData.cost_growth_rate !== 0}
-                  <span class="tag" class:tag--success={overviewData.cost_growth_rate > 0} class:tag--danger={overviewData.cost_growth_rate < 0}>
+                  <span class="tag" class:tag--success={overviewData.cost_growth_rate > 0} class:tag--danger={overviewData.cost_growth_rate < 0} aria-label={$_('adminOverview.growthRate')}>
                     {formatPercentage(overviewData.cost_growth_rate)}
                   </span>
                 {/if}
               </div>
-              <div class="metric-value">{formatCurrency(overviewData.total_cost)}</div>
+              <div class="metric-value" aria-label={$_('adminOverview.totalCost')}>{formatCurrency(overviewData.total_cost)}</div>
               <div class="metric-subtext">{$_('adminOverview.last30Days')}</div>
             </div>
           </AdminPanelCard>
@@ -152,14 +152,14 @@
       </section>
 
       <!-- Quick Links Section -->
-      <section class="quick-links-section">
-        <h2 class="section-title">{$_('adminOverview.quickLinks')}</h2>
+      <section class="quick-links-section" aria-labelledby="quick-links-title">
+        <h2 class="section-title" id="quick-links-title">{$_('adminOverview.quickLinks')}</h2>
 
         <div class="links-grid">
-          <Link to="/admin/users">
+          <Link to="/admin/users" aria-label={$_('sidebar.users')}>
             <AdminPanelCard class="link-card">
               <div class="link-content">
-                <div class="link-icon">
+                <div class="link-icon" aria-hidden="true">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                     <circle cx="9" cy="7" r="4"></circle>
@@ -171,7 +171,7 @@
                   <span class="link-title">{$_('sidebar.users')}</span>
                   <span class="link-description">{$_('adminOverview.manageUsers')}</span>
                 </div>
-                <div class="link-arrow">
+                <div class="link-arrow" aria-hidden="true">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9,18 15,12 9,6"></polyline>
                   </svg>
@@ -180,10 +180,10 @@
             </AdminPanelCard>
           </Link>
 
-          <Link to="/admin/departments">
+          <Link to="/admin/departments" aria-label={$_('admin.departments.title')}>
             <AdminPanelCard class="link-card">
               <div class="link-content">
-                <div class="link-icon">
+                <div class="link-icon" aria-hidden="true">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                     <polyline points="9 22 9 12 15 12 15 22"></polyline>
@@ -193,7 +193,7 @@
                   <span class="link-title">{$_('admin.departments.title')}</span>
                   <span class="link-description">{$_('adminOverview.manageDepartments')}</span>
                 </div>
-                <div class="link-arrow">
+                <div class="link-arrow" aria-hidden="true">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9,18 15,12 9,6"></polyline>
                   </svg>
@@ -202,10 +202,10 @@
             </AdminPanelCard>
           </Link>
 
-          <Link to="/admin/analytics">
+          <Link to="/admin/analytics" aria-label={$_('sidebar.usageAnalytics')}>
             <AdminPanelCard class="link-card">
               <div class="link-content">
-                <div class="link-icon">
+                <div class="link-icon" aria-hidden="true">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 3v18h18"></path>
                     <path d="M18 17V9"></path>
@@ -217,7 +217,7 @@
                   <span class="link-title">{$_('sidebar.usageAnalytics')}</span>
                   <span class="link-description">{$_('adminOverview.viewAnalytics')}</span>
                 </div>
-                <div class="link-arrow">
+                <div class="link-arrow" aria-hidden="true">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9,18 15,12 9,6"></polyline>
                   </svg>
@@ -226,10 +226,10 @@
             </AdminPanelCard>
           </Link>
 
-          <Link to="/admin/settings">
+          <Link to="/admin/settings" aria-label={$_('sidebar.settings')}>
             <AdminPanelCard class="link-card">
               <div class="link-content">
-                <div class="link-icon">
+                <div class="link-icon" aria-hidden="true">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 8a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 2a2 2 0 0 0-2 2a2 2 0 0 0 2 2a2 2 0 0 0 2-2a2 2 0 0 0-2-2m-2 12c-.25 0-.46-.18-.5-.42l-.37-2.65c-.63-.25-1.17-.59-1.69-.99l-2.49 1.01c-.22.08-.49 0-.61-.22l-2-3.46a.493.493 0 0 1 .12-.64l2.11-1.66L4.5 12l.07-1l-2.11-1.63a.493.493 0 0 1-.12-.64l2-3.46c.12-.22.39-.31.61-.22l2.49 1c.52-.39 1.06-.73 1.69-.98l.37-2.65c.04-.24.25-.42.5-.42h4c.25 0 .46.18.5.42l.37 2.65c.63.25 1.17.59 1.69.98l2.49-1c.22-.09.49 0 .61.22l2 3.46c.13.22.07.49-.12.64L19.43 11l.07 1l-.07 1l2.11 1.63c.19.15.25.42.12.64l-2 3.46c-.12.22-.39.31-.61.22l-2.49-1c-.52.39-1.06.73-1.69.98l-.37 2.65c-.04.24-.25.42-.5.42z"/>
                   </svg>
@@ -238,7 +238,7 @@
                   <span class="link-title">{$_('sidebar.settings')}</span>
                   <span class="link-description">{$_('adminOverview.configureSettings')}</span>
                 </div>
-                <div class="link-arrow">
+                <div class="link-arrow" aria-hidden="true">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9,18 15,12 9,6"></polyline>
                   </svg>
@@ -251,18 +251,18 @@
 
       <!-- Top Models Section -->
       {#if overviewData.top_models && overviewData.top_models.length > 0}
-        <section class="top-models-section">
-          <h2 class="section-title">{$_('adminOverview.topModels')}</h2>
+        <section class="top-models-section" aria-labelledby="top-models-title">
+          <h2 class="section-title" id="top-models-title">{$_('adminOverview.topModels')}</h2>
           <AdminPanelCard padded={false}>
-            <div class="table-container">
+            <div class="table-container" role="region" aria-label={$_('adminOverview.topModels')}>
               <table class="models-table">
                 <thead>
                   <tr>
-                    <th>{$_('analytics.topModels.model')}</th>
-                    <th>{$_('analytics.topModels.provider')}</th>
-                    <th>{$_('analytics.topModels.requests')}</th>
-                    <th>{$_('analytics.topModels.tokens')}</th>
-                    <th>{$_('analytics.topModels.cost')}</th>
+                    <th scope="col">{$_('analytics.topModels.model')}</th>
+                    <th scope="col">{$_('analytics.topModels.provider')}</th>
+                    <th scope="col">{$_('analytics.topModels.requests')}</th>
+                    <th scope="col">{$_('analytics.topModels.tokens')}</th>
+                    <th scope="col">{$_('analytics.topModels.cost')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -378,6 +378,12 @@
     text-decoration: none;
   }
 
+  .links-grid :global(a):focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: var(--radius-lg);
+  }
+
   :global(.link-card) {
     transition: all 0.2s ease;
     cursor: pointer;
@@ -472,6 +478,11 @@
 
   .models-table tbody tr:hover {
     background: var(--btn-tertiary);
+  }
+
+  .models-table tbody tr:focus-within {
+    outline: 2px solid var(--brand);
+    outline-offset: -2px;
   }
 
   .model-name {

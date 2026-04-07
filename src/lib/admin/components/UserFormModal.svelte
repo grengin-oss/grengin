@@ -100,7 +100,7 @@
   let departmentSearchResults = $state<Department[]>([]);
   let departmentSearching = $state(false);
   let departmentSearchTimeout: number | undefined;
-  let departmentSearchInputRef = $state<HTMLInputElement | null>(null);
+  let emailInputRef = $state<HTMLInputElement | null>(null);
 
   $effect(() => {
     if (isOpen) {
@@ -112,6 +112,22 @@
       departmentSearchResults = [];
       departmentSearching = false;
     }
+  });
+
+  // Focus email when opening create-user modal (after Modal moves focus to backdrop)
+  $effect(() => {
+    if (!isOpen || !isCreate) return;
+    let cancelled = false;
+    tick().then(() => {
+      setTimeout(() => {
+        if (!cancelled) {
+          emailInputRef?.focus({ preventScroll: true });
+        }
+      }, 0);
+    });
+    return () => {
+      cancelled = true;
+    };
   });
 
   async function toggleRoleSearch(): Promise<void> {
@@ -238,25 +254,38 @@
         onSubmit();
       }}
       class="user-form"
+      aria-busy={isSubmitting}
+      novalidate
     >
       <div class="form-group">
         <label for={isCreate ? "create-email" : "edit-email"}>
           {$_("admin.common.email")}
           {#if isCreate}
-            <span class="required">*</span>
+            <span class="required" aria-hidden="true">*</span>
           {/if}
         </label>
         <input
           id={isCreate ? "create-email" : "edit-email"}
           type="email"
+          bind:this={emailInputRef}
           bind:value={formData.email}
           placeholder="user@example.com"
           required={isCreate}
           disabled={!isCreate}
           class:error={isCreate && formErrors.email}
+          autocomplete="email"
+          aria-required={isCreate}
+          aria-invalid={isCreate && !!formErrors.email}
+          aria-describedby={isCreate && formErrors.email
+            ? `${mode}-user-form-email-error`
+            : undefined}
         />
         {#if isCreate && formErrors.email}
-          <span class="error-text">{formErrors.email}</span>
+          <span
+            class="error-text"
+            id={`${mode}-user-form-email-error`}
+            role="alert"
+          >{formErrors.email}</span>
         {/if}
       </div>
 
@@ -269,17 +298,26 @@
           type="text"
           bind:value={formData.name}
           placeholder={$_("admin.users.namePlaceholder")}
+          autocomplete="name"
         />
       </div>
 
       {#if !isCreate}
-        <div class="form-group roles-group">
+        <div
+          class="form-group roles-group"
+          role="group"
+          aria-labelledby={`${mode}-user-form-roles-label`}
+        >
           <div class="roles-header">
-            <span class="form-label">{$_("admin.common.roles")}</span>
+            <span class="form-label" id={`${mode}-user-form-roles-label`}
+              >{$_("admin.common.roles")}</span
+            >
             <button
               type="button"
               class="btn-role-toggle"
               onclick={() => (rolesOpen = !rolesOpen)}
+              aria-expanded={rolesOpen}
+              aria-controls={`${mode}-user-form-roles-panel`}
               aria-label={rolesOpen
                 ? $_("admin.users.hideRoles")
                 : $_("admin.users.showRoles")}
@@ -308,9 +346,17 @@
             </button>
           </div>
           {#if rolesOpen}
-            <div class="roles-applied">
+            <div
+              class="roles-applied"
+              id={`${mode}-user-form-roles-panel`}
+            >
               {#if roleAssignmentsLoading}
-                <div class="roles-loading">
+                <div
+                  class="roles-loading"
+                  role="status"
+                  aria-live="polite"
+                  aria-busy={true}
+                >
                   <LoadingSpinner />
                 </div>
               {:else if roleAssignments.length === 0}
@@ -337,6 +383,9 @@
                           type="button"
                           class="btn-role-scope"
                           onclick={() => openRoleScoping(role)}
+                          aria-label={$_("admin.users.manageScopingAria", {
+                            values: { role: role.name },
+                          })}
                         >
                           {$_("admin.accessControl.manageScoping")}
                         </button>
@@ -345,6 +394,11 @@
                         type="button"
                         class="btn-remove-role"
                         onclick={() => requestRemoveAssignment(assignment)}
+                        aria-label={$_("admin.users.removeRoleAria", {
+                          values: {
+                            role: role?.name ?? assignment.role_id,
+                          },
+                        })}
                       >
                         {$_("common.delete")}
                       </button>
@@ -357,24 +411,33 @@
               type="button"
               class="btn-add-role"
               onclick={toggleRoleSearch}
+              aria-expanded={addRoleOpen}
+              aria-controls={`${mode}-user-form-add-role-panel`}
             >
               {$_("admin.users.addRole")}
             </button>
             {#if addRoleOpen}
-              <div class="role-search-panel">
+              <div
+                class="role-search-panel"
+                id={`${mode}-user-form-add-role-panel`}
+                role="region"
+                aria-label={$_("admin.users.roleOptionsLabel")}
+              >
                 <div class="role-search">
                   <input
                     type="text"
                     class="role-search-input"
+                    id={`${mode}-user-form-role-search`}
                     placeholder={$_("admin.users.searchRoles")}
                     bind:value={roleSearchQuery}
                     bind:this={roleSearchInput}
+                    aria-label={$_("admin.users.searchRoles")}
                   />
                   <button
                     type="button"
                     class="role-search-close"
                     onclick={closeRoleSearch}
-                    aria-label={$_("common.close")}
+                    aria-label={$_("admin.common.closeModal")}
                   >
                     <svg viewBox="0 0 20 20" aria-hidden="true">
                       <path
@@ -390,13 +453,18 @@
                 <div class="roles-selector">
                   {#each filteredRoles() as role (role.id)}
                     <div class="role-option">
-                      <div class="role-name">{role.name}</div>
-                      <div class="role-actions">
+                      <div class="role-name" id={`role-option-${mode}-${role.id}`}>
+                        {role.name}
+                      </div>
+                      <div class="role-actions" role="group" aria-labelledby={`role-option-${mode}-${role.id}`}>
                         <button
                           type="button"
                           class="btn-role-add"
                           onclick={() => handleAddRoleAndClose(role.id)}
                           disabled={addingRoleId === role.id}
+                          aria-label={$_("admin.users.addRoleGlobalAria", {
+                            values: { role: role.name },
+                          })}
                         >
                         {addingRoleId === role.id
                           ? $_("admin.common.adding")
@@ -407,6 +475,9 @@
                           class="btn-role-scope"
                           onclick={() => openRoleScopingAndClose(role)}
                           disabled={addingRoleId === role.id}
+                          aria-label={$_("admin.users.addRoleScopedAria", {
+                            values: { role: role.name },
+                          })}
                         >
                           {$_("admin.users.addRoleScoped")}
                         </button>
@@ -431,8 +502,11 @@
             type="text"
             placeholder={$_("admin.users.departmentPlaceholder")}
             value={departmentSearchQuery}
-            bind:this={departmentSearchInputRef}
             oninput={handleDepartmentSearchInput}
+            autocomplete="off"
+            aria-autocomplete="list"
+            aria-controls={`${mode}-user-form-dept-results`}
+            aria-busy={departmentSearching}
           />
           {#if formData.department_id}
             <button
@@ -454,16 +528,24 @@
           {/if}
           </div>
           {#if departmentSearching}
-            <div class="department-search-loading">
+            <div
+              class="department-search-loading"
+              role="status"
+              aria-live="polite"
+            >
               <LoadingSpinner size="sm" />
               <span>{$_("admin.accessControl.loadingDepartments")}</span>
             </div>
           {:else if departmentSearchQuery && departmentSearchResults.length === 0 && !formData.department_id}
-            <div class="department-search-empty">
+            <div class="department-search-empty" role="status">
               <span>{$_("admin.accessControl.noDepartmentsFound")}</span>
             </div>
           {:else if departmentSearchResults.length > 0}
-            <ul class="department-search-results">
+            <ul
+              class="department-search-results"
+              id={`${mode}-user-form-dept-results`}
+              aria-label={$_("admin.users.departmentResultsLabel")}
+            >
               {#each departmentSearchResults as department (department.id)}
                 <li class="department-search-result">
                   <div class="department-search-info">
@@ -477,9 +559,12 @@
                   <button
                     type="button"
                     class="btn-department-select"
+                    aria-label={$_("admin.users.selectDepartmentOption", {
+                      values: { name: department.name },
+                    })}
                     onclick={() => selectDepartment(department)}
                   >
-                    Select
+                    {$_("common.select")}
                   </button>
                 </li>
               {/each}
@@ -492,7 +577,12 @@
         <button type="button" class="btn" onclick={onClose}>
           {$_("common.cancel")}
         </button>
-        <button type="submit" class="btn-primary" disabled={isSubmitting}>
+        <button
+          type="submit"
+          class="btn-primary"
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+        >
           {#if isCreate}
             {isSubmitting
               ? $_("admin.common.creating")
@@ -512,10 +602,11 @@
   isOpen={showRemoveRoleConfirm}
   title={$_("admin.users.confirmRemoveRoleTitle")}
   onclose={cancelRemoveAssignment}
+  descriptionId="remove-role-modal-desc"
 >
   {#snippet children()}
     <div class="remove-role-confirm">
-      <p class="remove-role-warning">
+      <p class="remove-role-warning" id="remove-role-modal-desc">
         {$_("admin.users.confirmRemoveRoleMessage", {
           values: { role: pendingRemoval?.roleName ?? "-" },
         })}
@@ -529,6 +620,7 @@
           type="button"
           onclick={confirmRemoveAssignment}
           disabled={isRemovingRole}
+          aria-busy={isRemovingRole}
         >
           {isRemovingRole ? $_("admin.common.deleting") : $_("common.delete")}
         </button>
@@ -946,6 +1038,26 @@
   .btn-role-add:hover,
   .btn-role-scope:hover {
     color: var(--text-primary);
+  }
+
+  .btn-role-toggle:focus-visible,
+  .btn-remove-role:focus-visible,
+  .btn-add-role:focus-visible,
+  .role-search-close:focus-visible,
+  .input-clear-btn:focus-visible,
+  .btn-department-select:focus-visible,
+  .btn-role-add:focus-visible,
+  .btn-role-scope:focus-visible,
+  .form-actions .btn:focus-visible,
+  .form-actions .btn-primary:focus-visible,
+  .btn-danger:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  .form-group input:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
 
 </style>

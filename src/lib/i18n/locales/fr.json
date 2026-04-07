@@ -5,7 +5,9 @@
     "delete": "Supprimer",
     "edit": "Modifier",
     "search": "Rechercher",
-    "never": "Jamais"
+    "never": "Jamais",
+    "clear": "Effacer",
+    "select": "Sélectionner"
   },
   "errors": {
     "forbidden": {
@@ -90,6 +92,7 @@
     "deleteChatConfirm": "Êtes-vous sûr de vouloir supprimer cette conversation ? Cette action est irréversible.",
     "cancel": "Annuler",
     "navigation": "Navigation principale",
+    "adminNavigation": "Navigation d'administration",
     "openAlerts": "Ouvrir les alertes",
     "deleting": "Suppression...",
     "close": "Fermer",
@@ -143,8 +146,11 @@
       "active": "Actif",
       "deactivated": "Désactivé",
       "actions": "Actions",
+      "pagination": "Pagination",
       "previous": "Précédent",
+      "previousPage": "Page précédente",
       "next": "Suivant",
+      "nextPage": "Page suivante",
       "allRoles": "Tous les rôles",
       "admin": "Administrateur",
       "user": "Utilisateur",
@@ -177,6 +183,7 @@
       "filters": "Filtres",
       "closeFilters": "Fermer les filtres",
       "openFilters": "Ouvrir les filtres",
+      "sortByAria": "Trier par {field}",
       "searchByNameOrEmail": "Rechercher par nom, e-mail ou service...",
       "reset": "Réinitialiser",
       "loadingUsers": "Chargement des utilisateurs...",
@@ -200,6 +207,7 @@
       "cannotToggleOwnStatus": "Vous ne pouvez pas désactiver votre propre compte.",
       "disableUserTooltip": "Désactiver l'utilisateur",
       "enableUserTooltip": "Activer l'utilisateur",
+      "toggleUserStatus": "Basculer l'état de l'utilisateur",
       "moreRoles": "Voir {count} rôles supplémentaires",
       "showRoles": "Afficher les rôles",
       "hideRoles": "Masquer les rôles",
@@ -209,7 +217,14 @@
       "addRoleScoped": "Ajouter avec portée",
       "searchRoles": "Rechercher des rôles...",
       "confirmRemoveRoleTitle": "Supprimer le rôle ?",
-      "confirmRemoveRoleMessage": "Voulez-vous vraiment supprimer {role} de cet utilisateur ?"
+      "confirmRemoveRoleMessage": "Voulez-vous vraiment supprimer {role} de cet utilisateur ?",
+      "selectDepartmentOption": "Sélectionner le département : {name}",
+      "removeRoleAria": "Supprimer le rôle {role}",
+      "manageScopingAria": "Gérer la portée pour {role}",
+      "addRoleGlobalAria": "Ajouter le rôle {role} globalement",
+      "addRoleScopedAria": "Ajouter le rôle {role} avec portée départementale",
+      "departmentResultsLabel": "Résultats de recherche des départements",
+      "roleOptionsLabel": "Rôles à ajouter"
     },
     "departments": {
       "title": "Départements",
@@ -653,6 +668,7 @@
     "totalRequests": "Requêtes totales",
     "totalTokens": "Tokens totaux",
     "totalCost": "Coût total",
+    "growthRate": "Taux de croissance",
     "activeUsers": "{count} actifs",
     "last30Days": "30 derniers jours",
     "manageUsers": "Gérer les comptes et rôles utilisateurs",

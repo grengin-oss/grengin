@@ -300,7 +300,14 @@
   <PageHeader title={$_('admin.users.userManagement')} subtitle={$_('admin.users.manageUsersAndRoles')}>
     {#snippet children()}
       {#if canManageUsers}
-        <button class="btn-primary" onclick={openCreateModal}>
+        <button
+          type="button"
+          class="btn-primary"
+          onclick={openCreateModal}
+          aria-label={$_('admin.users.createUserButton')}
+          aria-haspopup="dialog"
+          aria-expanded={isCreateModalOpen}
+        >
           + {$_('admin.users.createUserButton')}
         </button>
       {/if}
@@ -308,12 +315,14 @@
   </PageHeader>
 
   <!-- Filters -->
-  <div class="filters-section">
+  <div class="filters-section" aria-label={$_('admin.users.filters')}>
     <button
       class="filter-toggle-btn"
       class:open={filtersOpen}
       onclick={() => (filtersOpen = !filtersOpen)}
       aria-label={filtersOpen ? $_('admin.users.closeFilters') : $_('admin.users.openFilters')}
+      aria-expanded={filtersOpen}
+      aria-controls="filters-grid"
     >
       {#if filtersOpen}
         <svg
@@ -322,6 +331,7 @@
           viewBox="0 0 20 20"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
         >
           <path
             d="M10 6l-5 5M10 6l5 5"
@@ -338,6 +348,7 @@
           viewBox="0 0 20 20"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
         >
           <path
             d="M2.5 5h15M5 10h10M7.5 15h5"
@@ -352,18 +363,20 @@
         {$_('admin.users.filters')}
       {/if}
     </button>
-    <div class="filters-grid" class:open={filtersOpen}>
+    <div class="filters-grid" class:open={filtersOpen} id="filters-grid">
       <input
         type="text"
         placeholder={$_('admin.users.searchByNameOrEmail')}
         bind:value={searchQuery}
         oninput={applyFiltersDebounced}
         class="filter-input"
+        aria-label={$_('admin.users.searchByNameOrEmail')}
       />
       <select
         bind:value={filterRole}
         class="filter-select"
         onchange={applyFilters}
+        aria-label={$_('admin.common.role')}
       >
         <option value="">{$_('admin.common.allRoles')}</option>
         {#each roles as role (role.id)}
@@ -374,14 +387,20 @@
         bind:value={filterStatus}
         class="filter-select"
         onchange={applyFilters}
+        aria-label={$_('admin.common.status')}
       >
         <option value="">{$_('admin.common.allStatuses')}</option>
         <option value="active">{$_('admin.common.active')}</option>
         <option value="deactivated">{$_('admin.common.deactivated')}</option>
       </select>
-      <button class="btn-secondary reset-btn" onclick={clearFilters}
-        >{$_('admin.users.reset')}</button
+      <button
+        type="button"
+        class="btn-secondary reset-btn"
+        onclick={clearFilters}
+        aria-label={$_('admin.users.reset')}
       >
+        {$_('admin.users.reset')}
+      </button>
     </div>
   </div>
 
@@ -390,32 +409,62 @@
   {:else}
     <!-- Users Table -->
     <AdminTableCard minWidth="960px">
-      <table class="admin-table users-table">
+      <table class="admin-table users-table" aria-label={$_('admin.users.userManagement')}>
         <thead>
           <tr>
-            <th class="sortable" onclick={() => handleSort('name')}>
-              <span class="th-content">
-                {$_('admin.common.name')}
-                <SortIcon sort="name" currentSort={usersStore.sort} ascending={usersStore.ascending} />
-              </span>
+            <th
+              scope="col"
+              aria-sort={usersStore.sort === 'name' ? (usersStore.ascending ? 'ascending' : 'descending') : 'none'}
+            >
+              <button
+                type="button"
+                class="th-sort-btn"
+                onclick={() => handleSort('name')}
+                aria-label={$_('admin.users.sortByAria', { values: { field: $_('admin.common.name') } })}
+              >
+                <span class="th-content">
+                  {$_('admin.common.name')}
+                  <SortIcon sort="name" currentSort={usersStore.sort} ascending={usersStore.ascending} />
+                </span>
+              </button>
             </th>
-            <th class="sortable" onclick={() => handleSort('email')}>
-              <span class="th-content">
-                {$_('admin.common.email')}
-                <SortIcon sort="email" currentSort={usersStore.sort} ascending={usersStore.ascending} />
-              </span>
+            <th
+              scope="col"
+              aria-sort={usersStore.sort === 'email' ? (usersStore.ascending ? 'ascending' : 'descending') : 'none'}
+            >
+              <button
+                type="button"
+                class="th-sort-btn"
+                onclick={() => handleSort('email')}
+                aria-label={$_('admin.users.sortByAria', { values: { field: $_('admin.common.email') } })}
+              >
+                <span class="th-content">
+                  {$_('admin.common.email')}
+                  <SortIcon sort="email" currentSort={usersStore.sort} ascending={usersStore.ascending} />
+                </span>
+              </button>
             </th>
-            <th>{$_('admin.common.role')}</th>
-            <th>{$_('admin.common.department')}</th>
-            <th>{$_('admin.common.status')}</th>
-            <th class="sortable" onclick={() => handleSort('created_at')}>
-              <span class="th-content">
-                {$_('admin.common.created')}
-                <SortIcon sort="created_at" currentSort={usersStore.sort} ascending={usersStore.ascending} />
-              </span>
+            <th scope="col">{$_('admin.common.role')}</th>
+            <th scope="col">{$_('admin.common.department')}</th>
+            <th scope="col">{$_('admin.common.status')}</th>
+            <th
+              scope="col"
+              aria-sort={usersStore.sort === 'created_at' ? (usersStore.ascending ? 'ascending' : 'descending') : 'none'}
+            >
+              <button
+                type="button"
+                class="th-sort-btn"
+                onclick={() => handleSort('created_at')}
+                aria-label={$_('admin.users.sortByAria', { values: { field: $_('admin.common.created') } })}
+              >
+                <span class="th-content">
+                  {$_('admin.common.created')}
+                  <SortIcon sort="created_at" currentSort={usersStore.sort} ascending={usersStore.ascending} />
+                </span>
+              </button>
             </th>
             {#if canManageUsers}
-              <th>{$_('admin.common.actions')}</th>
+              <th scope="col">{$_('admin.common.actions')}</th>
             {/if}
           </tr>
         </thead>
@@ -441,25 +490,27 @@
 
     <!-- Pagination -->
     {#if totalPages > 1}
-      <div class="pagination">
+      <nav class="pagination" aria-label={$_('admin.common.pagination')}>
         <button
           class="btn"
           onclick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 0}
+          aria-label={$_('admin.common.previousPage')}
         >
           {$_('admin.common.previous')}
         </button>
-        <span class="pagination-info">
+        <span class="pagination-info" role="status" aria-live="polite">
           {$_('admin.common.pageInfo', { values: { current: formatNumber(currentPage + 1), total: formatNumber(totalPages), count: formatNumber(usersStore.total) } })}
         </span>
         <button
           class="btn"
           onclick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage >= totalPages - 1}
+          aria-label={$_('admin.common.nextPage')}
         >
           {$_('admin.common.next')}
         </button>
-      </div>
+      </nav>
     {/if}
   {/if}
 
@@ -554,6 +605,11 @@
     transform: translateY(-1px);
   }
 
+  .filter-toggle-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
   .filter-toggle-btn svg {
     width: 20px;
     height: 20px;
@@ -594,22 +650,28 @@
     font-size: 0.875rem;
   }
 
-  .sortable {
+  .th-sort-btn {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font: inherit;
     cursor: pointer;
-    user-select: none;
-    position: relative;
-    transition: all 0.2s ease;
-    font-weight: 700 !important;
-    color: var(--text-primary) !important;
   }
 
-  .sortable:hover {
+  .th-sort-btn:hover {
     background: rgba(var(--glass-tint), 0.08);
-    color: var(--text-primary);
   }
 
-  .sortable:active {
+  .th-sort-btn:active {
     background: rgba(var(--glass-tint), 0.12);
+  }
+
+  .th-sort-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: -2px;
   }
 
   .th-content {
@@ -617,6 +679,11 @@
     align-items: center;
     gap: var(--space-xs);
     justify-content: flex-start;
+  }
+
+  .pagination .btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
 
   @media (max-width: 768px) {

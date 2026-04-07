@@ -5,7 +5,9 @@
     "delete": "Eliminar",
     "edit": "Editar",
     "search": "Buscar",
-    "never": "Nunca"
+    "never": "Nunca",
+    "clear": "Limpiar",
+    "select": "Seleccionar"
   },
   "errors": {
     "forbidden": {
@@ -90,6 +92,7 @@
     "deleteChatConfirm": "¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer.",
     "cancel": "Cancelar",
     "navigation": "Navegación principal",
+    "adminNavigation": "Navegación de administración",
     "openAlerts": "Abrir alertas",
     "deleting": "Eliminando...",
     "close": "Cerrar",
@@ -143,8 +146,11 @@
       "active": "Activo",
       "deactivated": "Desactivado",
       "actions": "Acciones",
+      "pagination": "Paginación",
       "previous": "Anterior",
+      "previousPage": "Página anterior",
       "next": "Siguiente",
+      "nextPage": "Página siguiente",
       "allRoles": "Todos los roles",
       "admin": "Administrador",
       "user": "Usuario",
@@ -177,6 +183,7 @@
       "filters": "Filtros",
       "closeFilters": "Cerrar filtros",
       "openFilters": "Abrir filtros",
+      "sortByAria": "Ordenar por {field}",
       "searchByNameOrEmail": "Buscar por nombre, correo o departamento...",
       "reset": "Restablecer",
       "loadingUsers": "Cargando usuarios...",
@@ -200,6 +207,7 @@
       "cannotToggleOwnStatus": "No puedes desactivar tu propia cuenta.",
       "disableUserTooltip": "Desactivar usuario",
       "enableUserTooltip": "Activar usuario",
+      "toggleUserStatus": "Alternar estado del usuario",
       "moreRoles": "Ver {count} roles más",
       "showRoles": "Mostrar roles",
       "hideRoles": "Ocultar roles",
@@ -209,7 +217,14 @@
       "addRoleScoped": "Agregar con alcance",
       "searchRoles": "Buscar roles...",
       "confirmRemoveRoleTitle": "¿Eliminar rol?",
-      "confirmRemoveRoleMessage": "¿Seguro que quieres eliminar {role} de este usuario?"
+      "confirmRemoveRoleMessage": "¿Seguro que quieres eliminar {role} de este usuario?",
+      "selectDepartmentOption": "Seleccionar departamento: {name}",
+      "removeRoleAria": "Eliminar rol {role}",
+      "manageScopingAria": "Gestionar alcance para {role}",
+      "addRoleGlobalAria": "Agregar el rol {role} globalmente",
+      "addRoleScopedAria": "Agregar el rol {role} con alcance de departamento",
+      "departmentResultsLabel": "Resultados de búsqueda de departamentos",
+      "roleOptionsLabel": "Roles para añadir"
     },
     "departments": {
       "title": "Departamentos",
@@ -653,6 +668,7 @@
     "totalRequests": "Solicitudes totales",
     "totalTokens": "Tokens totales",
     "totalCost": "Costo total",
+    "growthRate": "Tasa de crecimiento",
     "activeUsers": "{count} activos",
     "last30Days": "Últimos 30 días",
     "manageUsers": "Gestionar cuentas y roles de usuario",

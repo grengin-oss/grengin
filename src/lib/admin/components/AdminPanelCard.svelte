@@ -5,16 +5,18 @@
     children?: Snippet;
     class?: string;
     padded?: boolean;
+    ariaLabel?: string;
   }
 
   let {
     children,
     class: className = '',
     padded = true,
+    ariaLabel = '',
   }: Props = $props();
 </script>
 
-<section class={`admin-panel-card ${padded ? 'padded' : 'flush'} ${className}`.trim()}>
+<section class={`admin-panel-card ${padded ? 'padded' : 'flush'} ${className}`.trim()} aria-label={ariaLabel}>
   {@render children?.()}
 </section>
 

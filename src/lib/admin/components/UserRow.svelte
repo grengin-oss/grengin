@@ -83,8 +83,9 @@
                         checked={checkboxChecked}
                         onchange={handleToggleUserStatus}
                         disabled={isSelfUser}
+                        aria-label={$_('admin.users.toggleUserStatus') || `Toggle ${user.name} status`}
                     />
-                    <span class="status-slider"></span>
+                    <span class="status-slider" aria-hidden="true"></span>
                     <span class="status-label">
                         {user.status === "active" ? $_('admin.common.active') : $_('admin.common.deactivated')}
                     </span>
@@ -106,6 +107,7 @@
                     class="action-btn edit"
                     onclick={() => openEditModal(user)}
                     title={$_('admin.users.editUserTitle')}
+                    aria-label={$_('admin.users.editUserTitle') || `Edit ${user.name}`}
                 >
                     ✏️
                 </button>
@@ -154,6 +156,11 @@
         transform: scale(1.1);
     }
 
+    .action-btn:focus-visible {
+        outline: 2px solid var(--brand);
+        outline-offset: 2px;
+    }
+
     /* Status Switch */
     .status-switch {
         display: flex;
@@ -175,6 +182,11 @@
         height: 0;
     }
 
+    .status-switch input[type="checkbox"]:focus-visible {
+        outline: 2px solid var(--brand);
+        outline-offset: 2px;
+    }
+
     .status-switch input[type="checkbox"]:disabled {
         cursor: not-allowed;
     }
@@ -188,6 +200,12 @@
         border-radius: 24px;
         transition: all 0.3s ease;
         flex-shrink: 0;
+    }
+
+    .status-switch input:focus-visible ~ .status-slider {
+        outline: 2px solid var(--brand);
+        outline-offset: 2px;
+        border-radius: 24px;
     }
 
     .status-slider::before {

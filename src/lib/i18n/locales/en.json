@@ -5,7 +5,9 @@
     "delete": "Delete",
     "edit": "Edit",
     "search": "Search",
-    "never": "Never"
+    "never": "Never",
+    "clear": "Clear",
+    "select": "Select"
   },
   "errors": {
     "forbidden": {
@@ -90,6 +92,7 @@
     "deleteChatConfirm": "Are you sure you want to delete this chat? This action cannot be undone.",
     "cancel": "Cancel",
     "navigation": "Main navigation",
+    "adminNavigation": "Admin navigation",
     "openAlerts": "Open alerts",
     "deleting": "Deleting...",
     "close": "Close",
@@ -143,8 +146,11 @@
       "active": "Active",
       "deactivated": "Deactivated",
       "actions": "Actions",
+      "pagination": "Pagination",
       "previous": "Previous",
+      "previousPage": "Previous page",
       "next": "Next",
+      "nextPage": "Next page",
       "allRoles": "All Roles",
       "admin": "Admin",
       "user": "User",
@@ -177,6 +183,7 @@
       "filters": "Filters",
       "closeFilters": "Close filters",
       "openFilters": "Open filters",
+      "sortByAria": "Sort by {field}",
       "searchByNameOrEmail": "Search by name, email, or department...",
       "reset": "Reset",
       "loadingUsers": "Loading users...",
@@ -200,6 +207,7 @@
       "cannotToggleOwnStatus": "You cannot deactivate your own account.",
       "disableUserTooltip": "Disable user",
       "enableUserTooltip": "Enable user",
+      "toggleUserStatus": "Toggle user status",
       "moreRoles": "View {count} more roles",
       "showRoles": "Show roles",
       "hideRoles": "Hide roles",
@@ -209,7 +217,14 @@
       "addRoleScoped": "Add scoped",
       "searchRoles": "Search roles...",
       "confirmRemoveRoleTitle": "Remove role?",
-      "confirmRemoveRoleMessage": "Are you sure you want to remove {role} from this user?"
+      "confirmRemoveRoleMessage": "Are you sure you want to remove {role} from this user?",
+      "selectDepartmentOption": "Select department: {name}",
+      "removeRoleAria": "Remove role {role}",
+      "manageScopingAria": "Manage scoping for {role}",
+      "addRoleGlobalAria": "Add role {role} globally",
+      "addRoleScopedAria": "Add role {role} with department scoping",
+      "departmentResultsLabel": "Department search results",
+      "roleOptionsLabel": "Roles to add"
     },
     "departments": {
       "title": "Departments",
@@ -653,6 +668,7 @@
     "totalRequests": "Total Requests",
     "totalTokens": "Total Tokens",
     "totalCost": "Total Cost",
+    "growthRate": "Growth rate",
     "activeUsers": "{count} active",
     "last30Days": "Last 30 days",
     "manageUsers": "Manage user accounts and roles",

@@ -5,7 +5,9 @@
     "delete": "삭제",
     "edit": "편집",
     "search": "검색",
-    "never": "없음"
+    "never": "없음",
+    "clear": "지우기",
+    "select": "선택"
   },
   "errors": {
     "forbidden": {
@@ -90,6 +92,7 @@
     "deleteChatConfirm": "이 채팅을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
     "cancel": "취소",
     "navigation": "주요 탐색",
+    "adminNavigation": "관리 탐색",
     "openAlerts": "알림 열기",
     "deleting": "삭제 중...",
     "close": "닫기",
@@ -143,8 +146,11 @@
       "active": "활성",
       "deactivated": "비활성화됨",
       "actions": "작업",
+      "pagination": "페이지네이션",
       "previous": "이전",
+      "previousPage": "이전 페이지",
       "next": "다음",
+      "nextPage": "다음 페이지",
       "allRoles": "모든 역할",
       "admin": "관리자",
       "user": "사용자",
@@ -177,6 +183,7 @@
       "filters": "필터",
       "closeFilters": "필터 닫기",
       "openFilters": "필터 열기",
+      "sortByAria": "{field}별 정렬",
       "searchByNameOrEmail": "이름, 이메일 또는 부서로 검색...",
       "reset": "재설정",
       "loadingUsers": "사용자 로딩 중...",
@@ -200,6 +207,7 @@
       "cannotToggleOwnStatus": "자신의 계정은 비활성화할 수 없습니다.",
       "disableUserTooltip": "사용자 비활성화",
       "enableUserTooltip": "사용자 활성화",
+      "toggleUserStatus": "사용자 상태 전환",
       "moreRoles": "{count}개 역할 더 보기",
       "showRoles": "역할 표시",
       "hideRoles": "역할 숨기기",
@@ -209,7 +217,14 @@
       "addRoleScoped": "범위 추가",
       "searchRoles": "역할 검색...",
       "confirmRemoveRoleTitle": "역할을 삭제할까요?",
-      "confirmRemoveRoleMessage": "이 사용자에서 {role} 역할을 삭제하시겠습니까?"
+      "confirmRemoveRoleMessage": "이 사용자에서 {role} 역할을 삭제하시겠습니까?",
+      "selectDepartmentOption": "{name} 부서 선택",
+      "removeRoleAria": "{role} 역할 제거",
+      "manageScopingAria": "{role} 범위 관리",
+      "addRoleGlobalAria": "{role} 역할을 전역으로 추가",
+      "addRoleScopedAria": "{role} 역할을 부서 범위로 추가",
+      "departmentResultsLabel": "부서 검색 결과",
+      "roleOptionsLabel": "추가할 역할"
     },
     "departments": {
       "title": "부서",
@@ -653,6 +668,7 @@
     "totalRequests": "총 요청",
     "totalTokens": "총 토큰",
     "totalCost": "총 비용",
+    "growthRate": "성장률",
     "activeUsers": "{count} 활성",
     "last30Days": "최근 30일",
     "manageUsers": "사용자 계정 및 역할 관리",

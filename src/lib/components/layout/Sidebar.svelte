@@ -255,6 +255,13 @@
     }
   }
 
+  function handleAdminMenuItemClick(path: string | undefined) {
+    if (!path) return;
+
+    navigate(path);
+    collapseSidebarOnMobile();
+  }
+
 </script>
 
 <svelte:window onclick={handleClickOutside} onresize={handleResize} onkeydown={(e) => {
@@ -263,7 +270,7 @@
   }
 }} />
 
-<aside class="sidebar" class:collapsed={isCollapsed} role="navigation" aria-label={$_('sidebar.navigation') || 'Main navigation'}>
+<aside class="sidebar" class:collapsed={isCollapsed} aria-label={$_('sidebar.navigation') || 'Main navigation'}>
   {#snippet alertsUi()}
     <button
       type="button"
@@ -357,19 +364,17 @@
   {#if isAdminView}
     <div class="admin-sidebar-header">
       <div class="header-top">
-        <Link to="/" class="back-btn-link">
-          <button
-            class="back-btn"
-            onclick={collapseSidebarOnMobile}
-            title={$_('sidebar.backToChat')}
-            aria-label={$_('sidebar.backToChat')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12,19 5,12 12,5"></polyline>
-            </svg>
-          </button>
-        </Link>
+        <button
+          class="back-btn"
+          onclick={() => handleAdminMenuItemClick('/')}
+          title={$_('sidebar.backToChat')}
+          aria-label={$_('sidebar.backToChat')}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12,19 5,12 12,5"></polyline>
+          </svg>
+        </button>
         {#if !isCollapsed}
           <h1 class="admin-title">{$_('sidebar.adminPanel')}</h1>
         {/if}
@@ -379,35 +384,36 @@
 
   <!-- Sidebar Navigation -->
   {#if isAdminView}
-    <nav class="sidebar-nav admin-sidebar-nav">
+    <nav class="sidebar-nav admin-sidebar-nav" aria-label={$_('sidebar.adminNavigation') || 'Admin navigation'}>
       {#each adminMenuItems as item}
         {#if item.type === 'section-header'}
           {#if !isCollapsed}
-            <div class="section-header">
+            <h2 class="section-header" id="nav-section-{item.id}">
               <span>{item.label}</span>
-            </div>
+            </h2>
           {:else}
-            <div class="section-divider"></div>
+            <div class="section-divider" aria-hidden="true"></div>
           {/if}
         {:else if item.path}
-          <Link to={item.path}>
-            <button
-              class="sidebar-item"
-              class:active={currentPath === item.path || currentPath.startsWith(item.path + '/')}
-              onclick={collapseSidebarOnMobile}
-              title={item.label}
-            >
-              {#if item.icon}
-                <span class="sidebar-icon">{@html item.icon}</span>
-              {/if}
-              <span class="sidebar-label">{item.label}</span>
-            </button>
-          </Link>
+          <button 
+            type="button"
+            class="sidebar-item"
+            class:active={currentPath === item.path || currentPath.startsWith(item.path + '/')}
+            onclick={() => handleAdminMenuItemClick(item.path)}
+            title={item.label}
+            aria-current={currentPath === item.path || currentPath.startsWith(item.path + '/') ? 'page' : undefined}
+            aria-label={item.label}
+          >
+            {#if item.icon}
+              <span class="sidebar-icon" aria-hidden="true">{@html item.icon}</span>
+            {/if}
+            <span class="sidebar-label">{item.label}</span>
+          </button>
         {/if}
       {/each}
     </nav>
     {#if !isCollapsed}
-      <div class="sidebar-divider"></div>
+      <div class="sidebar-divider" aria-hidden="true"></div>
     {/if}
   {:else}
     {#await import('$lib/bundles/user-chunk')}
@@ -455,18 +461,25 @@
 
 
 {#if showUserMenu}
-  <div class="user-menu-dropdown" role="menu" tabindex="-1" onkeydown={(e) => {
+  <div class="user-menu-dropdown" role="menu" aria-label={$_('sidebar.userMenu') || 'User menu'} aria-hidden={!showUserMenu} tabindex="-1" onkeydown={(e) => {
     if (e.key === 'Escape') {
       closeUserMenu();
     }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const items = Array.from(document.querySelectorAll('.user-menu-dropdown [role="menuitem"]'));
+      const focusedIndex = items.findIndex(item => item === document.activeElement);
+      const nextIndex = e.key === 'ArrowDown' ? (focusedIndex + 1) % items.length : (focusedIndex - 1 + items.length) % items.length;
+      (items[nextIndex] as HTMLElement)?.focus();
+    }
   }}>
     <button class="menu-item" role="menuitem" aria-label={$_('sidebar.settings')} title={$_('sidebar.settings')}>
-      <span class="user-menu-icon">⚙️</span>
+      <span class="user-menu-icon" aria-hidden="true">⚙️</span>
       <span>{$_('sidebar.settings')}</span>
     </button>
     {#if hasAdminPermissions}
-      <Link to="/admin" class="menu-item" role="menuitem" onclick={collapseSidebarOnMobile}>
-        <span class="menu-item-icon">🔒</span>
+      <Link to="/admin" class="menu-item" role="menuitem" aria-label={$_('sidebar.admin')} onclick={collapseSidebarOnMobile}>
+        <span class="menu-item-icon" aria-hidden="true">🔒</span>
         <span class="menu-item-label">{$_('sidebar.admin')}</span>
       </Link>
     {/if}
@@ -615,6 +628,11 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 16px rgba(0, 0, 0, 0.12);
   }
 
+  .back-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
   .back-btn:active {
     transform: translateY(0);
   }
@@ -687,6 +705,12 @@
     opacity: 1;
   }
 
+  .expand-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    opacity: 1;
+  }
+
   .expand-btn:hover {
     background: var(--btn-quaternary);
     color: var(--brand);
@@ -718,6 +742,11 @@
     transform: scale(1.05);
   }
 
+  .burger-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
   .burger-btn:active {
     transform: scale(0.95);
   }
@@ -737,6 +766,11 @@
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: none;
     backdrop-filter: none;
+  }
+
+  .logo-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
 
   .logo-btn:hover {
@@ -836,6 +870,7 @@
     border-radius: 0;
     box-shadow: none;
     backdrop-filter: none;
+    text-decoration: none;
   }
 
   .sidebar-item:hover {
@@ -845,10 +880,22 @@
     border-radius: var(--radius-md);
   }
 
+  .sidebar-item:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: -2px;
+    border-radius: var(--radius-md);
+    background: var(--btn-tertiary);
+  }
+
   .sidebar-item.active {
     background: var(--glass-tint-primary);
     color: var(--brand);
     font-weight: 600;
+  }
+
+  .sidebar-item.active:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: -2px;
   }
 
   .sidebar-icon {
@@ -905,6 +952,13 @@
 
   .user-menu-trigger:hover {
     background: transparent;
+  }
+
+  .user-menu-trigger:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: -2px;
+    background: var(--btn-tertiary);
+    border-radius: var(--radius-md);
   }
 
   .collapsed .user-menu-trigger {
@@ -997,6 +1051,45 @@
     z-index: 10001;
   }
 
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: var(--radius-md);
+    text-align: left;
+  }
+
+  .menu-item:hover {
+    background: rgba(var(--glass-tint), 0.08);
+    color: var(--text-primary);
+  }
+
+  .menu-item:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: -2px;
+    background: rgba(var(--glass-tint), 0.12);
+  }
+
+  .menu-item--danger {
+    color: var(--color-danger, #ef4444);
+  }
+
+  .menu-item--danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  .menu-item--danger:focus-visible {
+    outline-color: var(--color-danger, #ef4444);
+  }
+
   @keyframes slideUpFade {
     from {
       opacity: 0;
@@ -1019,8 +1112,12 @@
 
   /* ===== Section Headers ===== */
   .section-header {
+    font-size: 0.875rem;
+    font-weight: 700;
     padding: var(--space-lg) var(--space-lg) var(--space-sm) var(--space-lg);
     margin-top: var(--space-sm);
+    margin-bottom: 0;
+    color: var(--text-secondary);
   }
 
   .section-header:first-child {
@@ -1047,6 +1144,28 @@
   }
 
   /* ===== Mobile Responsiveness ===== */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+
+    .sidebar {
+      transition: none;
+    }
+
+    .burger-btn,
+    .logo-btn,
+    .expand-btn,
+    .back-btn,
+    .sidebar-item,
+    .user-menu-trigger,
+    .menu-item {
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+  }
+
   @media (max-width: 768px) {
     .sidebar {
       width: 280px;
@@ -1079,6 +1198,24 @@
       transform: translateX(-100%);
       width: 85vw;
       max-width: 320px;
+    }
+  }
+
+  @media (prefers-contrast: more) {
+    .sidebar-item {
+      border: 1px solid transparent;
+    }
+
+    .sidebar-item:focus-visible {
+      border: 1px solid var(--brand);
+    }
+
+    .menu-item {
+      border: 1px solid transparent;
+    }
+
+    .menu-item:focus-visible {
+      border: 1px solid var(--brand);
     }
   }
 </style>

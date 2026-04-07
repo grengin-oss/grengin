@@ -7,12 +7,41 @@
     title: string;
     onclose: () => void;
     children?: any;
+    /** Optional element id inside the modal that describes the dialog's purpose/content. */
+    descriptionId?: string;
+    /** When true (default), restores focus to the previously focused element on close (WCAG focus management). */
+    restoreFocusOnClose?: boolean;
   }
 
-  let { isOpen = $bindable(), title, onclose, children }: Props = $props();
+  let {
+    isOpen = $bindable(),
+    title,
+    onclose,
+    children,
+    descriptionId,
+    restoreFocusOnClose = true,
+  }: Props = $props();
 
   let modalContainer = $state<HTMLDivElement | null>(null);
   let modalBackdrop = $state<HTMLDivElement | null>(null);
+  /** Element that had focus before this dialog opened (plain ref, not reactive) */
+  let focusReturnTarget: HTMLElement | null = null;
+  /** Unique ID for this modal instance */
+  const modalId = crypto.randomUUID();
+  const titleId = `modal-title-${modalId}`;
+
+  // Track modal stack globally
+  const getModalStack = (): string[] => {
+    const stack = document.body.getAttribute("data-modal-stack");
+    return stack ? JSON.parse(stack) : [];
+  };
+  const setModalStack = (stack: string[]) => {
+    document.body.setAttribute("data-modal-stack", JSON.stringify(stack));
+  };
+  const isTopModal = (): boolean => {
+    const stack = getModalStack();
+    return stack[stack.length - 1] === modalId;
+  };
 
   // Track number of open modals globally
   const getModalCount = () =>
@@ -24,7 +53,8 @@
   };
 
   function handleEscape(event: KeyboardEvent) {
-    if (event.key === "Escape" && isOpen) {
+    // Only close if this is the topmost modal
+    if (event.key === "Escape" && isOpen && isTopModal()) {
       onclose();
     }
   }
@@ -62,12 +92,63 @@
     const count = getModalCount() + 1;
     setModalCount(count);
     updateBodyScrollLock(count);
+    // Add this modal to the stack
+    const stack = getModalStack();
+    stack.push(modalId);
+    setModalStack(stack);
   }
 
   function decrementModalCount() {
     const count = Math.max(0, getModalCount() - 1);
     setModalCount(count);
     updateBodyScrollLock(count);
+    // Remove this modal from the stack
+    const stack = getModalStack();
+    const index = stack.indexOf(modalId);
+    if (index !== -1) {
+      stack.splice(index, 1);
+      setModalStack(stack);
+    }
+  }
+
+  function captureFocusReturnTarget() {
+    const el = document.activeElement;
+    if (
+      el instanceof HTMLElement &&
+      el !== document.body &&
+      el !== document.documentElement
+    ) {
+      focusReturnTarget = el;
+    } else {
+      focusReturnTarget = null;
+    }
+  }
+
+  function scheduleRestoreFocus() {
+    if (!restoreFocusOnClose) {
+      focusReturnTarget = null;
+      return;
+    }
+    const el = focusReturnTarget;
+    focusReturnTarget = null;
+    tick().then(() => {
+      setTimeout(() => {
+        if (el?.isConnected) {
+          el.focus({ preventScroll: true });
+        } else {
+          // If the element is no longer in the DOM, focus the next modal in the stack
+          const stack = getModalStack();
+          if (stack.length > 0) {
+            // Find the topmost modal and focus it
+            const topModalId = stack[stack.length - 1];
+            const topModalElement = document.querySelector(`[data-modal-id="${topModalId}"]`);
+            if (topModalElement instanceof HTMLElement) {
+              topModalElement.focus({ preventScroll: true });
+            }
+          }
+        }
+      }, 0);
+    });
   }
 
   // Move modal to portal when open
@@ -78,21 +159,19 @@
       // Check if not already in portal
       if (!portal.contains(modalContainer)) {
         portal.appendChild(modalContainer);
-
-        // Increment modal count and lock body scroll
-        if (!wasOpen) {
-          incrementModalCount();
-          wasOpen = true;
-        }
       }
 
-      // Focus the modal for keyboard accessibility
-      if (modalBackdrop) {
+      if (!wasOpen) {
+        captureFocusReturnTarget();
+        incrementModalCount();
+        wasOpen = true;
+        // Focus dialog only on open — not on every effect re-run (nested modals would lose restored focus)
         tick().then(() => {
           modalBackdrop?.focus();
         });
       }
     } else if (!isOpen && wasOpen) {
+      scheduleRestoreFocus();
       decrementModalCount();
       wasOpen = false;
     }
@@ -107,6 +186,7 @@
 
   onDestroy(() => {
     if (wasOpen) {
+      scheduleRestoreFocus();
       decrementModalCount();
       wasOpen = false;
     }
@@ -118,17 +198,20 @@
     <div
       bind:this={modalBackdrop}
       class="modal-backdrop"
+      data-modal-id={modalId}
       onclick={handleBackdropClick}
       onkeydown={(e) => e.key === "Enter" && handleBackdropClick(e as any)}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="modal-title"
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
       tabindex="0"
     >
       <div class="modal-content">
         <div class="modal-header">
-          <h2 id="modal-title" class="modal-title">{title}</h2>
+          <h2 id={titleId} class="modal-title">{title}</h2>
           <button
+            type="button"
             class="modal-close"
             onclick={onclose}
             aria-label={$_("admin.common.closeModal")}
@@ -138,6 +221,7 @@
               fill="none"
               stroke="currentColor"
               stroke-width="2"
+              aria-hidden="true"
             >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />

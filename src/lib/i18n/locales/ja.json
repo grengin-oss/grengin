@@ -5,7 +5,9 @@
     "delete": "削除",
     "edit": "編集",
     "search": "検索",
-    "never": "なし"
+    "never": "なし",
+    "clear": "クリア",
+    "select": "選択"
   },
   "errors": {
     "forbidden": {
@@ -90,6 +92,7 @@
     "deleteChatConfirm": "このチャットを削除してもよろしいですか？この操作は元に戻せません。",
     "cancel": "キャンセル",
     "navigation": "メインナビゲーション",
+    "adminNavigation": "管理ナビゲーション",
     "openAlerts": "アラートを開く",
     "deleting": "削除中...",
     "close": "閉じる",
@@ -143,8 +146,11 @@
       "active": "アクティブ",
       "deactivated": "無効化",
       "actions": "操作",
+      "pagination": "ページネーション",
       "previous": "前へ",
+      "previousPage": "前のページ",
       "next": "次へ",
+      "nextPage": "次のページ",
       "allRoles": "すべての役割",
       "admin": "管理者",
       "user": "ユーザー",
@@ -177,6 +183,7 @@
       "filters": "フィルター",
       "closeFilters": "フィルターを閉じる",
       "openFilters": "フィルターを開く",
+      "sortByAria": "{field} で並べ替え",
       "searchByNameOrEmail": "名前、メール、または部署で検索...",
       "reset": "リセット",
       "loadingUsers": "ユーザーを読み込み中...",
@@ -200,6 +207,7 @@
       "cannotToggleOwnStatus": "自分のアカウントは無効化できません。",
       "disableUserTooltip": "ユーザーを無効化",
       "enableUserTooltip": "ユーザーを有効化",
+      "toggleUserStatus": "ユーザーの状態を切り替え",
       "moreRoles": "{count} 個の役割を表示",
       "showRoles": "ロールを表示",
       "hideRoles": "ロールを隠す",
@@ -209,7 +217,14 @@
       "addRoleScoped": "スコープ付きで追加",
       "searchRoles": "ロールを検索...",
       "confirmRemoveRoleTitle": "ロールを削除しますか？",
-      "confirmRemoveRoleMessage": "このユーザーから{role}を削除してもよろしいですか？"
+      "confirmRemoveRoleMessage": "このユーザーから{role}を削除してもよろしいですか？",
+      "selectDepartmentOption": "部門を選択: {name}",
+      "removeRoleAria": "ロール {role} を削除",
+      "manageScopingAria": "{role} のスコープを管理",
+      "addRoleGlobalAria": "ロール {role} をグローバルに追加",
+      "addRoleScopedAria": "ロール {role} を部門スコープ付きで追加",
+      "departmentResultsLabel": "部門検索結果",
+      "roleOptionsLabel": "追加するロール"
     },
     "departments": {
       "title": "部門",
@@ -653,6 +668,7 @@
     "totalRequests": "総リクエスト数",
     "totalTokens": "総トークン数",
     "totalCost": "総コスト",
+    "growthRate": "成長率",
     "activeUsers": "{count} アクティブ",
     "last30Days": "過去30日間",
     "manageUsers": "ユーザーアカウントとロールを管理",
