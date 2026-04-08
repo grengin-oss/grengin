@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { _ } from 'svelte-i18n';
   import AdminEmptyState from "../components/AdminEmptyState.svelte";
   import AdminPanelCard from "../components/AdminPanelCard.svelte";
@@ -15,7 +15,20 @@
 
   const store = aiEnginesStore;
   const canManageEngines = $derived(permissionsStore.canManageAiEngines());
+  const apiKeyHelperId = "ai-engine-api-key-helper";
+  const apiKeyMessageId = "ai-engine-api-key-message";
+  const defaultModelHintId = "ai-engine-default-model-hint";
+  const systemDefaultHintId = "ai-engine-system-default-hint";
+  const modalEngineStatusLabelId = "ai-engine-modal-status-label";
   let isDarkMode = $state(false);
+  let apiKeyInputEl = $state<HTMLInputElement | null>(null);
+
+  function focusApiKeyInput() {
+    tick().then(() => {
+      apiKeyInputEl?.focus();
+      apiKeyInputEl?.select();
+    });
+  }
 
   function syncThemeState() {
     isDarkMode = document.documentElement.classList.contains("dark")
@@ -303,17 +316,33 @@
     </AdminPanelCard>
   {:else}
     <!-- Available Providers Section -->
-    <div class="providers-section">
-      <div class="providers-grid">
+    <section
+      class="providers-section"
+      aria-labelledby="ai-engines-providers-heading"
+    >
+      <h2 id="ai-engines-providers-heading" class="sr-only">
+        {$_('aiEngines.title')}
+      </h2>
+      <div
+        class="providers-grid"
+        role="list"
+        aria-label={$_('aiEngines.subtitle')}
+      >
         {#each store.engines as engine (engine.engine_key)}
           {@const status = getEngineStatus(engine)}
           {@const isDefault = isDefaultEngine(engine)}
+          {@const cardLabelId = `engine-name-${engine.engine_key}`}
+          {@const cardStatusId = `engine-status-${engine.engine_key}`}
 
-          <div class="provider-card">
+          <div
+            class="provider-card"
+            role="listitem"
+          >
             <div class="provider-header">
               <div class="provider-info">
                 <div
                   class="provider-status-indicator"
+                  aria-hidden="true"
                   class:disabled={status.type === "disabled"}
                   class:connected={status.type === "connected"}
                   class:no-key={status.type === "no-key" ||
@@ -327,7 +356,9 @@
                   </div>
                 {/if}
                 <div>
-                  <h4 class="provider-name">{engine.display_name}</h4>
+                  <h4 id={cardLabelId} class="provider-name">
+                    {engine.display_name}
+                  </h4>
                   {#if isDefault}
                     <span class="default-badge">{$_('aiEngines.defaultEngine')}</span>
                   {/if}
@@ -338,6 +369,9 @@
                   class="status-toggle"
                   class:active={engine.is_enabled}
                   onclick={() => toggleEngineStatus(engine)}
+                  role="switch"
+                  aria-checked={engine.is_enabled}
+                  aria-describedby={cardStatusId}
                   aria-label={engine.is_enabled ? $_('aiEngines.engineStatus.enabled') : $_('aiEngines.engineStatus.disabled')}
                 >
                   <span class="toggle-slider"></span>
@@ -379,6 +413,7 @@
                   {/if}
                 </svg>
                 <span
+                  id={cardStatusId}
                   class="status-text"
                   class:success={status.type === "connected"}
                   class:warning={status.type === "no-key" ||
@@ -479,7 +514,7 @@
           </div>
         {/each}
       </div>
-    </div>
+    </section>
   {/if}
 </div>
 
@@ -529,6 +564,7 @@
               >
                 <div class="api-key-input-wrapper">
                   <input
+                    bind:this={apiKeyInputEl}
                     id="api-key-input"
                     type={store.showApiKey ? "text" : "password"}
                     placeholder={$_('aiEngines.apiKey.placeholder')}
@@ -536,6 +572,11 @@
                     autocomplete="off"
                     spellcheck="false"
                     aria-label={$_('aiEngines.apiKey.title')}
+                    aria-describedby={
+                      store.apiKeyMessage
+                        ? `${apiKeyHelperId} ${apiKeyMessageId}`
+                        : apiKeyHelperId
+                    }
                     onkeydown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -574,6 +615,9 @@
                     {/if}
                   </button>
                 </div>
+                <p class="api-key-helper" id={apiKeyHelperId}>
+                  {$_('aiEngines.apiKey.enterKey')}
+                </p>
 
                 <div class="api-key-edit-actions">
                   <button
@@ -605,6 +649,10 @@
               {#if store.apiKeyMessage}
                 <div
                   class="api-key-message"
+                  id={apiKeyMessageId}
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
                   class:valid={store.apiKeyStatus === "valid"}
                   class:invalid={store.apiKeyStatus === "in_valid"}
                 >
@@ -639,6 +687,7 @@
                       store.apiKeyInput = "";
                       store.apiKeyMessage = null;
                       store.apiKeyStatus = "not_validated";
+                      focusApiKeyInput();
                     }}
                     disabled={store.apiKeyLoading}
                     aria-label={$_('aiEngines.apiKey.update')}
@@ -689,6 +738,10 @@
             {#if store.apiKeyMessage}
               <div
                 class="api-key-message"
+                id={apiKeyMessageId}
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
                 class:valid={store.apiKeyStatus === "valid"}
                 class:invalid={store.apiKeyStatus === "in_valid"}
               >
@@ -784,6 +837,7 @@
                     class="filter-select"
                     bind:value={store.formData.default_model}
                     required
+                    aria-describedby={defaultModelHintId}
                   >
                     {#each store.availableModels?.models.filter(m => whitelistedSet.has(m.model_id)) as model}
                       <option value={model.model_id}
@@ -791,11 +845,11 @@
                       >
                     {/each}
                   </select>
-                  <span class="form-hint"
-                    >{$_('aiEngines.modelWhitelist.defaultModelHint')}</span
-                  >
+                  <span class="form-hint" id={defaultModelHintId}>
+                    {$_('aiEngines.modelWhitelist.defaultModelHint')}
+                  </span>
                 {:else}
-                  <div class="form-notice warning">
+                  <div class="form-notice warning" role="status" aria-live="polite">
                     <svg
                       viewBox="0 0 24 24"
                       fill="none"
@@ -833,12 +887,13 @@
                       title={store.formData.is_default && store.isDefaultEngine(store.selectedEngine?.engine_key || '') 
                         ? $_('aiEngines.systemDefault.cannotRemove')
                         : ""}
+                      aria-describedby={systemDefaultHintId}
                     />
                     <span>{$_('aiEngines.systemDefault.title')}</span>
                   </label>
-                  <span class="form-hint"
-                    >{$_('aiEngines.systemDefault.hint')}</span
-                  >
+                  <span class="form-hint" id={systemDefaultHintId}>
+                    {$_('aiEngines.systemDefault.hint')}
+                  </span>
                 {/if}
               </div>
             </div>
@@ -861,13 +916,19 @@
               onclick={() => {
                 store.formData = { ...store.formData, is_enabled: !store.formData.is_enabled };
               }}
+              role="switch"
+              aria-checked={store.formData.is_enabled}
+              aria-describedby={modalEngineStatusLabelId}
               aria-label={store.formData.is_enabled ? $_('aiEngines.engineStatus.enabled') : $_('aiEngines.engineStatus.disabled')}
             >
               <span class="toggle-slider"></span>
             </button>
-            <span class="status-label"
-              >{store.formData.is_enabled ? $_('aiEngines.engineStatus.enabled') : $_('aiEngines.engineStatus.disabled')}</span
+            <span
+              class="status-label"
+              id={modalEngineStatusLabelId}
             >
+              {store.formData.is_enabled ? $_('aiEngines.engineStatus.enabled') : $_('aiEngines.engineStatus.disabled')}
+            </span>
           </div>
         </div>
 
@@ -924,6 +985,11 @@
     background-position: right var(--space-md) center;
     background-size: 1.25rem;
     padding-right: 3rem;
+  }
+
+  .form-group .filter-select:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 4px;
   }
 
   .api-key-section {
@@ -1153,6 +1219,11 @@
       0 2px 4px rgba(0, 0, 0, 0.06);
   }
 
+  .provider-info:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 4px;
+  }
+
   .provider-card:hover {
     transform: translateY(-2px);
     box-shadow:
@@ -1231,6 +1302,11 @@
     border-radius: 1rem;
     cursor: pointer;
     transition: background 0.2s ease;
+  }
+
+  .status-toggle:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 3px;
   }
 
   .status-toggle.active {
@@ -1443,6 +1519,11 @@
     accent-color: var(--brand);
   }
 
+  .model-item input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
+  }
+
   .model-item input[type="checkbox"]:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -1564,6 +1645,11 @@
     height: 1.125rem;
     cursor: pointer;
     accent-color: var(--brand);
+  }
+
+  .checkbox-label input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
   }
 
   .checkbox-label span {
