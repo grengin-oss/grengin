@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
+  import { _ } from "svelte-i18n";
   import PageHeader from "../../components/PageHeader.svelte";
   import LoadingSpinner from "../../components/LoadingSpinner.svelte";
   import AdminTableCard from "../../components/AdminTableCard.svelte";
@@ -14,7 +15,7 @@
     toggleSSOProviderStatus,
   } from "../../../api/admin/SSOProviders.js";
   import type { UpdateSSOProviderPayload } from "../../../api/admin/SSOProviders.js";
-  import type { SSOProvider } from "../../types.js";
+  import type { SSOProvider, SSOProviderDetails } from "../../types.js";
 
   const providerIcons: Record<string, string> = {
     azure: "/azure.svg",
@@ -31,7 +32,7 @@
   let isDeleting = $state(false);
 
   let isEditOpen = $state(false);
-  let editingProvider = $state<SSOProvider | null>(null);
+  let editingProvider = $state<SSOProviderDetails | null>(null);
   let isEditLoading = $state(false);
   let isEditSaving = $state(false);
   let editErrors = $state<Record<string, string>>({});
@@ -48,6 +49,7 @@
   let clientSecretPreview = $state("");
   let isTenantFieldAvailable = $state(false);
   let showClientSecret = $state(false);
+  let editClientIdInputEl = $state<HTMLInputElement | null>(null);
   const canManageSsoProviders = $derived(
     permissionsStore.canManageSsoProviders()
   );
@@ -60,7 +62,7 @@
     try {
       providers = await getSSOProviders();
     } catch (err: any) {
-      error = err?.message || "Unable to load SSO providers";
+      error = err?.message || $_("admin.settings.oauthProviders.messages.loadError");
     } finally {
       isLoading = false;
     }
@@ -75,12 +77,26 @@
     try {
       await toggleSSOProviderStatus(provider.id, nextState);
       toast.success(
-        `SSO provider ${provider.name} ${nextState ? "enabled" : "disabled"}.`,
+        $_("admin.settings.oauthProviders.toasts.statusUpdated", {
+          values: {
+            name: provider.name,
+            status: nextState
+              ? $_("admin.settings.oauthProviders.common.enabled")
+              : $_("admin.settings.oauthProviders.common.disabled"),
+          },
+        }),
       );
     } catch (err: any) {
       toast.error(
         err?.message ||
-          `Unable to ${nextState ? "enable" : "disable"} ${provider.name}`,
+          $_("admin.settings.oauthProviders.toasts.statusUpdateError", {
+            values: {
+              action: nextState
+                ? $_("admin.settings.oauthProviders.common.enableVerb")
+                : $_("admin.settings.oauthProviders.common.disableVerb"),
+              name: provider.name,
+            },
+          }),
       );
     } finally {
       pendingToggleId = null;
@@ -108,11 +124,11 @@
     isDeleting = true;
     try {
       await deleteSSOProvider(providerToDelete.id);
-      toast.success("SSO provider deleted");
+      toast.success($_("admin.settings.oauthProviders.toasts.deleted"));
       closeModal();
       await loadProviders();
     } catch (err: any) {
-      toast.error(err?.message || "Failed to delete SSO provider");
+      toast.error(err?.message || $_("admin.settings.oauthProviders.toasts.deleteError"));
     } finally {
       isDeleting = false;
     }
@@ -138,19 +154,23 @@
     try {
       const data = await getSSOProvider(provider.id);
       editingProvider = data;
-      clientSecretPreview = data.client_secret_preview ?? "";
-      isTenantFieldAvailable = data.provider === "azure";
+      clientSecretPreview = data.client_secret_preview.value ?? "";
+      isTenantFieldAvailable = data.provider.value === "azure";
       showClientSecret = false;
 
       editForm = {
-        client_id: data.client_id,
-        client_secret: clientSecretPreview,
+        client_id: data.client_id.value,
+        client_secret: data.client_secret_preview.value,
         tenant_id: data.tenant_id ?? "",
         is_enabled: data.is_enabled,
         allowed_domains: data.allowed_domains || [],
       };
+      tick().then(() => {
+        editClientIdInputEl?.focus();
+        editClientIdInputEl?.select();
+      });
     } catch (err: any) {
-      toast.error(err?.message || "Unable to load provider");
+      toast.error(err?.message || $_("admin.settings.oauthProviders.toasts.loadProviderError"));
       closeEditModal();
     } finally {
       isEditLoading = false;
@@ -187,11 +207,11 @@
 
     // Client ID validation
     if (!clientId || !clientId.length || clientId === "<empty>") {
-      errors.client_id = "Client ID is required";
+      errors.client_id = $_("admin.settings.oauthProviders.validation.clientIdRequired");
     }
 
     if (!allowedPattern.test(clientId)) {
-      errors.client_id = "Client ID contains invalid characters";
+      errors.client_id = $_("admin.settings.oauthProviders.validation.clientIdInvalid");
     }
 
     // Client secret validation
@@ -204,21 +224,21 @@
 
     if (!skipSecretValidation) {
       if (!clientSecret || !clientSecret.length || clientSecret === "<empty>") {
-        errors.client_secret = "Client secret is required";
+        errors.client_secret = $_("admin.settings.oauthProviders.validation.clientSecretRequired");
       }
 
       if (!allowedPattern.test(clientSecret)) {
-        errors.client_secret = "Client secret contains invalid characters";
+        errors.client_secret = $_("admin.settings.oauthProviders.validation.clientSecretInvalid");
       }
     }
 
     if (isTenantFieldAvailable) {
       const tenantId = editForm.tenant_id.trim();
       if (!tenantId || !tenantId.length || tenantId === "<empty>") {
-        errors.tenant_id = "Tenant ID is required";
+        errors.tenant_id = $_("admin.settings.oauthProviders.validation.tenantIdRequired");
       }
       if (!allowedPattern.test(tenantId)) {
-        errors.tenant_id = "Tenant ID contains invalid characters";
+        errors.tenant_id = $_("admin.settings.oauthProviders.validation.tenantIdInvalid");
       }
     }
 
@@ -260,11 +280,11 @@
       }
 
       await updateSSOProvider(editingProvider.id, payload);
-      toast.success("SSO provider updated");
+      toast.success($_("admin.settings.oauthProviders.toasts.updated"));
       closeEditModal();
       await loadProviders();
     } catch (err: any) {
-      toast.error(err?.message || "Failed to update provider");
+      toast.error(err?.message || $_("admin.settings.oauthProviders.toasts.updateError"));
     } finally {
       isEditSaving = false;
     }
@@ -275,13 +295,13 @@
 
 <div class="sso-providers-page">
   <PageHeader
-    title="OAuth Providers"
-    subtitle="Configure OAuth integrations for your organization."
+    title={$_("admin.settings.oauthProviders.title")}
+    subtitle={$_("admin.settings.oauthProviders.subtitle")}
   />
 
   <section class="providers-card">
     {#if isLoading}
-      <LoadingSpinner text="Loading OAuth providers..." size="lg" />
+      <LoadingSpinner text={$_("admin.settings.oauthProviders.messages.loading")} size="lg" />
     {:else if error}
       <div class="error-state">
         <p>{error}</p>
@@ -290,23 +310,24 @@
           type="button"
           onclick={() => loadProviders()}
         >
-          Retry
+          {$_("admin.settings.oauthProviders.actions.retry")}
         </button>
       </div>
     {:else if providers.length === 0}
       <div class="empty-state">
-        <p>No OAuth providers have been configured yet.</p>
+        <p>{$_("admin.settings.oauthProviders.messages.empty")}</p>
       </div>
     {:else}
       <AdminTableCard minWidth="720px">
         <table class="providers-table">
+          <caption class="sr-only">{$_("admin.settings.oauthProviders.table.caption")}</caption>
           <thead>
             <tr>
-              <th>Provider</th>
-              <th>Allowed domains</th>
-              <th>Status</th>
+              <th scope="col">{$_("admin.settings.oauthProviders.table.provider")}</th>
+              <th scope="col">{$_("admin.settings.oauthProviders.table.allowedDomains")}</th>
+              <th scope="col">{$_("admin.settings.oauthProviders.table.status")}</th>
               {#if canManageSsoProviders}
-                <th>Actions</th>
+                <th scope="col">{$_("admin.settings.oauthProviders.table.actions")}</th>
               {/if}
             </tr>
           </thead>
@@ -319,7 +340,9 @@
                       class="provider-icon"
                       src={providerIcons[provider.provider] ??
                         "/grengin-icon.svg"}
-                      alt={`${provider.name} logo`}
+                      alt={$_("admin.settings.oauthProviders.aria.providerLogoAlt", {
+                        values: { name: provider.name },
+                      })}
                       loading="lazy"
                     />
                     <p class="provider-name__title">{provider.name}</p>
@@ -334,7 +357,7 @@
                         >
                       {/each}
                     {:else}
-                      <span class="domain-empty-text">No domains</span>
+                      <span class="domain-empty-text">{$_("admin.settings.oauthProviders.messages.noDomains")}</span>
                     {/if}
                   </div>
                 </td>
@@ -346,16 +369,24 @@
                           type="checkbox"
                           checked={provider.is_enabled}
                           disabled={pendingToggleId !== null}
+                          aria-label={$_("admin.settings.oauthProviders.aria.toggleProviderStatus", {
+                            values: { name: provider.name },
+                          })}
+                          aria-describedby={`provider-status-${provider.id}`}
                           onchange={() => toggleProvider(provider)}
                         />
                         <span class="status-slider"></span>
-                        <span class="status-label">
-                          {provider.is_enabled ? "Enabled" : "Disabled"}
+                        <span class="status-label" id={`provider-status-${provider.id}`}>
+                          {provider.is_enabled
+                            ? $_("admin.settings.oauthProviders.common.enabled")
+                            : $_("admin.settings.oauthProviders.common.disabled")}
                         </span>
                       </label>
                     {:else}
                       <span class="status-label">
-                        {provider.is_enabled ? "Enabled" : "Disabled"}
+                        {provider.is_enabled
+                          ? $_("admin.settings.oauthProviders.common.enabled")
+                          : $_("admin.settings.oauthProviders.common.disabled")}
                       </span>
                     {/if}
                   </div>
@@ -366,7 +397,9 @@
                       <button
                         class="icon-btn"
                         type="button"
-                        aria-label={`Configure ${provider.name}`}
+                        aria-label={$_("admin.settings.oauthProviders.aria.configureProvider", {
+                          values: { name: provider.name },
+                        })}
                         onclick={() => openEditModal(provider)}
                         disabled={isEditLoading}
                       >
@@ -390,7 +423,9 @@
                       <button
                         class="icon-btn icon-btn--danger"
                         type="button"
-                        aria-label={`Delete ${provider.name}`}
+                        aria-label={$_("admin.settings.oauthProviders.aria.deleteProvider", {
+                          values: { name: provider.name },
+                        })}
                         onclick={() => promptDelete(provider)}
                         disabled={isDeleting &&
                           providerToDelete?.id === provider.id}
@@ -424,13 +459,13 @@
   </section>
 
   <!-- Delete Confirmation Modal -->
-  <Modal title="Confirm deletion" isOpen={isConfirmOpen} onclose={closeModal}>
+  <Modal title={$_("admin.settings.oauthProviders.modals.confirmDeleteTitle")} isOpen={isConfirmOpen} onclose={closeModal}>
     {#snippet children()}
       <div class="confirm-body">
         <p>
-          Are you sure you want to delete <strong
-            >{providerToDelete?.name}</strong
-          >?
+          {$_("admin.settings.oauthProviders.modals.confirmDeleteMessage", {
+            values: { name: providerToDelete?.name ?? "" },
+          })}
         </p>
         <div class="confirm-actions">
           <button
@@ -439,7 +474,7 @@
             onclick={closeModal}
             disabled={isDeleting}
           >
-            Cancel
+            {$_("common.cancel")}
           </button>
           <button
             class="btn btn-accent"
@@ -447,7 +482,9 @@
             onclick={handleDeleteConfirmed}
             disabled={isDeleting}
           >
-            {isDeleting ? "Deleting…" : "Delete"}
+            {isDeleting
+              ? $_("admin.settings.oauthProviders.actions.deleting")
+              : $_("common.delete")}
           </button>
         </div>
       </div>
@@ -455,14 +492,16 @@
   </Modal>
 
   <Modal
-    title={`Edit ${editTitle || "OAuth provider"}`}
+    title={$_("admin.settings.oauthProviders.modals.editTitle", {
+      values: { name: editTitle || $_("admin.settings.oauthProviders.modals.providerFallback") },
+    })}
     isOpen={isEditOpen}
     onclose={closeEditModal}
   >
     {#snippet children()}
       {#if isEditLoading}
         <div class="edit-loading">
-          <LoadingSpinner size="md" text="Loading provider..." />
+          <LoadingSpinner size="md" text={$_("admin.settings.oauthProviders.messages.loadingProvider")} />
         </div>
       {:else}
         <form
@@ -473,21 +512,24 @@
           }}
         >
           <div class="form-row">
-            <label for="edit-client-id">Client ID</label>
+            <label for="edit-client-id">{$_("admin.settings.oauthProviders.form.clientId")}</label>
             <input
+              bind:this={editClientIdInputEl}
               id="edit-client-id"
               type="text"
               bind:value={editForm.client_id}
               class:error={editErrors.client_id}
-              placeholder={"Enter client ID"}
+              placeholder={$_("admin.settings.oauthProviders.form.clientIdPlaceholder")}
+              aria-invalid={Boolean(editErrors.client_id)}
+              aria-describedby={editErrors.client_id ? "edit-client-id-error" : undefined}
             />
             {#if editErrors.client_id}
-              <span class="field-error">{editErrors.client_id}</span>
+              <span class="field-error" id="edit-client-id-error">{editErrors.client_id}</span>
             {/if}
           </div>
 
           <div class="form-row">
-            <label for="edit-client-secret">Client secret</label>
+            <label for="edit-client-secret">{$_("admin.settings.oauthProviders.form.clientSecret")}</label>
             <div
               class="client-secret-input-row"
               class:error={Boolean(editErrors.client_secret)}
@@ -496,17 +538,20 @@
                 id="edit-client-secret"
                 type={showClientSecret ? "text" : "password"}
                 bind:value={editForm.client_secret}
-                placeholder="Enter client secret"
+                placeholder={$_("admin.settings.oauthProviders.form.clientSecretPlaceholder")}
                 autocomplete="off"
                 spellcheck="false"
+                aria-invalid={Boolean(editErrors.client_secret)}
+                aria-describedby={editErrors.client_secret ? "edit-client-secret-error" : undefined}
               />
               <button
                 type="button"
                 class="client-secret-visibility"
                 onclick={() => (showClientSecret = !showClientSecret)}
+                aria-pressed={showClientSecret}
                 aria-label={showClientSecret
-                  ? "Hide client secret"
-                  : "Show client secret"}
+                  ? $_("admin.settings.oauthProviders.aria.hideClientSecret")
+                  : $_("admin.settings.oauthProviders.aria.showClientSecret")}
               >
                 {#if showClientSecret}
                   <svg
@@ -536,31 +581,33 @@
               </button>
             </div>
             {#if editErrors.client_secret}
-              <span class="field-error">{editErrors.client_secret}</span>
+              <span class="field-error" id="edit-client-secret-error">{editErrors.client_secret}</span>
             {/if}
           </div>
 
           {#if isTenantFieldAvailable}
             <div class="form-row">
-              <label for="edit-tenant">Tenant ID</label>
+              <label for="edit-tenant">{$_("admin.settings.oauthProviders.form.tenantId")}</label>
               <input
                 id="edit-tenant"
                 type="text"
                 bind:value={editForm.tenant_id}
-                placeholder={"Enter tenant ID"}
+                placeholder={$_("admin.settings.oauthProviders.form.tenantIdPlaceholder")}
+                aria-invalid={Boolean(editErrors.tenant_id)}
+                aria-describedby={editErrors.tenant_id ? "edit-tenant-id-error" : undefined}
               />
               {#if editErrors.tenant_id}
-                <span class="field-error">{editErrors.tenant_id}</span>
+                <span class="field-error" id="edit-tenant-id-error">{editErrors.tenant_id}</span>
               {/if}
             </div>
           {/if}
 
           <div class="form-row">
-            <label for="edit-domains">Allowed domains</label>
+            <label for="edit-domains">{$_("admin.settings.oauthProviders.form.allowedDomains")}</label>
             <input
               id="edit-domains"
               type="text"
-              placeholder="Press Enter to add"
+              placeholder={$_("admin.settings.oauthProviders.form.domainsPlaceholder")}
               bind:value={domainInput}
               onkeydown={(event) => {
                 if (event.key === "Enter") {
@@ -578,7 +625,9 @@
                     <button
                       type="button"
                       class="domain-pill__remove"
-                      tabindex="-1"
+                      aria-label={$_("admin.settings.oauthProviders.aria.removeDomain", {
+                        values: { domain },
+                      })}
                       onclick={() => removeDomain(domain)}
                     >
                       ×
@@ -590,12 +639,14 @@
           </div>
 
           <div class="form-row">
-            <span class="switch-label">Status</span>
+            <span class="switch-label">{$_("admin.settings.oauthProviders.form.status")}</span>
             <label class="status-switch">
               <input type="checkbox" bind:checked={editForm.is_enabled} />
               <span class="status-slider"></span>
               <span class="status-label">
-                {editForm.is_enabled ? "Enabled" : "Disabled"}
+                {editForm.is_enabled
+                  ? $_("admin.settings.oauthProviders.common.enabled")
+                  : $_("admin.settings.oauthProviders.common.disabled")}
               </span>
             </label>
           </div>
@@ -607,14 +658,14 @@
               onclick={closeEditModal}
               disabled={isEditSaving}
             >
-              Cancel
+              {$_("common.cancel")}
             </button>
             <button
               class="btn btn-accent"
               type="submit"
               disabled={isEditSaving || isEditLoading}
             >
-              {isEditSaving ? "Saving…" : "Save"}
+              {isEditSaving ? $_("admin.settings.oauthProviders.actions.saving") : $_("common.save")}
             </button>
           </div>
         </form>
@@ -772,6 +823,11 @@
     height: 0;
   }
 
+  .status-switch input:focus-visible + .status-slider {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
+  }
+
   .status-slider {
     position: relative;
     display: inline-block;
@@ -842,6 +898,13 @@
     border-color: rgba(255, 255, 255, 0.2);
     color: var(--text-primary);
     background: rgba(var(--glass-tint), 0.05);
+  }
+
+  .icon-btn:focus-visible,
+  .client-secret-visibility:focus-visible,
+  .domain-pill__remove:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
   }
 
   .error-state,
@@ -979,6 +1042,7 @@
     padding: 0;
     font-size: 0.9rem;
     box-shadow: none;
+    background: transparent;
   }
 
   .providers-table tr.pending {

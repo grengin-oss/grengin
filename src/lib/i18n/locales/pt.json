@@ -367,7 +367,83 @@
     },
     "settings": {
       "title": "Configurações",
-      "subtitle": "Configurar definições do sistema e integrações"
+      "subtitle": "Configurar definições do sistema e integrações",
+      "tabs": {
+        "oauth": "OAuth",
+        "oauthAria": "Configuração de fornecedores OAuth"
+      },
+      "oauthProviders": {
+        "title": "Fornecedores OAuth",
+        "subtitle": "Configure as integrações OAuth para a sua organização.",
+        "common": {
+          "enabled": "Ativado",
+          "disabled": "Desativado",
+          "enableVerb": "ativar",
+          "disableVerb": "desativar"
+        },
+        "actions": {
+          "retry": "Tentar novamente",
+          "deleting": "A eliminar…",
+          "saving": "A guardar…"
+        },
+        "messages": {
+          "loading": "A carregar fornecedores OAuth...",
+          "empty": "Ainda não existem fornecedores OAuth configurados.",
+          "loadError": "Não foi possível carregar os fornecedores SSO",
+          "loadProviderError": "Não foi possível carregar o fornecedor",
+          "noDomains": "Sem domínios",
+          "loadingProvider": "A carregar fornecedor..."
+        },
+        "table": {
+          "caption": "Configuração de fornecedores OAuth",
+          "provider": "Fornecedor",
+          "allowedDomains": "Domínios permitidos",
+          "status": "Estado",
+          "actions": "Ações"
+        },
+        "modals": {
+          "confirmDeleteTitle": "Confirmar eliminação",
+          "confirmDeleteMessage": "Tem a certeza de que pretende eliminar {name}?",
+          "editTitle": "Editar {name}",
+          "providerFallback": "fornecedor OAuth"
+        },
+        "toasts": {
+          "statusUpdated": "O fornecedor SSO {name} está {status}.",
+          "statusUpdateError": "Não foi possível {action} {name}",
+          "deleted": "Fornecedor SSO eliminado",
+          "deleteError": "Falha ao eliminar fornecedor SSO",
+          "updated": "Fornecedor SSO atualizado",
+          "updateError": "Falha ao atualizar fornecedor"
+        },
+        "form": {
+          "clientId": "ID do cliente",
+          "clientIdPlaceholder": "Introduza o ID do cliente",
+          "clientSecret": "Segredo do cliente",
+          "clientSecretPlaceholder": "Introduza o segredo do cliente",
+          "tenantId": "ID do tenant",
+          "tenantIdPlaceholder": "Introduza o ID do tenant",
+          "allowedDomains": "Domínios permitidos",
+          "domainsPlaceholder": "Prima Enter para adicionar",
+          "status": "Estado"
+        },
+        "validation": {
+          "clientIdRequired": "O ID do cliente é obrigatório",
+          "clientIdInvalid": "O ID do cliente contém caracteres inválidos",
+          "clientSecretRequired": "O segredo do cliente é obrigatório",
+          "clientSecretInvalid": "O segredo do cliente contém caracteres inválidos",
+          "tenantIdRequired": "O ID do tenant é obrigatório",
+          "tenantIdInvalid": "O ID do tenant contém caracteres inválidos"
+        },
+        "aria": {
+          "toggleProviderStatus": "Alternar estado do fornecedor {name}",
+          "configureProvider": "Configurar {name}",
+          "deleteProvider": "Eliminar {name}",
+          "providerLogoAlt": "Logótipo de {name}",
+          "hideClientSecret": "Ocultar segredo do cliente",
+          "showClientSecret": "Mostrar segredo do cliente",
+          "removeDomain": "Remover domínio {domain}"
+        }
+      }
     },
     "accessControl": {
       "title": "Controlo de acesso",

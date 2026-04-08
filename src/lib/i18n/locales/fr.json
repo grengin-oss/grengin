@@ -367,7 +367,83 @@
     },
     "settings": {
       "title": "Paramètres",
-      "subtitle": "Configurer les paramètres système et intégrations"
+      "subtitle": "Configurer les paramètres système et intégrations",
+      "tabs": {
+        "oauth": "OAuth",
+        "oauthAria": "Configuration des fournisseurs OAuth"
+      },
+      "oauthProviders": {
+        "title": "Fournisseurs OAuth",
+        "subtitle": "Configurez les intégrations OAuth pour votre organisation.",
+        "common": {
+          "enabled": "Activé",
+          "disabled": "Désactivé",
+          "enableVerb": "activer",
+          "disableVerb": "désactiver"
+        },
+        "actions": {
+          "retry": "Réessayer",
+          "deleting": "Suppression…",
+          "saving": "Enregistrement…"
+        },
+        "messages": {
+          "loading": "Chargement des fournisseurs OAuth...",
+          "empty": "Aucun fournisseur OAuth n'a encore été configuré.",
+          "loadError": "Impossible de charger les fournisseurs SSO",
+          "loadProviderError": "Impossible de charger le fournisseur",
+          "noDomains": "Aucun domaine",
+          "loadingProvider": "Chargement du fournisseur..."
+        },
+        "table": {
+          "caption": "Configuration des fournisseurs OAuth",
+          "provider": "Fournisseur",
+          "allowedDomains": "Domaines autorisés",
+          "status": "Statut",
+          "actions": "Actions"
+        },
+        "modals": {
+          "confirmDeleteTitle": "Confirmer la suppression",
+          "confirmDeleteMessage": "Êtes-vous sûr de vouloir supprimer {name} ?",
+          "editTitle": "Modifier {name}",
+          "providerFallback": "fournisseur OAuth"
+        },
+        "toasts": {
+          "statusUpdated": "Le fournisseur SSO {name} est {status}.",
+          "statusUpdateError": "Impossible de {action} {name}",
+          "deleted": "Fournisseur SSO supprimé",
+          "deleteError": "Échec de la suppression du fournisseur SSO",
+          "updated": "Fournisseur SSO mis à jour",
+          "updateError": "Échec de la mise à jour du fournisseur"
+        },
+        "form": {
+          "clientId": "ID client",
+          "clientIdPlaceholder": "Saisissez l'ID client",
+          "clientSecret": "Secret client",
+          "clientSecretPlaceholder": "Saisissez le secret client",
+          "tenantId": "ID du locataire",
+          "tenantIdPlaceholder": "Saisissez l'ID du locataire",
+          "allowedDomains": "Domaines autorisés",
+          "domainsPlaceholder": "Appuyez sur Entrée pour ajouter",
+          "status": "Statut"
+        },
+        "validation": {
+          "clientIdRequired": "L'ID client est requis",
+          "clientIdInvalid": "L'ID client contient des caractères invalides",
+          "clientSecretRequired": "Le secret client est requis",
+          "clientSecretInvalid": "Le secret client contient des caractères invalides",
+          "tenantIdRequired": "L'ID du locataire est requis",
+          "tenantIdInvalid": "L'ID du locataire contient des caractères invalides"
+        },
+        "aria": {
+          "toggleProviderStatus": "Basculer le statut du fournisseur {name}",
+          "configureProvider": "Configurer {name}",
+          "deleteProvider": "Supprimer {name}",
+          "providerLogoAlt": "Logo {name}",
+          "hideClientSecret": "Masquer le secret client",
+          "showClientSecret": "Afficher le secret client",
+          "removeDomain": "Supprimer le domaine {domain}"
+        }
+      }
     },
     "accessControl": {
       "title": "Contrôle d'accès",

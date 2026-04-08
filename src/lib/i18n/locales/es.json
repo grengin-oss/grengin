@@ -367,7 +367,83 @@
     },
     "settings": {
       "title": "Configuración",
-      "subtitle": "Configurar ajustes del sistema e integraciones"
+      "subtitle": "Configurar ajustes del sistema e integraciones",
+      "tabs": {
+        "oauth": "OAuth",
+        "oauthAria": "Configuración de proveedores OAuth"
+      },
+      "oauthProviders": {
+        "title": "Proveedores OAuth",
+        "subtitle": "Configura las integraciones OAuth para tu organización.",
+        "common": {
+          "enabled": "Habilitado",
+          "disabled": "Deshabilitado",
+          "enableVerb": "habilitar",
+          "disableVerb": "deshabilitar"
+        },
+        "actions": {
+          "retry": "Reintentar",
+          "deleting": "Eliminando…",
+          "saving": "Guardando…"
+        },
+        "messages": {
+          "loading": "Cargando proveedores OAuth...",
+          "empty": "Aún no se han configurado proveedores OAuth.",
+          "loadError": "No se pudieron cargar los proveedores SSO",
+          "loadProviderError": "No se pudo cargar el proveedor",
+          "noDomains": "Sin dominios",
+          "loadingProvider": "Cargando proveedor..."
+        },
+        "table": {
+          "caption": "Configuración de proveedores OAuth",
+          "provider": "Proveedor",
+          "allowedDomains": "Dominios permitidos",
+          "status": "Estado",
+          "actions": "Acciones"
+        },
+        "modals": {
+          "confirmDeleteTitle": "Confirmar eliminación",
+          "confirmDeleteMessage": "¿Seguro que quieres eliminar {name}?",
+          "editTitle": "Editar {name}",
+          "providerFallback": "proveedor OAuth"
+        },
+        "toasts": {
+          "statusUpdated": "El proveedor SSO {name} está {status}.",
+          "statusUpdateError": "No se pudo {action} {name}",
+          "deleted": "Proveedor SSO eliminado",
+          "deleteError": "No se pudo eliminar el proveedor SSO",
+          "updated": "Proveedor SSO actualizado",
+          "updateError": "No se pudo actualizar el proveedor"
+        },
+        "form": {
+          "clientId": "ID de cliente",
+          "clientIdPlaceholder": "Ingresa el ID de cliente",
+          "clientSecret": "Secreto de cliente",
+          "clientSecretPlaceholder": "Ingresa el secreto de cliente",
+          "tenantId": "ID de tenant",
+          "tenantIdPlaceholder": "Ingresa el ID de tenant",
+          "allowedDomains": "Dominios permitidos",
+          "domainsPlaceholder": "Pulsa Enter para agregar",
+          "status": "Estado"
+        },
+        "validation": {
+          "clientIdRequired": "El ID de cliente es obligatorio",
+          "clientIdInvalid": "El ID de cliente contiene caracteres no válidos",
+          "clientSecretRequired": "El secreto de cliente es obligatorio",
+          "clientSecretInvalid": "El secreto de cliente contiene caracteres no válidos",
+          "tenantIdRequired": "El ID de tenant es obligatorio",
+          "tenantIdInvalid": "El ID de tenant contiene caracteres no válidos"
+        },
+        "aria": {
+          "toggleProviderStatus": "Cambiar estado del proveedor {name}",
+          "configureProvider": "Configurar {name}",
+          "deleteProvider": "Eliminar {name}",
+          "providerLogoAlt": "Logo de {name}",
+          "hideClientSecret": "Ocultar secreto de cliente",
+          "showClientSecret": "Mostrar secreto de cliente",
+          "removeDomain": "Quitar dominio {domain}"
+        }
+      }
     },
     "accessControl": {
       "title": "Control de acceso",

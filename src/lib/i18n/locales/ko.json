@@ -367,7 +367,83 @@
     },
     "settings": {
       "title": "설정",
-      "subtitle": "시스템 설정 및 연동 구성"
+      "subtitle": "시스템 설정 및 연동 구성",
+      "tabs": {
+        "oauth": "OAuth",
+        "oauthAria": "OAuth 공급자 설정"
+      },
+      "oauthProviders": {
+        "title": "OAuth 공급자",
+        "subtitle": "조직의 OAuth 연동을 구성합니다.",
+        "common": {
+          "enabled": "활성화",
+          "disabled": "비활성화",
+          "enableVerb": "활성화",
+          "disableVerb": "비활성화"
+        },
+        "actions": {
+          "retry": "다시 시도",
+          "deleting": "삭제 중…",
+          "saving": "저장 중…"
+        },
+        "messages": {
+          "loading": "OAuth 공급자를 불러오는 중...",
+          "empty": "아직 구성된 OAuth 공급자가 없습니다.",
+          "loadError": "SSO 공급자를 불러올 수 없습니다",
+          "loadProviderError": "공급자를 불러올 수 없습니다",
+          "noDomains": "도메인 없음",
+          "loadingProvider": "공급자 불러오는 중..."
+        },
+        "table": {
+          "caption": "OAuth 공급자 구성",
+          "provider": "공급자",
+          "allowedDomains": "허용 도메인",
+          "status": "상태",
+          "actions": "작업"
+        },
+        "modals": {
+          "confirmDeleteTitle": "삭제 확인",
+          "confirmDeleteMessage": "{name}을(를) 삭제하시겠습니까?",
+          "editTitle": "{name} 편집",
+          "providerFallback": "OAuth 공급자"
+        },
+        "toasts": {
+          "statusUpdated": "SSO 공급자 {name}이(가) {status} 상태입니다.",
+          "statusUpdateError": "{name}을(를) {action}할 수 없습니다",
+          "deleted": "SSO 공급자가 삭제되었습니다",
+          "deleteError": "SSO 공급자 삭제에 실패했습니다",
+          "updated": "SSO 공급자가 업데이트되었습니다",
+          "updateError": "공급자 업데이트에 실패했습니다"
+        },
+        "form": {
+          "clientId": "클라이언트 ID",
+          "clientIdPlaceholder": "클라이언트 ID 입력",
+          "clientSecret": "클라이언트 시크릿",
+          "clientSecretPlaceholder": "클라이언트 시크릿 입력",
+          "tenantId": "테넌트 ID",
+          "tenantIdPlaceholder": "테넌트 ID 입력",
+          "allowedDomains": "허용 도메인",
+          "domainsPlaceholder": "Enter로 추가",
+          "status": "상태"
+        },
+        "validation": {
+          "clientIdRequired": "클라이언트 ID는 필수입니다",
+          "clientIdInvalid": "클라이언트 ID에 잘못된 문자가 포함되어 있습니다",
+          "clientSecretRequired": "클라이언트 시크릿은 필수입니다",
+          "clientSecretInvalid": "클라이언트 시크릿에 잘못된 문자가 포함되어 있습니다",
+          "tenantIdRequired": "테넌트 ID는 필수입니다",
+          "tenantIdInvalid": "테넌트 ID에 잘못된 문자가 포함되어 있습니다"
+        },
+        "aria": {
+          "toggleProviderStatus": "{name} 공급자 상태 전환",
+          "configureProvider": "{name} 구성",
+          "deleteProvider": "{name} 삭제",
+          "providerLogoAlt": "{name} 로고",
+          "hideClientSecret": "클라이언트 시크릿 숨기기",
+          "showClientSecret": "클라이언트 시크릿 보기",
+          "removeDomain": "{domain} 도메인 제거"
+        }
+      }
     },
     "accessControl": {
       "title": "액세스 제어",

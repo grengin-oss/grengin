@@ -1,12 +1,12 @@
 import { request } from '../client.js';
-import type { SSOProvider } from '../../admin/types.js';
+import type { SSOProvider, SSOProviderDetails } from '../../admin/types.js';
 
 export async function getSSOProviders(): Promise<SSOProvider[]> {
   return request<SSOProvider[]>('/admin/sso-providers');
 }
 
-export async function getSSOProvider(providerId: string): Promise<SSOProvider> {
-  return request<SSOProvider>(`/admin/sso-providers/${providerId}`);
+export async function getSSOProvider(providerId: string): Promise<SSOProviderDetails> {
+  return request<SSOProviderDetails>(`/admin/sso-providers/${providerId}`);
 }
 
 export interface UpdateSSOProviderPayload {

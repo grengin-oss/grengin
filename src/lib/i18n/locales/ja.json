@@ -367,7 +367,83 @@
     },
     "settings": {
       "title": "設定",
-      "subtitle": "システム設定と連携を構成"
+      "subtitle": "システム設定と連携を構成",
+      "tabs": {
+        "oauth": "OAuth",
+        "oauthAria": "OAuthプロバイダー設定"
+      },
+      "oauthProviders": {
+        "title": "OAuthプロバイダー",
+        "subtitle": "組織向けのOAuth連携を設定します。",
+        "common": {
+          "enabled": "有効",
+          "disabled": "無効",
+          "enableVerb": "有効化",
+          "disableVerb": "無効化"
+        },
+        "actions": {
+          "retry": "再試行",
+          "deleting": "削除中…",
+          "saving": "保存中…"
+        },
+        "messages": {
+          "loading": "OAuthプロバイダーを読み込み中...",
+          "empty": "OAuthプロバイダーはまだ設定されていません。",
+          "loadError": "SSOプロバイダーを読み込めませんでした",
+          "loadProviderError": "プロバイダーを読み込めませんでした",
+          "noDomains": "ドメインなし",
+          "loadingProvider": "プロバイダーを読み込み中..."
+        },
+        "table": {
+          "caption": "OAuthプロバイダー設定",
+          "provider": "プロバイダー",
+          "allowedDomains": "許可ドメイン",
+          "status": "ステータス",
+          "actions": "操作"
+        },
+        "modals": {
+          "confirmDeleteTitle": "削除の確認",
+          "confirmDeleteMessage": "{name}を削除してもよろしいですか？",
+          "editTitle": "{name}を編集",
+          "providerFallback": "OAuthプロバイダー"
+        },
+        "toasts": {
+          "statusUpdated": "SSOプロバイダー {name} は{status}です。",
+          "statusUpdateError": "{name}を{action}できませんでした",
+          "deleted": "SSOプロバイダーを削除しました",
+          "deleteError": "SSOプロバイダーの削除に失敗しました",
+          "updated": "SSOプロバイダーを更新しました",
+          "updateError": "プロバイダーの更新に失敗しました"
+        },
+        "form": {
+          "clientId": "クライアントID",
+          "clientIdPlaceholder": "クライアントIDを入力",
+          "clientSecret": "クライアントシークレット",
+          "clientSecretPlaceholder": "クライアントシークレットを入力",
+          "tenantId": "テナントID",
+          "tenantIdPlaceholder": "テナントIDを入力",
+          "allowedDomains": "許可ドメイン",
+          "domainsPlaceholder": "Enterキーで追加",
+          "status": "ステータス"
+        },
+        "validation": {
+          "clientIdRequired": "クライアントIDは必須です",
+          "clientIdInvalid": "クライアントIDに無効な文字が含まれています",
+          "clientSecretRequired": "クライアントシークレットは必須です",
+          "clientSecretInvalid": "クライアントシークレットに無効な文字が含まれています",
+          "tenantIdRequired": "テナントIDは必須です",
+          "tenantIdInvalid": "テナントIDに無効な文字が含まれています"
+        },
+        "aria": {
+          "toggleProviderStatus": "{name}プロバイダーの状態を切り替え",
+          "configureProvider": "{name}を設定",
+          "deleteProvider": "{name}を削除",
+          "providerLogoAlt": "{name}のロゴ",
+          "hideClientSecret": "クライアントシークレットを非表示",
+          "showClientSecret": "クライアントシークレットを表示",
+          "removeDomain": "ドメイン {domain} を削除"
+        }
+      }
     },
     "accessControl": {
       "title": "アクセス制御",

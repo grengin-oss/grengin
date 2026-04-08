@@ -367,7 +367,83 @@
     },
     "settings": {
       "title": "Settings",
-      "subtitle": "Configure system settings and integrations"
+      "subtitle": "Configure system settings and integrations",
+      "tabs": {
+        "oauth": "OAuth",
+        "oauthAria": "OAuth providers configuration"
+      },
+      "oauthProviders": {
+        "title": "OAuth Providers",
+        "subtitle": "Configure OAuth integrations for your organization.",
+        "common": {
+          "enabled": "Enabled",
+          "disabled": "Disabled",
+          "enableVerb": "enable",
+          "disableVerb": "disable"
+        },
+        "actions": {
+          "retry": "Retry",
+          "deleting": "Deleting…",
+          "saving": "Saving…"
+        },
+        "messages": {
+          "loading": "Loading OAuth providers...",
+          "empty": "No OAuth providers have been configured yet.",
+          "loadError": "Unable to load SSO providers",
+          "loadProviderError": "Unable to load provider",
+          "noDomains": "No domains",
+          "loadingProvider": "Loading provider..."
+        },
+        "table": {
+          "caption": "OAuth providers configuration",
+          "provider": "Provider",
+          "allowedDomains": "Allowed domains",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "modals": {
+          "confirmDeleteTitle": "Confirm deletion",
+          "confirmDeleteMessage": "Are you sure you want to delete {name}?",
+          "editTitle": "Edit {name}",
+          "providerFallback": "OAuth provider"
+        },
+        "toasts": {
+          "statusUpdated": "SSO provider {name} {status}.",
+          "statusUpdateError": "Unable to {action} {name}",
+          "deleted": "SSO provider deleted",
+          "deleteError": "Failed to delete SSO provider",
+          "updated": "SSO provider updated",
+          "updateError": "Failed to update provider"
+        },
+        "form": {
+          "clientId": "Client ID",
+          "clientIdPlaceholder": "Enter client ID",
+          "clientSecret": "Client secret",
+          "clientSecretPlaceholder": "Enter client secret",
+          "tenantId": "Tenant ID",
+          "tenantIdPlaceholder": "Enter tenant ID",
+          "allowedDomains": "Allowed domains",
+          "domainsPlaceholder": "Press Enter to add",
+          "status": "Status"
+        },
+        "validation": {
+          "clientIdRequired": "Client ID is required",
+          "clientIdInvalid": "Client ID contains invalid characters",
+          "clientSecretRequired": "Client secret is required",
+          "clientSecretInvalid": "Client secret contains invalid characters",
+          "tenantIdRequired": "Tenant ID is required",
+          "tenantIdInvalid": "Tenant ID contains invalid characters"
+        },
+        "aria": {
+          "toggleProviderStatus": "Toggle {name} provider status",
+          "configureProvider": "Configure {name}",
+          "deleteProvider": "Delete {name}",
+          "providerLogoAlt": "{name} logo",
+          "hideClientSecret": "Hide client secret",
+          "showClientSecret": "Show client secret",
+          "removeDomain": "Remove domain {domain}"
+        }
+      }
     },
     "accessControl": {
       "title": "Access Control",
