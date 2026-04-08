@@ -29,7 +29,7 @@
   let showRemoveAdminConfirm = $state(false);
   let adminToRemove = $state<any | null>(null);
   let searchTimeout: number | undefined;
-  let searchInputRef: HTMLInputElement | null = null;
+  let searchInputRef = $state<HTMLInputElement | null>(null);
   
   async function loadAdminUsers() {
     if(!department || !department.admin_ids || department.admin_ids.length === 0) {
@@ -219,6 +219,7 @@
         <div class="admin-search-dropdown">
           {#each adminSearchResults as user (user.id)}
             <button
+              type="button"
               class="search-result-item"
               onclick={() => handleAddAdmin(user)}
               disabled={addingAdminId !== null}
@@ -594,6 +595,14 @@
   .search-result-item:hover:not(:disabled) {
     background: var(--button-bg);
     padding-left: 22px;
+  }
+
+  .search-result-item:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: -2px;
+    box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.15);
+    background: var(--button-bg);
+    padding-left: 24px;
   }
   
   .search-result-item:active:not(:disabled) {

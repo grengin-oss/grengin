@@ -277,6 +277,8 @@
       "failedToFetch": "部門の取得に失敗しました",
       "expandOrganizationTree": "組織ツリーを表示",
       "collapseOrganizationTree": "組織ツリーを非表示",
+      "expandDepartment": "部署を展開",
+      "collapseDepartment": "部署を折りたたむ",
       "budgetManagement": "予算管理",
       "budgetOverview": "予算概要",
       "currentBudget": "現在の予算",

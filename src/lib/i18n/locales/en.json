@@ -277,6 +277,8 @@
       "failedToFetch": "Failed to fetch departments",
       "expandOrganizationTree": "Show organization tree",
       "collapseOrganizationTree": "Hide organization tree",
+      "expandDepartment": "Expand department",
+      "collapseDepartment": "Collapse department",
       "budgetManagement": "Budget Management",
       "budgetOverview": "Budget Overview",
       "currentBudget": "Current Budget",

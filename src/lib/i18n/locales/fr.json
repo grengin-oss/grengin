@@ -277,6 +277,8 @@
       "failedToFetch": "Échec de la récupération des départements",
       "expandOrganizationTree": "Afficher l’arborescence",
       "collapseOrganizationTree": "Masquer l’arborescence",
+      "expandDepartment": "Développer le département",
+      "collapseDepartment": "Réduire le département",
       "budgetManagement": "Gestion du budget",
       "budgetOverview": "Vue d'ensemble du budget",
       "currentBudget": "Budget actuel",

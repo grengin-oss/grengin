@@ -221,9 +221,12 @@
 </script>
 
 <div class="departments-page">
-  <div class="page-content">
+  <div
+    class="page-content"
+    aria-labelledby="departments-organization-heading"
+  >
     <div class="departments-layout">
-      <div class="tree-section" class:mobile-tree-collapsed={!mobileTreeExpanded}>
+      <section class="tree-section" class:mobile-tree-collapsed={!mobileTreeExpanded}>
         <div class="tree-header">
           <button
             type="button"
@@ -252,9 +255,9 @@
               />
             </svg>
           </button>
-          <h2>{$_('admin.departments.organization')}</h2>
+          <h2 id="departments-organization-heading">{$_('admin.departments.organization')}</h2>
           {#if canManageDepartments}
-            <button class="btn-primary" onclick={openCreateModal}>
+            <button type="button" class="btn-primary" onclick={openCreateModal}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
@@ -279,13 +282,17 @@
               <h3>{$_('admin.departments.noDepartments')}</h3>
               <p>{$_('admin.departments.noDepartmentsDescription')}</p>
               {#if canManageDepartments}
-                <button class="btn-primary" onclick={openCreateModal}>
+                <button type="button" class="btn-primary" onclick={openCreateModal}>
                   {$_('admin.departments.createDepartment')}
                 </button>
               {/if}
             </div>
           {:else}
-            <div class="tree-list">
+            <div
+              class="tree-list"
+              role="tree"
+              aria-label={$_('admin.departments.organizationStructure')}
+            >
               {#each store.departmentsTree as dept (dept.id)}
                 <DepartmentTreeNode 
                   department={dept}
@@ -300,10 +307,14 @@
             </div>
           {/if}
         </div>
-      </div>
+      </section>
       
       {#if selectedDepartment}
-        <div class="details-section">
+        <section
+          class="details-section"
+          aria-live="polite"
+          aria-label={$_('admin.departments.details')}
+        >
           <DepartmentDetailsPanel 
             department={selectedDepartment}
             allDepartments={store.administeredDepartments}
@@ -311,9 +322,13 @@
             onEdit={openEditModal}
             onDelete={handleDeleteDepartment}
           />
-        </div>
+        </section>
       {:else}
-        <div class="details-section placeholder">
+        <section
+          class="details-section placeholder"
+          aria-live="polite"
+          aria-label={$_('admin.departments.selectDepartment')}
+        >
           <div class="placeholder-content">
             <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
               <path d="M40 10L10 25V45C10 58.8071 22.5736 70 40 70C57.4264 70 70 58.8071 70 45V25L40 10Z" stroke="#e5e7eb" stroke-width="2"/>
@@ -323,7 +338,7 @@
             <h3>{$_('admin.departments.selectDepartment')}</h3>
             <p>{$_('admin.departments.selectDepartmentDescription')}</p>
           </div>
-        </div>
+        </section>
       {/if}
     </div>
   </div>

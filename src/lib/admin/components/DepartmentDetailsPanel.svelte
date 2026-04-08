@@ -7,6 +7,7 @@
   import DepartmentAdminsSection from "./DepartmentAdminsSection.svelte";
   import { formatDate } from "$lib/utils/format.js";
   import { permissionsStore } from "$lib/features/auth/index.js";
+  import { tick } from "svelte";
   
   interface Props {
     department: Department | null;
@@ -67,6 +68,48 @@
       onDelete(department);
     }
   }
+
+  function getTabId(tab: string) {
+    const prefix = department ? `department-${department.id}` : "department";
+    return `${prefix}-${tab}`;
+  }
+
+  function getTabPanelId(tab: string) {
+    return `${getTabId(tab)}-panel`;
+  }
+
+  function handleTabKeydown(event: KeyboardEvent, tab: 'overview' | 'members' | 'budget') {
+    const tabs: ('overview' | 'members' | 'budget')[] = canViewBudget 
+      ? ['overview', 'members', 'budget'] 
+      : ['overview', 'members'];
+    
+    const currentIndex = tabs.indexOf(tab);
+    let newTab: 'overview' | 'members' | 'budget' | null = null;
+    
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      const nextIndex = (currentIndex + 1) % tabs.length;
+      newTab = tabs[nextIndex];
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+      newTab = tabs[prevIndex];
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      newTab = tabs[0];
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      newTab = tabs[tabs.length - 1];
+    }
+    
+    if (newTab && newTab !== activeTab) {
+      activeTab = newTab;
+      tick().then(() => {
+        const newTabElement = document.getElementById(getTabId(newTab!));
+        newTabElement?.focus();
+      });
+    }
+  }
   
 </script>
 
@@ -75,33 +118,63 @@
     <div class="panel-header">
       <div class="header-content">
         <h2>{department.name}</h2>
-        <button class="close-btn" onclick={onClose} aria-label="Close">
+        <button
+          type="button"
+          class="close-btn"
+          onclick={onClose}
+          aria-label={$_('admin.common.closeModal')}
+        >
           <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
             <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </button>
       </div>
       
-      <div class="tabs">
-        <button 
-          class="tab" 
+      <div
+        class="tabs"
+        role="tablist"
+        aria-label={$_('admin.departments.details')}
+      >
+        <button
+          type="button"
+          class="tab"
           class:active={activeTab === 'overview'}
-          onclick={() => activeTab = 'overview'}
+          role="tab"
+          id={getTabId('overview')}
+          aria-selected={activeTab === 'overview'}
+          aria-controls={getTabPanelId('overview')}
+          tabindex="0"
+          onclick={() => (activeTab = 'overview')}
+          onkeydown={(e) => handleTabKeydown(e, 'overview')}
         >
           {$_('admin.departments.overview')}
         </button>
-        <button 
-          class="tab" 
+        <button
+          type="button"
+          class="tab"
           class:active={activeTab === 'members'}
-          onclick={() => activeTab = 'members'}
+          role="tab"
+          id={getTabId('members')}
+          aria-selected={activeTab === 'members'}
+          aria-controls={getTabPanelId('members')}
+          tabindex="0"
+          onclick={() => (activeTab = 'members')}
+          onkeydown={(e) => handleTabKeydown(e, 'members')}
         >
           {$_('admin.departments.members')} ({department.member_count})
         </button>
         {#if canViewBudget}
-          <button 
-            class="tab" 
+          <button
+            type="button"
+            class="tab"
             class:active={activeTab === 'budget'}
-            onclick={() => activeTab = 'budget'}
+            role="tab"
+            id={getTabId('budget')}
+            aria-selected={activeTab === 'budget'}
+            aria-controls={getTabPanelId('budget')}
+            tabindex="0"
+            onclick={() => (activeTab = 'budget')}
+            onkeydown={(e) => handleTabKeydown(e, 'budget')}
           >
             {$_('admin.departments.budget')}
           </button>
@@ -111,41 +184,47 @@
     
     <div class="panel-content">
       {#if activeTab === 'overview'}
-        <div class="overview-tab">
+        <div
+          class="overview-tab"
+          role="tabpanel"
+          id={getTabPanelId('overview')}
+          aria-labelledby={getTabId('overview')}
+          tabindex="0"
+        >
           <div class="section">
             <div class="section-header">
               <h3>{$_('admin.departments.details')}</h3>
               {#if canManageDepartments}
-                <button class="btn-secondary" onclick={handleEdit}>
+                <button type="button" class="btn-secondary" onclick={handleEdit}>
                   {$_('common.edit')}
                 </button>
               {/if}
             </div>
             
             <div class="field-group">
-              <label>{$_('admin.departments.name')}</label>
+              <p class="field-label">{$_('admin.departments.name')}</p>
               <div class="field-value">{department.name}</div>
             </div>
             
             <div class="field-group">
-              <label>{$_('admin.departments.description')}</label>
+              <p class="field-label">{$_('admin.departments.description')}</p>
               <div class="field-value">{department.description || 'No description'}</div>
             </div>
             
             <div class="field-group">
-              <label>{$_('admin.departments.parentDepartment')}</label>
+              <p class="field-label">{$_('admin.departments.parentDepartment')}</p>
               <div class="field-value">
                 {parentDepartment?.name || 'None (Root Department)'}
               </div>
             </div>
             
             <div class="field-group">
-              <label>{$_('admin.departments.path')}</label>
+              <p class="field-label">{$_('admin.departments.path')}</p>
               <div class="field-value path">{department.name}</div>
             </div>
             
             <div class="field-group">
-              <label>{$_('admin.departments.depth')}</label>
+              <p class="field-label">{$_('admin.departments.depth')}</p>
               <div class="field-value">Level {department.depth}</div>
             </div>
           </div>
@@ -193,12 +272,12 @@
             <h3>{$_('admin.common.metadata')}</h3>
             
             <div class="field-group">
-              <label>{$_('admin.common.created')}</label>
+              <p class="field-label">{$_('admin.common.created')}</p>
               <div class="field-value">{formatDate(department.created_at)}</div>
             </div>
             
             <div class="field-group">
-              <label>{$_('admin.common.lastUpdated')}</label>
+              <p class="field-label">{$_('admin.common.lastUpdated')}</p>
               <div class="field-value">{formatDate(department.updated_at)}</div>
             </div>
           </div>
@@ -206,7 +285,7 @@
           {#if canManageDepartments}
             <div class="section danger-zone">
               <h3>{$_('admin.departments.deleteDepartment')}</h3>
-              <button class="btn-danger" onclick={confirmDelete}>
+              <button type="button" class="btn-danger" onclick={confirmDelete}>
                 {$_('admin.departments.deleteDepartment')}
               </button>
             </div>
@@ -215,13 +294,25 @@
       {/if}
       
       {#if activeTab === 'members'}
-        <div class="members-tab">
+        <div
+          class="members-tab"
+          role="tabpanel"
+          id={getTabPanelId('members')}
+          aria-labelledby={getTabId('members')}
+          tabindex="0"
+        >
           <MemberManagement {department} canManage={canManageDepartments} />
         </div>
       {/if}
       
       {#if activeTab === 'budget' && canViewBudget}
-        <div class="budget-tab">
+        <div
+          class="budget-tab"
+          role="tabpanel"
+          id={getTabPanelId('budget')}
+          aria-labelledby={getTabId('budget')}
+          tabindex="0"
+        >
           <BudgetManagement {department} canEdit={canEditBudget}/>
         </div>
       {/if}
@@ -240,10 +331,10 @@
       <p class="warning">{$_('admin.departments.deleteConfirmWarning')}</p>
       
       <div class="modal-actions">
-        <button class="btn-secondary" onclick={() => showDeleteConfirm = false}>
+        <button type="button" class="btn-secondary" onclick={() => showDeleteConfirm = false}>
           {$_('common.cancel')}
         </button>
-        <button class="btn-danger" onclick={handleDelete}>
+        <button type="button" class="btn-danger" onclick={handleDelete}>
           {$_('common.delete')}
         </button>
       </div>
@@ -315,6 +406,12 @@
   .tab:hover {
     color: var(--text-primary);
   }
+
+  .tab:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    color: var(--text-primary);
+  }
   
   .tab.active {
     color: var(--brand);
@@ -365,7 +462,7 @@
     margin-bottom: 0;
   }
   
-  .field-group label {
+  .field-group .field-label {
     display: block;
     font-size: 12px;
     font-weight: 500;

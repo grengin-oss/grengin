@@ -277,6 +277,8 @@
       "failedToFetch": "Falha ao buscar departamentos",
       "expandOrganizationTree": "Mostrar árvore da organização",
       "collapseOrganizationTree": "Ocultar árvore da organização",
+      "expandDepartment": "Expandir departamento",
+      "collapseDepartment": "Recolher departamento",
       "budgetManagement": "Gerenciamento de orçamento",
       "budgetOverview": "Visão geral do orçamento",
       "currentBudget": "Orçamento atual",

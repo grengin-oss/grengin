@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Department } from "../types.js";
   import Modal from "./Modal.svelte";
+  import { tick } from "svelte";
   import { _ } from "svelte-i18n";
   
   interface Props {
@@ -20,6 +21,8 @@
     parent_id: null as string | null,
     admin_ids: [] as string[],
   });
+
+  let nameInput = $state<HTMLInputElement | null>(null);
   
   let formErrors = $state<Record<string, string>>({});
   let isSubmitting = $state(false);
@@ -42,6 +45,9 @@
         };
       }
       formErrors = {};
+      tick().then(() => {
+        nameInput?.focus({ preventScroll: true });
+      });
     }
   });
   
@@ -105,6 +111,7 @@
         placeholder={$_('admin.departments.namePlaceholder')}
         class:error={formErrors.name}
         disabled={isSubmitting}
+        bind:this={nameInput}
       />
       {#if formErrors.name}
         <span class="error-message">{formErrors.name}</span>
