@@ -38,7 +38,7 @@
   <div class="permissions-tab">
     <div class="permissions-grid">
       {#each domainOrder as domain}
-        <AdminPanelCard class="domain-card-wrapper">
+        <AdminPanelCard class="domain-card-wrapper" ariaLabel={formatDomain(domain)}>
           <div class="domain-header">
             <h3 class="domain-heading">{formatDomain(domain)}</h3>
             <span class="domain-count">
@@ -47,45 +47,51 @@
               })}
             </span>
           </div>
-          <div class="permissions-table">
-            <div class="permissions-table-header">
-              <span class="col-action"
-                >{$_("admin.accessControl.permissionsTab.columns.action")}</span
-              >
-              <span class="col-scope"
-                >{$_("admin.accessControl.permissionsTab.columns.scope")}</span
-              >
-            </div>
-            {#each permissionsByDomain[domain] as perm (perm.id)}
-              {@const description = getPermissionDescription(perm, $_)}
-              <div class="permission-row">
-                <div class="permission-info">
-                  <span class="permission-action"
-                    >{formatAction(perm.action)}</span
-                  >
-                  {#if description}
-                    <span class="permission-description">{description}</span>
-                  {/if}
-                </div>
-                <span class="permission-scope">
-                  {#if perm.is_scopeable}
-                    <span
-                      class="badge badge--scopeable"
-                      title={$_("admin.accessControl.departmentScopeSupportTooltip")}
+          <table class="permissions-table">
+            <thead>
+              <tr class="permissions-table-header">
+                <th scope="col" class="col-action"
+                  >{$_("admin.accessControl.permissionsTab.columns.action")}</th
+                >
+                <th scope="col" class="col-scope"
+                  >{$_("admin.accessControl.permissionsTab.columns.scope")}</th
+                >
+              </tr>
+            </thead>
+            <tbody>
+              {#each permissionsByDomain[domain] as perm (perm.id)}
+                {@const description = getPermissionDescription(perm, $_)}
+                <tr class="permission-row">
+                  <td class="permission-info">
+                    <span class="permission-action"
+                      >{formatAction(perm.action)}</span
                     >
-                      {$_("admin.accessControl.departmentLabel")}
-                    </span>
-                  {:else}
-                    <span class="badge badge--global"
-                      >{$_(
-                        "admin.accessControl.permissionsTab.globalBadge",
-                      )}</span
-                    >
-                  {/if}
-                </span>
-              </div>
-            {/each}
-          </div>
+                    {#if description}
+                      <span class="permission-description">{description}</span>
+                    {/if}
+                  </td>
+                  <td class="permission-scope">
+                    {#if perm.is_scopeable}
+                      <span
+                        class="badge badge--scopeable"
+                        aria-label={$_(
+                          "admin.accessControl.departmentScopeSupportTooltip",
+                        )}
+                      >
+                        {$_("admin.accessControl.departmentLabel")}
+                      </span>
+                    {:else}
+                      <span class="badge badge--global"
+                        >{$_(
+                          "admin.accessControl.permissionsTab.globalBadge",
+                        )}</span
+                      >
+                    {/if}
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
         </AdminPanelCard>
       {/each}
     </div>
@@ -131,16 +137,13 @@
   }
 
   .permissions-table {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 var(--space-xs);
   }
 
   .permissions-table-header {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: var(--space-md);
-    padding: var(--space-xs) 0;
     font-size: 0.6875rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -148,19 +151,39 @@
     color: var(--text-secondary);
   }
 
+  .permissions-table-header th {
+    padding: 0 0 var(--space-xs);
+    text-align: left;
+    vertical-align: bottom;
+  }
+
+  .permissions-table-header .col-scope {
+    text-align: right;
+    width: 8rem;
+  }
+
   .permission-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: var(--space-md);
-    align-items: center;
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(var(--glass-tint), 0.03);
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
     transition: background 0.15s ease;
   }
 
-  .permission-row:hover {
+  .permission-row td {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.875rem;
+    background: rgba(var(--glass-tint), 0.03);
+    vertical-align: middle;
+  }
+
+  .permission-row td:first-child {
+    border-top-left-radius: var(--radius-md);
+    border-bottom-left-radius: var(--radius-md);
+  }
+
+  .permission-row td:last-child {
+    border-top-right-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
+  }
+
+  .permission-row:hover td {
     background: rgba(var(--glass-tint), 0.06);
   }
 
@@ -182,9 +205,9 @@
     line-height: 1.35;
   }
 
-  .permission-scope {
-    display: flex;
-    justify-content: flex-end;
+  .permissions-table td.permission-scope {
+    text-align: right;
+    white-space: nowrap;
   }
 
   .badge {

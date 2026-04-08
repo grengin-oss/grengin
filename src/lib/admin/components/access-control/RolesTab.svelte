@@ -203,6 +203,12 @@
     }, 300);
   }
 
+  function handleAddUserSearchKeydown(event: KeyboardEvent, roleId: string) {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    toggleAddUserSearch(roleId);
+  }
+
   async function searchAddUser(query: string) {
     const roleId = showAddUserSearch;
     if (!roleId || !query.trim()) {
@@ -531,6 +537,8 @@
                           bind:value={addUserSearchQuery}
                           bind:this={searchInputRef}
                           oninput={handleAddUserSearchInput}
+                          onkeydown={(event) =>
+                            handleAddUserSearchKeydown(event, role.id)}
                         />
                         <button
                           class="search-close-btn"
