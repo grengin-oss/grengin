@@ -58,6 +58,9 @@ export interface GetDepartmentAnalyticsParams {
   offset?: number;
   limit?: number;
   search?: string;
+  /** `name` = sort by department name; `updated_at` = default when name sort is cleared */
+  sort?: 'name' | 'updated_at';
+  ascending?: boolean;
 }
 
 export async function getDepartmentAnalytics(params: GetDepartmentAnalyticsParams): Promise<DepartmentAnalyticsResponse> {

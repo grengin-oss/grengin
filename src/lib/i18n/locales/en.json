@@ -843,6 +843,27 @@
       "byDepartment": "By Department",
       "byModel": "By Model"
     },
+    "tabsAria": {
+      "overview": "Overview usage metrics and trends",
+      "byUser": "Usage breakdown by user",
+      "byDepartment": "Usage breakdown by department",
+      "byModel": "Usage breakdown by model"
+    },
+    "byModel": {
+      "title": "By Model",
+      "comingSoon": "Coming soon",
+      "hint": "Model analytics will be available here."
+    },
+    "aria": {
+      "mainRegion": "Usage analytics",
+      "dateRangeGroup": "Report date range",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "pagination": "Results pagination",
+      "topModelsCaption": "Top models by usage for the selected date range",
+      "departmentTableCaption": "Department usage for the selected date range",
+      "userTableCaption": "User usage for the selected date range"
+    },
     "filters": {
       "dateRange": "Date Range",
       "presets": {
@@ -914,6 +935,14 @@
       "emptyState": {
         "title": "No timeseries data available for the selected date range",
         "hint": "Try selecting a different date range or check back later"
+      },
+      "accessibility": {
+        "keyboardInstructions": "Press Enter or Space to view data table. Press Escape to close.",
+        "dataPoints": "{count} data points",
+        "viewDataTable": "View Data Table",
+        "viewDataTableFor": "View data table for {chartName}",
+        "closeDataTable": "Close data table",
+        "dataTableRegion": "{chartName} data table"
       }
     },
     "errors": {

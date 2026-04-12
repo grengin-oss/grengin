@@ -843,6 +843,27 @@
       "byDepartment": "Par Département",
       "byModel": "Par Modèle"
     },
+    "tabsAria": {
+      "overview": "Métriques d'utilisation et tendances",
+      "byUser": "Répartition de l'utilisation par utilisateur",
+      "byDepartment": "Répartition de l'utilisation par département",
+      "byModel": "Répartition de l'utilisation par modèle"
+    },
+    "byModel": {
+      "title": "Par modèle",
+      "comingSoon": "Bientôt disponible",
+      "hint": "Les analyses par modèle seront disponibles ici."
+    },
+    "aria": {
+      "mainRegion": "Analytique d'utilisation",
+      "dateRangeGroup": "Plage de dates du rapport",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "pagination": "Pagination des résultats",
+      "topModelsCaption": "Principaux modèles par utilisation pour la plage de dates sélectionnée",
+      "departmentTableCaption": "Utilisation par département pour la plage de dates sélectionnée",
+      "userTableCaption": "Utilisation par utilisateur pour la plage de dates sélectionnée"
+    },
     "filters": {
       "dateRange": "Plage de dates",
       "presets": {
@@ -914,6 +935,14 @@
       "emptyState": {
         "title": "Aucune donnée de série temporelle disponible pour la plage de dates sélectionnée",
         "hint": "Essayez de sélectionner une plage de dates différente ou revenez plus tard"
+      },
+      "accessibility": {
+        "keyboardInstructions": "Appuyez sur Entrée ou Espace pour afficher le tableau de données. Appuyez sur Échap pour fermer.",
+        "dataPoints": "{count} points de données",
+        "viewDataTable": "Afficher le tableau de données",
+        "viewDataTableFor": "Afficher le tableau de données pour {chartName}",
+        "closeDataTable": "Fermer le tableau de données",
+        "dataTableRegion": "Tableau de données de {chartName}"
       }
     },
     "errors": {

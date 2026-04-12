@@ -52,6 +52,21 @@
     document.body.style.overflow = count > 0 ? "hidden" : "";
   };
 
+  /** Main app lives in #app; modals port to #modal-portal. Hide #app from AT so SR/hover does not reach charts behind. */
+  function lockMainAppFromAssistiveTech() {
+    const app = document.getElementById("app");
+    if (!(app instanceof HTMLElement)) return;
+    app.setAttribute("aria-hidden", "true");
+    app.inert = true;
+  }
+
+  function unlockMainAppFromAssistiveTech() {
+    const app = document.getElementById("app");
+    if (!(app instanceof HTMLElement)) return;
+    app.removeAttribute("aria-hidden");
+    app.inert = false;
+  }
+
   function handleEscape(event: KeyboardEvent) {
     // Only close if this is the topmost modal
     if (event.key === "Escape" && isOpen && isTopModal()) {
@@ -89,9 +104,13 @@
   let wasOpen = $state(false);
 
   function incrementModalCount() {
-    const count = getModalCount() + 1;
+    const prev = getModalCount();
+    const count = prev + 1;
     setModalCount(count);
     updateBodyScrollLock(count);
+    if (prev === 0) {
+      lockMainAppFromAssistiveTech();
+    }
     // Add this modal to the stack
     const stack = getModalStack();
     stack.push(modalId);
@@ -102,6 +121,9 @@
     const count = Math.max(0, getModalCount() - 1);
     setModalCount(count);
     updateBodyScrollLock(count);
+    if (count === 0) {
+      unlockMainAppFromAssistiveTech();
+    }
     // Remove this modal from the stack
     const stack = getModalStack();
     const index = stack.indexOf(modalId);

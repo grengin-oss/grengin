@@ -843,6 +843,27 @@
       "byDepartment": "Por Departamento",
       "byModel": "Por Modelo"
     },
+    "tabsAria": {
+      "overview": "Métricas y tendencias generales de uso",
+      "byUser": "Desglose de uso por usuario",
+      "byDepartment": "Desglose de uso por departamento",
+      "byModel": "Desglose de uso por modelo"
+    },
+    "byModel": {
+      "title": "Por Modelo",
+      "comingSoon": "Próximamente",
+      "hint": "La analítica por modelo estará disponible aquí."
+    },
+    "aria": {
+      "mainRegion": "Analítica de uso",
+      "dateRangeGroup": "Rango de fechas del informe",
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
+      "pagination": "Paginación de resultados",
+      "topModelsCaption": "Modelos principales por uso para el rango de fechas seleccionado",
+      "departmentTableCaption": "Uso por departamento para el rango de fechas seleccionado",
+      "userTableCaption": "Uso por usuario para el rango de fechas seleccionado"
+    },
     "filters": {
       "dateRange": "Rango de fechas",
       "presets": {
@@ -914,6 +935,14 @@
       "emptyState": {
         "title": "No hay datos de series temporales disponibles para el rango de fechas seleccionado",
         "hint": "Intente seleccionar un rango de fechas diferente o vuelva más tarde"
+      },
+      "accessibility": {
+        "keyboardInstructions": "Pulse Entrar o Espacio para ver la tabla de datos. Pulse Escape para cerrar.",
+        "dataPoints": "{count} puntos de datos",
+        "viewDataTable": "Ver tabla de datos",
+        "viewDataTableFor": "Ver tabla de datos para {chartName}",
+        "closeDataTable": "Cerrar tabla de datos",
+        "dataTableRegion": "Tabla de datos de {chartName}"
       }
     },
     "errors": {

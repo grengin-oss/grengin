@@ -843,6 +843,27 @@
       "byDepartment": "부서별",
       "byModel": "모델별"
     },
+    "tabsAria": {
+      "overview": "사용량 지표 및 추세 개요",
+      "byUser": "사용자별 사용 내역",
+      "byDepartment": "부서별 사용 내역",
+      "byModel": "모델별 사용 내역"
+    },
+    "byModel": {
+      "title": "모델별",
+      "comingSoon": "곧 제공",
+      "hint": "모델별 분석이 여기에 제공됩니다."
+    },
+    "aria": {
+      "mainRegion": "사용량 분석",
+      "dateRangeGroup": "보고서 기간",
+      "startDate": "시작일",
+      "endDate": "종료일",
+      "pagination": "결과 페이지 매김",
+      "topModelsCaption": "선택한 기간의 사용량 기준 상위 모델",
+      "departmentTableCaption": "선택한 기간의 부서별 사용량",
+      "userTableCaption": "선택한 기간의 사용자별 사용량"
+    },
     "filters": {
       "dateRange": "기간",
       "presets": {
@@ -914,6 +935,14 @@
       "emptyState": {
         "title": "선택한 날짜 범위에 대한 시계열 데이터가 없습니다",
         "hint": "다른 날짜 범위를 선택하거나 나중에 다시 확인하세요"
+      },
+      "accessibility": {
+        "keyboardInstructions": "Enter 또는 Space로 데이터 테이블을 엽니다. Escape로 닫습니다.",
+        "dataPoints": "데이터 포인트 {count}개",
+        "viewDataTable": "데이터 테이블 보기",
+        "viewDataTableFor": "{chartName} 데이터 테이블 보기",
+        "closeDataTable": "데이터 테이블 닫기",
+        "dataTableRegion": "{chartName} 데이터 테이블"
       }
     },
     "errors": {
