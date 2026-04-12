@@ -6,7 +6,9 @@
     "edit": "Modifier",
     "search": "Rechercher",
     "never": "Jamais",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "clear": "Effacer",
+    "select": "Sélectionner"
   },
   "errors": {
     "forbidden": {
@@ -53,7 +55,12 @@
     "oauthProviderNotFound": "Fournisseur OAuth introuvable. Veuillez réessayer de vous connecter.",
     "invalidAuthResponse": "Réponse d'authentification invalide du serveur",
     "unexpectedAuthError": "Une erreur inattendue s'est produite lors de l'authentification",
-    "failedToInitiateLogin": "Échec de l'initiation de la connexion {provider}"
+    "failedToInitiateLogin": "Échec de l'initiation de la connexion {provider}",
+    "socialLogin": "Options de connexion sociale",
+    "legalLinks": "Mentions légales"
+  },
+  "components": {
+    "typingIndicator": "L'assistant écrit"
   },
   "sidebar": {
     "newChat": "Nouvelle conversation",
@@ -85,6 +92,9 @@
     "deleteChat": "Supprimer la conversation",
     "deleteChatConfirm": "Êtes-vous sûr de vouloir supprimer cette conversation ? Cette action est irréversible.",
     "cancel": "Annuler",
+    "navigation": "Navigation principale",
+    "adminNavigation": "Navigation d'administration",
+    "openAlerts": "Ouvrir les alertes",
     "deleting": "Suppression...",
     "close": "Fermer",
     "chatDeleted": "{title} supprimé avec succès",
@@ -101,7 +111,6 @@
     "sectionConfigure": "Configurer",
     "overview": "Aperçu",
     "accessControl": "Contrôle d'accès",
-    "openAlerts": "Ouvrir les alertes",
     "viewAllAlerts": "Voir toutes les alertes",
     "noRecentAlerts": "Pas encore d'alertes",
     "newAlert": "Nouvelle alerte"
@@ -111,8 +120,10 @@
     "subtitle": "Vos notifications et mises à jour",
     "filterAll": "Toutes",
     "filterUnread": "Non lues",
+    "filterLabel": "Filtrer les alertes par statut",
+    "notificationsList": "Liste des notifications",
     "empty": "Aucune alerte à afficher",
-    "loading": "Chargement...",
+    "loading": "Chargement des alertes...",
     "loadMore": "Charger plus",
     "unread": "Non lue",
     "loadError": "Échec du chargement des alertes",
@@ -136,8 +147,11 @@
       "active": "Actif",
       "deactivated": "Désactivé",
       "actions": "Actions",
+      "pagination": "Pagination",
       "previous": "Précédent",
+      "previousPage": "Page précédente",
       "next": "Suivant",
+      "nextPage": "Page suivante",
       "allRoles": "Tous les rôles",
       "admin": "Administrateur",
       "user": "Utilisateur",
@@ -170,6 +184,7 @@
       "filters": "Filtres",
       "closeFilters": "Fermer les filtres",
       "openFilters": "Ouvrir les filtres",
+      "sortByAria": "Trier par {field}",
       "searchByNameOrEmail": "Rechercher par nom, e-mail ou service...",
       "reset": "Réinitialiser",
       "loadingUsers": "Chargement des utilisateurs...",
@@ -193,6 +208,7 @@
       "cannotToggleOwnStatus": "Vous ne pouvez pas désactiver votre propre compte.",
       "disableUserTooltip": "Désactiver l'utilisateur",
       "enableUserTooltip": "Activer l'utilisateur",
+      "toggleUserStatus": "Basculer l'état de l'utilisateur",
       "moreRoles": "Voir {count} rôles supplémentaires",
       "showRoles": "Afficher les rôles",
       "hideRoles": "Masquer les rôles",
@@ -202,7 +218,14 @@
       "addRoleScoped": "Ajouter avec portée",
       "searchRoles": "Rechercher des rôles...",
       "confirmRemoveRoleTitle": "Supprimer le rôle ?",
-      "confirmRemoveRoleMessage": "Voulez-vous vraiment supprimer {role} de cet utilisateur ?"
+      "confirmRemoveRoleMessage": "Voulez-vous vraiment supprimer {role} de cet utilisateur ?",
+      "selectDepartmentOption": "Sélectionner le département : {name}",
+      "removeRoleAria": "Supprimer le rôle {role}",
+      "manageScopingAria": "Gérer la portée pour {role}",
+      "addRoleGlobalAria": "Ajouter le rôle {role} globalement",
+      "addRoleScopedAria": "Ajouter le rôle {role} avec portée départementale",
+      "departmentResultsLabel": "Résultats de recherche des départements",
+      "roleOptionsLabel": "Rôles à ajouter"
     },
     "departments": {
       "title": "Départements",
@@ -255,6 +278,8 @@
       "failedToFetch": "Échec de la récupération des départements",
       "expandOrganizationTree": "Afficher l’arborescence",
       "collapseOrganizationTree": "Masquer l’arborescence",
+      "expandDepartment": "Développer le département",
+      "collapseDepartment": "Réduire le département",
       "budgetManagement": "Gestion du budget",
       "budgetOverview": "Vue d'ensemble du budget",
       "currentBudget": "Budget actuel",
@@ -343,7 +368,83 @@
     },
     "settings": {
       "title": "Paramètres",
-      "subtitle": "Configurer les paramètres système et intégrations"
+      "subtitle": "Configurer les paramètres système et intégrations",
+      "tabs": {
+        "oauth": "OAuth",
+        "oauthAria": "Configuration des fournisseurs OAuth"
+      },
+      "oauthProviders": {
+        "title": "Fournisseurs OAuth",
+        "subtitle": "Configurez les intégrations OAuth pour votre organisation.",
+        "common": {
+          "enabled": "Activé",
+          "disabled": "Désactivé",
+          "enableVerb": "activer",
+          "disableVerb": "désactiver"
+        },
+        "actions": {
+          "retry": "Réessayer",
+          "deleting": "Suppression…",
+          "saving": "Enregistrement…"
+        },
+        "messages": {
+          "loading": "Chargement des fournisseurs OAuth...",
+          "empty": "Aucun fournisseur OAuth n'a encore été configuré.",
+          "loadError": "Impossible de charger les fournisseurs SSO",
+          "loadProviderError": "Impossible de charger le fournisseur",
+          "noDomains": "Aucun domaine",
+          "loadingProvider": "Chargement du fournisseur..."
+        },
+        "table": {
+          "caption": "Configuration des fournisseurs OAuth",
+          "provider": "Fournisseur",
+          "allowedDomains": "Domaines autorisés",
+          "status": "Statut",
+          "actions": "Actions"
+        },
+        "modals": {
+          "confirmDeleteTitle": "Confirmer la suppression",
+          "confirmDeleteMessage": "Êtes-vous sûr de vouloir supprimer {name} ?",
+          "editTitle": "Modifier {name}",
+          "providerFallback": "fournisseur OAuth"
+        },
+        "toasts": {
+          "statusUpdated": "Le fournisseur SSO {name} est {status}.",
+          "statusUpdateError": "Impossible de {action} {name}",
+          "deleted": "Fournisseur SSO supprimé",
+          "deleteError": "Échec de la suppression du fournisseur SSO",
+          "updated": "Fournisseur SSO mis à jour",
+          "updateError": "Échec de la mise à jour du fournisseur"
+        },
+        "form": {
+          "clientId": "ID client",
+          "clientIdPlaceholder": "Saisissez l'ID client",
+          "clientSecret": "Secret client",
+          "clientSecretPlaceholder": "Saisissez le secret client",
+          "tenantId": "ID du locataire",
+          "tenantIdPlaceholder": "Saisissez l'ID du locataire",
+          "allowedDomains": "Domaines autorisés",
+          "domainsPlaceholder": "Appuyez sur Entrée pour ajouter",
+          "status": "Statut"
+        },
+        "validation": {
+          "clientIdRequired": "L'ID client est requis",
+          "clientIdInvalid": "L'ID client contient des caractères invalides",
+          "clientSecretRequired": "Le secret client est requis",
+          "clientSecretInvalid": "Le secret client contient des caractères invalides",
+          "tenantIdRequired": "L'ID du locataire est requis",
+          "tenantIdInvalid": "L'ID du locataire contient des caractères invalides"
+        },
+        "aria": {
+          "toggleProviderStatus": "Basculer le statut du fournisseur {name}",
+          "configureProvider": "Configurer {name}",
+          "deleteProvider": "Supprimer {name}",
+          "providerLogoAlt": "Logo {name}",
+          "hideClientSecret": "Masquer le secret client",
+          "showClientSecret": "Afficher le secret client",
+          "removeDomain": "Supprimer le domaine {domain}"
+        }
+      }
     },
     "accessControl": {
       "title": "Contrôle d'accès",
@@ -919,6 +1020,7 @@
     "totalRequests": "Requêtes totales",
     "totalTokens": "Tokens totaux",
     "totalCost": "Coût total",
+    "growthRate": "Taux de croissance",
     "activeUsers": "{count} actifs",
     "last30Days": "30 derniers jours",
     "manageUsers": "Gérer les comptes et rôles utilisateurs",
@@ -1015,6 +1117,27 @@
       "byDepartment": "Par Département",
       "byModel": "Par Modèle"
     },
+    "tabsAria": {
+      "overview": "Métriques d'utilisation et tendances",
+      "byUser": "Répartition de l'utilisation par utilisateur",
+      "byDepartment": "Répartition de l'utilisation par département",
+      "byModel": "Répartition de l'utilisation par modèle"
+    },
+    "byModel": {
+      "title": "Par modèle",
+      "comingSoon": "Bientôt disponible",
+      "hint": "Les analyses par modèle seront disponibles ici."
+    },
+    "aria": {
+      "mainRegion": "Analytique d'utilisation",
+      "dateRangeGroup": "Plage de dates du rapport",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "pagination": "Pagination des résultats",
+      "topModelsCaption": "Principaux modèles par utilisation pour la plage de dates sélectionnée",
+      "departmentTableCaption": "Utilisation par département pour la plage de dates sélectionnée",
+      "userTableCaption": "Utilisation par utilisateur pour la plage de dates sélectionnée"
+    },
     "filters": {
       "dateRange": "Plage de dates",
       "presets": {
@@ -1086,6 +1209,14 @@
       "emptyState": {
         "title": "Aucune donnée de série temporelle disponible pour la plage de dates sélectionnée",
         "hint": "Essayez de sélectionner une plage de dates différente ou revenez plus tard"
+      },
+      "accessibility": {
+        "keyboardInstructions": "Appuyez sur Entrée ou Espace pour afficher le tableau de données. Appuyez sur Échap pour fermer.",
+        "dataPoints": "{count} points de données",
+        "viewDataTable": "Afficher le tableau de données",
+        "viewDataTableFor": "Afficher le tableau de données pour {chartName}",
+        "closeDataTable": "Fermer le tableau de données",
+        "dataTableRegion": "Tableau de données de {chartName}"
       }
     },
     "errors": {

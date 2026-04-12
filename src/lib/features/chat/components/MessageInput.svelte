@@ -395,9 +395,27 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     }
   }
 
+  // Close dropdowns on Escape key
+  function handleKeyboardEscape(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      if (showPlusMenu) {
+        showPlusMenu = false;
+        event.preventDefault();
+      }
+      if (showModelDropdown) {
+        showModelDropdown = false;
+        event.preventDefault();
+      }
+    }
+  }
+
   onMount(() => {
     document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleKeyboardEscape);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyboardEscape);
+    };
   });
 </script>
 
@@ -497,23 +515,23 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
             title={$_('chat.messageInput.addContent')}
             {disabled}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M12 5v14m-7-7h14"/>
             </svg>
           </button>
 
           {#if showPlusMenu}
-            <div class="plus-menu">
-              <button class="menu-item" onclick={handlePhotoSelect}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="plus-menu" role="menu" tabindex="-1">
+              <button class="menu-item" role="menuitem" onclick={handlePhotoSelect} aria-label={$_('chat.messageInput.addPhotos')}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                   <circle cx="8.5" cy="8.5" r="1.5"></circle>
                   <polyline points="21 15 16 10 5 21"></polyline>
                 </svg>
                 <span>{$_('chat.messageInput.addPhotos')}</span>
               </button>
-              <button class="menu-item" onclick={handleFileSelect}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <button class="menu-item" role="menuitem" onclick={handleFileSelect} aria-label={$_('chat.messageInput.addFiles')}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                   <polyline points="14,2 14,8 20,8"></polyline>
                 </svg>
@@ -529,19 +547,20 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
             onclick={() => { showModelDropdown = !showModelDropdown; showPlusMenu = false; }}
             title={$_('chat.messageInput.selectModel')}
             aria-label={$_('chat.messageInput.selectModel')}
+            aria-expanded={showModelDropdown}
           >
             <div class="model-icon">
               {#if selectedProvider}
                 {@const providerIcon = getIconForTheme(providers.find(p => p.key === selectedProvider))}
                 {#if providerIcon}
-                  <img src={providerIcon} alt="" class="provider-icon-img" />
+                  <img src={providerIcon} alt="" aria-hidden="true" class="provider-icon-img" />
                 {:else}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <circle cx="12" cy="12" r="10"/>
                   </svg>
                 {/if}
               {:else}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M12 16v-4"/>
                   <path d="M12 8h.01"/>
@@ -549,13 +568,13 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
               {/if}
             </div>
             <span class="selector-label model-caption">{selectedModel || $_('chat.messageInput.selectModelFallback')}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow" class:open={showModelDropdown}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow" class:open={showModelDropdown} aria-hidden="true">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </button>
 
           {#if showModelDropdown}
-            <div class="model-menu">
+            <div class="model-menu" role="menu" tabindex="-1">
               {#if loadingModels}
                 <div class="dropdown-loading">
                   <div class="loading-spinner"></div>
@@ -568,7 +587,7 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
                   <div class="provider-section">
                     <div class="provider-header">
                       <div class="provider-icon">
-                        <img src={getIconForTheme(provider)} alt="" class="provider-icon-img" />
+                        <img src={getIconForTheme(provider)} alt={provider.name} aria-hidden="true" class="provider-icon-img" />
                       </div>
                       <span class="provider-name">{provider.name}</span>
                     </div>
@@ -576,16 +595,18 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
                       {#each provider.models as model}
                         <button
                           class="menu-item model-option"
+                          role="menuitem"
                           class:selected={selectedModel === model.name}
                           onclick={() => selectModel(provider, model)}
+                          aria-label={model.name}
                         >
                           <span class="model-name">{model.name}</span>
                           <div class="model-capabilities">
                             {#if model.supports_vision}
-                              <svg class="capability-icon active" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label={$_('chat.messageInput.visionCapable')}>
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                              </svg>
+                                <svg class="capability-icon active" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                  <circle cx="12" cy="12" r="3"/>
+                                </svg>
                             {/if}
                           </div>
                         </button>
@@ -662,7 +683,7 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
           aria-label={webSearchEnabled ? $_('chat.messageInput.disableWebSearch') : $_('chat.messageInput.enableWebSearch')}
           aria-pressed={webSearchEnabled}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <circle cx="12" cy="12" r="10"/>
             <path d="M2 12h20"/>
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
@@ -684,16 +705,17 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
           onclick={toggleVoiceInput}
           aria-label={isRecording ? $_('chat.messageInput.stopRecording') : $_('chat.messageInput.voiceInput')}
           title={isRecording ? $_('chat.messageInput.stopRecording') : $_('chat.messageInput.voiceInput')}
+          aria-pressed={isRecording}
           {disabled}
         >
           {#if isRecording}
             <!-- Filled circle during recording -->
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
               <circle cx="12" cy="12" r="8"/>
             </svg>
           {:else}
             <!-- Microphone icon when idle -->
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
               <path d="M12 19v4"/>
@@ -710,12 +732,12 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
           title={$_('chat.messageInput.sendMessageTitle')}
         >
           {#if disabled}
-            <svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
               <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"></path>
             </svg>
           {:else}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M22 2L11 13"/>
               <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
             </svg>

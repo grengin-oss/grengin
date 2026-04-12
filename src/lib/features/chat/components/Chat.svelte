@@ -718,20 +718,20 @@
 
 {#if isLoadingConversation}
   <!-- Loading state: wait until we know if there are messages -->
-  <div class="chat-container chat-container--loading"></div>
+  <div class="chat-container chat-container--loading" role="status" aria-label={$_('chat.messageInput.loadingModels')} aria-busy="true"></div>
 {:else if messages.length === 0}
   <!-- Empty state: centered layout with input included -->
   <div class="chat-container chat-container--empty">
     <div class="empty-state-container">
       <div class="empty-icon-wrapper">
-        <div class="empty-icon">
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <div class="empty-icon" aria-hidden="true">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
         </div>
       </div>
       <div class="empty-content">
-        <h3>{$_('chat.emptyState.title')}</h3>
+        <h1>{$_('chat.emptyState.title')}</h1>
         <p>{$_('chat.emptyState.description')}</p>
       </div>
       <div class="empty-state-input">
@@ -760,16 +760,16 @@
     </div>
 
     {#if error && !currentStreamingMessage}
-      <div class="error-banner error-banner--centered" class:error-banner--warning={error.externalCode === 'budget_warning'}>
-        <div class="error-icon">
+      <div class="error-banner error-banner--centered" role="alert" aria-live="assertive" class:error-banner--warning={error.externalCode === 'budget_warning'}>
+        <div class="error-icon" aria-hidden="true">
           {#if error.externalCode === 'budget_warning'}
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05l-8.47-14.14a2 2 0 0 0-3.42 0z"></path>
               <line x1="12" y1="9" x2="12" y2="13"></line>
               <line x1="12" y1="17" x2="12.01" y2="17"></line>
             </svg>
           {:else}
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="8" x2="12" y2="12"></line>
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -787,7 +787,7 @@
           {/if}
         </div>
         <button class="dismiss-btn" onclick={() => error = null} aria-label={$_('chat.errors.dismissError')} title={$_('chat.errors.dismissError')}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
@@ -798,7 +798,7 @@
 {:else}
   <!-- Active chat: bottom-anchored input -->
   <div class="chat-container">
-    <div class="messages-container" bind:this={messagesContainer} onscroll={handleScroll}>
+    <div class="messages-container" bind:this={messagesContainer} onscroll={handleScroll} role="log" aria-live="polite" aria-label={$_('chat.messageInput.messageInput')}>
       <div class="messages-inner">
         {#each messages as message (message.id)}          
           <!-- Chat message -->
@@ -814,20 +814,22 @@
         {/each}
 
         {#if isTyping}
-          <TypingIndicator />
+          <div role="status" aria-label={$_('chat.messageInput.loadingModels')} aria-live="polite">
+            <TypingIndicator />
+          </div>
         {/if}
 
         {#if error && !currentStreamingMessage}
-          <div class="error-banner" class:error-banner--warning={error.externalCode === 'budget_warning'}>
-            <div class="error-icon">
+          <div class="error-banner" role="alert" aria-live="assertive" class:error-banner--warning={error.externalCode === 'budget_warning'}>
+            <div class="error-icon" aria-hidden="true">
               {#if error.externalCode === 'budget_warning'}
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05l-8.47-14.14a2 2 0 0 0-3.42 0z"></path>
                   <line x1="12" y1="9" x2="12" y2="13"></line>
                   <line x1="12" y1="17" x2="12.01" y2="17"></line>
                 </svg>
               {:else}
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="12" y1="8" x2="12" y2="12"></line>
                   <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -845,7 +847,7 @@
               {/if}
             </div>
             <button class="dismiss-btn" onclick={() => error = null} aria-label={$_('chat.errors.dismissError')} title={$_('chat.errors.dismissError')}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
@@ -979,7 +981,7 @@
     50% { transform: translateY(-10px); }
   }
 
-  .empty-content h3 {
+  .empty-content h1 {
     margin: 0 0 0.5rem 0;
     font-size: 1.75rem;
     font-weight: 700;
@@ -1116,6 +1118,11 @@
     transform: scale(1.1);
   }
 
+  .dismiss-btn:focus-visible {
+    outline: 2px solid #ef4444;
+    outline-offset: 2px;
+  }
+
   .input-container {
     flex-shrink: 0;
     padding: 1.25rem 1.5rem;
@@ -1169,7 +1176,7 @@
       height: 100px;
     }
 
-    .empty-content h3 {
+    .empty-content h1 {
       font-size: 1.5rem;
     }
 
@@ -1195,7 +1202,7 @@
       height: 80px;
     }
 
-    .empty-content h3 {
+    .empty-content h1 {
       font-size: 1.25rem;
     }
 

@@ -6,7 +6,9 @@
     "edit": "Edit",
     "search": "Search",
     "never": "Never",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "clear": "Clear",
+    "select": "Select"
   },
   "errors": {
     "forbidden": {
@@ -53,7 +55,12 @@
     "oauthProviderNotFound": "OAuth provider not found. Please try logging in again.",
     "invalidAuthResponse": "Invalid authentication response from server",
     "unexpectedAuthError": "An unexpected error occurred during authentication",
-    "failedToInitiateLogin": "Failed to initiate {provider} login"
+    "failedToInitiateLogin": "Failed to initiate {provider} login",
+    "socialLogin": "Social login options",
+    "legalLinks": "Legal"
+  },
+  "components": {
+    "typingIndicator": "Assistant is typing"
   },
   "sidebar": {
     "newChat": "New Chat",
@@ -85,6 +92,9 @@
     "deleteChat": "Delete Chat",
     "deleteChatConfirm": "Are you sure you want to delete this chat? This action cannot be undone.",
     "cancel": "Cancel",
+    "navigation": "Main navigation",
+    "adminNavigation": "Admin navigation",
+    "openAlerts": "Open alerts",
     "deleting": "Deleting...",
     "close": "Close",
     "chatDeleted": "{title} deleted successfully",
@@ -101,7 +111,6 @@
     "sectionConfigure": "Configure",
     "overview": "Overview",
     "accessControl": "Access Control",
-    "connectors": "Connectors",
     "openAlerts": "Open alerts",
     "viewAllAlerts": "View all alerts",
     "noRecentAlerts": "No alerts yet",
@@ -112,8 +121,10 @@
     "subtitle": "Your notifications and updates",
     "filterAll": "All",
     "filterUnread": "Unread",
+    "filterLabel": "Filter alerts by status",
+    "notificationsList": "Notifications list",
     "empty": "No alerts to show",
-    "loading": "Loading...",
+    "loading": "Loading alerts...",
     "loadMore": "Load more",
     "unread": "Unread",
     "loadError": "Failed to load alerts",
@@ -137,8 +148,11 @@
       "active": "Active",
       "deactivated": "Deactivated",
       "actions": "Actions",
+      "pagination": "Pagination",
       "previous": "Previous",
+      "previousPage": "Previous page",
       "next": "Next",
+      "nextPage": "Next page",
       "allRoles": "All Roles",
       "admin": "Admin",
       "user": "User",
@@ -171,6 +185,7 @@
       "filters": "Filters",
       "closeFilters": "Close filters",
       "openFilters": "Open filters",
+      "sortByAria": "Sort by {field}",
       "searchByNameOrEmail": "Search by name, email, or department...",
       "reset": "Reset",
       "loadingUsers": "Loading users...",
@@ -194,6 +209,7 @@
       "cannotToggleOwnStatus": "You cannot deactivate your own account.",
       "disableUserTooltip": "Disable user",
       "enableUserTooltip": "Enable user",
+      "toggleUserStatus": "Toggle user status",
       "moreRoles": "View {count} more roles",
       "showRoles": "Show roles",
       "hideRoles": "Hide roles",
@@ -203,7 +219,14 @@
       "addRoleScoped": "Add scoped",
       "searchRoles": "Search roles...",
       "confirmRemoveRoleTitle": "Remove role?",
-      "confirmRemoveRoleMessage": "Are you sure you want to remove {role} from this user?"
+      "confirmRemoveRoleMessage": "Are you sure you want to remove {role} from this user?",
+      "selectDepartmentOption": "Select department: {name}",
+      "removeRoleAria": "Remove role {role}",
+      "manageScopingAria": "Manage scoping for {role}",
+      "addRoleGlobalAria": "Add role {role} globally",
+      "addRoleScopedAria": "Add role {role} with department scoping",
+      "departmentResultsLabel": "Department search results",
+      "roleOptionsLabel": "Roles to add"
     },
     "departments": {
       "title": "Departments",
@@ -256,6 +279,8 @@
       "failedToFetch": "Failed to fetch departments",
       "expandOrganizationTree": "Show organization tree",
       "collapseOrganizationTree": "Hide organization tree",
+      "expandDepartment": "Expand department",
+      "collapseDepartment": "Collapse department",
       "budgetManagement": "Budget Management",
       "budgetOverview": "Budget Overview",
       "currentBudget": "Current Budget",
@@ -344,7 +369,83 @@
     },
     "settings": {
       "title": "Settings",
-      "subtitle": "Configure system settings and integrations"
+      "subtitle": "Configure system settings and integrations",
+      "tabs": {
+        "oauth": "OAuth",
+        "oauthAria": "OAuth providers configuration"
+      },
+      "oauthProviders": {
+        "title": "OAuth Providers",
+        "subtitle": "Configure OAuth integrations for your organization.",
+        "common": {
+          "enabled": "Enabled",
+          "disabled": "Disabled",
+          "enableVerb": "enable",
+          "disableVerb": "disable"
+        },
+        "actions": {
+          "retry": "Retry",
+          "deleting": "Deleting…",
+          "saving": "Saving…"
+        },
+        "messages": {
+          "loading": "Loading OAuth providers...",
+          "empty": "No OAuth providers have been configured yet.",
+          "loadError": "Unable to load SSO providers",
+          "loadProviderError": "Unable to load provider",
+          "noDomains": "No domains",
+          "loadingProvider": "Loading provider..."
+        },
+        "table": {
+          "caption": "OAuth providers configuration",
+          "provider": "Provider",
+          "allowedDomains": "Allowed domains",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "modals": {
+          "confirmDeleteTitle": "Confirm deletion",
+          "confirmDeleteMessage": "Are you sure you want to delete {name}?",
+          "editTitle": "Edit {name}",
+          "providerFallback": "OAuth provider"
+        },
+        "toasts": {
+          "statusUpdated": "SSO provider {name} {status}.",
+          "statusUpdateError": "Unable to {action} {name}",
+          "deleted": "SSO provider deleted",
+          "deleteError": "Failed to delete SSO provider",
+          "updated": "SSO provider updated",
+          "updateError": "Failed to update provider"
+        },
+        "form": {
+          "clientId": "Client ID",
+          "clientIdPlaceholder": "Enter client ID",
+          "clientSecret": "Client secret",
+          "clientSecretPlaceholder": "Enter client secret",
+          "tenantId": "Tenant ID",
+          "tenantIdPlaceholder": "Enter tenant ID",
+          "allowedDomains": "Allowed domains",
+          "domainsPlaceholder": "Press Enter to add",
+          "status": "Status"
+        },
+        "validation": {
+          "clientIdRequired": "Client ID is required",
+          "clientIdInvalid": "Client ID contains invalid characters",
+          "clientSecretRequired": "Client secret is required",
+          "clientSecretInvalid": "Client secret contains invalid characters",
+          "tenantIdRequired": "Tenant ID is required",
+          "tenantIdInvalid": "Tenant ID contains invalid characters"
+        },
+        "aria": {
+          "toggleProviderStatus": "Toggle {name} provider status",
+          "configureProvider": "Configure {name}",
+          "deleteProvider": "Delete {name}",
+          "providerLogoAlt": "{name} logo",
+          "hideClientSecret": "Hide client secret",
+          "showClientSecret": "Show client secret",
+          "removeDomain": "Remove domain {domain}"
+        }
+      }
     },
     "accessControl": {
       "title": "Access Control",
@@ -965,6 +1066,7 @@
     "totalRequests": "Total Requests",
     "totalTokens": "Total Tokens",
     "totalCost": "Total Cost",
+    "growthRate": "Growth rate",
     "activeUsers": "{count} active",
     "last30Days": "Last 30 days",
     "manageUsers": "Manage user accounts and roles",
@@ -1061,6 +1163,27 @@
       "byDepartment": "By Department",
       "byModel": "By Model"
     },
+    "tabsAria": {
+      "overview": "Overview usage metrics and trends",
+      "byUser": "Usage breakdown by user",
+      "byDepartment": "Usage breakdown by department",
+      "byModel": "Usage breakdown by model"
+    },
+    "byModel": {
+      "title": "By Model",
+      "comingSoon": "Coming soon",
+      "hint": "Model analytics will be available here."
+    },
+    "aria": {
+      "mainRegion": "Usage analytics",
+      "dateRangeGroup": "Report date range",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "pagination": "Results pagination",
+      "topModelsCaption": "Top models by usage for the selected date range",
+      "departmentTableCaption": "Department usage for the selected date range",
+      "userTableCaption": "User usage for the selected date range"
+    },
     "filters": {
       "dateRange": "Date Range",
       "presets": {
@@ -1132,6 +1255,14 @@
       "emptyState": {
         "title": "No timeseries data available for the selected date range",
         "hint": "Try selecting a different date range or check back later"
+      },
+      "accessibility": {
+        "keyboardInstructions": "Press Enter or Space to view data table. Press Escape to close.",
+        "dataPoints": "{count} data points",
+        "viewDataTable": "View Data Table",
+        "viewDataTableFor": "View data table for {chartName}",
+        "closeDataTable": "Close data table",
+        "dataTableRegion": "{chartName} data table"
       }
     },
     "errors": {

@@ -2,7 +2,8 @@
   import { tick } from "svelte";
   import AdminPanelCard from "../AdminPanelCard.svelte";
   import LoadingSpinner from "../LoadingSpinner.svelte";
-  import type { AnalyticsOverview, AnalyticsTimeseries } from "../../types.js";
+  import ChartDataTableModal from "./ChartDataTableModal.svelte";
+  import type { AnalyticsOverview, AnalyticsTimeseries, TimeseriesDataPoint } from "../../types.js";
   import embed from "vega-embed";
   import { _ } from 'svelte-i18n';
 
@@ -21,6 +22,19 @@
   let { overviewData, timeseriesData, isLoading, chartsLoading, comparisonPeriodLabel, error, onRetry, granularity, onGranularityChange }: Props = $props();
   let chartsGridEl = $state<HTMLDivElement | null>(null);
   let resizeRerenderTimer: ReturnType<typeof setTimeout> | null = null;
+  let activeDataTable = $state<string | null>(null);
+
+  interface TableColumn {
+    id: string;
+    label: string;
+    value: (row: TimeseriesDataPoint) => string | number;
+  }
+
+  interface ActiveTableConfig {
+    title: string;
+    caption: string;
+    columns: TableColumn[];
+  }
 
   function formatNumber(num: number): string {
     if (num >= 1000000) {
@@ -40,6 +54,91 @@
   function formatPercentage(num: number): string {
     const sign = num >= 0 ? '+' : '';
     return sign + (num * 100).toFixed(1) + '%';
+  }
+
+  function toggleDataTable(chartId: string) {
+    if (activeDataTable === chartId) {
+      closeDataTable();
+    } else {
+      activeDataTable = chartId;
+    }
+  }
+
+  function closeDataTable() {
+    const previousChartId = activeDataTable;
+    activeDataTable = null;
+    tick().then(() => {
+      // Find the view data table button for the chart that was open
+      const chartCard = document.getElementById(previousChartId!)?.closest('.chart-card');
+      const button = chartCard?.querySelector('.view-data-table-btn') as HTMLElement;
+      button?.focus();
+    });
+  }
+
+  function handleGlobalKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape' && activeDataTable) {
+      event.preventDefault();
+      closeDataTable();
+    }
+  }
+
+  function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function getActiveTableConfig(): ActiveTableConfig | null {
+    if (!activeDataTable) return null;
+
+    if (activeDataTable === "multi-metric-chart") {
+      return {
+        title: $_("analytics.charts.multiMetric.title"),
+        caption: `${$_("analytics.charts.multiMetric.title")} data`,
+        columns: [
+          { id: "date", label: $_("analytics.charts.multiMetric.date"), value: (row) => formatDate(row.timestamp) },
+          { id: "requests", label: $_("analytics.charts.multiMetric.requests"), value: (row) => formatNumber(row.total_requests) },
+          { id: "tokens", label: $_("analytics.charts.multiMetric.tokens"), value: (row) => formatNumber(row.total_tokens) },
+          { id: "latency", label: $_("analytics.charts.multiMetric.latencyMs"), value: (row) => row.average_latency.toFixed(2) }
+        ]
+      };
+    }
+
+    if (activeDataTable === "requests-tokens-chart") {
+      return {
+        title: $_("analytics.charts.usageGrowth.title"),
+        caption: `${$_("analytics.charts.usageGrowth.title")} data`,
+        columns: [
+          { id: "date", label: $_("analytics.charts.multiMetric.date"), value: (row) => formatDate(row.timestamp) },
+          { id: "requests", label: $_("analytics.charts.usageGrowth.requests"), value: (row) => formatNumber(row.total_requests) },
+          { id: "tokens", label: $_("analytics.charts.usageGrowth.tokens"), value: (row) => formatNumber(row.total_tokens) }
+        ]
+      };
+    }
+
+    if (activeDataTable === "success-error-chart") {
+      return {
+        title: $_("analytics.charts.apiReliability.title"),
+        caption: `${$_("analytics.charts.apiReliability.title")} data`,
+        columns: [
+          { id: "date", label: $_("analytics.charts.multiMetric.date"), value: (row) => formatDate(row.timestamp) },
+          { id: "success", label: $_("analytics.charts.apiReliability.success"), value: (row) => formatNumber(row.success_count) },
+          { id: "errors", label: $_("analytics.charts.apiReliability.errors"), value: (row) => formatNumber(row.error_count) }
+        ]
+      };
+    }
+
+    if (activeDataTable === "cost-trend-chart") {
+      return {
+        title: $_("analytics.charts.costTrend.title"),
+        caption: `${$_("analytics.charts.costTrend.title")} data`,
+        columns: [
+          { id: "date", label: $_("analytics.charts.multiMetric.date"), value: (row) => formatDate(row.timestamp) },
+          { id: "cost", label: $_("analytics.charts.costTrend.totalCost"), value: (row) => formatCurrency(row.total_cost) }
+        ]
+      };
+    }
+
+    return null;
   }
 
   function renderCharts() {
@@ -101,11 +200,13 @@
           encoding: {
             x: {
               field: 'timestamp',
-              type: 'temporal'
+              type: 'temporal',
+              title: $_('analytics.charts.multiMetric.date')
             },
             y: {
               field: 'total_requests',
-              type: 'quantitative'
+              type: 'quantitative',
+              title: $_('analytics.charts.multiMetric.requests')
             },
             color: { value: '#4079c5' }
           }
@@ -146,12 +247,14 @@
           encoding: {
             x: {
               field: 'timestamp',
-              type: 'temporal'
+              type: 'temporal',
+              title: $_('analytics.charts.multiMetric.date')
             },
             y: {
               field: 'total_requests',
               type: 'quantitative',
-              scale: { zero: true }
+              scale: { zero: true },
+              title: $_('analytics.charts.usageGrowth.requests')
             },
             color: { value: '#4079c5' },
             tooltip: [
@@ -167,9 +270,15 @@
             x: { field: 'timestamp', type: 'temporal' },
             y: {
               field: 'total_tokens',
-              type: 'quantitative'
+              type: 'quantitative',
+              title: $_('analytics.charts.usageGrowth.tokens')
             },
-            color: { value: '#2d906b' }
+            color: { value: '#2d906b' },
+            tooltip: [
+              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
+              { field: 'total_requests', type: 'quantitative', title: $_('analytics.charts.usageGrowth.requests'), format: ',.0f' },
+              { field: 'total_tokens', type: 'quantitative', title: $_('analytics.charts.usageGrowth.tokens'), format: ',.0f' }
+            ]
           }
         },
         {
@@ -177,7 +286,12 @@
           encoding: {
             x: { field: 'timestamp', type: 'temporal' },
             y: { field: 'total_tokens', type: 'quantitative' },
-            color: { value: '#2d906b' }
+            color: { value: '#2d906b' },
+            tooltip: [
+              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
+              { field: 'total_requests', type: 'quantitative', title: $_('analytics.charts.usageGrowth.requests'), format: ',.0f' },
+              { field: 'total_tokens', type: 'quantitative', title: $_('analytics.charts.usageGrowth.tokens'), format: ',.0f' }
+            ]
           }
         }
       ],
@@ -200,11 +314,13 @@
       encoding: {
         x: {
           field: 'timestamp',
-          type: 'temporal'
+          type: 'temporal',
+          title: $_('analytics.charts.multiMetric.date')
         },
         y: {
           field: 'value',
-          type: 'quantitative'
+          type: 'quantitative',
+          title: $_('analytics.charts.apiReliability.count')
         },
         color: {
           field: 'type',
@@ -246,12 +362,14 @@
           encoding: {
             x: {
               field: 'timestamp',
-              type: 'temporal'
+              type: 'temporal',
+              title: $_('analytics.charts.multiMetric.date')
             },
             y: {
               field: 'total_cost',
               type: 'quantitative',
-              scale: { zero: true }
+              scale: { zero: true },
+              title: $_('analytics.charts.costTrend.totalCost')
             },
             color: { value: '#2d906b' }
           }
@@ -312,15 +430,17 @@
   });
 </script>
 
+<svelte:window onkeydown={handleGlobalKeydown} />
+
 {#if isLoading}
-  <div class="loading-container">
+  <div class="loading-container" role="status" aria-live="polite" aria-busy="true">
     <LoadingSpinner />
   </div>
 {:else if error}
   <AdminPanelCard>
-    <div class="error-state">
+    <div class="error-state" role="alert">
       <p class="error-message">{error}</p>
-      <button class="btn-primary" onclick={onRetry}>{$_('analytics.retry')}</button>
+      <button type="button" class="btn-primary" onclick={onRetry}>{$_('analytics.retry')}</button>
     </div>
   </AdminPanelCard>
 {:else if overviewData}
@@ -407,13 +527,14 @@
         <AdminPanelCard padded={false}>
           <div class="table-container">
             <table class="models-table">
+              <caption class="sr-only">{$_('analytics.aria.topModelsCaption')}</caption>
               <thead>
                 <tr>
-                  <th>{$_('analytics.topModels.model')}</th>
-                  <th>{$_('analytics.topModels.provider')}</th>
-                  <th>{$_('analytics.topModels.requests')}</th>
-                  <th>{$_('analytics.topModels.tokens')}</th>
-                  <th>{$_('analytics.topModels.cost')}</th>
+                  <th scope="col">{$_('analytics.topModels.model')}</th>
+                  <th scope="col">{$_('analytics.topModels.provider')}</th>
+                  <th scope="col">{$_('analytics.topModels.requests')}</th>
+                  <th scope="col">{$_('analytics.topModels.tokens')}</th>
+                  <th scope="col">{$_('analytics.topModels.cost')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -436,33 +557,41 @@
     <section class="charts-section">
       <div class="section-header">
         <h2 class="section-title">{$_('analytics.charts.title')}</h2>
-        <div class="aggregation-control">
-          <span class="aggregation-label">{$_('analytics.filters.aggregated')}</span>
+        <div class="aggregation-control" role="group" aria-labelledby="charts-aggregation-label">
+          <span class="aggregation-label" id="charts-aggregation-label">{$_('analytics.filters.aggregated')}</span>
           <div class="pill-group pill-group--compact">
             <button
+              type="button"
               class="pill-group__item"
               class:pill-group__item--active={granularity === 'hour'}
+              aria-pressed={granularity === 'hour'}
               onclick={() => onGranularityChange('hour')}
             >
               {$_('analytics.filters.hour')}
             </button>
             <button
+              type="button"
               class="pill-group__item"
               class:pill-group__item--active={granularity === 'day'}
+              aria-pressed={granularity === 'day'}
               onclick={() => onGranularityChange('day')}
             >
               {$_('analytics.filters.day')}
             </button>
             <button
+              type="button"
               class="pill-group__item"
               class:pill-group__item--active={granularity === 'week'}
+              aria-pressed={granularity === 'week'}
               onclick={() => onGranularityChange('week')}
             >
               {$_('analytics.filters.week')}
             </button>
             <button
+              type="button"
               class="pill-group__item"
               class:pill-group__item--active={granularity === 'month'}
+              aria-pressed={granularity === 'month'}
               onclick={() => onGranularityChange('month')}
             >
               {$_('analytics.filters.month')}
@@ -473,7 +602,7 @@
 
       {#if !timeseriesData || !timeseriesData.data || timeseriesData.data.length === 0}
         <div class="empty-state">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3" aria-hidden="true">
             <path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>
           </svg>
           <p class="empty-state-text">{$_('analytics.charts.emptyState.title')}</p>
@@ -483,93 +612,198 @@
       <div class="charts-grid" bind:this={chartsGridEl}>
         <div class="chart-card">
           <div class="chart-header">
-            <div class="chart-icon" style="background: rgba(64, 121, 197, 0.1);">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4079c5" stroke-width="2">
-                <path d="M3 3v18h18"/><path d="M7 12l3-3 3 3 5-5"/>
+            <div class="chart-header-main">
+              <div class="chart-icon" aria-hidden="true" style="background: rgba(64, 121, 197, 0.1);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4079c5" stroke-width="2">
+                  <path d="M3 3v18h18"/><path d="M7 12l3-3 3 3 5-5"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="chart-title">{$_('analytics.charts.multiMetric.title')}</h3>
+                <p class="chart-subtitle">{$_('analytics.charts.multiMetric.subtitle')}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="view-data-table-btn"
+              onclick={() => toggleDataTable('multi-metric-chart')}
+              aria-label={$_('analytics.charts.accessibility.viewDataTableFor', { values: { chartName: $_('analytics.charts.multiMetric.title') } })}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
               </svg>
-            </div>
-            <div>
-              <h3 class="chart-title">{$_('analytics.charts.multiMetric.title')}</h3>
-              <p class="chart-subtitle">{$_('analytics.charts.multiMetric.subtitle')}</p>
-            </div>
+              {$_('analytics.charts.accessibility.viewDataTable')}
+            </button>
           </div>
           {#if chartsLoading}
             <div class="chart-loading"><LoadingSpinner /></div>
           {:else}
-            <div class="chart-legend">
+            <p class="sr-only" id="chart-summary-multi-metric">
+              {$_('analytics.charts.multiMetric.title')}. {$_('analytics.charts.multiMetric.subtitle')}. {$_('analytics.charts.accessibility.dataPoints', { values: { count: timeseriesData.data.length } })}.
+            </p>
+            <div class="chart-legend" aria-hidden="true">
               <span class="legend-item"><span class="legend-dot" style="background: #4079c5;"></span>{$_('analytics.charts.multiMetric.requests')}</span>
               <span class="legend-item"><span class="legend-dot" style="background: #2d906b;"></span>{$_('analytics.charts.multiMetric.tokens')}</span>
               <span class="legend-item"><span class="legend-dot" style="background: #DF000C;"></span>{$_('analytics.charts.multiMetric.latency')}</span>
             </div>
-            <div id="multi-metric-chart" class="chart-container"></div>
+            <div 
+              id="multi-metric-chart" 
+              class="chart-container" 
+              role="img" 
+              aria-labelledby="chart-summary-multi-metric"
+            ></div>
           {/if}
         </div>
 
         <div class="chart-card">
           <div class="chart-header">
-            <div class="chart-icon" style="background: rgba(45, 144, 107, 0.1);">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2d906b" stroke-width="2">
-                <path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="14" y="5" width="3" height="12"/>
+            <div class="chart-header-main">
+              <div class="chart-icon" aria-hidden="true" style="background: rgba(45, 144, 107, 0.1);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2d906b" stroke-width="2">
+                  <path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="14" y="5" width="3" height="12"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="chart-title">{$_('analytics.charts.usageGrowth.title')}</h3>
+                <p class="chart-subtitle">{$_('analytics.charts.usageGrowth.subtitle')}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="view-data-table-btn"
+              onclick={() => toggleDataTable('requests-tokens-chart')}
+              aria-label={$_('analytics.charts.accessibility.viewDataTableFor', { values: { chartName: $_('analytics.charts.usageGrowth.title') } })}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
               </svg>
-            </div>
-            <div>
-              <h3 class="chart-title">{$_('analytics.charts.usageGrowth.title')}</h3>
-              <p class="chart-subtitle">{$_('analytics.charts.usageGrowth.subtitle')}</p>
-            </div>
+              {$_('analytics.charts.accessibility.viewDataTable')}
+            </button>
           </div>
           {#if chartsLoading}
             <div class="chart-loading"><LoadingSpinner /></div>
           {:else}
-            <div class="chart-legend">
+            <p class="sr-only" id="chart-summary-usage-growth">
+              {$_('analytics.charts.usageGrowth.title')}. {$_('analytics.charts.usageGrowth.subtitle')}. {$_('analytics.charts.accessibility.dataPoints', { values: { count: timeseriesData.data.length } })}.
+            </p>
+            <div class="chart-legend" aria-hidden="true">
               <span class="legend-item"><span class="legend-dot" style="background: #4079c5;"></span>{$_('analytics.charts.usageGrowth.requests')}</span>
               <span class="legend-item"><span class="legend-dot" style="background: #2d906b;"></span>{$_('analytics.charts.usageGrowth.tokens')}</span>
             </div>
-            <div id="requests-tokens-chart" class="chart-container"></div>
+            <div 
+              id="requests-tokens-chart" 
+              class="chart-container" 
+              role="img" 
+              aria-labelledby="chart-summary-usage-growth"
+            ></div>
           {/if}
         </div>
 
         <div class="chart-card">
           <div class="chart-header">
-            <div class="chart-icon" style="background: rgba(0, 200, 83, 0.1);">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            <div class="chart-header-main">
+              <div class="chart-icon" aria-hidden="true" style="background: rgba(0, 200, 83, 0.1);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="chart-title">{$_('analytics.charts.apiReliability.title')}</h3>
+                <p class="chart-subtitle">{$_('analytics.charts.apiReliability.subtitle')}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="view-data-table-btn"
+              onclick={() => toggleDataTable('success-error-chart')}
+              aria-label={$_('analytics.charts.accessibility.viewDataTableFor', { values: { chartName: $_('analytics.charts.apiReliability.title') } })}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
               </svg>
-            </div>
-            <div>
-              <h3 class="chart-title">{$_('analytics.charts.apiReliability.title')}</h3>
-              <p class="chart-subtitle">{$_('analytics.charts.apiReliability.subtitle')}</p>
-            </div>
+              {$_('analytics.charts.accessibility.viewDataTable')}
+            </button>
           </div>
           {#if chartsLoading}
             <div class="chart-loading"><LoadingSpinner /></div>
           {:else}
-            <div class="chart-legend">
+            <p class="sr-only" id="chart-summary-api-reliability">
+              {$_('analytics.charts.apiReliability.title')}. {$_('analytics.charts.apiReliability.subtitle')}. {$_('analytics.charts.accessibility.dataPoints', { values: { count: timeseriesData.data.length } })}.
+            </p>
+            <div class="chart-legend" aria-hidden="true">
               <span class="legend-item"><span class="legend-dot" style="background: #00C853;"></span>{$_('analytics.charts.apiReliability.success')}</span>
               <span class="legend-item"><span class="legend-dot" style="background: #DF000C;"></span>{$_('analytics.charts.apiReliability.errors')}</span>
             </div>
-            <div id="success-error-chart" class="chart-container"></div>
+            <div 
+              id="success-error-chart" 
+              class="chart-container" 
+              role="img" 
+              aria-labelledby="chart-summary-api-reliability"
+            ></div>
           {/if}
         </div>
 
         <div class="chart-card">
           <div class="chart-header">
-            <div class="chart-icon" style="background: rgba(45, 144, 107, 0.1);">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2d906b" stroke-width="2">
-                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            <div class="chart-header-main">
+              <div class="chart-icon" aria-hidden="true" style="background: rgba(45, 144, 107, 0.1);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2d906b" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="chart-title">{$_('analytics.charts.costTrend.title')}</h3>
+                <p class="chart-subtitle">{$_('analytics.charts.costTrend.subtitle')}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="view-data-table-btn"
+              onclick={() => toggleDataTable('cost-trend-chart')}
+              aria-label={$_('analytics.charts.accessibility.viewDataTableFor', { values: { chartName: $_('analytics.charts.costTrend.title') } })}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
               </svg>
-            </div>
-            <div>
-              <h3 class="chart-title">{$_('analytics.charts.costTrend.title')}</h3>
-              <p class="chart-subtitle">{$_('analytics.charts.costTrend.subtitle')}</p>
-            </div>
+              {$_('analytics.charts.accessibility.viewDataTable')}
+            </button>
           </div>
           {#if chartsLoading}
             <div class="chart-loading"><LoadingSpinner /></div>
           {:else}
-            <div id="cost-trend-chart" class="chart-container"></div>
+            <p class="sr-only" id="chart-summary-cost-trend">
+              {$_('analytics.charts.costTrend.title')}. {$_('analytics.charts.costTrend.subtitle')}. {$_('analytics.charts.accessibility.dataPoints', { values: { count: timeseriesData.data.length } })}.
+            </p>
+            <div 
+              id="cost-trend-chart" 
+              class="chart-container" 
+              role="img" 
+              aria-labelledby="chart-summary-cost-trend"
+            ></div>
           {/if}
         </div>
       </div>
+
+      {#if timeseriesData && activeDataTable}
+        {@const activeTableConfig = getActiveTableConfig()}
+        {#if activeTableConfig}
+          <ChartDataTableModal
+            title={activeTableConfig.title}
+            caption={activeTableConfig.caption}
+            rows={timeseriesData.data}
+            columns={activeTableConfig.columns}
+            onClose={closeDataTable}
+          />
+        {/if}
+      {/if}
       {/if}
     </section>
   </div>
@@ -642,6 +876,11 @@
   .pill-group--compact .pill-group__item {
     padding: 0.375rem 0.75rem;
     font-size: 0.8125rem;
+  }
+
+  .aggregation-control .pill-group__item:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
   }
 
   /* Enhanced active state for aggregation buttons */
@@ -804,9 +1043,16 @@
 
   .chart-header {
     display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--space-2xl);
+  }
+
+  .chart-header-main {
+    display: flex;
     align-items: center;
     gap: var(--space-md);
-    margin-bottom: var(--space-2xl);
+    min-width: 0;
   }
 
   .chart-icon {
@@ -862,6 +1108,38 @@
     position: relative;
     min-width: 0;
     overflow: hidden;
+    border-radius: var(--radius-md);
+  }
+
+  .view-data-table-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: 0;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--btn-secondary);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .view-data-table-btn:hover {
+    background: var(--btn-tertiary);
+    color: var(--text-primary);
+    border-color: var(--brand);
+  }
+
+  .view-data-table-btn:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
+  }
+
+  .view-data-table-btn svg {
+    flex-shrink: 0;
   }
 
   :global(.chart-container .vega-embed) {

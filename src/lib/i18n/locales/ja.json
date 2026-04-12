@@ -6,7 +6,9 @@
     "edit": "編集",
     "search": "検索",
     "never": "なし",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "clear": "クリア",
+    "select": "選択"
   },
   "errors": {
     "forbidden": {
@@ -53,7 +55,12 @@
     "oauthProviderNotFound": "OAuthプロバイダーが見つかりません。再度ログインをお試しください。",
     "invalidAuthResponse": "サーバーからの認証応答が無効です",
     "unexpectedAuthError": "認証中に予期しないエラーが発生しました",
-    "failedToInitiateLogin": "{provider}ログインの開始に失敗しました"
+    "failedToInitiateLogin": "{provider}ログインの開始に失敗しました",
+    "socialLogin": "ソーシャルログインのオプション",
+    "legalLinks": "法的情報"
+  },
+  "components": {
+    "typingIndicator": "アシスタントが入力しています"
   },
   "sidebar": {
     "newChat": "新しいチャット",
@@ -85,6 +92,9 @@
     "deleteChat": "チャットを削除",
     "deleteChatConfirm": "このチャットを削除してもよろしいですか？この操作は元に戻せません。",
     "cancel": "キャンセル",
+    "navigation": "メインナビゲーション",
+    "adminNavigation": "管理ナビゲーション",
+    "openAlerts": "アラートを開く",
     "deleting": "削除中...",
     "close": "閉じる",
     "chatDeleted": "{title} を削除しました",
@@ -101,7 +111,6 @@
     "sectionConfigure": "設定",
     "overview": "概要",
     "accessControl": "アクセス制御",
-    "openAlerts": "アラートを開く",
     "viewAllAlerts": "すべてのアラートを見る",
     "noRecentAlerts": "まだアラートはありません",
     "newAlert": "新しいアラート"
@@ -111,8 +120,10 @@
     "subtitle": "通知と更新",
     "filterAll": "すべて",
     "filterUnread": "未読",
+    "filterLabel": "アラートを状態で絞り込む",
+    "notificationsList": "通知リスト",
     "empty": "表示するアラートがありません",
-    "loading": "読み込み中...",
+    "loading": "アラートを読み込み中...",
     "loadMore": "さらに読み込む",
     "unread": "未読",
     "loadError": "アラートの読み込みに失敗しました",
@@ -136,8 +147,11 @@
       "active": "アクティブ",
       "deactivated": "無効化",
       "actions": "操作",
+      "pagination": "ページネーション",
       "previous": "前へ",
+      "previousPage": "前のページ",
       "next": "次へ",
+      "nextPage": "次のページ",
       "allRoles": "すべての役割",
       "admin": "管理者",
       "user": "ユーザー",
@@ -170,6 +184,7 @@
       "filters": "フィルター",
       "closeFilters": "フィルターを閉じる",
       "openFilters": "フィルターを開く",
+      "sortByAria": "{field} で並べ替え",
       "searchByNameOrEmail": "名前、メール、または部署で検索...",
       "reset": "リセット",
       "loadingUsers": "ユーザーを読み込み中...",
@@ -193,6 +208,7 @@
       "cannotToggleOwnStatus": "自分のアカウントは無効化できません。",
       "disableUserTooltip": "ユーザーを無効化",
       "enableUserTooltip": "ユーザーを有効化",
+      "toggleUserStatus": "ユーザーの状態を切り替え",
       "moreRoles": "{count} 個の役割を表示",
       "showRoles": "ロールを表示",
       "hideRoles": "ロールを隠す",
@@ -202,7 +218,14 @@
       "addRoleScoped": "スコープ付きで追加",
       "searchRoles": "ロールを検索...",
       "confirmRemoveRoleTitle": "ロールを削除しますか？",
-      "confirmRemoveRoleMessage": "このユーザーから{role}を削除してもよろしいですか？"
+      "confirmRemoveRoleMessage": "このユーザーから{role}を削除してもよろしいですか？",
+      "selectDepartmentOption": "部門を選択: {name}",
+      "removeRoleAria": "ロール {role} を削除",
+      "manageScopingAria": "{role} のスコープを管理",
+      "addRoleGlobalAria": "ロール {role} をグローバルに追加",
+      "addRoleScopedAria": "ロール {role} を部門スコープ付きで追加",
+      "departmentResultsLabel": "部門検索結果",
+      "roleOptionsLabel": "追加するロール"
     },
     "departments": {
       "title": "部門",
@@ -255,6 +278,8 @@
       "failedToFetch": "部門の取得に失敗しました",
       "expandOrganizationTree": "組織ツリーを表示",
       "collapseOrganizationTree": "組織ツリーを非表示",
+      "expandDepartment": "部署を展開",
+      "collapseDepartment": "部署を折りたたむ",
       "budgetManagement": "予算管理",
       "budgetOverview": "予算概要",
       "currentBudget": "現在の予算",
@@ -343,7 +368,83 @@
     },
     "settings": {
       "title": "設定",
-      "subtitle": "システム設定と連携を構成"
+      "subtitle": "システム設定と連携を構成",
+      "tabs": {
+        "oauth": "OAuth",
+        "oauthAria": "OAuthプロバイダー設定"
+      },
+      "oauthProviders": {
+        "title": "OAuthプロバイダー",
+        "subtitle": "組織向けのOAuth連携を設定します。",
+        "common": {
+          "enabled": "有効",
+          "disabled": "無効",
+          "enableVerb": "有効化",
+          "disableVerb": "無効化"
+        },
+        "actions": {
+          "retry": "再試行",
+          "deleting": "削除中…",
+          "saving": "保存中…"
+        },
+        "messages": {
+          "loading": "OAuthプロバイダーを読み込み中...",
+          "empty": "OAuthプロバイダーはまだ設定されていません。",
+          "loadError": "SSOプロバイダーを読み込めませんでした",
+          "loadProviderError": "プロバイダーを読み込めませんでした",
+          "noDomains": "ドメインなし",
+          "loadingProvider": "プロバイダーを読み込み中..."
+        },
+        "table": {
+          "caption": "OAuthプロバイダー設定",
+          "provider": "プロバイダー",
+          "allowedDomains": "許可ドメイン",
+          "status": "ステータス",
+          "actions": "操作"
+        },
+        "modals": {
+          "confirmDeleteTitle": "削除の確認",
+          "confirmDeleteMessage": "{name}を削除してもよろしいですか？",
+          "editTitle": "{name}を編集",
+          "providerFallback": "OAuthプロバイダー"
+        },
+        "toasts": {
+          "statusUpdated": "SSOプロバイダー {name} は{status}です。",
+          "statusUpdateError": "{name}を{action}できませんでした",
+          "deleted": "SSOプロバイダーを削除しました",
+          "deleteError": "SSOプロバイダーの削除に失敗しました",
+          "updated": "SSOプロバイダーを更新しました",
+          "updateError": "プロバイダーの更新に失敗しました"
+        },
+        "form": {
+          "clientId": "クライアントID",
+          "clientIdPlaceholder": "クライアントIDを入力",
+          "clientSecret": "クライアントシークレット",
+          "clientSecretPlaceholder": "クライアントシークレットを入力",
+          "tenantId": "テナントID",
+          "tenantIdPlaceholder": "テナントIDを入力",
+          "allowedDomains": "許可ドメイン",
+          "domainsPlaceholder": "Enterキーで追加",
+          "status": "ステータス"
+        },
+        "validation": {
+          "clientIdRequired": "クライアントIDは必須です",
+          "clientIdInvalid": "クライアントIDに無効な文字が含まれています",
+          "clientSecretRequired": "クライアントシークレットは必須です",
+          "clientSecretInvalid": "クライアントシークレットに無効な文字が含まれています",
+          "tenantIdRequired": "テナントIDは必須です",
+          "tenantIdInvalid": "テナントIDに無効な文字が含まれています"
+        },
+        "aria": {
+          "toggleProviderStatus": "{name}プロバイダーの状態を切り替え",
+          "configureProvider": "{name}を設定",
+          "deleteProvider": "{name}を削除",
+          "providerLogoAlt": "{name}のロゴ",
+          "hideClientSecret": "クライアントシークレットを非表示",
+          "showClientSecret": "クライアントシークレットを表示",
+          "removeDomain": "ドメイン {domain} を削除"
+        }
+      }
     },
     "accessControl": {
       "title": "アクセス制御",
@@ -919,6 +1020,7 @@
     "totalRequests": "総リクエスト数",
     "totalTokens": "総トークン数",
     "totalCost": "総コスト",
+    "growthRate": "成長率",
     "activeUsers": "{count} アクティブ",
     "last30Days": "過去30日間",
     "manageUsers": "ユーザーアカウントとロールを管理",
@@ -1015,6 +1117,27 @@
       "byDepartment": "部門別",
       "byModel": "モデル別"
     },
+    "tabsAria": {
+      "overview": "利用状況の指標と傾向の概要",
+      "byUser": "ユーザー別の利用内訳",
+      "byDepartment": "部門別の利用内訳",
+      "byModel": "モデル別の利用内訳"
+    },
+    "byModel": {
+      "title": "モデル別",
+      "comingSoon": "近日公開",
+      "hint": "モデル別の分析はこちらで利用できるようになります。"
+    },
+    "aria": {
+      "mainRegion": "使用状況分析",
+      "dateRangeGroup": "レポートの日付範囲",
+      "startDate": "開始日",
+      "endDate": "終了日",
+      "pagination": "結果のページ送り",
+      "topModelsCaption": "選択した日付範囲での利用上位モデル",
+      "departmentTableCaption": "選択した日付範囲での部門別利用",
+      "userTableCaption": "選択した日付範囲でのユーザー別利用"
+    },
     "filters": {
       "dateRange": "期間",
       "presets": {
@@ -1086,6 +1209,14 @@
       "emptyState": {
         "title": "選択した日付範囲の時系列データがありません",
         "hint": "別の日付範囲を選択するか、後でもう一度お試しください"
+      },
+      "accessibility": {
+        "keyboardInstructions": "Enter または Space でデータ表を表示します。Escape で閉じます。",
+        "dataPoints": "データポイント {count} 件",
+        "viewDataTable": "データ表を表示",
+        "viewDataTableFor": "{chartName} のデータ表を表示",
+        "closeDataTable": "データ表を閉じる",
+        "dataTableRegion": "{chartName} のデータ表"
       }
     },
     "errors": {

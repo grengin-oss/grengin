@@ -15,17 +15,34 @@
     onTabChange?: (tab: string) => void;
   }
 
-  let {
-    tabs,
-    defaultTab,
-    currentTab = $bindable(),
-    tabListLabel = "Tabs",
-    onTabChange,
-  }: AdminTabsProps & { currentTab: string } = $props();
+let {
+  tabs,
+  defaultTab,
+  currentTab = $bindable(),
+  tabListLabel = "Tabs",
+  onTabChange,
+}: AdminTabsProps & { currentTab: string } = $props();
 
-  let availableTabIds = $derived(tabs.map((tab: TabConfig) => tab.id));
-  let lastSyncedTab = $state<string | null>(null);
-  let isInitialized = $state(false);
+let availableTabIds = $derived(tabs.map((tab: TabConfig) => tab.id));
+let lastSyncedTab = $state<string | null>(null);
+let isInitialized = $state(false);
+let tabButtonRefs: Array<HTMLButtonElement | null> = [];
+
+function tabRef(node: HTMLButtonElement, index: number) {
+  tabButtonRefs[index] = node;
+  return {
+    update(newIndex: number) {
+      tabButtonRefs[index] = null;
+      tabButtonRefs[newIndex] = node;
+      index = newIndex;
+    },
+    destroy() {
+      if (tabButtonRefs[index] === node) {
+        tabButtonRefs[index] = null;
+      }
+    },
+  };
+}
 
   function normalizeTab(tab: string | null): string {
     if (!tab) return defaultTab;
@@ -57,12 +74,42 @@
     onTabChange?.(tab);
   }
 
-  function handleKeydown(event: KeyboardEvent, tab: string): void {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      setTab(tab);
-    }
+function focusTab(index: number): void {
+  const count = tabs.length;
+  if (!count) return;
+  const normalized = ((index % count) + count) % count;
+  const targetTab = tabs[normalized];
+  if (!targetTab) return;
+  setTab(targetTab.id);
+  tabButtonRefs[normalized]?.focus();
+}
+
+function handleKeydown(event: KeyboardEvent, tab: string, index: number): void {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    setTab(tab);
+    return;
   }
+  if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+    event.preventDefault();
+    focusTab(index + 1);
+    return;
+  }
+  if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+    event.preventDefault();
+    focusTab(index - 1);
+    return;
+  }
+  if (event.key === "Home") {
+    event.preventDefault();
+    focusTab(0);
+    return;
+  }
+  if (event.key === "End") {
+    event.preventDefault();
+    focusTab(tabs.length - 1);
+  }
+}
 
   function handlePopState(): void {
     const tab = getTabFromQuery();
@@ -113,17 +160,22 @@
 </script>
 
 <div class="tabs" role="tablist" aria-label={tabListLabel}>
-  {#each tabs as tab (tab.id)}
+{#each tabs as tab, index (tab.id)}
     <button
       class="tab"
       class:tab--active={currentTab === tab.id}
       role="tab"
       aria-selected={currentTab === tab.id}
       aria-controls={`${tab.id}-panel`}
+      id={`tab-${tab.id}`}
       aria-label={tab.ariaLabel ?? tab.label}
-      tabindex={currentTab === tab.id ? 0 : -1}
-      onclick={() => setTab(tab.id)}
-      onkeydown={(event) => handleKeydown(event, tab.id)}
+      tabindex="0"
+      onclick={() => {
+        setTab(tab.id);
+        tabButtonRefs[index]?.focus();
+      }}
+      onkeydown={(event) => handleKeydown(event, tab.id, index)}
+      use:tabRef={index}
     >
       {tab.label}
     </button>

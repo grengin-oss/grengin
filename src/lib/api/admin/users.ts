@@ -18,6 +18,10 @@ export interface CreateUserData {
   department_id?: string | null;
 }
 
+function hasNonEmptyDepartmentId(value: string | null | undefined): boolean {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
 function buildQueryString(params?: Record<string, string | number | boolean | undefined>): string {
   if (!params) return '';
   const queryParams = new URLSearchParams();
@@ -43,16 +47,36 @@ export async function getUser(userId: string): Promise<User> {
 }
 
 export async function createUser(data: CreateUserData): Promise<User> {
+  const payload: Record<string, unknown> = { email: data.email };
+  if (data.name !== undefined) {
+    payload.name = data.name;
+  }
+  if (hasNonEmptyDepartmentId(data.department_id)) {
+    payload.department_id = data.department_id;
+  }
   return request<User>('/admin/users', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
 }
 
 export async function updateUser(userId: string, updates: Partial<User>): Promise<User> {
+  const payload: Record<string, unknown> = { ...updates };
+
+  if (Object.hasOwn(updates, 'department_id')) {
+    delete payload.department_id;
+    delete payload.unassign_department;
+
+    if (hasNonEmptyDepartmentId(updates.department_id)) {
+      payload.department_id = updates.department_id;
+    } else {
+      payload.unassign_department = true;
+    }
+  }
+
   return request<User>(`/admin/users/${userId}`, {
     method: 'PUT',
-    body: JSON.stringify(updates),
+    body: JSON.stringify(payload),
   });
 }
 

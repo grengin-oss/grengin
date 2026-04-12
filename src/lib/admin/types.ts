@@ -38,6 +38,26 @@ export interface SSOProvider {
   updated_at: string;
 }
 
+export interface EditableField {
+  editable: boolean;
+  value: string;
+}
+
+export interface SSOProviderDetails {
+  id: string;
+  provider: EditableField;
+  name: EditableField;
+  client_id: EditableField;
+  client_secret_preview: EditableField;
+  issuer_url: EditableField;
+  redirect_url: EditableField;
+  tenant_id: string | null;
+  allowed_domains: string[];
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AIEngine {
   engine_key: string;
   display_name: string;

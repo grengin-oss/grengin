@@ -1,7 +1,7 @@
 <script lang="ts">
   import Modal from "./Modal.svelte";
   import { _ } from "svelte-i18n";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import * as usersApi from "../../api/admin/users.js";
   import * as departmentsApi from "../../api/admin/departments.js";
   import { toast } from "../../components/Toaster.svelte";
@@ -32,9 +32,13 @@
 
   let searchTimeout: ReturnType<typeof setTimeout> | undefined;
   let isInitialLoad = true;
+  let searchInputRef = $state<HTMLInputElement | null>(null);
 
   onMount(() => {
     loadUsers();
+    tick().then(() => {
+      searchInputRef?.focus({ preventScroll: true });
+    });
   });
 
   // Debounced search effect (skip initial load)
@@ -141,6 +145,7 @@
           type="text"
           bind:value={searchQuery}
           placeholder={$_('admin.users.searchByNameOrEmail')}
+          bind:this={searchInputRef}
         />
       </div>
       {#if selectedUsers.size > 0}

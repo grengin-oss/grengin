@@ -76,10 +76,10 @@
   aria-label={$_('auth.signInWith', { values: { provider: providerName } })}
 >
   {#if isLoading}
-    <span class="spinner"></span>
+    <span class="spinner" aria-hidden="true"></span>
     <span>{$_('auth.connectingTo', { values: { provider: providerName } })}</span>
   {:else}
-    <img src={iconPath} alt="{providerName} logo" class="icon" />
+    <img src={iconPath} alt="{providerName} logo" class="icon" aria-hidden="true" />
     <span>{$_('auth.signInWith', { values: { provider: providerName } })}</span>
   {/if}
 </button>

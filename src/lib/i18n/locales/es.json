@@ -6,7 +6,9 @@
     "edit": "Editar",
     "search": "Buscar",
     "never": "Nunca",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "clear": "Limpiar",
+    "select": "Seleccionar"
   },
   "errors": {
     "forbidden": {
@@ -53,7 +55,12 @@
     "oauthProviderNotFound": "Proveedor OAuth no encontrado. Por favor, intente iniciar sesión nuevamente.",
     "invalidAuthResponse": "Respuesta de autenticación inválida del servidor",
     "unexpectedAuthError": "Ocurrió un error inesperado durante la autenticación",
-    "failedToInitiateLogin": "Error al iniciar el inicio de sesión con {provider}"
+    "failedToInitiateLogin": "Error al iniciar el inicio de sesión con {provider}",
+    "socialLogin": "Opciones de inicio de sesión social",
+    "legalLinks": "Legal"
+  },
+  "components": {
+    "typingIndicator": "El asistente está escribiendo"
   },
   "sidebar": {
     "newChat": "Nueva conversación",
@@ -85,6 +92,9 @@
     "deleteChat": "Eliminar conversación",
     "deleteChatConfirm": "¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer.",
     "cancel": "Cancelar",
+    "navigation": "Navegación principal",
+    "adminNavigation": "Navegación de administración",
+    "openAlerts": "Abrir alertas",
     "deleting": "Eliminando...",
     "close": "Cerrar",
     "chatDeleted": "{title} eliminado correctamente",
@@ -101,7 +111,6 @@
     "sectionConfigure": "Configurar",
     "overview": "Resumen",
     "accessControl": "Control de acceso",
-    "openAlerts": "Abrir alertas",
     "viewAllAlerts": "Ver todas las alertas",
     "noRecentAlerts": "Aún no hay alertas",
     "newAlert": "Nueva alerta"
@@ -111,8 +120,10 @@
     "subtitle": "Tus notificaciones y actualizaciones",
     "filterAll": "Todas",
     "filterUnread": "Sin leer",
+    "filterLabel": "Filtrar alertas por estado",
+    "notificationsList": "Lista de notificaciones",
     "empty": "No hay alertas que mostrar",
-    "loading": "Cargando...",
+    "loading": "Cargando alertas...",
     "loadMore": "Cargar más",
     "unread": "Sin leer",
     "loadError": "Error al cargar las alertas",
@@ -136,8 +147,11 @@
       "active": "Activo",
       "deactivated": "Desactivado",
       "actions": "Acciones",
+      "pagination": "Paginación",
       "previous": "Anterior",
+      "previousPage": "Página anterior",
       "next": "Siguiente",
+      "nextPage": "Página siguiente",
       "allRoles": "Todos los roles",
       "admin": "Administrador",
       "user": "Usuario",
@@ -170,6 +184,7 @@
       "filters": "Filtros",
       "closeFilters": "Cerrar filtros",
       "openFilters": "Abrir filtros",
+      "sortByAria": "Ordenar por {field}",
       "searchByNameOrEmail": "Buscar por nombre, correo o departamento...",
       "reset": "Restablecer",
       "loadingUsers": "Cargando usuarios...",
@@ -193,6 +208,7 @@
       "cannotToggleOwnStatus": "No puedes desactivar tu propia cuenta.",
       "disableUserTooltip": "Desactivar usuario",
       "enableUserTooltip": "Activar usuario",
+      "toggleUserStatus": "Alternar estado del usuario",
       "moreRoles": "Ver {count} roles más",
       "showRoles": "Mostrar roles",
       "hideRoles": "Ocultar roles",
@@ -202,7 +218,14 @@
       "addRoleScoped": "Agregar con alcance",
       "searchRoles": "Buscar roles...",
       "confirmRemoveRoleTitle": "¿Eliminar rol?",
-      "confirmRemoveRoleMessage": "¿Seguro que quieres eliminar {role} de este usuario?"
+      "confirmRemoveRoleMessage": "¿Seguro que quieres eliminar {role} de este usuario?",
+      "selectDepartmentOption": "Seleccionar departamento: {name}",
+      "removeRoleAria": "Eliminar rol {role}",
+      "manageScopingAria": "Gestionar alcance para {role}",
+      "addRoleGlobalAria": "Agregar el rol {role} globalmente",
+      "addRoleScopedAria": "Agregar el rol {role} con alcance de departamento",
+      "departmentResultsLabel": "Resultados de búsqueda de departamentos",
+      "roleOptionsLabel": "Roles para añadir"
     },
     "departments": {
       "title": "Departamentos",
@@ -255,6 +278,8 @@
       "failedToFetch": "Error al obtener departamentos",
       "expandOrganizationTree": "Mostrar árbol de organización",
       "collapseOrganizationTree": "Ocultar árbol de organización",
+      "expandDepartment": "Expandir departamento",
+      "collapseDepartment": "Contraer departamento",
       "budgetManagement": "Gestión de presupuesto",
       "budgetOverview": "Resumen de presupuesto",
       "currentBudget": "Presupuesto actual",
@@ -343,7 +368,83 @@
     },
     "settings": {
       "title": "Configuración",
-      "subtitle": "Configurar ajustes del sistema e integraciones"
+      "subtitle": "Configurar ajustes del sistema e integraciones",
+      "tabs": {
+        "oauth": "OAuth",
+        "oauthAria": "Configuración de proveedores OAuth"
+      },
+      "oauthProviders": {
+        "title": "Proveedores OAuth",
+        "subtitle": "Configura las integraciones OAuth para tu organización.",
+        "common": {
+          "enabled": "Habilitado",
+          "disabled": "Deshabilitado",
+          "enableVerb": "habilitar",
+          "disableVerb": "deshabilitar"
+        },
+        "actions": {
+          "retry": "Reintentar",
+          "deleting": "Eliminando…",
+          "saving": "Guardando…"
+        },
+        "messages": {
+          "loading": "Cargando proveedores OAuth...",
+          "empty": "Aún no se han configurado proveedores OAuth.",
+          "loadError": "No se pudieron cargar los proveedores SSO",
+          "loadProviderError": "No se pudo cargar el proveedor",
+          "noDomains": "Sin dominios",
+          "loadingProvider": "Cargando proveedor..."
+        },
+        "table": {
+          "caption": "Configuración de proveedores OAuth",
+          "provider": "Proveedor",
+          "allowedDomains": "Dominios permitidos",
+          "status": "Estado",
+          "actions": "Acciones"
+        },
+        "modals": {
+          "confirmDeleteTitle": "Confirmar eliminación",
+          "confirmDeleteMessage": "¿Seguro que quieres eliminar {name}?",
+          "editTitle": "Editar {name}",
+          "providerFallback": "proveedor OAuth"
+        },
+        "toasts": {
+          "statusUpdated": "El proveedor SSO {name} está {status}.",
+          "statusUpdateError": "No se pudo {action} {name}",
+          "deleted": "Proveedor SSO eliminado",
+          "deleteError": "No se pudo eliminar el proveedor SSO",
+          "updated": "Proveedor SSO actualizado",
+          "updateError": "No se pudo actualizar el proveedor"
+        },
+        "form": {
+          "clientId": "ID de cliente",
+          "clientIdPlaceholder": "Ingresa el ID de cliente",
+          "clientSecret": "Secreto de cliente",
+          "clientSecretPlaceholder": "Ingresa el secreto de cliente",
+          "tenantId": "ID de tenant",
+          "tenantIdPlaceholder": "Ingresa el ID de tenant",
+          "allowedDomains": "Dominios permitidos",
+          "domainsPlaceholder": "Pulsa Enter para agregar",
+          "status": "Estado"
+        },
+        "validation": {
+          "clientIdRequired": "El ID de cliente es obligatorio",
+          "clientIdInvalid": "El ID de cliente contiene caracteres no válidos",
+          "clientSecretRequired": "El secreto de cliente es obligatorio",
+          "clientSecretInvalid": "El secreto de cliente contiene caracteres no válidos",
+          "tenantIdRequired": "El ID de tenant es obligatorio",
+          "tenantIdInvalid": "El ID de tenant contiene caracteres no válidos"
+        },
+        "aria": {
+          "toggleProviderStatus": "Cambiar estado del proveedor {name}",
+          "configureProvider": "Configurar {name}",
+          "deleteProvider": "Eliminar {name}",
+          "providerLogoAlt": "Logo de {name}",
+          "hideClientSecret": "Ocultar secreto de cliente",
+          "showClientSecret": "Mostrar secreto de cliente",
+          "removeDomain": "Quitar dominio {domain}"
+        }
+      }
     },
     "accessControl": {
       "title": "Control de acceso",
@@ -936,6 +1037,7 @@
     "totalRequests": "Solicitudes totales",
     "totalTokens": "Tokens totales",
     "totalCost": "Costo total",
+    "growthRate": "Tasa de crecimiento",
     "activeUsers": "{count} activos",
     "last30Days": "Últimos 30 días",
     "manageUsers": "Gestionar cuentas y roles de usuario",
@@ -1032,6 +1134,27 @@
       "byDepartment": "Por Departamento",
       "byModel": "Por Modelo"
     },
+    "tabsAria": {
+      "overview": "Métricas y tendencias generales de uso",
+      "byUser": "Desglose de uso por usuario",
+      "byDepartment": "Desglose de uso por departamento",
+      "byModel": "Desglose de uso por modelo"
+    },
+    "byModel": {
+      "title": "Por Modelo",
+      "comingSoon": "Próximamente",
+      "hint": "La analítica por modelo estará disponible aquí."
+    },
+    "aria": {
+      "mainRegion": "Analítica de uso",
+      "dateRangeGroup": "Rango de fechas del informe",
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
+      "pagination": "Paginación de resultados",
+      "topModelsCaption": "Modelos principales por uso para el rango de fechas seleccionado",
+      "departmentTableCaption": "Uso por departamento para el rango de fechas seleccionado",
+      "userTableCaption": "Uso por usuario para el rango de fechas seleccionado"
+    },
     "filters": {
       "dateRange": "Rango de fechas",
       "presets": {
@@ -1103,6 +1226,14 @@
       "emptyState": {
         "title": "No hay datos de series temporales disponibles para el rango de fechas seleccionado",
         "hint": "Intente seleccionar un rango de fechas diferente o vuelva más tarde"
+      },
+      "accessibility": {
+        "keyboardInstructions": "Pulse Entrar o Espacio para ver la tabla de datos. Pulse Escape para cerrar.",
+        "dataPoints": "{count} puntos de datos",
+        "viewDataTable": "Ver tabla de datos",
+        "viewDataTableFor": "Ver tabla de datos para {chartName}",
+        "closeDataTable": "Cerrar tabla de datos",
+        "dataTableRegion": "Tabla de datos de {chartName}"
       }
     },
     "errors": {

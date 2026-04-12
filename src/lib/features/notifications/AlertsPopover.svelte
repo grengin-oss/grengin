@@ -30,6 +30,7 @@
   const notifState = getNotificationsState();
 
   let flyoutStyle = $state('');
+  let popoverElement: HTMLDivElement | undefined = $state();
 
   function isNotificationUnread(n: { read_at: string | null }): boolean {
     return n.read_at == null || n.read_at === '';
@@ -76,15 +77,26 @@
       window.removeEventListener('scroll', onReposition, true);
     };
   });
+
+  // Focus management: focus the dialog when opened
+  $effect(() => {
+    if (open && popoverElement) {
+      tick().then(() => {
+        popoverElement?.focus();
+      });
+    }
+  });
 </script>
 
 {#if open}
   <div class="alerts-flyout-stack" style={flyoutStyle}>
     <div
       class="alerts-popover"
+      bind:this={popoverElement}
       role="dialog"
+      aria-modal="true"
       aria-label={$_('app.notifications')}
-      tabindex="-1"
+      tabindex="0"
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e: KeyboardEvent) => {
         if (e.key === 'Escape') {
@@ -103,11 +115,12 @@
             onClose();
           }}
           aria-label={$_('sidebar.close')}
+          title={$_('sidebar.close')}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
         </button>
       </div>
 
@@ -124,6 +137,7 @@
               type="button"
               class="alerts-popover-item"
               class:alerts-popover-item-unread={isNotificationUnread(n as NotificationItem)}
+              aria-label={`${n.title}${n.body ? ': ' + n.body : ''}`}
               onclick={(e) => {
                 e.stopPropagation();
                 onNavigate();

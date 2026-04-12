@@ -39,16 +39,32 @@
 
   let tabs = $derived<TabConfig[]>([
     ...(canViewOverview
-      ? [makeTab("overview", $_("analytics.tabs.overview"), "Overview analytics")]
+      ? [
+          makeTab(
+            "overview",
+            $_("analytics.tabs.overview"),
+            $_("analytics.tabsAria.overview"),
+          ),
+        ]
       : []),
-    makeTab("by-user", $_("analytics.tabs.byUser"), "User analytics"),
+    makeTab(
+      "by-user",
+      $_("analytics.tabs.byUser"),
+      $_("analytics.tabsAria.byUser"),
+    ),
     makeTab(
       "by-department",
       $_("analytics.tabs.byDepartment"),
-      "Department analytics"
+      $_("analytics.tabsAria.byDepartment"),
     ),
-    makeTab("by-model", $_("analytics.tabs.byModel"), "Model analytics"),
+    makeTab(
+      "by-model",
+      $_("analytics.tabs.byModel"),
+      $_("analytics.tabsAria.byModel"),
+    ),
   ]);
+
+  let prevTab = $state<string | null>(null);
 
   // Redirect to by-user tab if user does not have overview permission
   $effect(() => {
@@ -289,64 +305,87 @@
     currentTab;
     restartPolling();
   });
+
+  $effect(() => {
+    if (prevTab !== null && currentTab !== prevTab) {
+      tick().then(() => {
+        document.getElementById(`${currentTab}-panel`)?.focus();
+      });
+    }
+    prevTab = currentTab;
+  });
 </script>
 
-<div class="analytics-page">
+<div class="analytics-page" role="region" aria-label={$_("analytics.aria.mainRegion")}>
   <PageHeader title={$_('analytics.title')} subtitle={$_('analytics.subtitle')}>
     <div class="filters-toolbar" class:filters-toolbar-custom={selectedPreset === 'custom'}>
       <!-- Date Range Presets -->
-      <div class="filter-section">
-        <span class="filter-label">{$_('analytics.filters.dateRange')}</span>
-        <div class="pill-group">
+      <fieldset class="filter-section">
+        <legend class="filter-label">{$_('analytics.filters.dateRange')}</legend>
+        <div class="pill-group" role="group" aria-label={$_('analytics.aria.dateRangeGroup')}>
           <button
+            type="button"
             class="pill-group__item"
             class:pill-group__item--active={selectedPreset === 'last7'}
+            aria-pressed={selectedPreset === 'last7'}
             onclick={() => setDatePreset('last7')}
           >
             {$_('analytics.filters.presets.last7Days')}
           </button>
           <button
+            type="button"
             class="pill-group__item"
             class:pill-group__item--active={selectedPreset === 'last30'}
+            aria-pressed={selectedPreset === 'last30'}
             onclick={() => setDatePreset('last30')}
           >
             {$_('analytics.filters.presets.last30Days')}
           </button>
           <button
+            type="button"
             class="pill-group__item"
             class:pill-group__item--active={selectedPreset === 'last90'}
+            aria-pressed={selectedPreset === 'last90'}
             onclick={() => setDatePreset('last90')}
           >
             {$_('analytics.filters.presets.last90Days')}
           </button>
           <button
+            type="button"
             class="pill-group__item"
             class:pill-group__item--active={selectedPreset === 'thisMonth'}
+            aria-pressed={selectedPreset === 'thisMonth'}
             onclick={() => setDatePreset('thisMonth')}
           >
             {$_('analytics.filters.presets.thisMonth')}
           </button>
           <button
+            type="button"
             class="pill-group__item"
             class:pill-group__item--active={selectedPreset === 'custom'}
+            aria-pressed={selectedPreset === 'custom'}
             onclick={() => setDatePreset('custom')}
           >
             {$_('analytics.filters.presets.custom')}
           </button>
         </div>
-      </div>
+      </fieldset>
 
       <!-- Custom Date Inputs (only shown when Custom is selected) -->
       {#if selectedPreset === 'custom'}
         <div class="filter-section">
           <div class="date-inputs">
+            <label for="analytics-date-start" class="sr-only">{$_('analytics.aria.startDate')}</label>
             <input
+              id="analytics-date-start"
               type="date"
               bind:value={startDate}
               class="date-input"
             />
-            <span class="date-separator">{$_('analytics.filters.to')}</span>
+            <span class="date-separator" aria-hidden="true">{$_('analytics.filters.to')}</span>
+            <label for="analytics-date-end" class="sr-only">{$_('analytics.aria.endDate')}</label>
             <input
+              id="analytics-date-end"
               type="date"
               bind:value={endDate}
               class="date-input"
@@ -366,11 +405,13 @@
       bind:currentTab
     />
     <button
+      type="button"
       class="refresh-button"
       onclick={handleRefresh}
       disabled={isRefreshing}
       title={$_('analytics.refresh')}
       aria-label={$_('analytics.refresh')}
+      aria-busy={isRefreshing}
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class:spinning={isRefreshing}>
         <polyline points="23 4 23 10 17 10"></polyline>
@@ -382,37 +423,65 @@
   </div>
 
   {#if currentTab === 'overview' && canViewOverview}
-    <AnalyticsOverviewTab
-      {overviewData}
-      {timeseriesData}
-      {isLoading}
-      {chartsLoading}
-      comparisonPeriodLabel={comparisonPeriodLabel()}
-      {error}
-      onRetry={() => fetchAnalytics({showLoading: true})}
-      {granularity}
-      onGranularityChange={(value) => granularity = value}
-    />
+    <div
+      id="overview-panel"
+      class="analytics-tab-panel"
+      role="tabpanel"
+      aria-labelledby="tab-overview"
+      tabindex="-1"
+    >
+      <AnalyticsOverviewTab
+        {overviewData}
+        {timeseriesData}
+        {isLoading}
+        {chartsLoading}
+        comparisonPeriodLabel={comparisonPeriodLabel()}
+        {error}
+        onRetry={() => fetchAnalytics({showLoading: true})}
+        {granularity}
+        onGranularityChange={(value) => granularity = value}
+      />
+    </div>
   {:else if currentTab === 'by-user'}
-    <UserAnalyticsTab 
-      {startDate} 
-      {endDate}
-      onRefresh={(callback) => userAnalyticsRefresh = callback}
-    />
+    <div
+      id="by-user-panel"
+      class="analytics-tab-panel"
+      role="tabpanel"
+      aria-labelledby="tab-by-user"
+      tabindex="-1"
+    >
+      <UserAnalyticsTab
+        {startDate}
+        {endDate}
+        onRefresh={(callback) => userAnalyticsRefresh = callback}
+      />
+    </div>
   {:else if currentTab === 'by-department'}
-    <DepartmentAnalyticsTab 
-      {startDate} 
-      {endDate}
-      onRefresh={(callback) => departmentAnalyticsRefresh = callback}
-    />
-  {/if}
-
-  {#if currentTab === 'by-model'}
-    <div class="tab-placeholder">
+    <div
+      id="by-department-panel"
+      class="analytics-tab-panel"
+      role="tabpanel"
+      aria-labelledby="tab-by-department"
+      tabindex="-1"
+    >
+      <DepartmentAnalyticsTab
+        {startDate}
+        {endDate}
+        onRefresh={(callback) => departmentAnalyticsRefresh = callback}
+      />
+    </div>
+  {:else if currentTab === 'by-model'}
+    <div
+      id="by-model-panel"
+      class="analytics-tab-panel tab-placeholder"
+      role="tabpanel"
+      aria-labelledby="tab-by-model"
+      tabindex="-1"
+    >
       <AdminPanelCard>
         <div class="placeholder-content">
-          <p>{$_('analytics.tabs.byModel')} - Coming soon</p>
-          <p class="placeholder-hint">Model analytics will be available here</p>
+          <p>{$_('analytics.byModel.title')} — {$_('analytics.byModel.comingSoon')}</p>
+          <p class="placeholder-hint">{$_('analytics.byModel.hint')}</p>
         </div>
       </AdminPanelCard>
     </div>
@@ -445,6 +514,14 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
+    border: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+
+  .filter-section .filter-label {
+    padding: 0;
   }
 
   .filter-label {
@@ -453,6 +530,11 @@
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+
+  .filter-section .pill-group__item:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
   }
 
   /* Enhanced selection state for filter buttons */
@@ -491,6 +573,20 @@
     outline: none;
     border-color: var(--brand);
     box-shadow: 0 0 0 2px var(--brand-ring);
+  }
+
+  .date-input:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
+  }
+
+  .analytics-tab-panel {
+    outline: none;
+  }
+
+  .analytics-tab-panel:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
   }
 
   .date-separator {
@@ -557,6 +653,11 @@
 
   .refresh-button:hover:not(:disabled)::before {
     opacity: 0.05;
+  }
+
+  .refresh-button:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
   }
 
   .refresh-button:active:not(:disabled) {

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount, tick } from "svelte";
   import Modal from "../Modal.svelte";
   import type { Permission } from "../../../api/admin/permissions.js";
   import type { Role } from "../../../api/admin/roles.js";
@@ -26,6 +27,7 @@
   const isEdit = $derived(!!role);
 
   let name = $state(role?.name ?? "");
+  let roleNameInputEl = $state<HTMLInputElement | null>(null);
   let selectedPermissions = $state<Set<string>>(
     new Set(role?.permissions ?? []),
   );
@@ -36,6 +38,14 @@
     const r = role;
     name = r?.name ?? "";
     selectedPermissions = new Set(r?.permissions ?? []);
+  });
+
+  onMount(() => {
+    if (isEdit || role?.is_system) return;
+    tick().then(() => {
+      roleNameInputEl?.focus();
+      roleNameInputEl?.select();
+    });
   });
 
   function toPermissionKey(p: Permission): string {
@@ -135,6 +145,7 @@
       <input
         id="role-name"
         type="text"
+        bind:this={roleNameInputEl}
         bind:value={name}
         placeholder={$_("admin.accessControl.roleNamePlaceholder")}
         class="role-name-input"

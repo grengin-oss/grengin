@@ -16,8 +16,8 @@
   const TABS: TabConfig[] = [
     {
       id: "oauth",
-      label: "OAuth",
-      ariaLabel: "OAuth providers configuration",
+      label: $_("admin.settings.tabs.oauth"),
+      ariaLabel: $_("admin.settings.tabs.oauthAria"),
     },
   ] as const;
 
@@ -45,7 +45,7 @@
     role="tabpanel"
     id={`${currentTab}-panel`}
     aria-labelledby={currentTab}
-    tabindex="0"
+    tabindex="-1"
   >
     {#if currentTab === "oauth"}
       <OAuthProviders />
@@ -68,10 +68,15 @@
   /* Tab content */
   .settings-content {
     padding: var(--space-sm);
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--surface-card);
+    border: 1px solid var(--surface-border);
     border-radius: var(--radius-lg);
     outline: none;
+  }
+
+  .settings-content:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
   }
 
   /* Responsive adjustments */

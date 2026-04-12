@@ -38,6 +38,8 @@
   const DEFAULT_TAB: TabId = "roles";
   // State
   let currentTab = $state<TabId>(DEFAULT_TAB);
+  let rolesPanelRef = $state<HTMLDivElement | null>(null);
+  let permissionsPanelRef = $state<HTMLDivElement | null>(null);
 
   // Permissions state (fetched when permissions or roles tab is shown - roles need it for Add Role)
   let permissionsLoading = $state(false);
@@ -104,6 +106,17 @@
     }
   });
 
+  let prevTab = $state<string | null>(null);
+
+  $effect(() => {
+    if (prevTab !== null && currentTab !== prevTab) {
+      const activePanel =
+        currentTab === "roles" ? rolesPanelRef : permissionsPanelRef;
+      activePanel?.focus();
+    }
+    prevTab = currentTab;
+  });
+
 </script>
 
 <div class="access-control-container">
@@ -119,24 +132,33 @@
     bind:currentTab
   />
 
-  <!-- Tab content -->
+  <!-- Tab panels (stable ids improve screen reader tab/panel mapping) -->
   <div
     class="access-control-content"
     role="tabpanel"
-    id={`${currentTab}-panel`}
-    aria-labelledby={currentTab}
-    tabindex="0"
+    id="roles-panel"
+    aria-labelledby="tab-roles"
+    tabindex={currentTab === "roles" ? -1 : undefined}
+    hidden={currentTab !== "roles"}
+    bind:this={rolesPanelRef}
   >
-    {#if currentTab === "roles"}
-      <RolesTab
-        {roles}
-        {permissions}
-        loading={rolesLoading}
-        onRolesChange={fetchRoles}
-      />
-    {:else if currentTab === "permissions"}
-      <PermissionsTab {permissions} loading={permissionsLoading} />
-    {/if}
+    <RolesTab
+      {roles}
+      {permissions}
+      loading={rolesLoading}
+      onRolesChange={fetchRoles}
+    />
+  </div>
+  <div
+    class="access-control-content"
+    role="tabpanel"
+    id="permissions-panel"
+    aria-labelledby="tab-permissions"
+    tabindex={currentTab === "permissions" ? -1 : undefined}
+    hidden={currentTab !== "permissions"}
+    bind:this={permissionsPanelRef}
+  >
+    <PermissionsTab {permissions} loading={permissionsLoading} />
   </div>
 </div>
 
@@ -156,6 +178,11 @@
     border-radius: var(--radius-lg);
     outline: none;
     min-height: 200px;
+  }
+
+  .access-control-content:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
   }
 
   @media (max-width: 768px) {
