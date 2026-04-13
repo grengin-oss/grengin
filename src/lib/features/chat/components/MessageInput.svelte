@@ -1195,6 +1195,8 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   .model-dropdown-container,
   .connectors-dropdown-container {
     position: relative;
+    display: flex;
+    align-items: center;
   }
 
   .plus-menu,
@@ -1369,7 +1371,7 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    padding: var(--space-xs) var(--space-sm) 0;
+    padding: 0;
   }
 
   .connectors-trigger {
@@ -1785,13 +1787,24 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     }
 
     .selector-label,
-    .toggle-label {
+    .toggle-label,
+    .connectors-label {
       display: none;
     }
 
     .selector-btn {
       padding: var(--space-xs);
       border-radius: 50%;
+      gap: 0;
+    }
+
+    .connectors-trigger {
+      width: 1.625rem;
+      min-width: 1.625rem;
+      height: 1.625rem;
+      padding: 0;
+      border-radius: 50%;
+      justify-content: center;
       gap: 0;
     }
 
@@ -1834,6 +1847,12 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     }
 
     .toggle-btn {
+      width: 1.5rem;
+      min-width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .connectors-trigger {
       width: 1.5rem;
       min-width: 1.5rem;
       height: 1.5rem;
