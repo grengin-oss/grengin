@@ -111,7 +111,7 @@
     "sectionConfigure": "Configure",
     "overview": "Overview",
     "accessControl": "Access Control",
-    "openAlerts": "Open alerts",
+    "connectors": "Connectors",
     "viewAllAlerts": "View all alerts",
     "noRecentAlerts": "No alerts yet",
     "newAlert": "New alert"
@@ -168,7 +168,8 @@
       "create": "Create",
       "metadata": "Metadata",
       "lastUpdated": "Last Updated",
-      "removing": "Removing"
+      "removing": "Removing",
+      "loading": "Loading..."
     },
     "tabListLabels": {
       "accessControl": "Access Control tabs",
@@ -896,6 +897,7 @@
       "somethingWentWrong": "Something went wrong",
       "dismissError": "Dismiss error",
       "failedToLoadModels": "Failed to load models",
+      "failedToLoadConnectors": "Failed to load connectors",
       "failedToLoadConversation": "Failed to load conversation",
       "failedToSendMessage": "Failed to send message",
       "budgetAboutToExhaust": "Department budget is about to exhaust.",
@@ -914,6 +916,9 @@
       "selectModelFallback": "Select Model",
       "loadingModels": "Loading models...",
       "selectConnectorsFallback": "Connectors",
+      "selectConnectors": "Select connectors",
+      "loadingConnectors": "Loading connectors...",
+      "noConnectors": "No connectors available",
       "connectors": "connectors",
       "enableWebSearch": "Enable web search",
       "disableWebSearch": "Disable web search",
@@ -939,6 +944,7 @@
       "copied": "Copied!",
       "copyContent": "Copy content",
       "loadingImage": "Loading image...",
+      "imagePreview": "Image preview",
       "imageAlt": "Image",
       "fileFallback": "File",
       "pause": "Pause",

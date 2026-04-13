@@ -170,7 +170,7 @@
         editClientIdInputEl?.select();
       });
     } catch (err: any) {
-      toast.error(err?.message || $_("admin.settings.oauthProviders.toasts.loadProviderError"));
+      toast.error(err?.message || $_("admin.settings.oauthProviders.messages.loadProviderError"));
       closeEditModal();
     } finally {
       isEditLoading = false;
