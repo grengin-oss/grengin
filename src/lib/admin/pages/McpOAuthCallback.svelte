@@ -51,6 +51,20 @@
   }
 
   function redirectAfterSuccess(): void {
+    // Notify parent window that OAuth was successful
+    if (window.opener) {
+      window.opener.postMessage({
+        type: 'mcp_oauth_callback',
+        success: true,
+        server_id: new URLSearchParams(window.location.search).get('state') || ''
+      }, window.location.origin);
+    }
+    
+    // Close the popup window after a short delay
+    setTimeout(() => {
+      window.close();
+    }, 100);
+    
     const path = getRedirectPath();
     setTimeout(() => {
       navigate(path, { replace: true });
@@ -58,6 +72,22 @@
   }
 
   function redirectAfterError(): void {
+    // Notify parent window that OAuth failed
+    if (window.opener) {
+      const params = new URLSearchParams(window.location.search);
+      window.opener.postMessage({
+        type: 'mcp_oauth_callback',
+        success: false,
+        server_id: params.get('state') || '',
+        error: params.get('error_description') || params.get('error') || 'Authentication failed'
+      }, window.location.origin);
+    }
+    
+    // Close the popup window after a short delay
+    setTimeout(() => {
+      window.close();
+    }, 100);
+    
     const path = getRedirectPath();
     setTimeout(() => {
       navigate(path, { replace: true });

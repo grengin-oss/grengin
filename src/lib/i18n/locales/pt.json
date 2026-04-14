@@ -909,7 +909,9 @@
       "speechRecognitionNotSupported": "O reconhecimento de voz não é suportado no seu navegador",
       "microphoneAccessDenied": "Acesso ao microfone negado. Por favor, permita o acesso ao microfone.",
       "voiceInputError": "Erro de entrada de voz: {error}",
-      "failedToStartVoiceInput": "Falha ao iniciar entrada de voz"
+      "failedToStartVoiceInput": "Falha ao iniciar entrada de voz",
+      "uploading": "Enviando…",
+      "uploadFailed": "Falhou"
     },
     "message": {
       "copy": "Copiar",
@@ -1445,23 +1447,27 @@
       "actions": "Ações"
     },
     "status": {
-      "connected": "Ligado",
-      "disconnected": "Desligado"
+      "connected": "Conectado",
+      "disconnected": "Desconectado",
+      "expired": "Expirado",
+      "error": "Erro",
+      "expiredWarning": "A conexão expirou. Reconecte para atualizar seu acesso."
     },
     "actions": {
-      "connect": "Ligar",
-      "connecting": "A ligar...",
-      "disconnect": "Desligar",
-      "disconnectConfirm": "Desligar?",
+      "connect": "Conectar",
+      "connecting": "Conectando...",
+      "disconnect": "Desconectar",
+      "reconnect": "Reconectar",
+      "disconnectConfirm": "Desconectar?",
       "yes": "Sim",
       "no": "Não",
       "viewTools": "Ver ferramentas"
     },
-    "connectedSince": "Ligado desde {date}",
+    "connectedSince": "Conectado desde {date}",
     "toolCount": "{count} {count, plural, one {ferramenta} other {ferramentas}}",
     "tools": {
       "modalTitle": "{name} — Ferramentas",
-      "loading": "A carregar ferramentas...",
+      "loading": "Carregando ferramentas...",
       "empty": "Nenhuma ferramenta disponível para este servidor."
     }
   }

@@ -44,6 +44,8 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   let message = $state('');
   let attachedFiles = $state<File[]>([]);
   let uploadingFiles = $state<Set<string>>(new Set());
+  let uploadedFileResults = $state<Map<string, UploadedFile>>(new Map());
+  let failedUploads = $state<Set<string>>(new Set());
   let filePreviews = $state<Record<string, string>>({});
   let imageThumbnails = $state<Record<string, string>>({});
   let showFilePreview = $state(false);
@@ -94,38 +96,39 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     }
   }
 
+  let isUploading = $derived(uploadingFiles.size > 0);
+
+  async function uploadFileImmediately(file: File) {
+    uploadingFiles.add(file.name);
+    uploadingFiles = new Set(uploadingFiles);
+    try {
+      const uploaded = await uploadDocument({
+        file,
+        provider: selectedProvider || 'openai'
+      });
+      uploadedFileResults.set(file.name, uploaded);
+      uploadedFileResults = new Map(uploadedFileResults);
+      failedUploads.delete(file.name);
+      failedUploads = new Set(failedUploads);
+    } catch (error) {
+      console.error(`Failed to upload file: ${file.name}`, error);
+      failedUploads.add(file.name);
+      failedUploads = new Set(failedUploads);
+    } finally {
+      uploadingFiles.delete(file.name);
+      uploadingFiles = new Set(uploadingFiles);
+    }
+  }
+
   async function handleSend() {
     const trimmed = message.trim();
-    if ((trimmed || attachedFiles.length > 0) && !disabled) {
-      // Upload files first if there are any
-      let uploadedFiles: UploadedFile[] = [];
-      if (attachedFiles.length > 0) {
-        const filesToUpload = [...attachedFiles];
-        
-        // Upload each file individually - upload API handles one file at a time
-        for (const file of filesToUpload) {
-          uploadingFiles.add(file.name);
-          try {
-            const uploaded = await uploadDocument({
-              file,
-              provider: selectedProvider || 'openai'
-            });
-            uploadedFiles.push(uploaded);
-          } catch (error) {
-            console.error(`Failed to upload file: ${file.name}`, error);
-            // Remove failed file from attached files
-            attachedFiles = attachedFiles.filter(f => f !== file);
-            // Continue with other files instead of stopping completely
-            continue;
-          } finally {
-            uploadingFiles.delete(file.name);
-          }
-        }
-        
-        // If no files were successfully uploaded, don't send message
-        if (uploadedFiles.length === 0 && attachedFiles.length > 0) {
-          console.error('No files were successfully uploaded');
-          return;
+    if ((trimmed || attachedFiles.length > 0) && !disabled && !isUploading) {
+      // Collect already-uploaded file results
+      const uploadedFiles: UploadedFile[] = [];
+      for (const file of attachedFiles) {
+        const result = uploadedFileResults.get(file.name);
+        if (result) {
+          uploadedFiles.push(result);
         }
       }
       
@@ -133,6 +136,8 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
       onSend(trimmed, uploadedFiles.length > 0 ? uploadedFiles : undefined, webSearchEnabled);
       message = '';
       attachedFiles = [];
+      uploadedFileResults = new Map();
+      failedUploads = new Set();
       
       if (textarea) {
         textarea.style.height = 'auto';
@@ -204,8 +209,11 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
       const newFiles = Array.from(target.files);
       attachedFiles = [...attachedFiles, ...newFiles];
 
-      // Generate previews for text and image files
+      // Generate previews and start uploading immediately
       for (const file of newFiles) {
+        // Start upload immediately
+        uploadFileImmediately(file);
+
         if (isTextFile(file)) {
           readFileContent(file).then(content => {
             filePreviews[file.name] = content;
@@ -231,6 +239,13 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   function removeFile(index: number) {
     const file = attachedFiles[index];
     attachedFiles = attachedFiles.filter((_, i) => i !== index);
+
+    if (file) {
+      uploadedFileResults.delete(file.name);
+      uploadedFileResults = new Map(uploadedFileResults);
+      failedUploads.delete(file.name);
+      failedUploads = new Set(failedUploads);
+    }
 
     if (file && filePreviews[file.name]) {
       delete filePreviews[file.name];
@@ -395,27 +410,9 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     }
   }
 
-  // Close dropdowns on Escape key
-  function handleKeyboardEscape(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      if (showPlusMenu) {
-        showPlusMenu = false;
-        event.preventDefault();
-      }
-      if (showModelDropdown) {
-        showModelDropdown = false;
-        event.preventDefault();
-      }
-    }
-  }
-
   onMount(() => {
     document.addEventListener('click', handleClickOutside);
-    document.addEventListener('keydown', handleKeyboardEscape);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyboardEscape);
-    };
+    return () => document.removeEventListener('click', handleClickOutside);
   });
 </script>
 
@@ -442,7 +439,7 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   {#if attachedFiles.length > 0}
     <div class="file-attachments">
       {#each attachedFiles as file, index}
-        <div class="file-pill" class:file-pill-image={isImageFile(file)}>
+        <div class="file-pill" class:file-pill-image={isImageFile(file)} class:file-pill-uploading={uploadingFiles.has(file.name)} class:file-pill-failed={failedUploads.has(file.name)}>
           {#if isImageFile(file)}
             <button
               class="thumbnail-button"
@@ -474,6 +471,16 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
             </button>
             <span class="file-name" title={file.name}>{file.name}</span>
             <span class="file-size">{formatFileSize(file.size)}</span>
+          {/if}
+          {#if uploadingFiles.has(file.name)}
+            <span class="pill-upload-status uploading">
+              <span class="pill-spinner"></span>
+              <span class="pill-status-text">{$_('chat.messageInput.uploading')}</span>
+            </span>
+          {:else if failedUploads.has(file.name)}
+            <span class="pill-upload-status failed">✕ {$_('chat.messageInput.uploadFailed')}</span>
+          {:else if uploadedFileResults.has(file.name)}
+            <span class="pill-upload-status success">✓</span>
           {/if}
           <button class="pill-remove-btn" onclick={() => removeFile(index)} aria-label={$_('chat.messageInput.removeFile')}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -515,23 +522,23 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
             title={$_('chat.messageInput.addContent')}
             {disabled}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 5v14m-7-7h14"/>
             </svg>
           </button>
 
           {#if showPlusMenu}
-            <div class="plus-menu" role="menu" tabindex="-1">
-              <button class="menu-item" role="menuitem" onclick={handlePhotoSelect} aria-label={$_('chat.messageInput.addPhotos')}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <div class="plus-menu">
+              <button class="menu-item" onclick={handlePhotoSelect}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                   <circle cx="8.5" cy="8.5" r="1.5"></circle>
                   <polyline points="21 15 16 10 5 21"></polyline>
                 </svg>
                 <span>{$_('chat.messageInput.addPhotos')}</span>
               </button>
-              <button class="menu-item" role="menuitem" onclick={handleFileSelect} aria-label={$_('chat.messageInput.addFiles')}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <button class="menu-item" onclick={handleFileSelect}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                   <polyline points="14,2 14,8 20,8"></polyline>
                 </svg>
@@ -547,20 +554,19 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
             onclick={() => { showModelDropdown = !showModelDropdown; showPlusMenu = false; }}
             title={$_('chat.messageInput.selectModel')}
             aria-label={$_('chat.messageInput.selectModel')}
-            aria-expanded={showModelDropdown}
           >
             <div class="model-icon">
               {#if selectedProvider}
                 {@const providerIcon = getIconForTheme(providers.find(p => p.key === selectedProvider))}
                 {#if providerIcon}
-                  <img src={providerIcon} alt="" aria-hidden="true" class="provider-icon-img" />
+                  <img src={providerIcon} alt="" class="provider-icon-img" />
                 {:else}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/>
                   </svg>
                 {/if}
               {:else}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M12 16v-4"/>
                   <path d="M12 8h.01"/>
@@ -568,13 +574,13 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
               {/if}
             </div>
             <span class="selector-label model-caption">{selectedModel || $_('chat.messageInput.selectModelFallback')}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow" class:open={showModelDropdown} aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow" class:open={showModelDropdown}>
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </button>
 
           {#if showModelDropdown}
-            <div class="model-menu" role="menu" tabindex="-1">
+            <div class="model-menu">
               {#if loadingModels}
                 <div class="dropdown-loading">
                   <div class="loading-spinner"></div>
@@ -587,7 +593,7 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
                   <div class="provider-section">
                     <div class="provider-header">
                       <div class="provider-icon">
-                        <img src={getIconForTheme(provider)} alt={provider.name} aria-hidden="true" class="provider-icon-img" />
+                        <img src={getIconForTheme(provider)} alt="" class="provider-icon-img" />
                       </div>
                       <span class="provider-name">{provider.name}</span>
                     </div>
@@ -595,18 +601,16 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
                       {#each provider.models as model}
                         <button
                           class="menu-item model-option"
-                          role="menuitem"
                           class:selected={selectedModel === model.name}
                           onclick={() => selectModel(provider, model)}
-                          aria-label={model.name}
                         >
                           <span class="model-name">{model.name}</span>
                           <div class="model-capabilities">
                             {#if model.supports_vision}
-                                <svg class="capability-icon active" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                  <circle cx="12" cy="12" r="3"/>
-                                </svg>
+                              <svg class="capability-icon active" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label={$_('chat.messageInput.visionCapable')}>
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                              </svg>
                             {/if}
                           </div>
                         </button>
@@ -683,7 +687,7 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
           aria-label={webSearchEnabled ? $_('chat.messageInput.disableWebSearch') : $_('chat.messageInput.enableWebSearch')}
           aria-pressed={webSearchEnabled}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
             <path d="M2 12h20"/>
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
@@ -705,17 +709,16 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
           onclick={toggleVoiceInput}
           aria-label={isRecording ? $_('chat.messageInput.stopRecording') : $_('chat.messageInput.voiceInput')}
           title={isRecording ? $_('chat.messageInput.stopRecording') : $_('chat.messageInput.voiceInput')}
-          aria-pressed={isRecording}
           {disabled}
         >
           {#if isRecording}
             <!-- Filled circle during recording -->
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
               <circle cx="12" cy="12" r="8"/>
             </svg>
           {:else}
             <!-- Microphone icon when idle -->
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
               <path d="M12 19v4"/>
@@ -727,17 +730,17 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
         <button
           class="input-btn send-btn"
           onclick={handleSend}
-          disabled={disabled || (!message.trim() && attachedFiles.length === 0)}
-          aria-label={$_('chat.messageInput.sendMessage')}
-          title={$_('chat.messageInput.sendMessageTitle')}
+          disabled={disabled || isUploading || (!message.trim() && attachedFiles.length === 0)}
+          aria-label={isUploading ? $_('chat.messageInput.uploading') : $_('chat.messageInput.sendMessage')}
+          title={isUploading ? $_('chat.messageInput.uploading') : $_('chat.messageInput.sendMessageTitle')}
         >
-          {#if disabled}
-            <svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          {#if disabled || isUploading}
+            <svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
               <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"></path>
             </svg>
           {:else}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M22 2L11 13"/>
               <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
             </svg>
@@ -1532,28 +1535,34 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   .file-attachments {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-sm);
+    gap: 6px;
     width: 100%;
+    padding: var(--space-xs) 0;
   }
 
   .file-pill {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-xs);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-md);
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 10px;
     background: var(--glass-bg-dark);
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-stroke-dark);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     color: var(--text-primary);
     transition: all 0.2s ease;
-    box-shadow: var(--glass-highlight), var(--glass-edge-glow);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    max-width: 240px;
+  }
+
+  .file-pill:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   .file-pill-image {
-    padding: var(--space-xs);
+    padding: 4px;
   }
 
   .thumbnail-button {
@@ -1564,68 +1573,127 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     border: none;
     background: transparent;
     cursor: pointer;
-    border-radius: var(--radius-sm);
+    border-radius: 6px;
     transition: transform 0.15s ease;
+    overflow: hidden;
   }
 
   .thumbnail-button:hover {
-    transform: scale(1.02);
+    transform: scale(1.05);
   }
 
   .file-thumbnail {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     object-fit: cover;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--glass-stroke-dark);
+    border-radius: 6px;
   }
 
   .thumbnail-placeholder,
   .file-icon-button {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--btn-tertiary);
-    border-radius: var(--radius-sm);
+    border-radius: 6px;
     color: var(--text-secondary);
   }
 
   .file-name {
-    max-width: 150px;
+    max-width: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-weight: 500;
+    font-size: 0.8125rem;
   }
 
   .file-size {
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
     color: var(--text-secondary);
     flex-shrink: 0;
+    opacity: 0.7;
   }
 
   .pill-remove-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 1.125rem;
-    height: 1.125rem;
+    width: 16px;
+    height: 16px;
     padding: 0;
     border: none;
     border-radius: 50%;
-    background: var(--btn-tertiary);
+    background: rgba(0, 0, 0, 0.1);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     flex-shrink: 0;
+    opacity: 0.6;
+  }
+
+  .file-pill:hover .pill-remove-btn {
+    opacity: 1;
   }
 
   .pill-remove-btn:hover {
-    background: var(--danger-surface);
-    color: var(--brand-red);
+    background: var(--brand-red, #ef4444);
+    color: white;
     transform: scale(1.1);
+    opacity: 1;
+  }
+
+  /* Upload status indicators */
+  .pill-upload-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .pill-upload-status.uploading {
+    color: var(--text-secondary);
+  }
+
+  .pill-upload-status.success {
+    color: var(--brand-green, #22c55e);
+    font-size: 0.75rem;
+  }
+
+  .pill-upload-status.failed {
+    color: var(--brand-red, #ef4444);
+  }
+
+  .pill-status-text {
+    white-space: nowrap;
+  }
+
+  .pill-spinner {
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid rgba(var(--brand-rgb), 0.15);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: pill-spin 0.7s linear infinite;
+  }
+
+  @keyframes pill-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .file-pill-uploading {
+    opacity: 0.75;
+    border-style: dashed;
+  }
+
+  .file-pill-failed {
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.05);
   }
 
   /* ===== Preview Modal ===== */

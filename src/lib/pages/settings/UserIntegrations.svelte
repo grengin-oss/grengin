@@ -19,6 +19,8 @@
   import { ApiError } from "../../api/client.js";
   import { toast } from "../../components/Toaster.svelte";
 
+  type ConnectionStatus = 'connected' | 'expired' | 'error' | 'disconnected';
+
   interface MergedServer {
     id: string;
     name: string;
@@ -26,9 +28,23 @@
     icon: string;
     transport_type: string;
     connected: boolean;
+    status: ConnectionStatus;
     connected_at: string | null;
+    expires_at: string | null;
+    account_email: string | null;
     scopes: string[];
     tools: { name: string; description: string }[];
+  }
+
+  function computeStatus(conn: import("../../types/integrations.js").McpConnection | undefined): ConnectionStatus {
+    if (!conn) return 'disconnected';
+    if (conn.status === 'error') return 'error';
+    if (conn.status === 'expired') return 'expired';
+    if (conn.expires_at) {
+      const expiresAt = new Date(conn.expires_at);
+      if (expiresAt.getTime() < Date.now()) return 'expired';
+    }
+    return conn.connected ? 'connected' : 'disconnected';
   }
 
   let servers = $state<MergedServer[]>([]);
@@ -74,14 +90,18 @@
 
       servers = serversRes.servers.map((s) => {
         const conn = connectionMap.get(s.id);
+        const status = computeStatus(conn);
         return {
           id: s.id,
           name: s.name,
           description: s.description,
           icon: s.icon,
           transport_type: s.transport_type,
-          connected: conn ? conn.connected : s.connected,
+          connected: status === 'connected',
+          status,
           connected_at: conn?.connected_at ?? null,
+          expires_at: conn?.expires_at ?? null,
+          account_email: conn?.account_email ?? null,
           scopes: conn?.scopes ?? [],
           tools: s.tools ?? [],
         };
@@ -129,7 +149,7 @@
       if (response.success) {
         servers = servers.map((s) =>
           s.id === server.id
-            ? { ...s, connected: false, connected_at: null, scopes: [] }
+            ? { ...s, connected: false, status: 'disconnected' as ConnectionStatus, connected_at: null, expires_at: null, account_email: null, scopes: [] }
             : s
         );
         toast.success($_("userIntegrations.disconnected", { values: { name: server.name } }));
@@ -350,11 +370,13 @@
                 <td>
                   <span
                     class="status-badge"
-                    class:status-badge--connected={server.connected}
-                    class:status-badge--disconnected={!server.connected}
+                    class:status-badge--connected={server.status === 'connected'}
+                    class:status-badge--disconnected={server.status === 'disconnected'}
+                    class:status-badge--expired={server.status === 'expired'}
+                    class:status-badge--error={server.status === 'error'}
                   >
                     <span class="status-dot"></span>
-                    {server.connected ? $_("userIntegrations.status.connected") : $_("userIntegrations.status.disconnected")}
+                    {$_(`userIntegrations.status.${server.status}`)}
                   </span>
                 </td>
                 <td>
@@ -367,13 +389,30 @@
                   </button>
                 </td>
                 <td>
-                  <span class="date-text">
-                    {server.connected_at ? formatDate(server.connected_at) : "—"}
-                  </span>
+                  <div class="date-cell">
+                    {#if server.account_email}
+                      <span class="account-email">{server.account_email}</span>
+                    {/if}
+                    <span class="date-text">
+                      {server.connected_at ? formatDate(server.connected_at) : "—"}
+                    </span>
+                  </div>
                 </td>
                 <td>
                   <div class="action-buttons">
-                    {#if server.connected}
+                    {#if server.status === 'connected'}
+                      <button
+                        class="action-btn action-btn--reconnect"
+                        onclick={() => handleConnect(server)}
+                        disabled={connectingId === server.id}
+                        title={$_("userIntegrations.actions.reconnect")}
+                      >
+                        {#if connectingId === server.id}
+                          <span class="btn-spinner"></span>
+                        {:else}
+                          {$_("userIntegrations.actions.reconnect")}
+                        {/if}
+                      </button>
                       {#if disconnectConfirmId === server.id}
                         <div class="confirm-disconnect">
                           <span class="confirm-text">{$_("userIntegrations.actions.disconnectConfirm")}</span>
@@ -405,6 +444,35 @@
                           {$_("userIntegrations.actions.disconnect")}
                         </button>
                       {/if}
+                    {:else if server.status === 'expired'}
+                      <div class="expired-warning">
+                        <span class="expired-text">{$_("userIntegrations.status.expiredWarning")}</span>
+                      </div>
+                      <button
+                        class="action-btn action-btn--reconnect"
+                        onclick={() => handleConnect(server)}
+                        disabled={connectingId === server.id}
+                      >
+                        {#if connectingId === server.id}
+                          <span class="btn-spinner"></span>
+                          {$_("userIntegrations.actions.connecting")}
+                        {:else}
+                          {$_("userIntegrations.actions.reconnect")}
+                        {/if}
+                      </button>
+                    {:else if server.status === 'error'}
+                      <button
+                        class="action-btn action-btn--reconnect"
+                        onclick={() => handleConnect(server)}
+                        disabled={connectingId === server.id}
+                      >
+                        {#if connectingId === server.id}
+                          <span class="btn-spinner"></span>
+                          {$_("userIntegrations.actions.connecting")}
+                        {:else}
+                          {$_("userIntegrations.actions.reconnect")}
+                        {/if}
+                      </button>
                     {:else}
                       <button
                         class="action-btn action-btn--connect"
@@ -433,7 +501,9 @@
         {#each filteredServers() as server (server.id)}
           <div
             class="integration-card"
-            class:integration-card--connected={server.connected}
+            class:integration-card--connected={server.status === 'connected'}
+            class:integration-card--expired={server.status === 'expired'}
+            class:integration-card--error={server.status === 'error'}
           >
             <div class="card-header">
               <div class="card-icon-wrapper">
@@ -462,11 +532,13 @@
                 <h3 class="card-title">{server.name}</h3>
                 <span
                   class="card-status"
-                  class:status--connected={server.connected}
-                  class:status--disconnected={!server.connected}
+                  class:status--connected={server.status === 'connected'}
+                  class:status--disconnected={server.status === 'disconnected'}
+                  class:status--expired={server.status === 'expired'}
+                  class:status--error={server.status === 'error'}
                 >
                   <span class="status-dot"></span>
-                  {server.connected ? $_("userIntegrations.status.connected") : $_("userIntegrations.status.disconnected")}
+                  {$_(`userIntegrations.status.${server.status}`)}
                 </span>
               </div>
             </div>
@@ -483,19 +555,27 @@
               </button>
             </div>
 
-            {#if server.connected && server.connected_at}
+            {#if server.status === 'expired'}
+              <div class="card-expired-warning">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>{$_("userIntegrations.status.expiredWarning")}</span>
+              </div>
+            {/if}
+
+            {#if (server.status === 'connected' || server.status === 'expired') && server.connected_at}
               <div class="card-connection-info">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
+                {#if server.account_email}
+                  <span class="account-email">{server.account_email}</span>
+                  <span class="connection-separator">·</span>
+                {/if}
                 <span class="connection-date">
                   {$_("userIntegrations.connectedSince", { values: { date: formatDate(server.connected_at) } })}
                 </span>
@@ -503,7 +583,19 @@
             {/if}
 
             <div class="card-actions">
-              {#if server.connected}
+              {#if server.status === 'connected'}
+                <button
+                  class="action-btn action-btn--reconnect"
+                  onclick={() => handleConnect(server)}
+                  disabled={connectingId === server.id}
+                  style="margin-right: var(--space-sm);"
+                >
+                  {#if connectingId === server.id}
+                    <span class="btn-spinner"></span>
+                  {:else}
+                    {$_("userIntegrations.actions.reconnect")}
+                  {/if}
+                </button>
                 {#if disconnectConfirmId === server.id}
                   <div class="confirm-disconnect">
                     <span class="confirm-text">{$_("userIntegrations.actions.disconnectConfirm")}</span>
@@ -535,6 +627,32 @@
                     {$_("userIntegrations.actions.disconnect")}
                   </button>
                 {/if}
+              {:else if server.status === 'expired'}
+                <button
+                  class="action-btn action-btn--reconnect"
+                  onclick={() => handleConnect(server)}
+                  disabled={connectingId === server.id}
+                >
+                  {#if connectingId === server.id}
+                    <span class="btn-spinner"></span>
+                    {$_("userIntegrations.actions.connecting")}
+                  {:else}
+                    {$_("userIntegrations.actions.reconnect")}
+                  {/if}
+                </button>
+              {:else if server.status === 'error'}
+                <button
+                  class="action-btn action-btn--reconnect"
+                  onclick={() => handleConnect(server)}
+                  disabled={connectingId === server.id}
+                >
+                  {#if connectingId === server.id}
+                    <span class="btn-spinner"></span>
+                    {$_("userIntegrations.actions.connecting")}
+                  {:else}
+                    {$_("userIntegrations.actions.reconnect")}
+                  {/if}
+                </button>
               {:else}
                 <button
                   class="action-btn action-btn--connect"
@@ -671,31 +789,6 @@
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   }
 
-  .icon-grid,
-  .icon-table {
-    display: block;
-    width: 18px;
-    height: 18px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    opacity: 0.7;
-  }
-
-  .view-toggle-btn--active .icon-grid,
-  .view-toggle-btn--active .icon-table,
-  .view-toggle-btn:hover .icon-grid,
-  .view-toggle-btn:hover .icon-table {
-    opacity: 1;
-  }
-
-  .icon-grid {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='7' height='7'/%3E%3Crect x='14' y='3' width='7' height='7'/%3E%3Crect x='14' y='14' width='7' height='7'/%3E%3Crect x='3' y='14' width='7' height='7'/%3E%3C/svg%3E");
-  }
-
-  .icon-table {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round'%3E%3Cline x1='4' y1='6' x2='20' y2='6'/%3E%3Cline x1='4' y1='12' x2='20' y2='12'/%3E%3Cline x1='4' y1='18' x2='20' y2='18'/%3E%3C/svg%3E");
-  }
 
   /* Filter buttons */
   .filter-group {
@@ -822,6 +915,53 @@
     color: var(--text-secondary);
   }
 
+  .status-badge--expired {
+    color: var(--brand-yellow, #ecc94b);
+  }
+
+  .status-badge--error {
+    color: var(--brand-red);
+  }
+
+  .status-badge--expired .status-dot {
+    background: var(--brand-yellow, #ecc94b);
+    box-shadow: 0 0 6px rgba(236, 201, 75, 0.4);
+  }
+
+  .status-badge--error .status-dot {
+    background: var(--brand-red);
+    box-shadow: 0 0 6px rgba(var(--brand-red-rgb), 0.4);
+  }
+
+  .date-cell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+
+  .account-email {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .connection-separator {
+    color: var(--text-secondary);
+    opacity: 0.5;
+  }
+
+  .expired-warning {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .expired-text {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--brand-yellow, #ecc94b);
+  }
+
   .tools-count-btn {
     display: inline-flex;
     align-items: center;
@@ -943,6 +1083,22 @@
     border-color: color-mix(in oklab, var(--brand-green) 35%, transparent);
   }
 
+  .integration-card--expired {
+    border-color: color-mix(in oklab, var(--brand-yellow, #ecc94b) 25%, transparent);
+  }
+
+  .integration-card--expired:hover {
+    border-color: color-mix(in oklab, var(--brand-yellow, #ecc94b) 40%, transparent);
+  }
+
+  .integration-card--error {
+    border-color: color-mix(in oklab, var(--brand-red) 20%, transparent);
+  }
+
+  .integration-card--error:hover {
+    border-color: color-mix(in oklab, var(--brand-red) 35%, transparent);
+  }
+
   /* Card header */
   .card-header {
     display: flex;
@@ -1029,6 +1185,24 @@
     opacity: 0.5;
   }
 
+  .status--expired {
+    color: var(--brand-yellow, #ecc94b);
+  }
+
+  .status--expired .status-dot {
+    background: var(--brand-yellow, #ecc94b);
+    box-shadow: 0 0 6px rgba(236, 201, 75, 0.4);
+  }
+
+  .status--error {
+    color: var(--brand-red);
+  }
+
+  .status--error .status-dot {
+    background: var(--brand-red);
+    box-shadow: 0 0 6px rgba(var(--brand-red-rgb), 0.4);
+  }
+
   .status-badge .status-dot {
     width: 6px;
     height: 6px;
@@ -1090,6 +1264,24 @@
 
   .meta-tools-btn:hover {
     color: var(--brand-hover);
+  }
+
+  /* Card expired warning */
+  .card-expired-warning {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(236, 201, 75, 0.08);
+    border: 1px solid rgba(236, 201, 75, 0.15);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--brand-yellow, #ecc94b);
+  }
+
+  .card-expired-warning svg {
+    flex-shrink: 0;
   }
 
   /* Card tools panel */
@@ -1174,6 +1366,19 @@
     color: var(--brand-red);
     border-color: color-mix(in oklab, var(--brand-red) 30%, transparent);
     background: rgba(var(--brand-red-rgb), 0.06);
+    transform: translateY(-1px);
+  }
+
+  .action-btn--reconnect {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .action-btn--reconnect:hover:not(:disabled) {
+    color: var(--brand);
+    border-color: color-mix(in oklab, var(--brand) 30%, transparent);
+    background: rgba(var(--brand-rgb), 0.06);
     transform: translateY(-1px);
   }
 
@@ -1429,8 +1634,25 @@
       border-color: rgba(0, 0, 0, 0.12);
     }
 
+    .action-btn--reconnect {
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+
     .confirm-btn--no {
       border-color: rgba(0, 0, 0, 0.12);
+    }
+
+    .integration-card--expired {
+      border-color: color-mix(in oklab, var(--brand-yellow, #ecc94b) 30%, transparent);
+    }
+
+    .integration-card--error {
+      border-color: color-mix(in oklab, var(--brand-red) 25%, transparent);
+    }
+
+    .card-expired-warning {
+      background: rgba(236, 201, 75, 0.06);
+      border-color: rgba(236, 201, 75, 0.12);
     }
 
     .tool-item {

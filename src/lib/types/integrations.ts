@@ -20,13 +20,15 @@ export interface McpServerListResponse {
 
 // GET /mcp/connections
 export interface McpConnection {
+  account_email: string | null;
   connected: boolean;
   connected_at: string;
   description: string;
-  expires_at: string;
+  expires_at: string | null;
   scopes: string[];
   server_id: string;
   server_name: string;
+  status: 'connected' | 'expired' | 'error' | 'disconnected';
 }
 
 export interface McpConnectionListResponse {

@@ -227,6 +227,19 @@
     }
   }
 
+  // Derived image count for dynamic grid sizing
+  const imageFiles = $derived(message.files?.filter(f => f.type?.startsWith('image/')) ?? []);
+  const imageCount = $derived(imageFiles.length);
+  const nonImageFiles = $derived(message.files?.filter(f => !f.type?.startsWith('image/')) ?? []);
+
+  // Compute grid-template-columns dynamically (repeat() needs a real integer, not var())
+  // Fixed-size columns so every image is identical; parent shrinks via fit-content
+  const gridColumns = $derived.by(() => {
+    const imgs = imageCount;
+    const cols = Math.min(imgs || 1, 3);
+    return `repeat(${cols}, var(--img-size))`;
+  });
+
   // Helper functions for file handling
   function isImage(type?: string): boolean {
     return type?.startsWith('image/') || false;
@@ -358,6 +371,7 @@
   class:assistant={message.role !== 'user'}
   class:streaming={message.isStreaming}
   class:actions-visible={showActions}
+  class:has-images={message.role === 'user' && imageCount > 0}
   bind:this={messageContainer}
   onclick={handleMessageTap}
 >
@@ -550,7 +564,10 @@
         <div class="message-body">
           {@html renderedContent}
           {#if message.files && message.files.length > 0}
-            <div class="message-files">
+            <div
+              class="message-files"
+              style:grid-template-columns={gridColumns}
+            >
               {#each message.files as file}
                 {#if isImage(file.type)}
                   {#if fileLoadingStates.get(file.id)}
@@ -676,6 +693,11 @@
   .message.user {
     flex-direction: row-reverse;
     align-self: flex-end;
+    max-width: 75%;
+  }
+
+  .message.user.has-images {
+    max-width: 90%;
   }
 
   .message.assistant {
@@ -745,6 +767,9 @@
     border-radius: var(--glass-radius);
     border-bottom-right-radius: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
     box-shadow:
       0 2px 12px rgba(var(--brand-rgb), 0.25),
       0 1px 2px rgba(var(--brand-rgb), 0.15),
@@ -765,6 +790,10 @@
     line-height: 1.6;
     white-space: pre-wrap;
     word-wrap: break-word;
+  }
+
+  .user-message p:empty {
+    display: none;
   }
 
   /* Assistant message bubble - frosted glass effect */
@@ -1236,21 +1265,15 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* ── Standardized Image Grid System ── */
   .message-files {
-    display: flex;
+    --img-size: 160px;
+    display: grid;
+    /* grid-template-columns is set dynamically via inline style */
     gap: var(--space-sm);
     margin-top: var(--space-md);
-  }
-
-  .message-image {
-    max-width: min(220px, 100%);
-    max-height: 400px;
-    border-radius: var(--radius-md);
-    object-fit: contain;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-    display: block;
-    overflow: hidden;
+    width: fit-content;
+    max-width: 100%;
   }
 
   .message-image-btn {
@@ -1259,31 +1282,30 @@
     padding: 0;
     cursor: pointer;
     display: block;
+    width: var(--img-size);
+    height: var(--img-size);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    flex-shrink: 0;
   }
 
   .message-image-btn:focus-visible {
     outline: 2px solid var(--brand);
     outline-offset: 2px;
+  }
+
+  .message-image {
+    width: var(--img-size);
+    height: var(--img-size);
+    object-fit: cover;
     border-radius: var(--radius-md);
-  }
-
-  /* Responsive image sizing */
-  @media (max-width: 768px) {
-    .message-image {
-      max-width: min(180px, 100%);
-      max-height: 300px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .message-image {
-      max-width: min(140px, 100%);
-      max-height: 250px;
-    }
+    display: block;
+    transition: transform 0.2s ease, filter 0.2s ease;
   }
 
   .message-image:hover {
-    transform: scale(1.02);
+    transform: scale(1.03);
+    filter: brightness(1.05);
   }
 
   .user-message .message-image {
@@ -1292,6 +1314,76 @@
 
   .assistant-message .message-image {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* ── User message: dynamic flex-wrap image grid ── */
+  .user-message .message-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-top: var(--space-sm);
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+  }
+
+  .user-message .message-image-btn {
+    width: clamp(3.5rem, 8vw, 5.5rem);
+    height: clamp(3.5rem, 8vw, 5.5rem);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    flex: 0 0 auto;
+  }
+
+  .user-message .message-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+  }
+
+  .user-message .image-loader {
+    width: clamp(3.5rem, 8vw, 5.5rem);
+    height: clamp(3.5rem, 8vw, 5.5rem);
+    aspect-ratio: auto;
+    overflow: hidden;
+    padding: 0.25rem;
+    gap: 0.15rem;
+  }
+
+  .user-message .image-loader .spinner {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-width: 2px;
+  }
+
+  .user-message .image-loader .loader-text {
+    font-size: 0.5rem;
+    line-height: 1;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  /* Responsive grid breakpoints */
+  @media (max-width: 768px) {
+    .message-files { --img-size: 120px; }
+    .user-message .message-image-btn,
+    .user-message .image-loader {
+      width: clamp(3rem, 12vw, 4.5rem);
+      height: clamp(3rem, 12vw, 4.5rem);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .message-files { --img-size: 100px; }
+    .user-message .message-image-btn,
+    .user-message .image-loader {
+      width: clamp(2.5rem, 15vw, 3.5rem);
+      height: clamp(2.5rem, 15vw, 3.5rem);
+    }
   }
 
   .file-box {
@@ -1372,11 +1464,10 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-sm);
-    padding: var(--space-xl);
     background: rgba(255, 255, 255, 0.03);
     border-radius: var(--radius-md);
-    min-height: 150px;
-    max-width: 300px;
+    aspect-ratio: 1 / 1;
+    width: 100%;
   }
 
   .spinner {
