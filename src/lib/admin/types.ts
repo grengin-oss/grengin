@@ -288,6 +288,11 @@ export type BudgetPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearl
 
 export type ActionOnExceed = 'warn' | 'block';
 
+export interface AllowedModel {
+  model: string;
+  provider: string;
+}
+
 export interface Department {
   id: string;
   name: string;
@@ -305,6 +310,7 @@ export interface Department {
   budget_used: number;
   budget_period: BudgetPeriod;
   action_on_exceed?: ActionOnExceed;
+  allowed_models?: AllowedModel[] | null;
   created_at: string;
   updated_at: string;
   children?: Department[];
@@ -337,6 +343,7 @@ export interface SetBudgetRequest {
   budget_allocated: number;
   budget_period: BudgetPeriod;
   action_on_exceed: ActionOnExceed;
+  allowed_models?: AllowedModel[] | null;
 }
 
 export interface DepartmentMember {

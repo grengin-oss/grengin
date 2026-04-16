@@ -5,10 +5,10 @@ import type {
   CreateDepartmentRequest, 
   UpdateDepartmentRequest,
   SetBudgetRequest,
+  AllowedModel,
   DepartmentMembersResponse,
   BudgetOverview,
-  DepartmentTreeResponse,
-  AdministeredDepartmentsResponse
+  DepartmentTreeResponse
 } from '../../admin/types.js';
 
 export interface GetDepartmentsParams {
@@ -55,6 +55,16 @@ export async function updateDepartment(
   return request<Department>(`/admin/departments/${departmentId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
+  });
+}
+
+export async function updateDepartmentAllowedModels(
+  departmentId: string,
+  allowedModels: AllowedModel[]
+): Promise<Department> {
+  return request<Department>(`/admin/departments/${departmentId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ allowed_models: allowedModels }),
   });
 }
 
@@ -122,6 +132,6 @@ export async function removeDepartmentMembers(
   });
 }
 
-export async function getAdministeredDepartments(): Promise<AdministeredDepartmentsResponse> {
-  return request<AdministeredDepartmentsResponse>('/me/administered-departments');
+export async function getAdministeredDepartments(): Promise<DepartmentListResponse> {
+  return request<DepartmentListResponse>('/me/administered-departments');
 }

@@ -7,27 +7,29 @@
   import { _ } from "svelte-i18n";
   import { getBudgetOverview } from "../../api/admin/departments.js";
   import LoadingSpinner from "./LoadingSpinner.svelte";
+  import DepartmentAllowedModels from "./DepartmentAllowedModels.svelte";
+  import Modal from "./Modal.svelte";
   
   interface Props {
     department: Department;
-    canEdit?: boolean;
+    canEditBudget?: boolean;
   }
   
-  let { department, canEdit = true }: Props = $props();
+  let { department, canEditBudget = true }: Props = $props();
   
-  let isEditing = $state(false);
+  let isEditingBudget = $state(false);
   let budgetAmount = $state(department.budget_allocated);
   let budgetPeriod = $state<BudgetPeriod>(department.budget_period);
   let actionOnExceed = $state<ActionOnExceed>(department.action_on_exceed || 'warn');
   let isSubmitting = $state(false);
   let budgetOverview = $state<BudgetOverview | null>(null);
   let isLoadingOverview = $state(false);
-  let showSaveConfirmation = $state(false);
+  let showSaveBudgetConfirmation = $state(false);
   
   // Reactively fetch budget overview whenever department changes
   $effect(() => {
-    isEditing = false;
-    showSaveConfirmation = false;
+    isEditingBudget = false;
+    showSaveBudgetConfirmation = false;
     fetchBudgetOverview();
   });
    
@@ -77,7 +79,7 @@
   };
   
   function startEditing() {
-    if (!canEdit) return;
+    if (!canEditBudget) return;
     // Use budgetOverview data if available (most recent), otherwise fall back to department data
     if (budgetOverview) {
       budgetAmount = budgetOverview.budget_allocated;
@@ -87,11 +89,12 @@
       budgetPeriod = department.budget_period;
     }
     actionOnExceed = department.action_on_exceed || 'warn';
-    isEditing = true;
+    isEditingBudget = true;
   }
   
   function cancelEditing() {
-    isEditing = false;
+    isEditingBudget = false;
+    showSaveBudgetConfirmation = false;
   }
   
   function saveBudget() {
@@ -106,11 +109,11 @@
     }
     
     // Show confirmation UI
-    showSaveConfirmation = true;
+    showSaveBudgetConfirmation = true;
   }
   
   function cancelSaveConfirmation() {
-    showSaveConfirmation = false;
+    showSaveBudgetConfirmation = false;
   }
   
   async function confirmSave() {
@@ -122,8 +125,8 @@
         action_on_exceed: actionOnExceed,
       });
       toast.success($_('admin.departments.budgetUpdated'));
-      isEditing = false;
-      showSaveConfirmation = false;
+      isEditingBudget = false;
+      showSaveBudgetConfirmation = false;
     } catch (error) {
       const errorMessage = error instanceof ApiError 
         ? getLocalizedError(error, 'description', $_) 
@@ -142,126 +145,24 @@
 <div class="budget-management">
   <div class="budget-header">
     <h3>{$_('admin.departments.budgetOverview')}</h3>
-    {#if !isEditing && canEdit}
+    {#if !isEditingBudget && canEditBudget}
       <button class="btn-secondary" onclick={startEditing}>
         {$_('admin.departments.editBudget')}
       </button>
     {/if}
   </div>
   
-  {#if isEditing}
-    <div class="budget-form">
-      {#if !showSaveConfirmation}
-        <div class="form-row">
-          <div class="form-group">
-            <label for="budget-amount">{$_('admin.departments.budgetAmount')}</label>
-            <input
-              id="budget-amount"
-              type="number"
-              step="0.01"
-              min="0"
-              bind:value={budgetAmount}
-              disabled={isSubmitting}
-            />
-          </div>
-          
-          <div class="form-group">
-            <label for="budget-period">{$_('admin.departments.budgetPeriod')}</label>
-            <select
-              id="budget-period"
-              bind:value={budgetPeriod}
-              disabled={isSubmitting}
-            >
-              <option value="daily">{$_('admin.departments.budgetPeriods.daily')}</option>
-              <option value="weekly">{$_('admin.departments.budgetPeriods.weekly')}</option>
-              <option value="monthly">{$_('admin.departments.budgetPeriods.monthly')}</option>
-              <option value="quarterly">{$_('admin.departments.budgetPeriods.quarterly')}</option>
-              <option value="yearly">{$_('admin.departments.budgetPeriods.yearly')}</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label for="action-on-exceed">{$_('admin.departments.actionOnExceed')}</label>
-            <select
-              id="action-on-exceed"
-              bind:value={actionOnExceed}
-              disabled={isSubmitting}
-            >
-              <option value="warn">{$_('admin.departments.actionOnExceedWarn')}</option>
-              <option value="block">{$_('admin.departments.actionOnExceedBlock')}</option>
-            </select>
-          </div>
-        </div>
-      {/if}
-      
-      {#if !showSaveConfirmation}
-        <div class="form-actions">
-          <button 
-            class="btn-secondary" 
-            onclick={cancelEditing}
-            disabled={isSubmitting}
-          >
-            {$_('common.cancel')}
-          </button>
-          <button 
-            class="btn-primary" 
-            onclick={saveBudget}
-            disabled={isSubmitting}
-          >
-            {$_('admin.departments.saveBudget')}
-          </button>
-        </div>
-      {:else}
-        <div class="save-confirmation">
-          <div class="confirmation-message">
-            <h4>{$_('admin.departments.confirmBudgetUpdate')}</h4>
-            <p>{$_('admin.departments.confirmBudgetMessage')}</p>
-            <div class="confirmation-details">
-              <div class="detail-row">
-                <span class="detail-label">{$_('admin.departments.budgetAmount')}:</span>
-                <span class="detail-value">{formatCurrency(budgetAmount)}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{$_('admin.departments.budgetPeriod')}:</span>
-                <span class="detail-value">{$_(`admin.departments.budgetPeriods.${budgetPeriod}`)}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{$_('admin.departments.actionOnExceed')}:</span>
-                <span class="detail-value">{actionOnExceed === 'warn' ? $_('admin.departments.actionOnExceedWarn') : $_('admin.departments.actionOnExceedBlock')}</span>
-              </div>
-            </div>
-          </div>
-          <div class="confirmation-actions">
-            <button 
-              class="btn-secondary" 
-              onclick={cancelSaveConfirmation}
-              disabled={isSubmitting}
-            >
-              {$_('common.cancel')}
-            </button>
-            <button 
-              class="btn-primary danger" 
-              onclick={confirmSave}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? $_('admin.common.saving') : $_('admin.departments.confirmAndSave')}
-            </button>
-          </div>
-        </div>
-      {/if}
+  {#if isLoadingOverview}
+    <div class="loading-state">
+      <LoadingSpinner size="md" text={$_('admin.departments.loadingBudgets')} />
     </div>
-  {:else}
-    {#if isLoadingOverview}
-      <div class="loading-state">
-        <LoadingSpinner size="md" text={$_('admin.departments.loadingBudgets')} />
-      </div>
-    {:else if budgetOverview}
-      <div class="budget-stats">
+  {:else if budgetOverview}
+    <div class="budget-stats">
         <div class="stat-row">
           <div class="stat-item">
             <span class="stat-label">{$_('admin.departments.budgetAllocated')}</span>
             <span class="stat-value">{formatCurrency(budgetOverview.budget_allocated)}</span>
-            <span class="stat-period">per {$_(`admin.departments.budgetPeriods.${budgetOverview.period}`)}</span>
+            <span class="stat-period">{$_('admin.departments.budgetPer')} {$_(`admin.departments.budgetPeriods.${budgetOverview.period}`)}</span>
           </div>
           
           <div class="stat-item">
@@ -310,45 +211,51 @@
           {/if}
         </div>
       </div>
-    {:else}
-      <div class="empty-state">
-        <p>{$_('admin.departments.noBudgetData')}</p>
-      </div>
-    {/if}
-    
-    {#if budgetOverview}
-      <div class="budget-visualization">
-        <div class="progress-bar">
-          <div 
-            class="progress-segment used {getUsageColorClass(usagePercent)}" 
-            style="width: {Math.min(usagePercent, 100)}%"
-            title="Used (Direct): {formatCurrency(budgetOverview.budget_used)} ({usagePercent.toFixed(1)}%)"
-          ></div>
-          <div 
-            class="progress-segment distributed" 
-            style="width: {Math.min(distributedPercent, 100 - usagePercent)}%"
-            title="Distributed: {formatCurrency(budgetOverview.budget_distributed)}"
-          ></div>
-        </div>
-        
-        <div class="progress-legend">
-          <div class="legend-item">
-            <span class="legend-color used {getUsageColorClass(usagePercent)}"></span>
-            <span>{$_('admin.departments.legendUsedDirect')}</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color distributed"></span>
-            <span>{$_('admin.departments.legendDistributed')}</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color available"></span>
-            <span>{$_('admin.departments.legendAvailable')}</span>
-          </div>
-        </div>
-      </div>
-    {/if}
+  {:else}
+    <div class="empty-state">
+      <p>{$_('admin.departments.noBudgetData')}</p>
+    </div>
   {/if}
   
+  {#if budgetOverview}
+    <div class="budget-visualization">
+      <div class="progress-bar">
+        <div 
+          class="progress-segment used {getUsageColorClass(usagePercent)}" 
+          style="width: {Math.min(usagePercent, 100)}%"
+          title={$_('admin.departments.progressBarTooltipUsedDirect', {
+            values: {
+              amount: formatCurrency(budgetOverview.budget_used),
+              percent: usagePercent.toFixed(1),
+            },
+          })}
+        ></div>
+        <div 
+          class="progress-segment distributed" 
+          style="width: {Math.min(distributedPercent, 100 - usagePercent)}%"
+          title={$_('admin.departments.progressBarTooltipDistributed', {
+            values: { amount: formatCurrency(budgetOverview.budget_distributed) },
+          })}
+        ></div>
+      </div>
+      
+      <div class="progress-legend">
+        <div class="legend-item">
+          <span class="legend-color used {getUsageColorClass(usagePercent)}"></span>
+          <span>{$_('admin.departments.legendUsedDirect')}</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color distributed"></span>
+          <span>{$_('admin.departments.legendDistributed')}</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color available"></span>
+          <span>{$_('admin.departments.legendAvailable')}</span>
+        </div>
+      </div>
+    </div>
+  {/if}
+
   {#if budgetOverview && budgetOverview.sub_department_budgets.length > 0}
     <div class="child-budgets">
       <h4>{$_('admin.departments.childBudgets')}</h4>
@@ -376,6 +283,113 @@
         {/each}
       </div>
     </div>
+  {/if}
+
+  <DepartmentAllowedModels {department} canEditModels={canEditBudget} />
+  
+  {#if isEditingBudget}
+    <Modal isOpen={isEditingBudget} onclose={cancelEditing} title={$_('admin.departments.editBudget')}>
+      <div class="budget-form">
+        {#if !showSaveBudgetConfirmation}
+          <div class="form-row">
+            <div class="form-group">
+              <label for="budget-amount">{$_('admin.departments.budgetAmount')}</label>
+              <input
+                id="budget-amount"
+                type="number"
+                step="0.01"
+                min="0"
+                bind:value={budgetAmount}
+                disabled={isSubmitting}
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="budget-period">{$_('admin.departments.budgetPeriod')}</label>
+              <select
+                id="budget-period"
+                bind:value={budgetPeriod}
+                disabled={isSubmitting}
+              >
+                <option value="daily">{$_('admin.departments.budgetPeriods.daily')}</option>
+                <option value="weekly">{$_('admin.departments.budgetPeriods.weekly')}</option>
+                <option value="monthly">{$_('admin.departments.budgetPeriods.monthly')}</option>
+                <option value="quarterly">{$_('admin.departments.budgetPeriods.quarterly')}</option>
+                <option value="yearly">{$_('admin.departments.budgetPeriods.yearly')}</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="action-on-exceed">{$_('admin.departments.actionOnExceed')}</label>
+              <select
+                id="action-on-exceed"
+                bind:value={actionOnExceed}
+                disabled={isSubmitting}
+              >
+                <option value="warn">{$_('admin.departments.actionOnExceedWarn')}</option>
+                <option value="block">{$_('admin.departments.actionOnExceedBlock')}</option>
+              </select>
+            </div>
+          </div>
+        {/if}
+        
+        {#if !showSaveBudgetConfirmation}
+          <div class="form-actions">
+            <button 
+              class="btn-secondary" 
+              onclick={cancelEditing}
+              disabled={isSubmitting}
+            >
+              {$_('common.cancel')}
+            </button>
+            <button 
+              class="btn-primary" 
+              onclick={saveBudget}
+              disabled={isSubmitting}
+            >
+              {$_('admin.departments.saveBudget')}
+            </button>
+          </div>
+        {:else}
+          <div class="save-confirmation">
+            <div class="confirmation-message">
+              <h4>{$_('admin.departments.confirmBudgetUpdate')}</h4>
+              <p>{$_('admin.departments.confirmBudgetMessage')}</p>
+              <div class="confirmation-details">
+                <div class="detail-row">
+                  <span class="detail-label">{$_('admin.departments.budgetAmount')}:</span>
+                  <span class="detail-value">{formatCurrency(budgetAmount)}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">{$_('admin.departments.budgetPeriod')}:</span>
+                  <span class="detail-value">{$_(`admin.departments.budgetPeriods.${budgetPeriod}`)}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">{$_('admin.departments.actionOnExceed')}:</span>
+                  <span class="detail-value">{actionOnExceed === 'warn' ? $_('admin.departments.actionOnExceedWarn') : $_('admin.departments.actionOnExceedBlock')}</span>
+                </div>
+              </div>
+            </div>
+            <div class="confirmation-actions">
+              <button 
+                class="btn-secondary" 
+                onclick={cancelSaveConfirmation}
+                disabled={isSubmitting}
+              >
+                {$_('common.cancel')}
+              </button>
+              <button 
+                class="btn-primary danger" 
+                onclick={confirmSave}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? $_('admin.common.saving') : $_('admin.departments.confirmAndSave')}
+              </button>
+            </div>
+          </div>
+        {/if}
+      </div>
+    </Modal>
   {/if}
 </div>
 
@@ -461,7 +475,7 @@
   
   .stat-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 20px;
     margin-bottom: 16px;
   }

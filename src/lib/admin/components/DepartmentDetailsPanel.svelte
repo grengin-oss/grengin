@@ -313,7 +313,7 @@
           aria-labelledby={getTabId('budget')}
           tabindex="0"
         >
-          <BudgetManagement {department} canEdit={canEditBudget}/>
+          <BudgetManagement {department} canEditBudget={canEditBudget}/>
         </div>
       {/if}
     </div>
