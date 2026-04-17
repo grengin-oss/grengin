@@ -114,7 +114,8 @@
     "connectors": "커넥터",
     "viewAllAlerts": "모든 알림 보기",
     "noRecentAlerts": "아직 알림이 없습니다",
-    "newAlert": "새 알림"
+    "newAlert": "새 알림",
+    "promptLibrary": "Prompt Library"
   },
   "alerts": {
     "title": "알림",
@@ -807,6 +808,81 @@
       "table": "표 보기",
       "tool": "도구",
       "tools": "도구"
+    },
+    "promptLibrary": {
+      "title": "Prompt Library",
+      "subtitle": "Manage role-based prompts for your organization",
+      "createPrompt": "Create Prompt",
+      "editPrompt": "Edit Prompt",
+      "previewPrompt": "Preview Prompt",
+      "deletePrompt": "Delete Prompt",
+      "searchPlaceholder": "Search prompts...",
+      "allRoles": "All Roles",
+      "allTypes": "All Types",
+      "systemType": "System",
+      "userType": "User",
+      "clearFilters": "Clear",
+      "loading": "Loading prompts...",
+      "noPromptsTitle": "No prompts yet",
+      "noPromptsMessage": "Create your first prompt to get started",
+      "noMatchTitle": "No matching prompts",
+      "noMatchMessage": "Try adjusting your filters or search query",
+      "promptCount": "{count} prompt | {count} prompts",
+      "columns": {
+        "name": "Name",
+        "role": "Role",
+        "type": "Type",
+        "variables": "Variables",
+        "usage": "Usage",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "form": {
+        "name": "Name",
+        "namePlaceholder": "e.g. Customer Support Greeting",
+        "nameRequired": "Name is required",
+        "role": "Role",
+        "roleRequired": "Role is required",
+        "selectRole": "Select a role...",
+        "promptText": "Prompt Text",
+        "promptTextPlaceholder": "Enter prompt text... Use {{variable_name}} for dynamic variables",
+        "promptTextRequired": "Prompt text is required",
+        "variables": "Variables",
+        "addVariable": "Add",
+        "addVariablePlaceholder": "Add a variable name...",
+        "variableExists": "Variable already exists",
+        "variablesHelp": "Variables can be referenced in the prompt text as {{variable_name}}",
+        "detectedVariables": "Detected variables:",
+        "systemPrompt": "System prompt",
+        "systemPromptHelp": "System prompts are used as default instructions for the AI model",
+        "creating": "Creating...",
+        "saving": "Saving...",
+        "createButton": "Create Prompt",
+        "saveButton": "Save Changes"
+      },
+      "preview": {
+        "name": "Name",
+        "type": "Type",
+        "sampleValues": "Sample Variable Values",
+        "sampleHint": "Enter sample values below to preview how the prompt will render",
+        "samplePlaceholder": "Enter sample value...",
+        "renderedOutput": "Rendered Output"
+      },
+      "delete": {
+        "confirmMessage": "Are you sure you want to delete",
+        "warning": "This action cannot be undone.",
+        "deleting": "Deleting..."
+      },
+      "toast": {
+        "created": "Prompt created successfully",
+        "updated": "Prompt updated successfully",
+        "deleted": "Prompt deleted successfully",
+        "failedToLoad": "Failed to load prompts",
+        "failedToSave": "Failed to save prompt",
+        "failedToDelete": "Failed to delete prompt"
+      },
+      "unknown": "Unknown",
+      "none": "None"
     }
   },
   "permissions": {
@@ -951,6 +1027,20 @@
       "searchedTheWeb": "웹을 검색했습니다",
       "results": "개 결과"
     },
+    "toolExecution": {
+      "timeline": "Turu siljaeng taimlain",
+      "input": "Ipryeok",
+      "output": "Chulryeok",
+      "running": "Siljaeng jung",
+      "completed": "Wanryeo",
+      "failed": "Silpae",
+      "row": "haeng",
+      "rows": "haeng",
+      "imageResult": "Imiji gyeolgwa",
+      "resource": "Risoseu",
+      "unknownError": "Al su eopseun oeroga balsaenghaetseumnida",
+      "duration": "Gigan"
+    },
     "mcpAuth": {
       "connectTo": "{name}에 연결",
       "connectedTo": "{name}에 연결됨",
@@ -961,6 +1051,8 @@
       "failedToGetAuthUrl": "인증 URL을 가져오지 못했습니다",
       "popupBlocked": "팝업이 차단되었습니다. 이 사이트에 대해 팝업을 허용해 주세요.",
       "retry": "다시 시도",
+      "notNow": "지금은 안 함",
+      "requestedPermissions": "요청된 권한:",
       "manageInSettings": "연결된 계정은 설정에서 관리할 수 있습니다."
     }
   },

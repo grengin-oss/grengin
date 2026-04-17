@@ -303,8 +303,16 @@
         },
         onToolCall: (toolCall) => {
           if (pendingStreamingMessage) {
-            // Initialize or replace the tool call entry; status remains 'pending' until results arrive
-            const updatedToolCalls = [...(pendingStreamingMessage.toolCalls || []), toolCall];
+            // Merge by tool_id: update existing entry or add new one
+            const existingCalls = pendingStreamingMessage.toolCalls || [];
+            const existingIndex = existingCalls.findIndex(tc => tc.tool_id === toolCall.tool_id);
+            let updatedToolCalls;
+            if (existingIndex >= 0) {
+              updatedToolCalls = [...existingCalls];
+              updatedToolCalls[existingIndex] = toolCall;
+            } else {
+              updatedToolCalls = [...existingCalls, toolCall];
+            }
             const mergedWebSearch = mergeWebSearchResults(updatedToolCalls, pendingStreamingMessage.toolsResults || [], 'running');
 
             pendingStreamingMessage = {
@@ -312,6 +320,8 @@
               toolCalls: updatedToolCalls,
               mergedWebSearch: mergedWebSearch,
             };
+
+            currentStreamingMessage = {...pendingStreamingMessage};
 
             // Update the message in the array
             messages = messages.map(m => 
@@ -324,12 +334,21 @@
         },
         onToolResult: (toolResult) => {
           if (pendingStreamingMessage) {
-            // update tool result
+            // Update tool result
             const updatedToolResults = [...pendingStreamingMessage.toolsResults || [], toolResult];
-            const mergedWebSearch = mergeWebSearchResults(pendingStreamingMessage.toolCalls || [], updatedToolResults || [], 'running');
+
+            // Mark corresponding tool call as completed/error
+            const updatedToolCalls = (pendingStreamingMessage.toolCalls || []).map(tc =>
+              tc.tool_id === toolResult.tool_id
+                ? { ...tc, status: (toolResult.status === 'error' ? 'error' : 'completed') as import('../../../types/toolCall').ToolCallStatus }
+                : tc
+            );
+
+            const mergedWebSearch = mergeWebSearchResults(updatedToolCalls, updatedToolResults || [], 'running');
 
             pendingStreamingMessage = {
               ...pendingStreamingMessage,
+              toolCalls: updatedToolCalls,
               toolsResults: updatedToolResults,
               mergedWebSearch
             };
@@ -569,7 +588,16 @@
         },
         onToolCall: (toolCall) => {
           if (pendingStreamingMessage) {
-            const updatedToolCalls = [...(pendingStreamingMessage.toolCalls || []), toolCall];
+            // Merge by tool_id: update existing entry or add new one
+            const existingCalls = pendingStreamingMessage.toolCalls || [];
+            const existingIndex = existingCalls.findIndex(tc => tc.tool_id === toolCall.tool_id);
+            let updatedToolCalls;
+            if (existingIndex >= 0) {
+              updatedToolCalls = [...existingCalls];
+              updatedToolCalls[existingIndex] = toolCall;
+            } else {
+              updatedToolCalls = [...existingCalls, toolCall];
+            }
             const mergedWebSearch = mergeWebSearchResults(updatedToolCalls, pendingStreamingMessage.toolsResults || [], 'running');
 
             pendingStreamingMessage = {
@@ -587,10 +615,19 @@
         onToolResult: (toolResult) => {
           if (pendingStreamingMessage) {
             const updatedToolResults = [...pendingStreamingMessage.toolsResults || [], toolResult];
-            const mergedWebSearch = mergeWebSearchResults(pendingStreamingMessage.toolCalls || [], updatedToolResults || [], 'running');
+
+            // Mark corresponding tool call as completed/error
+            const updatedToolCalls = (pendingStreamingMessage.toolCalls || []).map(tc =>
+              tc.tool_id === toolResult.tool_id
+                ? { ...tc, status: (toolResult.status === 'error' ? 'error' : 'completed') as import('../../../types/toolCall').ToolCallStatus }
+                : tc
+            );
+
+            const mergedWebSearch = mergeWebSearchResults(updatedToolCalls, updatedToolResults || [], 'running');
 
             pendingStreamingMessage = {
               ...pendingStreamingMessage,
+              toolCalls: updatedToolCalls,
               toolsResults: updatedToolResults,
               mergedWebSearch
             };

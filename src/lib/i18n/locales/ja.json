@@ -114,7 +114,8 @@
     "connectors": "コネクタ",
     "viewAllAlerts": "すべてのアラートを見る",
     "noRecentAlerts": "まだアラートはありません",
-    "newAlert": "新しいアラート"
+    "newAlert": "新しいアラート",
+    "promptLibrary": "Prompt Library"
   },
   "alerts": {
     "title": "アラート",
@@ -807,6 +808,81 @@
       "table": "テーブル表示",
       "tool": "ツール",
       "tools": "ツール"
+    },
+    "promptLibrary": {
+      "title": "Prompt Library",
+      "subtitle": "Manage role-based prompts for your organization",
+      "createPrompt": "Create Prompt",
+      "editPrompt": "Edit Prompt",
+      "previewPrompt": "Preview Prompt",
+      "deletePrompt": "Delete Prompt",
+      "searchPlaceholder": "Search prompts...",
+      "allRoles": "All Roles",
+      "allTypes": "All Types",
+      "systemType": "System",
+      "userType": "User",
+      "clearFilters": "Clear",
+      "loading": "Loading prompts...",
+      "noPromptsTitle": "No prompts yet",
+      "noPromptsMessage": "Create your first prompt to get started",
+      "noMatchTitle": "No matching prompts",
+      "noMatchMessage": "Try adjusting your filters or search query",
+      "promptCount": "{count} prompt | {count} prompts",
+      "columns": {
+        "name": "Name",
+        "role": "Role",
+        "type": "Type",
+        "variables": "Variables",
+        "usage": "Usage",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "form": {
+        "name": "Name",
+        "namePlaceholder": "e.g. Customer Support Greeting",
+        "nameRequired": "Name is required",
+        "role": "Role",
+        "roleRequired": "Role is required",
+        "selectRole": "Select a role...",
+        "promptText": "Prompt Text",
+        "promptTextPlaceholder": "Enter prompt text... Use {{variable_name}} for dynamic variables",
+        "promptTextRequired": "Prompt text is required",
+        "variables": "Variables",
+        "addVariable": "Add",
+        "addVariablePlaceholder": "Add a variable name...",
+        "variableExists": "Variable already exists",
+        "variablesHelp": "Variables can be referenced in the prompt text as {{variable_name}}",
+        "detectedVariables": "Detected variables:",
+        "systemPrompt": "System prompt",
+        "systemPromptHelp": "System prompts are used as default instructions for the AI model",
+        "creating": "Creating...",
+        "saving": "Saving...",
+        "createButton": "Create Prompt",
+        "saveButton": "Save Changes"
+      },
+      "preview": {
+        "name": "Name",
+        "type": "Type",
+        "sampleValues": "Sample Variable Values",
+        "sampleHint": "Enter sample values below to preview how the prompt will render",
+        "samplePlaceholder": "Enter sample value...",
+        "renderedOutput": "Rendered Output"
+      },
+      "delete": {
+        "confirmMessage": "Are you sure you want to delete",
+        "warning": "This action cannot be undone.",
+        "deleting": "Deleting..."
+      },
+      "toast": {
+        "created": "Prompt created successfully",
+        "updated": "Prompt updated successfully",
+        "deleted": "Prompt deleted successfully",
+        "failedToLoad": "Failed to load prompts",
+        "failedToSave": "Failed to save prompt",
+        "failedToDelete": "Failed to delete prompt"
+      },
+      "unknown": "Unknown",
+      "none": "None"
     }
   },
   "permissions": {
@@ -951,6 +1027,20 @@
       "searchedTheWeb": "ウェブを検索しました",
       "results": "件の結果"
     },
+    "toolExecution": {
+      "timeline": "ツール実行のタイムライン",
+      "input": "入力",
+      "output": "出力",
+      "running": "実行中",
+      "completed": "完了",
+      "failed": "失敗",
+      "row": "行",
+      "rows": "行",
+      "imageResult": "画像結果",
+      "resource": "リソース",
+      "unknownError": "不明なエラーが発生しました",
+      "duration": "時間"
+    },
     "mcpAuth": {
       "connectTo": "{name}に接続",
       "connectedTo": "{name}に接続しました",
@@ -961,6 +1051,8 @@
       "failedToGetAuthUrl": "認証URLの取得に失敗しました",
       "popupBlocked": "ポップアップがブロックされました。このサイトのポップアップを許可してください。",
       "retry": "再試行",
+      "notNow": "今はしない",
+      "requestedPermissions": "要求された権限:",
       "manageInSettings": "接続済みアカウントは設定で管理できます。"
     }
   },

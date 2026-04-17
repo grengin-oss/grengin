@@ -8,9 +8,17 @@
     onConnected: (serverId: string) => void;
     onError: (serverId: string, error: string) => void;
     onStatusChange: (serverId: string, status: McpAuthRequest['status']) => void;
+    onDismiss?: (serverId: string) => void;
   }
 
-  let { authRequest, onConnected, onError, onStatusChange }: Props = $props();
+  let { authRequest, onConnected, onError, onStatusChange, onDismiss }: Props = $props();
+
+  let dismissed = $state(false);
+
+  function handleDismiss() {
+    dismissed = true;
+    onDismiss?.(authRequest.server_id);
+  }
 
   let popupWindow: Window | null = null;
   let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -93,8 +101,10 @@
   });
 </script>
 
-{#if authRequest.status === 'connected'}
-  <div class="mcp-auth-prompt mcp-auth-prompt--connected">
+{#if dismissed}
+  <!-- Dismissed by user -->
+{:else if authRequest.status === 'connected'}
+  <div class="mcp-auth-prompt mcp-auth-prompt--connected" role="status" aria-label={$_('chat.mcpAuth.connectedTo', { values: { name: authRequest.server_name } })}>
     <div class="mcp-auth-icon mcp-auth-icon--success">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <circle cx="12" cy="12" r="10" fill="var(--brand-green)" stroke="var(--brand-green)"></circle>
@@ -108,7 +118,7 @@
     </div>
   </div>
 {:else if authRequest.status === 'error'}
-  <div class="mcp-auth-prompt mcp-auth-prompt--error">
+  <div class="mcp-auth-prompt mcp-auth-prompt--error" role="alert">
     <div class="mcp-auth-icon mcp-auth-icon--error">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"></circle>
@@ -121,13 +131,13 @@
       {#if authRequest.error}
         <span class="mcp-auth-error-detail">{authRequest.error}</span>
       {/if}
-      <button class="mcp-auth-retry-btn" onclick={handleConnect}>
+      <button class="mcp-auth-retry-btn" onclick={handleConnect} aria-label={$_('chat.mcpAuth.retry')}>
         {$_('chat.mcpAuth.retry')}
       </button>
     </div>
   </div>
 {:else}
-  <div class="mcp-auth-prompt">
+  <div class="mcp-auth-prompt" role="region" aria-label={$_('chat.mcpAuth.connectTo', { values: { name: authRequest.server_name } })}>
     <div class="mcp-auth-header">
       <div class="mcp-auth-icon">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -143,10 +153,21 @@
       <p class="mcp-auth-description">
         {$_('chat.mcpAuth.description', { values: { tool: authRequest.tool_name, name: authRequest.server_name } })}
       </p>
+      {#if authRequest.scopes && authRequest.scopes.length > 0}
+        <div class="mcp-auth-scopes">
+          <span class="mcp-auth-scopes-label">{$_('chat.mcpAuth.requestedPermissions')}</span>
+          <ul class="mcp-auth-scopes-list">
+            {#each authRequest.scopes as scope}
+              <li>{scope}</li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
       <button
         class="mcp-auth-connect-btn"
         onclick={handleConnect}
         disabled={authRequest.status === 'connecting'}
+        aria-label={$_('chat.mcpAuth.connectAccount', { values: { name: authRequest.server_name } })}
       >
         {#if authRequest.status === 'connecting'}
           <span class="mcp-auth-spinner"></span>
@@ -159,9 +180,18 @@
           <span>{$_('chat.mcpAuth.connectAccount', { values: { name: authRequest.server_name } })}</span>
         {/if}
       </button>
-      <p class="mcp-auth-footer">
-        {$_('chat.mcpAuth.manageInSettings')}
-      </p>
+      <div class="mcp-auth-actions">
+        <p class="mcp-auth-footer">
+          {$_('chat.mcpAuth.manageInSettings')}
+        </p>
+        <button
+          class="mcp-auth-dismiss-btn"
+          onclick={handleDismiss}
+          aria-label={$_('chat.mcpAuth.notNow')}
+        >
+          {$_('chat.mcpAuth.notNow')}
+        </button>
+      </div>
     </div>
   </div>
 {/if}
@@ -318,10 +348,64 @@
     opacity: 0.8;
   }
 
+  .mcp-auth-scopes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .mcp-auth-scopes-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .mcp-auth-scopes-list {
+    margin: 0;
+    padding: 0 0 0 1.25rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .mcp-auth-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
   .mcp-auth-footer {
     font-size: 0.6875rem;
     color: var(--text-tertiary);
     margin: 0;
+  }
+
+  .mcp-auth-dismiss-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--glass-stroke-light);
+    border-radius: 0.375rem;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .mcp-auth-dismiss-btn:hover {
+    background: var(--surface-subtle);
+    color: var(--text-secondary);
+    border-color: var(--glass-stroke);
+  }
+
+  .mcp-auth-dismiss-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
 
   .mcp-auth-spinner {

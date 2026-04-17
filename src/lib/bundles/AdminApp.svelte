@@ -13,6 +13,7 @@
     AlertsPage,
     MCPServers,
     McpOAuthCallback,
+    PromptLibrary,
   } from './admin-chunk';
 </script>
 
@@ -70,6 +71,13 @@
   <PermissionGuard permission={PERMISSIONS.mcpServers.view}>
     {#snippet children()}
       <MCPServers />
+    {/snippet}
+  </PermissionGuard>
+</Route>
+<Route path="/admin/prompt-library">
+  <PermissionGuard permission={PERMISSIONS.roles.view}>
+    {#snippet children()}
+      <PromptLibrary />
     {/snippet}
   </PermissionGuard>
 </Route>

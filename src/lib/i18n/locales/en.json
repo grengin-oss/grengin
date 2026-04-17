@@ -112,6 +112,7 @@
     "overview": "Overview",
     "accessControl": "Access Control",
     "connectors": "Connectors",
+    "promptLibrary": "Prompt Library",
     "viewAllAlerts": "View all alerts",
     "noRecentAlerts": "No alerts yet",
     "newAlert": "New alert"
@@ -807,6 +808,81 @@
       "table": "Table view",
       "tool": "tool",
       "tools": "tools"
+    },
+    "promptLibrary": {
+      "title": "Prompt Library",
+      "subtitle": "Manage role-based prompts for your organization",
+      "createPrompt": "Create Prompt",
+      "editPrompt": "Edit Prompt",
+      "previewPrompt": "Preview Prompt",
+      "deletePrompt": "Delete Prompt",
+      "searchPlaceholder": "Search prompts...",
+      "allRoles": "All Roles",
+      "allTypes": "All Types",
+      "systemType": "System",
+      "userType": "User",
+      "clearFilters": "Clear",
+      "loading": "Loading prompts...",
+      "noPromptsTitle": "No prompts yet",
+      "noPromptsMessage": "Create your first prompt to get started",
+      "noMatchTitle": "No matching prompts",
+      "noMatchMessage": "Try adjusting your filters or search query",
+      "promptCount": "{count} prompt | {count} prompts",
+      "columns": {
+        "name": "Name",
+        "role": "Role",
+        "type": "Type",
+        "variables": "Variables",
+        "usage": "Usage",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "form": {
+        "name": "Name",
+        "namePlaceholder": "e.g. Customer Support Greeting",
+        "nameRequired": "Name is required",
+        "role": "Role",
+        "roleRequired": "Role is required",
+        "selectRole": "Select a role...",
+        "promptText": "Prompt Text",
+        "promptTextPlaceholder": "Enter prompt text... Use {{variable_name}} for dynamic variables",
+        "promptTextRequired": "Prompt text is required",
+        "variables": "Variables",
+        "addVariable": "Add",
+        "addVariablePlaceholder": "Add a variable name...",
+        "variableExists": "Variable already exists",
+        "variablesHelp": "Variables can be referenced in the prompt text as {{variable_name}}",
+        "detectedVariables": "Detected variables:",
+        "systemPrompt": "System prompt",
+        "systemPromptHelp": "System prompts are used as default instructions for the AI model",
+        "creating": "Creating...",
+        "saving": "Saving...",
+        "createButton": "Create Prompt",
+        "saveButton": "Save Changes"
+      },
+      "preview": {
+        "name": "Name",
+        "type": "Type",
+        "sampleValues": "Sample Variable Values",
+        "sampleHint": "Enter sample values below to preview how the prompt will render",
+        "samplePlaceholder": "Enter sample value...",
+        "renderedOutput": "Rendered Output"
+      },
+      "delete": {
+        "confirmMessage": "Are you sure you want to delete",
+        "warning": "This action cannot be undone.",
+        "deleting": "Deleting..."
+      },
+      "toast": {
+        "created": "Prompt created successfully",
+        "updated": "Prompt updated successfully",
+        "deleted": "Prompt deleted successfully",
+        "failedToLoad": "Failed to load prompts",
+        "failedToSave": "Failed to save prompt",
+        "failedToDelete": "Failed to delete prompt"
+      },
+      "unknown": "Unknown",
+      "none": "None"
     }
   },
   "permissions": {
@@ -983,6 +1059,20 @@
       "searchedTheWeb": "Searched the web",
       "results": "results"
     },
+    "toolExecution": {
+      "timeline": "Tool execution timeline",
+      "input": "Input",
+      "output": "Output",
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed",
+      "row": "row",
+      "rows": "rows",
+      "imageResult": "Image result",
+      "resource": "Resource",
+      "unknownError": "An unknown error occurred",
+      "duration": "Duration"
+    },
     "mcpAuth": {
       "connectTo": "Connect to {name}",
       "connectedTo": "Connected to {name}",
@@ -993,6 +1083,8 @@
       "failedToGetAuthUrl": "Failed to get authorization URL",
       "popupBlocked": "Popup was blocked. Please allow popups for this site.",
       "retry": "Try again",
+      "notNow": "Not now",
+      "requestedPermissions": "Requested permissions:",
       "manageInSettings": "You can manage connected accounts in Settings."
     }
   },
