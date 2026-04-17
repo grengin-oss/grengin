@@ -23,6 +23,7 @@ export interface McpAuthRequest {
   server_name: string;
   tool_name: string;
   authorization_url?: string;
+  scopes?: string[];
   status: 'pending' | 'connecting' | 'connected' | 'error';
   error?: string;
   connected_as?: string;

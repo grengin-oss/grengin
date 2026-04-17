@@ -9,3 +9,4 @@ export { default as Analytics } from '$lib/admin/pages/Analytics.svelte';
 export { default as AlertsPage } from '$lib/features/notifications/AlertsPage.svelte';
 export { default as MCPServers } from '$lib/admin/pages/MCPServers.svelte';
 export { default as McpOAuthCallback } from '$lib/admin/pages/McpOAuthCallback.svelte';
+export { default as PromptLibrary } from '$lib/admin/pages/PromptLibrary.svelte';

@@ -255,6 +255,9 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
     const decoder = new TextDecoder();
     let buffer = '';
 
+    // Accumulate tool call input_text chunks by tool_id
+    const toolCallAccumulator = new Map<string, { tool_name: string; tool_id: string; kind: string; input_text: string; input?: { type: string; value: Record<string, unknown> }; status: string }>();
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -291,7 +294,30 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
               break;
             case 'tool_call':
               if (data?.tool_call) {
-                onToolCall?.(data.tool_call);
+                const tc = data.tool_call;
+                const existing = toolCallAccumulator.get(tc.tool_id);
+
+                if (existing) {
+                  if (tc.input_text) {
+                    existing.input_text += tc.input_text;
+                  }
+                  if (tc.input) {
+                    existing.input = tc.input;
+                    existing.status = 'running';
+                  }
+                  onToolCall?.({ ...existing });
+                } else {
+                  const newToolCall = {
+                    tool_name: tc.tool_name,
+                    tool_id: tc.tool_id,
+                    kind: tc.kind,
+                    input_text: tc.input_text || '',
+                    input: tc.input,
+                    status: tc.input ? 'running' : 'pending',
+                  };
+                  toolCallAccumulator.set(tc.tool_id, newToolCall);
+                  onToolCall?.(newToolCall);
+                }
               }
               break;
             case 'tool_result':
@@ -306,6 +332,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
                   server_name: data.server_name,
                   tool_name: data.tool_name,
                   authorization_url: data.authorization_url,
+                  scopes: data.scopes,
                   status: 'pending',
                 });
               }

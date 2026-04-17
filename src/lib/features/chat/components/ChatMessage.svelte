@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ChatMessage, McpAuthRequest } from '../../../types/chat';
+  import type { ToolResult } from '../../../types/toolCall';
   import { renderMarkdown, copyToClipboard } from '../../../utils/markdown';
   import { onMount, onDestroy, tick } from 'svelte';
   import type { ProviderInfo } from '../../../api/models';
@@ -48,6 +49,7 @@
   import { _ } from 'svelte-i18n';
   import { get } from 'svelte/store';
   import WebSearch from './WebSearch.svelte';
+  import ToolCallTimeline from './ToolCallTimeline.svelte';
   import McpOAuthPrompt from './McpOAuthPrompt.svelte';
 
   interface Props {
@@ -391,6 +393,16 @@
     {#if message.mergedWebSearch}
       <div class="tool-calls-container">
         <WebSearch mergedWebSearch={message.mergedWebSearch}/>
+      </div>
+    {/if}
+
+    <!-- MCP tool call timeline (non-web-search tools) -->
+    {#if message.toolCalls && message.toolCalls.some(tc => tc.kind !== 'web_search')}
+      <div class="tool-calls-container">
+        <ToolCallTimeline
+          toolCalls={message.toolCalls}
+          toolResults={message.toolsResults as ToolResult[] || []}
+        />
       </div>
     {/if}
 
