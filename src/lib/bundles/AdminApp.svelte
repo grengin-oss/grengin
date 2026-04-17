@@ -14,6 +14,7 @@
     MCPServers,
     McpOAuthCallback,
     PromptLibrary,
+    PromptEffectiveness,
   } from './admin-chunk';
 </script>
 
@@ -78,6 +79,13 @@
   <PermissionGuard permission={PERMISSIONS.roles.view}>
     {#snippet children()}
       <PromptLibrary />
+    {/snippet}
+  </PermissionGuard>
+</Route>
+<Route path="/admin/prompt-effectiveness">
+  <PermissionGuard permission={PERMISSIONS.roles.view}>
+    {#snippet children()}
+      <PromptEffectiveness />
     {/snippet}
   </PermissionGuard>
 </Route>

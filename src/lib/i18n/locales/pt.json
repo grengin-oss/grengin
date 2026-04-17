@@ -115,7 +115,8 @@
     "viewAllAlerts": "Ver todos os alertas",
     "noRecentAlerts": "Ainda não há alertas",
     "newAlert": "Novo alerta",
-    "promptLibrary": "Prompt Library"
+    "promptLibrary": "Prompt Library",
+    "promptEffectiveness": "Eficácia de Prompts"
   },
   "alerts": {
     "title": "Alertas",
@@ -882,7 +883,59 @@
         "failedToDelete": "Failed to delete prompt"
       },
       "unknown": "Unknown",
-      "none": "None"
+      "none": "None",
+      "viewEffectiveness": "Ver métricas de eficácia"
+    },
+    "promptEffectiveness": {
+      "title": "Eficácia de Prompts",
+      "subtitle": "Analise o desempenho, feedback e adoção de prompts em sua organização",
+      "refresh": "Atualizar",
+      "loading": "Carregando métricas de prompts...",
+      "emptyTitle": "Ainda não há métricas de prompts",
+      "emptyMessage": "Os dados de eficácia aparecerão aqui quando os prompts forem usados",
+      "filterByRole": "Filtrar por função",
+      "filterByPrompt": "Filtrar por prompt",
+      "allRoles": "Todas as funções",
+      "allPrompts": "Todos os prompts",
+      "totalUsage": "Uso total",
+      "totalFeedback": "Feedback total",
+      "thumbsUp": "Curtir",
+      "thumbsDown": "Não curtir",
+      "avgRating": "Avaliação média",
+      "mostEffective": "Prompts mais eficazes",
+      "leastEffective": "Prompts menos eficazes",
+      "usagePerPrompt": "Uso por prompt",
+      "departmentAdoption": "Taxas de adoção por departamento",
+      "noDepartments": "Nenhum dado de departamento disponível",
+      "unknownRole": "Função desconhecida",
+      "noData": "Nenhum dado disponível",
+      "columns": {
+        "name": "Nome",
+        "role": "Função",
+        "usage": "Uso",
+        "feedback": "Feedback",
+        "thumbsUp": "Curtir",
+        "thumbsDown": "Não curtir",
+        "rating": "Avaliação",
+        "department": "Departamento",
+        "members": "Membros",
+        "promptsUsed": "Prompts usados",
+        "totalUsage": "Uso total",
+        "adoptionRate": "Taxa de adoção"
+      },
+      "abTest": {
+        "title": "Comparação A/B",
+        "description": "Compare dois prompts lado a lado para avaliar sua eficácia",
+        "variantA": "Variante A",
+        "variantB": "Variante B",
+        "selectPrompt": "Selecione um prompt...",
+        "selectBoth": "Selecione ambas as variantes para comparar",
+        "leadsBy": "lidera por",
+        "tied": "Ambas as variantes estão empatadas"
+      },
+      "toast": {
+        "failedToLoad": "Falha ao carregar métricas de prompts"
+      }
     }
   },
   "permissions": {

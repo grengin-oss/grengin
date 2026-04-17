@@ -115,7 +115,8 @@
     "viewAllAlerts": "すべてのアラートを見る",
     "noRecentAlerts": "まだアラートはありません",
     "newAlert": "新しいアラート",
-    "promptLibrary": "Prompt Library"
+    "promptLibrary": "Prompt Library",
+    "promptEffectiveness": "プロンプト効果"
   },
   "alerts": {
     "title": "アラート",
@@ -882,7 +883,59 @@
         "failedToDelete": "Failed to delete prompt"
       },
       "unknown": "Unknown",
-      "none": "None"
+      "none": "None",
+      "viewEffectiveness": "効果指標を表示"
+    },
+    "promptEffectiveness": {
+      "title": "プロンプト効果",
+      "subtitle": "組織全体のプロンプトのパフォーマンス、フィードバック、採用状況を分析",
+      "refresh": "更新",
+      "loading": "プロンプト指標を読み込み中...",
+      "emptyTitle": "プロンプト指標がまだありません",
+      "emptyMessage": "プロンプトが使用されると、効果データがここに表示されます",
+      "filterByRole": "ロールでフィルター",
+      "filterByPrompt": "プロンプトでフィルター",
+      "allRoles": "すべてのロール",
+      "allPrompts": "すべてのプロンプト",
+      "totalUsage": "総使用回数",
+      "totalFeedback": "総フィードバック",
+      "thumbsUp": "高評価",
+      "thumbsDown": "低評価",
+      "avgRating": "平均評価",
+      "mostEffective": "最も効果的なプロンプト",
+      "leastEffective": "最も効果が低いプロンプト",
+      "usagePerPrompt": "プロンプト別使用状況",
+      "departmentAdoption": "部門別採用率",
+      "noDepartments": "部門データがありません",
+      "unknownRole": "不明なロール",
+      "noData": "データがありません",
+      "columns": {
+        "name": "名前",
+        "role": "ロール",
+        "usage": "使用回数",
+        "feedback": "フィードバック",
+        "thumbsUp": "高評価",
+        "thumbsDown": "低評価",
+        "rating": "評価",
+        "department": "部門",
+        "members": "メンバー",
+        "promptsUsed": "使用プロンプト",
+        "totalUsage": "総使用回数",
+        "adoptionRate": "採用率"
+      },
+      "abTest": {
+        "title": "A/Bテスト比較",
+        "description": "2つのプロンプトを並べて効果を評価",
+        "variantA": "バリアントA",
+        "variantB": "バリアントB",
+        "selectPrompt": "プロンプトを選択...",
+        "selectBoth": "比較する両方のバリアントを選択してください",
+        "leadsBy": "リード",
+        "tied": "両方のバリアントは同等です"
+      },
+      "toast": {
+        "failedToLoad": "プロンプト指標の読み込みに失敗しました"
+      }
     }
   },
   "permissions": {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { _ } from "svelte-i18n";
+  import { navigate } from "svelte-routing";
   import PageHeader from "../components/PageHeader.svelte";
   import AdminTableCard from "../components/AdminTableCard.svelte";
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
@@ -362,7 +363,11 @@
                 </div>
               </td>
               <td>
-                <span class="usage-count">
+                <button
+                  class="usage-count-link"
+                  onclick={() => navigate(`/admin/prompt-effectiveness?prompt_id=${prompt.id}`)}
+                  title={$_('admin.promptLibrary.viewEffectiveness')}
+                >
                   <svg
                     width="14"
                     height="14"
@@ -379,7 +384,7 @@
                     <path d="M8 17v-3" />
                   </svg>
                   {prompt.usage_count.toLocaleString()}
-                </span>
+                </button>
               </td>
               <td>
                 <span class="date-text">{formatDate(prompt.updated_at)}</span>
@@ -720,13 +725,25 @@
     font-style: italic;
   }
 
-  .usage-count {
+  .usage-count-link {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--brand);
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .usage-count-link:hover {
+    background: color-mix(in oklab, var(--brand) 12%, var(--button-bg));
+    color: var(--brand-hover);
+    text-decoration: underline;
   }
 
   .date-text {

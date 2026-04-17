@@ -113,6 +113,7 @@
     "accessControl": "Access Control",
     "connectors": "Connectors",
     "promptLibrary": "Prompt Library",
+    "promptEffectiveness": "Prompt Effectiveness",
     "viewAllAlerts": "View all alerts",
     "noRecentAlerts": "No alerts yet",
     "newAlert": "New alert"
@@ -882,7 +883,59 @@
         "failedToDelete": "Failed to delete prompt"
       },
       "unknown": "Unknown",
-      "none": "None"
+      "none": "None",
+      "viewEffectiveness": "View effectiveness metrics"
+    },
+    "promptEffectiveness": {
+      "title": "Prompt Effectiveness",
+      "subtitle": "Analyze prompt performance, feedback, and adoption across your organization",
+      "refresh": "Refresh",
+      "loading": "Loading prompt metrics...",
+      "emptyTitle": "No prompt metrics yet",
+      "emptyMessage": "Prompt effectiveness data will appear here once prompts are used",
+      "filterByRole": "Filter by role",
+      "filterByPrompt": "Filter by prompt",
+      "allRoles": "All Roles",
+      "allPrompts": "All Prompts",
+      "totalUsage": "Total Usage",
+      "totalFeedback": "Total Feedback",
+      "thumbsUp": "Thumbs Up",
+      "thumbsDown": "Thumbs Down",
+      "avgRating": "Avg Rating",
+      "mostEffective": "Most Effective Prompts",
+      "leastEffective": "Least Effective Prompts",
+      "usagePerPrompt": "Usage per Prompt",
+      "departmentAdoption": "Department Adoption Rates",
+      "noDepartments": "No department data available",
+      "unknownRole": "Unknown Role",
+      "noData": "No data available",
+      "columns": {
+        "name": "Name",
+        "role": "Role",
+        "usage": "Usage",
+        "feedback": "Feedback",
+        "thumbsUp": "Thumbs Up",
+        "thumbsDown": "Thumbs Down",
+        "rating": "Rating",
+        "department": "Department",
+        "members": "Members",
+        "promptsUsed": "Prompts Used",
+        "totalUsage": "Total Usage",
+        "adoptionRate": "Adoption Rate"
+      },
+      "abTest": {
+        "title": "A/B Test Comparison",
+        "description": "Compare two prompts side-by-side to evaluate their effectiveness",
+        "variantA": "Variant A",
+        "variantB": "Variant B",
+        "selectPrompt": "Select a prompt...",
+        "selectBoth": "Select both variants to compare",
+        "leadsBy": "leads by",
+        "tied": "Both variants are tied"
+      },
+      "toast": {
+        "failedToLoad": "Failed to load prompt metrics"
+      }
     }
   },
   "permissions": {
