@@ -928,7 +928,9 @@
       "speechRecognitionNotSupported": "La reconnaissance vocale n'est pas prise en charge dans votre navigateur",
       "microphoneAccessDenied": "Accès au microphone refusé. Veuillez autoriser l'accès au microphone.",
       "voiceInputError": "Erreur de saisie vocale : {error}",
-      "failedToStartVoiceInput": "Échec du démarrage de la saisie vocale"
+      "failedToStartVoiceInput": "Échec du démarrage de la saisie vocale",
+      "uploading": "Téléversement…",
+      "uploadFailed": "Échec"
     },
     "message": {
       "copy": "Copier",
@@ -1465,18 +1467,22 @@
     },
     "status": {
       "connected": "Connecté",
-      "disconnected": "Déconnecté"
+      "disconnected": "Déconnecté",
+      "expired": "Expiré",
+      "error": "Erreur",
+      "expiredWarning": "La connexion a expiré. Reconnectez-vous pour actualiser votre accès."
     },
     "actions": {
       "connect": "Connecter",
       "connecting": "Connexion...",
       "disconnect": "Déconnecter",
+      "reconnect": "Reconnecter",
       "disconnectConfirm": "Déconnecter ?",
       "yes": "Oui",
       "no": "Non",
       "viewTools": "Voir les outils"
     },
-    "connectedSince": "Connecté depuis le {date}",
+    "connectedSince": "Connecté depuis {date}",
     "toolCount": "{count} {count, plural, one {outil} other {outils}}",
     "tools": {
       "modalTitle": "{name} — Outils",

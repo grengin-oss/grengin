@@ -67,6 +67,9 @@
       clearInterval(pollTimer);
       pollTimer = null;
     }
+    if (popupWindow && !popupWindow.closed) {
+      popupWindow.close();
+    }
     popupWindow = null;
   }
 

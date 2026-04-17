@@ -887,12 +887,16 @@
     },
     "status": {
       "connected": "Connected",
-      "disconnected": "Disconnected"
+      "disconnected": "Disconnected",
+      "expired": "Expired",
+      "error": "Error",
+      "expiredWarning": "Connection expired. Reconnect to refresh your access."
     },
     "actions": {
       "connect": "Connect",
       "connecting": "Connecting...",
       "disconnect": "Disconnect",
+      "reconnect": "Reconnect",
       "disconnectConfirm": "Disconnect?",
       "yes": "Yes",
       "no": "No",
@@ -956,7 +960,9 @@
       "speechRecognitionNotSupported": "Speech recognition is not supported in your browser",
       "microphoneAccessDenied": "Microphone access denied. Please allow microphone access.",
       "voiceInputError": "Voice input error: {error}",
-      "failedToStartVoiceInput": "Failed to start voice input"
+      "failedToStartVoiceInput": "Failed to start voice input",
+      "uploading": "Uploading…",
+      "uploadFailed": "Failed"
     },
     "message": {
       "copy": "Copy",

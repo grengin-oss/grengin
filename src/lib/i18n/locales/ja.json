@@ -928,7 +928,9 @@
       "speechRecognitionNotSupported": "お使いのブラウザでは音声認識がサポートされていません",
       "microphoneAccessDenied": "マイクへのアクセスが拒否されました。マイクへのアクセスを許可してください。",
       "voiceInputError": "音声入力エラー: {error}",
-      "failedToStartVoiceInput": "音声入力の開始に失敗しました"
+      "failedToStartVoiceInput": "音声入力の開始に失敗しました",
+      "uploading": "アップロード中…",
+      "uploadFailed": "失敗"
     },
     "message": {
       "copy": "コピー",
@@ -1465,23 +1467,27 @@
     },
     "status": {
       "connected": "接続済み",
-      "disconnected": "未接続"
+      "disconnected": "未接続",
+      "expired": "期限切れ",
+      "error": "エラー",
+      "expiredWarning": "接続の有効期限が切れました。再接続してアクセスを更新してください。"
     },
     "actions": {
       "connect": "接続",
       "connecting": "接続中...",
       "disconnect": "切断",
+      "reconnect": "再接続",
       "disconnectConfirm": "切断しますか？",
       "yes": "はい",
       "no": "いいえ",
       "viewTools": "ツールを表示"
     },
     "connectedSince": "{date}から接続",
-    "toolCount": "{count} {count, plural, one {個のツール} other {個のツール}}",
+    "toolCount": "{count}個のツール",
     "tools": {
       "modalTitle": "{name} — ツール",
       "loading": "ツールを読み込み中...",
-      "empty": "このサーバーで利用できるツールはありません。"
+      "empty": "このサーバーで利用可能なツールはありません。"
     }
   }
 }

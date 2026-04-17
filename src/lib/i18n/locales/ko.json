@@ -928,7 +928,9 @@
       "speechRecognitionNotSupported": "브라우저에서 음성 인식을 지원하지 않습니다",
       "microphoneAccessDenied": "마이크 액세스가 거부되었습니다. 마이크 액세스를 허용해 주세요.",
       "voiceInputError": "음성 입력 오류: {error}",
-      "failedToStartVoiceInput": "음성 입력 시작 실패"
+      "failedToStartVoiceInput": "음성 입력 시작 실패",
+      "uploading": "업로드 중…",
+      "uploadFailed": "실패"
     },
     "message": {
       "copy": "복사",
@@ -1465,23 +1467,27 @@
     },
     "status": {
       "connected": "연결됨",
-      "disconnected": "연결 안 됨"
+      "disconnected": "연결 안 됨",
+      "expired": "만료됨",
+      "error": "오류",
+      "expiredWarning": "연결이 만료되었습니다. 다시 연결하여 액세스를 갱신하세요."
     },
     "actions": {
       "connect": "연결",
       "connecting": "연결 중...",
       "disconnect": "연결 해제",
-      "disconnectConfirm": "연결을 해제할까요?",
+      "reconnect": "재연결",
+      "disconnectConfirm": "연결을 해제하시겠습니까?",
       "yes": "예",
       "no": "아니요",
       "viewTools": "도구 보기"
     },
     "connectedSince": "{date}부터 연결됨",
-    "toolCount": "{count} {count, plural, one {개 도구} other {개 도구}}",
+    "toolCount": "{count}개 도구",
     "tools": {
       "modalTitle": "{name} — 도구",
-      "loading": "도구 로드 중...",
-      "empty": "이 서버에서 사용할 수 있는 도구가 없습니다."
+      "loading": "도구 로딩 중...",
+      "empty": "이 서버에 사용 가능한 도구가 없습니다."
     }
   }
 }

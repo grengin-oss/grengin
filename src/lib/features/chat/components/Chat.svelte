@@ -466,7 +466,7 @@
     // Check if all auth requests for this message are now connected
     const msg = messages.find(m => m.id === messageId);
     if (msg?.mcpAuthRequests?.every(r => r.status === 'connected')) {
-      resendAfterAuth(messageId);
+      continueProcessingRequest(messageId);
     }
   }
 
@@ -482,7 +482,7 @@
     });
   }
 
-  async function resendAfterAuth(assistantMessageId: string) {
+  async function continueProcessingRequest(assistantMessageId: string) {
     // Find the user message that preceded this assistant message
     const msgIndex = messages.findIndex(m => m.id === assistantMessageId);
     if (msgIndex <= 0) return;
@@ -490,15 +490,174 @@
     const userMessage = messages[msgIndex - 1];
     if (userMessage?.role !== 'user') return;
 
-    // Resend by calling handleSendMessage with the original content
-    // First, remove the assistant message with the auth prompt
-    messages = messages.filter(m => m.id !== assistantMessageId);
+    // Set up pending streaming message for the existing assistant message
+    let pendingStreamingMessage: ChatMessageType | null = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+      isStreaming: true,
+      model: selectedModel,
+      toolCalls: [] as ToolCall[],
+      toolsResults: [] as ToolResult[],
+      mergedWebSearch: null as MergedToolResult | null,
+    };
 
-    await handleSendMessage(
-      userMessage.content,
-      userMessage.files?.map(f => ({ id: f.id, name: f.name || '', size: 0, type: f.type || '' })),
-      webSearchEnabled,
-    );
+    // Update the assistant message to show processing state
+    messages = messages.map(msg => {
+      if (msg.id === assistantMessageId) {
+        return { ...pendingStreamingMessage! };
+      }
+      return msg;
+    });
+
+    // Process the original request without creating a new message
+    isLoading = true;
+    isTyping = true;
+    autoScrollEnabled = true;
+
+    try {
+      await sendMessage({
+        message: userMessage.content,
+        conversationId: conversationId || undefined,
+        provider: selectedProvider,
+        modelName: selectedModel,
+        uploadedFiles: userMessage.files?.map(f => ({ 
+          id: f.id, 
+          name: f.name || '', 
+          size: f.size || 0, 
+          type: f.type || '' 
+        })),
+        webSearch: webSearchEnabled,
+        selectedMcpServers,
+
+        onConversationInitialized: ({newConversationId}) => {
+          if (newConversationId && newConversationId !== conversationId) {
+            conversationId = newConversationId;
+            updateUrlWithConversationId(newConversationId);
+          }
+          window.dispatchEvent(new CustomEvent('refreshChatHistory'));
+        },
+        onStreamingStart: (messageId) => {
+          if (pendingStreamingMessage) {
+            pendingStreamingMessage = { ...pendingStreamingMessage, id: messageId };
+            
+            // Update the existing assistant message with the real message ID
+            messages = messages.map(msg => {
+              if (msg.id === assistantMessageId) {
+                return pendingStreamingMessage as ChatMessageType;
+              }
+              return msg;
+            });
+          }
+          isTyping = false;
+          isLoading = true;
+        },
+        onResponseDelta: (token) => {
+          if (pendingStreamingMessage) {
+            // Update the pending streaming message content
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              content: pendingStreamingMessage.content + token
+            };
+
+            // Update the message in the array
+            messages = messages.map(m => 
+              m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
+            );
+          }
+        },
+        onToolCall: (toolCall) => {
+          if (pendingStreamingMessage) {
+            const updatedToolCalls = [...(pendingStreamingMessage.toolCalls || []), toolCall];
+            const mergedWebSearch = mergeWebSearchResults(updatedToolCalls, pendingStreamingMessage.toolsResults || [], 'running');
+
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              toolCalls: updatedToolCalls,
+              mergedWebSearch: mergedWebSearch,
+            };
+
+            // Update the message in the array
+            messages = messages.map(m => 
+              m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
+            );
+          }
+        },
+        onToolResult: (toolResult) => {
+          if (pendingStreamingMessage) {
+            const updatedToolResults = [...pendingStreamingMessage.toolsResults || [], toolResult];
+            const mergedWebSearch = mergeWebSearchResults(pendingStreamingMessage.toolCalls || [], updatedToolResults || [], 'running');
+
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              toolsResults: updatedToolResults,
+              mergedWebSearch
+            };
+
+            // Update the message in the array
+            messages = messages.map(m => 
+              m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
+            );
+          }
+        },
+        onDone: async (_data) => {
+          if (pendingStreamingMessage) {
+            let updatedMergedWebSearch = null;
+            if(pendingStreamingMessage.mergedWebSearch) {
+              updatedMergedWebSearch = {...pendingStreamingMessage.mergedWebSearch, status: 'completed'};
+            }
+
+            // Mark all tool calls as completed when stream ends
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              isStreaming: false,
+              mergedWebSearch: updatedMergedWebSearch as MergedToolResult
+            };
+
+            // Update the message in the array
+            messages = messages.map(m => 
+              m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
+            );
+          }
+          isLoading = false;
+          isTyping = false;
+        },
+        onError: (err) => {
+          if (err instanceof ApiError) {
+            error = err;
+          } else {
+            error = new ApiError(500, err.message);
+          }
+          if (pendingStreamingMessage) {
+            const errorMessage = getLocalizedError(error, 'description', $_) || (typeof error.detail === 'string' ? error.detail : error.detail?.description || 'Unknown error');
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              error: errorMessage,
+              isStreaming: false,
+            };
+            
+            // Update the message in the array
+            messages = messages.map(m => 
+              m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
+            );
+          }
+          isLoading = false;
+          isTyping = false;
+        }
+      });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        error = err;
+      } else {
+        error = new ApiError(
+          500,
+          err instanceof Error ? err.message : 'Failed to process request'
+        );
+      }
+      isLoading = false;
+      isTyping = false;
+    }
   }
 
   function filterLatestById<T extends { tool_id: string }>(arr?: T[] | null): T[] {

@@ -928,7 +928,9 @@
       "speechRecognitionNotSupported": "El reconocimiento de voz no es compatible con su navegador",
       "microphoneAccessDenied": "Acceso al micrófono denegado. Por favor, permite el acceso al micrófono.",
       "voiceInputError": "Error de entrada de voz: {error}",
-      "failedToStartVoiceInput": "Error al iniciar la entrada de voz"
+      "failedToStartVoiceInput": "Error al iniciar la entrada de voz",
+      "uploading": "Subiendo…",
+      "uploadFailed": "Error"
     },
     "message": {
       "copy": "Copiar",
@@ -1465,18 +1467,22 @@
     },
     "status": {
       "connected": "Conectado",
-      "disconnected": "Desconectado"
+      "disconnected": "Desconectado",
+      "expired": "Expirado",
+      "error": "Error",
+      "expiredWarning": "La conexión ha expirado. Reconéctese para actualizar su acceso."
     },
     "actions": {
       "connect": "Conectar",
       "connecting": "Conectando...",
       "disconnect": "Desconectar",
+      "reconnect": "Reconectar",
       "disconnectConfirm": "¿Desconectar?",
       "yes": "Sí",
       "no": "No",
       "viewTools": "Ver herramientas"
     },
-    "connectedSince": "Conectado desde el {date}",
+    "connectedSince": "Conectado desde {date}",
     "toolCount": "{count} {count, plural, one {herramienta} other {herramientas}}",
     "tools": {
       "modalTitle": "{name} — Herramientas",
