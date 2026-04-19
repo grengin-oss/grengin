@@ -6,7 +6,7 @@
     "edit": "Modifier",
     "search": "Rechercher",
     "never": "Jamais",
-    "loading": "Loading...",
+    "loading": "Chargement...",
     "clear": "Effacer",
     "select": "Sélectionner"
   },
@@ -110,13 +110,14 @@
     "sectionMonitor": "Surveiller",
     "sectionConfigure": "Configurer",
     "overview": "Aperçu",
+    "organization": "Organisation",
     "accessControl": "Contrôle d'accès",
     "connectors": "Connecteurs",
     "viewAllAlerts": "Voir toutes les alertes",
     "noRecentAlerts": "Pas encore d'alertes",
     "newAlert": "Nouvelle alerte",
-    "promptLibrary": "Prompt Library",
-    "promptEffectiveness": "Efficacité des Prompts"
+    "promptLibrary": "Instructions",
+    "promptEffectiveness": "Métriques des Instructions"
   },
   "alerts": {
     "title": "Alertes",
@@ -234,6 +235,7 @@
     "departments": {
       "title": "Départements",
       "organization": "Organisation",
+      "organizationSubtitle": "Gérez vos départements et la structure d'équipe",
       "organizationStructure": "Structure organisationnelle",
       "selectDepartment": "Sélectionner un département",
       "selectDepartmentDescription": "Choisissez un département dans l'arborescence pour voir ses détails",
@@ -387,7 +389,8 @@
       "failedToSearchUsers": "Échec de la recherche d'utilisateurs",
       "removeAdminConfirmTitle": "Retirer l'accès administrateur",
       "removeAdminConfirmMessage": "Êtes-vous sûr de vouloir retirer l'accès administrateur à {name} ?",
-      "removeAdminConfirmWarning": "Cette personne ne pourra plus gérer ce département."
+      "removeAdminConfirmWarning": "Cette personne ne pourra plus gérer ce département.",
+      "prompts": "Instructions"
     },
     "settings": {
       "title": "Paramètres",
@@ -811,103 +814,103 @@
       "tools": "outils"
     },
     "promptLibrary": {
-      "title": "Prompt Library",
-      "subtitle": "Manage role-based prompts for your organization",
-      "createPrompt": "Create Prompt",
-      "editPrompt": "Edit Prompt",
-      "previewPrompt": "Preview Prompt",
-      "deletePrompt": "Delete Prompt",
-      "searchPlaceholder": "Search prompts...",
-      "allRoles": "All Roles",
-      "allTypes": "All Types",
-      "systemType": "System",
-      "userType": "User",
-      "clearFilters": "Clear",
-      "loading": "Loading prompts...",
-      "noPromptsTitle": "No prompts yet",
-      "noPromptsMessage": "Create your first prompt to get started",
-      "noMatchTitle": "No matching prompts",
-      "noMatchMessage": "Try adjusting your filters or search query",
-      "promptCount": "{count} prompt | {count} prompts",
+      "title": "Bibliothèque d'Instructions",
+      "subtitle": "Gérer les instructions basées sur les rôles pour votre organisation",
+      "createPrompt": "Créer une Instruction",
+      "editPrompt": "Modifier l'Instruction",
+      "previewPrompt": "Aperçu de l'Instruction",
+      "deletePrompt": "Supprimer l'Instruction",
+      "searchPlaceholder": "Rechercher des instructions...",
+      "allRoles": "Tous les Rôles",
+      "allTypes": "Tous les Types",
+      "systemType": "Système",
+      "userType": "Utilisateur",
+      "clearFilters": "Effacer",
+      "loading": "Chargement des instructions...",
+      "noPromptsTitle": "Aucune instruction pour l'instant",
+      "noPromptsMessage": "Créez votre première instruction pour commencer",
+      "noMatchTitle": "Aucune instruction correspondante",
+      "noMatchMessage": "Essayez d'ajuster vos filtres ou votre recherche",
+      "promptCount": "{count} instruction | {count} instructions",
       "columns": {
-        "name": "Name",
-        "role": "Role",
+        "name": "Nom",
+        "role": "Rôle",
         "type": "Type",
         "variables": "Variables",
-        "usage": "Usage",
-        "updated": "Updated",
+        "usage": "Utilisation",
+        "updated": "Mis à jour",
         "actions": "Actions"
       },
       "form": {
-        "name": "Name",
-        "namePlaceholder": "e.g. Customer Support Greeting",
-        "nameRequired": "Name is required",
-        "role": "Role",
-        "roleRequired": "Role is required",
-        "selectRole": "Select a role...",
-        "promptText": "Prompt Text",
-        "promptTextPlaceholder": "Enter prompt text... Use {{variable_name}} for dynamic variables",
-        "promptTextRequired": "Prompt text is required",
+        "name": "Nom",
+        "namePlaceholder": "ex. Salutation du Service Client",
+        "nameRequired": "Le nom est requis",
+        "role": "Rôle",
+        "roleRequired": "Le rôle est requis",
+        "selectRole": "Sélectionnez un rôle...",
+        "promptText": "Texte de l'Instruction",
+        "promptTextPlaceholder": "Saisissez le texte de l'instruction... Utilisez {{variable_name}} pour les variables dynamiques",
+        "promptTextRequired": "Le texte de l'instruction est requis",
         "variables": "Variables",
-        "addVariable": "Add",
-        "addVariablePlaceholder": "Add a variable name...",
-        "variableExists": "Variable already exists",
-        "variablesHelp": "Variables can be referenced in the prompt text as {{variable_name}}",
-        "detectedVariables": "Detected variables:",
-        "systemPrompt": "System prompt",
-        "systemPromptHelp": "System prompts are used as default instructions for the AI model",
-        "creating": "Creating...",
-        "saving": "Saving...",
-        "createButton": "Create Prompt",
-        "saveButton": "Save Changes"
+        "addVariable": "Ajouter",
+        "addVariablePlaceholder": "Ajouter un nom de variable...",
+        "variableExists": "La variable existe déjà",
+        "variablesHelp": "Les variables peuvent être référencées dans le texte de l'instruction sous la forme {{variable_name}}",
+        "detectedVariables": "Variables détectées :",
+        "systemPrompt": "Instruction système",
+        "systemPromptHelp": "Les instructions système sont utilisées comme instructions par défaut pour le modèle d'IA",
+        "creating": "Création...",
+        "saving": "Sauvegarde...",
+        "createButton": "Créer l'Instruction",
+        "saveButton": "Enregistrer les Modifications"
       },
       "preview": {
-        "name": "Name",
+        "name": "Nom",
         "type": "Type",
-        "sampleValues": "Sample Variable Values",
-        "sampleHint": "Enter sample values below to preview how the prompt will render",
-        "samplePlaceholder": "Enter sample value...",
-        "renderedOutput": "Rendered Output"
+        "sampleValues": "Valeurs d'Exemple des Variables",
+        "sampleHint": "Saisissez des valeurs d'exemple ci-dessous pour prévisualiser le rendu de l'instruction",
+        "samplePlaceholder": "Saisissez une valeur d'exemple...",
+        "renderedOutput": "Résultat Rendu"
       },
       "delete": {
-        "confirmMessage": "Are you sure you want to delete",
-        "warning": "This action cannot be undone.",
-        "deleting": "Deleting..."
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer",
+        "warning": "Cette action est irréversible.",
+        "deleting": "Suppression..."
       },
       "toast": {
-        "created": "Prompt created successfully",
-        "updated": "Prompt updated successfully",
-        "deleted": "Prompt deleted successfully",
-        "failedToLoad": "Failed to load prompts",
-        "failedToSave": "Failed to save prompt",
-        "failedToDelete": "Failed to delete prompt"
+        "created": "Instruction créée avec succès",
+        "updated": "Instruction mise à jour avec succès",
+        "deleted": "Instruction supprimée avec succès",
+        "failedToLoad": "Échec du chargement des instructions",
+        "failedToSave": "Échec de la sauvegarde de l'instruction",
+        "failedToDelete": "Échec de la suppression de l'instruction"
       },
-      "unknown": "Unknown",
-      "none": "None",
+      "unknown": "Inconnu",
+      "none": "Aucun",
       "viewEffectiveness": "Voir les métriques d'efficacité"
     },
     "promptEffectiveness": {
-      "title": "Efficacité des Prompts",
-      "subtitle": "Analysez les performances, retours et adoption des prompts dans votre organisation",
+      "title": "Efficacité des Instructions",
+      "subtitle": "Analyser la performance, les retours et l'adoption des instructions dans votre organisation",
       "refresh": "Actualiser",
-      "loading": "Chargement des métriques...",
-      "emptyTitle": "Aucune métrique de prompt",
-      "emptyMessage": "Les données d'efficacité apparaîtront ici lorsque les prompts seront utilisés",
+      "loading": "Chargement des métriques d'instructions...",
+      "emptyTitle": "Pas encore de métriques d'instructions",
+      "emptyMessage": "Les données d'efficacité des instructions apparaîtront ici une fois les instructions utilisées",
       "filterByRole": "Filtrer par rôle",
-      "filterByPrompt": "Filtrer par prompt",
-      "allRoles": "Tous les rôles",
-      "allPrompts": "Tous les prompts",
-      "totalUsage": "Utilisation totale",
-      "totalFeedback": "Retours totaux",
+      "filterByPrompt": "Filtrer par instruction",
+      "allRoles": "Tous les Rôles",
+      "allPrompts": "Toutes les Instructions",
+      "totalUsage": "Utilisation Totale",
+      "totalFeedback": "Retours Totaux",
       "thumbsUp": "J'aime",
       "thumbsDown": "Je n'aime pas",
-      "avgRating": "Note moyenne",
-      "mostEffective": "Prompts les plus efficaces",
-      "leastEffective": "Prompts les moins efficaces",
-      "usagePerPrompt": "Utilisation par prompt",
-      "departmentAdoption": "Taux d'adoption par département",
+      "avgRating": "Note Moyenne",
+      "mostEffective": "Instructions les Plus Efficaces",
+      "leastEffective": "Instructions les Moins Efficaces",
+      "usagePerPrompt": "Utilisation par Instruction",
+      "departmentAdoption": "Taux d'Adoption par Département",
       "noDepartments": "Aucune donnée de département disponible",
-      "unknownRole": "Rôle inconnu",
+      "unknownRole": "Rôle Inconnu",
       "noData": "Aucune donnée disponible",
       "columns": {
         "name": "Nom",
@@ -919,22 +922,63 @@
         "rating": "Note",
         "department": "Département",
         "members": "Membres",
-        "promptsUsed": "Prompts utilisés",
-        "totalUsage": "Utilisation totale",
-        "adoptionRate": "Taux d'adoption"
+        "promptsUsed": "Instructions Utilisées",
+        "totalUsage": "Utilisation Totale",
+        "adoptionRate": "Taux d'Adoption"
       },
       "abTest": {
-        "title": "Comparaison A/B",
-        "description": "Comparez deux prompts côte à côte pour évaluer leur efficacité",
+        "title": "Comparaison de Test A/B",
+        "description": "Comparez deux instructions côte à côte pour évaluer leur efficacité",
         "variantA": "Variante A",
         "variantB": "Variante B",
-        "selectPrompt": "Sélectionnez un prompt...",
+        "selectPrompt": "Sélectionnez une instruction...",
         "selectBoth": "Sélectionnez les deux variantes pour comparer",
         "leadsBy": "en tête de",
         "tied": "Les deux variantes sont à égalité"
       },
       "toast": {
-        "failedToLoad": "Échec du chargement des métriques"
+        "failedToLoad": "Échec du chargement des métriques d'instructions"
+      }
+    },
+    "departmentPrompts": {
+      "title": "Instructions du Département",
+      "subtitle": "Attribuer et gérer les instructions pour les départements",
+      "loading": "Chargement des données...",
+      "selectDepartment": "Département",
+      "chooseDepartment": "Sélectionner un département...",
+      "selectDepartmentTitle": "Sélectionner un département",
+      "selectDepartmentMessage": "Choisissez un département dans le menu déroulant ci-dessus pour gérer ses instructions",
+      "assignedPrompts": "Instructions Attribuées",
+      "assignPrompt": "Attribuer une Instruction",
+      "unassignPrompt": "Retirer l'Instruction",
+      "previewPrompt": "Aperçu de l'Instruction",
+      "loadingAssigned": "Chargement des instructions attribuées...",
+      "noAssignedTitle": "Aucune instruction attribuée",
+      "noAssignedMessage": "Attribuez des instructions à ce département pour commencer",
+      "noAvailablePrompts": "Toutes les instructions sont déjà attribuées à ce département",
+      "assignHint": "Sélectionnez une instruction à attribuer à ce département",
+      "assign": "Attribuer",
+      "unassign": "Retirer",
+      "unassigning": "Retrait en cours...",
+      "unassignConfirmMessage": "Êtes-vous sûr de vouloir retirer",
+      "unassignWarning": "Cette instruction ne sera plus disponible pour les utilisateurs du département.",
+      "dragHint": "Glisser pour réorganiser la priorité des instructions",
+      "dragToReorder": "Glisser pour réorganiser",
+      "previewTitle": "Aperçu de l'Instruction",
+      "previewDescription": "Voici comment les instructions apparaîtront pour les utilisateurs de ce département, classées par priorité.",
+      "systemType": "Système",
+      "userType": "Utilisateur",
+      "prompt": "instruction",
+      "prompts": "instructions",
+      "unknown": "Inconnu",
+      "toast": {
+        "failedToLoad": "Échec du chargement des données",
+        "assigned": "Instruction attribuée avec succès",
+        "failedToAssign": "Échec de l'attribution de l'instruction",
+        "unassigned": "Instruction retirée avec succès",
+        "failedToUnassign": "Échec du retrait de l'instruction",
+        "reordered": "Priorité de l'instruction mise à jour",
+        "failedToReorder": "Échec de la mise à jour de la priorité"
       }
     }
   },
@@ -1027,7 +1071,7 @@
     },
     "messageInput": {
       "placeholder": "Demander n'importe quoi",
-      "placeholderWithModel": "Message {model}",
+      "placeholderWithModel": "Message à {model}",
       "recordingPlaceholder": "En cours d'écoute... Parlez maintenant",
       "addContent": "Ajouter du contenu",
       "addPhotos": "Ajouter des photos",
@@ -1214,8 +1258,9 @@
     "activeUsers": "{count} actifs",
     "last30Days": "30 derniers jours",
     "manageUsers": "Gérer les comptes et rôles utilisateurs",
-    "manageDepartments": "Organiser la structure de l'équipe",
-    "viewAnalytics": "Voir les analyses d'utilisation détaillées",
+    "manageDepartments": "Organisez votre structure d'équipe",
+    "viewAnalytics": "Voir les analytics d'utilisation détaillés",
+    "viewPromptEffectiveness": "Voir les métriques d'efficacité des prompts",
     "configureSettings": "Configurer les paramètres du système",
     "retry": "Réessayer",
     "errors": {
@@ -1244,7 +1289,7 @@
       "requests": "Requêtes",
       "success": "Succès",
       "errors": "Erreurs",
-      "tokens": "Tokens",
+      "tokens": "Jetons",
       "cost": "Coût",
       "avgLatency": "Latence moyenne",
       "lastActivity": "Dernière activité"
@@ -1363,7 +1408,7 @@
       "model": "Modèle",
       "provider": "Fournisseur",
       "requests": "Requêtes",
-      "tokens": "Tokens",
+      "tokens": "Jetons",
       "cost": "Coût"
     },
     "charts": {
@@ -1372,7 +1417,7 @@
         "title": "Tendances multi-métriques",
         "subtitle": "Requêtes • Tokens • Latence",
         "requests": "Requêtes",
-        "tokens": "Tokens",
+        "tokens": "Jetons",
         "latency": "Latence",
         "date": "Date",
         "latencyMs": "Latence (ms)"
@@ -1381,7 +1426,7 @@
         "title": "Croissance de l'utilisation",
         "subtitle": "Requêtes (barres) • Tokens (ligne)",
         "requests": "Requêtes",
-        "tokens": "Tokens"
+        "tokens": "Jetons"
       },
       "apiReliability": {
         "title": "Fiabilité de l'API",
@@ -1574,7 +1619,9 @@
     "subtitle": "Gérez vos préférences personnelles et les intégrations connectées.",
     "tabs": {
       "integrations": "Intégrations",
-      "integrationsAria": "Intégrations connectées"
+      "integrationsAria": "Intégrations connectées",
+      "promptSettings": "Paramètres des Instructions",
+      "promptSettingsAria": "Gérer vos préférences d'instructions"
     }
   },
   "userIntegrations": {
@@ -1633,6 +1680,61 @@
       "modalTitle": "{name} — Outils",
       "loading": "Chargement des outils...",
       "empty": "Aucun outil disponible pour ce serveur."
+    }
+  },
+  "userPromptSettings": {
+    "loading": "Chargement des paramètres d'instructions...",
+    "failedToLoad": "Échec du chargement des paramètres d'instructions",
+    "activePrompt": "Instruction Active",
+    "source": {
+      "label": "Source",
+      "user_custom": "Instruction Personnalisée",
+      "department_default": "Par Défaut du Département",
+      "system_default": "Par Défaut du Système"
+    },
+    "variables": {
+      "title": "Variables Disponibles",
+      "empty": "Aucune variable disponible",
+      "insertHint": "Cliquez sur une variable pour l'insérer dans l'éditeur",
+      "copied": "Variable insérée"
+    },
+    "editor": {
+      "title": "Éditeur d'Instruction Personnalisée",
+      "placeholder": "Rédigez votre instruction système personnalisée ici. Utilisez des variables comme {{variable_name}} pour insérer des valeurs dynamiques...",
+      "charCount": "{count} caractères",
+      "preview": "Aperçu",
+      "edit": "Modifier",
+      "previewTitle": "Aperçu de l'Instruction",
+      "previewEmpty": "Rien à prévisualiser. Commencez à rédiger votre instruction personnalisée ci-dessus."
+    },
+    "actions": {
+      "save": "Enregistrer l'Instruction",
+      "saving": "Enregistrement...",
+      "resetToDefault": "Réinitialiser par Défaut",
+      "resetting": "Réinitialisation...",
+      "resetConfirmTitle": "Réinitialiser par Défaut ?",
+      "resetConfirmMessage": "Cela supprimera votre instruction personnalisée et reviendra au paramètre par défaut du département ou du système. Cette action est irréversible.",
+      "resetConfirmButton": "Oui, Réinitialiser",
+      "cancel": "Annuler"
+    },
+    "messages": {
+      "saved": "Instruction personnalisée enregistrée avec succès",
+      "failedToSave": "Échec de l'enregistrement de l'instruction",
+      "reset": "Instruction réinitialisée par défaut",
+      "failedToReset": "Échec de la réinitialisation de l'instruction",
+      "noChanges": "Aucune modification à enregistrer"
+    },
+    "feedback": {
+      "title": "Retour sur l'Instruction",
+      "subtitle": "Aidez-nous à améliorer en évaluant l'efficacité de l'instruction actuelle",
+      "thumbsUp": "Cette instruction fonctionne bien",
+      "thumbsDown": "Cette instruction a besoin d'améliorations",
+      "commentPlaceholder": "Facultatif : Dites-nous en plus sur votre expérience avec cette instruction...",
+      "submit": "Envoyer le Retour",
+      "submitting": "Envoi en cours...",
+      "submitted": "Merci pour votre retour !",
+      "failedToSubmit": "Échec de l'envoi du retour",
+      "ratingRequired": "Veuillez sélectionner une note avant d'envoyer"
     }
   }
 }

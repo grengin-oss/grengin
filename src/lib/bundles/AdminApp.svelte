@@ -15,7 +15,7 @@
     McpOAuthCallback,
     PromptLibrary,
     PromptEffectiveness,
-  } from './admin-chunk';
+      } from './admin-chunk';
 </script>
 
 <Route path="/admin/alerts"><AlertsPage /></Route>

@@ -226,6 +226,30 @@
             </AdminPanelCard>
           </Link>
 
+          <Link to="/admin/prompt-effectiveness" aria-label={$_('sidebar.promptEffectiveness')}>
+            <AdminPanelCard class="link-card">
+              <div class="link-content">
+                <div class="link-icon" aria-hidden="true">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18"/>
+                    <path d="M18 17V9"/>
+                    <path d="M13 17V5"/>
+                    <path d="M8 17v-3"/>
+                  </svg>
+                </div>
+                <div class="link-text">
+                  <span class="link-title">{$_('sidebar.promptEffectiveness')}</span>
+                  <span class="link-description">{$_('adminOverview.viewPromptEffectiveness')}</span>
+                </div>
+                <div class="link-arrow" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9,18 15,12 9,6"></polyline>
+                  </svg>
+                </div>
+              </div>
+            </AdminPanelCard>
+          </Link>
+
           <Link to="/admin/settings" aria-label={$_('sidebar.settings')}>
             <AdminPanelCard class="link-card">
               <div class="link-content">

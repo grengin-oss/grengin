@@ -110,10 +110,11 @@
     "sectionMonitor": "Monitor",
     "sectionConfigure": "Configure",
     "overview": "Overview",
+    "organization": "Organization",
     "accessControl": "Access Control",
     "connectors": "Connectors",
-    "promptLibrary": "Prompt Library",
-    "promptEffectiveness": "Prompt Effectiveness",
+    "promptLibrary": "Prompts",
+    "promptEffectiveness": "Prompt Metrics",
     "viewAllAlerts": "View all alerts",
     "noRecentAlerts": "No alerts yet",
     "newAlert": "New alert"
@@ -234,6 +235,7 @@
     "departments": {
       "title": "Departments",
       "organization": "Organization",
+      "organizationSubtitle": "Manage your departments and team structure",
       "organizationStructure": "Organization Structure",
       "selectDepartment": "Select a department",
       "selectDepartmentDescription": "Choose a department from the tree to view its details",
@@ -256,6 +258,7 @@
       "leaders": "Leaders",
       "members": "Members",
       "budget": "Budget",
+      "prompts": "Prompts",
       "overview": "Overview",
       "details": "Details",
       "name": "Name",
@@ -886,6 +889,47 @@
       "none": "None",
       "viewEffectiveness": "View effectiveness metrics"
     },
+    "departmentPrompts": {
+      "title": "Department Prompts",
+      "subtitle": "Assign and manage prompts for departments",
+      "loading": "Loading data...",
+      "selectDepartment": "Department",
+      "chooseDepartment": "Select a department...",
+      "selectDepartmentTitle": "Select a department",
+      "selectDepartmentMessage": "Choose a department from the dropdown above to manage its prompts",
+      "assignedPrompts": "Assigned Prompts",
+      "assignPrompt": "Assign Prompt",
+      "unassignPrompt": "Unassign Prompt",
+      "previewPrompt": "Preview Prompt",
+      "loadingAssigned": "Loading assigned prompts...",
+      "noAssignedTitle": "No prompts assigned",
+      "noAssignedMessage": "Assign prompts to this department to get started",
+      "noAvailablePrompts": "All prompts are already assigned to this department",
+      "assignHint": "Select a prompt to assign to this department",
+      "assign": "Assign",
+      "unassign": "Unassign",
+      "unassigning": "Unassigning...",
+      "unassignConfirmMessage": "Are you sure you want to unassign",
+      "unassignWarning": "This prompt will no longer be available to department users.",
+      "dragHint": "Drag to reorder prompt priority",
+      "dragToReorder": "Drag to reorder",
+      "previewTitle": "Prompt Preview",
+      "previewDescription": "This is how prompts will render for users in this department, ordered by priority.",
+      "systemType": "System",
+      "userType": "User",
+      "prompt": "prompt",
+      "prompts": "prompts",
+      "unknown": "Unknown",
+      "toast": {
+        "failedToLoad": "Failed to load data",
+        "assigned": "Prompt assigned successfully",
+        "failedToAssign": "Failed to assign prompt",
+        "unassigned": "Prompt unassigned successfully",
+        "failedToUnassign": "Failed to unassign prompt",
+        "reordered": "Prompt priority updated",
+        "failedToReorder": "Failed to update priority"
+      }
+    },
     "promptEffectiveness": {
       "title": "Prompt Effectiveness",
       "subtitle": "Analyze prompt performance, feedback, and adoption across your organization",
@@ -978,7 +1022,64 @@
     "subtitle": "Manage your personal preferences and connected integrations.",
     "tabs": {
       "integrations": "Integrations",
-      "integrationsAria": "Connected integrations"
+      "integrationsAria": "Connected integrations",
+      "promptSettings": "Prompt Settings",
+      "promptSettingsAria": "Manage your prompt preferences"
+    }
+  },
+  "userPromptSettings": {
+    "loading": "Loading prompt settings...",
+    "failedToLoad": "Failed to load prompt settings",
+    "activePrompt": "Active Prompt",
+    "source": {
+      "label": "Source",
+      "user_custom": "Custom Prompt",
+      "department_default": "Department Default",
+      "system_default": "System Default"
+    },
+    "variables": {
+      "title": "Available Variables",
+      "empty": "No variables available",
+      "insertHint": "Click a variable to insert it into the editor",
+      "copied": "Variable inserted"
+    },
+    "editor": {
+      "title": "Custom Prompt Editor",
+      "placeholder": "Write your custom system prompt here. Use variables like {{variable_name}} to insert dynamic values...",
+      "charCount": "{count} characters",
+      "preview": "Preview",
+      "edit": "Edit",
+      "previewTitle": "Prompt Preview",
+      "previewEmpty": "Nothing to preview. Start writing your custom prompt above."
+    },
+    "actions": {
+      "save": "Save Prompt",
+      "saving": "Saving...",
+      "resetToDefault": "Reset to Default",
+      "resetting": "Resetting...",
+      "resetConfirmTitle": "Reset to Default?",
+      "resetConfirmMessage": "This will remove your custom prompt and revert to the department or system default. This action cannot be undone.",
+      "resetConfirmButton": "Yes, Reset",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "saved": "Custom prompt saved successfully",
+      "failedToSave": "Failed to save prompt",
+      "reset": "Prompt reset to default",
+      "failedToReset": "Failed to reset prompt",
+      "noChanges": "No changes to save"
+    },
+    "feedback": {
+      "title": "Prompt Feedback",
+      "subtitle": "Help us improve by rating the current prompt effectiveness",
+      "thumbsUp": "This prompt works well",
+      "thumbsDown": "This prompt needs improvement",
+      "commentPlaceholder": "Optional: Tell us more about your experience with this prompt...",
+      "submit": "Submit Feedback",
+      "submitting": "Submitting...",
+      "submitted": "Thank you for your feedback!",
+      "failedToSubmit": "Failed to submit feedback",
+      "ratingRequired": "Please select a rating before submitting"
     }
   },
   "userIntegrations": {
@@ -1248,6 +1349,7 @@
     "manageUsers": "Manage user accounts and roles",
     "manageDepartments": "Organize your team structure",
     "viewAnalytics": "View detailed usage analytics",
+    "viewPromptEffectiveness": "View prompt effectiveness metrics",
     "configureSettings": "Configure system settings",
     "retry": "Retry",
     "errors": {

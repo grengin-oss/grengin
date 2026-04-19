@@ -5,6 +5,7 @@
   import BudgetManagement from "./BudgetManagement.svelte";
   import MemberManagement from "./MemberManagement.svelte";
   import DepartmentAdminsSection from "./DepartmentAdminsSection.svelte";
+  import DepartmentPromptsTab from "./DepartmentPromptsTab.svelte";
   import { formatDate } from "$lib/utils/format.js";
   import { permissionsStore } from "$lib/features/auth/index.js";
   import { tick } from "svelte";
@@ -19,7 +20,7 @@
   
   let { department, allDepartments, onClose, onEdit, onDelete }: Props = $props();
   
-  let activeTab = $state<'overview' | 'members' | 'budget'>('overview');
+  let activeTab = $state<'overview' | 'members' | 'budget' | 'prompts'>('overview');
   let showDeleteConfirm = $state(false);
   
   const parentDepartment = $derived(
@@ -78,13 +79,13 @@
     return `${getTabId(tab)}-panel`;
   }
 
-  function handleTabKeydown(event: KeyboardEvent, tab: 'overview' | 'members' | 'budget') {
-    const tabs: ('overview' | 'members' | 'budget')[] = canViewBudget 
-      ? ['overview', 'members', 'budget'] 
-      : ['overview', 'members'];
+  function handleTabKeydown(event: KeyboardEvent, tab: 'overview' | 'members' | 'budget' | 'prompts') {
+    const tabs: ('overview' | 'members' | 'budget' | 'prompts')[] = canViewBudget 
+      ? ['overview', 'members', 'budget', 'prompts'] 
+      : ['overview', 'members', 'prompts'];
     
     const currentIndex = tabs.indexOf(tab);
-    let newTab: 'overview' | 'members' | 'budget' | null = null;
+    let newTab: 'overview' | 'members' | 'budget' | 'prompts' | null = null;
     
     if (event.key === 'ArrowRight') {
       event.preventDefault();
@@ -179,6 +180,20 @@
             {$_('admin.departments.budget')}
           </button>
         {/if}
+        <button
+          type="button"
+          class="tab"
+          class:active={activeTab === 'prompts'}
+          role="tab"
+          id={getTabId('prompts')}
+          aria-selected={activeTab === 'prompts'}
+          aria-controls={getTabPanelId('prompts')}
+          tabindex="0"
+          onclick={() => (activeTab = 'prompts')}
+          onkeydown={(e) => handleTabKeydown(e, 'prompts')}
+        >
+          {$_('admin.departments.prompts')}
+        </button>
       </div>
     </div>
     
@@ -314,6 +329,18 @@
           tabindex="0"
         >
           <BudgetManagement {department} canEditBudget={canEditBudget}/>
+        </div>
+      {/if}
+      
+      {#if activeTab === 'prompts'}
+        <div
+          class="prompts-tab"
+          role="tabpanel"
+          id={getTabPanelId('prompts')}
+          aria-labelledby={getTabId('prompts')}
+          tabindex="0"
+        >
+          <DepartmentPromptsTab department={department} canManage={canManageDepartments} />
         </div>
       {/if}
     </div>

@@ -10,6 +10,7 @@
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
   import { _ } from "svelte-i18n";
+  import { navigate } from "svelte-routing";
   import { permissionsStore } from "$lib/features/auth/index.js";
   
   const SELECTED_DEPARTMENT_QUERY_KEY = "departmentId";
@@ -34,6 +35,7 @@
   /** Narrow layout only: collapsible org tree (CSS gates visibility of toggle + collapsed body). */
   let mobileTreeExpanded = $state(true);
   const canManageDepartments = $derived(permissionsStore.canManageDepartments());
+  const canViewUsers = $derived(permissionsStore.canViewUsers());
 
   function findDepartmentInTree(
     departments: Department[],
@@ -225,6 +227,37 @@
     class="page-content"
     aria-labelledby="departments-organization-heading"
   >
+    <!-- Page Header -->
+    <div class="org-page-header">
+      <div class="org-page-header-top">
+        <div class="org-page-header-text">
+          <h1 class="org-page-title">{$_('admin.departments.organization')}</h1>
+          <p class="org-page-subtitle">{$_('admin.departments.organizationSubtitle')}</p>
+        </div>
+        <div class="org-page-header-actions">
+          {#if canViewUsers}
+            <button type="button" class="org-nav-btn" onclick={() => navigate('/admin/users')}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              {$_('sidebar.users')}
+            </button>
+          {/if}
+          {#if canManageDepartments}
+            <button type="button" class="btn-primary" onclick={openCreateModal}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              {$_('admin.departments.createDepartment')}
+            </button>
+          {/if}
+        </div>
+      </div>
+    </div>
+
     <div class="departments-layout">
       <section class="tree-section" class:mobile-tree-collapsed={!mobileTreeExpanded}>
         <div class="tree-header">
@@ -255,15 +288,7 @@
               />
             </svg>
           </button>
-          <h2 id="departments-organization-heading">{$_('admin.departments.organization')}</h2>
-          {#if canManageDepartments}
-            <button type="button" class="btn-primary" onclick={openCreateModal}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              {$_('admin.departments.createDepartment')}
-            </button>
-          {/if}
+          <h2 id="departments-organization-heading">{$_('admin.departments.organizationStructure')}</h2>
         </div>
         
         <div class="tree-container" id="departments-tree-panel">
@@ -445,14 +470,74 @@
   
   .tree-header h2 {
     flex: 1;
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
   }
 
-  .tree-header .btn-primary {
-    align-self: flex-end;
+  /* Page Header */
+  .org-page-header {
+    margin-bottom: 24px;
+  }
+
+  .org-page-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .org-page-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .org-page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .org-page-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .org-page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .org-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--button-bg);
+    border: 1px solid var(--button-border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+
+  .org-nav-btn:hover {
+    color: var(--brand);
+    border-color: var(--brand);
+  }
+
+  .org-nav-btn svg {
+    flex-shrink: 0;
   }
   
   .tree-container {
@@ -547,6 +632,15 @@
   @media (max-width: 1024px) {
     .page-content {
       padding: 16px;
+    }
+
+    .org-page-header-top {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .org-page-header-actions {
+      width: 100%;
     }
 
     .departments-layout {
