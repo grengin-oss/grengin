@@ -34,6 +34,10 @@
   let abVariantA = $state("");
   let abVariantB = $state("");
 
+  // Pagination state for department adoption
+  let adoptionPageSize = $state(10);
+  let adoptionCurrentPage = $state(0);
+
   // Derived
   let roleMap = $derived(
     roles.reduce(
@@ -100,6 +104,33 @@
       })
       .sort((a, b) => b.adoptionRate - a.adoptionRate);
   });
+
+  // Pagination derived values
+  let adoptionTotalPages = $derived(
+    Math.ceil(departmentAdoption.length / adoptionPageSize)
+  );
+  
+  let paginatedDepartmentAdoption = $derived(() => {
+    const startIndex = adoptionCurrentPage * adoptionPageSize;
+    const endIndex = startIndex + adoptionPageSize;
+    return departmentAdoption.slice(startIndex, endIndex);
+  });
+
+  // Reset pagination when page size changes or filters change
+  $effect(() => {
+    const _pageSize = adoptionPageSize;
+    adoptionCurrentPage = 0;
+  });
+
+  $effect(() => {
+    const _filterRoleId = filterRoleId;
+    const _filterPromptId = filterPromptId;
+    adoptionCurrentPage = 0;
+  });
+
+  function handleAdoptionPageChange(page: number) {
+    adoptionCurrentPage = page;
+  }
 
   // A/B comparison (UI-only)
   let variantAMetric = $derived(metrics.find((m) => m.prompt_id === abVariantA));
@@ -377,7 +408,7 @@
                 </tr>
               </thead>
               <tbody>
-                {#each departmentAdoption as dept}
+                {#each paginatedDepartmentAdoption() as dept}
                   <tr>
                     <td><span class="dept-name">{dept.name}</span></td>
                     <td>{dept.memberCount}</td>
@@ -394,6 +425,31 @@
               </tbody>
             </table>
           </AdminTableCard>
+
+          <!-- Pagination -->
+          {#if adoptionTotalPages > 1}
+            <nav class="pagination" aria-label={$_('admin.common.pagination')}>
+              <button
+                class="btn"
+                onclick={() => handleAdoptionPageChange(adoptionCurrentPage - 1)}
+                disabled={adoptionCurrentPage === 0}
+                aria-label={$_('admin.common.previousPage')}
+              >
+                {$_('admin.common.previous')}
+              </button>
+              <span class="pagination-info" role="status" aria-live="polite">
+                Page {formatNumber(adoptionCurrentPage + 1)} of {formatNumber(adoptionTotalPages)} ({departmentAdoption.length} departments)
+              </span>
+              <button
+                class="btn"
+                onclick={() => handleAdoptionPageChange(adoptionCurrentPage + 1)}
+                disabled={adoptionCurrentPage >= adoptionTotalPages - 1}
+                aria-label={$_('admin.common.nextPage')}
+              >
+                {$_('admin.common.next')}
+              </button>
+            </nav>
+          {/if}
         {:else}
           <AdminPanelCard>
             <p class="empty-text">{$_("admin.promptEffectiveness.noDepartments")}</p>
@@ -911,6 +967,47 @@
     font-weight: 600;
     color: var(--brand);
     white-space: nowrap;
+  }
+
+  /* Pagination Styles */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xl);
+    margin-top: var(--space-xl);
+  }
+
+  .pagination-info {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+
+  .pagination .btn {
+    padding: var(--space-sm) var(--space-md);
+    background: var(--button-bg);
+    border: 1px solid var(--button-border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .pagination .btn:hover:not(:disabled) {
+    background: var(--btn-secondary);
+    border-color: var(--glass-stroke-light);
+  }
+
+  .pagination .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .pagination .btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
 
   /* A/B Test */
