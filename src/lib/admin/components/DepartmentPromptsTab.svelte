@@ -68,7 +68,9 @@
 
   let hasPrompts = $derived(sortedAssigned.length > 0);
 
-  onMount(() => {
+  $effect(() => {
+    // Re-load whenever the department changes (not just on first mount)
+    const _deptId = department.id;
     loadInitialData();
   });
 

@@ -111,9 +111,12 @@
     }
   }
 
-  function handleDepartmentChange() {
-    loadAssignedPrompts();
-  }
+  // Reactively load prompts whenever selected department changes
+  $effect(() => {
+    if (selectedDepartmentId !== undefined) {
+      loadAssignedPrompts();
+    }
+  });
 
   async function handleAssignPrompt(promptId: string) {
     if (!selectedDepartmentId) return;
@@ -270,7 +273,6 @@
         id="dept-select"
         class="selector-select"
         bind:value={selectedDepartmentId}
-        onchange={handleDepartmentChange}
       >
         <option value="">{$_('admin.departmentPrompts.chooseDepartment')}</option>
         {#each departments as dept}
