@@ -15,6 +15,7 @@
     McpOAuthCallback,
     PromptLibrary,
     PromptEffectiveness,
+    AuditLogs,
       } from './admin-chunk';
 </script>
 
@@ -88,6 +89,9 @@
       <PromptEffectiveness />
     {/snippet}
   </PermissionGuard>
+</Route>
+<Route path="/admin/audit-logs">
+  <AuditLogs />
 </Route>
 <Route path="/mcp/oauth/callback">
   <McpOAuthCallback />
