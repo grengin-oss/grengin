@@ -31,6 +31,9 @@ export const PERMISSIONS = {
     view: "mcp_servers:view",
     manage: "mcp_servers:manage",
   },
+  auditLogs: {
+    view: "audit_logs:view",
+  },
 } as const;
 
 export type PermissionKey =
@@ -41,4 +44,5 @@ export type PermissionKey =
   | (typeof PERMISSIONS.users)[keyof typeof PERMISSIONS.users]
   | (typeof PERMISSIONS.roles)[keyof typeof PERMISSIONS.roles]
   | (typeof PERMISSIONS.budget)[keyof typeof PERMISSIONS.budget]
-  | (typeof PERMISSIONS.mcpServers)[keyof typeof PERMISSIONS.mcpServers];
+  | (typeof PERMISSIONS.mcpServers)[keyof typeof PERMISSIONS.mcpServers]
+  | (typeof PERMISSIONS.auditLogs)[keyof typeof PERMISSIONS.auditLogs];

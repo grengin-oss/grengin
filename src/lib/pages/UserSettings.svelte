@@ -3,8 +3,9 @@
   import { _ } from "svelte-i18n";
   import PageHeader from "../admin/components/PageHeader.svelte";
   import UserIntegrations from "./settings/UserIntegrations.svelte";
+  import UserPromptSettings from "./settings/UserPromptSettings.svelte";
 
-  type TabId = "integrations";
+  type TabId = "integrations" | "promptSettings";
 
   interface TabConfig {
     id: TabId;
@@ -17,6 +18,11 @@
       id: "integrations",
       label: $_("userSettings.tabs.integrations"),
       ariaLabel: $_("userSettings.tabs.integrationsAria"),
+    },
+    {
+      id: "promptSettings",
+      label: $_("userSettings.tabs.promptSettings"),
+      ariaLabel: $_("userSettings.tabs.promptSettingsAria"),
     },
   ] as const;
 
@@ -31,8 +37,8 @@
 
     if (!tabParam) return DEFAULT_TAB;
 
-    const normalized = tabParam.toLowerCase() as TabId;
-    return availableTabIds.includes(normalized) ? normalized : DEFAULT_TAB;
+    const candidate = tabParam as TabId;
+    return availableTabIds.includes(candidate) ? candidate : DEFAULT_TAB;
   }
 
   function syncQueryToUrl(tab: TabId, replace = false): void {
@@ -112,6 +118,8 @@
   >
     {#if currentTab === "integrations"}
       <UserIntegrations />
+    {:else if currentTab === "promptSettings"}
+      <UserPromptSettings />
     {/if}
   </div>
 </div>

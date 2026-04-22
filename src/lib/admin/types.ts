@@ -397,3 +397,22 @@ export interface BudgetOverview {
   period_start: string;
   sub_department_budgets: SubDepartmentBudget[];
 }
+
+export interface AuditLog {
+  id: string;
+  userId: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  details: string;
+  ipAddress: string;
+  userAgent: string;
+  createdAt: string;
+}
+
+export interface PaginatedAuditLogs {
+  items: AuditLog[];
+  total: number;
+  page: number;
+  limit: number;
+}
