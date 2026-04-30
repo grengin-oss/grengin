@@ -1,0 +1,30 @@
+{
+  "common": {
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "search": "Rechercher",
+    "never": "Jamais",
+    "loading": "Chargement...",
+    "clear": "Effacer",
+    "select": "Sélectionner"
+  },
+  "errors": {
+    "forbidden": {
+      "title": "Accès refusé",
+      "message": "Vous n'avez pas la permission d'accéder à cette page.",
+      "back": "Retour au chat",
+      "iconAlt": "Accès refusé"
+    }
+  },
+  "components": {
+    "typingIndicator": "L'assistant écrit"
+  },
+  "app": {
+    "closeSidebar": "Fermer la barre latérale",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "notifications": "Notifications"
+  }
+}

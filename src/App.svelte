@@ -6,6 +6,7 @@
   import Login from './lib/features/auth/components/Login.svelte';
   import AuthCallback from './lib/features/auth/components/AuthCallback.svelte';
   import MainAreaRoutes from '$lib/bundles/MainAreaRoutes.svelte';
+  import { loadNamespacesForRoute } from '$lib/i18n/index.js';
   import { initAuth, getAuthState, logout, permissionsStore } from './lib/features/auth/index.js';
   import {
     dismissStreamToast,
@@ -109,6 +110,13 @@
       history.pushState = originalPushState;
       history.replaceState = originalReplaceState;
     };
+  });
+
+  // Preload i18n namespaces when the route changes
+  $effect(() => {
+    // Subscribe to currentPath so this fires on every navigation
+    const path = currentPath;
+    loadNamespacesForRoute(path);
   });
 
   onMount(() => {

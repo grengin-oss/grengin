@@ -1,0 +1,16 @@
+{
+  "alerts": {
+    "title": "アラート",
+    "subtitle": "通知と更新",
+    "filterAll": "すべて",
+    "filterUnread": "未読",
+    "filterLabel": "アラートを状態で絞り込む",
+    "notificationsList": "通知リスト",
+    "empty": "表示するアラートがありません",
+    "loading": "アラートを読み込み中...",
+    "loadMore": "さらに読み込む",
+    "unread": "未読",
+    "loadError": "アラートの読み込みに失敗しました",
+    "markReadError": "アラートを既読にできませんでした"
+  }
+}

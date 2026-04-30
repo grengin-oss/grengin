@@ -1,0 +1,126 @@
+{
+  "userSettings": {
+    "title": "Ajustes",
+    "subtitle": "Administre sus preferencias personales e integraciones conectadas.",
+    "tabs": {
+      "integrations": "Integraciones",
+      "integrationsAria": "Integraciones conectadas",
+      "promptSettings": "Configuración de Indicaciones",
+      "promptSettingsAria": "Gestionar sus preferencias de indicaciones"
+    }
+  },
+  "userIntegrations": {
+    "loading": "Cargando integraciones...",
+    "failedToLoad": "Error al cargar integraciones",
+    "failedToGetAuthUrl": "No se pudo obtener la URL de autorización",
+    "failedToConnect": "Error al conectar {name}",
+    "failedToDisconnect": "Error al desconectar {name}",
+    "disconnected": "{name} desconectado",
+    "stats": {
+      "connected": "Conectado",
+      "available": "Disponible",
+      "total": "Total"
+    },
+    "filters": {
+      "all": "Todas",
+      "connected": "Conectadas",
+      "available": "Disponibles",
+      "filterAria": "Filtrar integraciones"
+    },
+    "empty": {
+      "title": "No se encontraron integraciones",
+      "noConnected": "Aún no ha conectado ninguna integración.",
+      "noAvailable": "No hay integraciones disponibles para conectar en este momento.",
+      "noConfigured": "Su organización no ha configurado integraciones.",
+      "viewAll": "Ver todas las integraciones"
+    },
+    "columns": {
+      "name": "Nombre",
+      "transport": "Transporte",
+      "status": "Estado",
+      "tools": "Herramientas",
+      "connectedAt": "Conectado",
+      "actions": "Acciones"
+    },
+    "status": {
+      "connected": "Conectado",
+      "disconnected": "Desconectado",
+      "expired": "Expirado",
+      "error": "Error",
+      "expiredWarning": "La conexión ha expirado. Reconéctese para actualizar su acceso."
+    },
+    "actions": {
+      "connect": "Conectar",
+      "connecting": "Conectando...",
+      "disconnect": "Desconectar",
+      "reconnect": "Reconectar",
+      "disconnectConfirm": "¿Desconectar?",
+      "yes": "Sí",
+      "no": "No",
+      "viewTools": "Ver herramientas"
+    },
+    "connectedSince": "Conectado desde {date}",
+    "toolCount": "{count} {count, plural, one {herramienta} other {herramientas}}",
+    "tools": {
+      "modalTitle": "{name} — Herramientas",
+      "loading": "Cargando herramientas...",
+      "empty": "No hay herramientas disponibles para este servidor."
+    }
+  },
+  "userPromptSettings": {
+    "loading": "Cargando configuración de indicaciones...",
+    "failedToLoad": "Error al cargar la configuración de indicaciones",
+    "activePrompt": "Indicación Activa",
+    "source": {
+      "label": "Fuente",
+      "user_custom": "Indicación Personalizada",
+      "department": "Predeterminado del Departamento",
+      "department_default": "Predeterminado del Departamento",
+      "system_default": "Predeterminado del Sistema"
+    },
+    "variables": {
+      "title": "Variables Disponibles",
+      "empty": "No hay variables disponibles",
+      "insertHint": "Haga clic en una variable para insertarla en el editor",
+      "copied": "Variable insertada"
+    },
+    "editor": {
+      "title": "Editor de Indicación Personalizada",
+      "placeholder": "Escriba su indicación personalizada del sistema aquí. Use variables como {{variable_name}} para insertar valores dinámicos...",
+      "charCount": "{count} caracteres",
+      "preview": "Vista Previa",
+      "edit": "Editar",
+      "previewTitle": "Vista Previa de Indicación",
+      "previewEmpty": "Nada que previsualizar. Comience a escribir su indicación personalizada arriba."
+    },
+    "actions": {
+      "save": "Guardar Indicación",
+      "saving": "Guardando...",
+      "resetToDefault": "Restablecer a Predeterminado",
+      "resetting": "Restableciendo...",
+      "resetConfirmTitle": "¿Restablecer a Predeterminado?",
+      "resetConfirmMessage": "Esto eliminará su indicación personalizada y volverá al predeterminado del departamento o del sistema. Esta acción no se puede deshacer.",
+      "resetConfirmButton": "Sí, Restablecer",
+      "cancel": "Cancelar"
+    },
+    "messages": {
+      "saved": "Indicación personalizada guardada exitosamente",
+      "failedToSave": "Error al guardar la indicación",
+      "reset": "Indicación restablecida al predeterminado",
+      "failedToReset": "Error al restablecer la indicación",
+      "noChanges": "No hay cambios que guardar"
+    },
+    "feedback": {
+      "title": "Comentarios sobre la Indicación",
+      "subtitle": "Ayúdenos a mejorar calificando la efectividad de la indicación actual",
+      "thumbsUp": "Esta indicación funciona bien",
+      "thumbsDown": "Esta indicación necesita mejoras",
+      "commentPlaceholder": "Opcional: Cuéntenos más sobre su experiencia con esta indicación...",
+      "submit": "Enviar Comentarios",
+      "submitting": "Enviando...",
+      "submitted": "¡Gracias por sus comentarios!",
+      "failedToSubmit": "Error al enviar comentarios",
+      "ratingRequired": "Seleccione una calificación antes de enviar"
+    }
+  }
+}

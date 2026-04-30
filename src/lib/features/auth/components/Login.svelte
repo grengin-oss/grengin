@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { login, ApiError } from '../index.js';
   import { setAuth } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { getLocalizedError } from '../../../utils/errorLocalization';
   import OAuthButton from './OAuthButton.svelte';
   import { _ } from 'svelte-i18n';
+  import { loadNamespaces } from '$lib/i18n/index.js';
 
   // TODO: This should come from the server (API update)
   type AuthMode = 'google' | 'azure' | 'keycloak' | 'admin';
@@ -63,6 +65,11 @@
   function handleOAuthSuccess() {
     onLoginSuccess?.();
   }
+
+  onMount(() => {
+    // Ensure auth namespace is loaded for translations
+    loadNamespaces(['auth']);
+  });
 </script>
 
 <main class="login-container">

@@ -154,14 +154,14 @@
     try {
       const data = await getSSOProvider(provider.id);
       editingProvider = data;
-      clientSecretPreview = data.client_secret_preview.value ?? "";
+      clientSecretPreview = data.client_secret_preview?.value ?? "";
       isTenantFieldAvailable = data.provider.value === "azure";
       showClientSecret = false;
 
       editForm = {
         client_id: data.client_id.value,
-        client_secret: data.client_secret_preview.value,
-        tenant_id: data.tenant_id ?? "",
+        client_secret: data.client_secret_preview?.value ?? "",
+        tenant_id: typeof data.tenant_id === 'string' ? data.tenant_id : data.tenant_id?.value ?? "",
         is_enabled: data.is_enabled,
         allowed_domains: data.allowed_domains || [],
       };

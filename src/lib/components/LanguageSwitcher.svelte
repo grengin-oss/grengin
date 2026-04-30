@@ -1,25 +1,24 @@
 <script lang="ts">
-  import { locale, locales } from 'svelte-i18n';
-  import { SUPPORTED_LOCALES, type SupportedLocale } from '$lib/i18n';
+  import { locale } from 'svelte-i18n';
+  import { SUPPORTED_LOCALES, switchLocale, type SupportedLocale } from '$lib/i18n';
 
   let isOpen = $state(false);
+  let isSwitching = $state(false);
 
-  function setLanguage(lang: SupportedLocale) {
-    locale.set(lang);
-    localStorage.setItem('locale', lang);
-    isOpen = false;
+  async function setLanguage(lang: SupportedLocale) {
+    if (isSwitching) return;
+    isSwitching = true;
+    try {
+      await switchLocale(lang);
+    } finally {
+      isSwitching = false;
+      isOpen = false;
+    }
   }
 
   function toggleDropdown() {
     isOpen = !isOpen;
   }
-
-  $effect(() => {
-    const savedLocale = localStorage.getItem('locale');
-    if (savedLocale && savedLocale in SUPPORTED_LOCALES) {
-      locale.set(savedLocale);
-    }
-  });
 </script>
 
 <div class="language-switcher">

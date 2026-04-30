@@ -1,0 +1,16 @@
+{
+  "alerts": {
+    "title": "Alerts",
+    "subtitle": "Your notifications and updates",
+    "filterAll": "All",
+    "filterUnread": "Unread",
+    "filterLabel": "Filter alerts by status",
+    "notificationsList": "Notifications list",
+    "empty": "No alerts to show",
+    "loading": "Loading alerts...",
+    "loadMore": "Load more",
+    "unread": "Unread",
+    "loadError": "Failed to load alerts",
+    "markReadError": "Could not mark alert as read"
+  }
+}
