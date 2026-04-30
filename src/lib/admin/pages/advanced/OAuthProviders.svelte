@@ -12,9 +12,10 @@
     deleteSSOProvider,
     getSSOProvider,
     updateSSOProvider,
+    validateSSOProvider,
     toggleSSOProviderStatus,
   } from "../../../api/admin/SSOProviders.js";
-  import type { UpdateSSOProviderPayload } from "../../../api/admin/SSOProviders.js";
+  import type { UpdateSSOProviderPayload, ValidateSSOProviderPayload } from "../../../api/admin/SSOProviders.js";
   import type { SSOProvider, SSOProviderDetails } from "../../types.js";
 
   const providerIcons: Record<string, string> = {
@@ -35,6 +36,7 @@
   let editingProvider = $state<SSOProviderDetails | null>(null);
   let isEditLoading = $state(false);
   let isEditSaving = $state(false);
+  let isValidating = $state(false);
   let editErrors = $state<Record<string, string>>({});
   let editTitle = $state("");
 
@@ -247,11 +249,70 @@
   }
 
   async function handleEditSubmit() {
-    if (!editingProvider || isEditSaving) {
+    if (!editingProvider || isEditSaving || isValidating) {
       return;
     }
     if (!validateEditForm()) {
       return;
+    }
+
+    const clientSecret = editForm.client_secret.trim();
+    const hasSecretChanged =
+      clientSecret &&
+      clientSecret.length > 0 &&
+      clientSecret !== clientSecretPreview;
+    const hasClientIdChanged =
+      editForm.client_id.trim() !== editingProvider.client_id.value;
+    const hasTenantIdChanged =
+      isTenantFieldAvailable &&
+      editForm.tenant_id.trim() !== (editingProvider.tenant_id?.value ?? "");
+    const credentialsChanged =
+      hasSecretChanged || hasClientIdChanged || hasTenantIdChanged;
+
+    let validationToken: string | undefined;
+
+    if (credentialsChanged) {
+      isValidating = true;
+      try {
+        const validatePayload: ValidateSSOProviderPayload = {
+          client_id: editForm.client_id.trim(),
+          provider: editingProvider.provider.value,
+          issuer_url: editingProvider.issuer_url.value,
+          redirect_url: editingProvider.redirect_url.value,
+          frontend_hosted_url: window.location.origin,
+        };
+
+        if (hasSecretChanged) {
+          validatePayload.client_secret = clientSecret;
+        }
+
+        if (isTenantFieldAvailable) {
+          validatePayload.tenant_id = editForm.tenant_id.trim();
+        }
+
+        const result = await validateSSOProvider(
+          editingProvider.id,
+          validatePayload,
+        );
+
+        if (!result.valid) {
+          toast.error(
+            result.message ||
+              $_("admin.settings.oauthProviders.toasts.validationFailed"),
+          );
+          return;
+        }
+
+        validationToken = result.validation_token;
+      } catch (err: any) {
+        toast.error(
+          err?.message ||
+            $_("admin.settings.oauthProviders.toasts.validationFailed"),
+        );
+        return;
+      } finally {
+        isValidating = false;
+      }
     }
 
     isEditSaving = true;
@@ -269,14 +330,12 @@
         payload.tenant_id = editForm.tenant_id.trim();
       }
 
-      // Only update client secret if it has changed
-      const clientSecret = editForm.client_secret.trim();
-      if (
-        clientSecret &&
-        clientSecret.length &&
-        clientSecret !== clientSecretPreview
-      ) {
+      if (hasSecretChanged) {
         payload.client_secret = clientSecret;
+      }
+
+      if (validationToken) {
+        payload.validation_token = validationToken;
       }
 
       await updateSSOProvider(editingProvider.id, payload);
@@ -656,16 +715,20 @@
               class="btn"
               type="button"
               onclick={closeEditModal}
-              disabled={isEditSaving}
+              disabled={isEditSaving || isValidating}
             >
               {$_("common.cancel")}
             </button>
             <button
               class="btn btn-accent"
               type="submit"
-              disabled={isEditSaving || isEditLoading}
+              disabled={isEditSaving || isEditLoading || isValidating}
             >
-              {isEditSaving ? $_("admin.settings.oauthProviders.actions.saving") : $_("common.save")}
+              {isValidating
+                ? $_("admin.settings.oauthProviders.actions.validating")
+                : isEditSaving
+                  ? $_("admin.settings.oauthProviders.actions.saving")
+                  : $_("common.save")}
             </button>
           </div>
         </form>

@@ -271,7 +271,8 @@
         "actions": {
           "retry": "Reintentar",
           "deleting": "Eliminando…",
-          "saving": "Guardando…"
+          "saving": "Guardando…",
+          "validating": "Validando…"
         },
         "messages": {
           "loading": "Cargando proveedores OAuth...",
@@ -299,6 +300,7 @@
           "statusUpdateError": "No se pudo {action} {name}",
           "deleted": "Proveedor SSO eliminado",
           "deleteError": "No se pudo eliminar el proveedor SSO",
+          "validationFailed": "La validación de credenciales SSO falló. Verifica tus credenciales e intenta de nuevo.",
           "updated": "Proveedor SSO actualizado",
           "updateError": "No se pudo actualizar el proveedor"
         },
@@ -1109,9 +1111,74 @@
     "viewAnalytics": "Ver análisis de uso detallado",
     "viewPromptEffectiveness": "Ver métricas de efectividad de prompts",
     "configureSettings": "Configurar ajustes del sistema",
+    "viewSystemMetrics": "Estado y diagnósticos del sistema",
     "retry": "Reintentar",
     "errors": {
       "fetchFailed": "Error al obtener datos del resumen"
+    }
+  },
+  "systemMetrics": {
+    "title": "Métricas del sistema",
+    "subtitle": "Estado en tiempo real del servidor, base de datos y contenedores",
+    "refresh": "Actualizar",
+    "autoRefresh": "Actualización automática",
+    "lastUpdated": "Última actualización",
+    "generatedAt": "Generado en",
+    "machine": {
+      "title": "Máquina",
+      "cpuUsage": "Uso de CPU",
+      "memoryUsage": "Uso de memoria",
+      "swapUsage": "Uso de swap",
+      "usedMemory": "Usada",
+      "freeMemory": "Libre",
+      "totalMemory": "Total",
+      "usedSwap": "Swap usado",
+      "totalSwap": "Swap total",
+      "loadAverage": "Carga promedio",
+      "load1m": "1 min",
+      "load5m": "5 min",
+      "load15m": "15 min",
+      "uptime": "Tiempo activo",
+      "disks": "Uso de disco"
+    },
+    "database": {
+      "title": "Base de datos",
+      "connections": "Conexiones",
+      "active": "Activas",
+      "idle": "Inactivas",
+      "total": "Total",
+      "backends": "Procesos backend",
+      "latency": "Latencia de ida y vuelta",
+      "size": "Tamaño de la base",
+      "cacheHitRatio": "Tasa de aciertos de caché",
+      "blocksHit": "Bloques en caché",
+      "blocksRead": "Bloques leídos",
+      "transactions": "Transacciones",
+      "commits": "Confirmaciones",
+      "rollbacks": "Reversiones",
+      "tuples": "Operaciones de tuplas",
+      "fetched": "Recuperados",
+      "inserted": "Insertados",
+      "updated": "Actualizados",
+      "deleted": "Eliminados",
+      "returned": "Devueltos"
+    },
+    "container": {
+      "title": "Contenedor",
+      "insideContainer": "Ejecutándose en contenedor",
+      "yes": "Sí",
+      "no": "No",
+      "cgroupVersion": "Versión de Cgroup",
+      "cpuQuota": "Cuota de CPU",
+      "cpuUsage": "Uso de CPU",
+      "cores": "núcleos",
+      "seconds": "segundos",
+      "memoryUsage": "Uso de memoria",
+      "memoryLimit": "Límite de memoria",
+      "memoryAvailable": "Memoria disponible"
+    },
+    "errors": {
+      "fetchFailed": "Error al obtener métricas del sistema"
     }
   }
 }

@@ -55,6 +55,7 @@
     "newAlert": "Nueva alerta",
     "promptLibrary": "Indicaciones",
     "promptEffectiveness": "Métricas de Indicaciones",
-    "auditLogs": "Registros de auditoría"
+    "auditLogs": "Registros de auditoría",
+    "systemMetrics": "Métricas del sistema"
   }
 }

@@ -271,7 +271,8 @@
         "actions": {
           "retry": "다시 시도",
           "deleting": "삭제 중…",
-          "saving": "저장 중…"
+          "saving": "저장 중…",
+          "validating": "검증 중…"
         },
         "messages": {
           "loading": "OAuth 공급자를 불러오는 중...",
@@ -299,6 +300,7 @@
           "statusUpdateError": "{name}을(를) {action}할 수 없습니다",
           "deleted": "SSO 공급자가 삭제되었습니다",
           "deleteError": "SSO 공급자 삭제에 실패했습니다",
+          "validationFailed": "SSO 자격 증명 검증에 실패했습니다. 자격 증명을 확인하고 다시 시도해주세요.",
           "updated": "SSO 공급자가 업데이트되었습니다",
           "updateError": "공급자 업데이트에 실패했습니다"
         },
@@ -1109,9 +1111,74 @@
     "viewAnalytics": "상세 사용 분석 보기",
     "viewPromptEffectiveness": "프롬프트 효과 지표 보기",
     "configureSettings": "시스템 설정 구성",
+    "viewSystemMetrics": "시스템 상태 및 진단",
     "retry": "재시도",
     "errors": {
       "fetchFailed": "개요 데이터를 가져오지 못했습니다"
+    }
+  },
+  "systemMetrics": {
+    "title": "시스템 메트릭",
+    "subtitle": "서버, 데이터베이스 및 컨테이너의 실시간 상태",
+    "refresh": "새로고침",
+    "autoRefresh": "자동 새로고침",
+    "lastUpdated": "마지막 업데이트",
+    "generatedAt": "생성 시간",
+    "machine": {
+      "title": "머신",
+      "cpuUsage": "CPU 사용량",
+      "memoryUsage": "메모리 사용량",
+      "swapUsage": "스왑 사용량",
+      "usedMemory": "사용됨",
+      "freeMemory": "사용 가능",
+      "totalMemory": "전체",
+      "usedSwap": "사용된 스왑",
+      "totalSwap": "전체 스왑",
+      "loadAverage": "평균 부하",
+      "load1m": "1분",
+      "load5m": "5분",
+      "load15m": "15분",
+      "uptime": "가동 시간",
+      "disks": "디스크 사용량"
+    },
+    "database": {
+      "title": "데이터베이스",
+      "connections": "연결",
+      "active": "활성",
+      "idle": "유휴",
+      "total": "전체",
+      "backends": "백엔드",
+      "latency": "왕복 지연 시간",
+      "size": "데이터베이스 크기",
+      "cacheHitRatio": "캐시 적중률",
+      "blocksHit": "캐시 히트 블록",
+      "blocksRead": "읽은 블록",
+      "transactions": "트랜잭션",
+      "commits": "커밋",
+      "rollbacks": "롤백",
+      "tuples": "튜플 작업",
+      "fetched": "조회됨",
+      "inserted": "삽입됨",
+      "updated": "업데이트됨",
+      "deleted": "삭제됨",
+      "returned": "반환됨"
+    },
+    "container": {
+      "title": "컨테이너",
+      "insideContainer": "컨테이너에서 실행 중",
+      "yes": "예",
+      "no": "아니오",
+      "cgroupVersion": "Cgroup 버전",
+      "cpuQuota": "CPU 할당량",
+      "cpuUsage": "CPU 사용량",
+      "cores": "코어",
+      "seconds": "초",
+      "memoryUsage": "메모리 사용량",
+      "memoryLimit": "메모리 제한",
+      "memoryAvailable": "사용 가능한 메모리"
+    },
+    "errors": {
+      "fetchFailed": "시스템 메트릭을 가져오지 못했습니다"
     }
   }
 }

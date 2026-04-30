@@ -271,7 +271,8 @@
         "actions": {
           "retry": "再試行",
           "deleting": "削除中…",
-          "saving": "保存中…"
+          "saving": "保存中…",
+          "validating": "検証中…"
         },
         "messages": {
           "loading": "OAuthプロバイダーを読み込み中...",
@@ -299,6 +300,7 @@
           "statusUpdateError": "{name}を{action}できませんでした",
           "deleted": "SSOプロバイダーを削除しました",
           "deleteError": "SSOプロバイダーの削除に失敗しました",
+          "validationFailed": "SSO資格情報の検証に失敗しました。資格情報を確認して再試行してください。",
           "updated": "SSOプロバイダーを更新しました",
           "updateError": "プロバイダーの更新に失敗しました"
         },
@@ -1109,9 +1111,74 @@
     "viewAnalytics": "詳細な使用分析を表示",
     "viewPromptEffectiveness": "プロンプト効果指標を表示",
     "configureSettings": "システム設定を構成",
+    "viewSystemMetrics": "システム状態と診断",
     "retry": "再試行",
     "errors": {
       "fetchFailed": "概要データの取得に失敗しました"
+    }
+  },
+  "systemMetrics": {
+    "title": "システムメトリクス",
+    "subtitle": "サーバー、データベース、コンテナのリアルタイム状態",
+    "refresh": "更新",
+    "autoRefresh": "自動更新",
+    "lastUpdated": "最終更新",
+    "generatedAt": "生成日時",
+    "machine": {
+      "title": "マシン",
+      "cpuUsage": "CPU使用率",
+      "memoryUsage": "メモリ使用量",
+      "swapUsage": "スワップ使用量",
+      "usedMemory": "使用中",
+      "freeMemory": "空き",
+      "totalMemory": "合計",
+      "usedSwap": "使用済みスワップ",
+      "totalSwap": "合計スワップ",
+      "loadAverage": "平均負荷",
+      "load1m": "1分",
+      "load5m": "5分",
+      "load15m": "15分",
+      "uptime": "稼働時間",
+      "disks": "ディスク使用量"
+    },
+    "database": {
+      "title": "データベース",
+      "connections": "接続数",
+      "active": "アクティブ",
+      "idle": "アイドル",
+      "total": "合計",
+      "backends": "バックエンド",
+      "latency": "往復レイテンシ",
+      "size": "データベースサイズ",
+      "cacheHitRatio": "キャッシュヒット率",
+      "blocksHit": "ヒットブロック",
+      "blocksRead": "読み込みブロック",
+      "transactions": "トランザクション",
+      "commits": "コミット",
+      "rollbacks": "ロールバック",
+      "tuples": "タプル操作",
+      "fetched": "取得",
+      "inserted": "挿入",
+      "updated": "更新",
+      "deleted": "削除",
+      "returned": "返却"
+    },
+    "container": {
+      "title": "コンテナ",
+      "insideContainer": "コンテナ内で実行中",
+      "yes": "はい",
+      "no": "いいえ",
+      "cgroupVersion": "Cgroupバージョン",
+      "cpuQuota": "CPUクォータ",
+      "cpuUsage": "CPU使用率",
+      "cores": "コア",
+      "seconds": "秒",
+      "memoryUsage": "メモリ使用量",
+      "memoryLimit": "メモリ制限",
+      "memoryAvailable": "利用可能メモリ"
+    },
+    "errors": {
+      "fetchFailed": "システムメトリクスの取得に失敗しました"
     }
   }
 }

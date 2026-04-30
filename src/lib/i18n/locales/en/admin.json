@@ -271,7 +271,8 @@
         "actions": {
           "retry": "Retry",
           "deleting": "Deleting…",
-          "saving": "Saving…"
+          "saving": "Saving…",
+          "validating": "Validating…"
         },
         "messages": {
           "loading": "Loading OAuth providers...",
@@ -299,6 +300,7 @@
           "statusUpdateError": "Unable to {action} {name}",
           "deleted": "SSO provider deleted",
           "deleteError": "Failed to delete SSO provider",
+          "validationFailed": "SSO credentials validation failed. Please check your credentials and try again.",
           "updated": "SSO provider updated",
           "updateError": "Failed to update provider"
         },
@@ -1109,7 +1111,7 @@
     "viewAnalytics": "View detailed usage analytics",
     "viewPromptEffectiveness": "View prompt effectiveness metrics",
     "configureSettings": "Configure system settings",
-    "viewSystemMetrics": "Monitor server, database & container health",
+    "viewSystemMetrics": "System health & diagnostics",
     "retry": "Retry",
     "errors": {
       "fetchFailed": "Failed to fetch overview data"

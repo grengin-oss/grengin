@@ -3,7 +3,8 @@
   import PageHeader from "../components/PageHeader.svelte";
   import AdminPanelCard from "../components/AdminPanelCard.svelte";
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
-  import { getSystemMetrics } from "../../api/admin/systemMetrics.js";
+  import { getSystemMetrics, getHealthStatus } from "../../api/admin/systemMetrics.js";
+  import type { HealthStatus } from "../../api/admin/systemMetrics.js";
   import type { SystemMetrics } from "../types.js";
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
@@ -11,16 +12,29 @@
 
   let isLoading = $state(true);
   let metricsData = $state<SystemMetrics | null>(null);
+  let healthData = $state<HealthStatus | null>(null);
   let error = $state<string | null>(null);
   let autoRefresh = $state(false);
   let refreshInterval: ReturnType<typeof setInterval> | null = null;
+
+  async function fetchHealthStatus() {
+    try {
+      healthData = await getHealthStatus();
+    } catch (err: any) {
+      console.error('Health status fetch error:', err);
+    }
+  }
 
   async function fetchMetrics() {
     isLoading = !metricsData;
     error = null;
 
     try {
-      metricsData = await getSystemMetrics();
+      const [metrics] = await Promise.all([
+        getSystemMetrics(),
+        !healthData ? fetchHealthStatus() : Promise.resolve(),
+      ]);
+      metricsData = metrics;
     } catch (err: any) {
       const errorMessage = err instanceof ApiError ? err.message : err.message;
       error = errorMessage;
@@ -146,11 +160,40 @@
       </div>
     </AdminPanelCard>
   {:else if metricsData}
-    {#if metricsData.generatedAt}
-      <p class="generated-at">
-        {$_('systemMetrics.generatedAt')}: {formatTimestamp(metricsData.generatedAt)}
-      </p>
-    {/if}
+    <!-- ====== VERSION & STATUS BANNER ====== -->
+    <div class="status-banner">
+      <div class="status-banner__left">
+        {#if healthData}
+          <div class="version-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>
+            <div class="version-info">
+              <span class="version-label">Grengin</span>
+              <span class="version-number">v{healthData.version}</span>
+            </div>
+          </div>
+          <div class="health-indicator" class:healthy={healthData.status === 'Okay'} class:unhealthy={healthData.status !== 'Okay'}>
+            <span class="health-dot"></span>
+            <span class="health-text">{healthData.status === 'Okay' ? 'All Systems Operational' : healthData.status}</span>
+          </div>
+        {:else}
+          <div class="version-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>
+            <div class="version-info">
+              <span class="version-label">Grengin</span>
+              <span class="version-number version-number--loading">Loading...</span>
+            </div>
+          </div>
+        {/if}
+      </div>
+      <div class="status-banner__right">
+        {#if metricsData.generatedAt}
+          <span class="generated-at">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            {formatTimestamp(metricsData.generatedAt)}
+          </span>
+        {/if}
+      </div>
+    </div>
 
     <div class="metrics-content">
       <!-- ====== MACHINE SECTION ====== -->
@@ -460,6 +503,7 @@
     height: 100%;
   }
 
+  /* ====== Header Actions ====== */
   .header-actions {
     display: flex;
     align-items: center;
@@ -486,6 +530,7 @@
   .btn-auto-refresh:hover {
     background: var(--btn-secondary);
     color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.18);
   }
 
   .btn-refresh:disabled {
@@ -507,12 +552,142 @@
     to { transform: rotate(360deg); }
   }
 
-  .generated-at {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-    margin: 0 0 var(--space-xl) 0;
+  /* ====== Status Banner ====== */
+  .status-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg) var(--space-xl);
+    margin-bottom: var(--space-xl);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-lg);
+    gap: var(--space-lg);
+    flex-wrap: wrap;
   }
 
+  .status-banner__left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xl);
+    flex-wrap: wrap;
+  }
+
+  .status-banner__right {
+    display: flex;
+    align-items: center;
+  }
+
+  .version-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .version-badge :global(svg) {
+    color: var(--brand);
+    flex-shrink: 0;
+  }
+
+  .version-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .version-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1;
+  }
+
+  .version-number {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  }
+
+  .version-number--loading {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-weight: 500;
+  }
+
+  .health-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 0.375rem 0.75rem;
+    border-radius: 100px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .health-indicator.healthy {
+    background: rgba(52, 211, 153, 0.1);
+    color: #34d399;
+  }
+
+  .health-indicator.unhealthy {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+  }
+
+  .health-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .healthy .health-dot {
+    background: #34d399;
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+    animation: pulse-green 2s ease-in-out infinite;
+  }
+
+  .unhealthy .health-dot {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    animation: pulse-red 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 4px rgba(52, 211, 153, 0.4); }
+    50% { box-shadow: 0 0 12px rgba(52, 211, 153, 0.7); }
+  }
+
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+    50% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.7); }
+  }
+
+  .health-text {
+    white-space: nowrap;
+  }
+
+  .generated-at {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .generated-at :global(svg) {
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  /* ====== Loading & Error ====== */
   .loading-container {
     display: flex;
     justify-content: center;
@@ -531,6 +706,7 @@
     font-size: 1rem;
   }
 
+  /* ====== Metrics Content ====== */
   .metrics-content {
     display: flex;
     flex-direction: column;
@@ -543,7 +719,7 @@
   }
 
   .section-title {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0 0 var(--space-lg) 0;
@@ -551,6 +727,8 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   .section-title :global(svg) {
@@ -559,13 +737,13 @@
   }
 
   .subsection-title {
-    font-size: 1rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     color: var(--text-secondary);
     margin: var(--space-xl) 0 var(--space-md) 0;
   }
 
-  /* Card grid layouts */
+  /* ====== Card Grid Layouts ====== */
   .cards-grid {
     display: grid;
     gap: var(--space-lg);
@@ -578,7 +756,7 @@
 
   .mt-lg { margin-top: var(--space-lg); }
 
-  /* Stat cards */
+  /* ====== Stat Cards ====== */
   .stat-card {
     display: flex;
     flex-direction: column;
@@ -595,13 +773,14 @@
     font-size: 0.8125rem;
     color: var(--text-secondary);
     font-weight: 500;
+    letter-spacing: 0.01em;
   }
 
   .stat-value {
     font-size: 1.75rem;
     font-weight: 700;
     color: var(--text-primary);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     line-height: 1.2;
   }
 
@@ -625,12 +804,12 @@
     flex-wrap: wrap;
   }
 
-  .mono { font-family: 'SF Mono', 'Menlo', monospace; }
+  .mono { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
 
-  /* Progress bars */
+  /* ====== Progress Bars ====== */
   .progress-bar {
     height: 6px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
     border-radius: 3px;
     overflow: hidden;
   }
@@ -644,25 +823,25 @@
     height: 100%;
     border-radius: 3px;
     background: var(--brand);
-    transition: width 0.6s ease;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .progress-fill.warn { background: #f59e0b; }
   .progress-fill.critical { background: #ef4444; }
   .progress-fill--accent { background: #34d399; }
 
-  /* Badges */
+  /* ====== Badges ====== */
   .badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.125rem 0.5rem;
+    padding: 0.1875rem 0.625rem;
     border-radius: var(--radius-sm);
     font-size: 0.75rem;
     font-weight: 600;
   }
 
   .badge--green {
-    background: rgba(52, 211, 153, 0.15);
+    background: rgba(52, 211, 153, 0.12);
     color: #34d399;
   }
 
@@ -671,7 +850,7 @@
     color: var(--text-secondary);
   }
 
-  /* Load averages */
+  /* ====== Load Averages ====== */
   .load-averages {
     display: flex;
     gap: var(--space-lg);
@@ -699,7 +878,7 @@
     color: var(--text-primary);
   }
 
-  /* Key-value grid for transactions / tuples */
+  /* ====== Key-Value Grid ====== */
   .kv-grid {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -728,7 +907,7 @@
     flex: 1;
   }
 
-  /* Responsive */
+  /* ====== Responsive ====== */
   @media (max-width: 1200px) {
     .cards-grid--4 { grid-template-columns: repeat(2, 1fr); }
     .cards-grid--3 { grid-template-columns: repeat(2, 1fr); }
@@ -743,5 +922,7 @@
     .header-actions { flex-direction: column; width: 100%; }
     .btn-refresh, .btn-auto-refresh { width: 100%; justify-content: center; }
     .stat-card--inline { flex-direction: column; }
+    .status-banner { flex-direction: column; align-items: flex-start; }
+    .status-banner__left { flex-direction: column; align-items: flex-start; }
   }
 </style>

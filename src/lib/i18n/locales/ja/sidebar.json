@@ -55,6 +55,7 @@
     "newAlert": "新しいアラート",
     "promptLibrary": "プロンプトライブラリ",
     "promptEffectiveness": "プロンプト効果",
-    "auditLogs": "監査ログ"
+    "auditLogs": "監査ログ",
+    "systemMetrics": "システムメトリクス"
   }
 }

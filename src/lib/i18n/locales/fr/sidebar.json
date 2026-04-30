@@ -55,6 +55,7 @@
     "newAlert": "Nouvelle alerte",
     "promptLibrary": "Instructions",
     "promptEffectiveness": "Métriques des Instructions",
-    "auditLogs": "Journaux d'audit"
+    "auditLogs": "Journaux d'audit",
+    "systemMetrics": "Métriques système"
   }
 }

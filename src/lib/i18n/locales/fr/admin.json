@@ -271,7 +271,8 @@
         "actions": {
           "retry": "Réessayer",
           "deleting": "Suppression…",
-          "saving": "Enregistrement…"
+          "saving": "Enregistrement…",
+          "validating": "Validation…"
         },
         "messages": {
           "loading": "Chargement des fournisseurs OAuth...",
@@ -299,6 +300,7 @@
           "statusUpdateError": "Impossible de {action} {name}",
           "deleted": "Fournisseur SSO supprimé",
           "deleteError": "Échec de la suppression du fournisseur SSO",
+          "validationFailed": "La validation des identifiants SSO a échoué. Veuillez vérifier vos identifiants et réessayer.",
           "updated": "Fournisseur SSO mis à jour",
           "updateError": "Échec de la mise à jour du fournisseur"
         },
@@ -1109,9 +1111,74 @@
     "viewAnalytics": "Voir les analytics d'utilisation détaillés",
     "viewPromptEffectiveness": "Voir les métriques d'efficacité des prompts",
     "configureSettings": "Configurer les paramètres du système",
+    "viewSystemMetrics": "Santé et diagnostics du système",
     "retry": "Réessayer",
     "errors": {
       "fetchFailed": "Échec de la récupération des données d'aperçu"
+    }
+  },
+  "systemMetrics": {
+    "title": "Métriques système",
+    "subtitle": "État en temps réel du serveur, de la base de données et des conteneurs",
+    "refresh": "Actualiser",
+    "autoRefresh": "Actualisation automatique",
+    "lastUpdated": "Dernière mise à jour",
+    "generatedAt": "Généré à",
+    "machine": {
+      "title": "Serveur",
+      "cpuUsage": "Utilisation CPU",
+      "memoryUsage": "Utilisation mémoire",
+      "swapUsage": "Utilisation du swap",
+      "usedMemory": "Utilisée",
+      "freeMemory": "Libre",
+      "totalMemory": "Totale",
+      "usedSwap": "Swap utilisé",
+      "totalSwap": "Swap total",
+      "loadAverage": "Charge moyenne",
+      "load1m": "1 min",
+      "load5m": "5 min",
+      "load15m": "15 min",
+      "uptime": "Temps de fonctionnement",
+      "disks": "Utilisation du disque"
+    },
+    "database": {
+      "title": "Base de données",
+      "connections": "Connexions",
+      "active": "Actives",
+      "idle": "Inactives",
+      "total": "Total",
+      "backends": "Processus backend",
+      "latency": "Latence aller-retour",
+      "size": "Taille de la base",
+      "cacheHitRatio": "Taux de réussite du cache",
+      "blocksHit": "Blocs en cache",
+      "blocksRead": "Blocs lus",
+      "transactions": "Transactions BD",
+      "commits": "Validations",
+      "rollbacks": "Annulations",
+      "tuples": "Opérations sur tuples",
+      "fetched": "Récupérés",
+      "inserted": "Insérés",
+      "updated": "Mis à jour",
+      "deleted": "Supprimés",
+      "returned": "Retournés"
+    },
+    "container": {
+      "title": "Conteneur",
+      "insideContainer": "Exécuté dans un conteneur",
+      "yes": "Oui",
+      "no": "Non",
+      "cgroupVersion": "Version Cgroup",
+      "cpuQuota": "Quota CPU",
+      "cpuUsage": "Utilisation CPU",
+      "cores": "cœurs",
+      "seconds": "secondes",
+      "memoryUsage": "Utilisation mémoire",
+      "memoryLimit": "Limite mémoire",
+      "memoryAvailable": "Mémoire disponible"
+    },
+    "errors": {
+      "fetchFailed": "Échec de récupération des métriques système"
     }
   }
 }
