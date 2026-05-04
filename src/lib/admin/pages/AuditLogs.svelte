@@ -551,6 +551,10 @@
                                                     <span class="object-prop-value">
                                                       {#if typeof objValue === 'string'}
                                                         "{objValue}"
+                                                      {:else if Array.isArray(objValue)}
+                                                        Array[{objValue.length}]
+                                                      {:else if typeof objValue === 'object' && objValue !== null}
+                                                        Object({Object.keys(objValue).length} props)
                                                       {:else}
                                                         {objValue}
                                                       {/if}

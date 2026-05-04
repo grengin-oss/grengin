@@ -1,0 +1,193 @@
+{
+  "userAnalytics": {
+    "title": "Analítica de usuarios",
+    "subtitle": "Analítica de uso detallada por usuario",
+    "filters": {
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
+      "search": "Buscar",
+      "searchPlaceholder": "Buscar por nombre, correo o departamento...",
+      "perPage": "Por página"
+    },
+    "stats": {
+      "totalUsers": "Usuarios totales",
+      "showing": "Mostrando",
+      "showingCount": "{filtered} de {total}"
+    },
+    "table": {
+      "userName": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "department": "Departamento",
+      "requests": "Solicitudes",
+      "success": "Éxitos",
+      "errors": "Errores",
+      "tokens": "Tokens",
+      "cost": "Costo",
+      "avgLatency": "Latencia promedio",
+      "lastActivity": "Última actividad"
+    },
+    "emptyState": {
+      "noMatch": "No se encontraron usuarios que coincidan con \"{query}\"",
+      "noData": "No hay datos de analítica de usuarios disponibles para el rango de fechas seleccionado"
+    },
+    "pagination": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "pageInfo": "Página {current} de {total}"
+    },
+    "errors": {
+      "fetchFailed": "Error al obtener analítica de usuarios"
+    }
+  },
+  "departmentAnalytics": {
+    "title": "Analítica por Departamento",
+    "subtitle": "Analítica detallada de uso por departamento",
+    "filters": {
+      "search": "Buscar",
+      "searchPlaceholder": "Buscar por nombre de departamento...",
+      "perPage": "Por página"
+    },
+    "stats": {
+      "totalDepartments": "Departamentos totales",
+      "showing": "Mostrando",
+      "showingCount": "{showing} de {total}"
+    },
+    "table": {
+      "department": "Departamento",
+      "users": "Usuarios",
+      "requests": "Solicitudes",
+      "success": "Éxitos",
+      "errors": "Errores",
+      "tokens": "Tokens",
+      "cost": "Costo",
+      "avgLatency": "Latencia promedio"
+    },
+    "emptyState": {
+      "noMatch": "No se encontraron departamentos que coincidan con \"{query}\"",
+      "noData": "No hay datos de analítica de departamentos disponibles para el rango de fechas seleccionado"
+    },
+    "pagination": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "pageInfo": "Página {current} de {total}"
+    },
+    "errors": {
+      "fetchFailed": "Error al obtener analítica de departamentos"
+    }
+  },
+  "analytics": {
+    "title": "Analítica de Uso",
+    "subtitle": "Monitorear el rendimiento del sistema y las métricas de uso",
+    "tabs": {
+      "overview": "Resumen",
+      "byUser": "Por Usuario",
+      "byDepartment": "Por Departamento",
+      "byModel": "Por Modelo"
+    },
+    "tabsAria": {
+      "overview": "Métricas y tendencias generales de uso",
+      "byUser": "Desglose de uso por usuario",
+      "byDepartment": "Desglose de uso por departamento",
+      "byModel": "Desglose de uso por modelo"
+    },
+    "byModel": {
+      "title": "Por Modelo",
+      "comingSoon": "Próximamente",
+      "hint": "La analítica por modelo estará disponible aquí."
+    },
+    "aria": {
+      "mainRegion": "Analítica de uso",
+      "dateRangeGroup": "Rango de fechas del informe",
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
+      "pagination": "Paginación de resultados",
+      "topModelsCaption": "Modelos principales por uso para el rango de fechas seleccionado",
+      "departmentTableCaption": "Uso por departamento para el rango de fechas seleccionado",
+      "userTableCaption": "Uso por usuario para el rango de fechas seleccionado"
+    },
+    "filters": {
+      "dateRange": "Rango de fechas",
+      "presets": {
+        "last7Days": "Últimos 7 días",
+        "last30Days": "Últimos 30 días",
+        "last90Days": "Últimos 90 días",
+        "thisMonth": "Este mes",
+        "custom": "Personalizado"
+      },
+      "to": "a",
+      "aggregated": "Agregado",
+      "hour": "Por hora",
+      "day": "Diario",
+      "week": "Semanal",
+      "month": "Mensual"
+    },
+    "loading": "Cargando analítica...",
+    "retry": "Reintentar",
+    "refresh": "Actualizar analítica",
+    "refreshButton": "Actualizar",
+    "overview": {
+      "title": "Resumen",
+      "totalUsers": "Usuarios totales",
+      "activeUsers": "{count} activos",
+      "totalRequests": "Solicitudes totales",
+      "avgPerUser": "{count} promedio por usuario",
+      "totalTokens": "Tokens totales",
+      "totalCost": "Costo total",
+      "vsPreviousDays": "vs {count} días anteriores"
+    },
+    "topModels": {
+      "title": "Modelos principales",
+      "model": "Modelo",
+      "provider": "Proveedor",
+      "requests": "Solicitudes",
+      "tokens": "Tokens",
+      "cost": "Costo"
+    },
+    "charts": {
+      "title": "Tendencias de rendimiento",
+      "multiMetric": {
+        "title": "Tendencias multi-métricas",
+        "subtitle": "Solicitudes • Tokens • Latencia",
+        "requests": "Solicitudes",
+        "tokens": "Tokens",
+        "latency": "Latencia",
+        "date": "Fecha",
+        "latencyMs": "Latencia (ms)"
+      },
+      "usageGrowth": {
+        "title": "Crecimiento de uso",
+        "subtitle": "Solicitudes (barras) • Tokens (línea)",
+        "requests": "Solicitudes",
+        "tokens": "Tokens"
+      },
+      "apiReliability": {
+        "title": "Confiabilidad de API",
+        "subtitle": "Éxitos vs Errores",
+        "success": "Éxitos",
+        "errors": "Errores",
+        "type": "Tipo",
+        "count": "Cantidad"
+      },
+      "costTrend": {
+        "title": "Tendencia de costos",
+        "subtitle": "Gasto total a lo largo del tiempo",
+        "totalCost": "Costo total"
+      },
+      "emptyState": {
+        "title": "No hay datos de series temporales disponibles para el rango de fechas seleccionado",
+        "hint": "Intente seleccionar un rango de fechas diferente o vuelva más tarde"
+      },
+      "accessibility": {
+        "keyboardInstructions": "Pulse Entrar o Espacio para ver la tabla de datos. Pulse Escape para cerrar.",
+        "dataPoints": "{count} puntos de datos",
+        "viewDataTable": "Ver tabla de datos",
+        "viewDataTableFor": "Ver tabla de datos para {chartName}",
+        "closeDataTable": "Cerrar tabla de datos",
+        "dataTableRegion": "Tabla de datos de {chartName}"
+      }
+    },
+    "errors": {
+      "fetchFailed": "Error al obtener datos de analítica"
+    }
+  }
+}

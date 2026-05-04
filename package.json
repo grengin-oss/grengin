@@ -7,9 +7,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "tsx scripts/sync-i18n.ts",
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
+    "i18n:check": "tsx scripts/sync-i18n.ts",
     "mock:dev": "tsx mock/server.ts",
     "mock:generate-types": "openapi-typescript api/openapi.yaml -o mock/types/api.ts"
   },

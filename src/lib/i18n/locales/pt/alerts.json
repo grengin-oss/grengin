@@ -1,0 +1,16 @@
+{
+  "alerts": {
+    "title": "Alertas",
+    "subtitle": "Suas notificações e atualizações",
+    "filterAll": "Todas",
+    "filterUnread": "Não lidas",
+    "filterLabel": "Filtrar alertas por estado",
+    "notificationsList": "Lista de notificações",
+    "empty": "Nenhum alerta para exibir",
+    "loading": "A carregar alertas...",
+    "loadMore": "Carregar mais",
+    "unread": "Não lida",
+    "loadError": "Falha ao carregar alertas",
+    "markReadError": "Não foi possível marcar o alerta como lido"
+  }
+}

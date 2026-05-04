@@ -16,6 +16,7 @@
     PromptLibrary,
     PromptEffectiveness,
     AuditLogs,
+    SystemMetrics,
       } from './admin-chunk';
 </script>
 
@@ -92,6 +93,13 @@
 </Route>
 <Route path="/admin/audit-logs">
   <AuditLogs />
+</Route>
+<Route path="/admin/system-metrics">
+  <PermissionGuard permission={PERMISSIONS.analytics.view} requireGlobal={true}>
+    {#snippet children()}
+      <SystemMetrics />
+    {/snippet}
+  </PermissionGuard>
 </Route>
 <Route path="/mcp/oauth/callback">
   <McpOAuthCallback />

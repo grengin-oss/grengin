@@ -9,12 +9,31 @@ export async function getSSOProvider(providerId: string): Promise<SSOProviderDet
   return request<SSOProviderDetails>(`/admin/sso-providers/${providerId}`);
 }
 
+export interface ValidateSSOProviderPayload {
+  client_id?: string;
+  client_secret?: string;
+  tenant_id?: string;
+  provider?: string;
+  issuer_url?: string;
+  redirect_url?: string;
+  frontend_hosted_url?: string;
+}
+
+export interface ValidateSSOProviderResponse {
+  valid: boolean;
+  message: string;
+  redirect_url: string;
+  validation_token?: string;
+  validation_token_expires_at?: string;
+}
+
 export interface UpdateSSOProviderPayload {
   allowed_domains: string[];
   client_id: string;
   client_secret?: string;
   is_enabled: boolean;
   tenant_id?: string;
+  validation_token?: string;
 }
 
 export async function updateSSOProvider(
@@ -34,6 +53,16 @@ export async function toggleSSOProviderStatus(
   return request<void>(`/admin/sso-providers/${providerId}`, {
     method: 'PUT',
     body: JSON.stringify({ is_enabled }),
+  });
+}
+
+export async function validateSSOProvider(
+  providerId: string,
+  body: ValidateSSOProviderPayload,
+): Promise<ValidateSSOProviderResponse> {
+  return request<ValidateSSOProviderResponse>(`/admin/sso-providers/${providerId}/validate`, {
+    method: 'POST',
+    body: JSON.stringify(body),
   });
 }
 

@@ -18,6 +18,7 @@
      * Note that setting allowJs false does not prevent the use
      * of JS in `.svelte` files.
      */
+    "resolveJsonModule": true,
     "allowJs": true,
     "checkJs": true,
     "moduleDetection": "force"

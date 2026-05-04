@@ -1,0 +1,126 @@
+{
+  "userSettings": {
+    "title": "설정",
+    "subtitle": "개인 기본 설정과 연결된 통합을 관리합니다.",
+    "tabs": {
+      "integrations": "통합",
+      "integrationsAria": "연결된 통합",
+      "promptSettings": "프롬프트 설정",
+      "promptSettingsAria": "프롬프트 기본 설정 관리"
+    }
+  },
+  "userIntegrations": {
+    "loading": "통합 로드 중...",
+    "failedToLoad": "통합을 불러오지 못했습니다",
+    "failedToGetAuthUrl": "인증 URL을 가져오지 못했습니다",
+    "failedToConnect": "{name} 연결 실패",
+    "failedToDisconnect": "{name} 연결 해제 실패",
+    "disconnected": "{name} 연결 해제됨",
+    "stats": {
+      "connected": "연결됨",
+      "available": "사용 가능",
+      "total": "전체"
+    },
+    "filters": {
+      "all": "전체",
+      "connected": "연결됨",
+      "available": "사용 가능",
+      "filterAria": "통합 필터"
+    },
+    "empty": {
+      "title": "통합을 찾을 수 없습니다",
+      "noConnected": "아직 연결한 통합이 없습니다.",
+      "noAvailable": "지금 연결할 수 있는 통합이 없습니다.",
+      "noConfigured": "조직에서 통합을 구성하지 않았습니다.",
+      "viewAll": "모든 통합 보기"
+    },
+    "columns": {
+      "name": "이름",
+      "transport": "전송 방식",
+      "status": "상태",
+      "tools": "도구",
+      "connectedAt": "연결됨",
+      "actions": "작업"
+    },
+    "status": {
+      "connected": "연결됨",
+      "disconnected": "연결 안 됨",
+      "expired": "만료됨",
+      "error": "오류",
+      "expiredWarning": "연결이 만료되었습니다. 다시 연결하여 액세스를 갱신하세요."
+    },
+    "actions": {
+      "connect": "연결",
+      "connecting": "연결 중...",
+      "disconnect": "연결 해제",
+      "reconnect": "재연결",
+      "disconnectConfirm": "연결을 해제하시겠습니까?",
+      "yes": "예",
+      "no": "아니요",
+      "viewTools": "도구 보기"
+    },
+    "connectedSince": "{date}부터 연결됨",
+    "toolCount": "{count}개 도구",
+    "tools": {
+      "modalTitle": "{name} — 도구",
+      "loading": "도구 로딩 중...",
+      "empty": "이 서버에 사용 가능한 도구가 없습니다."
+    }
+  },
+  "userPromptSettings": {
+    "loading": "프롬프트 설정 로딩 중...",
+    "failedToLoad": "프롬프트 설정 로딩 실패",
+    "activePrompt": "활성 프롬프트",
+    "source": {
+      "label": "출처",
+      "user_custom": "사용자 정의 프롬프트",
+      "department": "부서 기본값",
+      "department_default": "부서 기본값",
+      "system_default": "시스템 기본값"
+    },
+    "variables": {
+      "title": "사용 가능한 변수",
+      "empty": "사용 가능한 변수 없음",
+      "insertHint": "변수를 클릭하여 편집기에 삽입",
+      "copied": "변수가 삽입되었습니다"
+    },
+    "editor": {
+      "title": "사용자 정의 프롬프트 편집기",
+      "placeholder": "여기에 사용자 정의 시스템 프롬프트를 작성하세요. {{variable_name}}과 같은 변수를 사용하여 동적 값을 삽입할 수 있습니다...",
+      "charCount": "{count}자",
+      "preview": "미리보기",
+      "edit": "편집",
+      "previewTitle": "프롬프트 미리보기",
+      "previewEmpty": "미리볼 내용이 없습니다. 위에서 사용자 정의 프롬프트를 작성하세요."
+    },
+    "actions": {
+      "save": "프롬프트 저장",
+      "saving": "저장 중...",
+      "resetToDefault": "기본값으로 재설정",
+      "resetting": "재설정 중...",
+      "resetConfirmTitle": "기본값으로 재설정하시겠습니까?",
+      "resetConfirmMessage": "사용자 정의 프롬프트가 삭제되고 부서 또는 시스템 기본값으로 되돌아갑니다. 이 작업은 취소할 수 없습니다.",
+      "resetConfirmButton": "예, 재설정",
+      "cancel": "취소"
+    },
+    "messages": {
+      "saved": "사용자 정의 프롬프트가 성공적으로 저장되었습니다",
+      "failedToSave": "프롬프트 저장 실패",
+      "reset": "프롬프트가 기본값으로 재설정되었습니다",
+      "failedToReset": "프롬프트 재설정 실패",
+      "noChanges": "저장할 변경 사항 없음"
+    },
+    "feedback": {
+      "title": "프롬프트 피드백",
+      "subtitle": "현재 프롬프트의 효과를 평가하여 개선에 도움을 주세요",
+      "thumbsUp": "이 프롬프트는 잘 작동합니다",
+      "thumbsDown": "이 프롬프트는 개선이 필요합니다",
+      "commentPlaceholder": "선택사항: 이 프롬프트 사용 경험에 대해 자세히 알려주세요...",
+      "submit": "피드백 제출",
+      "submitting": "제출 중...",
+      "submitted": "피드백 감사합니다!",
+      "failedToSubmit": "피드백 제출 실패",
+      "ratingRequired": "제출하기 전에 평가를 선택하세요"
+    }
+  }
+}

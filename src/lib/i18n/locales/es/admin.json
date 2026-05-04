@@ -1,145 +1,4 @@
 {
-  "common": {
-    "cancel": "Cancelar",
-    "save": "Guardar",
-    "delete": "Eliminar",
-    "edit": "Editar",
-    "search": "Buscar",
-    "never": "Nunca",
-    "loading": "Cargando...",
-    "clear": "Limpiar",
-    "select": "Seleccionar"
-  },
-  "errors": {
-    "forbidden": {
-      "title": "Acceso denegado",
-      "message": "No tiene permiso para ver esta página.",
-      "back": "Volver al chat",
-      "iconAlt": "Acceso denegado"
-    }
-  },
-  "auth": {
-    "signIn": "Iniciar sesión",
-    "signUp": "Registrarse",
-    "forgotPassword": "¿Olvidó su contraseña?",
-    "rememberMe": "Recuérdame",
-    "emailPlaceholder": "Ingrese su correo electrónico",
-    "passwordPlaceholder": "Ingrese su contraseña",
-    "welcomeToGrengin": "Bienvenido a Grengin",
-    "signInToContinue": "Inicie sesión para continuar a su espacio de trabajo",
-    "emailAddress": "Dirección de correo electrónico",
-    "password": "Contraseña",
-    "signingIn": "Iniciando sesión...",
-    "emailAndPassword": "Correo electrónico y contraseña",
-    "orContinueWith": "o continuar con",
-    "signInWith": "Iniciar sesión con {provider}",
-    "connectingTo": "Conectando a {provider}...",
-    "noAuthMethods": "Sin métodos de autenticación",
-    "noAuthMethodsDescription": "Por favor, contacte a su administrador para configurar las opciones de autenticación.",
-    "termsOfService": "Términos de servicio",
-    "privacyPolicy": "Política de privacidad",
-    "copyright": "© 2025-2026 Perter. Todos los derechos reservados.",
-    "demoAccount": "Cuenta de demostración",
-    "authenticationInProgress": "Autenticación en curso",
-    "completingSignIn": "Completando inicio de sesión...",
-    "pleaseWaitVerifying": "Por favor espere mientras verificamos sus credenciales",
-    "authenticationComplete": "Autenticación completada",
-    "signInSuccessful": "¡Inicio de sesión exitoso!",
-    "redirectingToWorkspace": "Redirigiendo a su espacio de trabajo...",
-    "authenticationFailed": "Error de autenticación",
-    "signInFailed": "Error al iniciar sesión",
-    "redirectingToLogin": "Redirigiendo a la página de inicio de sesión...",
-    "mfaRequired": "Se requiere MFA pero aún no está implementado",
-    "unexpectedError": "Ocurrió un error inesperado",
-    "missingOAuthParams": "Faltan parámetros OAuth requeridos (state o code)",
-    "oauthProviderNotFound": "Proveedor OAuth no encontrado. Por favor, intente iniciar sesión nuevamente.",
-    "invalidAuthResponse": "Respuesta de autenticación inválida del servidor",
-    "unexpectedAuthError": "Ocurrió un error inesperado durante la autenticación",
-    "failedToInitiateLogin": "Error al iniciar el inicio de sesión con {provider}",
-    "socialLogin": "Opciones de inicio de sesión social",
-    "legalLinks": "Legal"
-  },
-  "components": {
-    "typingIndicator": "El asistente está escribiendo"
-  },
-  "sidebar": {
-    "newChat": "Nueva conversación",
-    "users": "Usuarios",
-    "adminPanel": "Panel de Control",
-    "backToChat": "Volver al chat",
-    "toggleSidebar": "Alternar barra lateral",
-    "expandSidebar": "Expandir barra lateral",
-    "searchPlaceholder": "Buscar...",
-    "searchTitle": "Buscar en tus conversaciones",
-    "clearSearch": "Limpiar búsqueda",
-    "chats": "Conversaciones",
-    "loadingChats": "Cargando conversaciones...",
-    "noChatsYet": "Aún no hay conversaciones",
-    "noChatsFound": "No se encontraron conversaciones",
-    "chatOptions": "Opciones de conversación",
-    "delete": "Eliminar",
-    "archive": "Archivar",
-    "rename": "Renombrar",
-    "renamePlaceholder": "Ingresa un título",
-    "chatRenamed": "{title} renombrado correctamente",
-    "renameChatError": "Error al renombrar la conversación",
-    "emptyChatTitle": "El título no puede estar vacío",
-    "userMenu": "Menú de usuario",
-    "user": "Usuario",
-    "settings": "Configuración",
-    "admin": "Panel de Control",
-    "signOut": "Cerrar sesión",
-    "deleteChat": "Eliminar conversación",
-    "deleteChatConfirm": "¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer.",
-    "cancel": "Cancelar",
-    "navigation": "Navegación principal",
-    "adminNavigation": "Navegación de administración",
-    "openAlerts": "Abrir alertas",
-    "deleting": "Eliminando...",
-    "close": "Cerrar",
-    "chatDeleted": "{title} eliminado correctamente",
-    "chatArchived": "{title} archivado correctamente",
-    "deleteChatError": "Error al eliminar la conversación",
-    "archiveChatError": "Error al archivar la conversación",
-    "chat": "Conversación",
-    "untitledChat": "Conversación sin título",
-    "usageAnalytics": "Analíticas de Uso",
-    "userAnalytics": "Analíticas de Usuario",
-    "aiEngines": "Motores de IA",
-    "sectionManage": "Gestionar",
-    "sectionMonitor": "Monitorear",
-    "sectionConfigure": "Configurar",
-    "overview": "Resumen",
-    "organization": "Organización",
-    "accessControl": "Control de acceso",
-    "connectors": "Conectores",
-    "viewAllAlerts": "Ver todas las alertas",
-    "noRecentAlerts": "Aún no hay alertas",
-    "newAlert": "Nueva alerta",
-    "promptLibrary": "Indicaciones",
-    "promptEffectiveness": "Métricas de Indicaciones",
-    "auditLogs": "Registros de auditoría"
-  },
-  "alerts": {
-    "title": "Alertas",
-    "subtitle": "Tus notificaciones y actualizaciones",
-    "filterAll": "Todas",
-    "filterUnread": "Sin leer",
-    "filterLabel": "Filtrar alertas por estado",
-    "notificationsList": "Lista de notificaciones",
-    "empty": "No hay alertas que mostrar",
-    "loading": "Cargando alertas...",
-    "loadMore": "Cargar más",
-    "unread": "Sin leer",
-    "loadError": "Error al cargar las alertas",
-    "markReadError": "No se pudo marcar la alerta como leída"
-  },
-  "app": {
-    "closeSidebar": "Cerrar barra lateral",
-    "openMenu": "Abrir menú",
-    "closeMenu": "Cerrar menú",
-    "notifications": "Notificaciones"
-  },
   "admin": {
     "common": {
       "closeModal": "Cerrar ventana",
@@ -147,7 +6,7 @@
       "name": "Nombre",
       "email": "Correo electrónico",
       "role": "Rol",
-      "roles": "Roles",
+      "roles": "Funciones",
       "status": "Estado",
       "active": "Activo",
       "deactivated": "Desactivado",
@@ -412,7 +271,8 @@
         "actions": {
           "retry": "Reintentar",
           "deleting": "Eliminando…",
-          "saving": "Guardando…"
+          "saving": "Guardando…",
+          "validating": "Validando…"
         },
         "messages": {
           "loading": "Cargando proveedores OAuth...",
@@ -440,6 +300,7 @@
           "statusUpdateError": "No se pudo {action} {name}",
           "deleted": "Proveedor SSO eliminado",
           "deleteError": "No se pudo eliminar el proveedor SSO",
+          "validationFailed": "La validación de credenciales SSO falló. Verifica tus credenciales e intenta de nuevo.",
           "updated": "Proveedor SSO actualizado",
           "updateError": "No se pudo actualizar el proveedor"
         },
@@ -477,7 +338,7 @@
       "title": "Control de acceso",
       "subtitle": "Gestionar roles y permisos",
       "tabs": {
-        "roles": "Roles",
+        "roles": "Funciones",
         "permissions": "Permisos"
       },
       "loadingRoles": "Cargando roles…",
@@ -568,7 +429,7 @@
         },
         "scopeableBadge": "Con alcance",
         "scopeableBadgeTitle": "Puede asignarse a departamentos",
-        "globalBadge": "Global",
+        "globalBadge": "General",
         "domainCount": "{count} permisos"
       }
     },
@@ -837,7 +698,7 @@
         "name": "Nombre",
         "role": "Rol",
         "type": "Tipo",
-        "variables": "Variables",
+        "variables": "Parámetros",
         "usage": "Uso",
         "updated": "Actualizado",
         "actions": "Acciones"
@@ -852,7 +713,7 @@
         "promptText": "Texto de Indicación",
         "promptTextPlaceholder": "Ingrese el texto de indicación... Use {{variable_name}} para variables dinámicas",
         "promptTextRequired": "El texto de indicación es obligatorio",
-        "variables": "Variables",
+        "variables": "Parámetros",
         "addVariable": "Agregar",
         "addVariablePlaceholder": "Agregar nombre de variable...",
         "variableExists": "La variable ya existe",
@@ -1141,108 +1002,6 @@
       }
     }
   },
-  "chat": {
-    "emptyState": {
-      "title": "Iniciar una conversación",
-      "description": "¡Envía un mensaje para comenzar a chatear con el asistente de IA!",
-      "aiDisclaimer": "La IA puede cometer errores. Por favor, verifica las respuestas."
-    },
-    "errors": {
-      "somethingWentWrong": "Algo salió mal",
-      "dismissError": "Descartar error",
-      "failedToLoadModels": "Error al cargar modelos",
-      "failedToLoadConnectors": "Error al cargar conectores",
-      "failedToLoadConversation": "Error al cargar conversación",
-      "failedToSendMessage": "Error al enviar mensaje",
-      "budgetAboutToExhaust": "El presupuesto del departamento está a punto de agotarse.",
-      "budgetExhaustedWarn": "El presupuesto del departamento está agotado para el periodo actual. El chat continuará, pero el uso podría exceder el presupuesto.",
-      "budgetExhaustedBlock": "El presupuesto está agotado y no se aceptan nuevas solicitudes",
-      "budgetExhaustedBlockSolution": "Contacte a su administrador para solicitar presupuesto adicional o intente más tarde"
-    },
-    "messageInput": {
-      "placeholder": "Pregunta cualquier cosa",
-      "placeholderWithModel": "Mensaje {model}",
-      "recordingPlaceholder": "Escuchando... Habla ahora",
-      "addContent": "Agregar contenido",
-      "addPhotos": "Agregar fotos",
-      "addFiles": "Agregar archivos",
-      "selectModel": "Seleccionar modelo",
-      "selectModelFallback": "Seleccionar Modelo",
-      "loadingModels": "Cargando modelos...",
-      "selectConnectorsFallback": "Conectores",
-      "selectConnectors": "Seleccionar conectores",
-      "loadingConnectors": "Cargando conectores...",
-      "noConnectors": "No hay conectores disponibles",
-      "connectors": "conectores",
-      "enableWebSearch": "Habilitar búsqueda web",
-      "disableWebSearch": "Deshabilitar búsqueda web",
-      "search": "Buscar",
-      "voiceInput": "Entrada de voz",
-      "stopRecording": "Detener grabación",
-      "sendMessage": "Enviar mensaje",
-      "sendMessageTitle": "Enviar mensaje (Enter)",
-      "messageInput": "Entrada de mensaje",
-      "visionCapable": "Capaz de visión",
-      "removeFile": "Eliminar archivo",
-      "previewImage": "Vista previa de imagen: {name}",
-      "previewFile": "Vista previa de archivo: {name}",
-      "fileLabel": "Archivo: {name}",
-      "closePreview": "Cerrar vista previa",
-      "speechRecognitionNotSupported": "El reconocimiento de voz no es compatible con su navegador",
-      "microphoneAccessDenied": "Acceso al micrófono denegado. Por favor, permite el acceso al micrófono.",
-      "voiceInputError": "Error de entrada de voz: {error}",
-      "failedToStartVoiceInput": "Error al iniciar la entrada de voz",
-      "uploading": "Subiendo…",
-      "uploadFailed": "Error"
-    },
-    "message": {
-      "copy": "Copiar",
-      "copied": "¡Copiado!",
-      "copyContent": "Copiar contenido",
-      "loadingImage": "Cargando imagen...",
-      "imagePreview": "Vista previa de imagen",
-      "imageAlt": "Imagen",
-      "fileFallback": "Archivo",
-      "pause": "Pausar",
-      "resume": "Reanudar",
-      "listen": "Escuchar",
-      "stop": "Detener",
-      "closePreview": "Cerrar vista previa"
-    },
-    "toolCalls": {
-      "searching": "Buscando en la web",
-      "searchedTheWeb": "Buscó en la web",
-      "results": "resultados"
-    },
-    "toolExecution": {
-      "timeline": "Línea de tiempo de ejecución de herramientas",
-      "input": "Entrada",
-      "output": "Salida",
-      "running": "Ejecutando",
-      "completed": "Completado",
-      "failed": "Fallido",
-      "row": "fila",
-      "rows": "filas",
-      "imageResult": "Resultado de imagen",
-      "resource": "Recurso",
-      "unknownError": "Ocurrió un error desconocido",
-      "duration": "Duración"
-    },
-    "mcpAuth": {
-      "connectTo": "Conectar a {name}",
-      "connectedTo": "Conectado a {name}",
-      "description": "Para usar {tool}, necesito acceso a tu cuenta de {name}. Tus permisos se aplicarán a todas las acciones.",
-      "connectAccount": "Conectar cuenta de {name}",
-      "connecting": "Conectando...",
-      "connectionFailed": "Error de conexión",
-      "failedToGetAuthUrl": "No se pudo obtener la URL de autorización",
-      "popupBlocked": "Se bloqueó la ventana emergente. Permita ventanas emergentes para este sitio.",
-      "retry": "Intentar de nuevo",
-      "notNow": "Ahora no",
-      "requestedPermissions": "Permisos solicitados:",
-      "manageInSettings": "Puede gestionar las cuentas conectadas en Ajustes."
-    }
-  },
   "aiEngines": {
     "title": "Motores de IA",
     "subtitle": "Configurar y gestionar integraciones de motores de IA",
@@ -1352,479 +1111,74 @@
     "viewAnalytics": "Ver análisis de uso detallado",
     "viewPromptEffectiveness": "Ver métricas de efectividad de prompts",
     "configureSettings": "Configurar ajustes del sistema",
+    "viewSystemMetrics": "Estado y diagnósticos del sistema",
     "retry": "Reintentar",
     "errors": {
       "fetchFailed": "Error al obtener datos del resumen"
     }
   },
-  "userAnalytics": {
-    "title": "Analítica de usuarios",
-    "subtitle": "Analítica de uso detallada por usuario",
-    "filters": {
-      "startDate": "Fecha de inicio",
-      "endDate": "Fecha de fin",
-      "search": "Buscar",
-      "searchPlaceholder": "Buscar por nombre, correo o departamento...",
-      "perPage": "Por página"
+  "systemMetrics": {
+    "title": "Métricas del sistema",
+    "subtitle": "Estado en tiempo real del servidor, base de datos y contenedores",
+    "refresh": "Actualizar",
+    "autoRefresh": "Actualización automática",
+    "lastUpdated": "Última actualización",
+    "generatedAt": "Generado en",
+    "machine": {
+      "title": "Máquina",
+      "cpuUsage": "Uso de CPU",
+      "memoryUsage": "Uso de memoria",
+      "swapUsage": "Uso de swap",
+      "usedMemory": "Usada",
+      "freeMemory": "Libre",
+      "totalMemory": "Total",
+      "usedSwap": "Swap usado",
+      "totalSwap": "Swap total",
+      "loadAverage": "Carga promedio",
+      "load1m": "1 min",
+      "load5m": "5 min",
+      "load15m": "15 min",
+      "uptime": "Tiempo activo",
+      "disks": "Uso de disco"
     },
-    "stats": {
-      "totalUsers": "Usuarios totales",
-      "showing": "Mostrando",
-      "showingCount": "{filtered} de {total}"
+    "database": {
+      "title": "Base de datos",
+      "connections": "Conexiones",
+      "active": "Activas",
+      "idle": "Inactivas",
+      "total": "Total",
+      "backends": "Procesos backend",
+      "latency": "Latencia de ida y vuelta",
+      "size": "Tamaño de la base",
+      "cacheHitRatio": "Tasa de aciertos de caché",
+      "blocksHit": "Bloques en caché",
+      "blocksRead": "Bloques leídos",
+      "transactions": "Transacciones",
+      "commits": "Confirmaciones",
+      "rollbacks": "Reversiones",
+      "tuples": "Operaciones de tuplas",
+      "fetched": "Recuperados",
+      "inserted": "Insertados",
+      "updated": "Actualizados",
+      "deleted": "Eliminados",
+      "returned": "Devueltos"
     },
-    "table": {
-      "userName": "Nombre de usuario",
-      "email": "Correo electrónico",
-      "department": "Departamento",
-      "requests": "Solicitudes",
-      "success": "Éxitos",
-      "errors": "Errores",
-      "tokens": "Tokens",
-      "cost": "Costo",
-      "avgLatency": "Latencia promedio",
-      "lastActivity": "Última actividad"
-    },
-    "emptyState": {
-      "noMatch": "No se encontraron usuarios que coincidan con \"{query}\"",
-      "noData": "No hay datos de analítica de usuarios disponibles para el rango de fechas seleccionado"
-    },
-    "pagination": {
-      "previous": "Anterior",
-      "next": "Siguiente",
-      "pageInfo": "Página {current} de {total}"
-    },
-    "errors": {
-      "fetchFailed": "Error al obtener analítica de usuarios"
-    }
-  },
-  "departmentAnalytics": {
-    "title": "Analítica por Departamento",
-    "subtitle": "Analítica detallada de uso por departamento",
-    "filters": {
-      "search": "Buscar",
-      "searchPlaceholder": "Buscar por nombre de departamento...",
-      "perPage": "Por página"
-    },
-    "stats": {
-      "totalDepartments": "Departamentos totales",
-      "showing": "Mostrando",
-      "showingCount": "{showing} de {total}"
-    },
-    "table": {
-      "department": "Departamento",
-      "users": "Usuarios",
-      "requests": "Solicitudes",
-      "success": "Éxitos",
-      "errors": "Errores",
-      "tokens": "Tokens",
-      "cost": "Costo",
-      "avgLatency": "Latencia promedio"
-    },
-    "emptyState": {
-      "noMatch": "No se encontraron departamentos que coincidan con \"{query}\"",
-      "noData": "No hay datos de analítica de departamentos disponibles para el rango de fechas seleccionado"
-    },
-    "pagination": {
-      "previous": "Anterior",
-      "next": "Siguiente",
-      "pageInfo": "Página {current} de {total}"
-    },
-    "errors": {
-      "fetchFailed": "Error al obtener analítica de departamentos"
-    }
-  },
-  "analytics": {
-    "title": "Analítica de Uso",
-    "subtitle": "Monitorear el rendimiento del sistema y las métricas de uso",
-    "tabs": {
-      "overview": "Resumen",
-      "byUser": "Por Usuario",
-      "byDepartment": "Por Departamento",
-      "byModel": "Por Modelo"
-    },
-    "tabsAria": {
-      "overview": "Métricas y tendencias generales de uso",
-      "byUser": "Desglose de uso por usuario",
-      "byDepartment": "Desglose de uso por departamento",
-      "byModel": "Desglose de uso por modelo"
-    },
-    "byModel": {
-      "title": "Por Modelo",
-      "comingSoon": "Próximamente",
-      "hint": "La analítica por modelo estará disponible aquí."
-    },
-    "aria": {
-      "mainRegion": "Analítica de uso",
-      "dateRangeGroup": "Rango de fechas del informe",
-      "startDate": "Fecha de inicio",
-      "endDate": "Fecha de fin",
-      "pagination": "Paginación de resultados",
-      "topModelsCaption": "Modelos principales por uso para el rango de fechas seleccionado",
-      "departmentTableCaption": "Uso por departamento para el rango de fechas seleccionado",
-      "userTableCaption": "Uso por usuario para el rango de fechas seleccionado"
-    },
-    "filters": {
-      "dateRange": "Rango de fechas",
-      "presets": {
-        "last7Days": "Últimos 7 días",
-        "last30Days": "Últimos 30 días",
-        "last90Days": "Últimos 90 días",
-        "thisMonth": "Este mes",
-        "custom": "Personalizado"
-      },
-      "to": "a",
-      "aggregated": "Agregado",
-      "hour": "Por hora",
-      "day": "Diario",
-      "week": "Semanal",
-      "month": "Mensual"
-    },
-    "loading": "Cargando analítica...",
-    "retry": "Reintentar",
-    "refresh": "Actualizar analítica",
-    "refreshButton": "Actualizar",
-    "overview": {
-      "title": "Resumen",
-      "totalUsers": "Usuarios totales",
-      "activeUsers": "{count} activos",
-      "totalRequests": "Solicitudes totales",
-      "avgPerUser": "{count} promedio por usuario",
-      "totalTokens": "Tokens totales",
-      "totalCost": "Costo total",
-      "vsPreviousDays": "vs {count} días anteriores"
-    },
-    "topModels": {
-      "title": "Modelos principales",
-      "model": "Modelo",
-      "provider": "Proveedor",
-      "requests": "Solicitudes",
-      "tokens": "Tokens",
-      "cost": "Costo"
-    },
-    "charts": {
-      "title": "Tendencias de rendimiento",
-      "multiMetric": {
-        "title": "Tendencias multi-métricas",
-        "subtitle": "Solicitudes • Tokens • Latencia",
-        "requests": "Solicitudes",
-        "tokens": "Tokens",
-        "latency": "Latencia",
-        "date": "Fecha",
-        "latencyMs": "Latencia (ms)"
-      },
-      "usageGrowth": {
-        "title": "Crecimiento de uso",
-        "subtitle": "Solicitudes (barras) • Tokens (línea)",
-        "requests": "Solicitudes",
-        "tokens": "Tokens"
-      },
-      "apiReliability": {
-        "title": "Confiabilidad de API",
-        "subtitle": "Éxitos vs Errores",
-        "success": "Éxitos",
-        "errors": "Errores",
-        "type": "Tipo",
-        "count": "Cantidad"
-      },
-      "costTrend": {
-        "title": "Tendencia de costos",
-        "subtitle": "Gasto total a lo largo del tiempo",
-        "totalCost": "Costo total"
-      },
-      "emptyState": {
-        "title": "No hay datos de series temporales disponibles para el rango de fechas seleccionado",
-        "hint": "Intente seleccionar un rango de fechas diferente o vuelva más tarde"
-      },
-      "accessibility": {
-        "keyboardInstructions": "Pulse Entrar o Espacio para ver la tabla de datos. Pulse Escape para cerrar.",
-        "dataPoints": "{count} puntos de datos",
-        "viewDataTable": "Ver tabla de datos",
-        "viewDataTableFor": "Ver tabla de datos para {chartName}",
-        "closeDataTable": "Cerrar tabla de datos",
-        "dataTableRegion": "Tabla de datos de {chartName}"
-      }
-    },
-    "errors": {
-      "fetchFailed": "Error al obtener datos de analítica"
-    }
-  },
-  "error": {
-    "not_found": {
-      "description": "El recurso solicitado no se encontró",
-      "solution": "El recurso que está buscando no existe o ha sido eliminado. Por favor, verifique la URL o intente de nuevo. Si el problema persiste, contacte al soporte {app}"
-    },
-    "validation": {
-      "missing_field": {
-        "description": "El campo requerido `{field}` está faltando",
-        "solution": "Por favor, proporcione todos los campos requeridos, incluido `{field}`"
-      },
-      "empty_field": {
-        "description": "El campo requerido `{field}` no puede estar vacío",
-        "solution": "Por favor, proporcione un valor para el campo `{field}`"
-      }
-    },
-    "sso": {
-      "conditional_access": {
-        "description": "Acceso denegado debido a la política de acceso condicional para `{provider}`",
-        "solution": "La política de seguridad de su organización está bloqueando el acceso. Contacte a su administrador o pruebe un método de autenticación diferente"
-      }
-    },
-    "llm": {
-      "disabled_by_admin": {
-        "description": "El proveedor de LLM `{provider}` está deshabilitado por un administrador",
-        "solution": "Pida a un administrador que habilite `{provider}` o seleccione un proveedor diferente"
-      },
-      "invalid_provider": {
-        "description": "El proveedor de LLM `{provider}` es inválido o no está soportado",
-        "solution": "Por favor, seleccione un proveedor válido de las opciones disponibles"
-      },
-      "not_configured": {
-        "description": "El proveedor de LLM `{provider}` no está configurado correctamente",
-        "solution": "Por favor, configure la configuración del proveedor o contacte a un administrador"
-      }
-    },
-    "db": {
-      "not_found": {
-        "description": "Recurso no encontrado en la base de datos {app}",
-        "solution": "El recurso que está buscando no existe. Intente iniciar un nuevo chat o contacte al soporte {app}"
-      },
-      "unavailable": {
-        "description": "La base de datos {app} está temporalmente no disponible",
-        "solution": "Por favor, intente de nuevo en unos momentos. Si el problema persiste, contacte al soporte {app}"
-      },
-      "timeout": {
-        "description": "Solicitud a la base de datos {app} agotó el tiempo de espera",
-        "solution": "La operación tardó demasiado. Por favor, intente de nuevo con una solicitud más pequeña o contacte al soporte {app}"
-      },
-      "conflict": {
-        "description": "Ocurrió un conflicto al procesar su solicitud {app}",
-        "solution": "El recurso ha sido modificado por otro proceso. Por favor, actualice e intente de nuevo"
-      }
-    },
-    "service_unavailable": {
-      "description": "El servicio {app} está temporalmente no disponible",
-      "solution": "Estamos experimentando dificultades técnicas. Por favor, intente de nuevo en unos momentos. Si el problema persiste, contacte al soporte {app}"
-    },
-    "auth": {
-      "service_unavailable": {
-        "description": "El servicio de autenticación {app} está temporalmente no disponible",
-        "solution": "Por favor, intente de nuevo en unos momentos. Si el problema persiste, contacte al soporte {app}"
-      },
-      "invalid_credentials": {
-        "description": "Email o contraseña inválidos para {app}",
-        "solution": "Por favor, verifique sus credenciales e intente de nuevo. Si ha olvidado su contraseña, use la opción de restablecimiento de contraseña"
-      },
-      "email_not_found": {
-        "description": "No se encontró ninguna cuenta {app} con esta dirección de correo electrónico",
-        "solution": "Por favor, verifique su dirección de correo electrónico o regístrese para una nueva cuenta {app}"
-      },
-      "missing_credentials": {
-        "description": "Se requieren email y contraseña para iniciar sesión en {app}",
-        "solution": "Por favor, proporcione su dirección de correo electrónico y contraseña para iniciar sesión"
-      },
-      "invalid_token": {
-        "description": "Su sesión {app} ha expirado",
-        "solution": "Por favor, inicie sesión nuevamente para continuar usando {app}"
-      },
-      "invalid_user_status": {
-        "description": "El estado de su cuenta {app} es inválido",
-        "solution": "Por favor, contacte al soporte {app} para resolver este problema con su cuenta"
-      },
-      "account_deactivated": {
-        "description": "Su cuenta {app} ha sido desactivada",
-        "solution": "Por favor, contacte a su administrador o soporte {app} para reactivar su cuenta"
-      },
-      "email_already_exists": {
-        "description": "Ya existe una cuenta {app} con este correo electrónico",
-        "solution": "Por favor, inicie sesión con su cuenta {app} existente o use una dirección de correo electrónico diferente"
-      },
-      "invalid_provider": {
-        "description": "El proveedor de autenticación `{provider}` es inválido o no está soportado por {app}",
-        "solution": "Por favor, seleccione un proveedor de autenticación válido para {app}"
-      },
-      "invalid_callback_params": {
-        "description": "Parámetros de callback de autenticación inválidos para {app}",
-        "solution": "El proceso de autenticación {app} encontró un error. Por favor, intente iniciar sesión nuevamente"
-      },
-      "missing_oauth_params": "Faltan parámetros OAuth requeridos (state o code)",
-      "oauth_provider_not_found": "Proveedor OAuth no encontrado. Por favor, intente iniciar sesión nuevamente",
-      "invalid_auth_response": "Respuesta de autenticación inválida del servidor",
-      "mfa_not_implemented": "La autenticación de múltiples factores es requerida pero aún no está implementada",
-      "invalid_redirect_uri": {
-        "description": "URI de redirección inválida `{redirect_uri}` para {app}",
-        "solution": "La URI de redirección no está autorizada para {app}. Por favor, contacte al soporte {app} si este problema persiste"
-      },
-      "permission_denied": {
-        "description": "No tiene permiso para realizar esta acción en {app}",
-        "solution": "Por favor, contacte a su administrador {app} si cree que debería tener acceso"
-      },
-      "org_not_found": {
-        "description": "Organización no encontrada en {app}",
-        "solution": "La organización {app} con ID `{org_id}` no existe. Por favor, verifique la configuración de su organización"
-      },
-      "resource_not_found": {
-        "description": "El recurso solicitado no se encontró en {app}",
-        "solution": "El recurso que está buscando no existe o ha sido eliminado de {app}"
-      },
-      "email_domain_not_allowed": {
-        "description": "El dominio de correo electrónico `{domain}` no está permitido para {app}",
-        "solution": "Su organización {app} solo permite ciertos dominios de correo electrónico. Por favor, use un correo electrónico de un dominio permitido"
-      },
-      "sso": {
-        "not_configured": {
-          "description": "El proveedor SSO `{provider}` no está configurado para {app}",
-          "solution": "Por favor, contacte a su administrador {app} para configurar SSO para `{provider}`"
-        },
-        "disabled_by_admin": {
-          "description": "El proveedor SSO `{provider}` está deshabilitado por un administrador {app}",
-          "solution": "Por favor, contacte a su administrador {app} para habilitar SSO para `{provider}` o use un método de autenticación diferente"
-        }
-      },
-      "no_token": {
-        "description": "No hay token de autenticación disponible",
-        "solution": "Por favor, inicie sesión para continuar"
-      }
-    },
-    "request": {
-      "no_response_body": {
-        "description": "No se recibió cuerpo de respuesta",
-        "solution": "El servidor no devolvió ningún dato. Por favor, intente de nuevo"
-      },
-      "send_message_failed": {
-        "description": "Error al enviar el mensaje",
-        "solution": "No se pudo enviar su mensaje. Por favor, verifique su conexión e intente de nuevo"
-      },
-      "archive_conversation_failed": {
-        "description": "Error al archivar la conversación",
-        "solution": "No se pudo archivar la conversación. Por favor, intente de nuevo"
-      }
-    },
-    "fallback": {
-      "description": "Algo salió mal",
-      "solution": "Ocurrió un error inesperado. Por favor, intente de nuevo"
-    }
-  },
-  "userSettings": {
-    "title": "Ajustes",
-    "subtitle": "Administre sus preferencias personales e integraciones conectadas.",
-    "tabs": {
-      "integrations": "Integraciones",
-      "integrationsAria": "Integraciones conectadas",
-      "promptSettings": "Configuración de Indicaciones",
-      "promptSettingsAria": "Gestionar sus preferencias de indicaciones"
-    }
-  },
-  "userIntegrations": {
-    "loading": "Cargando integraciones...",
-    "failedToLoad": "Error al cargar integraciones",
-    "failedToGetAuthUrl": "No se pudo obtener la URL de autorización",
-    "failedToConnect": "Error al conectar {name}",
-    "failedToDisconnect": "Error al desconectar {name}",
-    "disconnected": "{name} desconectado",
-    "stats": {
-      "connected": "Conectado",
-      "available": "Disponible",
-      "total": "Total"
-    },
-    "filters": {
-      "all": "Todas",
-      "connected": "Conectadas",
-      "available": "Disponibles",
-      "filterAria": "Filtrar integraciones"
-    },
-    "empty": {
-      "title": "No se encontraron integraciones",
-      "noConnected": "Aún no ha conectado ninguna integración.",
-      "noAvailable": "No hay integraciones disponibles para conectar en este momento.",
-      "noConfigured": "Su organización no ha configurado integraciones.",
-      "viewAll": "Ver todas las integraciones"
-    },
-    "columns": {
-      "name": "Nombre",
-      "transport": "Transporte",
-      "status": "Estado",
-      "tools": "Herramientas",
-      "connectedAt": "Conectado",
-      "actions": "Acciones"
-    },
-    "status": {
-      "connected": "Conectado",
-      "disconnected": "Desconectado",
-      "expired": "Expirado",
-      "error": "Error",
-      "expiredWarning": "La conexión ha expirado. Reconéctese para actualizar su acceso."
-    },
-    "actions": {
-      "connect": "Conectar",
-      "connecting": "Conectando...",
-      "disconnect": "Desconectar",
-      "reconnect": "Reconectar",
-      "disconnectConfirm": "¿Desconectar?",
+    "container": {
+      "title": "Contenedor",
+      "insideContainer": "Ejecutándose en contenedor",
       "yes": "Sí",
       "no": "No",
-      "viewTools": "Ver herramientas"
+      "cgroupVersion": "Versión de Cgroup",
+      "cpuQuota": "Cuota de CPU",
+      "cpuUsage": "Uso de CPU",
+      "cores": "núcleos",
+      "seconds": "segundos",
+      "memoryUsage": "Uso de memoria",
+      "memoryLimit": "Límite de memoria",
+      "memoryAvailable": "Memoria disponible"
     },
-    "connectedSince": "Conectado desde {date}",
-    "toolCount": "{count} {count, plural, one {herramienta} other {herramientas}}",
-    "tools": {
-      "modalTitle": "{name} — Herramientas",
-      "loading": "Cargando herramientas...",
-      "empty": "No hay herramientas disponibles para este servidor."
-    }
-  },
-  "userPromptSettings": {
-    "loading": "Cargando configuración de indicaciones...",
-    "failedToLoad": "Error al cargar la configuración de indicaciones",
-    "activePrompt": "Indicación Activa",
-    "source": {
-      "label": "Fuente",
-      "user_custom": "Indicación Personalizada",
-      "department_default": "Predeterminado del Departamento",
-      "system_default": "Predeterminado del Sistema"
-    },
-    "variables": {
-      "title": "Variables Disponibles",
-      "empty": "No hay variables disponibles",
-      "insertHint": "Haga clic en una variable para insertarla en el editor",
-      "copied": "Variable insertada"
-    },
-    "editor": {
-      "title": "Editor de Indicación Personalizada",
-      "placeholder": "Escriba su indicación personalizada del sistema aquí. Use variables como {{variable_name}} para insertar valores dinámicos...",
-      "charCount": "{count} caracteres",
-      "preview": "Vista Previa",
-      "edit": "Editar",
-      "previewTitle": "Vista Previa de Indicación",
-      "previewEmpty": "Nada que previsualizar. Comience a escribir su indicación personalizada arriba."
-    },
-    "actions": {
-      "save": "Guardar Indicación",
-      "saving": "Guardando...",
-      "resetToDefault": "Restablecer a Predeterminado",
-      "resetting": "Restableciendo...",
-      "resetConfirmTitle": "¿Restablecer a Predeterminado?",
-      "resetConfirmMessage": "Esto eliminará su indicación personalizada y volverá al predeterminado del departamento o del sistema. Esta acción no se puede deshacer.",
-      "resetConfirmButton": "Sí, Restablecer",
-      "cancel": "Cancelar"
-    },
-    "messages": {
-      "saved": "Indicación personalizada guardada exitosamente",
-      "failedToSave": "Error al guardar la indicación",
-      "reset": "Indicación restablecida al predeterminado",
-      "failedToReset": "Error al restablecer la indicación",
-      "noChanges": "No hay cambios que guardar"
-    },
-    "feedback": {
-      "title": "Comentarios sobre la Indicación",
-      "subtitle": "Ayúdenos a mejorar calificando la efectividad de la indicación actual",
-      "thumbsUp": "Esta indicación funciona bien",
-      "thumbsDown": "Esta indicación necesita mejoras",
-      "commentPlaceholder": "Opcional: Cuéntenos más sobre su experiencia con esta indicación...",
-      "submit": "Enviar Comentarios",
-      "submitting": "Enviando...",
-      "submitted": "¡Gracias por sus comentarios!",
-      "failedToSubmit": "Error al enviar comentarios",
-      "ratingRequired": "Seleccione una calificación antes de enviar"
+    "errors": {
+      "fetchFailed": "Error al obtener métricas del sistema"
     }
   }
 }

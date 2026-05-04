@@ -270,6 +270,30 @@
               </div>
             </AdminPanelCard>
           </Link>
+
+          <Link to="/admin/system-metrics" aria-label={$_('sidebar.systemMetrics')}>
+            <AdminPanelCard class="link-card">
+              <div class="link-content">
+                <div class="link-icon" aria-hidden="true">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                    <path d="M6 10l3-3 2 2 3-3 4 4"></path>
+                  </svg>
+                </div>
+                <div class="link-text">
+                  <span class="link-title">{$_('sidebar.systemMetrics')}</span>
+                  <span class="link-description">{$_('adminOverview.viewSystemMetrics')}</span>
+                </div>
+                <div class="link-arrow" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9,18 15,12 9,6"></polyline>
+                  </svg>
+                </div>
+              </div>
+            </AdminPanelCard>
+          </Link>
         </div>
       </section>
 

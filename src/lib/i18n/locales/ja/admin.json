@@ -1,145 +1,4 @@
 {
-  "common": {
-    "cancel": "キャンセル",
-    "save": "保存",
-    "delete": "削除",
-    "edit": "編集",
-    "search": "検索",
-    "never": "なし",
-    "loading": "読み込み中...",
-    "clear": "クリア",
-    "select": "選択"
-  },
-  "errors": {
-    "forbidden": {
-      "title": "アクセスが拒否されました",
-      "message": "このページを表示する権限がありません。",
-      "back": "チャットに戻る",
-      "iconAlt": "アクセス拒否"
-    }
-  },
-  "auth": {
-    "signIn": "サインイン",
-    "signUp": "サインアップ",
-    "forgotPassword": "パスワードをお忘れですか？",
-    "rememberMe": "ログイン状態を保持",
-    "emailPlaceholder": "メールアドレスを入力",
-    "passwordPlaceholder": "パスワードを入力",
-    "welcomeToGrengin": "Grenginへようこそ",
-    "signInToContinue": "ワークスペースに続けるにはサインインしてください",
-    "emailAddress": "メールアドレス",
-    "password": "パスワード",
-    "signingIn": "サインイン中...",
-    "emailAndPassword": "メールアドレスとパスワード",
-    "orContinueWith": "または次で続ける",
-    "signInWith": "{provider}でサインイン",
-    "connectingTo": "{provider}に接続中...",
-    "noAuthMethods": "認証方法がありません",
-    "noAuthMethodsDescription": "認証オプションを設定するには、管理者にお問い合わせください。",
-    "termsOfService": "利用規約",
-    "privacyPolicy": "プライバシーポリシー",
-    "copyright": "© 2025-2026 Perter. 全著作権所有。",
-    "demoAccount": "デモアカウント",
-    "authenticationInProgress": "認証処理中",
-    "completingSignIn": "サインインを完了しています...",
-    "pleaseWaitVerifying": "認証情報を確認中です。お待ちください",
-    "authenticationComplete": "認証完了",
-    "signInSuccessful": "サインインに成功しました！",
-    "redirectingToWorkspace": "ワークスペースにリダイレクトしています...",
-    "authenticationFailed": "認証に失敗しました",
-    "signInFailed": "サインインに失敗しました",
-    "redirectingToLogin": "ログインページにリダイレクトしています...",
-    "mfaRequired": "多要素認証が必要ですが、まだ実装されていません",
-    "unexpectedError": "予期しないエラーが発生しました",
-    "missingOAuthParams": "必要なOAuthパラメータ（stateまたはcode）が不足しています",
-    "oauthProviderNotFound": "OAuthプロバイダーが見つかりません。再度ログインをお試しください。",
-    "invalidAuthResponse": "サーバーからの認証応答が無効です",
-    "unexpectedAuthError": "認証中に予期しないエラーが発生しました",
-    "failedToInitiateLogin": "{provider}ログインの開始に失敗しました",
-    "socialLogin": "ソーシャルログインのオプション",
-    "legalLinks": "法的情報"
-  },
-  "components": {
-    "typingIndicator": "アシスタントが入力しています"
-  },
-  "sidebar": {
-    "newChat": "新しいチャット",
-    "users": "ユーザー",
-    "adminPanel": "管理センター",
-    "backToChat": "チャットに戻る",
-    "toggleSidebar": "サイドバーを切り替え",
-    "expandSidebar": "サイドバーを展開",
-    "searchPlaceholder": "検索...",
-    "searchTitle": "チャット履歴を検索",
-    "clearSearch": "検索をクリア",
-    "chats": "チャット",
-    "loadingChats": "チャットを読み込み中...",
-    "noChatsYet": "チャットがまだありません",
-    "noChatsFound": "チャットが見つかりません",
-    "chatOptions": "チャットオプション",
-    "delete": "削除",
-    "archive": "アーカイブ",
-    "rename": "名前を変更",
-    "renamePlaceholder": "タイトルを入力",
-    "chatRenamed": "{title} を名前変更しました",
-    "renameChatError": "名前の変更に失敗しました",
-    "emptyChatTitle": "タイトルは空にできません",
-    "userMenu": "ユーザーメニュー",
-    "user": "ユーザー",
-    "settings": "設定",
-    "admin": "管理センター",
-    "signOut": "サインアウト",
-    "deleteChat": "チャットを削除",
-    "deleteChatConfirm": "このチャットを削除してもよろしいですか？この操作は元に戻せません。",
-    "cancel": "キャンセル",
-    "navigation": "メインナビゲーション",
-    "adminNavigation": "管理ナビゲーション",
-    "openAlerts": "アラートを開く",
-    "deleting": "削除中...",
-    "close": "閉じる",
-    "chatDeleted": "{title} を削除しました",
-    "chatArchived": "{title} をアーカイブしました",
-    "deleteChatError": "チャットの削除に失敗しました",
-    "archiveChatError": "チャットのアーカイブに失敗しました",
-    "chat": "チャット",
-    "untitledChat": "タイトルなしチャット",
-    "usageAnalytics": "利用分析",
-    "userAnalytics": "ユーザー分析",
-    "aiEngines": "AIエンジン",
-    "sectionManage": "管理",
-    "sectionMonitor": "監視",
-    "sectionConfigure": "設定",
-    "overview": "概要",
-    "organization": "組織",
-    "accessControl": "アクセス制御",
-    "connectors": "コネクタ",
-    "viewAllAlerts": "すべてのアラートを見る",
-    "noRecentAlerts": "まだアラートはありません",
-    "newAlert": "新しいアラート",
-    "promptLibrary": "プロンプトライブラリ",
-    "promptEffectiveness": "プロンプト効果",
-    "auditLogs": "監査ログ"
-  },
-  "alerts": {
-    "title": "アラート",
-    "subtitle": "通知と更新",
-    "filterAll": "すべて",
-    "filterUnread": "未読",
-    "filterLabel": "アラートを状態で絞り込む",
-    "notificationsList": "通知リスト",
-    "empty": "表示するアラートがありません",
-    "loading": "アラートを読み込み中...",
-    "loadMore": "さらに読み込む",
-    "unread": "未読",
-    "loadError": "アラートの読み込みに失敗しました",
-    "markReadError": "アラートを既読にできませんでした"
-  },
-  "app": {
-    "closeSidebar": "サイドバーを閉じる",
-    "openMenu": "メニューを開く",
-    "closeMenu": "メニューを閉じる",
-    "notifications": "通知"
-  },
   "admin": {
     "common": {
       "closeModal": "モーダルを閉じる",
@@ -412,7 +271,8 @@
         "actions": {
           "retry": "再試行",
           "deleting": "削除中…",
-          "saving": "保存中…"
+          "saving": "保存中…",
+          "validating": "検証中…"
         },
         "messages": {
           "loading": "OAuthプロバイダーを読み込み中...",
@@ -440,6 +300,7 @@
           "statusUpdateError": "{name}を{action}できませんでした",
           "deleted": "SSOプロバイダーを削除しました",
           "deleteError": "SSOプロバイダーの削除に失敗しました",
+          "validationFailed": "SSO資格情報の検証に失敗しました。資格情報を確認して再試行してください。",
           "updated": "SSOプロバイダーを更新しました",
           "updateError": "プロバイダーの更新に失敗しました"
         },
@@ -1141,108 +1002,6 @@
       }
     }
   },
-  "chat": {
-    "emptyState": {
-      "title": "会話を開始",
-      "description": "メッセージを送信してAIアシスタントとのチャットを始めましょう！",
-      "aiDisclaimer": "AIは間違いを犯す可能性があります。回答を確認してください。"
-    },
-    "errors": {
-      "somethingWentWrong": "問題が発生しました",
-      "dismissError": "エラーを閉じる",
-      "failedToLoadModels": "モデルの読み込みに失敗しました",
-      "failedToLoadConnectors": "コネクタの読み込みに失敗しました",
-      "failedToLoadConversation": "会話の読み込みに失敗しました",
-      "failedToSendMessage": "メッセージの送信に失敗しました",
-      "budgetAboutToExhaust": "部署の予算がもうすぐ不足します。",
-      "budgetExhaustedWarn": "今期間の部署の予算は使い果たされました。チャットは続行されますが、利用が予算を超える可能性があります。",
-      "budgetExhaustedBlock": "予算が使い果たされ、新しいリクエストは受け付けられません。",
-      "budgetExhaustedBlockSolution": "追加の予算を申請するか、後でもう一度お試しください。"
-    },
-    "messageInput": {
-      "placeholder": "何でも聞いてください",
-      "placeholderWithModel": "{model}にメッセージ",
-      "recordingPlaceholder": "聞いています... 今話してください",
-      "addContent": "コンテンツを追加",
-      "addPhotos": "写真を追加",
-      "addFiles": "ファイルを追加",
-      "selectModel": "モデルを選択",
-      "selectModelFallback": "モデルを選択",
-      "loadingModels": "モデルを読み込み中...",
-      "selectConnectorsFallback": "コネクタ",
-      "selectConnectors": "コネクタを選択",
-      "loadingConnectors": "コネクタを読み込み中...",
-      "noConnectors": "利用可能なコネクタがありません",
-      "connectors": "コネクタ",
-      "enableWebSearch": "ウェブ検索を有効にする",
-      "disableWebSearch": "ウェブ検索を無効にする",
-      "search": "検索",
-      "voiceInput": "音声入力",
-      "stopRecording": "録音を停止",
-      "sendMessage": "メッセージを送信",
-      "sendMessageTitle": "メッセージを送信（Enter）",
-      "messageInput": "メッセージ入力",
-      "visionCapable": "ビジョン対応",
-      "removeFile": "ファイルを削除",
-      "previewImage": "画像プレビュー: {name}",
-      "previewFile": "ファイルプレビュー: {name}",
-      "fileLabel": "ファイル: {name}",
-      "closePreview": "プレビューを閉じる",
-      "speechRecognitionNotSupported": "お使いのブラウザでは音声認識がサポートされていません",
-      "microphoneAccessDenied": "マイクへのアクセスが拒否されました。マイクへのアクセスを許可してください。",
-      "voiceInputError": "音声入力エラー: {error}",
-      "failedToStartVoiceInput": "音声入力の開始に失敗しました",
-      "uploading": "アップロード中…",
-      "uploadFailed": "失敗"
-    },
-    "message": {
-      "copy": "コピー",
-      "copied": "コピーしました！",
-      "copyContent": "コンテンツをコピー",
-      "loadingImage": "画像を読み込み中...",
-      "imagePreview": "画像プレビュー",
-      "imageAlt": "画像",
-      "fileFallback": "ファイル",
-      "pause": "一時停止",
-      "resume": "再開",
-      "listen": "聞く",
-      "stop": "停止",
-      "closePreview": "プレビューを閉じる"
-    },
-    "toolCalls": {
-      "searching": "ウェブを検索中",
-      "searchedTheWeb": "ウェブを検索しました",
-      "results": "件の結果"
-    },
-    "toolExecution": {
-      "timeline": "ツール実行のタイムライン",
-      "input": "入力",
-      "output": "出力",
-      "running": "実行中",
-      "completed": "完了",
-      "failed": "失敗",
-      "row": "行",
-      "rows": "行",
-      "imageResult": "画像結果",
-      "resource": "リソース",
-      "unknownError": "不明なエラーが発生しました",
-      "duration": "時間"
-    },
-    "mcpAuth": {
-      "connectTo": "{name}に接続",
-      "connectedTo": "{name}に接続しました",
-      "description": "{tool}を使うには、お客様の{name}アカウントへのアクセスが必要です。権限はすべての操作に適用されます。",
-      "connectAccount": "{name}アカウントを接続",
-      "connecting": "接続中...",
-      "connectionFailed": "接続に失敗しました",
-      "failedToGetAuthUrl": "認証URLの取得に失敗しました",
-      "popupBlocked": "ポップアップがブロックされました。このサイトのポップアップを許可してください。",
-      "retry": "再試行",
-      "notNow": "今はしない",
-      "requestedPermissions": "要求された権限:",
-      "manageInSettings": "接続済みアカウントは設定で管理できます。"
-    }
-  },
   "aiEngines": {
     "title": "AIエンジン",
     "subtitle": "AIエンジン統合の設定と管理",
@@ -1352,479 +1111,74 @@
     "viewAnalytics": "詳細な使用分析を表示",
     "viewPromptEffectiveness": "プロンプト効果指標を表示",
     "configureSettings": "システム設定を構成",
+    "viewSystemMetrics": "システム状態と診断",
     "retry": "再試行",
     "errors": {
       "fetchFailed": "概要データの取得に失敗しました"
     }
   },
-  "userAnalytics": {
-    "title": "ユーザー分析",
-    "subtitle": "ユーザーごとの詳細な使用状況分析",
-    "filters": {
-      "startDate": "開始日",
-      "endDate": "終了日",
-      "search": "検索",
-      "searchPlaceholder": "名前、メール、または部門で検索...",
-      "perPage": "ページあたり"
+  "systemMetrics": {
+    "title": "システムメトリクス",
+    "subtitle": "サーバー、データベース、コンテナのリアルタイム状態",
+    "refresh": "更新",
+    "autoRefresh": "自動更新",
+    "lastUpdated": "最終更新",
+    "generatedAt": "生成日時",
+    "machine": {
+      "title": "マシン",
+      "cpuUsage": "CPU使用率",
+      "memoryUsage": "メモリ使用量",
+      "swapUsage": "スワップ使用量",
+      "usedMemory": "使用中",
+      "freeMemory": "空き",
+      "totalMemory": "合計",
+      "usedSwap": "使用済みスワップ",
+      "totalSwap": "合計スワップ",
+      "loadAverage": "平均負荷",
+      "load1m": "1分",
+      "load5m": "5分",
+      "load15m": "15分",
+      "uptime": "稼働時間",
+      "disks": "ディスク使用量"
     },
-    "stats": {
-      "totalUsers": "総ユーザー数",
-      "showing": "表示中",
-      "showingCount": "{total}件中{filtered}件"
+    "database": {
+      "title": "データベース",
+      "connections": "接続数",
+      "active": "アクティブ",
+      "idle": "アイドル",
+      "total": "合計",
+      "backends": "バックエンド",
+      "latency": "往復レイテンシ",
+      "size": "データベースサイズ",
+      "cacheHitRatio": "キャッシュヒット率",
+      "blocksHit": "ヒットブロック",
+      "blocksRead": "読み込みブロック",
+      "transactions": "トランザクション",
+      "commits": "コミット",
+      "rollbacks": "ロールバック",
+      "tuples": "タプル操作",
+      "fetched": "取得",
+      "inserted": "挿入",
+      "updated": "更新",
+      "deleted": "削除",
+      "returned": "返却"
     },
-    "table": {
-      "userName": "ユーザー名",
-      "email": "メール",
-      "department": "部門",
-      "requests": "リクエスト",
-      "success": "成功",
-      "errors": "エラー",
-      "tokens": "トークン",
-      "cost": "コスト",
-      "avgLatency": "平均レイテンシ",
-      "lastActivity": "最終アクティビティ"
-    },
-    "emptyState": {
-      "noMatch": "\"{query}\"に一致するユーザーが見つかりません",
-      "noData": "選択した日付範囲のユーザー分析データがありません"
-    },
-    "pagination": {
-      "previous": "前へ",
-      "next": "次へ",
-      "pageInfo": "{total}ページ中{current}ページ"
-    },
-    "errors": {
-      "fetchFailed": "ユーザー分析の取得に失敗しました"
-    }
-  },
-  "departmentAnalytics": {
-    "title": "部門別分析",
-    "subtitle": "部門ごとの詳細な利用分析",
-    "filters": {
-      "search": "検索",
-      "searchPlaceholder": "部門名で検索...",
-      "perPage": "1ページあたり"
-    },
-    "stats": {
-      "totalDepartments": "部門の総数",
-      "showing": "表示中",
-      "showingCount": "{total}中{showing}件表示"
-    },
-    "table": {
-      "department": "部門",
-      "users": "ユーザー",
-      "requests": "リクエスト",
-      "success": "成功",
-      "errors": "エラー",
-      "tokens": "トークン",
-      "cost": "コスト",
-      "avgLatency": "平均待機時間"
-    },
-    "emptyState": {
-      "noMatch": "「{query}」に一致する部門は見つかりませんでした",
-      "noData": "選択した日付範囲に部門別分析データがありません"
-    },
-    "pagination": {
-      "previous": "前へ",
-      "next": "次へ",
-      "pageInfo": "ページ {current}/{total}"
-    },
-    "errors": {
-      "fetchFailed": "部門別分析の取得に失敗しました"
-    }
-  },
-  "analytics": {
-    "title": "使用状況分析",
-    "subtitle": "システムのパフォーマンスと使用状況のメトリクスを監視",
-    "tabs": {
-      "overview": "概要",
-      "byUser": "ユーザー別",
-      "byDepartment": "部門別",
-      "byModel": "モデル別"
-    },
-    "tabsAria": {
-      "overview": "利用状況の指標と傾向の概要",
-      "byUser": "ユーザー別の利用内訳",
-      "byDepartment": "部門別の利用内訳",
-      "byModel": "モデル別の利用内訳"
-    },
-    "byModel": {
-      "title": "モデル別",
-      "comingSoon": "近日公開",
-      "hint": "モデル別の分析はこちらで利用できるようになります。"
-    },
-    "aria": {
-      "mainRegion": "使用状況分析",
-      "dateRangeGroup": "レポートの日付範囲",
-      "startDate": "開始日",
-      "endDate": "終了日",
-      "pagination": "結果のページ送り",
-      "topModelsCaption": "選択した日付範囲での利用上位モデル",
-      "departmentTableCaption": "選択した日付範囲での部門別利用",
-      "userTableCaption": "選択した日付範囲でのユーザー別利用"
-    },
-    "filters": {
-      "dateRange": "期間",
-      "presets": {
-        "last7Days": "過去7日間",
-        "last30Days": "過去30日間",
-        "last90Days": "過去90日間",
-        "thisMonth": "今月",
-        "custom": "カスタム"
-      },
-      "to": "から",
-      "aggregated": "集計単位",
-      "hour": "時間別",
-      "day": "日別",
-      "week": "週別",
-      "month": "月別"
-    },
-    "loading": "分析を読み込み中...",
-    "retry": "再試行",
-    "refresh": "分析を更新",
-    "refreshButton": "更新",
-    "overview": {
-      "title": "概要",
-      "totalUsers": "総ユーザー数",
-      "activeUsers": "{count} アクティブ",
-      "totalRequests": "総リクエスト数",
-      "avgPerUser": "ユーザーあたり平均 {count}",
-      "totalTokens": "総トークン数",
-      "totalCost": "総コスト",
-      "vsPreviousDays": "前{count}日間比"
-    },
-    "topModels": {
-      "title": "トップモデル",
-      "model": "モデル",
-      "provider": "プロバイダー",
-      "requests": "リクエスト",
-      "tokens": "トークン",
-      "cost": "コスト"
-    },
-    "charts": {
-      "title": "パフォーマンストレンド",
-      "multiMetric": {
-        "title": "マルチメトリックトレンド",
-        "subtitle": "リクエスト • トークン • レイテンシ",
-        "requests": "リクエスト",
-        "tokens": "トークン",
-        "latency": "レイテンシ",
-        "date": "日付",
-        "latencyMs": "レイテンシ (ms)"
-      },
-      "usageGrowth": {
-        "title": "使用量の増加",
-        "subtitle": "リクエスト（棒グラフ） • トークン（折れ線）",
-        "requests": "リクエスト",
-        "tokens": "トークン"
-      },
-      "apiReliability": {
-        "title": "API信頼性",
-        "subtitle": "成功 vs エラー",
-        "success": "成功",
-        "errors": "エラー",
-        "type": "タイプ",
-        "count": "カウント"
-      },
-      "costTrend": {
-        "title": "コストトレンド",
-        "subtitle": "時間経過に伴う総支出",
-        "totalCost": "総コスト"
-      },
-      "emptyState": {
-        "title": "選択した日付範囲の時系列データがありません",
-        "hint": "別の日付範囲を選択するか、後でもう一度お試しください"
-      },
-      "accessibility": {
-        "keyboardInstructions": "Enter または Space でデータ表を表示します。Escape で閉じます。",
-        "dataPoints": "データポイント {count} 件",
-        "viewDataTable": "データ表を表示",
-        "viewDataTableFor": "{chartName} のデータ表を表示",
-        "closeDataTable": "データ表を閉じる",
-        "dataTableRegion": "{chartName} のデータ表"
-      }
-    },
-    "errors": {
-      "fetchFailed": "分析データの取得に失敗しました"
-    }
-  },
-  "error": {
-    "not_found": {
-      "description": "要求されたリソースが見つかりませんでした",
-      "solution": "お探しのリソースは存在しないか、削除されました。URLを確認するか、もう一度お試しください。問題が続く場合は、{app}サポートにお問い合わせください"
-    },
-    "validation": {
-      "missing_field": {
-        "description": "必須フィールド `{field}` が不足しています",
-        "solution": "`{field}` を含むすべての必須フィールドを入力してください"
-      },
-      "empty_field": {
-        "description": "必須フィールド `{field}` は空にできません",
-        "solution": "`{field}` フィールドに値を入力してください"
-      }
-    },
-    "sso": {
-      "conditional_access": {
-        "description": "`{provider}` の条件付きアクセスポリシーによりアクセスが拒否されました",
-        "solution": "組織のセキュリティポリシーがアクセスをブロックしています。管理者に連絡するか、別の認証方法をお試しください"
-      }
-    },
-    "llm": {
-      "disabled_by_admin": {
-        "description": "LLMプロバイダー `{provider}` は管理者によって無効化されています",
-        "solution": "管理者に `{provider}` を有効にするよう依頼するか、別のプロバイダーを選択してください"
-      },
-      "invalid_provider": {
-        "description": "LLMプロバイダー `{provider}` は無効であるか、サポートされていません",
-        "solution": "利用可能なオプションから有効なプロバイダーを選択してください"
-      },
-      "not_configured": {
-        "description": "LLMプロバイダー `{provider}` が正しく設定されていません",
-        "solution": "プロバイダーの設定を構成するか、管理者に連絡してください"
-      }
-    },
-    "db": {
-      "not_found": {
-        "description": "{app}データベースでリソースが見つかりません",
-        "solution": "お探しのリソースは存在しません。新しいチャットを開始するか、{app}サポートにお問い合わせください"
-      },
-      "unavailable": {
-        "description": "{app}データベースが一時的に利用できません",
-        "solution": "しばらくしてからもう一度お試しください。問題が続く場合は、{app}サポートにお問い合わせください"
-      },
-      "timeout": {
-        "description": "{app}データベースリクエストがタイムアウトしました",
-        "solution": "操作に時間がかかりすぎました。より小さなリクエストで再試行するか、{app}サポートにお問い合わせください"
-      },
-      "conflict": {
-        "description": "{app}リクエストの処理中に競合が発生しました",
-        "solution": "リソースが別のプロセスによって変更されました。更新してからもう一度お試しください"
-      }
-    },
-    "service_unavailable": {
-      "description": "{app}サービスが一時的に利用できません",
-      "solution": "技術的な問題が発生しています。しばらくしてからもう一度お試しください。問題が続く場合は、{app}サポートにお問い合わせください"
-    },
-    "auth": {
-      "service_unavailable": {
-        "description": "{app}認証サービスが一時的に利用できません",
-        "solution": "しばらくしてからもう一度お試しください。問題が続く場合は、{app}サポートにお問い合わせください"
-      },
-      "invalid_credentials": {
-        "description": "{app}のメールアドレスまたはパスワードが正しくありません",
-        "solution": "資格情報を確認して、もう一度お試しください。パスワードを忘れた場合は、パスワードリセットオプションを使用してください"
-      },
-      "email_not_found": {
-        "description": "このメールアドレスで{app}アカウントが見つかりませんでした",
-        "solution": "メールアドレスを確認するか、新しい{app}アカウントに登録してください"
-      },
-      "missing_credentials": {
-        "description": "{app}にログインするにはメールアドレスとパスワードが必要です",
-        "solution": "ログインするには、メールアドレスとパスワードの両方を入力してください"
-      },
-      "invalid_token": {
-        "description": "{app}セッションの有効期限が切れました",
-        "solution": "{app}の使用を続行するには、再度ログインしてください"
-      },
-      "invalid_user_status": {
-        "description": "{app}アカウントのステータスが無効です",
-        "solution": "アカウントの問題を解決するには、{app}サポートにお問い合わせください"
-      },
-      "account_deactivated": {
-        "description": "{app}アカウントが無効化されました",
-        "solution": "アカウントを再有効化するには、管理者または{app}サポートにお問い合わせください"
-      },
-      "email_already_exists": {
-        "description": "このメールアドレスで既に{app}アカウントが存在します",
-        "solution": "既存の{app}アカウントでログインするか、別のメールアドレスを使用してください"
-      },
-      "invalid_provider": {
-        "description": "認証プロバイダー `{provider}` は無効であるか、{app}でサポートされていません",
-        "solution": "{app}で有効な認証プロバイダーを選択してください"
-      },
-      "invalid_callback_params": {
-        "description": "{app}認証コールバックパラメータが無効です",
-        "solution": "{app}認証プロセスでエラーが発生しました。もう一度ログインをお試しください"
-      },
-      "missing_oauth_params": "必須OAuthパラメータが不足しています（stateまたはcode）",
-      "oauth_provider_not_found": "OAuthプロバイダーが見つかりませんでした。もう一度ログインをお試しください",
-      "invalid_auth_response": "サーバーから無効な認証応答が返されました",
-      "mfa_not_implemented": "多要素認証が必要ですが、まだ実装されていません",
-      "invalid_redirect_uri": {
-        "description": "{app}リダイレクトURIが無効です: `{redirect_uri}`",
-        "solution": "リダイレクトURIが{app}で承認されていません。問題が続く場合は、{app}サポートにお問い合わせください"
-      },
-      "permission_denied": {
-        "description": "{app}でこの操作を実行する権限がありません",
-        "solution": "アクセス権限があると思われる場合は、{app}管理者にお問い合わせください"
-      },
-      "org_not_found": {
-        "description": "{app}で組織が見つかりませんでした",
-        "solution": "ID `{org_id}` の{app}組織は存在しません。組織設定を確認してください"
-      },
-      "resource_not_found": {
-        "description": "{app}で要求されたリソースが見つかりませんでした",
-        "solution": "お探しのリソースは{app}に存在しないか、削除されました"
-      },
-      "email_domain_not_allowed": {
-        "description": "メールドメイン `{domain}` は{app}で許可されていません",
-        "solution": "{app}組織では特定のメールドメインのみが許可されています。許可されたドメインのメールを使用してください"
-      },
-      "sso": {
-        "not_configured": {
-          "description": "SSOプロバイダー `{provider}` が{app}で設定されていません",
-          "solution": "`{provider}` のSSOを設定するには、{app}管理者にお問い合わせください"
-        },
-        "disabled_by_admin": {
-          "description": "SSOプロバイダー `{provider}` は{app}管理者によって無効化されています",
-          "solution": "`{provider}` のSSOを有効にするには、{app}管理者にお問い合わせするか、別の認証方法をお試しください"
-        }
-      },
-      "no_token": {
-        "description": "認証トークンが利用できません",
-        "solution": "続行するにはログインしてください"
-      }
-    },
-    "request": {
-      "no_response_body": {
-        "description": "レスポンスボディが受信されませんでした",
-        "solution": "サーバーがデータを返しませんでした。もう一度お試しください"
-      },
-      "send_message_failed": {
-        "description": "メッセージの送信に失敗しました",
-        "solution": "メッセージを送信できませんでした。接続を確認してもう一度お試しください"
-      },
-      "archive_conversation_failed": {
-        "description": "会話のアーカイブに失敗しました",
-        "solution": "会話をアーカイブできませんでした。もう一度お試しください"
-      }
-    },
-    "fallback": {
-      "description": "問題が発生しました",
-      "solution": "予期しないエラーが発生しました。もう一度お試しください"
-    }
-  },
-  "userSettings": {
-    "title": "設定",
-    "subtitle": "個人の設定と接続済みの連携を管理します。",
-    "tabs": {
-      "integrations": "連携",
-      "integrationsAria": "接続済みの連携",
-      "promptSettings": "プロンプト設定",
-      "promptSettingsAria": "プロンプトの設定を管理"
-    }
-  },
-  "userIntegrations": {
-    "loading": "連携を読み込み中...",
-    "failedToLoad": "連携の読み込みに失敗しました",
-    "failedToGetAuthUrl": "認証URLの取得に失敗しました",
-    "failedToConnect": "{name}への接続に失敗しました",
-    "failedToDisconnect": "{name}の切断に失敗しました",
-    "disconnected": "{name}を切断しました",
-    "stats": {
-      "connected": "接続済み",
-      "available": "利用可能",
-      "total": "合計"
-    },
-    "filters": {
-      "all": "すべて",
-      "connected": "接続済み",
-      "available": "利用可能",
-      "filterAria": "連携を絞り込む"
-    },
-    "empty": {
-      "title": "連携が見つかりません",
-      "noConnected": "まだ連携を接続していません。",
-      "noAvailable": "現在接続できる連携はありません。",
-      "noConfigured": "組織で連携が設定されていません。",
-      "viewAll": "すべての連携を表示"
-    },
-    "columns": {
-      "name": "名前",
-      "transport": "トランスポート",
-      "status": "ステータス",
-      "tools": "ツール",
-      "connectedAt": "接続日時",
-      "actions": "操作"
-    },
-    "status": {
-      "connected": "接続済み",
-      "disconnected": "未接続",
-      "expired": "期限切れ",
-      "error": "エラー",
-      "expiredWarning": "接続の有効期限が切れました。再接続してアクセスを更新してください。"
-    },
-    "actions": {
-      "connect": "接続",
-      "connecting": "接続中...",
-      "disconnect": "切断",
-      "reconnect": "再接続",
-      "disconnectConfirm": "切断しますか？",
+    "container": {
+      "title": "コンテナ",
+      "insideContainer": "コンテナ内で実行中",
       "yes": "はい",
       "no": "いいえ",
-      "viewTools": "ツールを表示"
+      "cgroupVersion": "Cgroupバージョン",
+      "cpuQuota": "CPUクォータ",
+      "cpuUsage": "CPU使用率",
+      "cores": "コア",
+      "seconds": "秒",
+      "memoryUsage": "メモリ使用量",
+      "memoryLimit": "メモリ制限",
+      "memoryAvailable": "利用可能メモリ"
     },
-    "connectedSince": "{date}から接続",
-    "toolCount": "{count}個のツール",
-    "tools": {
-      "modalTitle": "{name} — ツール",
-      "loading": "ツールを読み込み中...",
-      "empty": "このサーバーで利用可能なツールはありません。"
-    }
-  },
-  "userPromptSettings": {
-    "loading": "プロンプト設定を読み込み中...",
-    "failedToLoad": "プロンプト設定の読み込みに失敗しました",
-    "activePrompt": "アクティブなプロンプト",
-    "source": {
-      "label": "ソース",
-      "user_custom": "カスタムプロンプト",
-      "department_default": "部門デフォルト",
-      "system_default": "システムデフォルト"
-    },
-    "variables": {
-      "title": "利用可能な変数",
-      "empty": "利用可能な変数はありません",
-      "insertHint": "変数をクリックしてエディターに挿入",
-      "copied": "変数が挿入されました"
-    },
-    "editor": {
-      "title": "カスタムプロンプトエディター",
-      "placeholder": "カスタムシステムプロンプトをここに記入してください。{{variable_name}} のような変数を使用して動的な値を挿入できます...",
-      "charCount": "{count} 文字",
-      "preview": "プレビュー",
-      "edit": "編集",
-      "previewTitle": "プロンプトプレビュー",
-      "previewEmpty": "プレビューする内容がありません。上でカスタムプロンプトの作成を始めてください。"
-    },
-    "actions": {
-      "save": "プロンプトを保存",
-      "saving": "保存中...",
-      "resetToDefault": "デフォルトに戻す",
-      "resetting": "リセット中...",
-      "resetConfirmTitle": "デフォルトに戻しますか？",
-      "resetConfirmMessage": "カスタムプロンプトが削除され、部門またはシステムのデフォルトに戻ります。この操作は元に戻せません。",
-      "resetConfirmButton": "はい、リセットする",
-      "cancel": "キャンセル"
-    },
-    "messages": {
-      "saved": "カスタムプロンプトが正常に保存されました",
-      "failedToSave": "プロンプトの保存に失敗しました",
-      "reset": "プロンプトがデフォルトにリセットされました",
-      "failedToReset": "プロンプトのリセットに失敗しました",
-      "noChanges": "保存する変更はありません"
-    },
-    "feedback": {
-      "title": "プロンプトのフィードバック",
-      "subtitle": "現在のプロンプトの効果を評価して改善にご協力ください",
-      "thumbsUp": "このプロンプトはうまく機能しています",
-      "thumbsDown": "このプロンプトは改善が必要です",
-      "commentPlaceholder": "任意：このプロンプトでの体験について詳しくお聞かせください...",
-      "submit": "フィードバックを送信",
-      "submitting": "送信中...",
-      "submitted": "フィードバックありがとうございます！",
-      "failedToSubmit": "フィードバックの送信に失敗しました",
-      "ratingRequired": "送信前に評価を選択してください"
+    "errors": {
+      "fetchFailed": "システムメトリクスの取得に失敗しました"
     }
   }
 }

@@ -1,145 +1,4 @@
 {
-  "common": {
-    "cancel": "Cancel",
-    "save": "Save",
-    "delete": "Delete",
-    "edit": "Edit",
-    "search": "Search",
-    "never": "Never",
-    "loading": "Loading...",
-    "clear": "Clear",
-    "select": "Select"
-  },
-  "errors": {
-    "forbidden": {
-      "title": "Access denied",
-      "message": "You do not have permission to view this page.",
-      "back": "Back to chat",
-      "iconAlt": "Access denied"
-    }
-  },
-  "auth": {
-    "signIn": "Sign In",
-    "signUp": "Sign Up",
-    "forgotPassword": "Forgot Password?",
-    "rememberMe": "Remember Me",
-    "emailPlaceholder": "Enter your email",
-    "passwordPlaceholder": "Enter your password",
-    "welcomeToGrengin": "Welcome to Grengin",
-    "signInToContinue": "Sign in to continue to your workspace",
-    "emailAddress": "Email address",
-    "password": "Password",
-    "signingIn": "Signing in...",
-    "emailAndPassword": "Email & Password",
-    "orContinueWith": "or continue with",
-    "signInWith": "Sign in with {provider}",
-    "connectingTo": "Connecting to {provider}...",
-    "noAuthMethods": "No Authentication Methods",
-    "noAuthMethodsDescription": "Please contact your administrator to configure authentication options.",
-    "termsOfService": "Terms of Service",
-    "privacyPolicy": "Privacy Policy",
-    "copyright": "© 2025-2026 Perter. All rights reserved.",
-    "demoAccount": "Demo Account",
-    "authenticationInProgress": "Authentication in progress",
-    "completingSignIn": "Completing sign in...",
-    "pleaseWaitVerifying": "Please wait while we verify your credentials",
-    "authenticationComplete": "Authentication complete",
-    "signInSuccessful": "Sign in successful!",
-    "redirectingToWorkspace": "Redirecting you to your workspace...",
-    "authenticationFailed": "Authentication failed",
-    "signInFailed": "Sign in failed",
-    "redirectingToLogin": "Redirecting you back to the login page...",
-    "mfaRequired": "MFA is required but not yet implemented",
-    "unexpectedError": "An unexpected error occurred",
-    "missingOAuthParams": "Missing required OAuth parameters (state or code)",
-    "oauthProviderNotFound": "OAuth provider not found. Please try logging in again.",
-    "invalidAuthResponse": "Invalid authentication response from server",
-    "unexpectedAuthError": "An unexpected error occurred during authentication",
-    "failedToInitiateLogin": "Failed to initiate {provider} login",
-    "socialLogin": "Social login options",
-    "legalLinks": "Legal"
-  },
-  "components": {
-    "typingIndicator": "Assistant is typing"
-  },
-  "sidebar": {
-    "newChat": "New Chat",
-    "users": "Users",
-    "adminPanel": "Control Hub",
-    "backToChat": "Back to Chat",
-    "toggleSidebar": "Toggle sidebar",
-    "expandSidebar": "Expand sidebar",
-    "searchPlaceholder": "Search...",
-    "searchTitle": "Search through your chat conversations",
-    "clearSearch": "Clear search",
-    "chats": "Chats",
-    "loadingChats": "Loading chats...",
-    "noChatsYet": "No chats yet",
-    "noChatsFound": "No chats found",
-    "chatOptions": "Chat options",
-    "delete": "Delete",
-    "archive": "Archive",
-    "rename": "Rename",
-    "renamePlaceholder": "Enter a chat title",
-    "chatRenamed": "{title} renamed successfully",
-    "renameChatError": "Failed to rename chat",
-    "emptyChatTitle": "Chat title cannot be empty",
-    "userMenu": "User menu",
-    "user": "User",
-    "settings": "Settings",
-    "admin": "Control Hub",
-    "signOut": "Sign out",
-    "deleteChat": "Delete Chat",
-    "deleteChatConfirm": "Are you sure you want to delete this chat? This action cannot be undone.",
-    "cancel": "Cancel",
-    "navigation": "Main navigation",
-    "adminNavigation": "Admin navigation",
-    "openAlerts": "Open alerts",
-    "deleting": "Deleting...",
-    "close": "Close",
-    "chatDeleted": "{title} deleted successfully",
-    "chatArchived": "{title} archived successfully",
-    "deleteChatError": "Failed to delete chat",
-    "archiveChatError": "Failed to archive chat",
-    "chat": "Chat",
-    "untitledChat": "Untitled Chat",
-    "usageAnalytics": "Usage Analytics",
-    "userAnalytics": "User Analytics",
-    "aiEngines": "AI Engines",
-    "sectionManage": "Manage",
-    "sectionMonitor": "Monitor",
-    "sectionConfigure": "Configure",
-    "overview": "Overview",
-    "organization": "Organization",
-    "accessControl": "Access Control",
-    "connectors": "Connectors",
-    "promptLibrary": "Prompts",
-    "promptEffectiveness": "Prompt Metrics",
-    "auditLogs": "Audit Logs",
-    "viewAllAlerts": "View all alerts",
-    "noRecentAlerts": "No alerts yet",
-    "newAlert": "New alert"
-  },
-  "alerts": {
-    "title": "Alerts",
-    "subtitle": "Your notifications and updates",
-    "filterAll": "All",
-    "filterUnread": "Unread",
-    "filterLabel": "Filter alerts by status",
-    "notificationsList": "Notifications list",
-    "empty": "No alerts to show",
-    "loading": "Loading alerts...",
-    "loadMore": "Load more",
-    "unread": "Unread",
-    "loadError": "Failed to load alerts",
-    "markReadError": "Could not mark alert as read"
-  },
-  "app": {
-    "closeSidebar": "Close sidebar",
-    "openMenu": "Open menu",
-    "closeMenu": "Close menu",
-    "notifications": "Notifications"
-  },
   "admin": {
     "common": {
       "closeModal": "Close modal",
@@ -412,7 +271,8 @@
         "actions": {
           "retry": "Retry",
           "deleting": "Deleting…",
-          "saving": "Saving…"
+          "saving": "Saving…",
+          "validating": "Validating…"
         },
         "messages": {
           "loading": "Loading OAuth providers...",
@@ -440,6 +300,7 @@
           "statusUpdateError": "Unable to {action} {name}",
           "deleted": "SSO provider deleted",
           "deleteError": "Failed to delete SSO provider",
+          "validationFailed": "SSO credentials validation failed. Please check your credentials and try again.",
           "updated": "SSO provider updated",
           "updateError": "Failed to update provider"
         },
@@ -1074,262 +935,71 @@
   },
   "permissions": {
     "users": {
-      "view": { "description": "View users in the organization" },
-      "manage": { "description": "Create, edit, and deactivate users" }
+      "view": {
+        "description": "View users in the organization"
+      },
+      "manage": {
+        "description": "Create, edit, and deactivate users"
+      }
     },
     "analytics": {
-      "view": { "description": "View usage analytics and reports" }
+      "view": {
+        "description": "View usage analytics and reports"
+      }
     },
     "budget": {
-      "view": { "description": "View budget allocations and usage" },
-      "allocate": { "description": "Allocate and adjust department budgets" }
+      "view": {
+        "description": "View budget allocations and usage"
+      },
+      "allocate": {
+        "description": "Allocate and adjust department budgets"
+      }
     },
     "mcp_servers": {
-      "view": { "description": "View MCP server configurations" },
-      "admin": { "description": "Manage MCP server settings and deployments" },
-      "delegate": { "description": "Delegate MCP server access to departments" }
+      "view": {
+        "description": "View MCP server configurations"
+      },
+      "admin": {
+        "description": "Manage MCP server settings and deployments"
+      },
+      "delegate": {
+        "description": "Delegate MCP server access to departments"
+      }
     },
     "departments": {
-      "view": { "description": "View department structure and members" },
-      "manage": { "description": "Create, edit, and manage departments" }
+      "view": {
+        "description": "View department structure and members"
+      },
+      "manage": {
+        "description": "Create, edit, and manage departments"
+      }
     },
     "roles": {
-      "view": { "description": "View roles and their permissions" },
-      "manage": { "description": "Create, edit, and delete roles" },
-      "assign": { "description": "Assign roles to users" }
+      "view": {
+        "description": "View roles and their permissions"
+      },
+      "manage": {
+        "description": "Create, edit, and delete roles"
+      },
+      "assign": {
+        "description": "Assign roles to users"
+      }
     },
     "ai_platform": {
-      "view": { "description": "View AI engine configurations" },
-      "manage": { "description": "Configure AI engines and models" }
+      "view": {
+        "description": "View AI engine configurations"
+      },
+      "manage": {
+        "description": "Configure AI engines and models"
+      }
     },
     "sso_providers": {
-      "view": { "description": "View SSO provider configurations" },
-      "manage": { "description": "Configure and manage SSO providers" }
-    }
-  },
-  "userSettings": {
-    "title": "Settings",
-    "subtitle": "Manage your personal preferences and connected integrations.",
-    "tabs": {
-      "integrations": "Integrations",
-      "integrationsAria": "Connected integrations",
-      "promptSettings": "Prompt Settings",
-      "promptSettingsAria": "Manage your prompt preferences"
-    }
-  },
-  "userPromptSettings": {
-    "loading": "Loading prompt settings...",
-    "failedToLoad": "Failed to load prompt settings",
-    "activePrompt": "Active Prompt",
-    "source": {
-      "label": "Source",
-      "user_custom": "Custom Prompt",
-      "department_default": "Department Default",
-      "system_default": "System Default"
-    },
-    "variables": {
-      "title": "Available Variables",
-      "empty": "No variables available",
-      "insertHint": "Click a variable to insert it into the editor",
-      "copied": "Variable inserted"
-    },
-    "editor": {
-      "title": "Custom Prompt Editor",
-      "placeholder": "Write your custom system prompt here. Use variables like {{variable_name}} to insert dynamic values...",
-      "charCount": "{count} characters",
-      "preview": "Preview",
-      "edit": "Edit",
-      "previewTitle": "Prompt Preview",
-      "previewEmpty": "Nothing to preview. Start writing your custom prompt above."
-    },
-    "actions": {
-      "save": "Save Prompt",
-      "saving": "Saving...",
-      "resetToDefault": "Reset to Default",
-      "resetting": "Resetting...",
-      "resetConfirmTitle": "Reset to Default?",
-      "resetConfirmMessage": "This will remove your custom prompt and revert to the department or system default. This action cannot be undone.",
-      "resetConfirmButton": "Yes, Reset",
-      "cancel": "Cancel"
-    },
-    "messages": {
-      "saved": "Custom prompt saved successfully",
-      "failedToSave": "Failed to save prompt",
-      "reset": "Prompt reset to default",
-      "failedToReset": "Failed to reset prompt",
-      "noChanges": "No changes to save"
-    },
-    "feedback": {
-      "title": "Prompt Feedback",
-      "subtitle": "Help us improve by rating the current prompt effectiveness",
-      "thumbsUp": "This prompt works well",
-      "thumbsDown": "This prompt needs improvement",
-      "commentPlaceholder": "Optional: Tell us more about your experience with this prompt...",
-      "submit": "Submit Feedback",
-      "submitting": "Submitting...",
-      "submitted": "Thank you for your feedback!",
-      "failedToSubmit": "Failed to submit feedback",
-      "ratingRequired": "Please select a rating before submitting"
-    }
-  },
-  "userIntegrations": {
-    "loading": "Loading integrations...",
-    "failedToLoad": "Failed to load integrations",
-    "failedToGetAuthUrl": "Failed to get authorization URL",
-    "failedToConnect": "Failed to connect {name}",
-    "failedToDisconnect": "Failed to disconnect {name}",
-    "disconnected": "{name} disconnected",
-    "stats": {
-      "connected": "Connected",
-      "available": "Available",
-      "total": "Total"
-    },
-    "filters": {
-      "all": "All",
-      "connected": "Connected",
-      "available": "Available",
-      "filterAria": "Filter integrations"
-    },
-    "empty": {
-      "title": "No integrations found",
-      "noConnected": "You haven't connected any integrations yet.",
-      "noAvailable": "There are no integrations available to connect at the moment.",
-      "noConfigured": "No integrations have been configured by your organization.",
-      "viewAll": "View all integrations"
-    },
-    "columns": {
-      "name": "Name",
-      "transport": "Transport",
-      "status": "Status",
-      "tools": "Tools",
-      "connectedAt": "Connected",
-      "actions": "Actions"
-    },
-    "status": {
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "expired": "Expired",
-      "error": "Error",
-      "expiredWarning": "Connection expired. Reconnect to refresh your access."
-    },
-    "actions": {
-      "connect": "Connect",
-      "connecting": "Connecting...",
-      "disconnect": "Disconnect",
-      "reconnect": "Reconnect",
-      "disconnectConfirm": "Disconnect?",
-      "yes": "Yes",
-      "no": "No",
-      "viewTools": "View tools"
-    },
-    "connectedSince": "Connected since {date}",
-    "toolCount": "{count} {count, plural, one {tool} other {tools}}",
-    "tools": {
-      "modalTitle": "{name} — Tools",
-      "loading": "Loading tools...",
-      "empty": "No tools available for this server."
-    }
-  },
-  "chat": {
-    "emptyState": {
-      "title": "Start a conversation",
-      "description": "Send a message to begin chatting with the AI assistant!",
-      "aiDisclaimer": "AI can make mistakes. Please double-check responses."
-    },
-    "errors": {
-      "somethingWentWrong": "Something went wrong",
-      "dismissError": "Dismiss error",
-      "failedToLoadModels": "Failed to load models",
-      "failedToLoadConnectors": "Failed to load connectors",
-      "failedToLoadConversation": "Failed to load conversation",
-      "failedToSendMessage": "Failed to send message",
-      "budgetAboutToExhaust": "Department budget is about to exhaust.",
-      "budgetExhaustedWarn": "Department budget is exhausted for the current period. The chat will proceed, but usage may exceed the budget.",
-      "budgetExhaustedBlock": "Budget exhausted and no new requests are accepted",
-      "budgetExhaustedBlockSolution": "Contact your administrator to request additional budget or try again later"
-    },
-    "messageInput": {
-      "placeholder": "Ask anything",
-      "placeholderWithModel": "Message {model}",
-      "recordingPlaceholder": "Listening... Speak now",
-      "addContent": "Add content",
-      "addPhotos": "Add photos",
-      "addFiles": "Add files",
-      "selectModel": "Select model",
-      "selectModelFallback": "Select Model",
-      "loadingModels": "Loading models...",
-      "selectConnectorsFallback": "Connectors",
-      "selectConnectors": "Select connectors",
-      "loadingConnectors": "Loading connectors...",
-      "noConnectors": "No connectors available",
-      "connectors": "connectors",
-      "enableWebSearch": "Enable web search",
-      "disableWebSearch": "Disable web search",
-      "search": "Search",
-      "voiceInput": "Voice input",
-      "stopRecording": "Stop recording",
-      "sendMessage": "Send message",
-      "sendMessageTitle": "Send message (Enter)",
-      "messageInput": "Message input",
-      "visionCapable": "Vision capable",
-      "removeFile": "Remove file",
-      "previewImage": "Preview image: {name}",
-      "previewFile": "Preview file: {name}",
-      "fileLabel": "File: {name}",
-      "closePreview": "Close preview",
-      "speechRecognitionNotSupported": "Speech recognition is not supported in your browser",
-      "microphoneAccessDenied": "Microphone access denied. Please allow microphone access.",
-      "voiceInputError": "Voice input error: {error}",
-      "failedToStartVoiceInput": "Failed to start voice input",
-      "uploading": "Uploading…",
-      "uploadFailed": "Failed"
-    },
-    "message": {
-      "copy": "Copy",
-      "copied": "Copied!",
-      "copyContent": "Copy content",
-      "loadingImage": "Loading image...",
-      "imagePreview": "Image preview",
-      "imageAlt": "Image",
-      "fileFallback": "File",
-      "pause": "Pause",
-      "resume": "Resume",
-      "listen": "Listen",
-      "stop": "Stop",
-      "closePreview": "Close preview"
-    },
-    "toolCalls": {
-      "searching": "Searching the web",
-      "searchedTheWeb": "Searched the web",
-      "results": "results"
-    },
-    "toolExecution": {
-      "timeline": "Tool execution timeline",
-      "input": "Input",
-      "output": "Output",
-      "running": "Running",
-      "completed": "Completed",
-      "failed": "Failed",
-      "row": "row",
-      "rows": "rows",
-      "imageResult": "Image result",
-      "resource": "Resource",
-      "unknownError": "An unknown error occurred",
-      "duration": "Duration"
-    },
-    "mcpAuth": {
-      "connectTo": "Connect to {name}",
-      "connectedTo": "Connected to {name}",
-      "description": "To use {tool}, I need access to your {name} account. Your permissions will apply to all actions.",
-      "connectAccount": "Connect {name} Account",
-      "connecting": "Connecting...",
-      "connectionFailed": "Connection failed",
-      "failedToGetAuthUrl": "Failed to get authorization URL",
-      "popupBlocked": "Popup was blocked. Please allow popups for this site.",
-      "retry": "Try again",
-      "notNow": "Not now",
-      "requestedPermissions": "Requested permissions:",
-      "manageInSettings": "You can manage connected accounts in Settings."
+      "view": {
+        "description": "View SSO provider configurations"
+      },
+      "manage": {
+        "description": "Configure and manage SSO providers"
+      }
     }
   },
   "aiEngines": {
@@ -1441,356 +1111,74 @@
     "viewAnalytics": "View detailed usage analytics",
     "viewPromptEffectiveness": "View prompt effectiveness metrics",
     "configureSettings": "Configure system settings",
+    "viewSystemMetrics": "System health & diagnostics",
     "retry": "Retry",
     "errors": {
       "fetchFailed": "Failed to fetch overview data"
     }
   },
-  "userAnalytics": {
-    "title": "User Analytics",
-    "subtitle": "Detailed usage analytics per user",
-    "filters": {
-      "startDate": "Start Date",
-      "endDate": "End Date",
-      "search": "Search",
-      "searchPlaceholder": "Search by name, email, or department...",
-      "perPage": "Per Page"
+  "systemMetrics": {
+    "title": "System Metrics",
+    "subtitle": "Real-time server, database, and container health",
+    "refresh": "Refresh",
+    "autoRefresh": "Auto-refresh",
+    "lastUpdated": "Last updated",
+    "generatedAt": "Generated at",
+    "machine": {
+      "title": "Machine",
+      "cpuUsage": "CPU Usage",
+      "memoryUsage": "Memory Usage",
+      "swapUsage": "Swap Usage",
+      "usedMemory": "Used",
+      "freeMemory": "Free",
+      "totalMemory": "Total",
+      "usedSwap": "Used Swap",
+      "totalSwap": "Total Swap",
+      "loadAverage": "Load Average",
+      "load1m": "1m",
+      "load5m": "5m",
+      "load15m": "15m",
+      "uptime": "Uptime",
+      "disks": "Disk Usage"
     },
-    "stats": {
-      "totalUsers": "Total Users",
-      "showing": "Showing",
-      "showingCount": "{filtered} of {total}"
+    "database": {
+      "title": "Database",
+      "connections": "Connections",
+      "active": "Active",
+      "idle": "Idle",
+      "total": "Total",
+      "backends": "Backends",
+      "latency": "Roundtrip Latency",
+      "size": "Database Size",
+      "cacheHitRatio": "Cache Hit Ratio",
+      "blocksHit": "Blocks Hit",
+      "blocksRead": "Blocks Read",
+      "transactions": "Transactions",
+      "commits": "Commits",
+      "rollbacks": "Rollbacks",
+      "tuples": "Tuple Operations",
+      "fetched": "Fetched",
+      "inserted": "Inserted",
+      "updated": "Updated",
+      "deleted": "Deleted",
+      "returned": "Returned"
     },
-    "table": {
-      "userName": "User Name",
-      "email": "Email",
-      "department": "Department",
-      "requests": "Requests",
-      "success": "Success",
-      "errors": "Errors",
-      "tokens": "Tokens",
-      "cost": "Cost",
-      "avgLatency": "Avg Latency",
-      "lastActivity": "Last Activity"
-    },
-    "emptyState": {
-      "noMatch": "No users found matching \"{query}\"",
-      "noData": "No user analytics data available for the selected date range"
-    },
-    "pagination": {
-      "previous": "Previous",
-      "next": "Next",
-      "pageInfo": "Page {current} of {total}"
-    },
-    "errors": {
-      "fetchFailed": "Failed to fetch user analytics"
-    }
-  },
-  "departmentAnalytics": {
-    "title": "Department Analytics",
-    "subtitle": "Detailed usage analytics per department",
-    "filters": {
-      "search": "Search",
-      "searchPlaceholder": "Search by department name...",
-      "perPage": "Per Page"
-    },
-    "stats": {
-      "totalDepartments": "Total Departments",
-      "showing": "Showing",
-      "showingCount": "{showing} of {total}"
-    },
-    "table": {
-      "department": "Department",
-      "users": "Users",
-      "requests": "Requests",
-      "success": "Success",
-      "errors": "Errors",
-      "tokens": "Tokens",
-      "cost": "Cost",
-      "avgLatency": "Avg Latency"
-    },
-    "emptyState": {
-      "noMatch": "No departments found matching \"{query}\"",
-      "noData": "No department analytics data available for the selected date range"
-    },
-    "pagination": {
-      "previous": "Previous",
-      "next": "Next",
-      "pageInfo": "Page {current} of {total}"
+    "container": {
+      "title": "Container",
+      "insideContainer": "Running in Container",
+      "yes": "Yes",
+      "no": "No",
+      "cgroupVersion": "Cgroup Version",
+      "cpuQuota": "CPU Quota",
+      "cpuUsage": "CPU Usage",
+      "cores": "cores",
+      "seconds": "seconds",
+      "memoryUsage": "Memory Usage",
+      "memoryLimit": "Memory Limit",
+      "memoryAvailable": "Memory Available"
     },
     "errors": {
-      "fetchFailed": "Failed to fetch department analytics"
-    }
-  },
-  "analytics": {
-    "title": "Usage Analytics",
-    "subtitle": "Monitor system performance and usage metrics",
-    "tabs": {
-      "overview": "Overview",
-      "byUser": "By User",
-      "byDepartment": "By Department",
-      "byModel": "By Model"
-    },
-    "tabsAria": {
-      "overview": "Overview usage metrics and trends",
-      "byUser": "Usage breakdown by user",
-      "byDepartment": "Usage breakdown by department",
-      "byModel": "Usage breakdown by model"
-    },
-    "byModel": {
-      "title": "By Model",
-      "comingSoon": "Coming soon",
-      "hint": "Model analytics will be available here."
-    },
-    "aria": {
-      "mainRegion": "Usage analytics",
-      "dateRangeGroup": "Report date range",
-      "startDate": "Start date",
-      "endDate": "End date",
-      "pagination": "Results pagination",
-      "topModelsCaption": "Top models by usage for the selected date range",
-      "departmentTableCaption": "Department usage for the selected date range",
-      "userTableCaption": "User usage for the selected date range"
-    },
-    "filters": {
-      "dateRange": "Date Range",
-      "presets": {
-        "last7Days": "Last 7 days",
-        "last30Days": "Last 30 days",
-        "last90Days": "Last 90 days",
-        "thisMonth": "This month",
-        "custom": "Custom"
-      },
-      "to": "to",
-      "aggregated": "Aggregated",
-      "hour": "Hourly",
-      "day": "Daily",
-      "week": "Weekly",
-      "month": "Monthly"
-    },
-    "loading": "Loading analytics...",
-    "retry": "Retry",
-    "refresh": "Refresh analytics",
-    "refreshButton": "Refresh",
-    "overview": {
-      "title": "Overview",
-      "totalUsers": "Total Users",
-      "activeUsers": "{count} active",
-      "totalRequests": "Total Requests",
-      "avgPerUser": "{count} avg per user",
-      "totalTokens": "Total Tokens",
-      "totalCost": "Total Cost",
-      "vsPreviousDays": "vs prior {count} days"
-    },
-    "topModels": {
-      "title": "Top Models",
-      "model": "Model",
-      "provider": "Provider",
-      "requests": "Requests",
-      "tokens": "Tokens",
-      "cost": "Cost"
-    },
-    "charts": {
-      "title": "Performance Trends",
-      "multiMetric": {
-        "title": "Multi-Metric Trends",
-        "subtitle": "Requests • Tokens • Latency",
-        "requests": "Requests",
-        "tokens": "Tokens",
-        "latency": "Latency",
-        "date": "Date",
-        "latencyMs": "Latency (ms)"
-      },
-      "usageGrowth": {
-        "title": "Usage Growth",
-        "subtitle": "Requests (bars) • Tokens (line)",
-        "requests": "Requests",
-        "tokens": "Tokens"
-      },
-      "apiReliability": {
-        "title": "API Reliability",
-        "subtitle": "Success vs Errors",
-        "success": "Success",
-        "errors": "Errors",
-        "type": "Type",
-        "count": "Count"
-      },
-      "costTrend": {
-        "title": "Cost Trend",
-        "subtitle": "Total spending over time",
-        "totalCost": "Total Cost"
-      },
-      "emptyState": {
-        "title": "No timeseries data available for the selected date range",
-        "hint": "Try selecting a different date range or check back later"
-      },
-      "accessibility": {
-        "keyboardInstructions": "Press Enter or Space to view data table. Press Escape to close.",
-        "dataPoints": "{count} data points",
-        "viewDataTable": "View Data Table",
-        "viewDataTableFor": "View data table for {chartName}",
-        "closeDataTable": "Close data table",
-        "dataTableRegion": "{chartName} data table"
-      }
-    },
-    "errors": {
-      "fetchFailed": "Failed to fetch analytics data"
-    }
-  },
-  "error": {
-    "not_found": {
-      "description": "The requested resource was not found",
-      "solution": "The resource you're looking for doesn't exist or has been removed. Please check the URL or try again. If the problem persists, contact {app} support"
-    },
-    "validation": {
-      "missing_field": {
-        "description": "Required field `{field}` is missing",
-        "solution": "Please provide all required fields including `{field}`"
-      },
-      "empty_field": {
-        "description": "Required field `{field}` cannot be empty",
-        "solution": "Please provide a value for the `{field}` field"
-      }
-    },
-    "sso": {
-      "conditional_access": {
-        "description": "Access denied due to conditional access policy for `{provider}`",
-        "solution": "Your organization's security policy is blocking access. Contact your administrator or try a different authentication method"
-      }
-    },
-    "llm": {
-      "disabled_by_admin": {
-        "description": "The LLM provider `{provider}` is disabled by an administrator",
-        "solution": "Ask an admin to enable `{provider}` or select a different provider"
-      },
-      "invalid_provider": {
-        "description": "The LLM provider `{provider}` is invalid or not supported",
-        "solution": "Please select a valid provider from the available options"
-      },
-      "not_configured": {
-        "description": "The LLM provider `{provider}` is not properly configured",
-        "solution": "Please configure the provider settings or contact an administrator"
-      }
-    },
-    "db": {
-      "not_found": {
-        "description": "Resource not found in {app} database",
-        "solution": "The resource you're looking for doesn't exist. Try starting a new chat or contact {app} support"
-      },
-      "unavailable": {
-        "description": "{app} database is temporarily unavailable",
-        "solution": "Please try again in a few moments. If the problem persists, contact {app} support"
-      },
-      "timeout": {
-        "description": "{app} database request timed out",
-        "solution": "The operation took too long. Please try again with a smaller request or contact {app} support"
-      },
-      "conflict": {
-        "description": "A conflict occurred while processing your {app} request",
-        "solution": "The resource has been modified by another process. Please refresh and try again"
-      }
-    },
-    "service_unavailable": {
-      "description": "{app} service is temporarily unavailable",
-      "solution": "We're experiencing technical difficulties. Please try again in a few moments. If the problem persists, contact {app} support"
-    },
-    "auth": {
-      "service_unavailable": {
-        "description": "{app} authentication service is temporarily unavailable",
-        "solution": "Please try again in a few moments. If the problem persists, contact {app} support"
-      },
-      "invalid_credentials": {
-        "description": "Invalid email or password for {app}",
-        "solution": "Please check your credentials and try again. If you've forgotten your password, use the password reset option"
-      },
-      "email_not_found": {
-        "description": "No {app} account found with this email address",
-        "solution": "Please check your email address or sign up for a new {app} account"
-      },
-      "missing_credentials": {
-        "description": "Email and password are required to sign in to {app}",
-        "solution": "Please provide both your email address and password to sign in"
-      },
-      "invalid_token": {
-        "description": "Your {app} session has expired",
-        "solution": "Please log in again to continue using {app}"
-      },
-      "invalid_user_status": {
-        "description": "Your {app} account status is invalid",
-        "solution": "Please contact {app} support to resolve this issue with your account"
-      },
-      "account_deactivated": {
-        "description": "Your {app} account has been deactivated",
-        "solution": "Please contact your administrator or {app} support to reactivate your account"
-      },
-      "email_already_exists": {
-        "description": "An {app} account with this email already exists",
-        "solution": "Please sign in with your existing {app} account or use a different email address"
-      },
-      "invalid_provider": {
-        "description": "The authentication provider `{provider}` is invalid or not supported by {app}",
-        "solution": "Please select a valid authentication provider for {app}"
-      },
-      "invalid_callback_params": {
-        "description": "Invalid authentication callback parameters for {app}",
-        "solution": "The {app} authentication process encountered an error. Please try signing in again"
-      },
-      "missing_oauth_params": "Missing required OAuth parameters (state or code)",
-      "oauth_provider_not_found": "OAuth provider not found. Please try logging in again",
-      "invalid_auth_response": "Invalid authentication response from server",
-      "mfa_not_implemented": "Multi-factor authentication is required but not yet implemented",
-      "invalid_redirect_uri": {
-        "description": "Invalid redirect URI `{redirect_uri}` for {app}",
-        "solution": "The redirect URI is not authorized for {app}. Please contact {app} support if this issue persists"
-      },
-      "permission_denied": {
-        "description": "You don't have permission to perform this action in {app}",
-        "solution": "Please contact your {app} administrator if you believe you should have access"
-      },
-      "org_not_found": {
-        "description": "Organization not found in {app}",
-        "solution": "The {app} organization with ID `{org_id}` does not exist. Please check your organization settings"
-      },
-      "resource_not_found": {
-        "description": "The requested resource was not found in {app}",
-        "solution": "The resource you're looking for doesn't exist or has been removed from {app}"
-      },
-      "email_domain_not_allowed": {
-        "description": "Email domain `{domain}` is not allowed for {app}",
-        "solution": "Your {app} organization only allows certain email domains. Please use an email from an allowed domain"
-      },
-      "sso": {
-        "not_configured": {
-          "description": "SSO provider `{provider}` is not configured for {app}",
-          "solution": "Please contact your {app} administrator to configure SSO for `{provider}`"
-        },
-        "disabled_by_admin": {
-          "description": "SSO provider `{provider}` is disabled by an {app} administrator",
-          "solution": "Please contact your {app} administrator to enable SSO for `{provider}` or use a different authentication method"
-        }
-      },
-      "no_token": {
-        "description": "No authentication token available",
-        "solution": "Please log in to continue"
-      }
-    },
-    "request": {
-      "no_response_body": {
-        "description": "No response body received",
-        "solution": "The server did not return any data. Please try again"
-      },
-      "send_message_failed": {
-        "description": "Failed to send message",
-        "solution": "Unable to send your message. Please check your connection and try again"
-      },
-      "archive_conversation_failed": {
-        "description": "Failed to archive conversation",
-        "solution": "Unable to archive the conversation. Please try again"
-      }
-    },
-    "fallback": {
-      "description": "Something went wrong",
-      "solution": "An unexpected error occurred. Please try again"
+      "fetchFailed": "Failed to fetch system metrics"
     }
   }
 }

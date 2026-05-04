@@ -4,6 +4,7 @@
   import PageHeader from "../admin/components/PageHeader.svelte";
   import UserIntegrations from "./settings/UserIntegrations.svelte";
   import UserPromptSettings from "./settings/UserPromptSettings.svelte";
+  import { loadNamespaces } from "$lib/i18n/index.js";
 
   type TabId = "integrations" | "promptSettings";
 
@@ -13,7 +14,7 @@
     ariaLabel: string;
   }
 
-  const TABS: TabConfig[] = [
+  const TABS: TabConfig[] = $derived([
     {
       id: "integrations",
       label: $_("userSettings.tabs.integrations"),
@@ -24,10 +25,10 @@
       label: $_("userSettings.tabs.promptSettings"),
       ariaLabel: $_("userSettings.tabs.promptSettingsAria"),
     },
-  ] as const;
+  ]);
 
   const DEFAULT_TAB: TabId = "integrations";
-  const availableTabIds = TABS.map((t) => t.id);
+  const availableTabIds = $derived(TABS.map((t) => t.id));
 
   let currentTab = $state<TabId>(DEFAULT_TAB);
 
@@ -70,6 +71,9 @@
   }
 
   onMount(() => {
+    // Ensure settings namespace is loaded for translations
+    loadNamespaces(['settings']);
+    
     const initialTab = getTabFromQuery();
     currentTab = initialTab;
 

@@ -1,0 +1,126 @@
+{
+  "userSettings": {
+    "title": "Settings",
+    "subtitle": "Manage your personal preferences and connected integrations.",
+    "tabs": {
+      "integrations": "Integrations",
+      "integrationsAria": "Connected integrations",
+      "promptSettings": "Prompt Settings",
+      "promptSettingsAria": "Manage your prompt preferences"
+    }
+  },
+  "userPromptSettings": {
+    "loading": "Loading prompt settings...",
+    "failedToLoad": "Failed to load prompt settings",
+    "activePrompt": "Active Prompt",
+    "source": {
+      "label": "Source",
+      "user_custom": "Custom Prompt",
+      "department": "Department Default",
+      "department_default": "Department Default",
+      "system_default": "System Default"
+    },
+    "variables": {
+      "title": "Available Variables",
+      "empty": "No variables available",
+      "insertHint": "Click a variable to insert it into the editor",
+      "copied": "Variable inserted"
+    },
+    "editor": {
+      "title": "Custom Prompt Editor",
+      "placeholder": "Write your custom system prompt here. Use variables like {{variable_name}} to insert dynamic values...",
+      "charCount": "{count} characters",
+      "preview": "Preview",
+      "edit": "Edit",
+      "previewTitle": "Prompt Preview",
+      "previewEmpty": "Nothing to preview. Start writing your custom prompt above."
+    },
+    "actions": {
+      "save": "Save Prompt",
+      "saving": "Saving...",
+      "resetToDefault": "Reset to Default",
+      "resetting": "Resetting...",
+      "resetConfirmTitle": "Reset to Default?",
+      "resetConfirmMessage": "This will remove your custom prompt and revert to the department or system default. This action cannot be undone.",
+      "resetConfirmButton": "Yes, Reset",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "saved": "Custom prompt saved successfully",
+      "failedToSave": "Failed to save prompt",
+      "reset": "Prompt reset to default",
+      "failedToReset": "Failed to reset prompt",
+      "noChanges": "No changes to save"
+    },
+    "feedback": {
+      "title": "Prompt Feedback",
+      "subtitle": "Help us improve by rating the current prompt effectiveness",
+      "thumbsUp": "This prompt works well",
+      "thumbsDown": "This prompt needs improvement",
+      "commentPlaceholder": "Optional: Tell us more about your experience with this prompt...",
+      "submit": "Submit Feedback",
+      "submitting": "Submitting...",
+      "submitted": "Thank you for your feedback!",
+      "failedToSubmit": "Failed to submit feedback",
+      "ratingRequired": "Please select a rating before submitting"
+    }
+  },
+  "userIntegrations": {
+    "loading": "Loading integrations...",
+    "failedToLoad": "Failed to load integrations",
+    "failedToGetAuthUrl": "Failed to get authorization URL",
+    "failedToConnect": "Failed to connect {name}",
+    "failedToDisconnect": "Failed to disconnect {name}",
+    "disconnected": "{name} disconnected",
+    "stats": {
+      "connected": "Connected",
+      "available": "Available",
+      "total": "Total"
+    },
+    "filters": {
+      "all": "All",
+      "connected": "Connected",
+      "available": "Available",
+      "filterAria": "Filter integrations"
+    },
+    "empty": {
+      "title": "No integrations found",
+      "noConnected": "You haven't connected any integrations yet.",
+      "noAvailable": "There are no integrations available to connect at the moment.",
+      "noConfigured": "No integrations have been configured by your organization.",
+      "viewAll": "View all integrations"
+    },
+    "columns": {
+      "name": "Name",
+      "transport": "Transport",
+      "status": "Status",
+      "tools": "Tools",
+      "connectedAt": "Connected",
+      "actions": "Actions"
+    },
+    "status": {
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "expired": "Expired",
+      "error": "Error",
+      "expiredWarning": "Connection expired. Reconnect to refresh your access."
+    },
+    "actions": {
+      "connect": "Connect",
+      "connecting": "Connecting...",
+      "disconnect": "Disconnect",
+      "reconnect": "Reconnect",
+      "disconnectConfirm": "Disconnect?",
+      "yes": "Yes",
+      "no": "No",
+      "viewTools": "View tools"
+    },
+    "connectedSince": "Connected since {date}",
+    "toolCount": "{count} {count, plural, one {tool} other {tools}}",
+    "tools": {
+      "modalTitle": "{name} — Tools",
+      "loading": "Loading tools...",
+      "empty": "No tools available for this server."
+    }
+  }
+}
