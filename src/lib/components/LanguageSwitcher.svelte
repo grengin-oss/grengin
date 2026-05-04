@@ -10,6 +10,8 @@
     isSwitching = true;
     try {
       await switchLocale(lang);
+      locale.set(lang);
+      localStorage.setItem('locale', lang);
     } finally {
       isSwitching = false;
       isOpen = false;
@@ -19,6 +21,13 @@
   function toggleDropdown() {
     isOpen = !isOpen;
   }
+
+  $effect(() => {
+    const savedLocale = localStorage.getItem('locale');
+    if (savedLocale && savedLocale in SUPPORTED_LOCALES) {
+      locale.set(savedLocale);
+    }
+  });
 </script>
 
 <div class="language-switcher">
