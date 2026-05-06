@@ -13,6 +13,22 @@ export default defineConfig(({ mode }) => {
         '$lib': path.resolve('./src/lib')
       }
     },
+    build: {
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return;
+            if (/[\\/]node_modules[\\/](vega|vega-lite|vega-embed|vega-[^\\/]+)[\\/]/.test(id)) {
+              return 'vega';
+            }
+            if (/[\\/]node_modules[\\/](marked|highlight\.js|dompurify)[\\/]/.test(id)) {
+              return 'markdown';
+            }
+          },
+        },
+      },
+    },
     server: {
       proxy: {
         '/api': {
