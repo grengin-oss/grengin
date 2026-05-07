@@ -139,6 +139,14 @@
     showActions = !showActions;
   }
 
+  function handleMessageKeydown(e: KeyboardEvent) {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      showActions = !showActions;
+    }
+  }
+
   // Close actions when clicking outside (for touch devices)
   function handleClickOutside(e: MouseEvent) {
     if (messageContainer && !messageContainer.contains(e.target as Node)) {
@@ -376,6 +384,10 @@
   class:has-images={message.role === 'user' && imageCount > 0}
   bind:this={messageContainer}
   onclick={handleMessageTap}
+  onkeydown={handleMessageKeydown}
+  role="button"
+  tabindex="-1"
+  aria-pressed={showActions}
 >
   <!-- Avatar only for assistant messages -->
   {#if message.role !== 'user'}
@@ -1096,97 +1108,6 @@
     transform: scale(1);
   }
 
-  /* Active TTS button */
-  .action-btn.active {
-    background: rgba(var(--brand-rgb), 0.2);
-    color: var(--brand);
-    border-color: color-mix(in oklab, var(--brand) 30%, transparent);
-  }
-
-  .action-btn.active:hover:not(:disabled) {
-    background: rgba(var(--brand-rgb), 0.3);
-    color: var(--brand);
-    border-color: color-mix(in oklab, var(--brand) 40%, transparent);
-  }
-
-  /* Stop button styling */
-  .action-btn.stop-btn {
-    background: rgba(var(--brand-red-rgb, 220, 38, 38), 0.15);
-    color: var(--brand-red, #dc2626);
-    border-color: color-mix(in oklab, var(--brand-red, #dc2626) 25%, transparent);
-  }
-
-  .action-btn.stop-btn:hover:not(:disabled) {
-    background: rgba(var(--brand-red-rgb, 220, 38, 38), 0.25);
-    color: var(--brand-red, #dc2626);
-    border-color: color-mix(in oklab, var(--brand-red, #dc2626) 35%, transparent);
-  }
-
-  .edit-container {
-    width: 100%;
-    max-width: 80%;
-  }
-
-  .edit-textarea {
-    width: 100%;
-    min-height: 60px;
-    padding: var(--space-lg) var(--space-xl);
-    background: var(--brand);
-    color: white;
-    border: 2px solid var(--brand-hover);
-    border-radius: var(--radius-lg);
-    font-size: 1rem;
-    font-family: inherit;
-    line-height: 1.6;
-    resize: none;
-    overflow: hidden;
-  }
-
-  .edit-textarea:focus {
-    outline: none;
-    border-color: var(--brand-ring);
-    box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.15);
-  }
-
-  .edit-actions {
-    display: flex;
-    gap: var(--space-sm);
-    margin-top: var(--space-sm);
-    justify-content: flex-end;
-  }
-
-  .btn-save,
-  .btn-cancel {
-    padding: var(--space-sm) var(--space-lg);
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .btn-save {
-    background: var(--brand-green);
-    color: white;
-    border: none;
-  }
-
-  .btn-save:hover {
-    background: color-mix(in oklab, var(--brand-green) 88%, white);
-    transform: translateY(-1px);
-  }
-
-  .btn-cancel {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--glass-stroke-dark);
-  }
-
-  .btn-cancel:hover {
-    background: var(--btn-tertiary);
-    border-color: var(--glass-stroke-light);
-  }
-
   /* Copy button for code blocks */
   :global(.copy-code-btn) {
     position: absolute;
@@ -1232,10 +1153,6 @@
 
     .message-avatar {
       display: none;
-    }
-
-    .edit-container {
-      max-width: 100%;
     }
 
     /* On mobile, disable hover and only show via tap (actions-visible class) */

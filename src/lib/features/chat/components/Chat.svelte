@@ -21,8 +21,8 @@
   let conversationId = $state<string | null>(null);
   // Track if we're still loading the initial conversation
   let isLoadingConversation = $state(typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('chatId'));
-  let messagesContainer: HTMLDivElement;
-  let messageInput: MessageInput;
+  let messagesContainer = $state<HTMLDivElement | undefined>(undefined);
+  let messageInput = $state<MessageInput | undefined>(undefined);
   let currentStreamingMessage = $state<ChatMessageType | null>(null);
   let autoScrollEnabled = true;
   let selectedModel = $state('gpt-5.2');
@@ -165,7 +165,7 @@
 
     requestAnimationFrame(async () => {
       await tick();
-      if (messageElement) {
+      if (messageElement && messagesContainer) {
         // Check if the current message height is smaller than visible container height
         const messageHeight = (messageElement as HTMLElement).offsetHeight;
         const containerHeight = messagesContainer.clientHeight;
@@ -392,10 +392,20 @@
               updatedMergedWebSearch = {...pendingStreamingMessage.mergedWebSearch, status: 'completed'};
             }
 
+            // Finalize any tool call that never received a tool_result so the
+            // in-progress loader stops spinning after the stream ends.
+            const resultIds = new Set((pendingStreamingMessage.toolsResults || []).map(tr => tr.tool_id));
+            const finalizedToolCalls = (pendingStreamingMessage.toolCalls || []).map(tc =>
+              tc.status === 'completed' || tc.status === 'error' || resultIds.has(tc.tool_id)
+                ? tc
+                : { ...tc, status: 'error' as import('../../../types/toolCall').ToolCallStatus }
+            );
+
             // Mark all tool calls as completed when stream ends
             pendingStreamingMessage = {
               ...pendingStreamingMessage,
               isStreaming: false,
+              toolCalls: finalizedToolCalls,
               mergedWebSearch: updatedMergedWebSearch as MergedToolResult
             };
 
@@ -645,10 +655,20 @@
               updatedMergedWebSearch = {...pendingStreamingMessage.mergedWebSearch, status: 'completed'};
             }
 
+            // Finalize any tool call that never received a tool_result so the
+            // in-progress loader stops spinning after the stream ends.
+            const resultIds = new Set((pendingStreamingMessage.toolsResults || []).map(tr => tr.tool_id));
+            const finalizedToolCalls = (pendingStreamingMessage.toolCalls || []).map(tc =>
+              tc.status === 'completed' || tc.status === 'error' || resultIds.has(tc.tool_id)
+                ? tc
+                : { ...tc, status: 'error' as import('../../../types/toolCall').ToolCallStatus }
+            );
+
             // Mark all tool calls as completed when stream ends
             pendingStreamingMessage = {
               ...pendingStreamingMessage,
               isStreaming: false,
+              toolCalls: finalizedToolCalls,
               mergedWebSearch: updatedMergedWebSearch as MergedToolResult
             };
 
@@ -848,13 +868,14 @@
         if (messagesContainer) {
           // Save the original scroll behavior (likely 'smooth' from CSS).
           // We'll temporarily change it to 'auto' to prevent smooth scrolling animation.
-          const originalScrollBehavior = messagesContainer.style.scrollBehavior;
-          messagesContainer.style.scrollBehavior = 'auto';
+          const container = messagesContainer;
+          const originalScrollBehavior = container.style.scrollBehavior;
+          container.style.scrollBehavior = 'auto';
           
           requestAnimationFrame(() => {
-            void messagesContainer.offsetHeight;
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            messagesContainer.style.scrollBehavior = originalScrollBehavior;
+            void container.offsetHeight;
+            container.scrollTop = container.scrollHeight;
+            container.style.scrollBehavior = originalScrollBehavior;
           });
         }
 

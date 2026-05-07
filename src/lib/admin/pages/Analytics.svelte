@@ -262,9 +262,9 @@
   });
 
   // Track previous values to detect what changed
-  let prevStartDate = $state(startDate);
-  let prevEndDate = $state(endDate);
-  let prevGranularity = $state(granularity);
+  let prevStartDate = $state<string | undefined>(undefined);
+  let prevEndDate = $state<string | undefined>(undefined);
+  let prevGranularity = $state<typeof granularity | undefined>(undefined);
 
   $effect(() => {
     if (currentTab !== 'overview') return;

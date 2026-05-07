@@ -1348,37 +1348,6 @@
     }
   }
 
-  .client-secret-input-row {
-    position: relative;
-  }
-
-  .client-secret-input-row input {
-    width: 100%;
-    padding-right: var(--space-2xl);
-  }
-
-  .client-secret-visibility {
-    background: none;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    right: 0.4rem;
-    display: inline-flex;
-    height: 32px;
-    width: 40px;
-    padding: 0;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--text-secondary);
-    border-radius: var(--radius-sm);
-    transition: color 0.2s ease;
-  }
-
-  .client-secret-visibility:hover {
-    color: var(--text-primary);
-  }
-
   .mcp-form {
     display: flex;
     flex-direction: column;

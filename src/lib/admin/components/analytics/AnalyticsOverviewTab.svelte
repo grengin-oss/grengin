@@ -4,8 +4,16 @@
   import LoadingSpinner from "../LoadingSpinner.svelte";
   import ChartDataTableModal from "./ChartDataTableModal.svelte";
   import type { AnalyticsOverview, AnalyticsTimeseries, TimeseriesDataPoint } from "../../types.js";
-  import embed from "vega-embed";
+  import type { default as VegaEmbed } from "vega-embed";
   import { _ } from 'svelte-i18n';
+
+  let embedPromise: Promise<typeof VegaEmbed> | null = null;
+  function loadEmbed() {
+    if (!embedPromise) {
+      embedPromise = import("vega-embed").then((m) => m.default);
+    }
+    return embedPromise;
+  }
 
   interface Props {
     overviewData: AnalyticsOverview | null;
@@ -229,7 +237,7 @@
       config: getChartConfig()
     };
 
-    embed(el, spec, { actions: false, renderer: 'svg' }).catch(console.error);
+    loadEmbed().then((embed) => embed(el, spec, { actions: false, renderer: 'svg' })).catch(console.error);
   }
 
   function renderRequestsTokensChart() {
@@ -298,7 +306,7 @@
       config: getChartConfig()
     };
 
-    embed(el, spec, { actions: false, renderer: 'svg' }).catch(console.error);
+    loadEmbed().then((embed) => embed(el, spec, { actions: false, renderer: 'svg' })).catch(console.error);
   }
 
   function renderSuccessErrorChart() {
@@ -344,7 +352,7 @@
       config: getChartConfig()
     };
 
-    embed(el, spec, { actions: false, renderer: 'svg' }).catch(console.error);
+    loadEmbed().then((embed) => embed(el, spec, { actions: false, renderer: 'svg' })).catch(console.error);
   }
 
   function renderCostTrendChart() {
@@ -398,7 +406,7 @@
       config: getChartConfig()
     };
 
-    embed(el, spec, { actions: false, renderer: 'svg' }).catch(console.error);
+    loadEmbed().then((embed) => embed(el, spec, { actions: false, renderer: 'svg' })).catch(console.error);
   }
 
   // Re-render charts when data changes and not loading

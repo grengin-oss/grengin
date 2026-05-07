@@ -1,5 +1,5 @@
 import { marked } from 'marked';
-import hljs from 'highlight.js';
+import hljs from 'highlight.js/lib/common';
 import DOMPurify from 'dompurify';
 
 // Configure marked renderer for code blocks
