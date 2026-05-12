@@ -12,9 +12,49 @@ export const SUPPORTED_LOCALES = {
   es: 'Español',
   ko: '한국어',
   pt: 'Português',
+  ar: 'العربية',
 } as const;
 
 export type SupportedLocale = keyof typeof SUPPORTED_LOCALES;
+
+// ---------------------------------------------------------------------------
+// RTL (Right-to-Left) language support
+// ---------------------------------------------------------------------------
+
+/**
+ * Locales that should render with `dir="rtl"`. Adding a locale here flips the
+ * UI direction (sidebar position, alignments, logical properties, …) and is
+ * the single source of truth for direction across the app.
+ */
+export const RTL_LOCALES: ReadonlySet<string> = new Set(['ar', 'ur']);
+
+export type Direction = 'ltr' | 'rtl';
+
+/** Returns `true` when the given locale should render right-to-left. */
+export function isRTL(lang: string | null | undefined): boolean {
+  if (!lang) return false;
+  // Match both bare codes ("ar") and tagged codes ("ar-EG").
+  const short = lang.split('-')[0].toLowerCase();
+  return RTL_LOCALES.has(short);
+}
+
+/** Returns the writing direction (`'ltr'` or `'rtl'`) for the given locale. */
+export function getDirection(lang: string | null | undefined): Direction {
+  return isRTL(lang) ? 'rtl' : 'ltr';
+}
+
+/**
+ * Apply the writing direction & language to the root `<html>` element.
+ * Safe to call from any environment — silently no-ops when `document` is
+ * unavailable (e.g. SSR or test runners without a DOM).
+ */
+export function applyDocumentDirection(lang: string | null | undefined): void {
+  if (typeof document === 'undefined') return;
+  const dir = getDirection(lang);
+  const html = document.documentElement;
+  if (html.getAttribute('dir') !== dir) html.setAttribute('dir', dir);
+  if (lang && html.getAttribute('lang') !== lang) html.setAttribute('lang', lang);
+}
 
 /**
  * Every namespace that a locale can be split into.
@@ -133,6 +173,17 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'pt/analytics': () => import('./locales/pt/analytics.json'),
   'pt/settings':  () => import('./locales/pt/settings.json'),
   'pt/error':     () => import('./locales/pt/error.json'),
+
+  // RTL locales — partial coverage (common + sidebar + error). Other namespaces
+  'ar/common':    () => import('./locales/ar/common.json'),
+  'ar/auth':      () => import('./locales/ar/auth.json'),
+  'ar/sidebar':   () => import('./locales/ar/sidebar.json'),
+  'ar/alerts':    () => import('./locales/ar/alerts.json'),
+  'ar/chat':      () => import('./locales/ar/chat.json'),
+  'ar/admin':     () => import('./locales/ar/admin.json'),
+  'ar/analytics': () => import('./locales/ar/analytics.json'),
+  'ar/settings':  () => import('./locales/ar/settings.json'),
+  'ar/error':     () => import('./locales/ar/error.json'),
 };
 
 // ---------------------------------------------------------------------------
@@ -278,6 +329,17 @@ const initialLocale = resolveInitialLocale();
 init({
   fallbackLocale: 'en',
   initialLocale,
+});
+
+// Apply the initial direction synchronously so the very first paint already
+// renders RTL when the user previously selected an RTL locale.
+applyDocumentDirection(initialLocale);
+
+// Keep `<html dir>` and `<html lang>` in sync with the active locale. This is
+// the single place that mutates document direction at runtime — every other
+// caller goes through `switchLocale` (which sets the store).
+locale.subscribe((value) => {
+  if (value) applyDocumentDirection(value);
 });
 
 // Eagerly load only `common` + `error` for the initial locale (+ en fallback).
