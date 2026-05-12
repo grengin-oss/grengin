@@ -303,6 +303,13 @@
         },
         onToolCall: (toolCall) => {
           if (pendingStreamingMessage) {
+            // Some providers (e.g. Gemini) skip message_start and emit tool_call
+            // directly. Ensure the assistant placeholder is in the array so the
+            // tool call UI (and any subsequent OAuth prompt) becomes visible.
+            if (!messageAddedToArray) {
+              messages = [...messages, pendingStreamingMessage];
+              messageAddedToArray = true;
+            }
             // Merge by tool_id: update existing entry or add new one
             const existingCalls = pendingStreamingMessage.toolCalls || [];
             const existingIndex = existingCalls.findIndex(tc => tc.tool_id === toolCall.tool_id);
@@ -366,6 +373,13 @@
         },
         onMcpAuthRequired: (authRequest: McpAuthRequest) => {
           if (pendingStreamingMessage) {
+            // Some providers (e.g. Gemini) skip message_start and may emit
+            // mcp_oauth_required without any prior delta. Ensure the assistant
+            // placeholder is in the array so the OAuth connect prompt renders.
+            if (!messageAddedToArray) {
+              messages = [...messages, pendingStreamingMessage];
+              messageAddedToArray = true;
+            }
             const existingRequests = pendingStreamingMessage.mcpAuthRequests || [];
             const alreadyExists = existingRequests.some(r => r.server_id === authRequest.server_id);
             if (!alreadyExists) {
@@ -807,18 +821,47 @@
         conversationId = chatId;
 
         // Convert messages to ChatMessageType format
-        messages = (conversation.messages || []).map((msg: any) => ({
-          id: msg.id,
-          role: msg.role,
-          content: msg.parts.text || '',
-          timestamp: msg.created_at || new Date().toISOString(),
-          model: msg.model,
-          usage: msg.usage,
-          files: msg.parts.files || [],
-          toolCalls: msg.tool_calls || [],
-          toolsResults: msg.tools_results || [],
-          mergedWebSearch: mergeWebSearchResults(msg.tool_calls || [], msg.tools_results || [], 'completed')
-        }));
+        messages = (conversation.messages || []).map((msg: any) => {
+          const toolResults = msg.tool_results || msg.tools_results || [];
+          const toolCalls = msg.tool_calls || [];
+
+          // Reconstruct pending MCP OAuth requests from persisted tool_results.
+          // The backend stores OAuth-required failures as tool_results with
+          // status === 'error' and an authorization_url in the output payload.
+          const mcpAuthRequests: McpAuthRequest[] = [];
+          const seenServerIds = new Set<string>();
+          for (const tr of toolResults) {
+            const out = tr?.output;
+            const authUrl = out?.authorization_url;
+            const serverId = out?.server_id;
+            if (tr?.status === 'error' && authUrl && serverId && !seenServerIds.has(serverId)) {
+              seenServerIds.add(serverId);
+              const matchingCall = toolCalls.find((tc: any) => tc.tool_id === tr.tool_id);
+              mcpAuthRequests.push({
+                server_id: serverId,
+                server_name: out.server_name || serverId,
+                tool_name: matchingCall?.tool_name || tr.tool_name || '',
+                authorization_url: authUrl,
+                scopes: out.scopes,
+                status: 'pending',
+              });
+            }
+          }
+
+          return {
+            id: msg.id,
+            role: msg.role,
+            content: msg.parts.text || '',
+            timestamp: msg.created_at || new Date().toISOString(),
+            model: msg.model,
+            usage: msg.usage,
+            files: msg.parts.files || [],
+            toolCalls,
+            toolsResults: toolResults,
+            mergedWebSearch: mergeWebSearchResults(toolCalls, toolResults, 'completed'),
+            mcpAuthRequests: mcpAuthRequests.length > 0 ? mcpAuthRequests : undefined,
+          };
+        });
 
         // Web search enabled
         webSearchEnabled = conversation.web_search_enabled || false;

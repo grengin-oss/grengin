@@ -1,0 +1,30 @@
+{
+  "common": {
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "search": "بحث",
+    "never": "أبدًا",
+    "loading": "جارٍ التحميل...",
+    "clear": "مسح",
+    "select": "اختيار"
+  },
+  "errors": {
+    "forbidden": {
+      "title": "تم رفض الوصول",
+      "message": "ليس لديك إذن لعرض هذه الصفحة.",
+      "back": "العودة إلى الدردشة",
+      "iconAlt": "تم رفض الوصول"
+    }
+  },
+  "components": {
+    "typingIndicator": "المساعد يكتب"
+  },
+  "app": {
+    "closeSidebar": "إغلاق الشريط الجانبي",
+    "openMenu": "فتح القائمة",
+    "closeMenu": "إغلاق القائمة",
+    "notifications": "الإشعارات"
+  }
+}

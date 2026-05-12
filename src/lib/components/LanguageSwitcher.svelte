@@ -93,7 +93,7 @@
   .language-dropdown {
     position: absolute;
     top: calc(100% + 0.25rem);
-    right: 0;
+    inset-inline-end: 0;
     min-width: 180px;
     background: white;
     border: 1px solid var(--color-border, #ddd);
@@ -107,7 +107,7 @@
     display: block;
     width: 100%;
     padding: 0.75rem 1rem;
-    text-align: left;
+    text-align: start;
     background: white;
     border: none;
     cursor: pointer;

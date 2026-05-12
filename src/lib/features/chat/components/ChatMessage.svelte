@@ -524,7 +524,7 @@
           </div>
         </div>
       <!-- {/if} end of edit mode conditional -->
-    {:else}
+    {:else if message.content || (message.files && message.files.length > 0)}
       <div class="assistant-message">
         {#if !message.isStreaming}
           <div class="message-actions" class:tts-active={isActive}>
@@ -789,11 +789,12 @@
     background: linear-gradient(135deg, var(--brand) 0%, var(--brand-hover) 100%);
     color: white;
     border-radius: var(--glass-radius);
-    border-bottom-right-radius: var(--space-sm);
+    /* Logical corner so the "tail" stays on the inline-end edge under RTL. */
+    border-end-end-radius: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
     width: fit-content;
     max-width: 100%;
-    margin-left: auto;
+    margin-inline-start: auto;
     box-shadow:
       0 2px 12px rgba(var(--brand-rgb), 0.25),
       0 1px 2px rgba(var(--brand-rgb), 0.15),
@@ -886,7 +887,7 @@
   .assistant-message :global(ul),
   .assistant-message :global(ol) {
     margin: var(--space-md) 0;
-    padding-left: var(--space-2xl);
+    padding-inline-start: var(--space-2xl);
   }
 
   .assistant-message :global(li) {
@@ -926,8 +927,8 @@
 
   .assistant-message :global(blockquote) {
     margin: var(--space-md) 0;
-    padding-left: var(--space-xl);
-    border-left: 3px solid var(--brand);
+    padding-inline-start: var(--space-xl);
+    border-inline-start: 3px solid var(--brand);
     color: var(--text-secondary);
     font-style: italic;
   }
@@ -952,7 +953,7 @@
   .assistant-message :global(td) {
     padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--glass-stroke-dark);
-    text-align: left;
+    text-align: start;
     word-wrap: break-word;
     overflow-wrap: break-word;
     white-space: normal;
@@ -973,7 +974,7 @@
   .streaming .assistant-message::after {
     content: '▊';
     animation: blink 1s infinite;
-    margin-left: 2px;
+    margin-inline-start: 2px;
   }
 
   @keyframes blink {
@@ -1003,7 +1004,7 @@
   .message-actions {
     position: absolute;
     top: var(--space-sm);
-    right: var(--space-md);
+    inset-inline-end: var(--space-md);
     z-index: 10;
     display: flex;
     flex-direction: row;
@@ -1112,7 +1113,7 @@
   :global(.copy-code-btn) {
     position: absolute;
     top: var(--space-sm);
-    right: var(--space-sm);
+    inset-inline-end: var(--space-sm);
     display: flex;
     align-items: center;
     gap: var(--space-xs);
@@ -1253,7 +1254,7 @@
     margin-top: var(--space-sm);
     width: fit-content;
     max-width: 100%;
-    margin-left: auto;
+    margin-inline-start: auto;
   }
 
   .user-message .message-image-btn {
@@ -1441,8 +1442,7 @@
   .modal-backdrop {
     position: fixed;
     top: 0;
-    left: 0;
-    right: 0;
+    inset-inline: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.9);
     display: flex;
@@ -1475,7 +1475,7 @@
   .modal-close {
     position: fixed;
     top: 20px;
-    right: 20px;
+    inset-inline-end: 20px;
     background: rgba(255, 255, 255, 0.15);
     border: none;
     border-radius: 50%;

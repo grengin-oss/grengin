@@ -1,0 +1,193 @@
+{
+  "userAnalytics": {
+    "title": "تحليلات المستخدم",
+    "subtitle": "تحليلات الاستخدام التفصيلية لكل مستخدم",
+    "filters": {
+      "startDate": "تاريخ البدء",
+      "endDate": "تاريخ الانتهاء",
+      "search": "بحث",
+      "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني أو القسم...",
+      "perPage": "لكل صفحة"
+    },
+    "stats": {
+      "totalUsers": "إجمالي المستخدمين",
+      "showing": "عرض",
+      "showingCount": "{filtered} من {total}"
+    },
+    "table": {
+      "userName": "اسم المستخدم",
+      "email": "البريد الإلكتروني",
+      "department": "القسم",
+      "requests": "الطلبات",
+      "success": "نجاح",
+      "errors": "أخطاء",
+      "tokens": "الرموز",
+      "cost": "التكلفة",
+      "avgLatency": "متوسط زمن الاستجابة",
+      "lastActivity": "آخر نشاط"
+    },
+    "emptyState": {
+      "noMatch": "لم يتم العثور على مستخدمين مطابقين لـ \"{query}\"",
+      "noData": "لا توجد بيانات تحليلات مستخدم متاحة لنطاق التاريخ المحدد"
+    },
+    "pagination": {
+      "previous": "السابق",
+      "next": "التالي",
+      "pageInfo": "الصفحة {current} من {total}"
+    },
+    "errors": {
+      "fetchFailed": "تعذر جلب تحليلات المستخدم"
+    }
+  },
+  "departmentAnalytics": {
+    "title": "تحليلات القسم",
+    "subtitle": "تحليلات الاستخدام التفصيلية لكل قسم",
+    "filters": {
+      "search": "بحث",
+      "searchPlaceholder": "البحث باسم القسم...",
+      "perPage": "لكل صفحة"
+    },
+    "stats": {
+      "totalDepartments": "إجمالي الأقسام",
+      "showing": "عرض",
+      "showingCount": "{showing} من {total}"
+    },
+    "table": {
+      "department": "القسم",
+      "users": "المستخدمون",
+      "requests": "الطلبات",
+      "success": "نجاح",
+      "errors": "أخطاء",
+      "tokens": "الرموز",
+      "cost": "التكلفة",
+      "avgLatency": "متوسط زمن الاستجابة"
+    },
+    "emptyState": {
+      "noMatch": "لم يتم العثور على أقسام مطابقة لـ \"{query}\"",
+      "noData": "لا توجد بيانات تحليلات قسم متاحة لنطاق التاريخ المحدد"
+    },
+    "pagination": {
+      "previous": "السابق",
+      "next": "التالي",
+      "pageInfo": "الصفحة {current} من {total}"
+    },
+    "errors": {
+      "fetchFailed": "تعذر جلب تحليلات القسم"
+    }
+  },
+  "analytics": {
+    "title": "تحليلات الاستخدام",
+    "subtitle": "مراقبة أداء النظام ومقاييس الاستخدام",
+    "tabs": {
+      "overview": "نظرة عامة",
+      "byUser": "حسب المستخدم",
+      "byDepartment": "حسب القسم",
+      "byModel": "حسب النموذج"
+    },
+    "tabsAria": {
+      "overview": "مقاييس واتجاهات الاستخدام العامة",
+      "byUser": "تقسيم الاستخدام حسب المستخدم",
+      "byDepartment": "تقسيم الاستخدام حسب القسم",
+      "byModel": "تقسيم الاستخدام حسب النموذج"
+    },
+    "byModel": {
+      "title": "حسب النموذج",
+      "comingSoon": "قريباً",
+      "hint": "ستكون تحليلات النموذج متاحة هنا."
+    },
+    "aria": {
+      "mainRegion": "تحليلات الاستخدام",
+      "dateRangeGroup": "نطاق تاريخ التقرير",
+      "startDate": "تاريخ البدء",
+      "endDate": "تاريخ الانتهاء",
+      "pagination": "ترقيم النتائج",
+      "topModelsCaption": "أفضل النماذج حسب الاستخدام لنطاق التاريخ المحدد",
+      "departmentTableCaption": "استخدام القسم لنطاق التاريخ المحدد",
+      "userTableCaption": "استخدام المستخدم لنطاق التاريخ المحدد"
+    },
+    "filters": {
+      "dateRange": "نطاق التاريخ",
+      "presets": {
+        "last7Days": "آخر 7 أيام",
+        "last30Days": "آخر 30 يوم",
+        "last90Days": "آخر 90 يوم",
+        "thisMonth": "هذا الشهر",
+        "custom": "مخصص"
+      },
+      "to": "إلى",
+      "aggregated": "مجمع",
+      "hour": "ساعي",
+      "day": "يومي",
+      "week": "أسبوعي",
+      "month": "شهري"
+    },
+    "loading": "جارٍ تحميل التحليلات...",
+    "retry": "إعادة المحاولة",
+    "refresh": "تحديث التحليلات",
+    "refreshButton": "تحديث",
+    "overview": {
+      "title": "نظرة عامة",
+      "totalUsers": "إجمالي المستخدمين",
+      "activeUsers": "{count} نشط",
+      "totalRequests": "إجمالي الطلبات",
+      "avgPerUser": "{count} متوسط لكل مستخدم",
+      "totalTokens": "إجمالي الرموز",
+      "totalCost": "إجمالي التكلفة",
+      "vsPreviousDays": "مقارنة بـ {count} أيام سابقة"
+    },
+    "topModels": {
+      "title": "أفضل النماذج",
+      "model": "النموذج",
+      "provider": "المزود",
+      "requests": "الطلبات",
+      "tokens": "الرموز",
+      "cost": "التكلفة"
+    },
+    "charts": {
+      "title": "اتجاهات الأداء",
+      "multiMetric": {
+        "title": "اتجاهات متعددة المقاييس",
+        "subtitle": "الطلبات • الرموز • زمن الاستجابة",
+        "requests": "الطلبات",
+        "tokens": "الرموز",
+        "latency": "زمن الاستجابة",
+        "date": "التاريخ",
+        "latencyMs": "زمن الاستجابة (مللي ثانية)"
+      },
+      "usageGrowth": {
+        "title": "نمو الاستخدام",
+        "subtitle": "الطلبات (أعمدة) • الرموز (خط)",
+        "requests": "الطلبات",
+        "tokens": "الرموز"
+      },
+      "apiReliability": {
+        "title": "موثوقية API",
+        "subtitle": "النجاح مقابل الأخطاء",
+        "success": "نجاح",
+        "errors": "أخطاء",
+        "type": "النوع",
+        "count": "العدد"
+      },
+      "costTrend": {
+        "title": "اتجاه التكلفة",
+        "subtitle": "إجمالي الإنفاق بمرور الوقت",
+        "totalCost": "إجمالي التكلفة"
+      },
+      "emptyState": {
+        "title": "لا توجد بيانات السلسلة الزمنية متاحة لنطاق التاريخ المحدد",
+        "hint": "جرب تحديد نطاق تاريخ مختلف أو راجع لاحقًا"
+      },
+      "accessibility": {
+        "keyboardInstructions": "اضغط Enter أو Space لعرض جدول البيانات. اضغط Escape للإغلاق.",
+        "dataPoints": "{count} نقطة بيانات",
+        "viewDataTable": "عرض جدول البيانات",
+        "viewDataTableFor": "عرض جدول البيانات لـ {chartName}",
+        "closeDataTable": "إغلاق جدول البيانات",
+        "dataTableRegion": "جدول بيانات {chartName}"
+      }
+    },
+    "errors": {
+      "fetchFailed": "تعذر جلب بيانات التحليلات"
+    }
+  }
+}
