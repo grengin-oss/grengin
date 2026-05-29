@@ -32,6 +32,7 @@
       "loadingConnectors": "커넥터 불러오는 중...",
       "noConnectors": "사용 가능한 커넥터가 없습니다",
       "connectors": "커넥터",
+      "tools": "도구",
       "enableWebSearch": "웹 검색 사용",
       "disableWebSearch": "웹 검색 비활성화",
       "search": "검색",

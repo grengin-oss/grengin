@@ -17,26 +17,14 @@
     return isDarkMode ? (provider.icon_dark || provider.icon) : provider.icon;
   }
 
-  // Dynamic syntax highlighting theme based on color scheme
-  const loadHighlightTheme = () => {
-    if (isDarkMode) {
-      import('highlight.js/styles/github-dark.css');
-    } else {
-      import('highlight.js/styles/github.css');
-    }
-  };
-
-  // Load theme on mount and listen for changes
+  // Highlight.js themes are imported statically in app.css and gated by
+  // prefers-color-scheme media queries, so we only need to keep isDarkMode
+  // in sync for provider-icon swapping below.
   onMount(() => {
     syncThemeState();
-    loadHighlightTheme();
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleThemeChange = () => {
-      syncThemeState();
-      loadHighlightTheme();
-    };
-    mediaQuery.addEventListener('change', handleThemeChange);
-    return () => mediaQuery.removeEventListener('change', handleThemeChange);
+    mediaQuery.addEventListener('change', syncThemeState);
+    return () => mediaQuery.removeEventListener('change', syncThemeState);
   });
   import {
     speechSynthesisSupported,
