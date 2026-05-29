@@ -1,3 +1,9 @@
+/* Syntax highlighting themes for code blocks (highlight.js).
+   Loaded statically and gated by prefers-color-scheme so the theme
+   always matches the page palette — no JS race, no Windows quirks. */
+@import 'highlight.js/styles/github-dark.css' screen and (prefers-color-scheme: dark);
+@import 'highlight.js/styles/github.css' screen and (prefers-color-scheme: light);
+
 /* ===== Root tokens ===== */
 :root {
   /* Typography & rendering - system fonts */
