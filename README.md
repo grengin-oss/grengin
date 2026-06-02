@@ -57,15 +57,18 @@ Launch a pre-built image on your cloud of choice — PostgreSQL, Nginx, Certbot,
 
 On first boot the installer wizard launches automatically at `http://your-ip`. Complete the 6-step wizard to configure your domain, SSL, OAuth, and AI providers — then the application goes live on the same URL.
 
-> **Free custom subdomain**: Every Grengin instance qualifies for a free `*.grengin.io` subdomain. Claim yours during the wizard setup.
+> **Free custom subdomain**: Every Grengin instance qualifies for a free `*.grengin.com` subdomain. Claim yours during the wizard setup.
 
-### Option 2: One-Line Installer (Any Linux)
+### Option 2: Run Installer Locally (Docker)
+
+Pull and run the installer image to launch the setup wizard on your local machine — no Linux server needed:
 
 ```bash
-curl -sSL https://get.grengin.io | sudo bash
+docker pull ghcr.io/perter-tech/grengin-image:latest
+docker run --rm -p 80:80 ghcr.io/perter-tech/grengin-image:latest
 ```
 
-Opens the web-based wizard on port 80. After SSL is issued mid-wizard, the application transitions seamlessly to HTTPS on the same domain.
+Then open `http://localhost` in your browser and complete the wizard.
 
 ### Option 3: Docker / Docker Compose
 
@@ -254,7 +257,7 @@ grengin/                          # This repository
 ├── installer/                    # Web-based setup wizard (Rust/Axum)
 ├── .github/workflows/            # CI/CD (GitHub Actions)
 ├── deploy/                       # Deployment scripts and configs
-│   ├── install.sh                # Bootstrap script (get.grengin.io)
+│   ├── install.sh                # Bootstrap install script
 │   └── nginx/                    # Nginx configuration snippets
 ├── Dockerfile.*                  # Docker images for API, installer, webapp
 └── docs/                         # Documentation
