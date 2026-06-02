@@ -37,7 +37,7 @@ Grengin lets organisations deploy their own AI chat platform without handing dat
 - **Analytics** — token usage over time by user, department, and model with Vega-Lite charts
 - **SSO** — Google and Azure AD OAuth2/OIDC; domain allow-listing per provider
 - **Branding** — custom logo, primary/accent colours, and font family settable from the admin panel
-- **Desktop app** — Tauri-powered native app for Windows, macOS, and Linux alongside the web SPA
+- **Desktop & mobile app** — Tauri-powered native app for Windows, macOS, and Linux; Android and iOS apps coming soon (minSdkVersion 24 / iOS 14+)
 - **Multi-cloud marketplace** — pre-built AMIs and cloud images for AWS, GCP, Azure, and DigitalOcean with everything pre-installed
 
 ---
@@ -315,7 +315,7 @@ service/src/
 
 ### `webapp` — Frontend (`webapp`)
 
-> **Version**: 0.2.0 &nbsp;|&nbsp; **Framework**: Svelte 5 &nbsp;|&nbsp; **Language**: TypeScript &nbsp;|&nbsp; **Desktop**: Tauri 2 &nbsp;|&nbsp; **Charts**: Vega-Lite
+> **Version**: 0.2.0 &nbsp;|&nbsp; **Framework**: Svelte 5 &nbsp;|&nbsp; **Language**: TypeScript &nbsp;|&nbsp; **Desktop + Mobile**: Tauri 2 &nbsp;|&nbsp; **Charts**: Vega-Lite
 
 A responsive single-page application compiled as static files for web deployment, and bundled into a native desktop app via Tauri. Uses Svelte 5's fine-grained reactivity (`$state`, `$derived`).
 
@@ -329,7 +329,8 @@ A responsive single-page application compiled as static files for web deployment
 | **Prompt Library** | Personal saved prompts, admin-managed org-wide prompts |
 | **Notifications** | Real-time notification centre with SSE subscription |
 | **User Settings** | Profile, language (i18n), theme (dark/light) |
-| **Deep Linking** | Tauri deep-link plugin for `grengin://` URL scheme |
+| **Deep Linking** | Tauri deep-link plugin for `grengin://` and `msauth://` schemes on desktop, Android, and iOS |
+| **Mobile App** *(coming soon)* | Android (API 24+) and iOS (14+) builds via Tauri; OAuth redirect flows pre-wired |
 
 #### Admin Dashboard
 
