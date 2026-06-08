@@ -124,6 +124,12 @@ function createPermissionsStore() {
     return hasPermission(PERMISSIONS.roles.assign);
   }
 
+  // `system:maintain` is non-scopeable (host-wide), so it is always a global
+  // grant — `hasPermission` treats `'*'` (and super-admin) as held.
+  function canMaintainSystem(): boolean {
+    return hasPermission(PERMISSIONS.system.maintain);
+  }
+
   function canViewBudgetForDepartment(_departmentId: string): boolean {
     return hasPermission(PERMISSIONS.budget.view);
   }
@@ -202,6 +208,7 @@ function createPermissionsStore() {
     canViewRoles,
     canManageRoles,
     canAssignRoles,
+    canMaintainSystem,
     canViewBudgetForDepartment,
     canAllocateBudgetForDepartment,
     getAdminLandingPath,

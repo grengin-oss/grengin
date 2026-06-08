@@ -37,7 +37,8 @@
     "tabListLabels": {
       "accessControl": "Access Control tabs",
       "settings": "Settings tabs",
-      "analytics": "Analytics views"
+      "analytics": "Analytics views",
+      "systemMetrics": "System tabs"
     },
     "users": {
       "userManagement": "User Management",
@@ -929,7 +930,134 @@
         "admin_department_prompt_assigned": "Department Prompt Assigned",
         "admin_department_prompt_updated": "Department Prompt Updated",
         "admin_department_prompt_deleted": "Department Prompt Deleted",
-        "admin_audit_logs_redacted_for_user": "Audit Logs Redacted for User"
+        "admin_audit_logs_redacted_for_user": "Audit Logs Redacted for User",
+        "admin_domain_reconfigured": "Domain Reconfigured",
+        "admin_binaries_updated": "Application Updated"
+      }
+    },
+    "maintenance": {
+      "title": "Maintenance",
+      "subtitle": "Reconfigure the host this Grengin instance runs on.",
+      "yes": "Yes",
+      "no": "No",
+      "comingSoon": "Coming soon",
+      "foundationNote": "Controls for this action arrive in a follow-up release.",
+      "preflight": {
+        "checking": "Checking host capabilities…",
+        "privilege": "Privilege",
+        "runningAsRoot": "Running as root",
+        "sudoAvailable": "sudo available",
+        "privilegeMissing": "This host cannot run reconfiguration scripts (no root or sudo). Both actions are disabled.",
+        "recheck": "Re-check",
+        "advancedDetails": "Advanced details",
+        "exists": "Exists",
+        "executable": "Executable",
+        "effectiveSudo": "Uses sudo",
+        "reason": "Reason",
+        "loadError": "Couldn't load host status."
+      },
+      "viewAuditLogs": "View in Audit Logs",
+      "domain": {
+        "title": "Domain & TLS",
+        "description": "Change the serving domain and TLS mode.",
+        "apply": "Apply changes",
+        "unavailable": "Domain reconfiguration is unavailable on this host.",
+        "domainLabel": "Domain",
+        "domainPlaceholder": "chat.example.com",
+        "domainHint": "The hostname Grengin will be served from. No http:// prefix or path.",
+        "domainRequired": "Enter a domain.",
+        "domainNoScheme": "Enter a hostname only — remove the http:// or https:// prefix.",
+        "domainInvalid": "Enter a valid hostname, for example chat.example.com.",
+        "sslMode": "TLS / SSL mode",
+        "sslLetsencrypt": "Let's Encrypt",
+        "sslSelfsigned": "Self-signed",
+        "sslNone": "None",
+        "emailLabel": "Contact email",
+        "emailPlaceholder": "ops@example.com",
+        "emailHint": "Used for Let's Encrypt registration and certificate-expiry notices.",
+        "emailRequired": "An email address is required for Let's Encrypt.",
+        "emailInvalid": "Enter a valid email address.",
+        "selfSignedDaysLabel": "Certificate validity (days)",
+        "selfSignedDaysHint": "Browsers will warn visitors about the untrusted self-signed certificate.",
+        "selfSignedDaysInvalid": "Enter a whole number of days of 1 or more.",
+        "sslNoneNote": "Traffic will be served without TLS. This is insecure and not recommended.",
+        "prereqTitle": "Before issuing a Let's Encrypt certificate, confirm that:",
+        "prereqDns": "DNS A/AAAA records for this domain already point to this server's public IP.",
+        "prereqPorts": "Ports 80 and 443 are reachable from the internet.",
+        "prereqProxy": "This host is not behind a separate TLS-terminating proxy.",
+        "serviceUnavailable": "Service unavailable — the host may be busy. Please try again.",
+        "confirm": {
+          "title": "Confirm domain change",
+          "warning": "Applying this will change where Grengin is served to {domain}. Your current session may end and you may need to sign in again at the new address. Make sure DNS already points here.",
+          "typeToConfirm": "Type the new domain to confirm:",
+          "confirm": "Apply domain change",
+          "cancel": "Cancel"
+        },
+        "verify": {
+          "checking": "Checking that Grengin is reachable at {origin}…",
+          "reachable": "Grengin is up at the new address.",
+          "timeout": "Couldn't confirm the new address yet — DNS or TLS may still be propagating.",
+          "goToNewAddress": "Go to {origin}",
+          "retryCheck": "Retry check",
+          "openAnyway": "Open anyway",
+          "sessionWarning": "Opening the new address may end your current session — you may need to sign in again."
+        }
+      },
+      "console": {
+        "title": "Script output",
+        "copy": "Copy log",
+        "copied": "Copied",
+        "scriptDetails": "Script details",
+        "scriptPath": "Script path",
+        "noOutput": "No output was captured.",
+        "success": "Success",
+        "failure": "Failed"
+      },
+      "binaries": {
+        "title": "Application Updates",
+        "description": "Pull and install new application binaries.",
+        "currentVersion": "Current version",
+        "update": "Update binaries",
+        "unavailable": "Application updates are unavailable on this host.",
+        "version": "Target version",
+        "versionHint": "\"latest\" or a specific version like v1.2.3.",
+        "versionRequired": "Enter a version.",
+        "versionInvalid": "Enter \"latest\" or a version like v1.2.3.",
+        "versionUnknown": "Unknown",
+        "releaseBaseUrl": "Release source URL (optional)",
+        "releaseBaseUrlPlaceholder": "https://releases.example.com",
+        "releaseBaseUrlHint": "Where binaries are downloaded from. Leave blank to use the host's default source. Pointing this at an untrusted host installs untrusted binaries as root.",
+        "releaseBaseUrlInvalid": "Enter a valid URL, or leave blank.",
+        "releaseBaseUrlInsecure": "The release source must use HTTPS.",
+        "arch": "Architecture",
+        "archAuto": "Auto-detect",
+        "targets": "What to update",
+        "updateApi": "API server",
+        "updateApiHint": "Restarts the API service — expect brief downtime.",
+        "updateWebapp": "Web app",
+        "updateWebappHint": "Replaces this frontend — a hard reload is required afterward.",
+        "updateInstaller": "Installer",
+        "updateInstallerHint": "Updates the installer binary. Advanced.",
+        "noTarget": "Select at least one component to update.",
+        "verifyChecksums": "Verify checksums",
+        "verifyChecksumsHint": "Validate downloaded artifacts before installing. Recommended.",
+        "verifyChecksumsWarning": "Skipping checksum verification installs unverified binaries. Only disable this if you know what you're doing.",
+        "advanced": "Advanced",
+        "apiServiceName": "API service name",
+        "apiServiceNameHint": "Only set this if the API runs under a non-default service name.",
+        "serviceUnavailable": "Service unavailable — the host may be busy. Please try again.",
+        "confirm": {
+          "title": "Confirm application update",
+          "warning": "This restarts Grengin services. If the web app is updated, this page will need a hard refresh. Expect brief downtime. Take a snapshot or backup first.",
+          "typeToConfirm": "Type CONFIRM to proceed:",
+          "confirm": "Update binaries"
+        },
+        "result": {
+          "reloadPrompt": "A new version of the app was installed. Reload to use it.",
+          "reload": "Reload now",
+          "waitingForApi": "Waiting for the API to come back…",
+          "newVersion": "Grengin is back, now running v{version}."
+        }
       }
     }
   },
@@ -999,6 +1127,11 @@
       },
       "manage": {
         "description": "Configure and manage SSO providers"
+      }
+    },
+    "system": {
+      "maintain": {
+        "description": "Reconfigure the host system (domain, TLS, and application updates)"
       }
     }
   },
@@ -1118,7 +1251,7 @@
     }
   },
   "systemMetrics": {
-    "title": "System Metrics",
+    "title": "System",
     "subtitle": "Real-time server, database, and container health",
     "refresh": "Refresh",
     "autoRefresh": "Auto-refresh",
@@ -1179,6 +1312,10 @@
     },
     "errors": {
       "fetchFailed": "Failed to fetch system metrics"
+    },
+    "tabs": {
+      "metrics": "Metrics",
+      "maintenance": "Maintenance"
     }
   }
 }

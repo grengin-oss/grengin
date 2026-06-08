@@ -34,6 +34,9 @@ export const PERMISSIONS = {
   auditLogs: {
     view: "audit_logs:view",
   },
+  system: {
+    maintain: "system:maintain",
+  },
 } as const;
 
 export type PermissionKey =
@@ -45,4 +48,5 @@ export type PermissionKey =
   | (typeof PERMISSIONS.roles)[keyof typeof PERMISSIONS.roles]
   | (typeof PERMISSIONS.budget)[keyof typeof PERMISSIONS.budget]
   | (typeof PERMISSIONS.mcpServers)[keyof typeof PERMISSIONS.mcpServers]
-  | (typeof PERMISSIONS.auditLogs)[keyof typeof PERMISSIONS.auditLogs];
+  | (typeof PERMISSIONS.auditLogs)[keyof typeof PERMISSIONS.auditLogs]
+  | (typeof PERMISSIONS.system)[keyof typeof PERMISSIONS.system];

@@ -56,6 +56,6 @@
     "promptLibrary": "Instructions",
     "promptEffectiveness": "Métriques des Instructions",
     "auditLogs": "Journaux d'audit",
-    "systemMetrics": "Métriques système"
+    "systemMetrics": "Système"
   }
 }

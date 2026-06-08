@@ -37,7 +37,8 @@
     "tabListLabels": {
       "accessControl": "アクセス制御タブ",
       "settings": "設定タブ",
-      "analytics": "分析ビュー"
+      "analytics": "分析ビュー",
+      "systemMetrics": "システムタブ"
     },
     "users": {
       "userManagement": "ユーザー管理",
@@ -929,7 +930,134 @@
         "admin_department_prompt_assigned": "部門プロンプトを割り当て",
         "admin_department_prompt_updated": "部門プロンプトを更新",
         "admin_department_prompt_deleted": "部門プロンプトを削除",
-        "admin_audit_logs_redacted_for_user": "ユーザーのオーディットログを編集"
+        "admin_audit_logs_redacted_for_user": "ユーザーのオーディットログを編集",
+        "admin_domain_reconfigured": "ドメインを再構成",
+        "admin_binaries_updated": "アプリケーションを更新"
+      }
+    },
+    "maintenance": {
+      "title": "メンテナンス",
+      "subtitle": "この Grengin インスタンスが稼働しているホストを再構成します。",
+      "yes": "はい",
+      "no": "いいえ",
+      "comingSoon": "近日公開",
+      "foundationNote": "このアクションのコントロールは今後のリリースで提供されます。",
+      "preflight": {
+        "checking": "ホストの機能を確認しています…",
+        "privilege": "権限",
+        "runningAsRoot": "root として実行",
+        "sudoAvailable": "sudo 利用可能",
+        "privilegeMissing": "このホストは再構成スクリプトを実行できません（root も sudo もありません）。両方のアクションが無効になっています。",
+        "recheck": "再確認",
+        "advancedDetails": "詳細情報",
+        "exists": "存在する",
+        "executable": "実行可能",
+        "effectiveSudo": "sudo を使用",
+        "reason": "理由",
+        "loadError": "ホストのステータスを読み込めませんでした。"
+      },
+      "viewAuditLogs": "監査ログで表示",
+      "domain": {
+        "title": "ドメインと TLS",
+        "description": "配信ドメインと TLS モードを変更します。",
+        "apply": "変更を適用",
+        "unavailable": "このホストではドメインの再構成は利用できません。",
+        "domainLabel": "ドメイン",
+        "domainPlaceholder": "chat.example.com",
+        "domainHint": "Grengin を配信するホスト名です。http:// プレフィックスやパスは含めないでください。",
+        "domainRequired": "ドメインを入力してください。",
+        "domainNoScheme": "ホスト名のみを入力してください。http:// または https:// プレフィックスを削除してください。",
+        "domainInvalid": "有効なホスト名を入力してください（例: chat.example.com）。",
+        "sslMode": "TLS / SSL モード",
+        "sslLetsencrypt": "Let's Encrypt",
+        "sslSelfsigned": "自己署名",
+        "sslNone": "なし",
+        "emailLabel": "連絡先メールアドレス",
+        "emailPlaceholder": "ops@example.com",
+        "emailHint": "Let's Encrypt の登録および証明書の有効期限通知に使用されます。",
+        "emailRequired": "Let's Encrypt にはメールアドレスが必要です。",
+        "emailInvalid": "有効なメールアドレスを入力してください。",
+        "selfSignedDaysLabel": "証明書の有効期間（日数）",
+        "selfSignedDaysHint": "ブラウザは、信頼されていない自己署名証明書について訪問者に警告します。",
+        "selfSignedDaysInvalid": "1 以上の整数の日数を入力してください。",
+        "sslNoneNote": "トラフィックは TLS なしで配信されます。これは安全ではなく、推奨されません。",
+        "prereqTitle": "Let's Encrypt 証明書を発行する前に、次の点を確認してください:",
+        "prereqDns": "このドメインの DNS A/AAAA レコードが、すでにこのサーバーのパブリック IP を指していること。",
+        "prereqPorts": "ポート 80 と 443 がインターネットから到達可能であること。",
+        "prereqProxy": "このホストが、別の TLS 終端プロキシの背後にないこと。",
+        "serviceUnavailable": "サービスを利用できません。ホストがビジー状態の可能性があります。もう一度お試しください。",
+        "confirm": {
+          "title": "ドメイン変更の確認",
+          "warning": "これを適用すると、Grengin の配信先が {domain} に変更されます。現在のセッションが終了し、新しいアドレスで再度サインインが必要になる場合があります。DNS がすでにこちらを指していることを確認してください。",
+          "typeToConfirm": "確認のため、新しいドメインを入力してください:",
+          "confirm": "ドメイン変更を適用",
+          "cancel": "キャンセル"
+        },
+        "verify": {
+          "checking": "{origin} で Grengin に到達できるか確認しています…",
+          "reachable": "新しいアドレスで Grengin が稼働しています。",
+          "timeout": "新しいアドレスをまだ確認できませんでした。DNS または TLS がまだ伝播中の可能性があります。",
+          "goToNewAddress": "{origin} へ移動",
+          "retryCheck": "確認を再試行",
+          "openAnyway": "それでも開く",
+          "sessionWarning": "新しいアドレスを開くと、現在のセッションが終了する場合があります。再度サインインが必要になることがあります。"
+        }
+      },
+      "console": {
+        "title": "スクリプト出力",
+        "copy": "ログをコピー",
+        "copied": "コピーしました",
+        "scriptDetails": "スクリプトの詳細",
+        "scriptPath": "スクリプトパス",
+        "noOutput": "出力はキャプチャされませんでした。",
+        "success": "成功",
+        "failure": "失敗"
+      },
+      "binaries": {
+        "title": "アプリケーションの更新",
+        "description": "新しいアプリケーションバイナリを取得してインストールします。",
+        "currentVersion": "現在のバージョン",
+        "update": "バイナリを更新",
+        "unavailable": "このホストではアプリケーションの更新は利用できません。",
+        "version": "対象バージョン",
+        "versionHint": "「latest」または v1.2.3 のような特定のバージョン。",
+        "versionRequired": "バージョンを入力してください。",
+        "versionInvalid": "「latest」または v1.2.3 のようなバージョンを入力してください。",
+        "versionUnknown": "不明",
+        "releaseBaseUrl": "リリース取得元 URL（任意）",
+        "releaseBaseUrlPlaceholder": "https://releases.example.com",
+        "releaseBaseUrlHint": "バイナリのダウンロード元。空欄の場合はホストの既定の取得元を使用します。信頼できないホストを指定すると、信頼できないバイナリが root としてインストールされます。",
+        "releaseBaseUrlInvalid": "有効な URL を入力するか、空欄にしてください。",
+        "releaseBaseUrlInsecure": "リリース取得元は HTTPS を使用する必要があります。",
+        "arch": "アーキテクチャ",
+        "archAuto": "自動検出",
+        "targets": "更新する対象",
+        "updateApi": "API サーバー",
+        "updateApiHint": "API サービスを再起動します。短時間のダウンタイムが発生します。",
+        "updateWebapp": "Web アプリ",
+        "updateWebappHint": "このフロントエンドを置き換えます。完了後にハード再読み込みが必要です。",
+        "updateInstaller": "インストーラー",
+        "updateInstallerHint": "インストーラーのバイナリを更新します。上級者向け。",
+        "noTarget": "更新する対象を少なくとも 1 つ選択してください。",
+        "verifyChecksums": "チェックサムを検証",
+        "verifyChecksumsHint": "インストール前にダウンロードした成果物を検証します。推奨。",
+        "verifyChecksumsWarning": "チェックサムの検証をスキップすると、検証されていないバイナリがインストールされます。内容を理解している場合にのみ無効にしてください。",
+        "advanced": "詳細設定",
+        "apiServiceName": "API サービス名",
+        "apiServiceNameHint": "API が既定以外のサービス名で実行されている場合にのみ設定してください。",
+        "serviceUnavailable": "サービスを利用できません。ホストがビジー状態の可能性があります。もう一度お試しください。",
+        "confirm": {
+          "title": "アプリケーション更新の確認",
+          "warning": "これにより Grengin のサービスが再起動します。Web アプリが更新される場合、このページはハード再読み込みが必要になります。短時間のダウンタイムが発生します。先にスナップショットまたはバックアップを取得してください。",
+          "typeToConfirm": "続行するには CONFIRM と入力してください:",
+          "confirm": "バイナリを更新"
+        },
+        "result": {
+          "reloadPrompt": "新しいバージョンのアプリがインストールされました。使用するには再読み込みしてください。",
+          "reload": "今すぐ再読み込み",
+          "waitingForApi": "API の復帰を待機しています…",
+          "newVersion": "Grengin が復帰しました。現在 v{version} で実行中です。"
+        }
       }
     }
   },
@@ -999,6 +1127,11 @@
       },
       "manage": {
         "description": "SSOプロバイダーの設定と管理"
+      }
+    },
+    "system": {
+      "maintain": {
+        "description": "ホストシステムを再構成する（ドメイン、TLS、アプリケーションの更新）"
       }
     }
   },
@@ -1118,7 +1251,7 @@
     }
   },
   "systemMetrics": {
-    "title": "システムメトリクス",
+    "title": "システム",
     "subtitle": "サーバー、データベース、コンテナのリアルタイム状態",
     "refresh": "更新",
     "autoRefresh": "自動更新",
@@ -1179,6 +1312,10 @@
     },
     "errors": {
       "fetchFailed": "システムメトリクスの取得に失敗しました"
+    },
+    "tabs": {
+      "metrics": "メトリクス",
+      "maintenance": "メンテナンス"
     }
   }
 }
