@@ -53,7 +53,7 @@
     "promptLibrary": "Prompts",
     "promptEffectiveness": "Prompt Metrics",
     "auditLogs": "Audit Logs",
-    "systemMetrics": "System Metrics",
+    "systemMetrics": "System",
     "viewAllAlerts": "View all alerts",
     "noRecentAlerts": "No alerts yet",
     "newAlert": "New alert"

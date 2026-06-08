@@ -56,6 +56,6 @@
     "promptLibrary": "프롬프트",
     "promptEffectiveness": "프롬프트 지표",
     "auditLogs": "감사 로그",
-    "systemMetrics": "시스템 메트릭"
+    "systemMetrics": "시스템"
   }
 }

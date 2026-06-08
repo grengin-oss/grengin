@@ -37,7 +37,8 @@
     "tabListLabels": {
       "accessControl": "تبويبات التحكم في الوصول",
       "settings": "تبويبات الإعدادات",
-      "analytics": "طرق عرض التحليلات"
+      "analytics": "طرق عرض التحليلات",
+      "systemMetrics": "علامات تبويب النظام"
     },
     "users": {
       "userManagement": "إدارة المستخدمين",
@@ -929,7 +930,134 @@
         "admin_department_prompt_assigned": "تم تعيين مطالبة القسم",
         "admin_department_prompt_updated": "تم تحديث مطالبة القسم",
         "admin_department_prompt_deleted": "تم حذف مطالبة القسم",
-        "admin_audit_logs_redacted_for_user": "تم تعديل سجلات التدقيق للمستخدم"
+        "admin_audit_logs_redacted_for_user": "تم تعديل سجلات التدقيق للمستخدم",
+        "admin_domain_reconfigured": "تمت إعادة تكوين النطاق",
+        "admin_binaries_updated": "تم تحديث التطبيق"
+      }
+    },
+    "maintenance": {
+      "title": "الصيانة",
+      "subtitle": "أعد تكوين المضيف الذي يعمل عليه مثيل Grengin هذا.",
+      "yes": "نعم",
+      "no": "لا",
+      "comingSoon": "قريبًا",
+      "foundationNote": "ستتوفر عناصر التحكم لهذا الإجراء في إصدار لاحق.",
+      "preflight": {
+        "checking": "جارٍ التحقق من قدرات المضيف…",
+        "privilege": "الامتياز",
+        "runningAsRoot": "التشغيل كجذر (root)",
+        "sudoAvailable": "sudo متاح",
+        "privilegeMissing": "لا يمكن لهذا المضيف تشغيل نصوص إعادة التكوين (لا يوجد root أو sudo). تم تعطيل كلا الإجراءين.",
+        "recheck": "إعادة التحقق",
+        "advancedDetails": "تفاصيل متقدمة",
+        "exists": "موجود",
+        "executable": "قابل للتنفيذ",
+        "effectiveSudo": "يستخدم sudo",
+        "reason": "السبب",
+        "loadError": "تعذّر تحميل حالة المضيف."
+      },
+      "viewAuditLogs": "العرض في سجلات التدقيق",
+      "domain": {
+        "title": "النطاق وTLS",
+        "description": "تغيير نطاق الخدمة ووضع TLS.",
+        "apply": "تطبيق التغييرات",
+        "unavailable": "إعادة تكوين النطاق غير متاحة على هذا المضيف.",
+        "domainLabel": "النطاق",
+        "domainPlaceholder": "chat.example.com",
+        "domainHint": "اسم المضيف الذي سيتم تقديم Grengin منه. بدون بادئة //:http أو مسار.",
+        "domainRequired": "أدخل نطاقًا.",
+        "domainNoScheme": "أدخل اسم المضيف فقط — أزل البادئة //:http أو //:https.",
+        "domainInvalid": "أدخل اسم مضيف صالحًا، على سبيل المثال chat.example.com.",
+        "sslMode": "وضع TLS / SSL",
+        "sslLetsencrypt": "Let's Encrypt",
+        "sslSelfsigned": "موقّع ذاتيًا",
+        "sslNone": "بدون",
+        "emailLabel": "البريد الإلكتروني لجهة الاتصال",
+        "emailPlaceholder": "ops@example.com",
+        "emailHint": "يُستخدم لتسجيل Let's Encrypt وإشعارات انتهاء صلاحية الشهادة.",
+        "emailRequired": "عنوان البريد الإلكتروني مطلوب لـ Let's Encrypt.",
+        "emailInvalid": "أدخل عنوان بريد إلكتروني صالحًا.",
+        "selfSignedDaysLabel": "صلاحية الشهادة (بالأيام)",
+        "selfSignedDaysHint": "ستحذّر المتصفحات الزوار بشأن الشهادة الموقّعة ذاتيًا غير الموثوقة.",
+        "selfSignedDaysInvalid": "أدخل عدد أيام صحيحًا قدره 1 أو أكثر.",
+        "sslNoneNote": "سيتم تقديم حركة المرور بدون TLS. هذا غير آمن وغير موصى به.",
+        "prereqTitle": "قبل إصدار شهادة Let's Encrypt، تأكد من أن:",
+        "prereqDns": "سجلات DNS من نوع A/AAAA لهذا النطاق تشير بالفعل إلى عنوان IP العام لهذا الخادم.",
+        "prereqPorts": "المنفذان 80 و443 يمكن الوصول إليهما من الإنترنت.",
+        "prereqProxy": "هذا المضيف ليس خلف وكيل منفصل لإنهاء TLS.",
+        "serviceUnavailable": "الخدمة غير متاحة — قد يكون المضيف مشغولًا. يرجى المحاولة مرة أخرى.",
+        "confirm": {
+          "title": "تأكيد تغيير النطاق",
+          "warning": "سيؤدي تطبيق هذا إلى تغيير المكان الذي يتم تقديم Grengin منه إلى {domain}. قد تنتهي جلستك الحالية وقد تحتاج إلى تسجيل الدخول مرة أخرى على العنوان الجديد. تأكد من أن DNS يشير إلى هنا بالفعل.",
+          "typeToConfirm": "اكتب النطاق الجديد للتأكيد:",
+          "confirm": "تطبيق تغيير النطاق",
+          "cancel": "إلغاء"
+        },
+        "verify": {
+          "checking": "جارٍ التحقق من إمكانية الوصول إلى Grengin على {origin}…",
+          "reachable": "Grengin يعمل على العنوان الجديد.",
+          "timeout": "تعذّر تأكيد العنوان الجديد بعد — قد يكون DNS أو TLS لا يزال قيد الانتشار.",
+          "goToNewAddress": "الانتقال إلى {origin}",
+          "retryCheck": "إعادة المحاولة",
+          "openAnyway": "الفتح على أي حال",
+          "sessionWarning": "قد يؤدي فتح العنوان الجديد إلى إنهاء جلستك الحالية — وقد تحتاج إلى تسجيل الدخول مرة أخرى."
+        }
+      },
+      "console": {
+        "title": "مخرجات النص البرمجي",
+        "copy": "نسخ السجل",
+        "copied": "تم النسخ",
+        "scriptDetails": "تفاصيل النص البرمجي",
+        "scriptPath": "مسار النص البرمجي",
+        "noOutput": "لم يتم التقاط أي مخرجات.",
+        "success": "نجاح",
+        "failure": "فشل"
+      },
+      "binaries": {
+        "title": "تحديثات التطبيق",
+        "description": "جلب وتثبيت ثنائيات تطبيق جديدة.",
+        "currentVersion": "الإصدار الحالي",
+        "update": "تحديث الثنائيات",
+        "unavailable": "تحديثات التطبيق غير متاحة على هذا المضيف.",
+        "version": "الإصدار المستهدف",
+        "versionHint": "«latest» أو إصدار محدد مثل v1.2.3.",
+        "versionRequired": "أدخل إصدارًا.",
+        "versionInvalid": "أدخل «latest» أو إصدارًا مثل v1.2.3.",
+        "versionUnknown": "غير معروف",
+        "releaseBaseUrl": "عنوان URL لمصدر الإصدارات (اختياري)",
+        "releaseBaseUrlPlaceholder": "https://releases.example.com",
+        "releaseBaseUrlHint": "المكان الذي يتم تنزيل الثنائيات منه. اتركه فارغًا لاستخدام المصدر الافتراضي للمضيف. توجيهه إلى مضيف غير موثوق يثبّت ثنائيات غير موثوقة بصلاحيات الجذر (root).",
+        "releaseBaseUrlInvalid": "أدخل عنوان URL صالحًا أو اتركه فارغًا.",
+        "releaseBaseUrlInsecure": "يجب أن يستخدم مصدر الإصدارات HTTPS.",
+        "arch": "البنية",
+        "archAuto": "الكشف التلقائي",
+        "targets": "ما الذي تريد تحديثه",
+        "updateApi": "خادم API",
+        "updateApiHint": "يعيد تشغيل خدمة API — توقّع توقفًا وجيزًا.",
+        "updateWebapp": "تطبيق الويب",
+        "updateWebappHint": "يستبدل هذه الواجهة — سيلزم إعادة تحميل كامل بعد ذلك.",
+        "updateInstaller": "المُثبِّت",
+        "updateInstallerHint": "يحدّث ثنائي المُثبِّت. متقدم.",
+        "noTarget": "حدد مكوّنًا واحدًا على الأقل لتحديثه.",
+        "verifyChecksums": "التحقق من المجاميع الاختبارية",
+        "verifyChecksumsHint": "التحقق من العناصر التي تم تنزيلها قبل التثبيت. موصى به.",
+        "verifyChecksumsWarning": "تخطّي التحقق من المجاميع الاختبارية يثبّت ثنائيات غير مُتحقَّق منها. لا تعطّل هذا إلا إذا كنت تعرف ما تفعله.",
+        "advanced": "متقدم",
+        "apiServiceName": "اسم خدمة API",
+        "apiServiceNameHint": "اضبط هذا فقط إذا كانت واجهة API تعمل باسم خدمة غير افتراضي.",
+        "serviceUnavailable": "الخدمة غير متاحة — قد يكون المضيف مشغولًا. يرجى المحاولة مرة أخرى.",
+        "confirm": {
+          "title": "تأكيد تحديث التطبيق",
+          "warning": "يؤدي هذا إلى إعادة تشغيل خدمات Grengin. إذا تم تحديث تطبيق الويب، فستحتاج هذه الصفحة إلى إعادة تحميل كامل. توقّع توقفًا وجيزًا. أنشئ لقطة أو نسخة احتياطية أولًا.",
+          "typeToConfirm": "اكتب CONFIRM للمتابعة:",
+          "confirm": "تحديث الثنائيات"
+        },
+        "result": {
+          "reloadPrompt": "تم تثبيت إصدار جديد من التطبيق. أعد التحميل لاستخدامه.",
+          "reload": "إعادة التحميل الآن",
+          "waitingForApi": "في انتظار عودة API…",
+          "newVersion": "عاد Grengin، ويعمل الآن بالإصدار v{version}."
+        }
       }
     }
   },
@@ -999,6 +1127,11 @@
       },
       "manage": {
         "description": "تكوين وإدارة مزودي SSO"
+      }
+    },
+    "system": {
+      "maintain": {
+        "description": "إعادة تكوين النظام المضيف (النطاق وTLS وتحديثات التطبيق)"
       }
     }
   },
@@ -1118,7 +1251,7 @@
     }
   },
   "systemMetrics": {
-    "title": "مقاييس النظام",
+    "title": "النظام",
     "subtitle": "صحة الخادم وقاعدة البيانات والحاوية في الوقت الفعلي",
     "refresh": "تحديث",
     "autoRefresh": "تحديث تلقائي",
@@ -1179,6 +1312,10 @@
     },
     "errors": {
       "fetchFailed": "تعذر جلب مقاييس النظام"
+    },
+    "tabs": {
+      "metrics": "المقاييس",
+      "maintenance": "الصيانة"
     }
   }
 }

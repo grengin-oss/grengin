@@ -66,6 +66,12 @@ const ALLOWED_IDENTICAL_VALUES = new Set([
   "Image",
   "Pause",
   "Notifications",
+  "Maintenance",
+  // Brand / example values that are intentionally identical across locales
+  "Let's Encrypt",
+  "chat.example.com",
+  // Unavoidable cognate: "Architecture" is identical in EN + FR.
+  "Architecture",
 ]);
 
 /** Check whether a value is expected to be identical across all locales. */

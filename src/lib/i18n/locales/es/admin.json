@@ -37,7 +37,8 @@
     "tabListLabels": {
       "accessControl": "Pestañas de control de acceso",
       "settings": "Pestañas de configuración",
-      "analytics": "Vistas de análisis"
+      "analytics": "Vistas de análisis",
+      "systemMetrics": "Pestañas del sistema"
     },
     "users": {
       "userManagement": "Gestión de usuarios",
@@ -929,7 +930,134 @@
         "admin_department_prompt_assigned": "Prompt de Departamento Asignado",
         "admin_department_prompt_updated": "Prompt de Departamento Actualizado",
         "admin_department_prompt_deleted": "Prompt de Departamento Eliminado",
-        "admin_audit_logs_redacted_for_user": "Registros de Auditoría Redactados para Usuario"
+        "admin_audit_logs_redacted_for_user": "Registros de Auditoría Redactados para Usuario",
+        "admin_domain_reconfigured": "Dominio Reconfigurado",
+        "admin_binaries_updated": "Aplicación actualizada"
+      }
+    },
+    "maintenance": {
+      "title": "Mantenimiento",
+      "subtitle": "Reconfigura el host en el que se ejecuta esta instancia de Grengin.",
+      "yes": "Sí",
+      "no": "No",
+      "comingSoon": "Próximamente",
+      "foundationNote": "Los controles de esta acción llegarán en una versión posterior.",
+      "preflight": {
+        "checking": "Comprobando las capacidades del host…",
+        "privilege": "Privilegio",
+        "runningAsRoot": "Ejecutándose como root",
+        "sudoAvailable": "sudo disponible",
+        "privilegeMissing": "Este host no puede ejecutar scripts de reconfiguración (sin root ni sudo). Ambas acciones están deshabilitadas.",
+        "recheck": "Volver a comprobar",
+        "advancedDetails": "Detalles avanzados",
+        "exists": "Existe",
+        "executable": "Ejecutable",
+        "effectiveSudo": "Usa sudo",
+        "reason": "Motivo",
+        "loadError": "No se pudo cargar el estado del host."
+      },
+      "viewAuditLogs": "Ver en los registros de auditoría",
+      "domain": {
+        "title": "Dominio y TLS",
+        "description": "Cambiar el dominio de servicio y el modo TLS.",
+        "apply": "Aplicar cambios",
+        "unavailable": "La reconfiguración del dominio no está disponible en este host.",
+        "domainLabel": "Dominio",
+        "domainPlaceholder": "chat.example.com",
+        "domainHint": "El nombre de host desde el que se servirá Grengin. Sin prefijo http:// ni ruta.",
+        "domainRequired": "Introduce un dominio.",
+        "domainNoScheme": "Introduce solo un nombre de host: elimina el prefijo http:// o https://.",
+        "domainInvalid": "Introduce un nombre de host válido, por ejemplo chat.example.com.",
+        "sslMode": "Modo TLS / SSL",
+        "sslLetsencrypt": "Let's Encrypt",
+        "sslSelfsigned": "Autofirmado",
+        "sslNone": "Ninguno",
+        "emailLabel": "Correo de contacto",
+        "emailPlaceholder": "ops@example.com",
+        "emailHint": "Se usa para el registro en Let's Encrypt y los avisos de caducidad del certificado.",
+        "emailRequired": "Se requiere una dirección de correo para Let's Encrypt.",
+        "emailInvalid": "Introduce una dirección de correo válida.",
+        "selfSignedDaysLabel": "Validez del certificado (días)",
+        "selfSignedDaysHint": "Los navegadores advertirán a los visitantes sobre el certificado autofirmado no confiable.",
+        "selfSignedDaysInvalid": "Introduce un número entero de días de 1 o más.",
+        "sslNoneNote": "El tráfico se servirá sin TLS. Esto es inseguro y no se recomienda.",
+        "prereqTitle": "Antes de emitir un certificado de Let's Encrypt, confirma que:",
+        "prereqDns": "Los registros DNS A/AAAA de este dominio ya apuntan a la IP pública de este servidor.",
+        "prereqPorts": "Los puertos 80 y 443 son accesibles desde internet.",
+        "prereqProxy": "Este host no está detrás de un proxy independiente que termine TLS.",
+        "serviceUnavailable": "Servicio no disponible: es posible que el host esté ocupado. Inténtalo de nuevo.",
+        "confirm": {
+          "title": "Confirmar cambio de dominio",
+          "warning": "Aplicar esto cambiará dónde se sirve Grengin a {domain}. Tu sesión actual podría finalizar y es posible que tengas que iniciar sesión de nuevo en la nueva dirección. Asegúrate de que el DNS ya apunte aquí.",
+          "typeToConfirm": "Escribe el nuevo dominio para confirmar:",
+          "confirm": "Aplicar cambio de dominio",
+          "cancel": "Cancelar"
+        },
+        "verify": {
+          "checking": "Comprobando que Grengin sea accesible en {origin}…",
+          "reachable": "Grengin está activo en la nueva dirección.",
+          "timeout": "Aún no se pudo confirmar la nueva dirección: es posible que el DNS o TLS sigan propagándose.",
+          "goToNewAddress": "Ir a {origin}",
+          "retryCheck": "Reintentar comprobación",
+          "openAnyway": "Abrir de todos modos",
+          "sessionWarning": "Abrir la nueva dirección puede finalizar tu sesión actual; es posible que tengas que iniciar sesión de nuevo."
+        }
+      },
+      "console": {
+        "title": "Salida del script",
+        "copy": "Copiar registro",
+        "copied": "Copiado",
+        "scriptDetails": "Detalles del script",
+        "scriptPath": "Ruta del script",
+        "noOutput": "No se capturó ninguna salida.",
+        "success": "Correcto",
+        "failure": "Fallido"
+      },
+      "binaries": {
+        "title": "Actualizaciones de la aplicación",
+        "description": "Descargar e instalar nuevos binarios de la aplicación.",
+        "currentVersion": "Versión actual",
+        "update": "Actualizar binarios",
+        "unavailable": "Las actualizaciones de la aplicación no están disponibles en este host.",
+        "version": "Versión de destino",
+        "versionHint": "«latest» o una versión específica como v1.2.3.",
+        "versionRequired": "Introduce una versión.",
+        "versionInvalid": "Introduce «latest» o una versión como v1.2.3.",
+        "versionUnknown": "Desconocida",
+        "releaseBaseUrl": "URL de origen de versiones (opcional)",
+        "releaseBaseUrlPlaceholder": "https://releases.example.com",
+        "releaseBaseUrlHint": "Desde dónde se descargan los binarios. Déjalo en blanco para usar el origen predeterminado del host. Apuntar a un host no confiable instala binarios no confiables como root.",
+        "releaseBaseUrlInvalid": "Introduce una URL válida o déjalo en blanco.",
+        "releaseBaseUrlInsecure": "El origen de versiones debe usar HTTPS.",
+        "arch": "Arquitectura",
+        "archAuto": "Detección automática",
+        "targets": "Qué actualizar",
+        "updateApi": "Servidor API",
+        "updateApiHint": "Reinicia el servicio de API: habrá un breve tiempo de inactividad.",
+        "updateWebapp": "Aplicación web",
+        "updateWebappHint": "Reemplaza esta interfaz: después será necesario recargar por completo.",
+        "updateInstaller": "Instalador",
+        "updateInstallerHint": "Actualiza el binario del instalador. Avanzado.",
+        "noTarget": "Selecciona al menos un componente para actualizar.",
+        "verifyChecksums": "Verificar sumas de comprobación",
+        "verifyChecksumsHint": "Validar los artefactos descargados antes de instalarlos. Recomendado.",
+        "verifyChecksumsWarning": "Omitir la verificación de sumas de comprobación instala binarios sin verificar. Desactívalo solo si sabes lo que haces.",
+        "advanced": "Avanzado",
+        "apiServiceName": "Nombre del servicio de API",
+        "apiServiceNameHint": "Defínelo solo si la API se ejecuta con un nombre de servicio no predeterminado.",
+        "serviceUnavailable": "Servicio no disponible: el host puede estar ocupado. Inténtalo de nuevo.",
+        "confirm": {
+          "title": "Confirmar actualización de la aplicación",
+          "warning": "Esto reinicia los servicios de Grengin. Si se actualiza la aplicación web, esta página necesitará una recarga completa. Habrá un breve tiempo de inactividad. Haz primero una instantánea o copia de seguridad.",
+          "typeToConfirm": "Escribe CONFIRM para continuar:",
+          "confirm": "Actualizar binarios"
+        },
+        "result": {
+          "reloadPrompt": "Se instaló una nueva versión de la aplicación. Recarga para usarla.",
+          "reload": "Recargar ahora",
+          "waitingForApi": "Esperando a que la API vuelva…",
+          "newVersion": "Grengin volvió, ahora ejecutando la v{version}."
+        }
       }
     }
   },
@@ -999,6 +1127,11 @@
       },
       "manage": {
         "description": "Configurar y gestionar proveedores SSO"
+      }
+    },
+    "system": {
+      "maintain": {
+        "description": "Reconfigurar el sistema host (dominio, TLS y actualizaciones de la aplicación)"
       }
     }
   },
@@ -1118,7 +1251,7 @@
     }
   },
   "systemMetrics": {
-    "title": "Métricas del sistema",
+    "title": "Sistema",
     "subtitle": "Estado en tiempo real del servidor, base de datos y contenedores",
     "refresh": "Actualizar",
     "autoRefresh": "Actualización automática",
@@ -1179,6 +1312,10 @@
     },
     "errors": {
       "fetchFailed": "Error al obtener métricas del sistema"
+    },
+    "tabs": {
+      "metrics": "Métricas",
+      "maintenance": "Mantenimiento"
     }
   }
 }
