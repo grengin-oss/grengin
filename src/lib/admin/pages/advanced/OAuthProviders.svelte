@@ -13,6 +13,7 @@
     getSSOProvider,
     updateSSOProvider,
     toggleSSOProviderStatus,
+    activateGrenginProxy,
   } from "../../../api/admin/SSOProviders.js";
   import type { UpdateSSOProviderPayload } from "../../../api/admin/SSOProviders.js";
   import type { SSOProvider, SSOProviderDetails } from "../../types.js";
@@ -53,6 +54,56 @@
   const canManageSsoProviders = $derived(
     permissionsStore.canManageSsoProviders()
   );
+
+  // ── Quick-setup (Grengin SSO proxy) ──────────────────────────────────────
+  let quickSetupProviderId = $state<string | null>(null);
+  let quickSetupDomainInput = $state("");
+  let quickSetupDomains = $state<string[]>([]);
+  let quickSetupTenantId = $state("");
+  let quickSetupIsAzure = $state(false);
+  let isQuickSetupSaving = $state(false);
+
+  function openQuickSetup(provider: SSOProvider) {
+    quickSetupProviderId = provider.id;
+    quickSetupIsAzure = provider.provider === "azure";
+    quickSetupDomains = [...provider.allowed_domains];
+    quickSetupTenantId = provider.tenant_id ?? "";
+    quickSetupDomainInput = "";
+  }
+
+  function closeQuickSetup() {
+    quickSetupProviderId = null;
+  }
+
+  function addQuickSetupDomain() {
+    const d = quickSetupDomainInput.trim().toLowerCase();
+    if (d && !quickSetupDomains.includes(d)) {
+      quickSetupDomains = [...quickSetupDomains, d];
+    }
+    quickSetupDomainInput = "";
+  }
+
+  function removeQuickSetupDomain(domain: string) {
+    quickSetupDomains = quickSetupDomains.filter((d) => d !== domain);
+  }
+
+  async function handleQuickSetup() {
+    if (!quickSetupProviderId || isQuickSetupSaving) return;
+    isQuickSetupSaving = true;
+    try {
+      await activateGrenginProxy(quickSetupProviderId, {
+        allowed_domains: quickSetupDomains,
+        tenant_id: quickSetupIsAzure ? quickSetupTenantId || undefined : undefined,
+      });
+      toast.success("SSO enabled via Grengin proxy.");
+      closeQuickSetup();
+      await loadProviders();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to activate Grengin SSO proxy.");
+    } finally {
+      isQuickSetupSaving = false;
+    }
+  }
 
   async function loadProviders() {
     if (isLoading) return;
@@ -346,6 +397,9 @@
                       loading="lazy"
                     />
                     <p class="provider-name__title">{provider.name}</p>
+                    {#if provider.use_grengin_proxy}
+                      <span class="proxy-badge" title="OAuth credentials managed by Grengin">Grengin Managed</span>
+                    {/if}
                   </div>
                 </td>
                 <td>
@@ -394,6 +448,16 @@
                 {#if canManageSsoProviders}
                   <td>
                     <div class="provider-actions">
+                      {#if provider.grengin_proxy_available && !provider.use_grengin_proxy}
+                        <button
+                          class="btn btn--quick-setup"
+                          type="button"
+                          title="Enable SSO in seconds — no OAuth app registration needed"
+                          onclick={() => openQuickSetup(provider)}
+                        >
+                          ⚡ Quick Setup
+                        </button>
+                      {/if}
                       <button
                         class="icon-btn"
                         type="button"
@@ -457,6 +521,68 @@
       </AdminTableCard>
     {/if}
   </section>
+
+  <!-- Quick Setup Modal (Grengin SSO Proxy) -->
+  <Modal title="Quick Setup — Grengin SSO" isOpen={quickSetupProviderId !== null} onclose={closeQuickSetup}>
+    {#snippet children()}
+      <div class="quick-setup-body">
+        <p class="quick-setup-intro">
+          Skip OAuth app registration entirely. Grengin's pre-registered client
+          handles the OAuth flow — just tell us which email domains should be
+          allowed to sign in.
+        </p>
+
+        {#if quickSetupIsAzure}
+          <div class="quick-setup-field">
+            <label for="qs-tenant-id">Azure Tenant ID</label>
+            <input
+              id="qs-tenant-id"
+              type="text"
+              placeholder="e.g. contoso.onmicrosoft.com or use 'common'"
+              bind:value={quickSetupTenantId}
+            />
+          </div>
+        {/if}
+
+        <div class="quick-setup-field">
+          <label for="qs-domain-input">Allowed email domains</label>
+          <div class="domain-input-row">
+            <input
+              id="qs-domain-input"
+              type="text"
+              placeholder="acme.com"
+              bind:value={quickSetupDomainInput}
+              onkeydown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addQuickSetupDomain(); } }}
+              onblur={addQuickSetupDomain}
+            />
+            <button class="btn btn--sm" type="button" onclick={addQuickSetupDomain}>Add</button>
+          </div>
+          {#if quickSetupDomains.length}
+            <div class="domain-chips">
+              {#each quickSetupDomains as domain}
+                <span class="domain-capsule">
+                  {domain}
+                  <button type="button" class="domain-remove" aria-label="Remove {domain}" onclick={() => removeQuickSetupDomain(domain)}>×</button>
+                </span>
+              {/each}
+            </div>
+          {/if}
+        </div>
+
+        <div class="quick-setup-actions">
+          <button class="btn" type="button" onclick={closeQuickSetup} disabled={isQuickSetupSaving}>Cancel</button>
+          <button
+            class="btn btn--primary"
+            type="button"
+            onclick={handleQuickSetup}
+            disabled={isQuickSetupSaving || quickSetupDomains.length === 0}
+          >
+            {isQuickSetupSaving ? "Enabling…" : "Enable with Grengin SSO"}
+          </button>
+        </div>
+      </div>
+    {/snippet}
+  </Modal>
 
   <!-- Delete Confirmation Modal -->
   <Modal title={$_("admin.settings.oauthProviders.modals.confirmDeleteTitle")} isOpen={isConfirmOpen} onclose={closeModal}>
@@ -675,6 +801,94 @@
 </div>
 
 <style>
+  .proxy-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--color-primary-subtle, #e8f0fe);
+    color: var(--color-primary, #1a73e8);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .btn--quick-setup {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--color-primary-subtle, #e8f0fe);
+    color: var(--color-primary, #1a73e8);
+    border: 1px solid var(--color-primary, #1a73e8);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn--quick-setup:hover {
+    background: var(--color-primary, #1a73e8);
+    color: #fff;
+  }
+
+  .quick-setup-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md, 16px);
+    padding: var(--space-md, 16px) 0;
+  }
+  .quick-setup-intro {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+  .quick-setup-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .quick-setup-field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .quick-setup-field input {
+    padding: 8px 10px;
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+  .domain-input-row {
+    display: flex;
+    gap: 8px;
+  }
+  .domain-input-row input {
+    flex: 1;
+  }
+  .domain-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .domain-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0 2px;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.6;
+  }
+  .domain-remove:hover { opacity: 1; }
+  .quick-setup-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .btn--sm {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
   .sso-providers-page {
     display: flex;
     flex-direction: column;

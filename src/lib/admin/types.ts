@@ -34,6 +34,8 @@ export interface SSOProvider {
   allowed_domains: string[];
   is_enabled: boolean;
   tenant_id?: string;
+  use_grengin_proxy: boolean;
+  grengin_proxy_available: boolean;
   created_at: string;
   updated_at: string;
 }

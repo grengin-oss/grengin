@@ -42,3 +42,18 @@ export async function deleteSSOProvider(providerId: string): Promise<void> {
     method: 'DELETE',
   });
 }
+
+export interface GrenginProxySetupPayload {
+  allowed_domains: string[];
+  tenant_id?: string;
+}
+
+export async function activateGrenginProxy(
+  providerId: string,
+  body: GrenginProxySetupPayload,
+): Promise<void> {
+  return request<void>(`/admin/sso-providers/${providerId}/quick-setup`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
