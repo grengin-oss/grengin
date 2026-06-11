@@ -6,6 +6,7 @@ export interface User {
   email: string;
   name?: string;
   role?: string;
+  roles?: string[];
   status?: string;
   department?: string;
   department_id?: string;
@@ -299,7 +300,7 @@ export interface Department {
   name: string;
   description: string;
   parent_id: string | null;
-  leader_ids: string[];
+  admin_ids: string[];
   path: string;
   depth: number;
   child_count: number;
@@ -330,14 +331,14 @@ export interface CreateDepartmentRequest {
   name: string;
   description: string;
   parent_id?: string | null;
-  leader_ids?: string[];
+  admin_ids?: string[];
 }
 
 export interface UpdateDepartmentRequest {
   name?: string;
   description?: string;
   parent_id?: string | null;
-  leader_ids?: string[];
+  admin_ids?: string[];
 }
 
 export interface SetBudgetRequest {
@@ -356,7 +357,7 @@ export interface DepartmentMember {
 }
 
 export interface DepartmentMembersResponse {
-  members: DepartmentMember[];
+  members: User[];
   total: number;
 }
 

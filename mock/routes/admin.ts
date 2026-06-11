@@ -157,7 +157,7 @@ router.get('/admin/departments', requireAuth, (req, res) => {
 
 // Create department
 router.post('/admin/departments', requireAuth, (req, res) => {
-  const { name, description, parent_id, leader_ids } = req.body
+  const { name, description, parent_id, admin_ids } = req.body
 
   if (!name) {
     return res.status(400).json({ detail: 'Name is required' })
@@ -178,7 +178,7 @@ router.post('/admin/departments', requireAuth, (req, res) => {
     parent_id: parent_id || null,
     path: generatePath(parent_id, name),
     depth: getDepth(parent_id),
-    leader_ids: leader_ids || [],
+    admin_ids: admin_ids || [],
     member_count: 0,
     total_member_count: 0,
     child_count: 0,
@@ -240,14 +240,14 @@ router.put('/admin/departments/:departmentId', requireAuth, (req, res) => {
     return res.status(404).json({ detail: 'Department not found' })
   }
 
-  const { name, description, leader_ids } = req.body
+  const { name, description, admin_ids } = req.body
   const now = new Date().toISOString()
 
   const updated: Department = {
     ...dept,
     ...(name !== undefined && { name, path: generatePath(dept.parent_id, name) }),
     ...(description !== undefined && { description }),
-    ...(leader_ids !== undefined && { leader_ids }),
+    ...(admin_ids !== undefined && { admin_ids }),
     updated_at: now,
   }
 
