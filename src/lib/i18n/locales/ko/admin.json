@@ -332,6 +332,10 @@
           "hideClientSecret": "클라이언트 시크릿 숨기기",
           "showClientSecret": "클라이언트 시크릿 보기",
           "removeDomain": "{domain} 도메인 제거"
+        },
+        "selfProvisioning": {
+          "label": "자체 프로비저닝",
+          "hint": "활성화하면 이 공급자를 통해 처음 로그인하는 사용자가 대기 상태로 자동 생성되며, 관리자 승인이 필요합니다."
         }
       }
     },

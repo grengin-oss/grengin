@@ -61,9 +61,13 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
       redirect: 'manual', // Don't follow redirects automatically
     });
 
-    // If we get a redirect response, navigate directly
+    // If we get a redirect response, navigate to the redirect target
     if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
-      window.location.href = url;
+      // When the API is same-origin (e.g. SSO proxy via Cloudflare Worker), the Location header
+      // is readable. Navigate there directly to avoid a second backend request that would
+      // generate a new state value and break SSO state validation.
+      const location = response.headers.get('Location');
+      window.location.href = location || url;
       return;
     }
 

@@ -4,6 +4,7 @@
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
+  import { API_BASE } from '../../../api/client.js';
 
   // UI State
   type CallbackStatus = 'processing' | 'success' | 'error';
@@ -14,37 +15,92 @@
   const REDIRECT_DELAY_ERROR = 3000; // ms
 
   /**
+   * Try SSO proxy fallback — frontend only.
+   * When sso.grengin.com completes auth server-side, the callback URL may have
+   * no standard code/state. Check all URL locations for a token the proxy may
+   * have passed directly (access_token, token, id_token — in query or hash).
+   */
+  async function trySSOProxyFallback(): Promise<boolean> {
+    const queryParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+
+    // Debug: log every param in the URL so we can see what the SSO proxy sent
+    console.debug('[AuthCallback] SSO proxy fallback — URL params:', {
+      search: window.location.search,
+      hash: window.location.hash,
+      query: Object.fromEntries(queryParams.entries()),
+      hash_params: Object.fromEntries(hashParams.entries()),
+    });
+
+    // Check all common token param names (query string first, then hash fragment)
+    const accessToken =
+      queryParams.get('access_token') ?? hashParams.get('access_token') ??
+      queryParams.get('token')        ?? hashParams.get('token')        ??
+      queryParams.get('id_token')     ?? hashParams.get('id_token');
+
+    if (!accessToken) return false;
+
+    try {
+      // SSO proxy passed a token directly — validate it and fetch user profile
+      const response = await fetch(`${API_BASE}/me`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (response.ok) {
+        const user = await response.json();
+        if (user?.id) {
+          setAuth(accessToken, '', user);
+          return true;
+        }
+      }
+    } catch {
+      // Network error — fall through to show normal error
+    }
+    return false;
+  }
+
+  /**
    * Process OAuth callback
-   * Extracts parameters, calls backend, and handles authentication
+   * Extracts parameters, calls backend, and handles authentication.
+   * Supports: standard OAuth code/state flow, SSO proxy token flow, and hash fragment params.
    */
   async function processOAuthCallback(): Promise<void> {
     const params = new URLSearchParams(window.location.search);
+    // Also check hash fragment (some SSO proxies use implicit flow)
+    const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
 
     // 1. Check for OAuth provider errors
-    const error = params.get('error');
+    const error = params.get('error') || hashParams.get('error');
     if (error) {
-      const errorDesc = params.get('error_description') || error;
+      const errorDesc = params.get('error_description') || hashParams.get('error_description') || error;
       toast.error(errorDesc);
       throw new Error(errorDesc);
     }
 
-    // 2. Validate required OAuth parameters
-    const state = params.get('state');
-    const code = params.get('code');
+    // 2. Extract OAuth parameters — check both query string and hash fragment
+    const state = params.get('state') || hashParams.get('state');
+    const code = params.get('code') || hashParams.get('code');
+
     if (!state || !code) {
+      // No standard code/state — try SSO proxy fallback (token in URL)
+      console.warn('[AuthCallback] No code/state in URL, attempting SSO proxy fallback...');
+      const ssoSuccess = await trySSOProxyFallback();
+      if (ssoSuccess) {
+        return; // Successfully authenticated via SSO proxy
+      }
+
+      // All fallbacks failed — throw so catch block sets status='error', not 'success'
       const message = $_('error.auth.missing_oauth_params');
-      toast.error(message);
-      redirectAfterError();
-      return;
+      throw new ApiError(400, message);
     }
 
     // 3. Retrieve provider from session storage
     const provider = sessionStorage.getItem('oauth_provider');
     if (!provider) {
       const message = $_('error.auth.oauth_provider_not_found');
-      toast.error(message);
-      redirectAfterError();
-      return;
+      throw new ApiError(400, message);
     }
 
     // 4. Call backend OAuth callback endpoint
