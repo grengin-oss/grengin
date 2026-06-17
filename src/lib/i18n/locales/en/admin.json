@@ -332,6 +332,10 @@
           "hideClientSecret": "Hide client secret",
           "showClientSecret": "Show client secret",
           "removeDomain": "Remove domain {domain}"
+        },
+        "selfProvisioning": {
+          "label": "Self Provisioning",
+          "hint": "When enabled, users signing in via this provider for the first time will be automatically created with a pending status, requiring admin approval."
         }
       }
     },

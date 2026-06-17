@@ -332,6 +332,10 @@
           "hideClientSecret": "Ocultar secreto de cliente",
           "showClientSecret": "Mostrar secreto de cliente",
           "removeDomain": "Quitar dominio {domain}"
+        },
+        "selfProvisioning": {
+          "label": "Aprovisionamiento automático",
+          "hint": "Cuando está habilitado, los usuarios que inicien sesión a través de este proveedor por primera vez se crearán automáticamente con estado pendiente, requiriendo aprobación del administrador."
         }
       }
     },

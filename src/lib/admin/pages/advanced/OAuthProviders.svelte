@@ -45,6 +45,7 @@
     client_secret: "",
     tenant_id: "",
     is_enabled: false,
+    allow_self_provisioning: false,
     allowed_domains: [] as string[],
   });
   let domainInput = $state("");
@@ -52,6 +53,7 @@
   let isTenantFieldAvailable = $state(false);
   let showClientSecret = $state(false);
   let editClientIdInputEl = $state<HTMLInputElement | null>(null);
+
   const canManageSsoProviders = $derived(
     permissionsStore.canManageSsoProviders()
   );
@@ -146,6 +148,7 @@
       client_secret: "",
       tenant_id: "",
       is_enabled: false,
+      allow_self_provisioning: false,
       allowed_domains: [],
     };
     domainInput = "";
@@ -165,6 +168,7 @@
         client_secret: data.client_secret_preview?.value ?? "",
         tenant_id: typeof data.tenant_id === 'string' ? data.tenant_id : data.tenant_id?.value ?? "",
         is_enabled: data.is_enabled,
+        allow_self_provisioning: (data as any).allow_self_provisioning ?? false,
         allowed_domains: data.allowed_domains || [],
       };
       tick().then(() => {
@@ -324,6 +328,7 @@
           domain.trim(),
         ),
         is_enabled: editForm.is_enabled,
+        jit_provisioning: editForm.allow_self_provisioning,
       };
 
       if (isTenantFieldAvailable) {
@@ -710,6 +715,41 @@
             </label>
           </div>
 
+          <div class="form-row">
+            <div class="switch-label-row">
+              <span class="switch-label switch-label--with-icon">
+                <svg class="provisioning-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <line x1="19" y1="8" x2="19" y2="14" />
+                  <line x1="22" y1="11" x2="16" y2="11" />
+                </svg>
+                {$_("admin.settings.oauthProviders.selfProvisioning.label")}
+              </span>
+              <button
+                type="button"
+                class="info-icon-btn"
+                title={$_("admin.settings.oauthProviders.selfProvisioning.hint")}
+                aria-label={$_("admin.settings.oauthProviders.selfProvisioning.hint")}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+              </button>
+            </div>
+            <label class="status-switch">
+              <input type="checkbox" bind:checked={editForm.allow_self_provisioning} />
+              <span class="status-slider"></span>
+              <span class="status-label">
+                {editForm.allow_self_provisioning
+                  ? $_("admin.settings.oauthProviders.common.enabled")
+                  : $_("admin.settings.oauthProviders.common.disabled")}
+              </span>
+            </label>
+          </div>
+
           <div class="confirm-actions">
             <button
               class="btn"
@@ -988,6 +1028,39 @@
   .empty-state p {
     margin: 0;
     color: var(--text-secondary);
+  }
+
+  .switch-label-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+  }
+
+  .switch-label--with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .provisioning-icon {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  .info-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: help;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+  }
+
+  .info-icon-btn:hover {
+    color: var(--text-primary);
   }
 
   .confirm-body {

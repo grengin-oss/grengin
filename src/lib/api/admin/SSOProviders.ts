@@ -32,6 +32,7 @@ export interface UpdateSSOProviderPayload {
   client_id: string;
   client_secret?: string;
   is_enabled: boolean;
+  jit_provisioning: boolean;
   tenant_id?: string;
   validation_token?: string;
 }
