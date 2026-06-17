@@ -96,9 +96,12 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
   }
 }
 
-export async function handleOAuthCallback(provider: string, code: string, state: string): Promise<LoginResponse> {
+export async function handleOAuthCallback(provider: string, code: string | null, state: string, assertion?: string | null): Promise<LoginResponse> {
   const url = `${API_BASE}/auth/${provider}/callback`;
-  const body = JSON.stringify({ code, state });
+  const payload: Record<string, string> = { state };
+  if (code) payload.code = code;
+  if (assertion) payload.assertion = assertion;
+  const body = JSON.stringify(payload);
 
   // Use POST with body to avoid URL length limits (Azure codes are very long)
   // Backend retrieves redirect_uri from stored state, so we only send code and state

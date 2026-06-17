@@ -82,19 +82,7 @@
     // 2. Extract OAuth parameters — check both query string and hash fragment
     const state = params.get('state') || hashParams.get('state');
     const code = params.get('code') || hashParams.get('code');
-
-    if (!state || !code) {
-      // No standard code/state — try SSO proxy fallback (token in URL)
-      console.warn('[AuthCallback] No code/state in URL, attempting SSO proxy fallback...');
-      const ssoSuccess = await trySSOProxyFallback();
-      if (ssoSuccess) {
-        return; // Successfully authenticated via SSO proxy
-      }
-
-      // All fallbacks failed — throw so catch block sets status='error', not 'success'
-      const message = $_('error.auth.missing_oauth_params');
-      throw new ApiError(400, message);
-    }
+    const assertion = params.get('assertion') || hashParams.get('assertion');
 
     // 3. Retrieve provider from session storage
     const provider = sessionStorage.getItem('oauth_provider');
@@ -103,8 +91,26 @@
       throw new ApiError(400, message);
     }
 
-    // 4. Call backend OAuth callback endpoint
-    const response = await handleOAuthCallback(provider, code, state);
+    let response: LoginResponse;
+
+    if (assertion && state) {
+      // SSO proxy flow: assertion JWT + state — forward directly to API callback
+      response = await handleOAuthCallback(provider, null, state, assertion);
+    } else if (code && state) {
+      // Standard OAuth code flow
+      response = await handleOAuthCallback(provider, code, state, null);
+    } else {
+      // No standard code/state and no assertion — try legacy SSO proxy fallback (token in URL)
+      console.warn('[AuthCallback] No code/state/assertion in URL, attempting SSO proxy fallback...');
+      const ssoSuccess = await trySSOProxyFallback();
+      if (ssoSuccess) {
+        return;
+      }
+      const message = $_('error.auth.missing_oauth_params');
+      throw new ApiError(400, message);
+    }
+
+    // 4. Call backend OAuth callback endpoint — already done above
 
     // 5. Validate response and store authentication
     if (!response?.accessToken || !response?.user) {
