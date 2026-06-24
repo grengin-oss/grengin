@@ -50,7 +50,7 @@ Launch a pre-built image on your cloud of choice — PostgreSQL, Nginx, Certbot,
 
 | Cloud | How to launch |
 |-------|--------------|
-| **AWS** | Find *Grengin* in [AWS Marketplace](https://aws.amazon.com/marketplace) — available for x86_64 and arm64 |
+| **AWS** | [Early access — grengin.com/aws](https://grengin.com/aws) — AMI available for x86_64 and arm64 |
 | **GCP** | Use image family `grengin` from project `almalinux-cloud` |
 | **Azure** | Available in Azure Marketplace via `grenginMarketplaceGallery` |
 | **DigitalOcean** | Coming soon on DigitalOcean Marketplace |
@@ -72,11 +72,10 @@ Then open `http://localhost` in your browser and complete the wizard.
 
 ### Option 3: Docker / Docker Compose
 
-Images are published to **GitHub Container Registry** and support both **`linux/amd64`** and **`linux/arm64`**:
+The API image is published to **GitHub Container Registry** and supports both **`linux/amd64`** and **`linux/arm64`**:
 
 ```bash
 docker pull ghcr.io/grengin-oss/grengin-api:latest
-docker pull ghcr.io/grengin-oss/webapp:latest
 ```
 
 Or use Compose:
@@ -94,12 +93,9 @@ One-click Railway template with pre-wired environment variables and managed Post
 
 ## Container Images
 
-All images are published to [GitHub Container Registry](https://github.com/orgs/grengin-oss/packages) with multi-arch manifests covering **`linux/amd64`** and **`linux/arm64`**.
-
 | Image | Registry | Architectures |
 |-------|----------|--------------|
 | Backend API | `ghcr.io/grengin-oss/grengin-api` | amd64, arm64 |
-| Frontend (nginx + static) | `ghcr.io/grengin-oss/webapp` | amd64, arm64 |
 | Installer bundle | `ghcr.io/perter-tech/grengin-image` | amd64, arm64 |
 
 Tags: `latest`, `v0.2.0`, `main-<sha>`, etc.
@@ -108,6 +104,13 @@ Tags: `latest`, `v0.2.0`, `main-<sha>`, etc.
 # Pin to a specific release
 docker pull ghcr.io/grengin-oss/grengin-api:v0.2.0
 ```
+
+The webapp is distributed as a pre-built release tarball — no Docker image needed:
+
+| Release | Link |
+|---------|------|
+| Latest stable | [github.com/grengin-oss/webapp/releases/latest](https://github.com/grengin-oss/webapp/releases/latest) |
+| Current release | [v0.2.64](https://github.com/grengin-oss/webapp/releases/tag/v0.2.64) |
 
 ---
 
@@ -135,7 +138,7 @@ Grengin publishes pre-built machine images for every major cloud using [HashiCor
 - Based on AlmaLinux OS 9 (official AMI owner `764336703387`)
 - Backed by **gp3 EBS**, IMDSv2-only
 - Built for both **`x86_64`** and **`arm64`** (Graviton)
-- Available on **AWS Marketplace** and can be copied to additional regions
+- **Early access** — request access at [grengin.com/aws](https://grengin.com/aws)
 
 ```
 # t3.small (x86_64) or t4g.small (arm64) recommended minimum
@@ -309,6 +312,10 @@ service/src/
 #### Recent Changes
 
 - ARM64 Docker image builds in CI (`ghcr.io/grengin-oss/grengin-api` — multi-arch)
+- Grengin SSO proxy — skip manual OAuth app registration for self-hosted instances
+- JIT (just-in-time) user provisioning on first SSO login
+- Email domain filtering via environment config
+- Webapp domain reconfiguration via API
 - Extensive `sqlx-mcp` tool integration (in-repo stdio MCP server)
 - AMI domain and certificate reconfiguration APIs
 - SSO credentials validation API
@@ -318,7 +325,7 @@ service/src/
 
 ### `webapp` — Frontend (`webapp`)
 
-> **Version**: 0.2.0 &nbsp;|&nbsp; **Framework**: Svelte 5 &nbsp;|&nbsp; **Language**: TypeScript &nbsp;|&nbsp; **Desktop + Mobile**: Tauri 2 &nbsp;|&nbsp; **Charts**: Vega-Lite
+> **Version**: 0.2.64 &nbsp;|&nbsp; **Release**: [github.com/grengin-oss/webapp/releases/latest](https://github.com/grengin-oss/webapp/releases/latest) &nbsp;|&nbsp; **Framework**: Svelte 5 &nbsp;|&nbsp; **Language**: TypeScript &nbsp;|&nbsp; **Desktop + Mobile**: Tauri 2 &nbsp;|&nbsp; **Charts**: Vega-Lite
 
 A responsive single-page application compiled as static files for web deployment, and bundled into a native desktop app via Tauri. Uses Svelte 5's fine-grained reactivity (`$state`, `$derived`).
 
