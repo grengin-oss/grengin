@@ -1,6 +1,6 @@
-import type { StreamEvent } from '../types/chat';
+import type { StreamEvent, ConversationDetail, ConversationList, BudgetWarningMessage, McpAuthRequest } from '../types/chat';
 
-import { API_BASE, request } from './client';
+import { API_BASE, request, ApiError, parseErrorDetail } from './client';
 import { getAccessToken } from '../features/auth';
 
 export interface SendMessageOptions {
@@ -8,46 +8,113 @@ export interface SendMessageOptions {
   conversationId?: string;
   provider?: string;
   modelName?: string;
-  files?: File[];
-  onToken?: (token: string) => void;
-  onStart?: (data: any) => void;
-  onTitle?: (title: string) => void;
+  uploadedFiles?: UploadedFile[];
+  webSearch?: boolean;
+  selectedMcpServers?: string[];
+  onConversationInitialized?: (data: {newConversationId: string}) => void;
+  onStreamingStart?: (messageId: string) => void;
+  onResponseDelta?: (token: string) => void;
+  onBudgetWarning?: (data: BudgetWarningMessage) => void;
+  onToolCall?: (toolCall: any) => void;
+  onToolResult?: (toolResult: any) => void;
+  onMcpAuthRequired?: (authRequest: McpAuthRequest) => void;
   onDone?: (data: any) => void;
-  onError?: (error: string) => void;
+  onError?: (error: ApiError | Error) => void;
+}
+
+export interface UploadedFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+}
+
+export interface UploadDocumentOptions {
+  file: File;
+  provider?: string;
+}
+
+export async function getChatMcpServers(): Promise<{servers: any[]}> {
+  return request<{servers: any[]}>('/mcp-servers', {});
+}
+
+export async function uploadDocument(options: UploadDocumentOptions): Promise<UploadedFile> {
+  const { file, provider = 'openai' } = options;
+  
+  const token = getAccessToken();
+  if (!token) {
+    throw new ApiError(401, {
+      type: 'rich',
+      code: 401,
+      description: 'No authentication token available',
+      solution: 'Please log in to continue',
+      description_key: 'error.auth.no_token.description',
+      solution_key: 'error.auth.no_token.solution',
+      params: {},
+      external_code: null,
+    });
+  }
+
+  const base64 = await fileToBase64(file);
+  
+  const response = await fetch(`${API_BASE}/files`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      attachment: {
+        file: base64,
+        name: file.name,
+        type: file.type,
+      },
+      provider,
+    }),
+  });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      const detail = parseErrorDetail(body);
+      const apiError = new ApiError(response.status, detail);
+      throw apiError;
+    }
+
+  const data = await response.json();
+  return {
+    id: data.id || data.file_id,
+    name: data.name,
+    size: data.size || 0,
+    type: data.type,
+  };
 }
 
 /**
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, files, onToken, onStart, onTitle, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onMcpAuthRequired, onDone, onError } = options;
 
   try {
     const token = getAccessToken();
     if (!token) {
-      throw new Error('No authentication token available');
+      throw new ApiError(401, {
+        type: 'rich',
+        code: 401,
+        description: 'No authentication token available',
+        solution: 'Please log in to continue',
+        description_key: 'error.auth.no_token.description',
+        solution_key: 'error.auth.no_token.solution',
+        params: {},
+        external_code: null,
+      });
     }
-
-    // Convert files to base64 if present
-    const processedFiles = files ? await Promise.all(
-      files.map(async (file) => {
-        const base64 = await fileToBase64(file);
-        return {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          data: base64
-        };
-      })
-    ) : [];
 
     // Build the correct API URL
     const streamUrl = conversationId 
       ? `${API_BASE}/chat/stream/${conversationId}`
       : `${API_BASE}/chat/stream`;
     
-    console.log('Using stream URL:', streamUrl);
-
     let response = await fetch(streamUrl, {
       method: 'POST',
       headers: {
@@ -56,22 +123,21 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
       },
       body: JSON.stringify({
         provider: provider || 'openai',
-        modelName: modelName || 'gpt-3.5-turbo',
+        model_name: modelName || 'gpt-5.2',
         config: {},
-        temperature: 0.1,
-        webSearch: false,
-        selectedTools: [],
-        message: {
+        web_search: webSearch || false,
+        selected_tools: [],
+        selected_mcp_servers: selectedMcpServers || [],
+        messages: [{
           role: 'user',
           content: message,
-          files: processedFiles,
-        },
+          files: uploadedFiles || [],
+        }],
       }),
     });
 
     // Handle token expiration for streaming requests
     if (response.status === 401) {
-      console.log('Streaming request: Token expired, attempting refresh...');
       // Try to refresh token using the same logic as client.ts
       const refreshToken = localStorage.getItem('grengin_refresh_token');
       if (refreshToken) {
@@ -85,73 +151,112 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
           if (refreshResponse.ok) {
             const data = await refreshResponse.json();
             // Update tokens in storage
-            localStorage.setItem('grengin_access_token', data.access_token);
+            localStorage.setItem('grengin_access_token', data.accessToken);
             localStorage.setItem('grengin_refresh_token', data.refresh_token);
             localStorage.setItem('grengin_user', JSON.stringify(data.user));
-            
-            console.log('Streaming request: Token refreshed, retrying...');
+
             // Retry the streaming request with new token
-            response = await fetch(`${API_BASE}/chat/stream`, {
+            response = await fetch(streamUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${data.access_token}`,
+                'Authorization': `Bearer ${data.accessToken}`,
               },
               body: JSON.stringify({
                 provider: provider || 'openai',
-                modelName: modelName || 'gpt-3.5-turbo',
+                model_name: modelName || 'gpt-5.2',
                 config: {},
-                temperature: 0.1,
-                webSearch: false,
-                selectedTools: [],
-                message: {
+                web_search: webSearch || false,
+                selected_tools: [],
+                selected_mcp_servers: selectedMcpServers || [],
+                messages: [{
                   role: 'user',
                   content: message,
-                  files: processedFiles,
-                },
+                  files: uploadedFiles || [],
+                }],
               }),
             });
           } else {
-            console.log('Streaming request: Refresh failed, redirecting...');
             // Clear auth and redirect
             localStorage.removeItem('grengin_access_token');
             localStorage.removeItem('grengin_refresh_token');
             localStorage.removeItem('grengin_user');
             window.location.href = '/';
-            return;
+            // Throw error to prevent further execution
+            throw new ApiError(401, {
+              type: 'rich',
+              code: 401,
+              description: 'Session expired. Please log in again.',
+              solution: 'Please log in again to continue using the application',
+              description_key: 'error.auth.invalid_token.description',
+              solution_key: 'error.auth.invalid_token.solution',
+              params: {},
+              external_code: null,
+            });
           }
         } catch (error) {
-          console.log('Streaming request: Refresh error, redirecting...');
           // Clear auth and redirect
           localStorage.removeItem('grengin_access_token');
           localStorage.removeItem('grengin_refresh_token');
           localStorage.removeItem('grengin_user');
           window.location.href = '/';
-          return;
+          // Throw error to prevent further execution
+          throw new ApiError(401, {
+            type: 'rich',
+            code: 401,
+            description: 'Session expired. Please log in again.',
+            solution: 'Please log in again to continue using the application',
+            description_key: 'error.auth.invalid_token.description',
+            solution_key: 'error.auth.invalid_token.solution',
+            params: {},
+            external_code: null,
+          });
         }
       } else {
-        console.log('Streaming request: No refresh token, redirecting...');
         // Clear auth and redirect
         localStorage.removeItem('grengin_access_token');
         localStorage.removeItem('grengin_refresh_token');
         localStorage.removeItem('grengin_user');
         window.location.href = '/';
-        return;
+        // Throw error to prevent further execution
+        throw new ApiError(401, {
+          type: 'rich',
+          code: 401,
+          description: 'Session expired. Please log in again.',
+          solution: 'Please log in again to continue using the application',
+          description_key: 'error.auth.invalid_token.description',
+          solution_key: 'error.auth.invalid_token.solution',
+          params: {},
+          external_code: null,
+        });
       }
     }
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const body = await response.json().catch(() => null);
+      const detail = parseErrorDetail(body);
+      throw new ApiError(response.status, detail);
     }
 
     const reader = response.body?.getReader();
     if (!reader) {
-      throw new Error('No response body');
+      throw new ApiError(500, {
+        type: 'rich',
+        code: 500,
+        description: 'No response body received',
+        solution: 'The server did not return any data. Please try again',
+        description_key: 'error.request.no_response_body.description',
+        solution_key: 'error.request.no_response_body.solution',
+        params: {},
+        external_code: null,
+      });
     }
 
     const decoder = new TextDecoder();
     let buffer = '';
-    let isFirstChunk = true;
+
+    // Accumulate tool call input_text chunks by tool_id
+    const toolCallAccumulator = new Map<string, { tool_name: string; tool_id: string; kind: string; input_text: string; input?: { type: string; value: Record<string, unknown> }; status: string }>();
 
     while (true) {
       const { done, value } = await reader.read();
@@ -168,161 +273,221 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         const dataMatch = line.match(/^data: (.+)$/m);
 
         if (eventMatch && dataMatch) {
-          const event = eventMatch[1];
-          const dataStr = dataMatch[1];
+          const raw = eventMatch[1];
+          const event = raw.startsWith('"') ? JSON.parse(raw) : raw;
+          const data = JSON.parse(dataMatch[1]);
           
-          // Check for stream completion signal
-          if (dataStr === '[DONE]') {
-            onDone?.({});
-            break;
-          }
-          
-          const data = JSON.parse(dataStr);
-
           switch (event) {
-            case 'start':
-              onStart?.(data);
+            case 'conversation':
+              onConversationInitialized?.({newConversationId: data.id});
               break;
-            case 'chunk':
-              if (data) {
-                // Handle first chunk - extract conversation ID and call onStart
-                if (isFirstChunk) {
-                  console.log('First chunk detected:', data);
-                  isFirstChunk = false;
-                  
-                  // Call onStart with conversation data if available
-                  if (data.id && onStart) {
-                    onStart({ conversation_id: data.id });
-                  }
-                }
-                
-                onToken?.(data.content);
+            case 'message_start':
+              onStreamingStart?.(data.message_id);
+              break;
+            case 'budget_warning':
+              onBudgetWarning?.(data);
+              break;
+            case 'delta':
+              if (data) {                
+                onResponseDelta?.(data.text);
               }
               break;
-            case 'set_title':
-              onTitle?.(data.title);
+            case 'tool_call':
+              if (data?.tool_call) {
+                const tc = data.tool_call;
+                const existing = toolCallAccumulator.get(tc.tool_id);
+
+                if (existing) {
+                  if (tc.input_text) {
+                    existing.input_text += tc.input_text;
+                  }
+                  if (tc.input) {
+                    existing.input = tc.input;
+                    existing.status = 'running';
+                  }
+                  onToolCall?.({ ...existing });
+                } else {
+                  const newToolCall = {
+                    tool_name: tc.tool_name,
+                    tool_id: tc.tool_id,
+                    kind: tc.kind,
+                    input_text: tc.input_text || '',
+                    input: tc.input,
+                    status: tc.input ? 'running' : 'pending',
+                  };
+                  toolCallAccumulator.set(tc.tool_id, newToolCall);
+                  onToolCall?.(newToolCall);
+                }
+              }
               break;
-            case '[DONE]':
+            case 'tool_result':
+              if (data?.tool_result) {
+                onToolResult?.(data.tool_result);
+              }
+              break;
+            case 'mcp_oauth_required':
+              if (data) {
+                onMcpAuthRequired?.({
+                  server_id: data.server_id,
+                  server_name: data.server_name,
+                  tool_name: data.tool_name,
+                  authorization_url: data.authorization_url,
+                  scopes: data.scopes,
+                  status: 'pending',
+                });
+              }
+              break;
+            case 'message_end':
+              // Handle tokens usage
+              break;
+            case 'done':
               onDone?.(data);
               break;
             case 'error':
-              onError?.(data.message || 'An error occurred');
+              // Parse the error detail and create an ApiError
+              const errorDetail = parseErrorDetail(data);
+              const streamError = new ApiError(response.status || 500, errorDetail);
+              onError?.(streamError);
               break;
           }
         }
       }
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
-    onError?.(errorMessage);
+    // Convert all errors to ApiError for consistent handling
+    if (error instanceof ApiError) {
+      onError?.(error);
+    } else if (error instanceof Error) {
+      // Convert generic errors to ApiError
+      const apiError = new ApiError(500, error.message);
+      onError?.(apiError);
+    } else {
+      // Fallback for unknown error types
+      const apiError = new ApiError(500, {
+        type: 'rich',
+        code: 500,
+        description: 'Failed to send message',
+        solution: 'Unable to send your message. Please check your connection and try again',
+        description_key: 'error.request.send_message_failed.description',
+        solution_key: 'error.request.send_message_failed.solution',
+        params: {},
+        external_code: null,
+      });
+      onError?.(apiError);
+    }
   }
 }
 
 /**
  * Fetch conversation history
  */
-export async function getConversation(conversationId: string) {
-  try {
-    const token = getAccessToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    const response = await fetch(`${API_BASE}/chat/${conversationId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Failed to fetch conversation:', error);
-    throw error;
-  }
+export async function getConversation(conversationId: string): Promise<ConversationDetail> {
+  return request<ConversationDetail>(`/chat/${conversationId}`);
 }
 
 /**
  * List all conversations
  */
-export async function listConversations() {
-  try {
-    const token = getAccessToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    const response = await fetch(`${API_BASE}/chat`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Failed to fetch conversations:', error);
-    throw error;
+export async function listConversations(params?: { offset?: number; limit?: number, search?: string }): Promise<ConversationList> {
+  const searchParams = new URLSearchParams();
+  if (params?.offset !== undefined) {
+    searchParams.set('offset', String(params.offset));
   }
+  if (params?.limit !== undefined) {
+    searchParams.set('limit', String(params.limit));
+  }
+  if (params?.search !== undefined && params.search.trim()) {
+    searchParams.set('search', params.search);
+  }
+  const query = searchParams.toString();
+  return request<ConversationList>(`/chat${query ? `?${query}` : ''}`);
 }
 
 /**
  * Delete a conversation
  */
-export async function deleteConversation(conversationId: string) {
-  try {
-    const token = getAccessToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    const response = await fetch(`${API_BASE}/chat/${conversationId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-  } catch (error) {
-    console.error('Failed to delete conversation:', error);
-    throw error;
-  }
+export async function deleteConversation(conversationId: string): Promise<void> {
+  return request<void>(`/chat/${conversationId}`, { method: 'DELETE' });
 }
 
 /**
  * Search conversations
  */
-export async function searchConversations(query: string) {
+export async function searchConversations(query: string): Promise<ConversationList> {
+  return request<ConversationList>(`/chat/search?search=${encodeURIComponent(query)}`);
+}
+
+/**
+ * Archive a conversation
+ */
+export async function archiveConversation(conversationId: string, title: string): Promise<ConversationDetail> {
   try {
     const token = getAccessToken();
     if (!token) {
-      throw new Error('No authentication token available');
+      throw new ApiError(401, {
+        type: 'rich',
+        code: 401,
+        description: 'No authentication token available',
+        solution: 'Please log in to continue',
+        description_key: 'error.auth.no_token.description',
+        solution_key: 'error.auth.no_token.solution',
+        params: {},
+        external_code: null,
+      });
     }
 
-    const response = await fetch(`${API_BASE}/chat/search?search=${encodeURIComponent(query)}`, {
+    const response = await fetch(`${API_BASE}/chat/${conversationId}`, {
+      method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        archived: true,
+        title: title
+      }),
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const body = await response.json().catch(() => null);
+      const detail = parseErrorDetail(body);
+      throw new ApiError(response.status, detail);
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Failed to search conversations:', error);
-    throw error;
+    // Re-throw ApiError as-is, convert others
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    if (error instanceof Error) {
+      throw new ApiError(500, error.message);
+    } else {
+      throw new ApiError(500, {
+        type: 'rich',
+        code: 500,
+        description: 'Failed to archive conversation',
+        solution: 'Unable to archive the conversation. Please try again',
+        description_key: 'error.request.archive_conversation_failed.description',
+        solution_key: 'error.request.archive_conversation_failed.solution',
+        params: {},
+        external_code: null,
+      });
+    }
   }
+}
+
+/**
+ * Rename a conversation title
+ */
+export async function renameConversation(
+  conversationId: string,
+  payload: { title: string; archived: boolean }
+): Promise<ConversationDetail> {
+  return request<ConversationDetail>(`/chat/${conversationId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
 }
 
 /**

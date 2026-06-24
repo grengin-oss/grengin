@@ -1,0 +1,68 @@
+import { request } from '../client.js';
+import type { AnalyticsOverview, AnalyticsTimeseries, UserAnalyticsResponse, DepartmentAnalyticsResponse } from '../../admin/types.js';
+
+export interface GetAnalyticsOverviewParams {
+  start_date: string;
+  end_date: string;
+}
+
+export interface GetAnalyticsTimeseriesParams {
+  start_date: string;
+  end_date: string;
+  granularity: 'hour' | 'day' | 'week' | 'month';
+}
+
+function buildQueryString(params: Record<string, string | number | boolean | undefined>): string {
+  const queryParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) {
+      queryParams.set(key, String(value));
+    }
+  }
+  const query = queryParams.toString();
+  return query ? `?${query}` : '';
+}
+
+export async function getAnalyticsOverview(params: GetAnalyticsOverviewParams): Promise<AnalyticsOverview> {
+  return request<AnalyticsOverview>(`/admin/analytics/overview${buildQueryString(params as unknown as Record<string, string | number | boolean | undefined>)}`);
+}
+
+export async function getAnalyticsTimeseries(params: GetAnalyticsTimeseriesParams): Promise<AnalyticsTimeseries> {
+  return request<AnalyticsTimeseries>(`/admin/analytics/timeseries${buildQueryString(params as unknown as Record<string, string | number | boolean | undefined>)}`);
+}
+
+export interface GetUserAnalyticsParams {
+  start_date: string;
+  end_date: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+  sort_by?:
+    | 'name'
+    | 'email'
+    | 'totalRequests'
+    | 'totalTokens'
+    | 'totalCost'
+    | 'averageLatency'
+    | 'lastActivity';
+  order?: 'asc' | 'desc';
+}
+
+export async function getUserAnalytics(params: GetUserAnalyticsParams): Promise<UserAnalyticsResponse> {
+  return request<UserAnalyticsResponse>(`/me/analytics/administered-departments/users${buildQueryString(params as unknown as Record<string, string | number | boolean | undefined>)}`);
+}
+
+export interface GetDepartmentAnalyticsParams {
+  start_date: string;
+  end_date: string;
+  offset?: number;
+  limit?: number;
+  search?: string;
+  /** `name` = sort by department name; `updated_at` = default when name sort is cleared */
+  sort?: 'name' | 'updated_at';
+  ascending?: boolean;
+}
+
+export async function getDepartmentAnalytics(params: GetDepartmentAnalyticsParams): Promise<DepartmentAnalyticsResponse> {
+  return request<DepartmentAnalyticsResponse>(`/me/analytics/administered-departments${buildQueryString(params as unknown as Record<string, string | number | boolean | undefined>)}`);
+}

@@ -2,7 +2,9 @@
 
 Version 1.0 - November 2025
 
-Copyright (c) 2025 Grengin Project
+Copyright (c) 2025-2026 Perter Technology Solutions Private Limited
+
+Grengin is a product of Perter Technology Solutions Private Limited.
 
 ## Preamble
 
@@ -155,3 +157,5 @@ This License shall be governed by the laws of [Your Jurisdiction], without regar
 - For general inquiries: hello@grengin.com
 - License FAQ: [LICENSE_FAQ.md](LICENSE_FAQ.md)
 - Commercial licensing: https://grengin.com/pricing
+
+For commercial licensing inquiries, contact Perter Technology Solutions Private Limited at licensing@grengin.com.

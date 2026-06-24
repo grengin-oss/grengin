@@ -1,0 +1,126 @@
+{
+  "userSettings": {
+    "title": "Definições",
+    "subtitle": "Gerir as suas preferências pessoais e integrações ligadas.",
+    "tabs": {
+      "integrations": "Integrações",
+      "integrationsAria": "Integrações ligadas",
+      "promptSettings": "Definições de Prompt",
+      "promptSettingsAria": "Gerir as suas preferências de prompt"
+    }
+  },
+  "userPromptSettings": {
+    "loading": "A carregar definições de prompt...",
+    "failedToLoad": "Falha ao carregar definições de prompt",
+    "activePrompt": "Prompt Ativo",
+    "source": {
+      "label": "Fonte",
+      "user_custom": "Prompt Personalizado",
+      "department": "Padrão do Departamento",
+      "department_default": "Padrão do Departamento",
+      "system_default": "Padrão do Sistema"
+    },
+    "variables": {
+      "title": "Variáveis Disponíveis",
+      "empty": "Nenhuma variável disponível",
+      "insertHint": "Clique numa variável para inseri-la no editor",
+      "copied": "Variável inserida"
+    },
+    "editor": {
+      "title": "Editor de Prompt Personalizado",
+      "placeholder": "Escreva o seu prompt de sistema personalizado aqui. Use variáveis como {{nome_variavel}} para inserir valores dinâmicos...",
+      "charCount": "{count} caracteres",
+      "preview": "Pré-visualização",
+      "edit": "Editar",
+      "previewTitle": "Pré-visualização do Prompt",
+      "previewEmpty": "Nada para pré-visualizar. Comece a escrever o seu prompt personalizado acima."
+    },
+    "actions": {
+      "save": "Guardar Prompt",
+      "saving": "A guardar...",
+      "resetToDefault": "Repor Predefinição",
+      "resetting": "A repor...",
+      "resetConfirmTitle": "Repor Predefinição?",
+      "resetConfirmMessage": "Isto irá remover o seu prompt personalizado e reverter para o padrão do departamento ou do sistema. Esta ação não pode ser desfeita.",
+      "resetConfirmButton": "Sim, Repor",
+      "cancel": "Cancelar"
+    },
+    "messages": {
+      "saved": "Prompt personalizado guardado com sucesso",
+      "failedToSave": "Falha ao guardar prompt",
+      "reset": "Prompt reposto para predefinição",
+      "failedToReset": "Falha ao repor prompt",
+      "noChanges": "Sem alterações para guardar"
+    },
+    "feedback": {
+      "title": "Feedback do Prompt",
+      "subtitle": "Ajude-nos a melhorar avaliando a eficácia do prompt atual",
+      "thumbsUp": "Este prompt funciona bem",
+      "thumbsDown": "Este prompt precisa de melhorias",
+      "commentPlaceholder": "Opcional: Conte-nos mais sobre a sua experiência com este prompt...",
+      "submit": "Enviar Feedback",
+      "submitting": "A enviar...",
+      "submitted": "Obrigado pelo seu feedback!",
+      "failedToSubmit": "Falha ao enviar feedback",
+      "ratingRequired": "Por favor selecione uma avaliação antes de enviar"
+    }
+  },
+  "userIntegrations": {
+    "loading": "A carregar integrações...",
+    "failedToLoad": "Falha ao carregar integrações",
+    "failedToGetAuthUrl": "Falha ao obter o URL de autorização",
+    "failedToConnect": "Falha ao ligar a {name}",
+    "failedToDisconnect": "Falha ao desligar {name}",
+    "disconnected": "{name} desligado",
+    "stats": {
+      "connected": "Ligado",
+      "available": "Disponível",
+      "total": "Total"
+    },
+    "filters": {
+      "all": "Todas",
+      "connected": "Ligadas",
+      "available": "Disponíveis",
+      "filterAria": "Filtrar integrações"
+    },
+    "empty": {
+      "title": "Nenhuma integração encontrada",
+      "noConnected": "Ainda não ligou nenhuma integração.",
+      "noAvailable": "Não há integrações disponíveis para ligar de momento.",
+      "noConfigured": "A sua organização não configurou integrações.",
+      "viewAll": "Ver todas as integrações"
+    },
+    "columns": {
+      "name": "Nome",
+      "transport": "Transporte",
+      "status": "Estado",
+      "tools": "Ferramentas",
+      "connectedAt": "Ligado",
+      "actions": "Ações"
+    },
+    "status": {
+      "connected": "Conectado",
+      "disconnected": "Desconectado",
+      "expired": "Expirado",
+      "error": "Erro",
+      "expiredWarning": "A conexão expirou. Reconecte para atualizar seu acesso."
+    },
+    "actions": {
+      "connect": "Conectar",
+      "connecting": "Conectando...",
+      "disconnect": "Desconectar",
+      "reconnect": "Reconectar",
+      "disconnectConfirm": "Desconectar?",
+      "yes": "Sim",
+      "no": "Não",
+      "viewTools": "Ver ferramentas"
+    },
+    "connectedSince": "Conectado desde {date}",
+    "toolCount": "{count} {count, plural, one {ferramenta} other {ferramentas}}",
+    "tools": {
+      "modalTitle": "{name} — Ferramentas",
+      "loading": "Carregando ferramentas...",
+      "empty": "Nenhuma ferramenta disponível para este servidor."
+    }
+  }
+}

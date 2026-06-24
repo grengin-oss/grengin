@@ -1,9 +1,15 @@
+/* Syntax highlighting themes for code blocks (highlight.js).
+   Loaded statically and gated by prefers-color-scheme so the theme
+   always matches the page palette — no JS race, no Windows quirks. */
+@import 'highlight.js/styles/github-dark.css' screen and (prefers-color-scheme: dark);
+@import 'highlight.js/styles/github.css' screen and (prefers-color-scheme: light);
+
 /* ===== Root tokens ===== */
 :root {
-  /* Typography & rendering - Grengin brand fonts */
-  font-family: 'Coustard', -apple-system, BlinkMacSystemFont, system-ui, serif;
+  /* Typography & rendering - system fonts */
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   line-height: 1.5;
-  font-weight: 400;
+  font-weight: 500;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -47,8 +53,10 @@
   --radius-md: 1rem;
   --radius-lg: 1.25rem;
   --radius-xl: 1.5rem;
+  --radius-full: 9999px;
 
   /* Spacing system - consistent padding/margins */
+  --space-2xs: 0.125rem;
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 0.75rem;
@@ -82,6 +90,14 @@
   --text-primary: rgba(255, 255, 255, 0.95);
   --text-secondary: rgba(255, 255, 255, 0.7);
 
+  /* Content surfaces */
+  --surface-elevated: #16181f;
+  --surface-card: #12141a;
+  --surface-card-interactive: #181b22;
+  --surface-subtle: #0f1115;
+  --surface-accent: color-mix(in oklab, var(--brand) 12%, #101218);
+  --surface-border: rgba(255, 255, 255, 0.08);
+
   /* Links/buttons */
   --link-color: var(--brand);
   --link-hover: var(--brand-hover);
@@ -108,7 +124,14 @@
   :root {
     --bg-primary: #fcfcfc;
     --text-primary: #1a1d23;
-    --text-secondary: #4b5563;
+    --text-secondary: #111827;
+
+    --surface-elevated: #ffffff;
+    --surface-card: #f6f7fb;
+    --surface-card-interactive: #ffffff;
+    --surface-subtle: #f1f5f9;
+    --surface-accent: color-mix(in oklab, var(--brand) 8%, #ffffff);
+    --surface-border: #e5e7eb;
 
     --link-color: var(--brand);
     --link-hover: color-mix(in oklab, var(--brand) 80%, black);
@@ -158,6 +181,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Reserve scrollbar space so 100vw doesn't cause horizontal overflow when vertical scrollbar appears */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -176,6 +201,18 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   position: relative;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ===== Links ===== */
@@ -526,6 +563,47 @@ button:focus-visible, .btn:focus-visible {
     0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
 }
 
+/* ===== Underline Tabs ===== */
+.tabs {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-2xl);
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: var(--space-md) var(--space-lg);
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  outline: none;
+  position: relative;
+}
+
+.tab:hover:not(.tab--active) {
+  color: var(--text-primary);
+  background: rgba(var(--glass-tint), 0.03);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.tab--active,
+.tab[aria-selected="true"] {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
 /* ===== Tag Pills (for labels, badges) ===== */
 .tag {
   display: inline-flex;
@@ -568,13 +646,25 @@ button:focus-visible, .btn:focus-visible {
 }
 
 .tag--danger {
-  background: color-mix(in oklab, var(--glass-bg-dark) 90%, var(--danger-surface));
-  border-color: color-mix(in oklab, var(--brand-red) 15%, transparent);
+  background: color-mix(in oklab, var(--glass-bg-dark) 50%, var(--danger-surface));
+  border-color: color-mix(in oklab, var(--brand-red) 50%, transparent);
   color: var(--brand-red);
   box-shadow:
     var(--glass-highlight),
     var(--glass-edge-glow),
     0 0.125rem 0.5rem rgba(var(--brand-red-rgb), 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tag--danger {
+    background: color-mix(in oklab, #FFD4D4 90%, var(--danger-surface));
+    color: color-mix(in oklab, #520000 90%, var(--brand-red) 10%);
+    border: 1px solid color-mix(in oklab, #420000 90%, var(--brand-red) 10%);
+    box-shadow:
+      var(--glass-highlight),
+      0 0 0 1px color-mix(in oklab, #712020 35%, transparent),
+      0 0.125rem 0.5rem rgba(var(--brand-red-rgb), 0.12);
+  }
 }
 
 /* Removable tag with close button */
@@ -625,6 +715,64 @@ button:focus-visible, .btn:focus-visible {
     0 1.25rem 3.5rem rgba(0, 0, 0, 0.18);
 }
 
+/* ===== Menu Item (clickable list items) ===== */
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.menu-item:hover {
+  background: var(--btn-tertiary);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.menu-item svg {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.menu-item:hover svg {
+  color: var(--text-primary);
+}
+
+/* Selected state */
+.menu-item.selected {
+  background: color-mix(in oklab, var(--brand) 20%, transparent);
+  color: var(--brand);
+  font-weight: 500;
+}
+
+.menu-item.selected:hover {
+  background: color-mix(in oklab, var(--brand) 25%, transparent);
+}
+
+/* Danger variant (for delete actions) */
+.menu-item--danger:hover {
+  background: var(--danger-surface);
+  color: var(--brand-red);
+}
+
+.menu-item--danger:hover svg {
+  color: var(--brand-red);
+}
+
 /* ===== Form Components ===== */
 input, textarea, select {
   width: 100%;
@@ -660,7 +808,7 @@ input::placeholder, textarea::placeholder {
 
 /* ===== Typography ===== */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-weight: 700;
   line-height: 1.2;
   color: var(--text-primary);
@@ -756,4 +904,142 @@ pre {
       0 0.375rem 1rem rgba(0, 0, 0, 0.25),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
+}
+
+/* ===========================================================================
+ * Right-to-Left (RTL) language support
+ *
+ * The app's primary direction is controlled by the `dir` attribute on the
+ * <html> element (managed by `applyDocumentDirection` in src/lib/i18n).
+ *
+ * Strategy:
+ *   1. Most spacing/borders use *logical* properties (margin-inline-start,
+ *      border-inline-end, inset-inline-start, padding-inline, …) so they
+ *      mirror automatically under `dir="rtl"`.
+ *   2. The few rules below patch components that still rely on physical
+ *      left/right offsets, transforms, or directional iconography.
+ *   3. Bidirectional (mixed RTL/LTR) text in chat messages is rendered with
+ *      `unicode-bidi: plaintext`, which lets each paragraph pick its own
+ *      direction from its first strong character — the standard solution
+ *      for chat content where the UI direction may differ from the message
+ *      direction (e.g. an Arabic UI showing an English code snippet).
+ * ========================================================================= */
+
+/* Default body alignment follows direction. */
+html[dir="rtl"] body {
+  text-align: right;
+}
+
+/* Buttons and `.btn` elements default to left-aligned text via `.menu-item`
+ * and similar utility classes; flip those that rely on physical alignment. */
+html[dir="rtl"] .menu-item,
+html[dir="rtl"] .sidebar-item,
+html[dir="rtl"] .user-menu-trigger {
+  text-align: right;
+}
+
+/* Inputs honor the document direction natively (cursor + caret position),
+ * but explicit overrides sometimes leak from older rules. Reset them. */
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select {
+  text-align: right;
+}
+
+/* Some inputs hold inherently LTR content (URLs, emails, code, numbers).
+ * Authors can opt-in by adding `dir="ltr"` on the element OR using the
+ * `.ltr-content` utility below. */
+.ltr-content {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: isolate;
+}
+
+/* Bidirectional text: chat message bodies should render in the natural
+ * direction of their content rather than the surrounding UI direction.
+ * `unicode-bidi: plaintext` is the cleanest way to achieve this — each
+ * paragraph picks up its direction from the first strong character. */
+.message-body,
+.message-body p,
+.user-message .message-body,
+.assistant-message .message-body {
+  unicode-bidi: plaintext;
+}
+
+/* Code blocks and inline code are inherently LTR regardless of UI direction. */
+html[dir="rtl"] code,
+html[dir="rtl"] pre,
+html[dir="rtl"] kbd,
+html[dir="rtl"] samp {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+/* ---- Directional icons -----------------------------------------------------
+ * Icons that *imply* direction (back arrows, chevrons used for "next",
+ * progress bars, sliders, etc.) should be horizontally mirrored under RTL.
+ * Authors mark such icons with `data-rtl-flip` (already present on the
+ * sidebar collapse SVG) or with the `.rtl-flip` utility class. Icons that
+ * are direction-neutral (bell, gear, search) MUST NOT carry these markers. */
+html[dir="rtl"] [data-rtl-flip],
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* SVGs nested inside a flipped container should not double-flip. */
+html[dir="rtl"] [data-rtl-flip] svg,
+html[dir="rtl"] .rtl-flip svg {
+  transform: none;
+}
+
+/* ---- App shell -------------------------------------------------------------
+ * The sidebar is fixed to the inline-start edge; the main content reserves
+ * matching margin. Both already use logical properties (see App.svelte and
+ * Sidebar.svelte). The transforms below mirror the off-canvas slide-out on
+ * mobile so the sidebar slides off the correct edge under RTL. */
+/* Default sidebar slide-out uses translateX(-100%) which is physical — under
+ * RTL the inline-start edge is on the right, so reverse the translate. */
+@media (max-width: 768px) {
+  html[dir="rtl"] .sidebar.collapsed {
+    transform: translateX(100%);
+  }
+}
+
+/* Drop-shadow on the sidebar always points away from the content area. */
+html[dir="rtl"] .sidebar {
+  box-shadow: -4px 0 32px rgba(0, 0, 0, 0.18);
+}
+
+/* ---- Form layout patches ---------------------------------------------------
+ * Form controls that explicitly position adornments (icons inside inputs,
+ * clear buttons, dropdown arrows, …) typically use absolute positioning with
+ * left/right values. Component authors should migrate to logical properties;
+ * these utility overrides cover the common patterns until they do. */
+html[dir="rtl"] .input-icon-leading {
+  left: auto;
+  right: 0.75rem;
+}
+
+html[dir="rtl"] .input-icon-trailing {
+  right: auto;
+  left: 0.75rem;
+}
+
+/* ---- Numeric / tabular content --------------------------------------------
+ * Tables of numbers and dates should remain LTR even when the surrounding
+ * UI is RTL, matching how spreadsheets render in Arabic / Hebrew Excel. */
+html[dir="rtl"] .numeric,
+html[dir="rtl"] [data-numeric] {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: right;
+}
+
+/* ---- Logo / branding -------------------------------------------------------
+ * Brand wordmarks are typically asymmetric and should not be mirrored. */
+html[dir="rtl"] .brand-logo,
+html[dir="rtl"] .logo-icon,
+html[dir="rtl"] .mobile-header-logo {
+  transform: none;
 }

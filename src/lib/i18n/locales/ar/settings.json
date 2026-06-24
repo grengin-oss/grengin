@@ -1,0 +1,126 @@
+{
+  "userSettings": {
+    "title": "الإعدادات",
+    "subtitle": "إدارة تفضيلاتك الشخصية والتكاملات المتصلة.",
+    "tabs": {
+      "integrations": "التكاملات",
+      "integrationsAria": "التكاملات المتصلة",
+      "promptSettings": "إعدادات المطالبات",
+      "promptSettingsAria": "إدارة تفضيلات المطالبات"
+    }
+  },
+  "userPromptSettings": {
+    "loading": "جارٍ تحميل إعدادات المطالبات...",
+    "failedToLoad": "تعذر تحميل إعدادات المطالبات",
+    "activePrompt": "المطالبة النشطة",
+    "source": {
+      "label": "المصدر",
+      "user_custom": "مطالبة مخصصة",
+      "department": "افتراضي القسم",
+      "department_default": "افتراضي القسم",
+      "system_default": "الافتراضي للنظام"
+    },
+    "variables": {
+      "title": "المتغيرات المتاحة",
+      "empty": "لا توجد متغيرات متاحة",
+      "insertHint": "انقر على متغير لإدراجه في المحرر",
+      "copied": "تم إدراج المتغير"
+    },
+    "editor": {
+      "title": "محرر المطالبة المخصص",
+      "placeholder": "اكتب مطالبة النظام المخصصة هنا. استخدم متغيرات مثل {{variable_name}} لإدراج قيم ديناميكية...",
+      "charCount": "{count} حرف",
+      "preview": "معاينة",
+      "edit": "تعديل",
+      "previewTitle": "معاينة المطالبة",
+      "previewEmpty": "لا شيء للمعاينة. ابدأ كتابة مطالبتك المخصصة أعلاه."
+    },
+    "actions": {
+      "save": "حفظ المطالبة",
+      "saving": "جارٍ الحفظ...",
+      "resetToDefault": "إعادة تعيين إلى الافتراضي",
+      "resetting": "جارٍ إعادة التعيين...",
+      "resetConfirmTitle": "إعادة تعيين إلى الافتراضي؟",
+      "resetConfirmMessage": "سيؤدي هذا إلى إزالة مطالبتك المخصصة والعودة إلى الافتراضي للقسم أو النظام. لا يمكن التراجع عن هذا الإجراء.",
+      "resetConfirmButton": "نعم، إعادة التعيين",
+      "cancel": "إلغاء"
+    },
+    "messages": {
+      "saved": "تم حفظ المطالبة المخصصة بنجاح",
+      "failedToSave": "تعذر حفظ المطالبة",
+      "reset": "تم إعادة تعيين المطالبة إلى الافتراضي",
+      "failedToReset": "تعذر إعادة تعيين المطالبة",
+      "noChanges": "لا توجد تغييرات للحفظ"
+    },
+    "feedback": {
+      "title": "تعليقات المطالبة",
+      "subtitle": "ساعدنا في التحسين من خلال تقييم فعالية المطالبة الحالية",
+      "thumbsUp": "هذه المطالبة تعمل بشكل جيد",
+      "thumbsDown": "هذه المطالبة تحتاج إلى تحسين",
+      "commentPlaceholder": "اختياري: أخبرنا المزيد عن تجربتك مع هذه المطالبة...",
+      "submit": "إرسال التعليقات",
+      "submitting": "جارٍ الإرسال...",
+      "submitted": "شكرًا لك على تعليقاتك!",
+      "failedToSubmit": "تعذر إرسال التعليقات",
+      "ratingRequired": "يرجى اختيار تقييم قبل الإرسال"
+    }
+  },
+  "userIntegrations": {
+    "loading": "جارٍ تحميل التكاملات...",
+    "failedToLoad": "تعذر تحميل التكاملات",
+    "failedToGetAuthUrl": "تعذر الحصول على رابط التفويض",
+    "failedToConnect": "تعذر الاتصال بـ {name}",
+    "failedToDisconnect": "تعذر قطع الاتصال بـ {name}",
+    "disconnected": "تم قطع الاتصال بـ {name}",
+    "stats": {
+      "connected": "متصل",
+      "available": "متاح",
+      "total": "إجمالي"
+    },
+    "filters": {
+      "all": "الكل",
+      "connected": "متصل",
+      "available": "متاح",
+      "filterAria": "تصفية التكاملات"
+    },
+    "empty": {
+      "title": "لم يتم العثور على تكاملات",
+      "noConnected": "لم تقم بالاتصال بأي تكاملات بعد.",
+      "noAvailable": "لا توجد تكاملات متاحة للاتصال في الوقت الحالي.",
+      "noConfigured": "لم يتم تكوين أي تكاملات بواسطة مؤسستك.",
+      "viewAll": "عرض جميع التكاملات"
+    },
+    "columns": {
+      "name": "الاسم",
+      "transport": "النقل",
+      "status": "الحالة",
+      "tools": "الأدوات",
+      "connectedAt": "متصل",
+      "actions": "الإجراءات"
+    },
+    "status": {
+      "connected": "متصل",
+      "disconnected": "غير متصل",
+      "expired": "منتهي الصلاحية",
+      "error": "خطأ",
+      "expiredWarning": "انتهت صلاحية الاتصال. أعد الاتصال لتحديث وصولك."
+    },
+    "actions": {
+      "connect": "اتصال",
+      "connecting": "جارٍ الاتصال...",
+      "disconnect": "قطع الاتصال",
+      "reconnect": "إعادة الاتصال",
+      "disconnectConfirm": "قطع الاتصال؟",
+      "yes": "نعم",
+      "no": "لا",
+      "viewTools": "عرض الأدوات"
+    },
+    "connectedSince": "متصل منذ {date}",
+    "toolCount": "{count} {count, plural, one {أداة} other {أدوات}}",
+    "tools": {
+      "modalTitle": "{name} — الأدوات",
+      "loading": "جارٍ تحميل الأدوات...",
+      "empty": "لا توجد أدوات متاحة لهذا الخادم."
+    }
+  }
+}

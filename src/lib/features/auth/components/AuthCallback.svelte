@@ -2,6 +2,9 @@
   import { onMount } from 'svelte';
   import { setAuth, ApiError, handleOAuthCallback } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
+  import { _ } from 'svelte-i18n';
+  import { getLocalizedError } from '../../../utils/errorLocalization';
+  import { API_BASE } from '../../../api/client.js';
 
   // UI State
   type CallbackStatus = 'processing' | 'success' | 'error';
@@ -12,50 +15,111 @@
   const REDIRECT_DELAY_ERROR = 3000; // ms
 
   /**
+   * Try SSO proxy fallback — frontend only.
+   * When sso.grengin.com completes auth server-side, the callback URL may have
+   * no standard code/state. Check all URL locations for a token the proxy may
+   * have passed directly (access_token, token, id_token — in query or hash).
+   */
+  async function trySSOProxyFallback(): Promise<boolean> {
+    const queryParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+
+    // Debug: log every param in the URL so we can see what the SSO proxy sent
+    console.debug('[AuthCallback] SSO proxy fallback — URL params:', {
+      search: window.location.search,
+      hash: window.location.hash,
+      query: Object.fromEntries(queryParams.entries()),
+      hash_params: Object.fromEntries(hashParams.entries()),
+    });
+
+    // Check all common token param names (query string first, then hash fragment)
+    const accessToken =
+      queryParams.get('access_token') ?? hashParams.get('access_token') ??
+      queryParams.get('token')        ?? hashParams.get('token')        ??
+      queryParams.get('id_token')     ?? hashParams.get('id_token');
+
+    if (!accessToken) return false;
+
+    try {
+      // SSO proxy passed a token directly — validate it and fetch user profile
+      const response = await fetch(`${API_BASE}/me`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (response.ok) {
+        const user = await response.json();
+        if (user?.id) {
+          setAuth(accessToken, '', user);
+          return true;
+        }
+      }
+    } catch {
+      // Network error — fall through to show normal error
+    }
+    return false;
+  }
+
+  /**
    * Process OAuth callback
-   * Extracts parameters, calls backend, and handles authentication
+   * Extracts parameters, calls backend, and handles authentication.
+   * Supports: standard OAuth code/state flow, SSO proxy token flow, and hash fragment params.
    */
   async function processOAuthCallback(): Promise<void> {
     const params = new URLSearchParams(window.location.search);
+    // Also check hash fragment (some SSO proxies use implicit flow)
+    const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
 
     // 1. Check for OAuth provider errors
-    const error = params.get('error');
+    const error = params.get('error') || hashParams.get('error');
     if (error) {
-      const errorDesc = params.get('error_description') || error;
+      const errorDesc = params.get('error_description') || hashParams.get('error_description') || error;
       toast.error(errorDesc);
       throw new Error(errorDesc);
     }
 
-    // 2. Validate required OAuth parameters
-    const state = params.get('state');
-    const code = params.get('code');
-    if (!state || !code) {
-      const message = 'Missing required OAuth parameters (state or code)';
-      toast.error(message);
-      redirectAfterError();
-      return;
-    }
+    // 2. Extract OAuth parameters — check both query string and hash fragment
+    const state = params.get('state') || hashParams.get('state');
+    const code = params.get('code') || hashParams.get('code');
+    const assertion = params.get('assertion') || hashParams.get('assertion');
 
     // 3. Retrieve provider from session storage
     const provider = sessionStorage.getItem('oauth_provider');
     if (!provider) {
-      const message = 'OAuth provider not found. Please try logging in again.';
-      toast.error(message);
-      redirectAfterError();
-      return;
+      const message = $_('error.auth.oauth_provider_not_found');
+      throw new ApiError(400, message);
     }
 
-    // 4. Call backend OAuth callback endpoint
-    const response = await handleOAuthCallback(provider, code, state);
+    let response: LoginResponse;
+
+    if (assertion && state) {
+      // SSO proxy flow: assertion JWT + state — forward directly to API callback
+      response = await handleOAuthCallback(provider, null, state, assertion);
+    } else if (code && state) {
+      // Standard OAuth code flow
+      response = await handleOAuthCallback(provider, code, state, null);
+    } else {
+      // No standard code/state and no assertion — try legacy SSO proxy fallback (token in URL)
+      console.warn('[AuthCallback] No code/state/assertion in URL, attempting SSO proxy fallback...');
+      const ssoSuccess = await trySSOProxyFallback();
+      if (ssoSuccess) {
+        return;
+      }
+      const message = $_('error.auth.missing_oauth_params');
+      throw new ApiError(400, message);
+    }
+
+    // 4. Call backend OAuth callback endpoint — already done above
 
     // 5. Validate response and store authentication
     if (!response?.accessToken || !response?.user) {
-      const message = 'Invalid authentication response from server';
+      const message = $_('error.auth.invalid_auth_response');
       toast.error(message);
       throw new Error(message);
     }
 
-    setAuth(response.accessToken, response.refresh_token || '', response.user);
+    setAuth(response.accessToken, response.refreshToken || '', response.user);
     return;
   }
 
@@ -90,17 +154,10 @@
   /**
    * Handle errors and show toast notification
    */
-  function handleError(err: unknown): void {
+  function handleError(err: ApiError): void {
     console.error('OAuth callback error:', err);
     
-    let errorMessage: string;
-    if (err instanceof ApiError) {
-      errorMessage = err.detail;
-    } else if (err instanceof Error) {
-      errorMessage = err.message;
-    } else {
-      errorMessage = 'An unexpected error occurred during authentication';
-    }
+    const errorMessage = getLocalizedError(err, 'description', $_) || err.description;
     
     // Show error toast
     toast.error(errorMessage);
@@ -111,17 +168,18 @@
 
   // Initialize OAuth callback processing on component mount
   onMount(async () => {
-    console.log('AuthCallback mounted, status:', status);
     try {
       await processOAuthCallback();
       cleanupSessionStorage();
       status = 'success';
-      console.log('AuthCallback success, status:', status);
       redirectAfterSuccess();
     } catch (err: unknown) {
       cleanupSessionStorage();
-      console.log('AuthCallback error, status:', status);
-      handleError(err);
+      // Convert all errors to ApiError for consistent handling
+      const apiError = err instanceof ApiError 
+        ? err 
+        : new ApiError(500, err instanceof Error ? err.message : $_('error.fallback.description'));
+      handleError(apiError);
     }
   });
 </script>
@@ -134,7 +192,7 @@
           <img src="/grengin-icon.svg" alt="Grengin" class="callback-logo" />
           <div class="brand-text">
             <h1 class="brand-name">Grengin</h1>
-            <p class="brand-tagline">Authentication in progress</p>
+            <p class="brand-tagline">{$_('auth.authenticationInProgress')}</p>
           </div>
         </div>
         
@@ -144,8 +202,8 @@
             <div class="pulse-ring"></div>
           </div>
           <div class="status-text">
-            <h2>Completing sign in...</h2>
-            <p class="status-message">Please wait while we verify your credentials</p>
+            <h2>{$_('auth.completingSignIn')}</h2>
+            <p class="status-message">{$_('auth.pleaseWaitVerifying')}</p>
           </div>
         </div>
       </div>
@@ -155,7 +213,7 @@
           <img src="/grengin-icon.svg" alt="Grengin" class="callback-logo" />
           <div class="brand-text">
             <h1 class="brand-name">Grengin</h1>
-            <p class="brand-tagline">Authentication complete</p>
+            <p class="brand-tagline">{$_('auth.authenticationComplete')}</p>
           </div>
         </div>
         
@@ -166,8 +224,8 @@
             </svg>
           </div>
           <div class="status-text">
-            <h2>Sign in successful!</h2>
-            <p class="status-message">Redirecting you to your workspace...</p>
+            <h2>{$_('auth.signInSuccessful')}</h2>
+            <p class="status-message">{$_('auth.redirectingToWorkspace')}</p>
           </div>
         </div>
       </div>
@@ -177,7 +235,7 @@
           <img src="/grengin-icon.svg" alt="Grengin" class="callback-logo" />
           <div class="brand-text">
             <h1 class="brand-name">Grengin</h1>
-            <p class="brand-tagline">Authentication failed</p>
+            <p class="brand-tagline">{$_('auth.authenticationFailed')}</p>
           </div>
         </div>
         
@@ -190,8 +248,8 @@
             </svg>
           </div>
           <div class="status-text">
-            <h2>Sign in failed</h2>
-            <p class="status-submessage">Redirecting you back to the login page...</p>
+            <h2>{$_('auth.signInFailed')}</h2>
+            <p class="status-submessage">{$_('auth.redirectingToLogin')}</p>
           </div>
         </div>
       </div>

@@ -1,0 +1,48 @@
+Let me audit the codebase against each acceptance criterion to see what's already built and what's missing.
+
+Let me check for a few more things to complete the audit:
+
+
+
+
+
+
+
+
+
+
+
+
+Here's the full audit against every acceptance criterion:
+
+## Audit: Admin OAuth Configuration UI for MCP Servers
+
+| # | Acceptance Criterion | Status | Details |
+|---|---|---|---|
+| 1 | Can configure OAuth provider when adding MCP server | **Partial** | Form has `client_id`, `client_secret`, `url`, `connection_config` fields, but **no Auth Type selector** (None / API Key / OAuth 2.0), no dedicated OAuth section |
+| 2 | Provider presets auto-fill URLs and default scopes | **Not implemented** | No provider presets (Atlassian, Google, Custom). No `scopes` field. No auto-fill logic. |
+| 3 | Can select `auth_mode` (organization vs per_user) | **Not implemented** | No `auth_mode` field in [MCPServer](cci:2://file:///Users/manojkumar/Downloads/webapp/src/lib/admin/types.ts:54:0-73:1) type or form. No radio buttons for org vs per-user. |
+| 4 | Org-level: can initiate OAuth flow via popup | **Partial** | `handleConnect()` exists but does a **full-page redirect** (`window.location.href`), not a popup. No org-level connection panel. |
+| 5 | Org-level: connection status displays correctly | **Partial** | Shows connected/disconnected badge, but **no** "Connected as admin@..." text, no expiry info, no scopes display. |
+| 6 | Org-level: can disconnect | **Not implemented** | No disconnect button or function in MCPServers.svelte (API exists in [integrations.ts](cci:7://file:///Users/manojkumar/Downloads/webapp/src/lib/api/integrations.ts:0:0-0:0) but isn't used in admin). |
+| 7 | Per-user: shows info message about user connections | **Not implemented** | No per-user info panel at all. |
+| 8 | Per-user: shows count of connected users | **Not implemented** | No `connected_users` count or API call. |
+| 9 | Client secret masked in UI | **Implemented** ✅ | Password input with toggle visibility button works correctly. |
+| 10 | Form validation for required fields | **Partial** | Validates name, transport, URL format, connection_config JSON. But **no validation** for OAuth-specific required fields (client_id when OAuth, scopes, auth/token URLs for custom). |
+| 11 | Error handling for OAuth failures | **Partial** | `handleConnect` catches errors and shows toast. But no popup-based error handling or detailed OAuth failure states. |
+
+## Summary
+
+**Implemented (1/11):** Client secret masking only.
+
+**Partially implemented (4/11):** Basic form fields, basic connect flow, basic status display, basic error handling — but all missing the OAuth-specific enhancements described in the spec.
+
+**Not implemented (6/11):**
+- Auth Type selector (None / API Key / OAuth 2.0)
+- Provider presets with auto-fill
+- `auth_mode` toggle (organization vs per_user)
+- Organization Connection panel (connected as, expiry, scopes, reconnect, disconnect)
+- Per-user info panel with connected user count
+- OAuth-specific form validation
+
+This feature is **largely not built yet**. The existing MCP server form is a basic CRUD form without OAuth-aware UI. Would you like me to implement it?

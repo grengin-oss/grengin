@@ -1,0 +1,30 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "never": "Never",
+    "loading": "Loading...",
+    "clear": "Clear",
+    "select": "Select"
+  },
+  "errors": {
+    "forbidden": {
+      "title": "Access denied",
+      "message": "You do not have permission to view this page.",
+      "back": "Back to chat",
+      "iconAlt": "Access denied"
+    }
+  },
+  "components": {
+    "typingIndicator": "Assistant is typing"
+  },
+  "app": {
+    "closeSidebar": "Close sidebar",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "notifications": "Notifications"
+  }
+}

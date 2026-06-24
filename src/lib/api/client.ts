@@ -2,22 +2,83 @@ import type { components } from '../types/api.js';
 
 type User = components['schemas']['User'];
 
-// In development, use /api proxy to avoid CORS. In production, use the configured URL.
-export const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+// Always use /api - proxied by Vite dev server locally, Cloudflare Pages Function in production
+const defaultApiBase = '';
+const rawApiBase = import.meta.env?.VITE_API_BASE;
+
+const normalizeBase = (base: string): string => {
+  if (!base) {
+    return defaultApiBase;
+  }
+  return base.endsWith('/') ? base.slice(0, -1) : base;
+};
+
+// Use env override when provided, fall back to /api (proxied locally & via Pages Functions)
+export const API_BASE = normalizeBase(rawApiBase ?? defaultApiBase);
+
+
+export interface RichErrorDetail {
+  type: 'rich';
+  code: number;
+  description: string;
+  solution: string;
+  description_key: string;
+  solution_key: string;
+  params: Record<string, string>;
+  external_code: string | null;
+}
 
 export class ApiError extends Error {
+  public detail: string | RichErrorDetail;
+
   constructor(
     public status: number,
-    public detail: string
+    detail: string | RichErrorDetail
   ) {
-    super(detail);
+    // Use description as the message if it's a rich error, otherwise use the detail string
+    super(typeof detail === 'string' ? detail : detail.description);
     this.name = 'ApiError';
+    this.detail = detail;
+  }
+
+  // Check if this is a rich error with full internationalization support
+  isRichError(): this is ApiError & { detail: RichErrorDetail } {
+    return typeof this.detail === 'object' && this.detail.type === 'rich';
+  }
+
+  // Convenience getters for rich error properties
+  get code(): number | undefined {
+    return this.isRichError() ? this.detail.code : undefined;
+  }
+
+  get description(): string {
+    return this.isRichError() ? this.detail.description : this.detail as string;
+  }
+
+  get solution(): string | undefined {
+    return this.isRichError() ? this.detail.solution : undefined;
+  }
+
+  get descriptionKey(): string | undefined {
+    return this.isRichError() ? this.detail.description_key : undefined;
+  }
+
+  get solutionKey(): string | undefined {
+    return this.isRichError() ? this.detail.solution_key : undefined;
+  }
+
+  get params(): Record<string, string> | undefined {
+    return this.isRichError() ? this.detail.params : undefined;
+  }
+
+  get externalCode(): string | null | undefined {
+    return this.isRichError() ? this.detail.external_code : undefined;
   }
 }
 
 interface RefreshResponse {
-  access_token: string;
-  refresh_token: string;
+  accessToken: string;
+  refreshToken: string;
   user: User;
 }
 
@@ -36,9 +97,35 @@ export function setAuthAccessors(
   clearAuthFn = clearAuth;
 }
 
+// Helper to parse error detail from response body (supports both old and new formats)
+export function parseErrorDetail(body: any): string | RichErrorDetail {
+  if (!body || !body.detail) {
+    return 'Request failed';
+  }
+
+  const detail = body.detail;
+
+  // New rich error format
+  if (typeof detail === 'object' && detail.type === 'rich') {
+    return detail as RichErrorDetail;
+  }
+
+  // Old string format
+  if (typeof detail === 'string') {
+    return detail;
+  }
+
+  // Old format with message property
+  if (typeof detail === 'object' && detail.message) {
+    return detail.message;
+  }
+
+  return 'Request failed';
+}
+
 async function tryRefreshToken(): Promise<boolean> {
   const refreshToken = localStorage.getItem('grengin_refresh_token');
-  if (!refreshToken) {
+  if (!refreshToken || refreshToken === '') {
     return false;
   }
 
@@ -54,7 +141,11 @@ async function tryRefreshToken(): Promise<boolean> {
     }
 
     const data: RefreshResponse = await response.json();
-    setAuthFn?.(data.access_token, data.refresh_token, data.user);
+    if (!data.accessToken || !data.user) {
+      return false;
+    }
+    
+    setAuthFn?.(data.accessToken, refreshToken, data.user);
     return true;
   } catch {
     return false;
@@ -92,8 +183,9 @@ export async function request<T>(
         headers,
       });
       if (!retryResponse.ok) {
-        const error = await retryResponse.json().catch(() => ({ detail: 'Request failed' }));
-        throw new ApiError(retryResponse.status, error.detail || 'Request failed');
+        const body = await retryResponse.json().catch(() => null);
+        const detail = parseErrorDetail(body);
+        throw new ApiError(retryResponse.status, detail);
       }
       if (retryResponse.status === 204) {
         return undefined as T;
@@ -105,17 +197,31 @@ export async function request<T>(
     // Redirect to root path - app will show Login component when not authenticated
     window.location.href = '/';
     // Throw error to prevent further execution (though redirect will happen)
-    throw new ApiError(401, 'Session expired. Please log in again.');
+    throw new ApiError(401, {
+      type: 'rich',
+      code: 401,
+      description: 'Session expired. Please log in again.',
+      solution: 'Please log in again to continue using the application',
+      description_key: 'error.auth.invalid_token.description',
+      solution_key: 'error.auth.invalid_token.solution',
+      params: {},
+      external_code: null,
+    });
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-    throw new ApiError(response.status, error.detail || 'Request failed');
+    const body = await response.json().catch(() => null);
+    const detail = parseErrorDetail(body);
+    throw new ApiError(response.status, detail);
   }
 
   if (response.status === 204) {
     return undefined as T;
   }
 
-  return response.json();
+  try {
+    return await response.json();
+  } catch {
+    return "Request successful but invalid JSON response." as T;
+  }
 }

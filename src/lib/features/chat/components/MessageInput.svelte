@@ -1,170 +1,202 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { ProviderInfo, ModelInfo } from '../../../api/models';
-  import { getModels } from '../../../api/models';
+  import type { ProviderInfo, ModelInfo, SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from '../../../api/models';
+  import { uploadDocument, type UploadedFile } from '../../../api/chatApi';
+  import type { MCPServer } from '../../../admin/types.js';
+  import { _ } from 'svelte-i18n';
 
   interface MessageInputProps {
-    onSend: (message: string, files?: File[]) => void;
+    onSend: (message: string, uploadedFiles?: UploadedFile[], webSearch?: boolean) => void;
     disabled?: boolean;
     placeholder?: string;
-    rows?: number;
     selectedModel?: string;
     selectedProvider?: string;
-    onRemoveModel?: () => void;
     onModelSelect?: (provider: ProviderInfo, model: ModelInfo) => void;
+    onRemoveModel?: () => void;
+    providers?: ProviderInfo[];
+    loadingModels?: boolean;
+    modelsError?: string | null;
+    mcpServers?: MCPServer[];
+    selectedMcpServers?: string[];
+    loadingMcpServers?: boolean;
+    mcpServersError?: string | null;
+    onMcpToggle?: (serverId: string) => void;
+    webSearchEnabled?: boolean;
+    onWebSearchToggle?: () => void;
   }
 
-  let { onSend, disabled = false, placeholder = 'Type a message...', rows = 1, selectedModel, selectedProvider, onRemoveModel, onModelSelect }: MessageInputProps = $props();
-  
+let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, mcpServers = [], selectedMcpServers = [], loadingMcpServers = false, mcpServersError = null, onMcpToggle, webSearchEnabled = false, onWebSearchToggle }: MessageInputProps = $props();
+  let isDarkMode = $state(false);
+
+  function syncThemeState() {
+    isDarkMode = document.documentElement.classList.contains('dark')
+      || window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function getIconForTheme(provider?: ProviderInfo): string | undefined {
+    if (!provider) return undefined;
+    return isDarkMode ? (provider.icon_dark || provider.icon) : provider.icon;
+  }
+
   let textarea: HTMLTextAreaElement;
   let fileInput: HTMLInputElement;
   let photoInput: HTMLInputElement;
   let message = $state('');
   let attachedFiles = $state<File[]>([]);
+  let uploadingFiles = $state<Set<string>>(new Set());
+  let uploadedFileResults = $state<Map<string, UploadedFile>>(new Map());
+  let failedUploads = $state<Set<string>>(new Set());
   let filePreviews = $state<Record<string, string>>({});
   let imageThumbnails = $state<Record<string, string>>({});
   let showFilePreview = $state(false);
   let showImagePreview = $state(false);
   let currentPreviewFile = $state<File | null>(null);
   let currentPreviewImage = $state<{ file: File; url: string } | null>(null);
-  let showFileDropdown = $state(false);
+  let showPlusMenu = $state(false);
   let showModelDropdown = $state(false);
-  let providers = $state<ProviderInfo[]>([]);
-  let loadingModels = $state(true);
-  let modelsError = $state<string | null>(null);
-  const maxRows = 10;
-  const minRows = 1;
+  let showConnectorsDropdown = $state(false);
 
-  function adjustHeight() {
+  // Voice input state
+  let isRecording = $state(false);
+  let recognition: SpeechRecognition | null = null;
+  let microphoneError = $state<string | null>(null);
+
+  // Dynamic placeholder based on recording state
+  let currentPlaceholder = $derived(
+    isRecording 
+      ? $_('chat.messageInput.recordingPlaceholder') 
+      : (placeholder || $_('chat.messageInput.placeholder'))
+  );
+
+  const connectorsLabel = $derived($_('chat.messageInput.tools'));
+
+
+  function autoResize() {
     if (!textarea) return;
-    
-    // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
-    
-    // Calculate the number of rows based on scrollHeight
-    const lineHeight = parseInt(getComputedStyle(textarea).lineHeight);
-    const newRows = Math.min(
-      Math.max(Math.ceil(textarea.scrollHeight / lineHeight), minRows),
-      maxRows
-    );
-    
-    rows = newRows;
-    textarea.style.height = `${textarea.scrollHeight}px`;
+    const maxHeight = window.innerHeight * 0.4;
+    const scrollHeight = textarea.scrollHeight;
+    const newHeight = Math.max(24, Math.min(scrollHeight, maxHeight));
+    textarea.style.height = newHeight + 'px';
+    textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
   }
 
   function handleInput() {
-    adjustHeight();
+    autoResize();
   }
 
   function handleKeyDown(event: KeyboardEvent) {
-    // Send on Enter (without Shift), allow Shift+Enter for new line
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       handleSend();
     }
-    // Allow Shift+Enter to create a new line (default behavior)
   }
 
-  function handleSend() {
+  let isUploading = $derived(uploadingFiles.size > 0);
+
+  async function uploadFileImmediately(file: File) {
+    uploadingFiles.add(file.name);
+    uploadingFiles = new Set(uploadingFiles);
+    try {
+      const uploaded = await uploadDocument({
+        file,
+        provider: selectedProvider || 'openai'
+      });
+      uploadedFileResults.set(file.name, uploaded);
+      uploadedFileResults = new Map(uploadedFileResults);
+      failedUploads.delete(file.name);
+      failedUploads = new Set(failedUploads);
+    } catch (error) {
+      console.error(`Failed to upload file: ${file.name}`, error);
+      failedUploads.add(file.name);
+      failedUploads = new Set(failedUploads);
+    } finally {
+      uploadingFiles.delete(file.name);
+      uploadingFiles = new Set(uploadingFiles);
+    }
+  }
+
+  async function handleSend() {
     const trimmed = message.trim();
-    if ((trimmed || attachedFiles.length > 0) && !disabled) {
-      onSend(trimmed, attachedFiles.length > 0 ? attachedFiles : undefined);
+    if ((trimmed || attachedFiles.length > 0) && !disabled && !isUploading) {
+      // Collect already-uploaded file results
+      const uploadedFiles: UploadedFile[] = [];
+      for (const file of attachedFiles) {
+        const result = uploadedFileResults.get(file.name);
+        if (result) {
+          uploadedFiles.push(result);
+        }
+      }
+      
+      // Send message with successfully uploaded file metadata
+      onSend(trimmed, uploadedFiles.length > 0 ? uploadedFiles : undefined, webSearchEnabled);
       message = '';
       attachedFiles = [];
-      rows = minRows;
+      uploadedFileResults = new Map();
+      failedUploads = new Set();
+      
       if (textarea) {
         textarea.style.height = 'auto';
       }
     }
   }
 
-  function toggleFileDropdown() {
-    showFileDropdown = !showFileDropdown;
+  function togglePlusMenu() {
+    showPlusMenu = !showPlusMenu;
+    if (showPlusMenu) showModelDropdown = false;
   }
 
-  // Handle model selection
   function selectModel(provider: ProviderInfo, model: ModelInfo) {
     onModelSelect?.(provider, model);
     showModelDropdown = false;
   }
 
-  // Load models from API
-  async function loadModels() {
-    // try {
-    //   loadingModels = true;
-    //   modelsError = null;
-    //   const data = await getModels();
-    //   providers = data.providers;
-    // } catch (error) {
-    //   modelsError = error instanceof Error ? error.message : 'Failed to load models';
-    //   // add this dummy json 
-    providers = [{
-        key: 'openai',
-        name: 'OpenAI',
-        icon: '<svg width="20" height="20" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="1.5" class="text-text-primary shrink-0 icon-md"><path d="M37.5324 16.8707C37.9808 15.5241 38.1363 14.0974 37.9886 12.6859C37.8409 11.2744 37.3934 9.91076 36.676 8.68622C35.6126 6.83404 33.9882 5.3676 32.0373 4.4985C30.0864 3.62941 27.9098 3.40259 25.8215 3.85078C24.8796 2.7893 23.7219 1.94125 22.4257 1.36341C21.1295 0.785575 19.7249 0.491269 18.3058 0.500197C16.1708 0.495044 14.0893 1.16803 12.3614 2.42214C10.6335 3.67624 9.34853 5.44666 8.6917 7.47815C7.30085 7.76286 5.98686 8.3414 4.8377 9.17505C3.68854 10.0087 2.73073 11.0782 2.02839 12.312C0.956464 14.1591 0.498905 16.2988 0.721698 18.4228C0.944492 20.5467 1.83612 22.5449 3.268 24.1293C2.81966 25.4759 2.66413 26.9026 2.81182 28.3141C2.95951 29.7256 3.40701 31.0892 4.12437 32.3138C5.18791 34.1659 6.8123 35.6322 8.76321 36.5013C10.7141 37.3704 12.8907 37.5973 14.9789 37.1492C15.9208 38.2107 17.0786 39.0587 18.3747 39.6366C19.6709 40.2144 21.0755 40.5087 22.4946 40.4998C24.6307 40.5054 26.7133 39.8321 28.4418 38.5772C30.1704 37.3223 31.4556 35.5506 32.1119 33.5179C33.5027 33.2332 34.8167 32.6547 35.9659 31.821C37.115 30.9874 38.0728 29.9178 38.7752 28.684C39.8458 26.8371 40.3023 24.6979 40.0789 22.5748C39.8556 20.4517 38.9639 18.4544 37.5324 16.8707ZM22.4978 37.8849C20.7443 37.8874 19.0459 37.2733 17.6994 36.1501C17.7601 36.117 17.8666 36.0586 17.936 36.0161L25.9004 31.4156C26.1003 31.3019 26.2663 31.137 26.3813 30.9378C26.4964 30.7386 26.5563 30.5124 26.5549 30.2825V19.0542L29.9213 20.998C29.9389 21.0068 29.9541 21.0198 29.9656 21.0359C29.977 21.052 29.9842 21.0707 29.9867 21.0902V30.3889C29.9842 32.375 29.1946 34.2791 27.7909 35.6841C26.3872 37.0892 24.4838 37.8806 22.4978 37.8849ZM6.39227 31.0064C5.51397 29.4888 5.19742 27.7107 5.49804 25.9832C5.55718 26.0187 5.66048 26.0818 5.73461 26.1244L13.699 30.7248C13.8975 30.8408 14.1233 30.902 14.3532 30.902C14.583 30.902 14.8088 30.8408 15.0073 30.7248L24.731 25.1103V28.9979C24.7321 29.0177 24.7283 29.0376 24.7199 29.0556C24.7115 29.0736 24.6988 29.0893 24.6829 29.1012L16.6317 33.7497C14.9096 34.7416 12.8643 35.0097 10.9447 34.4954C9.02506 33.9811 7.38785 32.7263 6.39227 31.0064ZM4.29707 13.6194C5.17156 12.0998 6.55279 10.9364 8.19885 10.3327C8.19885 10.4013 8.19491 10.5228 8.19491 10.6071V19.808C8.19351 20.0378 8.25334 20.2638 8.36823 20.4629C8.48312 20.6619 8.64893 20.8267 8.84863 20.9404L18.5723 26.5542L15.206 28.4979C15.1894 28.5089 15.1703 28.5155 15.1505 28.5173C15.1307 28.5191 15.1107 28.516 15.0924 28.5082L7.04046 23.8557C5.32135 22.8601 4.06716 21.2235 3.55289 19.3046C3.03862 17.3858 3.30624 15.3413 4.29707 13.6194ZM31.955 20.0556L22.2312 14.4411L25.5976 12.4981C25.6142 12.4872 25.6333 12.4805 25.6531 12.4787C25.6729 12.4769 25.6928 12.4801 25.7111 12.4879L33.7631 17.1364C34.9967 17.849 36.0017 18.8982 36.6606 20.1613C37.3194 21.4244 37.6047 22.849 37.4832 24.2684C37.3617 25.6878 36.8382 27.0432 35.9743 28.1759C35.1103 29.3086 33.9415 30.1717 32.6047 30.6641C32.6047 30.5947 32.6047 30.4733 32.6047 30.3889V21.188C32.6066 20.9586 32.5474 20.7328 32.4332 20.5338C32.319 20.3348 32.154 20.1698 31.955 20.0556ZM35.3055 15.0128C35.2464 14.9765 35.1431 14.9142 35.069 14.8717L27.1045 10.2712C26.906 10.1554 26.6803 10.0943 26.4504 10.0943C26.2206 10.0943 25.9948 10.1554 25.7963 10.2712L16.0726 15.8858V11.9982C16.0715 11.9783 16.0753 11.9585 16.0837 11.9405C16.0921 11.9225 16.1048 11.9068 16.1207 11.8949L24.1719 7.25025C25.4053 6.53903 26.8158 6.19376 28.2383 6.25482C29.6608 6.31589 31.0364 6.78077 32.2044 7.59508C33.3723 8.40939 34.2842 9.53945 34.8334 10.8531C35.3826 12.1667 35.5464 13.6095 35.3055 15.0128ZM14.2424 21.9419L10.8752 19.9981C10.8576 19.9893 10.8423 19.9763 10.8309 19.9602C10.8195 19.9441 10.8122 19.9254 10.8098 19.9058V10.6071C10.8107 9.18295 11.2173 7.78848 11.9819 6.58696C12.7466 5.38544 13.8377 4.42659 15.1275 3.82264C16.4173 3.21869 17.8524 2.99464 19.2649 3.1767C20.6775 3.35876 22.0089 3.93941 23.1034 4.85067C23.0427 4.88379 22.937 4.94215 22.8668 4.98473L14.9024 9.58517C14.7025 9.69878 14.5366 9.86356 14.4215 10.0626C14.3065 10.2616 14.2466 10.4877 14.2479 10.7175L14.2424 21.9419ZM16.071 17.9991L20.4018 15.4978L24.7325 17.9975V22.9985L20.4018 25.4983L16.071 22.9985V17.9991Z" fill="currentColor"></path></svg>',
-        models: [
-          {
-            key: 'gpt-4o',
-            name: 'GPT-4o',
-            context_window: 128000,
-            max_output_tokens: 16384,
-            supports_streaming: true,
-            supports_tools: true,
-            supports_vision: true,
-            pricing: { input: 0.0025, output: 0.01 },
-          },
-          {
-            key: 'gpt-5.1',
-            name: 'GPT-4 Turbo',
-            context_window: 128000,
-            max_output_tokens: 4096,
-            supports_streaming: true,
-            supports_tools: true,
-            supports_vision: true,
-            pricing: { input: 0.01, output: 0.03 },
-          },
-          {
-            key: 'gpt-4',
-            name: 'GPT-4',
-            context_window: 8192,
-            max_output_tokens: 4096,
-            supports_streaming: true,
-            supports_tools: true,
-            supports_vision: false,
-            pricing: { input: 0.03, output: 0.06 },
-          },
-          {
-            key: 'gpt-3.5-turbo',
-            name: 'GPT-3.5 Turbo',
-            context_window: 16385,
-            max_output_tokens: 4096,
-            supports_streaming: true,
-            supports_tools: true,
-            supports_vision: false,
-            pricing: { input: 0.0005, output: 0.0015 },
-          },
-        ],
-      }];
-      loadingModels = false;
-    //   modelsError = null; // Clear error since we have fallback data 
-    // } finally {
-    //   loadingModels = false;
-    // }
+  // Expose focus method for external callers
+  export function focus() {
+    textarea?.focus();
   }
 
-  // Load models on mount
   onMount(() => {
-    loadModels();
+    syncThemeState();
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', syncThemeState);
+    autoResize();
+
+    // Cleanup speech recognition on unmount
+    return () => {
+      mediaQuery.removeEventListener('change', syncThemeState);
+      if (recognition) {
+        try {
+          recognition.stop();
+        } catch (error) {
+          // Ignore errors during cleanup
+        }
+      }
+    };
+  });
+
+  // Sync model selection with props from parent component
+  $effect(() => {
+    if (selectedModel && selectedProvider && providers.length > 0) {
+      // Find the provider and model in the loaded providers
+      const provider = providers.find(p => p.key === selectedProvider);
+      if (provider) {
+        const model = provider.models.find(m => m.key === selectedModel || m.name === selectedModel);
+        if (model) {
+          // The props are already being used in the template, so no need to update internal state
+        }
+      }
+    }
   });
 
   function handlePhotoSelect() {
     photoInput?.click();
-    showFileDropdown = false;
+    showPlusMenu = false;
   }
 
   function handleFileSelect() {
     fileInput?.click();
-    showFileDropdown = false;
+    showPlusMenu = false;
   }
 
   function handleFileChange(event: Event) {
@@ -172,21 +204,17 @@
     if (target.files) {
       const newFiles = Array.from(target.files);
       attachedFiles = [...attachedFiles, ...newFiles];
-      
-      // Generate previews for text files and thumbnails for images
+
+      // Generate previews and start uploading immediately
       for (const file of newFiles) {
-        
-        // Test basic detection
-        const isImage = isImageFile(file);
-        const isText = isTextFile(file);
-       
+        // Start upload immediately
+        uploadFileImmediately(file);
+
         if (isTextFile(file)) {
           readFileContent(file).then(content => {
             filePreviews[file.name] = content;
           });
         } else if (isImageFile(file)) {
-          
-          // Try to load real image immediately
           const reader = new FileReader();
           reader.onload = (e) => {
             const result = e.target?.result as string;
@@ -194,41 +222,53 @@
               imageThumbnails[file.name] = result;
               imageThumbnails = { ...imageThumbnails };
               attachedFiles = [...attachedFiles];
-            } 
-          };
-          reader.onerror = (e) => {
-            console.error('❌ FileReader error for:', file.name, e);
+            }
           };
           reader.readAsDataURL(file);
         }
       }
     }
-    // Reset the input so the same files can be selected again if needed
+    showPlusMenu = false;
     target.value = '';
   }
 
+  function removeFile(index: number) {
+    const file = attachedFiles[index];
+    attachedFiles = attachedFiles.filter((_, i) => i !== index);
+
+    if (file) {
+      uploadedFileResults.delete(file.name);
+      uploadedFileResults = new Map(uploadedFileResults);
+      failedUploads.delete(file.name);
+      failedUploads = new Set(failedUploads);
+    }
+
+    if (file && filePreviews[file.name]) {
+      delete filePreviews[file.name];
+      if (currentPreviewFile?.name === file.name) {
+        showFilePreview = false;
+        currentPreviewFile = null;
+      }
+    }
+    if (file && imageThumbnails[file.name]) {
+      delete imageThumbnails[file.name];
+      if (currentPreviewImage?.file.name === file.name) {
+        showImagePreview = false;
+        currentPreviewImage = null;
+      }
+    }
+  }
+
   function isTextFile(file: File): boolean {
-    const textTypes = [
-      'text/',
-      'application/json',
-      'application/xml',
-      'application/javascript',
-      'application/typescript',
-      'application/x-yaml',
-      'application/yaml'
-    ];
+    const textTypes = ['text/', 'application/json', 'application/xml', 'application/javascript', 'application/typescript', 'application/x-yaml', 'application/yaml'];
     const textExtensions = ['.txt', '.md', '.json', '.xml', '.js', '.ts', '.yaml', '.yml', '.csv', '.log', '.html', '.css', '.py', '.java', '.cpp', '.c', '.h', '.rs', '.go', '.php', '.rb', '.swift', '.kt', '.scala', '.r', '.sql', '.sh', '.bash', '.zsh', '.fish', '.ps1', '.bat', '.cmd'];
-    
-    return textTypes.some(type => file.type.startsWith(type)) || 
-           textExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+    return textTypes.some(type => file.type.startsWith(type)) || textExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
   }
 
   function isImageFile(file: File): boolean {
     const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff'];
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif'];
-    
-    return imageTypes.includes(file.type) || 
-           imageExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+    return imageTypes.includes(file.type) || imageExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
   }
 
   function readFileContent(file: File): Promise<string> {
@@ -238,33 +278,6 @@
       reader.onerror = (e) => reject(e);
       reader.readAsText(file);
     });
-  }
-
-  function removeFile(index: number) {
-    const file = attachedFiles[index];
-    attachedFiles = attachedFiles.filter((_, i) => i !== index);
-    
-    // Remove preview if exists
-    if (file && filePreviews[file.name]) {
-      delete filePreviews[file.name];
-      
-      // Close preview if this was the current file
-      if (currentPreviewFile?.name === file.name) {
-        showFilePreview = false;
-        currentPreviewFile = null;
-      }
-    }
-    
-    // Remove thumbnail if exists
-    if (file && imageThumbnails[file.name]) {
-      delete imageThumbnails[file.name];
-      
-      // Close image preview if this was the current image
-      if (currentPreviewImage?.file.name === file.name) {
-        showImagePreview = false;
-        currentPreviewImage = null;
-      }
-    }
   }
 
   function openFilePreview(file: File) {
@@ -299,549 +312,1405 @@
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
+  // ===== Speech Recognition =====
+  function initializeSpeechRecognition(): SpeechRecognition | null {
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) {
+      microphoneError = $_('chat.messageInput.speechRecognitionNotSupported');
+      return null;
+    }
+
+    const recognitionInstance = new SpeechRecognitionAPI();
+    recognitionInstance.continuous = true;
+    recognitionInstance.interimResults = true;
+    recognitionInstance.lang = 'en-US';
+
+    return recognitionInstance;
+  }
+
+  function toggleVoiceInput() {
+    if (disabled) return;
+
+    if (isRecording && recognition) {
+      // Stop recording
+      recognition.stop();
+      isRecording = false;
+      return;
+    }
+
+    // Start recording
+    if (!recognition) {
+      recognition = initializeSpeechRecognition();
+      if (!recognition) return;
+    }
+
+    microphoneError = null;
+
+    // Store the text that existed before we started recording
+    const textBeforeRecording = message.trim();
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      // Build the full transcript from all results
+      let fullTranscript = '';
+
+      for (let i = 0; i < event.results.length; i++) {
+        fullTranscript += event.results[i][0].transcript;
+      }
+
+      // Combine pre-existing text with new transcription
+      message = textBeforeRecording
+        ? textBeforeRecording + ' ' + fullTranscript
+        : fullTranscript;
+
+      // Trigger auto-resize for growing textarea
+      requestAnimationFrame(autoResize);
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      if (event.error === 'not-allowed') {
+        microphoneError = $_('chat.messageInput.microphoneAccessDenied');
+      } else if (event.error === 'no-speech') {
+        // User didn't speak - silently stop
+      } else if (event.error !== 'aborted') {
+        microphoneError = $_('chat.messageInput.voiceInputError', { values: { error: event.error } });
+      }
+      isRecording = false;
+    };
+
+    recognition.onend = () => {
+      isRecording = false;
+    };
+
+    try {
+      recognition.start();
+      isRecording = true;
+    } catch (error) {
+      console.error('Failed to start speech recognition:', error);
+      microphoneError = $_('chat.messageInput.failedToStartVoiceInput');
+      isRecording = false;
+    }
+  }
+
+  // Close dropdowns when clicking outside
+  function handleClickOutside(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.plus-menu-container') && !target.closest('.plus-btn')) {
+      showPlusMenu = false;
+    }
+    if (!target.closest('.model-dropdown-container') && !target.closest('.model-selector-btn')) {
+      showModelDropdown = false;
+    }
+    if (!target.closest('.connectors-dropdown-container') && !target.closest('.connectors-selector-btn')) {
+      showConnectorsDropdown = false;
+    }
+  }
+
   onMount(() => {
-    adjustHeight();
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   });
 </script>
 
-<div class="message-input-container">
-  <!-- Hidden file inputs -->
-  <input
-    type="file"
-    bind:this={photoInput}
-    onchange={handleFileChange}
-    multiple
-    style="display: none"
-    accept="image/*"
-  />
-  <input
-    type="file"
-    bind:this={fileInput}
-    onchange={handleFileChange}
-    multiple
-    style="display: none"
-    accept="*/*"
-  />
-  
-  <div class="input-wrapper">
-    <div class="input-content">
-      <!-- File attachments display -->
-      {#if attachedFiles.length > 0}
-        <div class="file-attachments">
-          {#each attachedFiles as file, index}
-            <div class:file-attachment-image={isImageFile(file)}>
-              {#if isImageFile(file)}
-                <div style="position: relative;">
-                  <button 
-                    class="thumbnail-button"
-                    onclick={() => openImagePreview(file)}
-                    onkeydown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        openImagePreview(file);
-                      }
-                    }}
-                    aria-label={`Preview image: ${file.name}`}
-                    title="Click to preview image"
-                  >
-                    {#if imageThumbnails[file.name]}
-                      <img 
-                        src={imageThumbnails[file.name]} 
-                        alt={file.name}
-                        class="file-thumbnail"
-                        style="display: block !important; width: 50px; height: 50px; object-fit: cover; border-radius: 0.375rem; border: 1px solid #e5e7eb;"
-                        onerror={(e) => {
-                          console.error('Image failed to load:', file.name, 'Src:', imageThumbnails[file.name]?.substring(0, 50));
-                        }}
-                        onload={() => {
-                        }}
-                      />
-                    {:else}
-                      <div style="width: 50px; height: 50px; background: #ff0000; border: 2px solid #000; border-radius: 0.375rem; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-size: 8px; text-align: center; padding: 2px; font-weight: bold;">
-                        NO THUMB
-                        <div style="font-size: 6px; margin-top: 1px;">
-                          {Object.keys(imageThumbnails).length}
-                        </div>
-                      </div>
-                    {/if}
-                  </button>
-                  <button class="remove-file" style="position: absolute; top: -6px; right: -6px; background: white; border: 1px solid #e5e7eb; border-radius: 50%; width: 20px; height: 20px; padding: 2px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); z-index: 10;" onclick={() => removeFile(index)} aria-label="Remove file">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                  </button>
-                </div>
+<!-- Hidden file inputs -->
+<input
+  type="file"
+  bind:this={photoInput}
+  onchange={handleFileChange}
+  multiple
+  style="display: none"
+  accept="image/*"
+/>
+<input
+  type="file"
+  bind:this={fileInput}
+  onchange={handleFileChange}
+  multiple
+  style="display: none"
+  accept="*/*"
+/>
+
+<div class="input-area-wrapper">
+  <!-- File Attachments Display -->
+  {#if attachedFiles.length > 0}
+    <div class="file-attachments">
+      {#each attachedFiles as file, index}
+        <div class="file-pill" class:file-pill-image={isImageFile(file)} class:file-pill-uploading={uploadingFiles.has(file.name)} class:file-pill-failed={failedUploads.has(file.name)}>
+          {#if isImageFile(file)}
+            <button
+              class="thumbnail-button"
+              onclick={() => openImagePreview(file)}
+              aria-label={$_('chat.messageInput.previewImage', { values: { name: file.name } })}
+            >
+              {#if imageThumbnails[file.name]}
+                <img src={imageThumbnails[file.name]} alt={file.name} class="file-thumbnail" />
               {:else}
-                <div style="position: relative;">
-                  <button 
-                    class="thumbnail-button"
-                    onclick={() => isTextFile(file) ? openFilePreview(file) : null}
-                    onkeydown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        if (isTextFile(file)) openFilePreview(file);
-                      }
-                    }}
-                    aria-label={isTextFile(file) ? `Preview file: ${file.name}` : `File: ${file.name}`}
-                    title={isTextFile(file) ? "Click to preview file" : "File attached"}
-                  >
-                    <div 
-                      role="button"
-                      tabindex="0"
-                      style="width: 50px; height: 50px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);"
-                      onmouseover={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; }}
-                      onmouseout={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'; }}
-                      onfocus={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; }}
-                      onblur={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'; }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                        <polyline points="14,2 14,8 20,8"></polyline>
-                        <line x1="12" y1="12" x2="12" y2="16"></line>
-                        <line x1="10" y1="14" x2="14" y2="14"></line>
-                      </svg>
-                    </div>
-                  </button>
-                  <button class="remove-file" style="position: absolute; top: -6px; right: -6px; background: white; border: 1px solid #e5e7eb; border-radius: 50%; width: 20px; height: 20px; padding: 2px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); z-index: 10;" onclick={() => removeFile(index)} aria-label="Remove file">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                  </button>
-                </div>
-              {/if}
-            </div>
-          {/each}
-        </div>
-      {/if}
-      <textarea
-        bind:this={textarea}
-        bind:value={message}
-        oninput={handleInput}
-        onkeydown={handleKeyDown}
-        {placeholder}
-        {disabled}
-        {rows}
-        class="message-textarea"
-        aria-label="Message input"
-      ></textarea>
-      
-      <div class="input-actions">
-        <div class="input-left">
-          <div style="position: relative;">
-            <button class="icon-button attachment-button" onclick={toggleFileDropdown} aria-label="Attach file" title="Attach file (photos or files)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-              </svg>
-            </button>
-            
-            <!-- File Attachment Dropdown -->
-            {#if showFileDropdown}
-              <div class="file-dropdown" style="position: absolute; bottom: 100%; left: 0; margin-bottom: 0.5rem; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); z-index: 50; min-width: 160px; padding: 0.25rem;">
-                <button 
-                  onclick={handlePhotoSelect}
-                  style="width: 100%; padding: 0.75rem 1rem; border: none; background: none; text-align: left; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; border-radius: 0.375rem; font-size: 0.875rem; color: #374151; transition: background 0.15s;"
-                  onmouseover={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
-                  onmouseout={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                  onfocus={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
-                  onblur={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="thumbnail-placeholder">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                     <circle cx="8.5" cy="8.5" r="1.5"></circle>
                     <polyline points="21 15 16 10 5 21"></polyline>
                   </svg>
-                  Add photos
-                </button>
-                <button 
-                  onclick={handleFileSelect}
-                  style="width: 100%; padding: 0.75rem 1rem; border: none; background: none; text-align: left; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; border-radius: 0.375rem; font-size: 0.875rem; color: #374151; transition: background 0.15s;"
-                  onmouseover={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
-                  onmouseout={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                  onfocus={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
-                  onblur={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                    <polyline points="14,2 14,8 20,8"></polyline>
-                  </svg>
-                  Add files
-                </button>
-              </div>
-            {/if}
-          </div>
-          <div style="width: 1px; height: 24px; background: #e5e7eb; margin: 0 0.25rem;"></div>
-          <div class="dropdown">
-            <button class="dropdown-button" class:open={showModelDropdown} onclick={() => showModelDropdown = !showModelDropdown}>
-              <div class="model-logo">
-                {@html selectedProvider ? providers.find(p => p.key === selectedProvider)?.icon || '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7L12 12L22 7L12 2Z"></path><path d="M2 17L12 22L22 17"></path><path d="M2 12L12 17L22 12"></path></svg>' : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7L12 12L22 7L12 2Z"></path><path d="M2 17L12 22L22 17"></path><path d="M2 12L12 17L22 12"></path></svg>'}
-              </div>
-              <span class="model-name">{selectedModel || 'Baichuan-M2'}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow">
-                <polyline points="6 9 12 15 18 9"></polyline>
+                </div>
+              {/if}
+            </button>
+          {:else}
+            <button
+              class="thumbnail-button file-icon-button"
+              onclick={() => isTextFile(file) ? openFilePreview(file) : null}
+              aria-label={isTextFile(file) ? $_('chat.messageInput.previewFile', { values: { name: file.name } }) : $_('chat.messageInput.fileLabel', { values: { name: file.name } })}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                <polyline points="14,2 14,8 20,8"></polyline>
               </svg>
             </button>
-            {#if showModelDropdown}
-              <div class="dropdown-menu">
-                {#if loadingModels}
-                  <div class="dropdown-loading">
-                    <div class="loading-spinner"></div>
-                    Loading models...
-                  </div>
-                {:else if modelsError}
-                  <div class="dropdown-error">
-                    {modelsError}
-                  </div>
+            <span class="file-name" title={file.name}>{file.name}</span>
+            <span class="file-size">{formatFileSize(file.size)}</span>
+          {/if}
+          {#if uploadingFiles.has(file.name)}
+            <span class="pill-upload-status uploading">
+              <span class="pill-spinner"></span>
+              <span class="pill-status-text">{$_('chat.messageInput.uploading')}</span>
+            </span>
+          {:else if failedUploads.has(file.name)}
+            <span class="pill-upload-status failed">✕ {$_('chat.messageInput.uploadFailed')}</span>
+          {:else if uploadedFileResults.has(file.name)}
+            <span class="pill-upload-status success">✓</span>
+          {/if}
+          <button class="pill-remove-btn" onclick={() => removeFile(index)} aria-label={$_('chat.messageInput.removeFile')}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      {/each}
+    </div>
+  {/if}
+
+  <!-- Main Input Container -->
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="input-container-main" onclick={(e) => { if (e.target === e.currentTarget || (e.target as HTMLElement).closest('.input-container-main') && !(e.target as HTMLElement).closest('button')) textarea?.focus(); }}>
+    <!-- Full-area Textarea -->
+    <textarea
+      bind:this={textarea}
+      bind:value={message}
+      oninput={handleInput}
+      onkeydown={handleKeyDown}
+      placeholder={currentPlaceholder}
+      {disabled}
+      class="chat-input-textarea"
+      class:recording={isRecording}
+      aria-label={$_('chat.messageInput.messageInput')}
+    ></textarea>
+
+    <!-- Floating Bottom Bar -->
+    <div class="input-bottom-bar">
+      <!-- Left: Plus button and Model selector -->
+      <div class="bottom-bar-left">
+        <div class="plus-menu-container">
+          <button
+            class="input-btn plus-btn"
+            onclick={togglePlusMenu}
+            aria-label={$_('chat.messageInput.addContent')}
+            title={$_('chat.messageInput.addContent')}
+            {disabled}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14m-7-7h14"/>
+            </svg>
+          </button>
+
+          {#if showPlusMenu}
+            <div class="plus-menu">
+              <button class="menu-item" onclick={handlePhotoSelect}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span>{$_('chat.messageInput.addPhotos')}</span>
+              </button>
+              <button class="menu-item" onclick={handleFileSelect}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                  <polyline points="14,2 14,8 20,8"></polyline>
+                </svg>
+                <span>{$_('chat.messageInput.addFiles')}</span>
+              </button>
+            </div>
+          {/if}
+        </div>
+
+        <div class="model-dropdown-container">
+          <button
+            class="selector-btn model-selector-btn"
+            onclick={() => { showModelDropdown = !showModelDropdown; showPlusMenu = false; }}
+            title={$_('chat.messageInput.selectModel')}
+            aria-label={$_('chat.messageInput.selectModel')}
+          >
+            <div class="model-icon">
+              {#if selectedProvider}
+                {@const providerIcon = getIconForTheme(providers.find(p => p.key === selectedProvider))}
+                {#if providerIcon}
+                  <img src={providerIcon} alt="" class="provider-icon-img" />
                 {:else}
-                  {#each providers as provider}
-                    <div class="provider-section">
-                      <div class="provider-header">
-                        <div class="provider-icon">
-                          {@html provider.icon}
-                        </div>
-                        <span class="provider-name">{provider.name}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                  </svg>
+                {/if}
+              {:else}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 16v-4"/>
+                  <path d="M12 8h.01"/>
+                </svg>
+              {/if}
+            </div>
+            <span class="selector-label model-caption">{selectedModel || $_('chat.messageInput.selectModelFallback')}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow" class:open={showModelDropdown}>
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          {#if showModelDropdown}
+            <div class="model-menu">
+              {#if loadingModels}
+                <div class="dropdown-loading">
+                  <div class="loading-spinner"></div>
+                  <span>{$_('chat.messageInput.loadingModels')}</span>
+                </div>
+              {:else if modelsError}
+                <div class="dropdown-error">{modelsError}</div>
+              {:else}
+                {#each providers as provider}
+                  <div class="provider-section">
+                    <div class="provider-header">
+                      <div class="provider-icon">
+                        <img src={getIconForTheme(provider)} alt="" class="provider-icon-img" />
                       </div>
+                      <span class="provider-name">{provider.name}</span>
+                    </div>
+                    <div class="provider-models">
                       {#each provider.models as model}
-                        <button 
-                          class="model-item"
+                        <button
+                          class="menu-item model-option"
                           class:selected={selectedModel === model.name}
                           onclick={() => selectModel(provider, model)}
                         >
-                          {model.name}
+                          <span class="model-name">{model.name}</span>
+                          <div class="model-capabilities">
+                            {#if model.supports_vision}
+                              <svg class="capability-icon active" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label={$_('chat.messageInput.visionCapable')}>
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                              </svg>
+                            {/if}
+                          </div>
                         </button>
                       {/each}
                     </div>
-                  {/each}
+                  </div>
+                {/each}
+              {/if}
+            </div>
+          {/if}
+        </div>
+
+        <div class="connectors-row">
+          <div class="connectors-dropdown-container">
+            <button
+              class="connectors-trigger connectors-selector-btn"
+              onclick={() => { showConnectorsDropdown = !showConnectorsDropdown; }}
+              title={$_('chat.messageInput.selectConnectors')}
+              aria-label={$_('chat.messageInput.selectConnectors')}
+            >
+              <div class="connectors-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                </svg>
+              </div>
+              <span class="connectors-label">{connectorsLabel}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow" class:open={showConnectorsDropdown}>
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+        
+            {#if showConnectorsDropdown}
+              <div class="connectors-menu">
+                {#if loadingMcpServers}
+                  <div class="dropdown-loading">
+                    <div class="loading-spinner"></div>
+                    <span>{$_('chat.messageInput.loadingConnectors')}</span>
+                  </div>
+                {:else if mcpServersError}
+                  <div class="dropdown-error">{mcpServersError}</div>
+                {:else if mcpServers.length === 0}
+                  <div class="dropdown-empty">{$_('chat.messageInput.noConnectors')}</div>
+                {:else}
+                  <div class="connectors-list">
+                    {#each mcpServers as server (server.id)}
+                      <div class="connectors-row-item" class:selected={selectedMcpServers.includes(server.id)}>
+                        <div class="connectors-info">
+                          <span class="connectors-name">{server.name}</span>
+                        </div>
+                        <button
+                          type="button"
+                          class="connectors-switch"
+                          class:active={selectedMcpServers.includes(server.id)}
+                          onclick={() => onMcpToggle?.(server.id)}
+                          aria-label={selectedMcpServers.includes(server.id) ? $_('admin.mcpServers.enabled') : $_('admin.mcpServers.disabled')}
+                        >
+                          <span class="switch-thumb"></span>
+                        </button>
+                      </div>
+                    {/each}
+                  </div>
                 {/if}
               </div>
             {/if}
           </div>
         </div>
-        
-        <div class="input-right">
-          <button class="icon-button" aria-label="Voice input" title="Voice input">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" y1="19" x2="12" y2="23"></line>
-              <line x1="8" y1="23" x2="16" y2="23"></line>
+
+        <button
+          class="toggle-btn"
+          class:active={webSearchEnabled}
+          onclick={onWebSearchToggle}
+          title={webSearchEnabled ? $_('chat.messageInput.disableWebSearch') : $_('chat.messageInput.enableWebSearch')}
+          aria-label={webSearchEnabled ? $_('chat.messageInput.disableWebSearch') : $_('chat.messageInput.enableWebSearch')}
+          aria-pressed={webSearchEnabled}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M2 12h20"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          {#if webSearchEnabled}
+            <span class="toggle-label">{$_('chat.messageInput.search')}</span>
+          {/if}
+        </button>
+      </div>
+
+      <!-- Center: Spacer -->
+      <div class="bottom-bar-center"></div>
+
+      <!-- Right: Mic and Send -->
+      <div class="bottom-bar-right">
+        <button
+          class="input-btn mic-btn"
+          class:recording={isRecording}
+          onclick={toggleVoiceInput}
+          aria-label={isRecording ? $_('chat.messageInput.stopRecording') : $_('chat.messageInput.voiceInput')}
+          title={isRecording ? $_('chat.messageInput.stopRecording') : $_('chat.messageInput.voiceInput')}
+          {disabled}
+        >
+          {#if isRecording}
+            <!-- Filled circle during recording -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <circle cx="12" cy="12" r="8"/>
             </svg>
-          </button>
-          <button 
-            class="send-button" 
-            onclick={handleSend}
-            disabled={disabled || !message.trim()}
-            aria-label="Send message"
-            title="Send message (Enter)"
-          >
-            {#if disabled}
-              <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
-                <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"></path>
-              </svg>
-            {:else}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="19" x2="12" y2="5"></line>
-                <polyline points="5 12 12 5 19 12"></polyline>
-              </svg>
-            {/if}
-          </button>
-        </div>
+          {:else}
+            <!-- Microphone icon when idle -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <path d="M12 19v4"/>
+              <path d="M8 23h8"/>
+            </svg>
+          {/if}
+        </button>
+
+        <button
+          class="input-btn send-btn"
+          onclick={handleSend}
+          disabled={disabled || isUploading || (!message.trim() && attachedFiles.length === 0)}
+          aria-label={isUploading ? $_('chat.messageInput.uploading') : $_('chat.messageInput.sendMessage')}
+          title={isUploading ? $_('chat.messageInput.uploading') : $_('chat.messageInput.sendMessageTitle')}
+        >
+          {#if disabled || isUploading}
+            <svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
+              <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"></path>
+            </svg>
+          {:else}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 2L11 13"/>
+              <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
+            </svg>
+          {/if}
+        </button>
       </div>
     </div>
   </div>
-  
-  <!-- File Preview Modal -->
-  {#if showFilePreview && currentPreviewFile}
-    <div 
-      class="file-preview-overlay" 
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="file-preview-title"
-      onclick={closeFilePreview}
-      onkeydown={(e) => {
-        if (e.key === 'Escape') {
-          closeFilePreview();
-        }
-      }}
-      tabindex="-1"
-    >
-      <div 
-        class="file-preview-modal" 
-        role="document"
-        onclick={(e) => e.stopPropagation()}
-        onkeydown={(e) => e.stopPropagation()}
-      >
-        <div class="file-preview-header">
-          <div class="file-preview-info">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-              <polyline points="14,2 14,8 20,8"></polyline>
-            </svg>
-            <span id="file-preview-title" class="file-preview-name">{currentPreviewFile.name}</span>
-            <span class="file-preview-size">{formatFileSize(currentPreviewFile.size)}</span>
-          </div>
-          <button class="file-preview-close" onclick={closeFilePreview} aria-label="Close preview">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-        <div class="file-preview-content">
-          <textarea 
-            class="file-preview-textarea" 
-            readonly 
-            value={filePreviews[currentPreviewFile.name] || ''}
-            aria-label="File content preview"
-          ></textarea>
-        </div>
-      </div>
-    </div>
-  {/if}
-  
-  <!-- Image Preview Modal -->
-  {#if showImagePreview && currentPreviewImage}
-    <div 
-      class="file-preview-overlay" 
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="image-preview-title"
-      onclick={closeImagePreview}
-      onkeydown={(e) => {
-        if (e.key === 'Escape') {
-          closeImagePreview();
-        }
-      }}
-      tabindex="-1"
-    >
-      <div 
-        class="image-preview-modal" 
-        role="document"
-        onclick={(e) => e.stopPropagation()}
-        onkeydown={(e) => e.stopPropagation()}
-      >
-        <div class="image-preview-header">
-          <div class="image-preview-info">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <circle cx="8.5" cy="8.5" r="1.5"></circle>
-              <polyline points="21 15 16 10 5 21"></polyline>
-            </svg>
-            <span id="image-preview-title" class="image-preview-name">{currentPreviewImage.file.name}</span>
-            <span class="image-preview-size">{formatFileSize(currentPreviewImage.file.size)}</span>
-          </div>
-          <button class="image-preview-close" onclick={closeImagePreview} aria-label="Close image preview">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-        <div class="image-preview-content">
-          <img 
-            src={currentPreviewImage.url} 
-            alt={currentPreviewImage.file.name}
-            class="image-preview-img"
-          />
-        </div>
-      </div>
-    </div>
-  {/if}
 </div>
 
+<!-- File Preview Modal -->
+{#if showFilePreview && currentPreviewFile}
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <div
+    class="preview-overlay"
+    role="dialog"
+    aria-modal="true"
+    onclick={closeFilePreview}
+    onkeydown={(e) => e.key === 'Escape' && closeFilePreview()}
+    tabindex="-1"
+  >
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <div class="preview-modal" role="document" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
+      <div class="preview-header">
+        <div class="preview-info">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+            <polyline points="14,2 14,8 20,8"></polyline>
+          </svg>
+          <span class="preview-name">{currentPreviewFile.name}</span>
+          <span class="preview-size">{formatFileSize(currentPreviewFile.size)}</span>
+        </div>
+        <button class="preview-close" onclick={closeFilePreview} aria-label={$_('chat.messageInput.closePreview')}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="preview-content">
+        <textarea class="preview-textarea" readonly value={filePreviews[currentPreviewFile.name] || ''}></textarea>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Image Preview Modal -->
+{#if showImagePreview && currentPreviewImage}
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <div
+    class="preview-overlay"
+    role="dialog"
+    aria-modal="true"
+    onclick={closeImagePreview}
+    onkeydown={(e) => e.key === 'Escape' && closeImagePreview()}
+    tabindex="-1"
+  >
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <div class="preview-modal image-preview-modal" role="document" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
+      <div class="preview-header">
+        <div class="preview-info">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <span class="preview-name">{currentPreviewImage.file.name}</span>
+          <span class="preview-size">{formatFileSize(currentPreviewImage.file.size)}</span>
+        </div>
+        <button class="preview-close" onclick={closeImagePreview} aria-label={$_('chat.messageInput.closePreview')}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="preview-content image-content">
+        <img src={currentPreviewImage.url} alt={currentPreviewImage.file.name} class="preview-image" />
+      </div>
+    </div>
+  </div>
+{/if}
+
 <style>
-  .message-input-container {
+  /* ===== Input Area Wrapper ===== */
+  .input-area-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
     width: 100%;
     max-width: 900px;
     margin: 0 auto;
   }
 
-  .input-wrapper {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 1.5rem;
-    transition: all 0.2s ease;
+  /* ===== Main Input Container - Liquid Glass ===== */
+  .input-container-main {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-radius: var(--radius-lg);
+    background: var(--glass-bg-dark);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
+    border: 1px solid var(--glass-stroke-dark);
+    box-shadow:
+      var(--glass-highlight),
+      var(--glass-edge-glow),
+      var(--glass-shadow-dark);
+    min-height: 2.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: text;
   }
 
-  .input-wrapper:focus-within {
-    border-color: #d1d5db;
+  .input-container-main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg,
+      var(--glass-tint-primary) 0%,
+      transparent 25%,
+      transparent 75%,
+      rgba(var(--brand-rgb), 0.03) 100%);
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
   }
 
-  .input-content {
-    padding: 1rem 1.25rem;
+  .input-container-main:focus-within {
+    background: color-mix(in oklab, var(--glass-bg-dark) 85%, var(--glass-tint-emphasis));
+    border-color: var(--glass-stroke-light);
+    box-shadow:
+      var(--glass-highlight),
+      var(--glass-edge-glow),
+      var(--glass-shadow-emphasis);
+    transform: translateY(-1px);
   }
 
-  .message-textarea {
+  .input-container-main:focus-within::before {
+    opacity: 1;
+  }
+
+  /* ===== Textarea ===== */
+  .chat-input-textarea {
     width: 100%;
-    min-height: 24px;
-    max-height: 200px;
-    padding: 0.5rem 0;
-    margin-bottom: 0.75rem;
-    background: transparent;
-    border: none;
-    outline: none;
-    box-shadow: none;
-    color: #374151;
-    font-size: 0.9375rem;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    line-height: 1.5;
+    min-height: 1.6rem;
+    max-height: 30vh;
+    padding: var(--space-sm) var(--space-md);
+    padding-bottom: calc(2rem + var(--space-xs));
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    color: var(--text-primary);
+    font-size: 1rem;
+    line-height: 1.6;
     resize: none;
-    overflow-y: auto;
-    scrollbar-width: none;
+    font-family: inherit;
+    font-weight: 400;
+    overflow-y: hidden;
+    transition: color 0.2s ease;
+    border-radius: var(--radius-lg);
+    position: relative;
+    z-index: 1;
   }
 
-  .message-textarea::-webkit-scrollbar {
-    display: none;
+  .chat-input-textarea:focus {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
   }
 
-  .message-textarea::placeholder {
-    color: #9ca3af;
+  .chat-input-textarea::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
   }
 
-  .message-textarea:disabled {
+  .chat-input-textarea:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
-  .file-attachments {
-    margin-bottom: 0.75rem;
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 0.5rem;
-    overflow-x: auto;
-    padding-bottom: 0.25rem;
-  }
-
-  .file-attachment-image {
-    padding: 0;
-    background: transparent;
-    border: none;
-    gap: 0.5rem;
-    align-items: flex-start;
-  }
-
-  .file-thumbnail {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    flex-shrink: 0;
-  }
-
-  .file-thumbnail:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  .thumbnail-button {
-    padding: 0;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    border-radius: 0.5rem;
-    transition: all 0.15s ease;
-    flex-shrink: 0;
-    position: relative;
-    display: inline-block;
-  }
-
-  .thumbnail-button:hover {
-    transform: scale(1.02);
-  }
-
-  .thumbnail-button:focus {
-    outline: 2px solid #3b82f6;
-    outline-offset: 2px;
-  }
-
-  .file-attachment-image .remove-file {
+  /* ===== Floating Bottom Bar ===== */
+  .input-bottom-bar {
     position: absolute;
-    top: -6px;
-    right: -6px;
-    background: #1f2937;
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: 2px solid white;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-xs) var(--space-sm);
+    background: transparent;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    gap: var(--space-sm);
+    min-height: 2rem;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .bottom-bar-left,
+  .bottom-bar-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    flex-shrink: 0;
+    pointer-events: auto;
+  }
+
+  .bottom-bar-center {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ===== Input Buttons ===== */
+  .input-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    z-index: 10;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .file-attachment-image .remove-file:hover {
-    background: #374151;
-    transform: scale(1.1);
-  }
-
-  .remove-file {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
+    width: 1.75rem;
+    height: 1.75rem;
     padding: 0;
     border: none;
-    background: transparent;
-    color: #6b7280;
+    border-radius: var(--radius-full);
+    background: var(--btn-tertiary);
+    color: var(--text-secondary);
     cursor: pointer;
-    border-radius: 50%;
-    transition: all 0.15s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    box-shadow: var(--glass-edge-glow);
+  }
+
+  .input-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .input-btn:hover:not(:disabled) {
+    background: var(--btn-quaternary);
+    color: var(--link-color);
+    transform: scale(1.05);
+    box-shadow: var(--glass-shadow-light);
+  }
+
+  .input-btn:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  .input-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Send Button */
+  .input-btn.send-btn {
+    background: var(--brand);
+    color: white;
+    box-shadow:
+      0 var(--space-xs) var(--space-lg) rgba(var(--brand-rgb), 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+
+  .input-btn.send-btn:hover:not(:disabled) {
+    background: var(--brand-hover);
+    color: white;
+    transform: scale(1.08);
+    box-shadow:
+      0 var(--space-sm) var(--space-xl) rgba(var(--brand-rgb), 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+
+  .input-btn.send-btn:disabled {
+    background: var(--btn-quaternary);
+    color: var(--text-secondary);
+    opacity: 0.5;
+    box-shadow: none;
+  }
+
+  /* Microphone Recording State */
+  .input-btn.mic-btn.recording {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(185, 28, 28, 0.15) 100%);
+    color: rgb(220, 38, 38);
+    animation: pulse 1.5s ease-in-out infinite;
+    box-shadow:
+      0 0 0 0 rgba(220, 38, 38, 0.4),
+      0 2px 8px rgba(220, 38, 38, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .input-btn.mic-btn.recording:hover {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.25) 0%, rgba(185, 28, 28, 0.25) 100%);
+    color: rgb(185, 28, 28);
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow:
+        0 0 0 0 rgba(220, 38, 38, 0.4),
+        0 2px 8px rgba(220, 38, 38, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    50% {
+      box-shadow:
+        0 0 0 8px rgba(220, 38, 38, 0),
+        0 2px 8px rgba(220, 38, 38, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    100% {
+      box-shadow:
+        0 0 0 0 rgba(220, 38, 38, 0),
+        0 2px 8px rgba(220, 38, 38, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+  }
+
+  /* Recording placeholder style */
+  .chat-input-textarea.recording::placeholder {
+    color: rgb(220, 38, 38);
+    opacity: 0.8;
+  }
+
+  /* ===== Selector Button (Dropdowns) ===== */
+  .selector-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-md);
+    background: var(--btn-secondary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    box-shadow: var(--glass-edge-glow);
+  }
+
+  .selector-btn:hover:not(:disabled) {
+    background: var(--btn-tertiary);
+    border-color: color-mix(in oklab, var(--brand) 30%, transparent);
+    color: var(--link-color);
+    transform: translateY(-1px);
+  }
+
+  .selector-label {
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ===== Toggle Button (On/Off) ===== */
+  .toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0 var(--space-sm);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-full);
+    background: var(--btn-secondary);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    box-shadow: var(--glass-edge-glow);
+  }
+
+  .toggle-btn:not(.active) {
+    padding: 0;
+    width: 1.75rem;
+  }
+
+  .toggle-btn svg {
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
   }
 
-  .remove-file:hover {
-    background: #d1d5db;
-    color: #374151;
+  .toggle-btn:hover:not(:disabled) {
+    background: var(--btn-tertiary);
+    border-color: color-mix(in oklab, var(--brand) 30%, transparent);
+    color: var(--link-color);
+    transform: translateY(-1px);
   }
 
-  .remove-file svg {
+  .toggle-btn.active {
+    background: color-mix(in oklab, var(--glass-bg-dark) 90%, var(--glass-tint-primary));
+    border-color: var(--brand);
+    color: var(--brand);
+    box-shadow: var(--glass-shadow-light);
+  }
+
+  .toggle-label {
+    font-size: 0.8125rem;
+  }
+
+  .model-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+  }
+
+  .model-icon :global(svg) {
     width: 12px;
     height: 12px;
   }
 
-  .loading-spinner {
+  .connectors-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+  }
+
+  .connectors-icon :global(svg) {
+    width: 12px;
+    height: 12px;
+  }
+
+  .model-icon .provider-icon-img {
     width: 16px;
     height: 16px;
-    border: 2px solid #e5e7eb;
-    border-top: 2px solid #3b82f6;
+    object-fit: contain;
+  }
+
+  .dropdown-arrow {
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .dropdown-arrow.open {
+    transform: rotate(180deg);
+  }
+
+  /* ===== Plus Menu ===== */
+  .plus-menu-container,
+  .model-dropdown-container,
+  .connectors-dropdown-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .plus-menu,
+  .model-menu,
+  .connectors-menu {
+    position: absolute;
+    bottom: calc(100% + var(--space-sm));
+    left: 0;
+    z-index: 100;
+    min-width: 11rem;
+    background: color-mix(in oklab, var(--bg-primary) 85%, var(--btn-secondary));
+    backdrop-filter: blur(calc(var(--glass-blur) * 1.5)) saturate(1.5);
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.5)) saturate(1.5);
+    border: 1px solid var(--glass-stroke-light);
+    border-radius: var(--radius-lg);
+    box-shadow:
+      /* Outer glow for floating effect */
+      0 0 0 1px var(--glass-edge-glow),
+      /* Layered depth shadows */
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      0 12px 28px rgba(0, 0, 0, 0.2),
+      0 20px 48px rgba(0, 0, 0, 0.15),
+      /* Inner highlight for glass edge */
+      var(--glass-highlight),
+      inset 0 0 20px rgba(255, 255, 255, 0.02);
+    padding: var(--space-sm);
+    overflow: hidden;
+  }
+
+  .plus-menu::before,
+  .model-menu::before,
+  .connectors-menu::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      /* Top highlight edge - liquid refraction */
+      linear-gradient(180deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        transparent 20%),
+      /* Subtle brand tint */
+      linear-gradient(135deg,
+        var(--glass-tint-primary) 0%,
+        transparent 40%,
+        transparent 60%,
+        rgba(var(--brand-rgb), 0.02) 100%);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .plus-menu::after,
+  .model-menu::after,
+  .connectors-menu::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.15) 20%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(255, 255, 255, 0.15) 80%,
+      transparent 100%);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+
+  /* ===== Model Menu ===== */
+  .model-menu,
+  .connectors-menu {
+    min-width: 14rem;
+    max-height: 20rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  }
+
+  .model-menu::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .model-menu::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .model-menu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+  }
+
+  .model-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .dropdown-empty {
+    padding: var(--space-lg);
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+
+  .provider-section {
+    position: relative;
+  }
+
+  .provider-section:not(:last-child) {
+    border-bottom: 1px solid var(--glass-stroke-dark);
+    margin-bottom: var(--space-xs);
+    padding-bottom: var(--space-xs);
+  }
+
+  .provider-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--btn-secondary);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-xs);
+  }
+
+  .provider-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  .provider-icon :global(svg) {
+    width: 12px;
+    height: 12px;
+    opacity: 0.7;
+  }
+
+  .provider-icon-img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+  }
+
+  .provider-models {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .model-option {
+    justify-content: space-between;
+  }
+
+  .connectors-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .connectors-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0;
+  }
+
+  .connectors-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-full);
+    background: var(--btn-secondary);
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--glass-edge-glow);
+  }
+
+  .connectors-trigger:hover {
+    background: var(--btn-tertiary);
+    border-color: color-mix(in oklab, var(--brand) 30%, transparent);
+    color: var(--link-color);
+  }
+
+  .connectors-label {
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .connectors-menu {
+    min-width: 16rem;
+  }
+
+  .connectors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .connectors-row-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    text-align: left;
+    width: 100%;
+  }
+
+  .connectors-row-item:hover {
+    background: var(--glass-stroke-light);
+    color: var(--text-primary);
+  }
+
+  .connectors-row-item.selected {
+    background: rgba(var(--brand-rgb), 0.12);
+    color: var(--text-primary);
+  }
+
+  .connectors-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .connectors-switch {
+    position: relative;
+    width: 2rem;
+    height: 1.25rem;
+    background: rgba(88 88 88 / 0.3);
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .connectors-switch:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .connectors-switch.active {
+    background: var(--brand-teal);
+  }
+
+  .switch-thumb {
+    position: absolute;
+    top: 0.125rem;
+    left: 0.125rem;
+    width: 1rem;
+    height: 1rem;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .connectors-switch.active .switch-thumb {
+    transform: translateX(1.25rem);
+  }
+
+  .model-option .model-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .model-capabilities {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .capability-icon {
+    opacity: 0.6;
+  }
+
+  .capability-icon.active {
+    opacity: 1;
+  }
+
+  .dropdown-loading,
+  .dropdown-error {
+    padding: var(--space-lg);
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+  }
+
+  .dropdown-error {
+    color: var(--brand-red);
+  }
+
+  .loading-spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--glass-stroke-dark);
+    border-top-color: var(--brand);
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin: 0 auto 0.5rem;
   }
 
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  /* ===== File Attachments ===== */
+  .file-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    padding: var(--space-xs) 0;
   }
 
-  /* Dropdown Styles */
-  .file-preview-overlay {
+  .file-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: var(--glass-bg-dark);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-stroke-dark);
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    max-width: 240px;
+  }
+
+  .file-pill:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .file-pill-image {
+    padding: 4px;
+  }
+
+  .thumbnail-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: transform 0.15s ease;
+    overflow: hidden;
+  }
+
+  .thumbnail-button:hover {
+    transform: scale(1.05);
+  }
+
+  .file-thumbnail {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+
+  .thumbnail-placeholder,
+  .file-icon-button {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--btn-tertiary);
+    border-radius: 6px;
+    color: var(--text-secondary);
+  }
+
+  .file-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+    font-size: 0.8125rem;
+  }
+
+  .file-size {
+    font-size: 0.6875rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  .pill-remove-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+
+  .file-pill:hover .pill-remove-btn {
+    opacity: 1;
+  }
+
+  .pill-remove-btn:hover {
+    background: var(--brand-red, #ef4444);
+    color: white;
+    transform: scale(1.1);
+    opacity: 1;
+  }
+
+  /* Upload status indicators */
+  .pill-upload-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .pill-upload-status.uploading {
+    color: var(--text-secondary);
+  }
+
+  .pill-upload-status.success {
+    color: var(--brand-green, #22c55e);
+    font-size: 0.75rem;
+  }
+
+  .pill-upload-status.failed {
+    color: var(--brand-red, #ef4444);
+  }
+
+  .pill-status-text {
+    white-space: nowrap;
+  }
+
+  .pill-spinner {
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid rgba(var(--brand-rgb), 0.15);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: pill-spin 0.7s linear infinite;
+  }
+
+  @keyframes pill-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .file-pill-uploading {
+    opacity: 0.75;
+    border-style: dashed;
+  }
+
+  .file-pill-failed {
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.05);
+  }
+
+  /* ===== Preview Modal ===== */
+  .preview-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    backdrop-filter: blur(4px);
   }
 
-  .file-preview-modal {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  .preview-modal {
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow-emphasis);
     width: 90vw;
     max-width: 800px;
     max-height: 80vh;
@@ -850,463 +1719,226 @@
     overflow: hidden;
   }
 
-  .file-preview-header {
+  .image-preview-modal {
+    max-width: 900px;
+    max-height: 90vh;
+  }
+
+  .preview-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f9fafb;
+    padding: var(--space-md) var(--space-xl);
+    border-bottom: 1px solid var(--glass-stroke-dark);
+    background: var(--btn-secondary);
   }
 
-  .file-preview-info {
+  .preview-info {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--space-md);
     flex: 1;
+    color: var(--text-secondary);
+    min-width: 0;
   }
 
-  .file-preview-name {
+  .preview-name {
     font-weight: 600;
-    color: #111827;
+    color: var(--text-primary);
     font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .file-preview-size {
+  .preview-size {
     font-size: 0.75rem;
-    color: #6b7280;
+    color: var(--text-secondary);
+    flex-shrink: 0;
   }
 
-  .file-preview-close {
+  .preview-close {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 2rem;
+    height: 2rem;
     padding: 0;
     border: none;
     background: transparent;
-    color: #6b7280;
+    color: var(--text-secondary);
     cursor: pointer;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-sm);
     transition: all 0.15s ease;
   }
 
-  .file-preview-close:hover {
-    background: #e5e7eb;
-    color: #374151;
+  .preview-close:hover {
+    background: var(--btn-tertiary);
+    color: var(--text-primary);
   }
 
-  .file-preview-content {
+  .preview-content {
     flex: 1;
-    padding: 1rem;
+    padding: var(--space-lg);
     overflow: hidden;
     display: flex;
     flex-direction: column;
   }
 
-  .file-preview-textarea {
+  .preview-textarea {
     flex: 1;
     width: 100%;
     min-height: 300px;
-    padding: 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    background: #f9fafb;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.875rem;
-    line-height: 1.5;
+    padding: var(--space-lg);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-sm);
+    background: var(--btn-secondary);
+    font-family: 'SF Mono', Monaco, Menlo, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.6;
     resize: none;
     outline: none;
-    color: #374151;
+    color: var(--text-primary);
     overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #d1d5db #f9fafb;
   }
 
-  .file-preview-textarea::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .file-preview-textarea::-webkit-scrollbar-track {
-    background: #f9fafb;
-  }
-
-  .file-preview-textarea::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 4px;
-  }
-
-  .file-preview-textarea::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
-  }
-
-  /* Image Preview Modal */
-  .image-preview-modal {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    width: 90vw;
-    max-width: 900px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .image-preview-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f9fafb;
-  }
-
-  .image-preview-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex: 1;
-  }
-
-  .image-preview-name {
-    font-weight: 600;
-    color: #111827;
-    font-size: 0.875rem;
-  }
-
-  .image-preview-size {
-    font-size: 0.75rem;
-    color: #6b7280;
-  }
-
-  .image-preview-close {
+  .image-content {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: #6b7280;
-    cursor: pointer;
-    border-radius: 0.5rem;
-    transition: all 0.15s ease;
+    background: var(--btn-secondary);
   }
 
-  .image-preview-close:hover {
-    background: #e5e7eb;
-    color: #374151;
-  }
-
-  .image-preview-content {
-    flex: 1;
-    padding: 1rem;
-    overflow: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f9fafb;
-  }
-
-  .image-preview-img {
+  .preview-image {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: var(--radius-sm);
   }
 
-  .input-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .input-left,
-  .input-right {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .model-name {
-    font-weight: 500;
-  }
-
-  /* Dropdown Styles */
-  .dropdown {
-    position: relative;
-  }
-
-  .dropdown-button {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border: 1px solid #e5e7eb;
-    background: white;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.875rem;
-    color: #374151;
-  }
-
-  .dropdown-button:hover {
-    border-color: #d1d5db;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .dropdown-button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .model-logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-  }
-
-  .dropdown-arrow {
-    color: #6b7280;
-    transition: transform 0.2s ease;
-  }
-
-  .dropdown-button:hover .dropdown-arrow {
-    color: #374151;
-  }
-
-  .dropdown-button.open .dropdown-arrow {
-    transform: rotate(180deg);
-  }
-
-  .dropdown-menu {
-    position: absolute;
-    bottom: calc(100% + 0.5rem);
-    left: 0;
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.375rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    min-width: 100px;
-    max-height: 150px;
-    overflow-y: auto;
-    animation: slideUp 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: scale(0.95) translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-  }
-
-  .dropdown-loading,
-  .dropdown-error {
-    padding: 1.5rem;
-    text-align: center;
-    color: #6b7280;
-    font-size: 0.875rem;
-  }
-
-  .dropdown-error {
-    color: #dc2626;
-  }
-
-  .loading-spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #e5e7eb;
-    border-top: 2px solid #3b82f6;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 0.5rem;
-  }
-
+  /* ===== Animations ===== */
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  .provider-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.25rem;
-  }
-
-  .provider-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.375rem 0.5rem;
-    background: #f8fafc;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 0.25rem;
-  }
-
-  .provider-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 12px;
-    height: 12px;
-    flex-shrink: 0;
-  }
-
-  .provider-name {
-    font-weight: 600;
-  }
-
-  .model-item {
-    padding: 0.25rem 0.75rem;
-    border: none;
-    background: transparent;
-    text-align: left;
-    font-size: 0.7rem;
-    color: #6b7280;
-    cursor: pointer;
-    border-radius: 0.25rem;
-    transition: all 0.15s ease;
-    margin-left: 0.5rem;
-  }
-
-  .model-item:hover {
-    background: #f1f5f9;
-    color: #374151;
-  }
-
-  .model-item.selected {
-    background: #dbeafe;
-    color: #1d4ed8;
-    font-weight: 500;
-  }
-
-  .icon-button {
-    flex-shrink: 0;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    background: transparent;
-    color: #6b7280;
-  }
-
-  .icon-button:hover {
-    background: #e5e7eb;
-    color: #374151;
-  }
-
-  .icon-button:active {
-    background: #d1d5db;
-  }
-
-  .attachment-button {
-    color: #3b82f6;
-  }
-
-  .attachment-button:hover {
-    background: #eff6ff;
-    color: #2563eb;
-  }
-
-  .send-button {
-    flex-shrink: 0;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    background: #e5e7eb;
-    color: #6b7280;
-  }
-
-  .send-button:not(:disabled) {
-    background: #000000;
-    color: #ffffff;
-  }
-
-  .send-button:hover:not(:disabled) {
-    background: #1a1a1a;
-    color: #ffffff;
-  }
-
-  .send-button:active:not(:disabled) {
-    background: #333333;
-  }
-
-  .send-button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    color: #6b7280;
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
   .spinner {
     animation: spin 1s linear infinite;
   }
 
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
+  /* ===== Responsive ===== */
   @media (max-width: 768px) {
-    .message-input-container {
+    .input-area-wrapper {
       max-width: 100%;
     }
 
-    .input-wrapper {
-      padding: 0.5rem 0.875rem;
+    .input-container-main {
+      border-radius: var(--radius-md);
+      min-height: 2.25rem;
     }
 
-    .icon-button,
-    .send-button {
-      width: 28px;
-      height: 28px;
+    .chat-input-textarea {
+      font-size: 1rem; /* Prevent iOS zoom */
+      padding: var(--space-xs) var(--space-sm);
+      padding-bottom: calc(1.75rem + var(--space-xs));
+    }
+
+    .input-bottom-bar {
+      padding: var(--space-2xs) var(--space-xs);
+      gap: var(--space-xs);
+      min-height: 1.75rem;
+    }
+
+    .selector-label,
+    .toggle-label,
+    .connectors-label {
+      display: none;
+    }
+
+    .selector-btn {
+      padding: var(--space-xs);
+      border-radius: 50%;
+      gap: 0;
+    }
+
+    .connectors-trigger {
+      width: 1.625rem;
+      min-width: 1.625rem;
+      height: 1.625rem;
+      padding: 0;
+      border-radius: 50%;
+      justify-content: center;
+      gap: 0;
+    }
+
+    .toggle-btn {
+      width: 1.625rem;
+      min-width: 1.625rem;
+      height: 1.625rem;
+      padding: 0;
+    }
+
+    .toggle-btn svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .dropdown-arrow {
+      display: none;
+    }
+
+    .input-btn {
+      width: 1.625rem;
+      height: 1.625rem;
+    }
+
+    .input-btn svg {
+      width: 12px;
+      height: 12px;
     }
   }
 
   @media (max-width: 480px) {
-    .input-wrapper {
-      padding: 0.5rem 0.75rem;
+    .input-btn {
+      width: 1.5rem;
+      height: 1.5rem;
     }
 
-    .message-textarea {
-      padding: 0.375rem 0.5rem;
-      font-size: 0.9375rem;
+    .input-btn svg {
+      width: 11px;
+      height: 11px;
     }
 
-    .icon-button,
-    .send-button {
-      width: 26px;
-      height: 26px;
+    .toggle-btn {
+      width: 1.5rem;
+      min-width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .connectors-trigger {
+      width: 1.5rem;
+      min-width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .toggle-btn svg {
+      width: 11px;
+      height: 11px;
+    }
+
+    .file-pill {
+      font-size: 0.8125rem;
+    }
+
+    .file-name {
+      max-width: 100px;
+    }
+
+    .file-thumbnail,
+    .thumbnail-placeholder,
+    .file-icon-button {
+      width: 28px;
+      height: 28px;
     }
   }
 </style>

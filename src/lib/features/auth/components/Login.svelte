@@ -1,8 +1,12 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { login, ApiError } from '../index.js';
   import { setAuth } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
+  import { getLocalizedError } from '../../../utils/errorLocalization';
   import OAuthButton from './OAuthButton.svelte';
+  import { _ } from 'svelte-i18n';
+  import { loadNamespaces } from '$lib/i18n/index.js';
 
   // TODO: This should come from the server (API update)
   type AuthMode = 'google' | 'azure' | 'keycloak' | 'admin';
@@ -32,20 +36,19 @@
       const response = await login(email, password);
 
       if (response.requires_mfa) {
-          toast.error('MFA is required but not yet implemented');
+        toast.error($_('error.auth.mfa_not_implemented'));
         return;
       }
 
-      if (response.accessToken && response.refresh_token && response.user) {
-        setAuth(response.accessToken, response.refresh_token, response.user);
+      if (response.accessToken && response.refreshToken && response.user) {
+        setAuth(response.accessToken, response.refreshToken, response.user);
         onLoginSuccess?.();
       }
     } catch (err) {
-      if (err instanceof ApiError) {
-        toast.error(err.detail);
-      } else {
-        toast.error('An unexpected error occurred');
-      }
+      const errorMessage = err instanceof ApiError 
+        ? getLocalizedError(err, 'description', $_) || err.description
+        : $_('error.fallback.description');
+      toast.error(errorMessage);
     } finally {
       isLoading = false;
     }
@@ -62,30 +65,35 @@
   function handleOAuthSuccess() {
     onLoginSuccess?.();
   }
+
+  onMount(() => {
+    // Ensure auth namespace is loaded for translations
+    loadNamespaces(['auth']);
+  });
 </script>
 
-<div class="login-container">
+<main class="login-container">
   <div class="login-card">
     <div class="brand-header">
       <img src="/grengin-icon.svg" alt="Grengin" class="login-logo" />
       <div class="brand-text">
-        <h1 class="brand-name">Welcome to Grengin</h1>
-        <p class="brand-tagline">Sign in to continue to your workspace</p>
+        <h1 class="brand-name">{$_('auth.welcomeToGrengin')}</h1>
+        <p class="brand-tagline">{$_('auth.signInToContinue')}</p>
       </div>
     </div>
 
     <div class="auth-content">
       {#if hasAdminLogin}
-        <form onsubmit={handleSubmit} class="login-form">
+        <form onsubmit={handleSubmit} class="login-form" aria-label={$_('auth.emailAndPassword')}>
           <div class="form-section">
-            <h3 class="section-title">Email & Password</h3>
+            <h2 class="section-title">{$_('auth.emailAndPassword')}</h2>
             <div class="form-group">
-              <label for="email">Email address</label>
+              <label for="email">{$_('auth.emailAddress')}</label>
               <input
                 type="email"
                 id="email"
                 bind:value={email}
-                placeholder="Enter your email"
+                placeholder={$_('auth.emailPlaceholder')}
                 required
                 disabled={isLoading}
                 autocomplete="email"
@@ -94,12 +102,12 @@
             </div>
 
             <div class="form-group">
-              <label for="password">Password</label>
+              <label for="password">{$_('auth.password')}</label>
               <input
                 type="password"
                 id="password"
                 bind:value={password}
-                placeholder="Enter your password"
+                placeholder={$_('auth.passwordPlaceholder')}
                 required
                 disabled={isLoading}
                 autocomplete="current-password"
@@ -110,37 +118,37 @@
             <button type="submit" class="login-btn" disabled={isLoading}>
               {#if isLoading}
                 <div class="btn-spinner"></div>
-                Signing in...
+                {$_('auth.signingIn')}
               {:else}
-                Sign in
+                {$_('auth.signIn')}
               {/if}
             </button>
           </div>
         </form>
 
-        <div class="demo-section">
+        <div class="demo-section" role="region" aria-label={$_('auth.demoAccount')}>
           <div class="demo-info">
-            <svg class="demo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="demo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="16" x2="12" y2="12"></line>
               <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
             <div class="demo-text">
-              <p class="demo-title">Demo Account</p>
-              <p class="demo-credentials">admin@grengin.com / Demo123456!@</p>
+              <p class="demo-title">{$_('auth.demoAccount')}</p>
+              <code class="demo-credentials">admin@grengin.com / Demo123456!@</code>
             </div>
           </div>
         </div>
       {/if}
 
       {#if hasOAuthProviders && hasAdminLogin}
-        <div class="divider">
-          <span>or continue with</span>
+        <div class="divider" aria-hidden="true">
+          <span>{$_('auth.orContinueWith')}</span>
         </div>
       {/if}
 
       {#if hasOAuthProviders}
-        <div class="oauth-section">
+        <section class="oauth-section" aria-label={$_('auth.socialLogin') || 'Social login'}>
           <div class="oauth-buttons">
             {#each oauthProviders as provider}
               <OAuthButton 
@@ -153,34 +161,34 @@
               />
             {/each}
           </div>
-        </div>
+        </section>
       {/if}
 
       {#if !hasOAuthProviders && !hasAdminLogin}
-        <div class="no-auth-section">
-          <div class="no-auth-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="no-auth-section" role="alert">
+          <div class="no-auth-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="15" y1="9" x2="9" y2="15"></line>
               <line x1="9" y1="9" x2="15" y2="15"></line>
             </svg>
           </div>
-          <h3>No Authentication Methods</h3>
-          <p>Please contact your administrator to configure authentication options.</p>
+          <h2>{$_('auth.noAuthMethods')}</h2>
+          <p>{$_('auth.noAuthMethodsDescription')}</p>
         </div>
       {/if}
     </div>
 
-    <div class="legal-footer">
-      <div class="legal-links">
-        <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>
-        <span class="separator">•</span>
-        <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-      </div>
-      <p class="copyright">© 2024 Grengin. All rights reserved.</p>
-    </div>
+    <footer class="legal-footer">
+      <nav class="legal-links" aria-label={$_('auth.legalLinks') || 'Legal'}>
+        <a href="/terms" target="_blank" rel="noopener noreferrer">{$_('auth.termsOfService')}</a>
+        <span class="separator" aria-hidden="true">•</span>
+        <a href="/privacy" target="_blank" rel="noopener noreferrer">{$_('auth.privacyPolicy')}</a>
+      </nav>
+      <p class="copyright">{$_('auth.copyright')}</p>
+    </footer>
   </div>
-</div>
+</main>
 
 <style>
   .login-container {
@@ -235,7 +243,7 @@
 
   .brand-tagline {
     font-size: 14px;
-    color: #718096;
+    color: #6b7280;
     margin: 0;
     font-weight: 500;
   }
@@ -380,13 +388,14 @@
 
   .demo-credentials {
     font-size: 13px;
-    color: #4a5568;
+    color: #2d3748;
     margin: 0;
     font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
     background: rgba(72, 187, 120, 0.1);
     padding: 6px 10px;
     border-radius: 6px;
     border: 1px solid rgba(72, 187, 120, 0.2);
+    display: inline-block;
   }
 
   .divider {
@@ -394,7 +403,7 @@
     align-items: center;
     text-align: center;
     margin: 32px 0;
-    color: #718096;
+    color: #6b7280;
     font-size: 14px;
     font-weight: 500;
   }
@@ -440,7 +449,7 @@
     height: 32px;
   }
 
-  .no-auth-section h3 {
+  .no-auth-section h2 {
     font-size: 18px;
     font-weight: 600;
     color: #1a202c;
@@ -449,7 +458,7 @@
 
   .no-auth-section p {
     font-size: 14px;
-    color: #718096;
+    color: #6b7280;
     margin: 0;
     line-height: 1.5;
   }
@@ -466,7 +475,7 @@
   }
 
   .legal-links a {
-    color: #718096;
+    color: #5a6b7d;
     text-decoration: none;
     font-size: 13px;
     transition: color 0.2s ease;
@@ -477,6 +486,11 @@
     text-decoration: underline;
   }
 
+  .legal-links a:focus-visible {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+  }
+
   .separator {
     margin: 0 8px;
     color: #cbd5e0;
@@ -484,7 +498,7 @@
 
   .copyright {
     font-size: 12px;
-    color: #a0aec0;
+    color: #6b7280;
     margin: 0;
   }
 
@@ -603,7 +617,7 @@
     }
 
     .demo-credentials {
-      color: #cbd5e0;
+      color: #e2e8f0;
       background: rgba(72, 187, 120, 0.2);
       border-color: rgba(72, 187, 120, 0.3);
     }
@@ -626,7 +640,7 @@
       border-color: rgba(245, 101, 101, 0.3);
     }
 
-    .no-auth-section h3 {
+    .no-auth-section h2 {
       color: #f7fafc;
     }
 
@@ -640,7 +654,7 @@
     }
 
     .legal-links a {
-      color: #cbd5e0;
+      color: #a0bcc9;
     }
 
     .legal-links a:hover {

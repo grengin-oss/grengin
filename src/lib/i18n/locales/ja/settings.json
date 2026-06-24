@@ -1,0 +1,126 @@
+{
+  "userSettings": {
+    "title": "設定",
+    "subtitle": "個人の設定と接続済みの連携を管理します。",
+    "tabs": {
+      "integrations": "連携",
+      "integrationsAria": "接続済みの連携",
+      "promptSettings": "プロンプト設定",
+      "promptSettingsAria": "プロンプトの設定を管理"
+    }
+  },
+  "userIntegrations": {
+    "loading": "連携を読み込み中...",
+    "failedToLoad": "連携の読み込みに失敗しました",
+    "failedToGetAuthUrl": "認証URLの取得に失敗しました",
+    "failedToConnect": "{name}への接続に失敗しました",
+    "failedToDisconnect": "{name}の切断に失敗しました",
+    "disconnected": "{name}を切断しました",
+    "stats": {
+      "connected": "接続済み",
+      "available": "利用可能",
+      "total": "合計"
+    },
+    "filters": {
+      "all": "すべて",
+      "connected": "接続済み",
+      "available": "利用可能",
+      "filterAria": "連携を絞り込む"
+    },
+    "empty": {
+      "title": "連携が見つかりません",
+      "noConnected": "まだ連携を接続していません。",
+      "noAvailable": "現在接続できる連携はありません。",
+      "noConfigured": "組織で連携が設定されていません。",
+      "viewAll": "すべての連携を表示"
+    },
+    "columns": {
+      "name": "名前",
+      "transport": "トランスポート",
+      "status": "ステータス",
+      "tools": "ツール",
+      "connectedAt": "接続日時",
+      "actions": "操作"
+    },
+    "status": {
+      "connected": "接続済み",
+      "disconnected": "未接続",
+      "expired": "期限切れ",
+      "error": "エラー",
+      "expiredWarning": "接続の有効期限が切れました。再接続してアクセスを更新してください。"
+    },
+    "actions": {
+      "connect": "接続",
+      "connecting": "接続中...",
+      "disconnect": "切断",
+      "reconnect": "再接続",
+      "disconnectConfirm": "切断しますか？",
+      "yes": "はい",
+      "no": "いいえ",
+      "viewTools": "ツールを表示"
+    },
+    "connectedSince": "{date}から接続",
+    "toolCount": "{count}個のツール",
+    "tools": {
+      "modalTitle": "{name} — ツール",
+      "loading": "ツールを読み込み中...",
+      "empty": "このサーバーで利用可能なツールはありません。"
+    }
+  },
+  "userPromptSettings": {
+    "loading": "プロンプト設定を読み込み中...",
+    "failedToLoad": "プロンプト設定の読み込みに失敗しました",
+    "activePrompt": "アクティブなプロンプト",
+    "source": {
+      "label": "ソース",
+      "user_custom": "カスタムプロンプト",
+      "department": "部門デフォルト",
+      "department_default": "部門デフォルト",
+      "system_default": "システムデフォルト"
+    },
+    "variables": {
+      "title": "利用可能な変数",
+      "empty": "利用可能な変数はありません",
+      "insertHint": "変数をクリックしてエディターに挿入",
+      "copied": "変数が挿入されました"
+    },
+    "editor": {
+      "title": "カスタムプロンプトエディター",
+      "placeholder": "カスタムシステムプロンプトをここに記入してください。{{variable_name}} のような変数を使用して動的な値を挿入できます...",
+      "charCount": "{count} 文字",
+      "preview": "プレビュー",
+      "edit": "編集",
+      "previewTitle": "プロンプトプレビュー",
+      "previewEmpty": "プレビューする内容がありません。上でカスタムプロンプトの作成を始めてください。"
+    },
+    "actions": {
+      "save": "プロンプトを保存",
+      "saving": "保存中...",
+      "resetToDefault": "デフォルトに戻す",
+      "resetting": "リセット中...",
+      "resetConfirmTitle": "デフォルトに戻しますか？",
+      "resetConfirmMessage": "カスタムプロンプトが削除され、部門またはシステムのデフォルトに戻ります。この操作は元に戻せません。",
+      "resetConfirmButton": "はい、リセットする",
+      "cancel": "キャンセル"
+    },
+    "messages": {
+      "saved": "カスタムプロンプトが正常に保存されました",
+      "failedToSave": "プロンプトの保存に失敗しました",
+      "reset": "プロンプトがデフォルトにリセットされました",
+      "failedToReset": "プロンプトのリセットに失敗しました",
+      "noChanges": "保存する変更はありません"
+    },
+    "feedback": {
+      "title": "プロンプトのフィードバック",
+      "subtitle": "現在のプロンプトの効果を評価して改善にご協力ください",
+      "thumbsUp": "このプロンプトはうまく機能しています",
+      "thumbsDown": "このプロンプトは改善が必要です",
+      "commentPlaceholder": "任意：このプロンプトでの体験について詳しくお聞かせください...",
+      "submit": "フィードバックを送信",
+      "submitting": "送信中...",
+      "submitted": "フィードバックありがとうございます！",
+      "failedToSubmit": "フィードバックの送信に失敗しました",
+      "ratingRequired": "送信前に評価を選択してください"
+    }
+  }
+}

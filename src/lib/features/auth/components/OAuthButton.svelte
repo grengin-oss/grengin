@@ -1,6 +1,8 @@
 <script lang="ts">
   import { initiateOAuth, ApiError } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
+  import { _ } from 'svelte-i18n';
+  import { getLocalizedError } from '../../../utils/errorLocalization';
 
   type OAuthProvider = 'google' | 'azure' | 'keycloak';
   type ButtonSize = 'small' | 'medium' | 'large';
@@ -16,9 +18,9 @@
 
   }
 
-  let { 
+  let {
     provider,
-    redirectUri = window.location.origin + '/auth/callback',
+    redirectUri,
     size = 'medium',
     disabled = false,
     onStart,
@@ -26,14 +28,16 @@
     onError,
   }: Props = $props();
 
+  // Always send redirect_uri so the backend knows where to redirect after OAuth
+  // Use provider-specific callback path to match Azure/OAuth provider configuration
+  const effectiveRedirectUri = $derived(
+    redirectUri ?? window.location.origin + `/auth/${provider}/callback`
+  );
+
   let isLoading = $state(false);
 
   // Capitalize provider name
   const providerName = $derived(provider.charAt(0).toUpperCase() + provider.slice(1));
-  
-  // Dynamic text
-  const displayName = $derived(`Sign in with ${providerName}`);
-  const loadingText = $derived(`Connecting to ${providerName}...`);
   
   // Icon path
   const iconPath = $derived(`/${provider}.svg`);
@@ -45,13 +49,12 @@
     onStart?.(); // Notify parent that OAuth flow is starting
 
     try {
-      await initiateOAuth(provider, redirectUri);
+      await initiateOAuth(provider, effectiveRedirectUri);
     } catch (err) {
-      console.log(err);
       isLoading = false;
       const errorMessage = err instanceof ApiError 
-        ? err.detail 
-        : `Failed to initiate ${providerName} login`;
+        ? getLocalizedError(err, 'description', $_) || err.description
+        : $_('error.fallback.description');
       
       toast.error(errorMessage);
       onError?.(errorMessage);
@@ -70,14 +73,14 @@
   class:provider-keycloak={provider === 'keycloak'}
   onclick={handleClick}
   disabled={isLoading || disabled}
-  aria-label={displayName}
+  aria-label={$_('auth.signInWith', { values: { provider: providerName } })}
 >
   {#if isLoading}
-    <span class="spinner"></span>
-    <span>{loadingText}</span>
+    <span class="spinner" aria-hidden="true"></span>
+    <span>{$_('auth.connectingTo', { values: { provider: providerName } })}</span>
   {:else}
-    <img src={iconPath} alt="{providerName} logo" class="icon" />
-    <span>{displayName}</span>
+    <img src={iconPath} alt="{providerName} logo" class="icon" aria-hidden="true" />
+    <span>{$_('auth.signInWith', { values: { provider: providerName } })}</span>
   {/if}
 </button>
 

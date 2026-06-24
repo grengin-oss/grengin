@@ -10,6 +10,7 @@ export {
   isAuthenticated,
 } from './state.svelte.js';
 export type { AuthState } from './state.svelte.js';
+export { permissionsStore } from './permissionsStore.svelte.js';
 
 // Auth API functions (re-exported for convenience)
 export { login, initiateOAuth, handleOAuthCallback, getCurrentUser } from '../../api/auth.js';

@@ -1,0 +1,126 @@
+{
+  "userSettings": {
+    "title": "Paramètres",
+    "subtitle": "Gérez vos préférences personnelles et les intégrations connectées.",
+    "tabs": {
+      "integrations": "Intégrations",
+      "integrationsAria": "Intégrations connectées",
+      "promptSettings": "Paramètres des Instructions",
+      "promptSettingsAria": "Gérer vos préférences d'instructions"
+    }
+  },
+  "userIntegrations": {
+    "loading": "Chargement des intégrations...",
+    "failedToLoad": "Échec du chargement des intégrations",
+    "failedToGetAuthUrl": "Échec de l'obtention de l'URL d'autorisation",
+    "failedToConnect": "Échec de la connexion à {name}",
+    "failedToDisconnect": "Échec de la déconnexion de {name}",
+    "disconnected": "{name} déconnecté",
+    "stats": {
+      "connected": "Connecté",
+      "available": "Disponible",
+      "total": "Total"
+    },
+    "filters": {
+      "all": "Toutes",
+      "connected": "Connectées",
+      "available": "Disponibles",
+      "filterAria": "Filtrer les intégrations"
+    },
+    "empty": {
+      "title": "Aucune intégration trouvée",
+      "noConnected": "Vous n'avez pas encore connecté d'intégrations.",
+      "noAvailable": "Aucune intégration n'est disponible pour le moment.",
+      "noConfigured": "Votre organisation n'a configuré aucune intégration.",
+      "viewAll": "Voir toutes les intégrations"
+    },
+    "columns": {
+      "name": "Nom",
+      "transport": "Protocole",
+      "status": "Statut",
+      "tools": "Outils",
+      "connectedAt": "Connecté",
+      "actions": "Opérations"
+    },
+    "status": {
+      "connected": "Connecté",
+      "disconnected": "Déconnecté",
+      "expired": "Expiré",
+      "error": "Erreur",
+      "expiredWarning": "La connexion a expiré. Reconnectez-vous pour actualiser votre accès."
+    },
+    "actions": {
+      "connect": "Connecter",
+      "connecting": "Connexion...",
+      "disconnect": "Déconnecter",
+      "reconnect": "Reconnecter",
+      "disconnectConfirm": "Déconnecter ?",
+      "yes": "Oui",
+      "no": "Non",
+      "viewTools": "Voir les outils"
+    },
+    "connectedSince": "Connecté depuis {date}",
+    "toolCount": "{count} {count, plural, one {outil} other {outils}}",
+    "tools": {
+      "modalTitle": "{name} — Outils",
+      "loading": "Chargement des outils...",
+      "empty": "Aucun outil disponible pour ce serveur."
+    }
+  },
+  "userPromptSettings": {
+    "loading": "Chargement des paramètres d'instructions...",
+    "failedToLoad": "Échec du chargement des paramètres d'instructions",
+    "activePrompt": "Instruction Active",
+    "source": {
+      "label": "Origine",
+      "user_custom": "Instruction Personnalisée",
+      "department": "Par Défaut du Département",
+      "department_default": "Par Défaut du Département",
+      "system_default": "Par Défaut du Système"
+    },
+    "variables": {
+      "title": "Variables Disponibles",
+      "empty": "Aucune variable disponible",
+      "insertHint": "Cliquez sur une variable pour l'insérer dans l'éditeur",
+      "copied": "Variable insérée"
+    },
+    "editor": {
+      "title": "Éditeur d'Instruction Personnalisée",
+      "placeholder": "Rédigez votre instruction système personnalisée ici. Utilisez des variables comme {{variable_name}} pour insérer des valeurs dynamiques...",
+      "charCount": "{count} caractères",
+      "preview": "Aperçu",
+      "edit": "Modifier",
+      "previewTitle": "Aperçu de l'Instruction",
+      "previewEmpty": "Rien à prévisualiser. Commencez à rédiger votre instruction personnalisée ci-dessus."
+    },
+    "actions": {
+      "save": "Enregistrer l'Instruction",
+      "saving": "Enregistrement...",
+      "resetToDefault": "Réinitialiser par Défaut",
+      "resetting": "Réinitialisation...",
+      "resetConfirmTitle": "Réinitialiser par Défaut ?",
+      "resetConfirmMessage": "Cela supprimera votre instruction personnalisée et reviendra au paramètre par défaut du département ou du système. Cette action est irréversible.",
+      "resetConfirmButton": "Oui, Réinitialiser",
+      "cancel": "Annuler"
+    },
+    "messages": {
+      "saved": "Instruction personnalisée enregistrée avec succès",
+      "failedToSave": "Échec de l'enregistrement de l'instruction",
+      "reset": "Instruction réinitialisée par défaut",
+      "failedToReset": "Échec de la réinitialisation de l'instruction",
+      "noChanges": "Aucune modification à enregistrer"
+    },
+    "feedback": {
+      "title": "Retour sur l'Instruction",
+      "subtitle": "Aidez-nous à améliorer en évaluant l'efficacité de l'instruction actuelle",
+      "thumbsUp": "Cette instruction fonctionne bien",
+      "thumbsDown": "Cette instruction a besoin d'améliorations",
+      "commentPlaceholder": "Facultatif : Dites-nous en plus sur votre expérience avec cette instruction...",
+      "submit": "Envoyer le Retour",
+      "submitting": "Envoi en cours...",
+      "submitted": "Merci pour votre retour !",
+      "failedToSubmit": "Échec de l'envoi du retour",
+      "ratingRequired": "Veuillez sélectionner une note avant d'envoyer"
+    }
+  }
+}

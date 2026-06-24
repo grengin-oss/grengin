@@ -266,11 +266,12 @@ export interface components {
             picture?: string;
             /** @description Hosted domain */
             hd?: string;
-            super_admin?: boolean;
+            isSuperAdmin?: boolean;
             /** Format: date-time */
             created_at?: string;
             /** Format: date-time */
             updated_at?: string;
+            role?: string;
         };
         Conversation: {
             /** Format: uuid */

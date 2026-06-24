@@ -1,0 +1,193 @@
+{
+  "userAnalytics": {
+    "title": "ユーザー分析",
+    "subtitle": "ユーザーごとの詳細な使用状況分析",
+    "filters": {
+      "startDate": "開始日",
+      "endDate": "終了日",
+      "search": "検索",
+      "searchPlaceholder": "名前、メール、または部門で検索...",
+      "perPage": "ページあたり"
+    },
+    "stats": {
+      "totalUsers": "総ユーザー数",
+      "showing": "表示中",
+      "showingCount": "{total}件中{filtered}件"
+    },
+    "table": {
+      "userName": "ユーザー名",
+      "email": "メール",
+      "department": "部門",
+      "requests": "リクエスト",
+      "success": "成功",
+      "errors": "エラー",
+      "tokens": "トークン",
+      "cost": "コスト",
+      "avgLatency": "平均レイテンシ",
+      "lastActivity": "最終アクティビティ"
+    },
+    "emptyState": {
+      "noMatch": "\"{query}\"に一致するユーザーが見つかりません",
+      "noData": "選択した日付範囲のユーザー分析データがありません"
+    },
+    "pagination": {
+      "previous": "前へ",
+      "next": "次へ",
+      "pageInfo": "{total}ページ中{current}ページ"
+    },
+    "errors": {
+      "fetchFailed": "ユーザー分析の取得に失敗しました"
+    }
+  },
+  "departmentAnalytics": {
+    "title": "部門別分析",
+    "subtitle": "部門ごとの詳細な利用分析",
+    "filters": {
+      "search": "検索",
+      "searchPlaceholder": "部門名で検索...",
+      "perPage": "1ページあたり"
+    },
+    "stats": {
+      "totalDepartments": "部門の総数",
+      "showing": "表示中",
+      "showingCount": "{total}中{showing}件表示"
+    },
+    "table": {
+      "department": "部門",
+      "users": "ユーザー",
+      "requests": "リクエスト",
+      "success": "成功",
+      "errors": "エラー",
+      "tokens": "トークン",
+      "cost": "コスト",
+      "avgLatency": "平均待機時間"
+    },
+    "emptyState": {
+      "noMatch": "「{query}」に一致する部門は見つかりませんでした",
+      "noData": "選択した日付範囲に部門別分析データがありません"
+    },
+    "pagination": {
+      "previous": "前へ",
+      "next": "次へ",
+      "pageInfo": "ページ {current}/{total}"
+    },
+    "errors": {
+      "fetchFailed": "部門別分析の取得に失敗しました"
+    }
+  },
+  "analytics": {
+    "title": "使用状況分析",
+    "subtitle": "システムのパフォーマンスと使用状況のメトリクスを監視",
+    "tabs": {
+      "overview": "概要",
+      "byUser": "ユーザー別",
+      "byDepartment": "部門別",
+      "byModel": "モデル別"
+    },
+    "tabsAria": {
+      "overview": "利用状況の指標と傾向の概要",
+      "byUser": "ユーザー別の利用内訳",
+      "byDepartment": "部門別の利用内訳",
+      "byModel": "モデル別の利用内訳"
+    },
+    "byModel": {
+      "title": "モデル別",
+      "comingSoon": "近日公開",
+      "hint": "モデル別の分析はこちらで利用できるようになります。"
+    },
+    "aria": {
+      "mainRegion": "使用状況分析",
+      "dateRangeGroup": "レポートの日付範囲",
+      "startDate": "開始日",
+      "endDate": "終了日",
+      "pagination": "結果のページ送り",
+      "topModelsCaption": "選択した日付範囲での利用上位モデル",
+      "departmentTableCaption": "選択した日付範囲での部門別利用",
+      "userTableCaption": "選択した日付範囲でのユーザー別利用"
+    },
+    "filters": {
+      "dateRange": "期間",
+      "presets": {
+        "last7Days": "過去7日間",
+        "last30Days": "過去30日間",
+        "last90Days": "過去90日間",
+        "thisMonth": "今月",
+        "custom": "カスタム"
+      },
+      "to": "から",
+      "aggregated": "集計単位",
+      "hour": "時間別",
+      "day": "日別",
+      "week": "週別",
+      "month": "月別"
+    },
+    "loading": "分析を読み込み中...",
+    "retry": "再試行",
+    "refresh": "分析を更新",
+    "refreshButton": "更新",
+    "overview": {
+      "title": "概要",
+      "totalUsers": "総ユーザー数",
+      "activeUsers": "{count} アクティブ",
+      "totalRequests": "総リクエスト数",
+      "avgPerUser": "ユーザーあたり平均 {count}",
+      "totalTokens": "総トークン数",
+      "totalCost": "総コスト",
+      "vsPreviousDays": "前{count}日間比"
+    },
+    "topModels": {
+      "title": "トップモデル",
+      "model": "モデル",
+      "provider": "プロバイダー",
+      "requests": "リクエスト",
+      "tokens": "トークン",
+      "cost": "コスト"
+    },
+    "charts": {
+      "title": "パフォーマンストレンド",
+      "multiMetric": {
+        "title": "マルチメトリックトレンド",
+        "subtitle": "リクエスト • トークン • レイテンシ",
+        "requests": "リクエスト",
+        "tokens": "トークン",
+        "latency": "レイテンシ",
+        "date": "日付",
+        "latencyMs": "レイテンシ (ms)"
+      },
+      "usageGrowth": {
+        "title": "使用量の増加",
+        "subtitle": "リクエスト（棒グラフ） • トークン（折れ線）",
+        "requests": "リクエスト",
+        "tokens": "トークン"
+      },
+      "apiReliability": {
+        "title": "API信頼性",
+        "subtitle": "成功 vs エラー",
+        "success": "成功",
+        "errors": "エラー",
+        "type": "タイプ",
+        "count": "カウント"
+      },
+      "costTrend": {
+        "title": "コストトレンド",
+        "subtitle": "時間経過に伴う総支出",
+        "totalCost": "総コスト"
+      },
+      "emptyState": {
+        "title": "選択した日付範囲の時系列データがありません",
+        "hint": "別の日付範囲を選択するか、後でもう一度お試しください"
+      },
+      "accessibility": {
+        "keyboardInstructions": "Enter または Space でデータ表を表示します。Escape で閉じます。",
+        "dataPoints": "データポイント {count} 件",
+        "viewDataTable": "データ表を表示",
+        "viewDataTableFor": "{chartName} のデータ表を表示",
+        "closeDataTable": "データ表を閉じる",
+        "dataTableRegion": "{chartName} のデータ表"
+      }
+    },
+    "errors": {
+      "fetchFailed": "分析データの取得に失敗しました"
+    }
+  }
+}

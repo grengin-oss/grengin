@@ -1,0 +1,30 @@
+{
+  "common": {
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "편집",
+    "search": "검색",
+    "never": "없음",
+    "loading": "로딩 중...",
+    "clear": "지우기",
+    "select": "선택"
+  },
+  "errors": {
+    "forbidden": {
+      "title": "액세스 거부",
+      "message": "이 페이지를 볼 권한이 없습니다.",
+      "back": "채팅으로 돌아가기",
+      "iconAlt": "액세스 거부"
+    }
+  },
+  "components": {
+    "typingIndicator": "어시스턴트가 입력 중입니다"
+  },
+  "app": {
+    "closeSidebar": "사이드바 닫기",
+    "openMenu": "메뉴 열기",
+    "closeMenu": "메뉴 닫기",
+    "notifications": "알림"
+  }
+}

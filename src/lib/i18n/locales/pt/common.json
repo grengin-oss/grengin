@@ -1,0 +1,30 @@
+{
+  "common": {
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "search": "Pesquisar",
+    "never": "Nunca",
+    "loading": "Carregando...",
+    "clear": "Limpar",
+    "select": "Selecionar"
+  },
+  "errors": {
+    "forbidden": {
+      "title": "Acesso negado",
+      "message": "Você não tem permissão para ver esta página.",
+      "back": "Voltar ao chat",
+      "iconAlt": "Acesso negado"
+    }
+  },
+  "components": {
+    "typingIndicator": "O assistente está a escrever"
+  },
+  "app": {
+    "closeSidebar": "Fechar barra lateral",
+    "openMenu": "Abrir menu",
+    "closeMenu": "Fechar menu",
+    "notifications": "Notificações"
+  }
+}

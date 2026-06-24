@@ -1,0 +1,16 @@
+{
+  "alerts": {
+    "title": "알림",
+    "subtitle": "알림 및 업데이트",
+    "filterAll": "전체",
+    "filterUnread": "읽지 않음",
+    "filterLabel": "상태별로 알림 필터",
+    "notificationsList": "알림 목록",
+    "empty": "표시할 알림이 없습니다",
+    "loading": "알림 로드 중...",
+    "loadMore": "더 보기",
+    "unread": "읽지 않음",
+    "loadError": "알림을 불러오지 못했습니다",
+    "markReadError": "알림을 읽음으로 표시할 수 없습니다"
+  }
+}

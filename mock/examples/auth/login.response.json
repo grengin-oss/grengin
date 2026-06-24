@@ -1,8 +1,8 @@
 {
   "requires_mfa": false,
-  "access_token": "mock-access-token-xyz789",
-  "refresh_token": "mock-refresh-token-abc123",
-  "expires_in": 3600,
+  "accessToken": "mock-access-token-xyz789",
+  "refreshToken": "mock-refresh-token-abc123",
+  "expiresIn": 3600,
   "user": {
     "id": "550e8400-e29b-41d4-a716-446655440001",
     "sub": "auth0|abc123def456",
@@ -12,7 +12,8 @@
     "hd": "grengin.com",
     "role": "admin",
     "status": "active",
-    "department": "Engineering",
+    "department_id": "d0010000-0000-0000-0000-000000000001",
+    "department_name": "Engineering",
     "is_super_admin": true,
     "has_password": true,
     "mfa_enabled": false,
