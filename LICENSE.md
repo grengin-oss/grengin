@@ -1,157 +1,121 @@
 # Grengin Sustainable Use License (SUL)
 
-Version 1.0 - November 2025
+Version 1.1 — June 2026
 
-Copyright (c) 2025 Grengin Project
+Copyright (c) 2025–2026 Perter Technology Solutions Private Limited
 
-## Preamble
+Grengin is **source-available and self-host first.** This single document is the entire license: it covers your right to use the software, contributions, the optional commercial/managed options, and the brand. (These previously lived in separate `LICENSE`, `CONTRIBUTOR_LICENSE`, and `LICENSE_ENTERPRISE` files and are now folded together.)
 
-This license allows free use of Grengin for individuals, small businesses, and non-commercial purposes, while requiring larger commercial entities to obtain a commercial license. This approach ensures sustainable development while keeping the software accessible to those who need it most.
+---
+
+## Plain-English summary
+
+*This summary is for convenience only; the numbered terms below are what actually govern.*
+
+- **Free for everyone** — individuals, companies of any size, non-profits, schools, open-source projects — **including internal commercial use.** No fee, no seat minimum, no revenue threshold.
+- You may **self-host, modify, and redistribute** the software free of charge.
+- You may **not** sell it, host it for third parties, white-label it, resell it, or build a competing service from it. Those require a **separate written agreement** from the Licensor.
+- **Optional** managed hosting, support, and indemnification are available from the Licensor — these add services, not features. Every feature ships in the free software.
+- **"Grengin" and the logo are reserved** — a fork or redistribution must use its own name.
 
 ---
 
 ## 1. Definitions
 
-- **"Software"** means the Grengin software, including all source code, documentation, and associated files.
-- **"You"** or **"Your"** means the individual or legal entity exercising rights under this License.
-- **"Commercial Use"** means use of the Software for commercial advantage or monetary compensation, including but not limited to: integrating the Software into commercial products, using it to provide services to customers, or using it in revenue-generating operations.
-- **"Annual Revenue"** means the gross revenue of Your organization and all affiliated entities in the most recent fiscal year, converted to USD using average exchange rates for that period.
+- **"Software"** means Grengin, including its source code, documentation, and associated files.
+- **"You"** / **"Your"** means the individual or entity exercising rights under this License.
+- **"Licensor"** means Perter Technology Solutions Private Limited, a company incorporated in India, the copyright holder named above.
+- **"Reserved Use"** means any activity listed in Section 3.
 
 ---
 
-## 2. Grant of Rights - Community Use (Free)
+## 2. Free Use
 
-You are granted a perpetual, worldwide, non-exclusive, royalty-free license to use, copy, modify, and distribute the Software, provided that:
+The Licensor grants You a perpetual, worldwide, non-exclusive, royalty-free license to use, copy, modify, create derivative works of, and redistribute the Software — **including for internal commercial purposes** — subject to Sections 2.1 and 3. There is no fee, seat minimum, or revenue threshold.
 
-### 2.1 Eligible Users
-You meet at least ONE of the following criteria:
-- Your organization has less than **$5,000,000 USD** in Annual Revenue, OR
-- You are using the Software for **non-commercial purposes** (personal, educational, research), OR
-- You are using the Software solely for **internal tools and automation** that do not directly generate revenue or provide services to external parties, OR
-- You are an **individual**, **non-profit organization**, **educational institution**, or **open source project**
+### 2.1 Conditions
+- Retain all copyright, license, and attribution notices.
+- Do not remove or circumvent any license validation or identification mechanism.
+- Include a copy of this License with any copy You distribute, and distribute the Software itself only free of charge.
+- Do not imply endorsement by, or affiliation with, the Grengin project or the Licensor.
 
-### 2.2 Conditions
-All permitted use under this section is subject to:
-- Retaining all copyright and license notices in the Software
-- Not removing or circumventing any license validation or identification mechanisms
-- Including a copy of this license with any distribution of the Software
-- Not claiming endorsement by the Grengin Project without permission
+### 2.2 Patent License
+
+The Licensor grants You a license, under any patent claims the Licensor can license or becomes able to license, to make, have made, use, sell, offer for sale, import, and have imported the Software, in each case subject to the conditions and limitations in this License. This patent license does not extend to any patent claims that You cause to be infringed by Your modifications or additions to the Software. If You, or any organization You act on behalf of, make a written claim that the Software infringes or contributes to the infringement of any patent, the patent license granted to You in this Section 2.2 terminates immediately.
 
 ---
 
-## 3. Restricted Use - Commercial License Required
+## 3. Reserved Uses — Separate Agreement Required
 
-You must obtain a separate Commercial License if:
+You need a separate written agreement from the Licensor to:
 
-### 3.1 Revenue Threshold
-- Your organization has **$5,000,000 USD or more** in Annual Revenue, AND
-- You are using the Software for Commercial Use
+- offer the Software as a hosted, managed, or SaaS product to third parties;
+- sell, resell, sublicense, white-label, or redistribute the Software for a fee; or
+- build or operate a product or service that competes with the Licensor's official Grengin offerings.
 
-### 3.2 Commercial License Terms
-Commercial licenses are available at different tiers based on usage. Contact licensing@grengin.com for pricing and terms, or visit https://grengin.com/pricing
+Using the Software **internally is not a Reserved Use** — including in revenue-generating operations, in client work produced with it, or as a tool Your own team relies on.
 
 ---
 
-## 4. Prohibited Uses
+## 4. Commercial, Managed & Support Options
 
-The following uses are prohibited without a separate written agreement:
-
-### 4.1 Service Offerings
-- Offering the Software as a hosted, managed, or cloud service to third parties
-- Providing the Software as part of a software-as-a-service (SaaS) offering
-- Selling access to the Software's functionality to external users
-
-### 4.2 Competing Services
-- Using the Software to create a product or service that competes with official Grengin commercial offerings
-- Rebranding or white-labeling the Software for commercial distribution
-
-### 4.3 License Circumvention
-- Removing, disabling, or circumventing license validation mechanisms
-- Structuring Your organization to avoid revenue thresholds
-- Misrepresenting Your eligibility for Community Use
+Managed hosting (Grengin Cloud), priority support with response-time SLAs, indemnification, and permission for the Reserved Uses in Section 3 are available from the Licensor on an **optional, opt-in** basis, for any deployment mode. These are **services and permissions, not feature unlocks** — all functionality of the Software is available to every user for free under Section 2. Contact sales@grengin.com or see https://grengin.com/pricing.
 
 ---
 
 ## 5. Contributions
 
-### 5.1 Contribution Terms
-By submitting contributions to the Software, You agree to license Your contributions under this License and grant the Grengin Project the right to relicense Your contributions under different terms, including proprietary licenses for commercial offerings.
+By submitting a contribution (code, documentation, or other material) to the project, You:
 
-### 5.2 Contributor License Agreement
-Significant contributions may require signing a separate Contributor License Agreement (CLA). See [CONTRIBUTOR_LICENSE.md](CONTRIBUTOR_LICENSE.md) for details.
+- license Your contribution to all recipients under this same License;
+- grant the Licensor a **perpetual, worldwide, non-exclusive, royalty-free, irrevocable, sublicensable license** to use, reproduce, modify, distribute, and **relicense** Your contribution, including under different or commercial terms (so it may be included in the Licensor's commercial and managed offerings);
+- grant a matching patent license for any patent claims Your contribution necessarily infringes; and
+- confirm that the contribution is Your original work and that You have the right to submit it (and, if Your employer holds rights, that You have permission).
 
----
-
-## 6. Attribution and Notices
-
-### 6.1 Required Attribution
-When distributing or publicly deploying the Software, You must:
-- Retain all existing copyright notices
-- Provide clear attribution to the Grengin Project
-- Include a link to the official repository or website
-
-### 6.2 Modified Versions
-If You distribute modified versions of the Software, You must:
-- Clearly indicate that modifications have been made
-- Not imply that modified versions are official releases
-- Provide access to the modified source code if distributing binaries
+You retain ownership of Your contribution and may use it elsewhere. For significant or corporate contributions, the Licensor may ask You to confirm agreement on the pull request or to sign a separate corporate agreement — contact legal@grengin.com. Contributors are credited in the Git history and `CONTRIBUTORS.md` unless You ask otherwise.
 
 ---
 
-## 7. Compliance and Auditing
+## 6. Trademark
 
-### 7.1 Self-Reporting
-Users are encouraged (but not required) to register their usage at https://grengin.com/register to help support the project.
+This License grants no rights in the **"Grengin"** name, logo, or brand assets. You may state factually that Your work uses or is based on Grengin, but You may not use the name or logo in any way that implies endorsement or affiliation, and any redistributed or forked version must be **clearly renamed.**
 
-### 7.2 Compliance Verification
-The Grengin Project reserves the right to request verification of eligibility for Community Use. You agree to provide reasonable documentation of Annual Revenue upon request.
+---
 
-### 7.3 Transition Period
-If You exceed the revenue threshold, You have **90 days** from the end of Your fiscal year to obtain a Commercial License before being in violation of this License.
+## 7. Attribution and Modified Versions
+
+When You redistribute or publicly deploy the Software, retain the copyright notices and provide attribution with a link to the official repository. If You distribute a modified version, clearly mark it as modified, do not present it as an official release, and make the modified source available if You distribute binaries.
 
 ---
 
 ## 8. Disclaimer of Warranty
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ---
 
 ## 9. Limitation of Liability
 
-IN NO EVENT SHALL THE GRENGIN PROJECT OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+IN NO EVENT SHALL THE LICENSOR OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ---
 
 ## 10. Termination
 
-### 10.1 Automatic Termination
-Your rights under this License terminate automatically if You fail to comply with any of its terms.
+If You use the Software in violation of this License, that use is not licensed and Your rights under this License terminate automatically.
 
-### 10.2 Reinstatement
-Terminated rights may be reinstated upon:
-- Ceasing all violations
-- Obtaining a Commercial License if required
-- Receiving written permission from the Grengin Project
+If the Licensor notifies You of the violation and You cease all violation within 30 days of receiving that notice, Your rights are reinstated retroactively. To resume a Reserved Use after stopping it, You must obtain a separate written agreement under Section 4.
+
+If You violate this License again after a reinstatement, Your rights terminate automatically and permanently.
 
 ---
 
 ## 11. Miscellaneous
 
-### 11.1 Entire Agreement
-This License constitutes the entire agreement between You and the Grengin Project regarding the Software.
-
-### 11.2 Amendments
-The Grengin Project may publish revised versions of this License. You may choose to use the Software under the terms of the version under which You originally obtained it, or any later version.
-
-### 11.3 Governing Law
-This License shall be governed by the laws of [Your Jurisdiction], without regard to conflict of law principles.
+- This License is the entire agreement between You and the Licensor regarding use of the Software.
+- The Licensor may publish revised versions of this License. You may use the Software under the version You received or any later version.
+- **Governing law:** This License is governed by the laws of the Republic of India, without regard to conflict-of-law principles.
 
 ---
 
-## Questions?
-
-- For licensing questions: licensing@grengin.com
-- For general inquiries: hello@grengin.com
-- License FAQ: [LICENSE_FAQ.md](LICENSE_FAQ.md)
-- Commercial licensing: https://grengin.com/pricing
+**Questions:** licensing@grengin.com · **Commercial & managed:** https://grengin.com/pricing · **Website:** https://grengin.com
