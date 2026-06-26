@@ -98,11 +98,11 @@ One-click Railway template with pre-wired environment variables and managed Post
 | Backend API | `ghcr.io/grengin-oss/grengin-api` | amd64, arm64 |
 | Installer bundle | `ghcr.io/perter-tech/grengin-image` | amd64, arm64 |
 
-Tags: `latest`, `v0.2.0`, `main-<sha>`, etc.
+Tags: `latest`, `v0.3.1`, `main-<sha>`, etc.
 
 ```bash
 # Pin to a specific release
-docker pull ghcr.io/grengin-oss/grengin-api:v0.2.0
+docker pull ghcr.io/grengin-oss/grengin-api:v0.3.1
 ```
 
 The webapp is distributed as a pre-built release tarball — no Docker image needed:
@@ -110,7 +110,7 @@ The webapp is distributed as a pre-built release tarball — no Docker image nee
 | Release | Link |
 |---------|------|
 | Latest stable | [github.com/grengin-oss/webapp/releases/latest](https://github.com/grengin-oss/webapp/releases/latest) |
-| Current release | [v0.2.64](https://github.com/grengin-oss/webapp/releases/tag/v0.2.64) |
+| Current release | [v0.3.1](https://github.com/grengin-oss/webapp/releases/tag/v0.3.1) |
 
 ---
 
@@ -181,7 +181,7 @@ cd grengin-image/packer
 
 # Build all clouds at once (requires cloud credentials in env)
 packer build \
-  -var "grengin_version=v0.2.0" \
+  -var "grengin_version=v0.3.1" \
   -var "aws_region=us-east-1" \
   -var "gcp_project_id=my-project" \
   -var "azure_subscription_id=<uuid>" \
@@ -189,14 +189,14 @@ packer build \
 
 # Build AWS only (x86_64 or arm64)
 packer build \
-  -var "grengin_version=v0.2.0" \
+  -var "grengin_version=v0.3.1" \
   -var "target_arch=arm64" \
   -only=amazon-ebs.grengin \
   grengin.pkr.hcl
 
 # Build for AWS Marketplace submission
 packer build \
-  -var "grengin_version=v0.2.0" \
+  -var "grengin_version=v0.3.1" \
   aws-marketplace.pkr.hcl
 ```
 
@@ -272,7 +272,7 @@ grengin/                          # This repository
 
 ### `service` — Backend API (`grengin-api`)
 
-> **Version**: 0.2.61 &nbsp;|&nbsp; **Language**: Rust (Edition 2024) &nbsp;|&nbsp; **Framework**: Axum 0.8 &nbsp;|&nbsp; **ORM**: SeaORM + PostgreSQL
+> **Version**: 0.3.1 &nbsp;|&nbsp; **Language**: Rust (Edition 2024) &nbsp;|&nbsp; **Framework**: Axum 0.8 &nbsp;|&nbsp; **ORM**: SeaORM + PostgreSQL
 
 The API server exposes a fully documented REST/SSE interface (Swagger UI at `/api/docs`). All LLM calls are streamed to the client using Server-Sent Events.
 
@@ -325,7 +325,7 @@ service/src/
 
 ### `webapp` — Frontend (`webapp`)
 
-> **Version**: 0.2.64 &nbsp;|&nbsp; **Release**: [github.com/grengin-oss/webapp/releases/latest](https://github.com/grengin-oss/webapp/releases/latest) &nbsp;|&nbsp; **Framework**: Svelte 5 &nbsp;|&nbsp; **Language**: TypeScript &nbsp;|&nbsp; **Desktop + Mobile**: Tauri 2 &nbsp;|&nbsp; **Charts**: Vega-Lite
+> **Version**: 0.3.1 &nbsp;|&nbsp; **Release**: [github.com/grengin-oss/webapp/releases/latest](https://github.com/grengin-oss/webapp/releases/latest) &nbsp;|&nbsp; **Framework**: Svelte 5 &nbsp;|&nbsp; **Language**: TypeScript &nbsp;|&nbsp; **Desktop + Mobile**: Tauri 2 &nbsp;|&nbsp; **Charts**: Vega-Lite
 
 A responsive single-page application compiled as static files for web deployment, and bundled into a native desktop app via Tauri. Uses Svelte 5's fine-grained reactivity (`$state`, `$derived`).
 
