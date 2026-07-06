@@ -12,6 +12,7 @@ import adminRoutes from './routes/admin.js'
 import analyticsRoutes from './routes/analytics.js'
 import onboardingRoutes from './routes/onboarding.js'
 import integrationsRoutes from './routes/integrations.js'
+import projectsRoutes from './routes/projects.js'
 
 // Seed initial data
 seedData()
@@ -20,7 +21,8 @@ const app = express()
 
 // Enable CORS
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ limit: '50mb', extended: true }))
 
 // Mount routes
 app.use(authRoutes)
@@ -34,6 +36,7 @@ app.use(adminRoutes)
 app.use(analyticsRoutes)
 app.use(onboardingRoutes)
 app.use(integrationsRoutes)
+app.use(projectsRoutes)
 
 // Fallback 404 handler - always returns JSON
 app.use((req, res) => {

@@ -335,7 +335,7 @@
         },
         "selfProvisioning": {
           "label": "Auto-provisionnement",
-          "hint": "Lorsqu'il est activé, les utilisateurs se connectant via ce fournisseur pour la première fois seront automatiquement créés avec un statut en attente, nécessitant l'approbation de l'administrateur."
+          "hint": "Créer automatiquement les comptes lors de la première connexion"
         }
       }
     },

@@ -21,12 +21,24 @@ export type DepartmentTree = components['schemas']['DepartmentTree']
 export type DepartmentBudgetStatus = components['schemas']['DepartmentBudgetStatus']
 export type BudgetPeriod = components['schemas']['BudgetPeriod']
 
+export interface Project {
+  id: string
+  name: string
+  description: string
+  category: string
+  visibility: 'private' | 'team'
+  createdAt: string
+  updatedAt: string
+  chatCount: number
+}
+
 // In-memory stores
 export const conversations = new Map<string, Conversation>()
 export const messages = new Map<string, Message[]>()
 export const files = new Map<string, UserFile>()
 export const aiEngines = new Map<string, AIEngineDetail>()
 export const departments = new Map<string, Department>()
+export const projects = new Map<string, Project>()
 
 export let userSettings: UserSettings = {
   models: {
@@ -186,4 +198,60 @@ export const seedData = () => {
   departments.set(marketingDept.id, marketingDept)
   departments.set(frontendDept.id, frontendDept)
   departments.set(backendDept.id, backendDept)
+
+  // Seed projects
+  const seedProjects: Project[] = [
+    {
+      id: 'proj_a1b2c3d4e5f6',
+      name: 'Q3 Product Research',
+      description: 'Research and analysis for Q3 product roadmap',
+      category: 'research',
+      visibility: 'team',
+      createdAt: '2024-06-01T09:00:00Z',
+      updatedAt: '2024-06-18T14:30:00Z',
+      chatCount: 12,
+    },
+    {
+      id: 'proj_g7h8i9j0k1l2',
+      name: 'API Migration Plan',
+      description: 'Planning the migration from v1 to v2 API',
+      category: 'planning',
+      visibility: 'team',
+      createdAt: '2024-05-15T10:00:00Z',
+      updatedAt: '2024-06-15T11:45:00Z',
+      chatCount: 8,
+    },
+    {
+      id: 'proj_m3n4o5p6q7r8',
+      name: 'Frontend Refactor',
+      description: 'Svelte 5 migration and component library updates',
+      category: 'code',
+      visibility: 'private',
+      createdAt: '2024-06-10T08:00:00Z',
+      updatedAt: '2024-06-17T16:20:00Z',
+      chatCount: 5,
+    },
+    {
+      id: 'proj_s9t0u1v2w3x4',
+      name: 'Onboarding Flow Design',
+      description: 'Designing the new user onboarding experience',
+      category: 'design',
+      visibility: 'team',
+      createdAt: '2024-06-05T13:00:00Z',
+      updatedAt: '2024-06-14T09:15:00Z',
+      chatCount: 3,
+    },
+    {
+      id: 'proj_y5z6a7b8c9d0',
+      name: 'Meeting Notes - Sprint Reviews',
+      description: 'Collection of sprint review meeting summaries',
+      category: 'meetings',
+      visibility: 'private',
+      createdAt: '2024-04-01T10:00:00Z',
+      updatedAt: '2024-06-12T17:00:00Z',
+      chatCount: 20,
+    },
+  ]
+
+  seedProjects.forEach((p) => projects.set(p.id, p))
 }

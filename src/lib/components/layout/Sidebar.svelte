@@ -1,12 +1,12 @@
 <script lang="ts">
   import { Link, navigate } from "svelte-routing";
-  import { _ } from 'svelte-i18n';
+  import { _ } from "svelte-i18n";
   import type { User } from "../../types/auth";
-  import grenginLogo from '../../../assets/grengin-logo.svg';
-  import { permissionsStore } from '../../features/auth/index.js';
-  import { PERMISSIONS } from '../../features/auth/permissions.js';
-  import { getNotificationsState } from '../../features/notifications/index.js';
-  import AlertsPopover from '../../features/notifications/AlertsPopover.svelte';
+  import grenginLogo from "../../../assets/grengin-logo.svg";
+  import { permissionsStore } from "../../features/auth/index.js";
+  import { PERMISSIONS } from "../../features/auth/permissions.js";
+  import { getNotificationsState } from "../../features/notifications/index.js";
+  import AlertsPopover from "../../features/notifications/AlertsPopover.svelte";
 
   interface Props {
     isCollapsed?: boolean;
@@ -15,7 +15,12 @@
     onlogout?: () => void;
   }
 
-  let { isCollapsed = $bindable(false), onsidebarToggle, user = null, onlogout }: Props = $props();
+  let {
+    isCollapsed = $bindable(false),
+    onsidebarToggle,
+    user = null,
+    onlogout,
+  }: Props = $props();
 
   // Auto-collapse sidebar on mobile after navigation actions
   function collapseSidebarOnMobile() {
@@ -35,30 +40,30 @@
 
   // Detect if we're in admin view
   let currentPath = $state(window.location.pathname);
-  let isAdminView = $derived(currentPath.startsWith('/admin'));
+  let isAdminView = $derived(currentPath.startsWith("/admin"));
   let hasAdminPermissions = $derived(permissionsStore.hasAnyPermissions());
   let canViewAnalytics = $derived(
-    permissionsStore.hasPermission(PERMISSIONS.analytics.view)
+    permissionsStore.hasPermission(PERMISSIONS.analytics.view),
   );
   let canViewOverview = $derived(
-    permissionsStore.isPermissionGlobal(PERMISSIONS.analytics.view)
+    permissionsStore.isPermissionGlobal(PERMISSIONS.analytics.view),
   );
   let canViewDepartments = $derived(
-    permissionsStore.hasPermission(PERMISSIONS.departments.view)
+    permissionsStore.hasPermission(PERMISSIONS.departments.view),
   );
   let canViewUsers = $derived(permissionsStore.canViewUsers());
   let canViewAiEngines = $derived(permissionsStore.canViewAiEngines());
   let canViewRoles = $derived(
-    permissionsStore.hasPermission(PERMISSIONS.roles.view)
+    permissionsStore.hasPermission(PERMISSIONS.roles.view),
   );
   let canViewSettings = $derived(permissionsStore.canViewSsoProviders());
   let canViewMcpServers = $derived(
-    permissionsStore.hasPermission(PERMISSIONS.mcpServers.view)
+    permissionsStore.hasPermission(PERMISSIONS.mcpServers.view),
   );
   let canViewAuditLogs = $derived(
-    permissionsStore.hasPermission(PERMISSIONS.auditLogs.view)
+    permissionsStore.hasPermission(PERMISSIONS.auditLogs.view),
   );
-  
+
   // Update currentPath on navigation
   $effect(() => {
     const updatePath = () => {
@@ -66,24 +71,24 @@
     };
 
     // Listen for browser back/forward
-    window.addEventListener('popstate', updatePath);
+    window.addEventListener("popstate", updatePath);
 
     // Listen for pushState/replaceState (used by svelte-routing Link)
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
 
-    history.pushState = function(...args) {
+    history.pushState = function (...args) {
       originalPushState.apply(this, args);
       updatePath();
     };
 
-    history.replaceState = function(...args) {
+    history.replaceState = function (...args) {
       originalReplaceState.apply(this, args);
       updatePath();
     };
 
     return () => {
-      window.removeEventListener('popstate', updatePath);
+      window.removeEventListener("popstate", updatePath);
       history.pushState = originalPushState;
       history.replaceState = originalReplaceState;
     };
@@ -95,93 +100,93 @@
     path?: string;
     label: string;
     icon?: string;
-    type: 'section-header' | 'item';
+    type: "section-header" | "item";
   }
 
   const analyticsMenuItem: AdminMenuItem = {
-    id: 'usage-analytics',
-    path: '/admin/analytics',
-    label: $_('sidebar.usageAnalytics'),
+    id: "usage-analytics",
+    path: "/admin/analytics",
+    label: $_("sidebar.usageAnalytics"),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>',
-    type: 'item',
+    type: "item",
   };
   const overviewMenuItem: AdminMenuItem = {
-    id: 'overview',
-    path: '/admin/overview',
-    label: $_('sidebar.overview'),
+    id: "overview",
+    path: "/admin/overview",
+    label: $_("sidebar.overview"),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
-    type: 'item',
+    type: "item",
   };
   const organizationMenuItem: AdminMenuItem = {
-    id: 'organization',
-    path: '/admin/departments',
-    label: $_('sidebar.organization'),
+    id: "organization",
+    path: "/admin/departments",
+    label: $_("sidebar.organization"),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>',
-    type: 'item',
+    type: "item",
   };
   const aiEnginesMenuItem: AdminMenuItem = {
-    id: 'ai-engines',
-    path: '/admin/ai-engines',
-    label: $_('sidebar.aiEngines'),
+    id: "ai-engines",
+    path: "/admin/ai-engines",
+    label: $_("sidebar.aiEngines"),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>',
-    type: 'item',
+    type: "item",
   };
   const manageSectionItem: AdminMenuItem = {
-    id: 'section-manage',
-    label: $_('sidebar.sectionManage'),
-    type: 'section-header',
+    id: "section-manage",
+    label: $_("sidebar.sectionManage"),
+    type: "section-header",
   };
   const configureSectionItem: AdminMenuItem = {
-    id: 'section-configure',
-    label: $_('sidebar.sectionConfigure'),
-    type: 'section-header',
+    id: "section-configure",
+    label: $_("sidebar.sectionConfigure"),
+    type: "section-header",
   };
   const monitorSectionItem: AdminMenuItem = {
-    id: 'section-monitor',
-    label: $_('sidebar.sectionMonitor'),
-    type: 'section-header',
+    id: "section-monitor",
+    label: $_("sidebar.sectionMonitor"),
+    type: "section-header",
   };
   const settingsSectionItem: AdminMenuItem = {
-    id: 'settings',
-    path: '/admin/settings',
-    label: $_('sidebar.settings'),
+    id: "settings",
+    path: "/admin/settings",
+    label: $_("sidebar.settings"),
     icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 8a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 2a2 2 0 0 0-2 2a2 2 0 0 0 2 2a2 2 0 0 0 2-2a2 2 0 0 0-2-2m-2 12c-.25 0-.46-.18-.5-.42l-.37-2.65c-.63-.25-1.17-.59-1.69-.99l-2.49 1.01c-.22.08-.49 0-.61-.22l-2-3.46a.493.493 0 0 1 .12-.64l2.11-1.66L4.5 12l.07-1l-2.11-1.63a.493.493 0 0 1-.12-.64l2-3.46c.12-.22.39-.31.61-.22l2.49 1c.52-.39 1.06-.73 1.69-.98l.37-2.65c.04-.24.25-.42.5-.42h4c.25 0 .46.18.5.42l.37 2.65c.63.25 1.17.59 1.69.98l2.49-1c.22-.09.49 0 .61.22l2 3.46c.13.22.07.49-.12.64L19.43 11l.07 1l-.07 1l2.11 1.63c.19.15.25.42.12.64l-2 3.46c-.12.22-.39.31-.61.22l-2.49-1c-.52.39-1.06.73-1.69.98l-.37 2.65c-.04.24-.25.42-.5.42zm1.25-18l-.37 2.61c-1.2.25-2.26.89-3.03 1.78L5.44 7.35l-.75 1.3L6.8 10.2a5.55 5.55 0 0 0 0 3.6l-2.12 1.56l.75 1.3l2.43-1.04c.77.88 1.82 1.52 3.01 1.76l.37 2.62h1.52l.37-2.61c1.19-.25 2.24-.89 3.01-1.77l2.43 1.04l.75-1.3l-2.12-1.55c.4-1.17.4-2.44 0-3.61l2.11-1.55l-.75-1.3l-2.41 1.04a5.42 5.42 0 0 0-3.03-1.77L12.75 4z"/></svg>',
-    type: 'item',
+    type: "item",
   };
   const accessControlMenuItem: AdminMenuItem = {
-    id: 'access-control',
-    path: '/admin/access-control',
-    label: $_('sidebar.accessControl'),
+    id: "access-control",
+    path: "/admin/access-control",
+    label: $_("sidebar.accessControl"),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
-    type: 'item',
+    type: "item",
   };
   const connectorsMenuItem: AdminMenuItem = {
-    id: 'connectors',
-    path: '/admin/mcp-servers',
-    label: $_('sidebar.connectors'),
+    id: "connectors",
+    path: "/admin/mcp-servers",
+    label: $_("sidebar.connectors"),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101"/><path d="M10.172 13.828a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1"/></svg>',
-    type: 'item',
+    type: "item",
   };
   const promptLibraryMenuItem: AdminMenuItem = {
-    id: 'prompt-library',
-    path: '/admin/prompt-library',
-    label: $_('sidebar.promptLibrary'),
+    id: "prompt-library",
+    path: "/admin/prompt-library",
+    label: $_("sidebar.promptLibrary"),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
-    type: 'item',
+    type: "item",
   };
   const promptEffectivenessMenuItem: AdminMenuItem = {
-    id: 'prompt-effectiveness',
-    path: '/admin/prompt-effectiveness',
-    label: $_('sidebar.promptEffectiveness'),
+    id: "prompt-effectiveness",
+    path: "/admin/prompt-effectiveness",
+    label: $_("sidebar.promptEffectiveness"),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>',
-    type: 'item',
+    type: "item",
   };
   const auditLogsMenuItem: AdminMenuItem = {
-    id: 'audit-logs',
-    path: '/admin/audit-logs',
-    label: $_('sidebar.auditLogs'),
+    id: "audit-logs",
+    path: "/admin/audit-logs",
+    label: $_("sidebar.auditLogs"),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
-    type: 'item',
+    type: "item",
   };
   function isMenuItem(value: AdminMenuItem | null): value is AdminMenuItem {
     return value !== null;
@@ -189,7 +194,7 @@
 
   let manageItems = $derived<AdminMenuItem[]>(
     [
-      (canViewUsers || canViewDepartments) ? organizationMenuItem : null,
+      canViewUsers || canViewDepartments ? organizationMenuItem : null,
       canViewAiEngines ? aiEnginesMenuItem : null,
       canViewMcpServers ? connectorsMenuItem : null,
     ].filter(isMenuItem),
@@ -199,7 +204,7 @@
     [
       canViewAnalytics ? analyticsMenuItem : null,
       canViewAnalytics ? promptEffectivenessMenuItem : null,
-      (canViewAuditLogs || hasAdminPermissions) ? auditLogsMenuItem : null,
+      canViewAuditLogs || hasAdminPermissions ? auditLogsMenuItem : null,
     ].filter(isMenuItem),
   );
 
@@ -218,9 +223,7 @@
     // MANAGE section
     ...(manageItems.length ? [manageSectionItem, ...manageItems] : []),
     // CONFIGURE section
-    ...(configureItems.length
-      ? [configureSectionItem, ...configureItems]
-      : []),
+    ...(configureItems.length ? [configureSectionItem, ...configureItems] : []),
     // SETTINGS section
     ...(canViewSettings ? [settingsSectionItem] : []),
   ]);
@@ -240,7 +243,11 @@
   }
 
   function handleClickOutside(event: MouseEvent) {
-    if (showUserMenu && userMenuElement && !userMenuElement.contains(event.target as Node)) {
+    if (
+      showUserMenu &&
+      userMenuElement &&
+      !userMenuElement.contains(event.target as Node)
+    ) {
       closeUserMenu();
     }
     if (showAlertsPopover) {
@@ -257,23 +264,29 @@
 
   function goToAlertsPage() {
     showAlertsPopover = false;
-    navigate(isAdminView ? '/admin/alerts' : '/alerts');
+    navigate(isAdminView ? "/admin/alerts" : "/alerts");
     collapseSidebarOnMobile();
   }
 
   function getUserInitials(): string {
-    if (!user?.name) return 'U';
-    const parts = user.name.split(' ').filter(Boolean);
+    if (!user?.name) return "U";
+    const parts = user.name.split(" ").filter(Boolean);
     if (parts.length >= 2) {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
-    return parts[0]?.substring(0, 2).toUpperCase() || 'U';
+    return parts[0]?.substring(0, 2).toUpperCase() || "U";
   }
 
   function getUserColor(): string {
     const colors = [
-      '#667eea', '#f56565', '#48bb78', '#ed8936', 
-      '#9f7aea', '#38b2ac', '#ed64a6', '#4299e1'
+      "#667eea",
+      "#f56565",
+      "#48bb78",
+      "#ed8936",
+      "#9f7aea",
+      "#38b2ac",
+      "#ed64a6",
+      "#4299e1",
     ];
     if (!user?.name) return colors[0];
     let hash = 0;
@@ -304,16 +317,23 @@
     navigate(path);
     collapseSidebarOnMobile();
   }
-
 </script>
 
-<svelte:window onclick={handleClickOutside} onresize={handleResize} onkeydown={(e) => {
-  if (e.key === 'Escape' && showUserMenu) {
-    closeUserMenu();
-  }
-}} />
+<svelte:window
+  onclick={handleClickOutside}
+  onresize={handleResize}
+  onkeydown={(e) => {
+    if (e.key === "Escape" && showUserMenu) {
+      closeUserMenu();
+    }
+  }}
+/>
 
-<aside class="sidebar" class:collapsed={isCollapsed} aria-label={$_('sidebar.navigation') || 'Main navigation'}>
+<aside
+  class="sidebar"
+  class:collapsed={isCollapsed}
+  aria-label={$_("sidebar.navigation") || "Main navigation"}
+>
   {#snippet alertsUi()}
     <button
       type="button"
@@ -324,8 +344,8 @@
         toggleAlertsPopover();
       }}
       aria-expanded={showAlertsPopover}
-      aria-label={$_('sidebar.openAlerts')}
-      title={$_('sidebar.openAlerts')}
+      aria-label={$_("sidebar.openAlerts")}
+      title={$_("sidebar.openAlerts")}
     >
       <svg
         class="alerts-bell-icon"
@@ -343,7 +363,9 @@
         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
       </svg>
       {#if notifState.unreadCount > 0}
-        <span class="alerts-badge">{notifState.unreadCount > 99 ? '99+' : notifState.unreadCount}</span>
+        <span class="alerts-badge"
+          >{notifState.unreadCount > 99 ? "99+" : notifState.unreadCount}</span
+        >
       {/if}
     </button>
   {/snippet}
@@ -351,7 +373,7 @@
   <AlertsPopover
     open={showAlertsPopover}
     anchorEl={alertsAnchorChat}
-    align={isCollapsed ? 'center' : 'start'}
+    align={isCollapsed ? "center" : "start"}
     onClose={() => {
       showAlertsPopover = false;
     }}
@@ -364,39 +386,64 @@
         {#if !isCollapsed}
           <img src={grenginLogo} alt="Grengin" class="brand-logo" />
           <div class="spacer"></div>
-          <div class="notifications-anchor brand-row-actions" bind:this={alertsAnchorChat}>
+          <div
+            class="notifications-anchor brand-row-actions"
+            bind:this={alertsAnchorChat}
+          >
             {@render alertsUi()}
           </div>
           <button
             class="burger-btn"
             onclick={toggleSidebar}
-            aria-label={$_('sidebar.toggleSidebar')}
-            title={$_('sidebar.toggleSidebar')}
+            aria-label={$_("sidebar.toggleSidebar")}
+            title={$_("sidebar.toggleSidebar")}
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" data-rtl-flip="" class="icon max-md:hidden"><path d="M6.83496 3.99992C6.38353 4.00411 6.01421 4.0122 5.69824 4.03801C5.31232 4.06954 5.03904 4.12266 4.82227 4.20012L4.62207 4.28606C4.18264 4.50996 3.81498 4.85035 3.55859 5.26848L3.45605 5.45207C3.33013 5.69922 3.25006 6.01354 3.20801 6.52824C3.16533 7.05065 3.16504 7.71885 3.16504 8.66301V11.3271C3.16504 12.2712 3.16533 12.9394 3.20801 13.4618C3.25006 13.9766 3.33013 14.2909 3.45605 14.538L3.55859 14.7216C3.81498 15.1397 4.18266 15.4801 4.62207 15.704L4.82227 15.79C5.03904 15.8674 5.31234 15.9205 5.69824 15.9521C6.01398 15.9779 6.383 15.986 6.83398 15.9902L6.83496 3.99992ZM18.165 11.3271C18.165 12.2493 18.1653 12.9811 18.1172 13.5702C18.0745 14.0924 17.9916 14.5472 17.8125 14.9648L17.7295 15.1415C17.394 15.8 16.8834 16.3511 16.2568 16.7353L15.9814 16.8896C15.5157 17.1268 15.0069 17.2285 14.4102 17.2773C13.821 17.3254 13.0893 17.3251 12.167 17.3251H7.83301C6.91071 17.3251 6.17898 17.3254 5.58984 17.2773C5.06757 17.2346 4.61294 17.1508 4.19531 16.9716L4.01855 16.8896C3.36014 16.5541 2.80898 16.0434 2.4248 15.4169L2.27051 15.1415C2.03328 14.6758 1.93158 14.167 1.88281 13.5702C1.83468 12.9811 1.83496 12.2493 1.83496 11.3271V8.66301C1.83496 7.74072 1.83468 7.00898 1.88281 6.41985C1.93157 5.82309 2.03329 5.31432 2.27051 4.84856L2.4248 4.57317C2.80898 3.94666 3.36012 3.436 4.01855 3.10051L4.19531 3.0175C4.61285 2.83843 5.06771 2.75548 5.58984 2.71281C6.17898 2.66468 6.91071 2.66496 7.83301 2.66496H12.167C13.0893 2.66496 13.821 2.66468 14.4102 2.71281C15.0069 2.76157 15.5157 2.86329 15.9814 3.10051L16.2568 3.25481C16.8833 3.63898 17.394 4.19012 17.7295 4.84856L17.8125 5.02531C17.9916 5.44285 18.0745 5.89771 18.1172 6.41985C18.1653 7.00898 18.165 7.74072 18.165 8.66301V11.3271ZM8.16406 15.995H12.167C13.1112 15.995 13.7794 15.9947 14.3018 15.9521C14.8164 15.91 15.1308 15.8299 15.3779 15.704L15.5615 15.6015C15.9797 15.3451 16.32 14.9774 16.5439 14.538L16.6299 14.3378C16.7074 14.121 16.7605 13.8478 16.792 13.4618C16.8347 12.9394 16.835 12.2712 16.835 11.3271V8.66301C16.835 7.71885 16.8347 7.05065 16.792 6.52824C16.7605 6.14232 16.7073 5.86904 16.6299 5.65227L16.5439 5.45207C16.32 5.01264 15.9796 4.64498 15.5615 4.3886L15.3779 4.28606C15.1308 4.16013 14.8165 4.08006 14.3018 4.03801C13.7794 3.99533 13.1112 3.99504 12.167 3.99504H8.16406C8.16407 3.99667 8.16504 3.99829 8.16504 3.99992L8.16406 15.995Z"></path></svg>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              xmlns="http://www.w3.org/2000/svg"
+              data-rtl-flip=""
+              class="icon max-md:hidden"
+              ><path
+                d="M6.83496 3.99992C6.38353 4.00411 6.01421 4.0122 5.69824 4.03801C5.31232 4.06954 5.03904 4.12266 4.82227 4.20012L4.62207 4.28606C4.18264 4.50996 3.81498 4.85035 3.55859 5.26848L3.45605 5.45207C3.33013 5.69922 3.25006 6.01354 3.20801 6.52824C3.16533 7.05065 3.16504 7.71885 3.16504 8.66301V11.3271C3.16504 12.2712 3.16533 12.9394 3.20801 13.4618C3.25006 13.9766 3.33013 14.2909 3.45605 14.538L3.55859 14.7216C3.81498 15.1397 4.18266 15.4801 4.62207 15.704L4.82227 15.79C5.03904 15.8674 5.31234 15.9205 5.69824 15.9521C6.01398 15.9779 6.383 15.986 6.83398 15.9902L6.83496 3.99992ZM18.165 11.3271C18.165 12.2493 18.1653 12.9811 18.1172 13.5702C18.0745 14.0924 17.9916 14.5472 17.8125 14.9648L17.7295 15.1415C17.394 15.8 16.8834 16.3511 16.2568 16.7353L15.9814 16.8896C15.5157 17.1268 15.0069 17.2285 14.4102 17.2773C13.821 17.3254 13.0893 17.3251 12.167 17.3251H7.83301C6.91071 17.3251 6.17898 17.3254 5.58984 17.2773C5.06757 17.2346 4.61294 17.1508 4.19531 16.9716L4.01855 16.8896C3.36014 16.5541 2.80898 16.0434 2.4248 15.4169L2.27051 15.1415C2.03328 14.6758 1.93158 14.167 1.88281 13.5702C1.83468 12.9811 1.83496 12.2493 1.83496 11.3271V8.66301C1.83496 7.74072 1.83468 7.00898 1.88281 6.41985C1.93157 5.82309 2.03329 5.31432 2.27051 4.84856L2.4248 4.57317C2.80898 3.94666 3.36012 3.436 4.01855 3.10051L4.19531 3.0175C4.61285 2.83843 5.06771 2.75548 5.58984 2.71281C6.17898 2.66468 6.91071 2.66496 7.83301 2.66496H12.167C13.0893 2.66496 13.821 2.66468 14.4102 2.71281C15.0069 2.76157 15.5157 2.86329 15.9814 3.10051L16.2568 3.25481C16.8833 3.63898 17.394 4.19012 17.7295 4.84856L17.8125 5.02531C17.9916 5.44285 18.0745 5.89771 18.1172 6.41985C18.1653 7.00898 18.165 7.74072 18.165 8.66301V11.3271ZM8.16406 15.995H12.167C13.1112 15.995 13.7794 15.9947 14.3018 15.9521C14.8164 15.91 15.1308 15.8299 15.3779 15.704L15.5615 15.6015C15.9797 15.3451 16.32 14.9774 16.5439 14.538L16.6299 14.3378C16.7074 14.121 16.7605 13.8478 16.792 13.4618C16.8347 12.9394 16.835 12.2712 16.835 11.3271V8.66301C16.835 7.71885 16.8347 7.05065 16.792 6.52824C16.7605 6.14232 16.7073 5.86904 16.6299 5.65227L16.5439 5.45207C16.32 5.01264 15.9796 4.64498 15.5615 4.3886L15.3779 4.28606C15.1308 4.16013 14.8165 4.08006 14.3018 4.03801C13.7794 3.99533 13.1112 3.99504 12.167 3.99504H8.16406C8.16407 3.99667 8.16504 3.99829 8.16504 3.99992L8.16406 15.995Z"
+              ></path></svg
+            >
           </button>
         {:else}
           <div class="collapsed-logo-container">
             <button
               class="logo-btn"
               onclick={toggleSidebar}
-              aria-label={$_('sidebar.toggleSidebar')}
-              title={$_('sidebar.toggleSidebar')}
+              aria-label={$_("sidebar.toggleSidebar")}
+              title={$_("sidebar.toggleSidebar")}
             >
               <img src="/grengin-icon.svg" alt="Grengin" class="logo-icon" />
             </button>
             <button
               class="expand-btn"
               onclick={toggleSidebar}
-              aria-label={$_('sidebar.expandSidebar')}
-              title={$_('sidebar.expandSidebar')}
+              aria-label={$_("sidebar.expandSidebar")}
+              title={$_("sidebar.expandSidebar")}
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6.83496 3.99992C6.38353 4.00411 6.01421 4.0122 5.69824 4.03801C5.31232 4.06954 5.03904 4.12266 4.82227 4.20012L4.62207 4.28606C4.18264 4.50996 3.81498 4.85035 3.55859 5.26848L3.45605 5.45207C3.33013 5.69922 3.25006 6.01354 3.20801 6.52824C3.16533 7.05065 3.16504 7.71885 3.16504 8.66301V11.3271C3.16504 12.2712 3.16533 12.9394 3.20801 13.4618C3.25006 13.9766 3.33013 14.2909 3.45605 14.538L3.55859 14.7216C3.81498 15.1397 4.18266 15.4801 4.62207 15.704L4.82227 15.79C5.03904 15.8674 5.31234 15.9205 5.69824 15.9521C6.01398 15.9779 6.383 15.986 6.83398 15.9902L6.83496 3.99992ZM18.165 11.3271C18.165 12.2493 18.1653 12.9811 18.1172 13.5702C18.0745 14.0924 17.9916 14.5472 17.8125 14.9648L17.7295 15.1415C17.394 15.8 16.8834 16.3511 16.2568 16.7353L15.9814 16.8896C15.5157 17.1268 15.0069 17.2285 14.4102 17.2773C13.821 17.3254 13.0893 17.3251 12.167 17.3251H7.83301C6.91071 17.3251 6.17898 17.3254 5.58984 17.2773C5.06757 17.2346 4.61294 17.1508 4.19531 16.9716L4.01855 16.8896C3.36014 16.5541 2.80898 16.0434 2.4248 15.4169L2.27051 15.1415C2.03328 14.6758 1.93158 14.167 1.88281 13.5702C1.83468 12.9811 1.83496 12.2493 1.83496 11.3271V8.66301C1.83496 7.74072 1.83468 7.00898 1.88281 6.41985C1.93157 5.82309 2.03329 5.31432 2.27051 4.84856L2.4248 4.57317C2.80898 3.94666 3.36012 3.436 4.01855 3.10051L4.19531 3.0175C4.61285 2.83843 5.06771 2.75548 5.58984 2.71281C6.17898 2.66468 6.91071 2.66496 7.83301 2.66496H12.167C13.0893 2.66496 13.821 2.66468 14.4102 2.71281C15.0069 2.76157 15.5157 2.86329 15.9814 3.10051L16.2568 3.25481C16.8833 3.63898 17.394 4.19012 17.7295 4.84856L17.8125 5.02531C17.9916 5.44285 18.0745 5.89771 18.1172 6.41985C18.1653 7.00898 18.165 7.74072 18.165 8.66301V11.3271ZM8.16406 15.995H12.167C13.1112 15.995 13.7794 15.9947 14.3018 15.9521C14.8164 15.91 15.1308 15.8299 15.3779 15.704L15.5615 15.6015C15.9797 15.3451 16.32 14.9774 16.5439 14.538L16.6299 14.3378C16.7074 14.121 16.7605 13.8478 16.792 13.4618C16.8347 12.9394 16.835 12.2712 16.835 11.3271V8.66301C16.835 7.71885 16.8347 7.05065 16.792 6.52824C16.7605 6.14232 16.7073 5.86904 16.6299 5.65227L16.5439 5.45207C16.32 5.01264 15.9796 4.64498 15.5615 4.3886L15.3779 4.28606C15.1308 4.16013 14.8165 4.08006 14.3018 4.03801C13.7794 3.99533 13.1112 3.99504 12.167 3.99504H8.16406C8.16407 3.99667 8.16504 3.99829 8.16504 3.99992L8.16406 15.995Z"></path>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M6.83496 3.99992C6.38353 4.00411 6.01421 4.0122 5.69824 4.03801C5.31232 4.06954 5.03904 4.12266 4.82227 4.20012L4.62207 4.28606C4.18264 4.50996 3.81498 4.85035 3.55859 5.26848L3.45605 5.45207C3.33013 5.69922 3.25006 6.01354 3.20801 6.52824C3.16533 7.05065 3.16504 7.71885 3.16504 8.66301V11.3271C3.16504 12.2712 3.16533 12.9394 3.20801 13.4618C3.25006 13.9766 3.33013 14.2909 3.45605 14.538L3.55859 14.7216C3.81498 15.1397 4.18266 15.4801 4.62207 15.704L4.82227 15.79C5.03904 15.8674 5.31234 15.9205 5.69824 15.9521C6.01398 15.9779 6.383 15.986 6.83398 15.9902L6.83496 3.99992ZM18.165 11.3271C18.165 12.2493 18.1653 12.9811 18.1172 13.5702C18.0745 14.0924 17.9916 14.5472 17.8125 14.9648L17.7295 15.1415C17.394 15.8 16.8834 16.3511 16.2568 16.7353L15.9814 16.8896C15.5157 17.1268 15.0069 17.2285 14.4102 17.2773C13.821 17.3254 13.0893 17.3251 12.167 17.3251H7.83301C6.91071 17.3251 6.17898 17.3254 5.58984 17.2773C5.06757 17.2346 4.61294 17.1508 4.19531 16.9716L4.01855 16.8896C3.36014 16.5541 2.80898 16.0434 2.4248 15.4169L2.27051 15.1415C2.03328 14.6758 1.93158 14.167 1.88281 13.5702C1.83468 12.9811 1.83496 12.2493 1.83496 11.3271V8.66301C1.83496 7.74072 1.83468 7.00898 1.88281 6.41985C1.93157 5.82309 2.03329 5.31432 2.27051 4.84856L2.4248 4.57317C2.80898 3.94666 3.36012 3.436 4.01855 3.10051L4.19531 3.0175C4.61285 2.83843 5.06771 2.75548 5.58984 2.71281C6.17898 2.66468 6.91071 2.66496 7.83301 2.66496H12.167C13.0893 2.66496 13.821 2.66468 14.4102 2.71281C15.0069 2.76157 15.5157 2.86329 15.9814 3.10051L16.2568 3.25481C16.8833 3.63898 17.394 4.19012 17.7295 4.84856L17.8125 5.02531C17.9916 5.44285 18.0745 5.89771 18.1172 6.41985C18.1653 7.00898 18.165 7.74072 18.165 8.66301V11.3271ZM8.16406 15.995H12.167C13.1112 15.995 13.7794 15.9947 14.3018 15.9521C14.8164 15.91 15.1308 15.8299 15.3779 15.704L15.5615 15.6015C15.9797 15.3451 16.32 14.9774 16.5439 14.538L16.6299 14.3378C16.7074 14.121 16.7605 13.8478 16.792 13.4618C16.8347 12.9394 16.835 12.2712 16.835 11.3271V8.66301C16.835 7.71885 16.8347 7.05065 16.792 6.52824C16.7605 6.14232 16.7073 5.86904 16.6299 5.65227L16.5439 5.45207C16.32 5.01264 15.9796 4.64498 15.5615 4.3886L15.3779 4.28606C15.1308 4.16013 14.8165 4.08006 14.3018 4.03801C13.7794 3.99533 13.1112 3.99504 12.167 3.99504H8.16406C8.16407 3.99667 8.16504 3.99829 8.16504 3.99992L8.16406 15.995Z"
+                ></path>
               </svg>
             </button>
           </div>
-          <div class="notifications-anchor notifications-anchor-collapsed" bind:this={alertsAnchorChat}>
+          <div
+            class="notifications-anchor notifications-anchor-collapsed"
+            bind:this={alertsAnchorChat}
+          >
             {@render alertsUi()}
           </div>
         {/if}
@@ -409,17 +456,27 @@
       <div class="header-top">
         <button
           class="back-btn"
-          onclick={() => handleAdminMenuItemClick('/')}
-          title={$_('sidebar.backToChat')}
-          aria-label={$_('sidebar.backToChat')}
+          onclick={() => handleAdminMenuItemClick("/")}
+          title={$_("sidebar.backToChat")}
+          aria-label={$_("sidebar.backToChat")}
         >
-          <svg data-rtl-flip width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            data-rtl-flip
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12,19 5,12 12,5"></polyline>
           </svg>
         </button>
         {#if !isCollapsed}
-          <h1 class="admin-title">{$_('sidebar.adminPanel')}</h1>
+          <h1 class="admin-title">{$_("sidebar.adminPanel")}</h1>
         {/if}
       </div>
     </div>
@@ -427,9 +484,12 @@
 
   <!-- Sidebar Navigation -->
   {#if isAdminView}
-    <nav class="sidebar-nav admin-sidebar-nav" aria-label={$_('sidebar.adminNavigation') || 'Admin navigation'}>
+    <nav
+      class="sidebar-nav admin-sidebar-nav"
+      aria-label={$_("sidebar.adminNavigation") || "Admin navigation"}
+    >
       {#each adminMenuItems as item}
-        {#if item.type === 'section-header'}
+        {#if item.type === "section-header"}
           {#if !isCollapsed}
             <h2 class="section-header" id="nav-section-{item.id}">
               <span>{item.label}</span>
@@ -438,17 +498,23 @@
             <div class="section-divider" aria-hidden="true"></div>
           {/if}
         {:else if item.path}
-          <button 
+          <button
             type="button"
             class="sidebar-item"
-            class:active={currentPath === item.path || currentPath.startsWith(item.path + '/')}
+            class:active={currentPath === item.path ||
+              currentPath.startsWith(item.path + "/")}
             onclick={() => handleAdminMenuItemClick(item.path)}
             title={item.label}
-            aria-current={currentPath === item.path || currentPath.startsWith(item.path + '/') ? 'page' : undefined}
+            aria-current={currentPath === item.path ||
+            currentPath.startsWith(item.path + "/")
+              ? "page"
+              : undefined}
             aria-label={item.label}
           >
             {#if item.icon}
-              <span class="sidebar-icon" aria-hidden="true">{@html item.icon}</span>
+              <span class="sidebar-icon" aria-hidden="true"
+                >{@html item.icon}</span
+              >
             {/if}
             <span class="sidebar-label">{item.label}</span>
           </button>
@@ -459,15 +525,21 @@
       <div class="sidebar-divider" aria-hidden="true"></div>
     {/if}
   {:else}
-    {#await import('$lib/bundles/user-chunk')}
+    {#await import("$lib/bundles/user-chunk")}
       <div class="sidebar-chat-pending" aria-busy="true">
         <div class="sidebar-chat-pending-spinner"></div>
       </div>
     {:then mod}
       {@const SidebarChatSection = mod.SidebarChatSection}
+      {@const SidebarProjectsSection = mod.SidebarProjectsSection}
+      <SidebarProjectsSection
+        {isCollapsed}
+        {currentPath}
+        onCollapseSidebar={collapseSidebarOnMobile}
+      />
       <SidebarChatSection
         {isCollapsed}
-        currentPath={currentPath}
+        {currentPath}
         onCollapseSidebar={collapseSidebarOnMobile}
       />
     {/await}
@@ -479,21 +551,32 @@
         <button
           class="user-menu-trigger sidebar-item"
           onclick={toggleUserMenu}
-          aria-label={$_('sidebar.userMenu')}
+          aria-label={$_("sidebar.userMenu")}
           aria-expanded={showUserMenu}
-          title={$_('sidebar.userMenu')}
+          title={$_("sidebar.userMenu")}
         >
           <div class="user-avatar">
-            <div class="user-initials" style="background-color: {getUserColor()};">
+            <div
+              class="user-initials"
+              style="background-color: {getUserColor()};"
+            >
               {getUserInitials()}
             </div>
           </div>
           {#if !isCollapsed}
             <div class="user-info">
-              <span class="user-name">{user?.name || $_('sidebar.user')}</span>
+              <span class="user-name">{user?.name || $_("sidebar.user")}</span>
             </div>
-            <svg class="dropdown-arrow" class:rotated={showUserMenu} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <polyline points="6,15 12,9 18,15"/>
+            <svg
+              class="dropdown-arrow"
+              class:rotated={showUserMenu}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <polyline points="6,15 12,9 18,15" />
             </svg>
           {/if}
         </button>
@@ -502,37 +585,76 @@
   </div>
 </aside>
 
-
 {#if showUserMenu}
-  <div class="user-menu-dropdown" role="menu" aria-label={$_('sidebar.userMenu') || 'User menu'} aria-hidden={!showUserMenu} tabindex="-1" onkeydown={(e) => {
-    if (e.key === 'Escape') {
-      closeUserMenu();
-    }
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      const items = Array.from(document.querySelectorAll('.user-menu-dropdown [role="menuitem"]'));
-      const focusedIndex = items.findIndex(item => item === document.activeElement);
-      const nextIndex = e.key === 'ArrowDown' ? (focusedIndex + 1) % items.length : (focusedIndex - 1 + items.length) % items.length;
-      (items[nextIndex] as HTMLElement)?.focus();
-    }
-  }}>
-    <Link to="/settings" class="menu-item" onclick={collapseSidebarOnMobile} role="menuitem" aria-label={$_('sidebar.settings')} title={$_('sidebar.settings')}>
+  <div
+    class="user-menu-dropdown"
+    role="menu"
+    aria-label={$_("sidebar.userMenu") || "User menu"}
+    aria-hidden={!showUserMenu}
+    tabindex="-1"
+    onkeydown={(e) => {
+      if (e.key === "Escape") {
+        closeUserMenu();
+      }
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const items = Array.from(
+          document.querySelectorAll('.user-menu-dropdown [role="menuitem"]'),
+        );
+        const focusedIndex = items.findIndex(
+          (item) => item === document.activeElement,
+        );
+        const nextIndex =
+          e.key === "ArrowDown"
+            ? (focusedIndex + 1) % items.length
+            : (focusedIndex - 1 + items.length) % items.length;
+        (items[nextIndex] as HTMLElement)?.focus();
+      }
+    }}
+  >
+    <Link
+      to="/settings"
+      class="menu-item"
+      onclick={collapseSidebarOnMobile}
+      role="menuitem"
+      aria-label={$_("sidebar.settings")}
+      title={$_("sidebar.settings")}
+    >
       <span class="user-menu-icon" aria-hidden="true">⚙️</span>
-      <span>{$_('sidebar.settings')}</span>
+      <span>{$_("sidebar.settings")}</span>
     </Link>
     {#if hasAdminPermissions}
-      <Link to="/admin" class="menu-item" role="menuitem" aria-label={$_('sidebar.admin')} onclick={collapseSidebarOnMobile}>
+      <Link
+        to="/admin"
+        class="menu-item"
+        role="menuitem"
+        aria-label={$_("sidebar.admin")}
+        onclick={collapseSidebarOnMobile}
+      >
         <span class="menu-item-icon" aria-hidden="true">🔒</span>
-        <span class="menu-item-label">{$_('sidebar.admin')}</span>
+        <span class="menu-item-label">{$_("sidebar.admin")}</span>
       </Link>
     {/if}
-    <button class="menu-item menu-item--danger" role="menuitem" onclick={handleLogout} aria-label={$_('sidebar.signOut')} title={$_('sidebar.signOut')}>
-      <svg class="user-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-        <polyline points="16,17 21,12 16,7"/>
-        <line x1="21" y1="12" x2="9" y2="12"/>
+    <button
+      class="menu-item menu-item--danger"
+      role="menuitem"
+      onclick={handleLogout}
+      aria-label={$_("sidebar.signOut")}
+      title={$_("sidebar.signOut")}
+    >
+      <svg
+        class="user-menu-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16,17 21,12 16,7" />
+        <line x1="21" y1="12" x2="9" y2="12" />
       </svg>
-      <span>{$_('sidebar.signOut')}</span>
+      <span>{$_("sidebar.signOut")}</span>
     </button>
   </div>
 {/if}
@@ -550,7 +672,9 @@
     z-index: 1000;
     overflow-y: auto;
     overflow-x: hidden;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Liquid Glass Layer 1 - Primary navigation surface */
     background: var(--bg-primary);
@@ -659,7 +783,9 @@
     color: var(--text-primary);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.08);
     flex-shrink: 0;
   }
 
@@ -668,7 +794,9 @@
     border-color: var(--link-color);
     color: var(--link-color);
     transform: translateY(-1px);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 16px rgba(0, 0, 0, 0.12);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      0 4px 16px rgba(0, 0, 0, 0.12);
   }
 
   .back-btn:focus-visible {
@@ -953,7 +1081,9 @@
   .sidebar-label {
     font-weight: 500;
     white-space: nowrap;
-    transition: opacity 0.2s ease, width 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      width 0.2s ease;
   }
 
   .collapsed .sidebar-label {
@@ -1076,7 +1206,11 @@
     bottom: 3rem;
     inset-inline-start: var(--space-lg);
     min-width: 200px;
-    background: color-mix(in oklab, var(--bg-primary) 85%, var(--btn-secondary));
+    background: color-mix(
+      in oklab,
+      var(--bg-primary) 85%,
+      var(--btn-secondary)
+    );
     backdrop-filter: blur(calc(var(--glass-blur) * 1.5)) saturate(1.5);
     -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.5)) saturate(1.5);
     border: 1px solid var(--glass-stroke-light);
@@ -1205,7 +1339,9 @@
     .sidebar-item,
     .user-menu-trigger,
     .menu-item {
-      transition: background-color 0.15s ease, color 0.15s ease;
+      transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
     }
   }
 
