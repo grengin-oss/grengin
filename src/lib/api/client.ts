@@ -3,7 +3,7 @@ import type { components } from '../types/api.js';
 type User = components['schemas']['User'];
 
 // Always use /api - proxied by Vite dev server locally, Cloudflare Pages Function in production
-const defaultApiBase = 'https://grengin-test-production.up.railway.app';
+const defaultApiBase = '';
 const rawApiBase = import.meta.env?.VITE_API_BASE;
 
 const normalizeBase = (base: string): string => {
