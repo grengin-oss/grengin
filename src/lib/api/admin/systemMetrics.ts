@@ -1,0 +1,23 @@
+import { request } from '../client.js';
+import { API_BASE } from '../client.js';
+import type { SystemMetrics } from '../../admin/types.js';
+
+export interface HealthStatus {
+  status: string;
+  version: string;
+}
+
+export async function getSystemMetrics(): Promise<SystemMetrics> {
+  return request<SystemMetrics>('/admin/system-metrics');
+}
+
+export async function getHealthStatus(): Promise<HealthStatus> {
+  const response = await fetch(API_BASE, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch health status');
+  }
+  return response.json();
+}

@@ -77,7 +77,7 @@ function createDepartmentsStore() {
       }
     },
 
-    async createDepartment(data: { name: string; description: string; parent_id?: string | null; leader_ids?: string[] }) {
+    async createDepartment(data: { name: string; description: string; parent_id?: string | null; admin_ids?: string[] }) {
       update(state => ({ ...state, loading: true, error: null }));
       try {
         const newDepartment = await departmentsApi.createDepartment(data);

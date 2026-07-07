@@ -1,145 +1,4 @@
 {
-  "common": {
-    "cancel": "취소",
-    "save": "저장",
-    "delete": "삭제",
-    "edit": "편집",
-    "search": "검색",
-    "never": "없음",
-    "loading": "로딩 중...",
-    "clear": "지우기",
-    "select": "선택"
-  },
-  "errors": {
-    "forbidden": {
-      "title": "액세스 거부",
-      "message": "이 페이지를 볼 권한이 없습니다.",
-      "back": "채팅으로 돌아가기",
-      "iconAlt": "액세스 거부"
-    }
-  },
-  "auth": {
-    "signIn": "로그인",
-    "signUp": "회원가입",
-    "forgotPassword": "비밀번호를 잊으셨나요?",
-    "rememberMe": "로그인 상태 유지",
-    "emailPlaceholder": "이메일을 입력하세요",
-    "passwordPlaceholder": "비밀번호를 입력하세요",
-    "welcomeToGrengin": "Grengin에 오신 것을 환영합니다",
-    "signInToContinue": "작업 공간을 계속하려면 로그인하세요",
-    "emailAddress": "이메일 주소",
-    "password": "비밀번호",
-    "signingIn": "로그인 중...",
-    "emailAndPassword": "이메일 및 비밀번호",
-    "orContinueWith": "또는 다음으로 계속",
-    "signInWith": "{provider}로 로그인",
-    "connectingTo": "{provider}에 연결 중...",
-    "noAuthMethods": "인증 방법 없음",
-    "noAuthMethodsDescription": "인증 옵션을 구성하려면 관리자에게 문의하세요.",
-    "termsOfService": "서비스 약관",
-    "privacyPolicy": "개인정보 보호정책",
-    "copyright": "© 2025-2026 Perter. 모든 권리 보유.",
-    "demoAccount": "데모 계정",
-    "authenticationInProgress": "인증 진행 중",
-    "completingSignIn": "로그인 완료 중...",
-    "pleaseWaitVerifying": "자격 증명을 확인하는 동안 기다려 주세요",
-    "authenticationComplete": "인증 완료",
-    "signInSuccessful": "로그인 성공!",
-    "redirectingToWorkspace": "작업 공간으로 리디렉션 중...",
-    "authenticationFailed": "인증 실패",
-    "signInFailed": "로그인 실패",
-    "redirectingToLogin": "로그인 페이지로 리디렉션 중...",
-    "mfaRequired": "MFA가 필요하지만 아직 구현되지 않았습니다",
-    "unexpectedError": "예기치 않은 오류가 발생했습니다",
-    "missingOAuthParams": "필수 OAuth 매개변수(state 또는 code)가 없습니다",
-    "oauthProviderNotFound": "OAuth 공급자를 찾을 수 없습니다. 다시 로그인해 주세요.",
-    "invalidAuthResponse": "서버의 인증 응답이 유효하지 않습니다",
-    "unexpectedAuthError": "인증 중 예기치 않은 오류가 발생했습니다",
-    "failedToInitiateLogin": "{provider} 로그인 시작 실패",
-    "socialLogin": "소셜 로그인 옵션",
-    "legalLinks": "법적 고지"
-  },
-  "components": {
-    "typingIndicator": "어시스턴트가 입력 중입니다"
-  },
-  "sidebar": {
-    "newChat": "새 채팅",
-    "users": "사용자",
-    "adminPanel": "관리 센터",
-    "backToChat": "채팅으로 돌아가기",
-    "toggleSidebar": "사이드바 토글",
-    "expandSidebar": "사이드바 확장",
-    "searchPlaceholder": "검색...",
-    "searchTitle": "채팅 대화 내역 검색",
-    "clearSearch": "검색 지우기",
-    "chats": "채팅",
-    "loadingChats": "채팅 로딩 중...",
-    "noChatsYet": "아직 채팅이 없습니다",
-    "noChatsFound": "채팅을 찾을 수 없습니다",
-    "chatOptions": "채팅 옵션",
-    "delete": "삭제",
-    "archive": "보관",
-    "rename": "이름 바꾸기",
-    "renamePlaceholder": "제목을 입력하세요",
-    "chatRenamed": "{title} 이름을 변경했습니다",
-    "renameChatError": "채팅 이름 변경에 실패했습니다",
-    "emptyChatTitle": "제목을 비워둘 수 없습니다",
-    "userMenu": "사용자 메뉴",
-    "user": "사용자",
-    "settings": "설정",
-    "admin": "관리 센터",
-    "signOut": "로그아웃",
-    "deleteChat": "채팅 삭제",
-    "deleteChatConfirm": "이 채팅을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
-    "cancel": "취소",
-    "navigation": "주요 탐색",
-    "adminNavigation": "관리 탐색",
-    "openAlerts": "알림 열기",
-    "deleting": "삭제 중...",
-    "close": "닫기",
-    "chatDeleted": "{title} 삭제 완료",
-    "chatArchived": "{title} 보관 완료",
-    "deleteChatError": "채팅 삭제 실패",
-    "archiveChatError": "채팅 보관 실패",
-    "chat": "채팅",
-    "untitledChat": "제목 없는 채팅",
-    "usageAnalytics": "사용 분석",
-    "userAnalytics": "사용자 분석",
-    "aiEngines": "AI 엔진",
-    "sectionManage": "관리",
-    "sectionMonitor": "모니터링",
-    "sectionConfigure": "설정",
-    "overview": "개요",
-    "organization": "조직",
-    "accessControl": "액세스 제어",
-    "connectors": "커넥터",
-    "viewAllAlerts": "모든 알림 보기",
-    "noRecentAlerts": "아직 알림이 없습니다",
-    "newAlert": "새 알림",
-    "promptLibrary": "프롬프트",
-    "promptEffectiveness": "프롬프트 지표",
-    "auditLogs": "감사 로그"
-  },
-  "alerts": {
-    "title": "알림",
-    "subtitle": "알림 및 업데이트",
-    "filterAll": "전체",
-    "filterUnread": "읽지 않음",
-    "filterLabel": "상태별로 알림 필터",
-    "notificationsList": "알림 목록",
-    "empty": "표시할 알림이 없습니다",
-    "loading": "알림 로드 중...",
-    "loadMore": "더 보기",
-    "unread": "읽지 않음",
-    "loadError": "알림을 불러오지 못했습니다",
-    "markReadError": "알림을 읽음으로 표시할 수 없습니다"
-  },
-  "app": {
-    "closeSidebar": "사이드바 닫기",
-    "openMenu": "메뉴 열기",
-    "closeMenu": "메뉴 닫기",
-    "notifications": "알림"
-  },
   "admin": {
     "common": {
       "closeModal": "모달 닫기",
@@ -178,7 +37,8 @@
     "tabListLabels": {
       "accessControl": "액세스 제어 탭",
       "settings": "설정 탭",
-      "analytics": "분석 보기"
+      "analytics": "분석 보기",
+      "systemMetrics": "시스템 탭"
     },
     "users": {
       "userManagement": "사용자 관리",
@@ -412,7 +272,8 @@
         "actions": {
           "retry": "다시 시도",
           "deleting": "삭제 중…",
-          "saving": "저장 중…"
+          "saving": "저장 중…",
+          "validating": "검증 중…"
         },
         "messages": {
           "loading": "OAuth 공급자를 불러오는 중...",
@@ -440,6 +301,7 @@
           "statusUpdateError": "{name}을(를) {action}할 수 없습니다",
           "deleted": "SSO 공급자가 삭제되었습니다",
           "deleteError": "SSO 공급자 삭제에 실패했습니다",
+          "validationFailed": "SSO 자격 증명 검증에 실패했습니다. 자격 증명을 확인하고 다시 시도해주세요.",
           "updated": "SSO 공급자가 업데이트되었습니다",
           "updateError": "공급자 업데이트에 실패했습니다"
         },
@@ -470,6 +332,10 @@
           "hideClientSecret": "클라이언트 시크릿 숨기기",
           "showClientSecret": "클라이언트 시크릿 보기",
           "removeDomain": "{domain} 도메인 제거"
+        },
+        "selfProvisioning": {
+          "label": "자체 프로비저닝",
+          "hint": "활성화하면 이 공급자를 통해 처음 로그인하는 사용자가 대기 상태로 자동 생성되며, 관리자 승인이 필요합니다."
         }
       }
     },
@@ -1068,7 +934,134 @@
         "admin_department_prompt_assigned": "부서 프롬프트 할당됨",
         "admin_department_prompt_updated": "부서 프롬프트 업데이트됨",
         "admin_department_prompt_deleted": "부서 프롬프트 삭제됨",
-        "admin_audit_logs_redacted_for_user": "사용자를 위해 감사 로그가 일부 가려짐"
+        "admin_audit_logs_redacted_for_user": "사용자를 위해 감사 로그가 일부 가려짐",
+        "admin_domain_reconfigured": "도메인 재구성됨",
+        "admin_binaries_updated": "애플리케이션 업데이트됨"
+      }
+    },
+    "maintenance": {
+      "title": "유지 관리",
+      "subtitle": "이 Grengin 인스턴스가 실행되는 호스트를 재구성합니다.",
+      "yes": "예",
+      "no": "아니요",
+      "comingSoon": "곧 제공 예정",
+      "foundationNote": "이 작업에 대한 컨트롤은 후속 릴리스에서 제공됩니다.",
+      "preflight": {
+        "checking": "호스트 기능을 확인하는 중…",
+        "privilege": "권한",
+        "runningAsRoot": "root로 실행 중",
+        "sudoAvailable": "sudo 사용 가능",
+        "privilegeMissing": "이 호스트는 재구성 스크립트를 실행할 수 없습니다(root 또는 sudo 없음). 두 작업 모두 비활성화됩니다.",
+        "recheck": "다시 확인",
+        "advancedDetails": "고급 세부 정보",
+        "exists": "존재함",
+        "executable": "실행 가능",
+        "effectiveSudo": "sudo 사용",
+        "reason": "이유",
+        "loadError": "호스트 상태를 불러올 수 없습니다."
+      },
+      "viewAuditLogs": "감사 로그에서 보기",
+      "domain": {
+        "title": "도메인 및 TLS",
+        "description": "서비스 도메인과 TLS 모드를 변경합니다.",
+        "apply": "변경 사항 적용",
+        "unavailable": "이 호스트에서는 도메인 재구성을 사용할 수 없습니다.",
+        "domainLabel": "도메인",
+        "domainPlaceholder": "chat.example.com",
+        "domainHint": "Grengin이 제공될 호스트 이름입니다. http:// 접두사나 경로는 포함하지 마세요.",
+        "domainRequired": "도메인을 입력하세요.",
+        "domainNoScheme": "호스트 이름만 입력하세요 — http:// 또는 https:// 접두사를 제거하세요.",
+        "domainInvalid": "유효한 호스트 이름을 입력하세요. 예: chat.example.com.",
+        "sslMode": "TLS / SSL 모드",
+        "sslLetsencrypt": "Let's Encrypt",
+        "sslSelfsigned": "자체 서명",
+        "sslNone": "없음",
+        "emailLabel": "연락처 이메일",
+        "emailPlaceholder": "ops@example.com",
+        "emailHint": "Let's Encrypt 등록 및 인증서 만료 알림에 사용됩니다.",
+        "emailRequired": "Let's Encrypt를 사용하려면 이메일 주소가 필요합니다.",
+        "emailInvalid": "유효한 이메일 주소를 입력하세요.",
+        "selfSignedDaysLabel": "인증서 유효 기간(일)",
+        "selfSignedDaysHint": "브라우저가 신뢰할 수 없는 자체 서명 인증서에 대해 방문자에게 경고를 표시합니다.",
+        "selfSignedDaysInvalid": "1 이상의 정수 일수를 입력하세요.",
+        "sslNoneNote": "트래픽이 TLS 없이 제공됩니다. 이는 안전하지 않으며 권장되지 않습니다.",
+        "prereqTitle": "Let's Encrypt 인증서를 발급하기 전에 다음을 확인하세요:",
+        "prereqDns": "이 도메인의 DNS A/AAAA 레코드가 이미 이 서버의 공인 IP를 가리키고 있습니다.",
+        "prereqPorts": "포트 80과 443에 인터넷에서 접근할 수 있습니다.",
+        "prereqProxy": "이 호스트가 별도의 TLS 종료 프록시 뒤에 있지 않습니다.",
+        "serviceUnavailable": "서비스를 사용할 수 없습니다 — 호스트가 사용 중일 수 있습니다. 다시 시도해 주세요.",
+        "confirm": {
+          "title": "도메인 변경 확인",
+          "warning": "이를 적용하면 Grengin이 제공되는 위치가 {domain}(으)로 변경됩니다. 현재 세션이 종료될 수 있으며 새 주소에서 다시 로그인해야 할 수 있습니다. DNS가 이미 이곳을 가리키는지 확인하세요.",
+          "typeToConfirm": "확인하려면 새 도메인을 입력하세요:",
+          "confirm": "도메인 변경 적용",
+          "cancel": "취소"
+        },
+        "verify": {
+          "checking": "Grengin이 {origin}에서 접근 가능한지 확인하는 중…",
+          "reachable": "Grengin이 새 주소에서 정상 작동 중입니다.",
+          "timeout": "아직 새 주소를 확인할 수 없습니다 — DNS 또는 TLS가 아직 전파되는 중일 수 있습니다.",
+          "goToNewAddress": "{origin}(으)로 이동",
+          "retryCheck": "다시 확인",
+          "openAnyway": "그래도 열기",
+          "sessionWarning": "새 주소를 열면 현재 세션이 종료될 수 있습니다 — 다시 로그인해야 할 수 있습니다."
+        }
+      },
+      "console": {
+        "title": "스크립트 출력",
+        "copy": "로그 복사",
+        "copied": "복사됨",
+        "scriptDetails": "스크립트 세부 정보",
+        "scriptPath": "스크립트 경로",
+        "noOutput": "캡처된 출력이 없습니다.",
+        "success": "성공",
+        "failure": "실패"
+      },
+      "binaries": {
+        "title": "애플리케이션 업데이트",
+        "description": "새 애플리케이션 바이너리를 가져와 설치합니다.",
+        "currentVersion": "현재 버전",
+        "update": "바이너리 업데이트",
+        "unavailable": "이 호스트에서는 애플리케이션 업데이트를 사용할 수 없습니다.",
+        "version": "대상 버전",
+        "versionHint": "\"latest\" 또는 v1.2.3 같은 특정 버전.",
+        "versionRequired": "버전을 입력하세요.",
+        "versionInvalid": "\"latest\" 또는 v1.2.3 같은 버전을 입력하세요.",
+        "versionUnknown": "알 수 없음",
+        "releaseBaseUrl": "릴리스 소스 URL(선택 사항)",
+        "releaseBaseUrlPlaceholder": "https://releases.example.com",
+        "releaseBaseUrlHint": "바이너리를 다운로드할 위치입니다. 비워 두면 호스트의 기본 소스를 사용합니다. 신뢰할 수 없는 호스트를 지정하면 신뢰할 수 없는 바이너리가 root로 설치됩니다.",
+        "releaseBaseUrlInvalid": "유효한 URL을 입력하거나 비워 두세요.",
+        "releaseBaseUrlInsecure": "릴리스 소스는 HTTPS를 사용해야 합니다.",
+        "arch": "아키텍처",
+        "archAuto": "자동 감지",
+        "targets": "업데이트할 항목",
+        "updateApi": "API 서버",
+        "updateApiHint": "API 서비스를 다시 시작합니다. 잠시 다운타임이 발생합니다.",
+        "updateWebapp": "웹 앱",
+        "updateWebappHint": "이 프런트엔드를 교체합니다. 이후 강력 새로고침이 필요합니다.",
+        "updateInstaller": "설치 관리자",
+        "updateInstallerHint": "설치 관리자 바이너리를 업데이트합니다. 고급.",
+        "noTarget": "업데이트할 구성 요소를 하나 이상 선택하세요.",
+        "verifyChecksums": "체크섬 검증",
+        "verifyChecksumsHint": "설치 전에 다운로드한 아티팩트를 검증합니다. 권장됨.",
+        "verifyChecksumsWarning": "체크섬 검증을 건너뛰면 검증되지 않은 바이너리가 설치됩니다. 무엇을 하는지 잘 아는 경우에만 비활성화하세요.",
+        "advanced": "고급",
+        "apiServiceName": "API 서비스 이름",
+        "apiServiceNameHint": "API가 기본이 아닌 서비스 이름으로 실행되는 경우에만 설정하세요.",
+        "serviceUnavailable": "서비스를 사용할 수 없습니다. 호스트가 사용 중일 수 있습니다. 다시 시도하세요.",
+        "confirm": {
+          "title": "애플리케이션 업데이트 확인",
+          "warning": "이 작업은 Grengin 서비스를 다시 시작합니다. 웹 앱이 업데이트되면 이 페이지를 강력 새로고침해야 합니다. 잠시 다운타임이 발생합니다. 먼저 스냅샷이나 백업을 만드세요.",
+          "typeToConfirm": "계속하려면 CONFIRM을 입력하세요:",
+          "confirm": "바이너리 업데이트"
+        },
+        "result": {
+          "reloadPrompt": "새 버전의 앱이 설치되었습니다. 사용하려면 새로고침하세요.",
+          "reload": "지금 새로고침",
+          "waitingForApi": "API가 돌아오기를 기다리는 중…",
+          "newVersion": "Grengin이 돌아왔으며, 현재 v{version}을(를) 실행 중입니다."
+        }
       }
     }
   },
@@ -1139,108 +1132,11 @@
       "manage": {
         "description": "SSO 공급자 구성 및 관리"
       }
-    }
-  },
-  "chat": {
-    "emptyState": {
-      "title": "대화 시작",
-      "description": "AI 어시스턴트와 채팅을 시작하려면 메시지를 보내세요!",
-      "aiDisclaimer": "AI는 실수를 할 수 있습니다. 응답을 다시 확인해 주세요."
     },
-    "errors": {
-      "somethingWentWrong": "문제가 발생했습니다",
-      "dismissError": "오류 닫기",
-      "failedToLoadModels": "모델 로드 실패",
-      "failedToLoadConnectors": "커넥터를 불러오지 못했습니다",
-      "failedToLoadConversation": "대화 로드 실패",
-      "failedToSendMessage": "메시지 전송 실패",
-      "budgetAboutToExhaust": "부서 예산이 곧 고갈됩니다.",
-      "budgetExhaustedWarn": "이번 기간의 부서 예산이 고갈되었습니다. 채팅은 계속되지만 사용량이 예산을 초과할 수 있습니다.",
-      "budgetExhaustedBlock": "예산이 고갈되어 새 요청을 받을 수 없습니다.",
-      "budgetExhaustedBlockSolution": "추가 예산을 요청하려면 관리자에게 문의하거나 나중에 다시 시도하세요."
-    },
-    "messageInput": {
-      "placeholder": "무엇이든 물어보세요",
-      "placeholderWithModel": "{model}에 메시지",
-      "recordingPlaceholder": "듣는 중... 지금 말하세요",
-      "addContent": "콘텐츠 추가",
-      "addPhotos": "사진 추가",
-      "addFiles": "파일 추가",
-      "selectModel": "모델 선택",
-      "selectModelFallback": "모델 선택",
-      "loadingModels": "모델 로딩 중...",
-      "selectConnectorsFallback": "커넥터",
-      "selectConnectors": "커넥터 선택",
-      "loadingConnectors": "커넥터 불러오는 중...",
-      "noConnectors": "사용 가능한 커넥터가 없습니다",
-      "connectors": "커넥터",
-      "enableWebSearch": "웹 검색 사용",
-      "disableWebSearch": "웹 검색 비활성화",
-      "search": "검색",
-      "voiceInput": "음성 입력",
-      "stopRecording": "녹음 중지",
-      "sendMessage": "메시지 보내기",
-      "sendMessageTitle": "메시지 보내기 (Enter)",
-      "messageInput": "메시지 입력",
-      "visionCapable": "비전 지원",
-      "removeFile": "파일 제거",
-      "previewImage": "이미지 미리보기: {name}",
-      "previewFile": "파일 미리보기: {name}",
-      "fileLabel": "파일: {name}",
-      "closePreview": "미리보기 닫기",
-      "speechRecognitionNotSupported": "브라우저에서 음성 인식을 지원하지 않습니다",
-      "microphoneAccessDenied": "마이크 액세스가 거부되었습니다. 마이크 액세스를 허용해 주세요.",
-      "voiceInputError": "음성 입력 오류: {error}",
-      "failedToStartVoiceInput": "음성 입력 시작 실패",
-      "uploading": "업로드 중…",
-      "uploadFailed": "실패"
-    },
-    "message": {
-      "copy": "복사",
-      "copied": "복사됨!",
-      "copyContent": "콘텐츠 복사",
-      "loadingImage": "이미지 로딩 중...",
-      "imagePreview": "이미지 미리보기",
-      "imageAlt": "이미지",
-      "fileFallback": "파일",
-      "pause": "일시정지",
-      "resume": "재개",
-      "listen": "듣기",
-      "stop": "중지",
-      "closePreview": "미리보기 닫기"
-    },
-    "toolCalls": {
-      "searching": "웹 검색 중",
-      "searchedTheWeb": "웹을 검색했습니다",
-      "results": "개 결과"
-    },
-    "toolExecution": {
-      "timeline": "Turu siljaeng taimlain",
-      "input": "Ipryeok",
-      "output": "Chulryeok",
-      "running": "Siljaeng jung",
-      "completed": "Wanryeo",
-      "failed": "Silpae",
-      "row": "haeng",
-      "rows": "haeng",
-      "imageResult": "Imiji gyeolgwa",
-      "resource": "Risoseu",
-      "unknownError": "Al su eopseun oeroga balsaenghaetseumnida",
-      "duration": "Gigan"
-    },
-    "mcpAuth": {
-      "connectTo": "{name}에 연결",
-      "connectedTo": "{name}에 연결됨",
-      "description": "{tool}을(를) 사용하려면 {name} 계정에 대한 액세스가 필요합니다. 권한은 모든 작업에 적용됩니다.",
-      "connectAccount": "{name} 계정 연결",
-      "connecting": "연결 중...",
-      "connectionFailed": "연결 실패",
-      "failedToGetAuthUrl": "인증 URL을 가져오지 못했습니다",
-      "popupBlocked": "팝업이 차단되었습니다. 이 사이트에 대해 팝업을 허용해 주세요.",
-      "retry": "다시 시도",
-      "notNow": "지금은 안 함",
-      "requestedPermissions": "요청된 권한:",
-      "manageInSettings": "연결된 계정은 설정에서 관리할 수 있습니다."
+    "system": {
+      "maintain": {
+        "description": "호스트 시스템 재구성(도메인, TLS 및 애플리케이션 업데이트)"
+      }
     }
   },
   "aiEngines": {
@@ -1352,479 +1248,78 @@
     "viewAnalytics": "상세 사용 분석 보기",
     "viewPromptEffectiveness": "프롬프트 효과 지표 보기",
     "configureSettings": "시스템 설정 구성",
+    "viewSystemMetrics": "시스템 상태 및 진단",
     "retry": "재시도",
     "errors": {
       "fetchFailed": "개요 데이터를 가져오지 못했습니다"
     }
   },
-  "userAnalytics": {
-    "title": "사용자 분석",
-    "subtitle": "사용자별 상세 사용 분석",
-    "filters": {
-      "startDate": "시작 날짜",
-      "endDate": "종료 날짜",
-      "search": "검색",
-      "searchPlaceholder": "이름, 이메일 또는 부서로 검색...",
-      "perPage": "페이지당"
+  "systemMetrics": {
+    "title": "시스템",
+    "subtitle": "서버, 데이터베이스 및 컨테이너의 실시간 상태",
+    "refresh": "새로고침",
+    "autoRefresh": "자동 새로고침",
+    "lastUpdated": "마지막 업데이트",
+    "generatedAt": "생성 시간",
+    "machine": {
+      "title": "머신",
+      "cpuUsage": "CPU 사용량",
+      "memoryUsage": "메모리 사용량",
+      "swapUsage": "스왑 사용량",
+      "usedMemory": "사용됨",
+      "freeMemory": "사용 가능",
+      "totalMemory": "전체",
+      "usedSwap": "사용된 스왑",
+      "totalSwap": "전체 스왑",
+      "loadAverage": "평균 부하",
+      "load1m": "1분",
+      "load5m": "5분",
+      "load15m": "15분",
+      "uptime": "가동 시간",
+      "disks": "디스크 사용량"
     },
-    "stats": {
-      "totalUsers": "총 사용자",
-      "showing": "표시 중",
-      "showingCount": "{total}개 중 {filtered}개"
+    "database": {
+      "title": "데이터베이스",
+      "connections": "연결",
+      "active": "활성",
+      "idle": "유휴",
+      "total": "전체",
+      "backends": "백엔드",
+      "latency": "왕복 지연 시간",
+      "size": "데이터베이스 크기",
+      "cacheHitRatio": "캐시 적중률",
+      "blocksHit": "캐시 히트 블록",
+      "blocksRead": "읽은 블록",
+      "transactions": "트랜잭션",
+      "commits": "커밋",
+      "rollbacks": "롤백",
+      "tuples": "튜플 작업",
+      "fetched": "조회됨",
+      "inserted": "삽입됨",
+      "updated": "업데이트됨",
+      "deleted": "삭제됨",
+      "returned": "반환됨"
     },
-    "table": {
-      "userName": "사용자 이름",
-      "email": "이메일",
-      "department": "부서",
-      "requests": "요청",
-      "success": "성공",
-      "errors": "오류",
-      "tokens": "토큰",
-      "cost": "비용",
-      "avgLatency": "평균 지연시간",
-      "lastActivity": "마지막 활동"
-    },
-    "emptyState": {
-      "noMatch": "\"{query}\"와 일치하는 사용자를 찾을 수 없습니다",
-      "noData": "선택한 날짜 범위에 대한 사용자 분석 데이터가 없습니다"
-    },
-    "pagination": {
-      "previous": "이전",
-      "next": "다음",
-      "pageInfo": "{total}페이지 중 {current}페이지"
-    },
-    "errors": {
-      "fetchFailed": "사용자 분석 가져오기 실패"
-    }
-  },
-  "departmentAnalytics": {
-    "title": "부서 분석",
-    "subtitle": "부서별 사용 분석 상세 정보",
-    "filters": {
-      "search": "검색",
-      "searchPlaceholder": "부서 이름으로 검색...",
-      "perPage": "페이지당"
-    },
-    "stats": {
-      "totalDepartments": "총 부서",
-      "showing": "표시 중",
-      "showingCount": "{total}개 중 {showing}개 표시"
-    },
-    "table": {
-      "department": "부서",
-      "users": "사용자",
-      "requests": "요청",
-      "success": "성공",
-      "errors": "오류",
-      "tokens": "토큰",
-      "cost": "비용",
-      "avgLatency": "평균 지연"
-    },
-    "emptyState": {
-      "noMatch": "「{query}」과 일치하는 부서를 찾을 수 없습니다",
-      "noData": "선택한 기간에 대한 부서 분석 데이터가 없습니다"
-    },
-    "pagination": {
-      "previous": "이전",
-      "next": "다음",
-      "pageInfo": "페이지 {current}/{total}"
-    },
-    "errors": {
-      "fetchFailed": "부서 분석을 가져오지 못했습니다"
-    }
-  },
-  "analytics": {
-    "title": "사용량 분석",
-    "subtitle": "시스템 성능 및 사용 메트릭 모니터링",
-    "tabs": {
-      "overview": "개요",
-      "byUser": "사용자별",
-      "byDepartment": "부서별",
-      "byModel": "모델별"
-    },
-    "tabsAria": {
-      "overview": "사용량 지표 및 추세 개요",
-      "byUser": "사용자별 사용 내역",
-      "byDepartment": "부서별 사용 내역",
-      "byModel": "모델별 사용 내역"
-    },
-    "byModel": {
-      "title": "모델별",
-      "comingSoon": "곧 제공",
-      "hint": "모델별 분석이 여기에 제공됩니다."
-    },
-    "aria": {
-      "mainRegion": "사용량 분석",
-      "dateRangeGroup": "보고서 기간",
-      "startDate": "시작일",
-      "endDate": "종료일",
-      "pagination": "결과 페이지 매김",
-      "topModelsCaption": "선택한 기간의 사용량 기준 상위 모델",
-      "departmentTableCaption": "선택한 기간의 부서별 사용량",
-      "userTableCaption": "선택한 기간의 사용자별 사용량"
-    },
-    "filters": {
-      "dateRange": "기간",
-      "presets": {
-        "last7Days": "최근 7일",
-        "last30Days": "최근 30일",
-        "last90Days": "최근 90일",
-        "thisMonth": "이번 달",
-        "custom": "사용자 정의"
-      },
-      "to": "부터",
-      "aggregated": "집계 단위",
-      "hour": "시간별",
-      "day": "일별",
-      "week": "주별",
-      "month": "월별"
-    },
-    "loading": "분석 로딩 중...",
-    "retry": "재시도",
-    "refresh": "분석 새로고침",
-    "refreshButton": "새로고침",
-    "overview": {
-      "title": "개요",
-      "totalUsers": "총 사용자",
-      "activeUsers": "{count} 활성",
-      "totalRequests": "총 요청",
-      "avgPerUser": "사용자당 평균 {count}",
-      "totalTokens": "총 토큰",
-      "totalCost": "총 비용",
-      "vsPreviousDays": "이전 {count}일 대비"
-    },
-    "topModels": {
-      "title": "상위 모델",
-      "model": "모델",
-      "provider": "제공자",
-      "requests": "요청",
-      "tokens": "토큰",
-      "cost": "비용"
-    },
-    "charts": {
-      "title": "성능 추세",
-      "multiMetric": {
-        "title": "다중 메트릭 추세",
-        "subtitle": "요청 • 토큰 • 지연시간",
-        "requests": "요청",
-        "tokens": "토큰",
-        "latency": "지연시간",
-        "date": "날짜",
-        "latencyMs": "지연시간 (ms)"
-      },
-      "usageGrowth": {
-        "title": "사용량 증가",
-        "subtitle": "요청 (막대) • 토큰 (선)",
-        "requests": "요청",
-        "tokens": "토큰"
-      },
-      "apiReliability": {
-        "title": "API 신뢰성",
-        "subtitle": "성공 vs 오류",
-        "success": "성공",
-        "errors": "오류",
-        "type": "유형",
-        "count": "개수"
-      },
-      "costTrend": {
-        "title": "비용 추세",
-        "subtitle": "시간 경과에 따른 총 지출",
-        "totalCost": "총 비용"
-      },
-      "emptyState": {
-        "title": "선택한 날짜 범위에 대한 시계열 데이터가 없습니다",
-        "hint": "다른 날짜 범위를 선택하거나 나중에 다시 확인하세요"
-      },
-      "accessibility": {
-        "keyboardInstructions": "Enter 또는 Space로 데이터 테이블을 엽니다. Escape로 닫습니다.",
-        "dataPoints": "데이터 포인트 {count}개",
-        "viewDataTable": "데이터 테이블 보기",
-        "viewDataTableFor": "{chartName} 데이터 테이블 보기",
-        "closeDataTable": "데이터 테이블 닫기",
-        "dataTableRegion": "{chartName} 데이터 테이블"
-      }
-    },
-    "errors": {
-      "fetchFailed": "분석 데이터 가져오기 실패"
-    }
-  },
-  "error": {
-    "not_found": {
-      "description": "요청한 리소스를 찾을 수 없습니다",
-      "solution": "찾고 있는 리소스가 존재하지 않거나 제거되었습니다. URL을 확인하거나 다시 시도해 주세요. 문제가 지속되면 {app} 지원팀에 문의하세요"
-    },
-    "validation": {
-      "missing_field": {
-        "description": "필수 필드 `{field}` 가 누락되었습니다",
-        "solution": "`{field}` 를 포함하여 모든 필수 필드를 제공해 주세요"
-      },
-      "empty_field": {
-        "description": "필수 필드 `{field}` 는 비워둘 수 없습니다",
-        "solution": "`{field}` 필드에 값을 입력해 주세요"
-      }
-    },
-    "sso": {
-      "conditional_access": {
-        "description": "`{provider}` 에 대한 조건부 액세스 정책으로 인해 액세스가 거부되었습니다",
-        "solution": "조직의 보안 정책이 액세스를 차단하고 있습니다. 관리자에게 문의하거나 다른 인증 방법을 시도해 주세요"
-      }
-    },
-    "llm": {
-      "disabled_by_admin": {
-        "description": "LLM 프로바이더 `{provider}` 가 관리자에 의해 비활성화되었습니다",
-        "solution": "관리자에게 `{provider}` 를 활성화하도록 요청하거나 다른 프로바이더를 선택하세요"
-      },
-      "invalid_provider": {
-        "description": "LLM 프로바이더 `{provider}` 가 유효하지 않거나 지원되지 않습니다",
-        "solution": "사용 가능한 옵션에서 유효한 프로바이더를 선택하세요"
-      },
-      "not_configured": {
-        "description": "LLM 프로바이더 `{provider}` 가 제대로 구성되지 않았습니다",
-        "solution": "프로바이더 설정을 구성하거나 관리자에게 문의하세요"
-      }
-    },
-    "db": {
-      "not_found": {
-        "description": "{app} 데이터베이스에서 리소스를 찾을 수 없습니다",
-        "solution": "찾고 있는 리소스가 존재하지 않습니다. 새 채팅을 시작하거나 {app} 지원팀에 문의해 주세요"
-      },
-      "unavailable": {
-        "description": "{app} 데이터베이스를 일시적으로 사용할 수 없습니다",
-        "solution": "잠시 후 다시 시도해 주세요. 문제가 지속되면 {app} 지원팀에 문의하세요"
-      },
-      "timeout": {
-        "description": "{app} 데이터베이스 요청 시간이 초과되었습니다",
-        "solution": "작업 시간이 너무 오래 걸렸습니다. 더 작은 요청으로 다시 시도하거나 {app} 지원팀에 문의해 주세요"
-      },
-      "conflict": {
-        "description": "{app} 요청을 처리하는 중 충돌이 발생했습니다",
-        "solution": "리소스가 다른 프로세스에 의해 수정되었습니다. 새로고침하고 다시 시도해 주세요"
-      }
-    },
-    "service_unavailable": {
-      "description": "{app} 서비스를 일시적으로 사용할 수 없습니다",
-      "solution": "기술적 문제가 발생했습니다. 잠시 후 다시 시도해 주세요. 문제가 지속되면 {app} 지원팀에 문의하세요"
-    },
-    "auth": {
-      "service_unavailable": {
-        "description": "{app} 인증 서비스를 일시적으로 사용할 수 없습니다",
-        "solution": "잠시 후 다시 시도해 주세요. 문제가 지속되면 {app} 지원팀에 문의하세요"
-      },
-      "invalid_credentials": {
-        "description": "{app} 이메일 또는 비밀번호가 올바르지 않습니다",
-        "solution": "자격 증명을 확인하고 다시 시도해 주세요. 비밀번호를 잊으셨다면 비밀번호 재설정 옵션을 사용하세요"
-      },
-      "email_not_found": {
-        "description": "이 이메일 주소로 등록된 {app} 계정을 찾을 수 없습니다",
-        "solution": "이메일 주소를 확인하거나 새 {app} 계정을 등록해 주세요"
-      },
-      "missing_credentials": {
-        "description": "{app} 로그인을 위해 이메일과 비밀번호가 필요합니다",
-        "solution": "로그인하려면 이메일 주소와 비밀번호를 모두 입력해 주세요"
-      },
-      "invalid_token": {
-        "description": "{app} 세션이 만료되었습니다",
-        "solution": "{app} 사용을 계속하려면 다시 로그인해 주세요"
-      },
-      "invalid_user_status": {
-        "description": "{app} 계정 상태가 유효하지 않습니다",
-        "solution": "계정 문제를 해결하려면 {app} 지원팀에 문의해 주세요"
-      },
-      "account_deactivated": {
-        "description": "{app} 계정이 비활성화되었습니다",
-        "solution": "계정을 다시 활성화하려면 관리자 또는 {app} 지원팀에 문의해 주세요"
-      },
-      "email_already_exists": {
-        "description": "이 이메일로 이미 {app} 계정이 존재합니다",
-        "solution": "기존 {app} 계정으로 로그인하거나 다른 이메일 주소를 사용해 주세요"
-      },
-      "invalid_provider": {
-        "description": "인증 프로바이더 `{provider}` 가 유효하지 않거나 {app} 에서 지원되지 않습니다",
-        "solution": "{app} 에서 유효한 인증 프로바이더를 선택해 주세요"
-      },
-      "invalid_callback_params": {
-        "description": "{app} 인증 콜백 매개변수가 유효하지 않습니다",
-        "solution": "{app} 인증 프로세스에서 오류가 발생했습니다. 다시 로그인해 주세요"
-      },
-      "missing_oauth_params": "필수 OAuth 매개변수가 누락되었습니다 (state 또는 code)",
-      "oauth_provider_not_found": "OAuth 프로바이더를 찾을 수 없습니다. 다시 로그인해 주세요",
-      "invalid_auth_response": "서버에서 유효하지 않은 인증 응답을 받았습니다",
-      "mfa_not_implemented": "다중 인증이 필요하지만 아직 구현되지 않았습니다",
-      "invalid_redirect_uri": {
-        "description": "{app} 리디렉션 URI가 유효하지 않습니다: `{redirect_uri}`",
-        "solution": "리디렉션 URI가 {app} 에서 승인되지 않았습니다. 문제가 지속되면 {app} 지원팀에 문의해 주세요"
-      },
-      "permission_denied": {
-        "description": "{app} 에서 이 작업을 수행할 권한이 없습니다",
-        "solution": "액세스 권한이 있어야 한다고 생각되면 {app} 관리자에게 문의해 주세요"
-      },
-      "org_not_found": {
-        "description": "{app} 에서 조직을 찾을 수 없습니다",
-        "solution": "ID `{org_id}` 인 {app} 조직이 존재하지 않습니다. 조직 설정을 확인해 주세요"
-      },
-      "resource_not_found": {
-        "description": "{app} 에서 요청한 리소스를 찾을 수 없습니다",
-        "solution": "찾고 있는 리소스가 {app} 에 존재하지 않거나 제거되었습니다"
-      },
-      "email_domain_not_allowed": {
-        "description": "이메일 도메인 `{domain}` 이 {app} 에서 허용되지 않습니다",
-        "solution": "{app} 조직에서는 특정 이메일 도메인만 허용됩니다. 허용된 도메인의 이메일을 사용해 주세요"
-      },
-      "sso": {
-        "not_configured": {
-          "description": "SSO 프로바이더 `{provider}` 가 {app} 에서 구성되지 않았습니다",
-          "solution": "`{provider}` 에 대한 SSO를 구성하려면 {app} 관리자에게 문의해 주세요"
-        },
-        "disabled_by_admin": {
-          "description": "SSO 프로바이더 `{provider}` 가 {app} 관리자에 의해 비활성화되었습니다",
-          "solution": "`{provider}` 에 대한 SSO를 활성화하려면 {app} 관리자에게 문의하거나 다른 인증 방법을 사용해 주세요"
-        }
-      },
-      "no_token": {
-        "description": "인증 토큰을 사용할 수 없습니다",
-        "solution": "계속하려면 로그인하세요"
-      }
-    },
-    "request": {
-      "no_response_body": {
-        "description": "응답 본문을 받지 못했습니다",
-        "solution": "서버가 데이터를 반환하지 않았습니다. 다시 시도해 주세요"
-      },
-      "send_message_failed": {
-        "description": "메시지 전송에 실패했습니다",
-        "solution": "메시지를 보낼 수 없습니다. 연결을 확인하고 다시 시도해 주세요"
-      },
-      "archive_conversation_failed": {
-        "description": "대화 아카이브에 실패했습니다",
-        "solution": "대화를 아카이브할 수 없습니다. 다시 시도해 주세요"
-      }
-    },
-    "fallback": {
-      "description": "문제가 발생했습니다",
-      "solution": "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요"
-    }
-  },
-  "userSettings": {
-    "title": "설정",
-    "subtitle": "개인 기본 설정과 연결된 통합을 관리합니다.",
-    "tabs": {
-      "integrations": "통합",
-      "integrationsAria": "연결된 통합",
-      "promptSettings": "프롬프트 설정",
-      "promptSettingsAria": "프롬프트 기본 설정 관리"
-    }
-  },
-  "userIntegrations": {
-    "loading": "통합 로드 중...",
-    "failedToLoad": "통합을 불러오지 못했습니다",
-    "failedToGetAuthUrl": "인증 URL을 가져오지 못했습니다",
-    "failedToConnect": "{name} 연결 실패",
-    "failedToDisconnect": "{name} 연결 해제 실패",
-    "disconnected": "{name} 연결 해제됨",
-    "stats": {
-      "connected": "연결됨",
-      "available": "사용 가능",
-      "total": "전체"
-    },
-    "filters": {
-      "all": "전체",
-      "connected": "연결됨",
-      "available": "사용 가능",
-      "filterAria": "통합 필터"
-    },
-    "empty": {
-      "title": "통합을 찾을 수 없습니다",
-      "noConnected": "아직 연결한 통합이 없습니다.",
-      "noAvailable": "지금 연결할 수 있는 통합이 없습니다.",
-      "noConfigured": "조직에서 통합을 구성하지 않았습니다.",
-      "viewAll": "모든 통합 보기"
-    },
-    "columns": {
-      "name": "이름",
-      "transport": "전송 방식",
-      "status": "상태",
-      "tools": "도구",
-      "connectedAt": "연결됨",
-      "actions": "작업"
-    },
-    "status": {
-      "connected": "연결됨",
-      "disconnected": "연결 안 됨",
-      "expired": "만료됨",
-      "error": "오류",
-      "expiredWarning": "연결이 만료되었습니다. 다시 연결하여 액세스를 갱신하세요."
-    },
-    "actions": {
-      "connect": "연결",
-      "connecting": "연결 중...",
-      "disconnect": "연결 해제",
-      "reconnect": "재연결",
-      "disconnectConfirm": "연결을 해제하시겠습니까?",
+    "container": {
+      "title": "컨테이너",
+      "insideContainer": "컨테이너에서 실행 중",
       "yes": "예",
-      "no": "아니요",
-      "viewTools": "도구 보기"
+      "no": "아니오",
+      "cgroupVersion": "Cgroup 버전",
+      "cpuQuota": "CPU 할당량",
+      "cpuUsage": "CPU 사용량",
+      "cores": "코어",
+      "seconds": "초",
+      "memoryUsage": "메모리 사용량",
+      "memoryLimit": "메모리 제한",
+      "memoryAvailable": "사용 가능한 메모리"
     },
-    "connectedSince": "{date}부터 연결됨",
-    "toolCount": "{count}개 도구",
-    "tools": {
-      "modalTitle": "{name} — 도구",
-      "loading": "도구 로딩 중...",
-      "empty": "이 서버에 사용 가능한 도구가 없습니다."
-    }
-  },
-  "userPromptSettings": {
-    "loading": "프롬프트 설정 로딩 중...",
-    "failedToLoad": "프롬프트 설정 로딩 실패",
-    "activePrompt": "활성 프롬프트",
-    "source": {
-      "label": "출처",
-      "user_custom": "사용자 정의 프롬프트",
-      "department_default": "부서 기본값",
-      "system_default": "시스템 기본값"
+    "errors": {
+      "fetchFailed": "시스템 메트릭을 가져오지 못했습니다"
     },
-    "variables": {
-      "title": "사용 가능한 변수",
-      "empty": "사용 가능한 변수 없음",
-      "insertHint": "변수를 클릭하여 편집기에 삽입",
-      "copied": "변수가 삽입되었습니다"
-    },
-    "editor": {
-      "title": "사용자 정의 프롬프트 편집기",
-      "placeholder": "여기에 사용자 정의 시스템 프롬프트를 작성하세요. {{variable_name}}과 같은 변수를 사용하여 동적 값을 삽입할 수 있습니다...",
-      "charCount": "{count}자",
-      "preview": "미리보기",
-      "edit": "편집",
-      "previewTitle": "프롬프트 미리보기",
-      "previewEmpty": "미리볼 내용이 없습니다. 위에서 사용자 정의 프롬프트를 작성하세요."
-    },
-    "actions": {
-      "save": "프롬프트 저장",
-      "saving": "저장 중...",
-      "resetToDefault": "기본값으로 재설정",
-      "resetting": "재설정 중...",
-      "resetConfirmTitle": "기본값으로 재설정하시겠습니까?",
-      "resetConfirmMessage": "사용자 정의 프롬프트가 삭제되고 부서 또는 시스템 기본값으로 되돌아갑니다. 이 작업은 취소할 수 없습니다.",
-      "resetConfirmButton": "예, 재설정",
-      "cancel": "취소"
-    },
-    "messages": {
-      "saved": "사용자 정의 프롬프트가 성공적으로 저장되었습니다",
-      "failedToSave": "프롬프트 저장 실패",
-      "reset": "프롬프트가 기본값으로 재설정되었습니다",
-      "failedToReset": "프롬프트 재설정 실패",
-      "noChanges": "저장할 변경 사항 없음"
-    },
-    "feedback": {
-      "title": "프롬프트 피드백",
-      "subtitle": "현재 프롬프트의 효과를 평가하여 개선에 도움을 주세요",
-      "thumbsUp": "이 프롬프트는 잘 작동합니다",
-      "thumbsDown": "이 프롬프트는 개선이 필요합니다",
-      "commentPlaceholder": "선택사항: 이 프롬프트 사용 경험에 대해 자세히 알려주세요...",
-      "submit": "피드백 제출",
-      "submitting": "제출 중...",
-      "submitted": "피드백 감사합니다!",
-      "failedToSubmit": "피드백 제출 실패",
-      "ratingRequired": "제출하기 전에 평가를 선택하세요"
+    "tabs": {
+      "metrics": "메트릭",
+      "maintenance": "유지 관리"
     }
   }
 }

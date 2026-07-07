@@ -112,7 +112,7 @@
     );
   }
 
-  function getDepartmentInfo(departmentId?: string) {
+  function getDepartmentInfo(departmentId?: string | null) {
     if (!departmentId)
       return { name: $_("admin.accessControl.globalScope"), description: $_("admin.accessControl.globalScopeDescription") };
     const department = departmentCache[departmentId];

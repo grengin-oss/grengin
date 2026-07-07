@@ -177,7 +177,7 @@
     <form class="access-rule-form" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
 
       <div class="form-section">
-        <label class="form-label">{$_('admin.mcpAccess.ruleType')}</label>
+        <span class="form-label">{$_('admin.mcpAccess.ruleType')}</span>
         <div class="radio-group">
           <label class="radio-option" class:radio-option--active={accessType === 'role'}>
             <input type="radio" name="access_type" value="role" bind:group={accessType} />
@@ -283,7 +283,7 @@
       </div>
 
       <div class="form-section">
-        <label class="form-label">{$_('admin.mcpAccess.permission')}</label>
+        <span class="form-label">{$_('admin.mcpAccess.permission')}</span>
         <div class="permission-options">
           <label class="permission-option" class:permission-option--active={permission === 'full'}>
             <input type="radio" name="permission" value="full" bind:group={permission} />

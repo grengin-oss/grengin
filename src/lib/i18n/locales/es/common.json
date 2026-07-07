@@ -1,0 +1,30 @@
+{
+  "common": {
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "search": "Buscar",
+    "never": "Nunca",
+    "loading": "Cargando...",
+    "clear": "Limpiar",
+    "select": "Seleccionar"
+  },
+  "errors": {
+    "forbidden": {
+      "title": "Acceso denegado",
+      "message": "No tiene permiso para ver esta página.",
+      "back": "Volver al chat",
+      "iconAlt": "Acceso denegado"
+    }
+  },
+  "components": {
+    "typingIndicator": "El asistente está escribiendo"
+  },
+  "app": {
+    "closeSidebar": "Cerrar barra lateral",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "notifications": "Notificaciones"
+  }
+}

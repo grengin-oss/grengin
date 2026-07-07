@@ -1,13 +1,21 @@
 <script lang="ts">
-  import { locale, locales } from 'svelte-i18n';
-  import { SUPPORTED_LOCALES, type SupportedLocale } from '$lib/i18n';
+  import { locale } from 'svelte-i18n';
+  import { SUPPORTED_LOCALES, switchLocale, type SupportedLocale } from '$lib/i18n';
 
   let isOpen = $state(false);
+  let isSwitching = $state(false);
 
-  function setLanguage(lang: SupportedLocale) {
-    locale.set(lang);
-    localStorage.setItem('locale', lang);
-    isOpen = false;
+  async function setLanguage(lang: SupportedLocale) {
+    if (isSwitching) return;
+    isSwitching = true;
+    try {
+      await switchLocale(lang);
+      locale.set(lang);
+      localStorage.setItem('locale', lang);
+    } finally {
+      isSwitching = false;
+      isOpen = false;
+    }
   }
 
   function toggleDropdown() {
@@ -85,7 +93,7 @@
   .language-dropdown {
     position: absolute;
     top: calc(100% + 0.25rem);
-    right: 0;
+    inset-inline-end: 0;
     min-width: 180px;
     background: white;
     border: 1px solid var(--color-border, #ddd);
@@ -99,7 +107,7 @@
     display: block;
     width: 100%;
     padding: 0.75rem 1rem;
-    text-align: left;
+    text-align: start;
     background: white;
     border: none;
     cursor: pointer;

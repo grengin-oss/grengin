@@ -61,9 +61,13 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
       redirect: 'manual', // Don't follow redirects automatically
     });
 
-    // If we get a redirect response, navigate directly
+    // If we get a redirect response, navigate to the redirect target
     if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
-      window.location.href = url;
+      // When the API is same-origin (e.g. SSO proxy via Cloudflare Worker), the Location header
+      // is readable. Navigate there directly to avoid a second backend request that would
+      // generate a new state value and break SSO state validation.
+      const location = response.headers.get('Location');
+      window.location.href = location || url;
       return;
     }
 
@@ -92,9 +96,12 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
   }
 }
 
-export async function handleOAuthCallback(provider: string, code: string, state: string): Promise<LoginResponse> {
+export async function handleOAuthCallback(provider: string, code: string | null, state: string, assertion?: string | null): Promise<LoginResponse> {
   const url = `${API_BASE}/auth/${provider}/callback`;
-  const body = JSON.stringify({ code, state });
+  const payload: Record<string, string> = { state };
+  if (code) payload.code = code;
+  if (assertion) payload.assertion = assertion;
+  const body = JSON.stringify(payload);
 
   // Use POST with body to avoid URL length limits (Azure codes are very long)
   // Backend retrieves redirect_uri from stored state, so we only send code and state

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { McpAuthRequest } from '../../../types/chat';
-  import { authorizeMcpConnection } from '../../../api/integrations.js';
+  import { authorizeMcpConnection, getMcpConnections } from '../../../api/integrations.js';
   import { _ } from 'svelte-i18n';
 
   interface Props {
@@ -65,9 +65,31 @@
     pollTimer = setInterval(() => {
       if (!popupWindow || popupWindow.closed) {
         cleanup();
-        onConnected(authRequest.server_id);
+        // Don't blindly trust that closing the popup means success. The popup
+        // can close after an OAuth failure (e.g. provider error, callback
+        // backend 5xx, or user cancellation). Verify by querying the backend
+        // for the current connection status before declaring success.
+        verifyConnectionStatus();
       }
     }, 500);
+  }
+
+  async function verifyConnectionStatus() {
+    onStatusChange(authRequest.server_id, 'connecting');
+    try {
+      const { connections } = await getMcpConnections();
+      const conn = connections?.find((c) => c.server_id === authRequest.server_id);
+      if (conn && conn.connected && conn.status === 'connected') {
+        onConnected(authRequest.server_id);
+      } else {
+        onError(authRequest.server_id, $_('chat.mcpAuth.connectionFailed'));
+      }
+    } catch (err: any) {
+      onError(
+        authRequest.server_id,
+        err?.message || $_('chat.mcpAuth.connectionFailed')
+      );
+    }
   }
 
   function cleanup() {

@@ -1,0 +1,158 @@
+{
+  "error": {
+    "not_found": {
+      "description": "El recurso solicitado no se encontró",
+      "solution": "El recurso que está buscando no existe o ha sido eliminado. Por favor, verifique la URL o intente de nuevo. Si el problema persiste, contacte al soporte {app}"
+    },
+    "validation": {
+      "missing_field": {
+        "description": "El campo requerido `{field}` está faltando",
+        "solution": "Por favor, proporcione todos los campos requeridos, incluido `{field}`"
+      },
+      "empty_field": {
+        "description": "El campo requerido `{field}` no puede estar vacío",
+        "solution": "Por favor, proporcione un valor para el campo `{field}`"
+      }
+    },
+    "sso": {
+      "conditional_access": {
+        "description": "Acceso denegado debido a la política de acceso condicional para `{provider}`",
+        "solution": "La política de seguridad de su organización está bloqueando el acceso. Contacte a su administrador o pruebe un método de autenticación diferente"
+      }
+    },
+    "llm": {
+      "disabled_by_admin": {
+        "description": "El proveedor de LLM `{provider}` está deshabilitado por un administrador",
+        "solution": "Pida a un administrador que habilite `{provider}` o seleccione un proveedor diferente"
+      },
+      "invalid_provider": {
+        "description": "El proveedor de LLM `{provider}` es inválido o no está soportado",
+        "solution": "Por favor, seleccione un proveedor válido de las opciones disponibles"
+      },
+      "not_configured": {
+        "description": "El proveedor de LLM `{provider}` no está configurado correctamente",
+        "solution": "Por favor, configure la configuración del proveedor o contacte a un administrador"
+      }
+    },
+    "db": {
+      "not_found": {
+        "description": "Recurso no encontrado en la base de datos {app}",
+        "solution": "El recurso que está buscando no existe. Intente iniciar un nuevo chat o contacte al soporte {app}"
+      },
+      "unavailable": {
+        "description": "La base de datos {app} está temporalmente no disponible",
+        "solution": "Por favor, intente de nuevo en unos momentos. Si el problema persiste, contacte al soporte {app}"
+      },
+      "timeout": {
+        "description": "Solicitud a la base de datos {app} agotó el tiempo de espera",
+        "solution": "La operación tardó demasiado. Por favor, intente de nuevo con una solicitud más pequeña o contacte al soporte {app}"
+      },
+      "conflict": {
+        "description": "Ocurrió un conflicto al procesar su solicitud {app}",
+        "solution": "El recurso ha sido modificado por otro proceso. Por favor, actualice e intente de nuevo"
+      }
+    },
+    "service_unavailable": {
+      "description": "El servicio {app} está temporalmente no disponible",
+      "solution": "Estamos experimentando dificultades técnicas. Por favor, intente de nuevo en unos momentos. Si el problema persiste, contacte al soporte {app}"
+    },
+    "auth": {
+      "service_unavailable": {
+        "description": "El servicio de autenticación {app} está temporalmente no disponible",
+        "solution": "Por favor, intente de nuevo en unos momentos. Si el problema persiste, contacte al soporte {app}"
+      },
+      "invalid_credentials": {
+        "description": "Email o contraseña inválidos para {app}",
+        "solution": "Por favor, verifique sus credenciales e intente de nuevo. Si ha olvidado su contraseña, use la opción de restablecimiento de contraseña"
+      },
+      "email_not_found": {
+        "description": "No se encontró ninguna cuenta {app} con esta dirección de correo electrónico",
+        "solution": "Por favor, verifique su dirección de correo electrónico o regístrese para una nueva cuenta {app}"
+      },
+      "missing_credentials": {
+        "description": "Se requieren email y contraseña para iniciar sesión en {app}",
+        "solution": "Por favor, proporcione su dirección de correo electrónico y contraseña para iniciar sesión"
+      },
+      "invalid_token": {
+        "description": "Su sesión {app} ha expirado",
+        "solution": "Por favor, inicie sesión nuevamente para continuar usando {app}"
+      },
+      "invalid_user_status": {
+        "description": "El estado de su cuenta {app} es inválido",
+        "solution": "Por favor, contacte al soporte {app} para resolver este problema con su cuenta"
+      },
+      "account_deactivated": {
+        "description": "Su cuenta {app} ha sido desactivada",
+        "solution": "Por favor, contacte a su administrador o soporte {app} para reactivar su cuenta"
+      },
+      "email_already_exists": {
+        "description": "Ya existe una cuenta {app} con este correo electrónico",
+        "solution": "Por favor, inicie sesión con su cuenta {app} existente o use una dirección de correo electrónico diferente"
+      },
+      "invalid_provider": {
+        "description": "El proveedor de autenticación `{provider}` es inválido o no está soportado por {app}",
+        "solution": "Por favor, seleccione un proveedor de autenticación válido para {app}"
+      },
+      "invalid_callback_params": {
+        "description": "Parámetros de callback de autenticación inválidos para {app}",
+        "solution": "El proceso de autenticación {app} encontró un error. Por favor, intente iniciar sesión nuevamente"
+      },
+      "missing_oauth_params": "Faltan parámetros OAuth requeridos (state o code)",
+      "oauth_provider_not_found": "Proveedor OAuth no encontrado. Por favor, intente iniciar sesión nuevamente",
+      "invalid_auth_response": "Respuesta de autenticación inválida del servidor",
+      "mfa_not_implemented": "La autenticación de múltiples factores es requerida pero aún no está implementada",
+      "invalid_redirect_uri": {
+        "description": "URI de redirección inválida `{redirect_uri}` para {app}",
+        "solution": "La URI de redirección no está autorizada para {app}. Por favor, contacte al soporte {app} si este problema persiste"
+      },
+      "permission_denied": {
+        "description": "No tiene permiso para realizar esta acción en {app}",
+        "solution": "Por favor, contacte a su administrador {app} si cree que debería tener acceso"
+      },
+      "org_not_found": {
+        "description": "Organización no encontrada en {app}",
+        "solution": "La organización {app} con ID `{org_id}` no existe. Por favor, verifique la configuración de su organización"
+      },
+      "resource_not_found": {
+        "description": "El recurso solicitado no se encontró en {app}",
+        "solution": "El recurso que está buscando no existe o ha sido eliminado de {app}"
+      },
+      "email_domain_not_allowed": {
+        "description": "El dominio de correo electrónico `{domain}` no está permitido para {app}",
+        "solution": "Su organización {app} solo permite ciertos dominios de correo electrónico. Por favor, use un correo electrónico de un dominio permitido"
+      },
+      "sso": {
+        "not_configured": {
+          "description": "El proveedor SSO `{provider}` no está configurado para {app}",
+          "solution": "Por favor, contacte a su administrador {app} para configurar SSO para `{provider}`"
+        },
+        "disabled_by_admin": {
+          "description": "El proveedor SSO `{provider}` está deshabilitado por un administrador {app}",
+          "solution": "Por favor, contacte a su administrador {app} para habilitar SSO para `{provider}` o use un método de autenticación diferente"
+        }
+      },
+      "no_token": {
+        "description": "No hay token de autenticación disponible",
+        "solution": "Por favor, inicie sesión para continuar"
+      }
+    },
+    "request": {
+      "no_response_body": {
+        "description": "No se recibió cuerpo de respuesta",
+        "solution": "El servidor no devolvió ningún dato. Por favor, intente de nuevo"
+      },
+      "send_message_failed": {
+        "description": "Error al enviar el mensaje",
+        "solution": "No se pudo enviar su mensaje. Por favor, verifique su conexión e intente de nuevo"
+      },
+      "archive_conversation_failed": {
+        "description": "Error al archivar la conversación",
+        "solution": "No se pudo archivar la conversación. Por favor, intente de nuevo"
+      }
+    },
+    "fallback": {
+      "description": "Algo salió mal",
+      "solution": "Ocurrió un error inesperado. Por favor, intente de nuevo"
+    }
+  }
+}

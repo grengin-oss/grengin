@@ -1,145 +1,4 @@
 {
-  "common": {
-    "cancel": "Annuler",
-    "save": "Enregistrer",
-    "delete": "Supprimer",
-    "edit": "Modifier",
-    "search": "Rechercher",
-    "never": "Jamais",
-    "loading": "Chargement...",
-    "clear": "Effacer",
-    "select": "Sélectionner"
-  },
-  "errors": {
-    "forbidden": {
-      "title": "Accès refusé",
-      "message": "Vous n'avez pas la permission d'accéder à cette page.",
-      "back": "Retour au chat",
-      "iconAlt": "Accès refusé"
-    }
-  },
-  "auth": {
-    "signIn": "Se connecter",
-    "signUp": "S'inscrire",
-    "forgotPassword": "Mot de passe oublié?",
-    "rememberMe": "Se souvenir de moi",
-    "emailPlaceholder": "Entrez votre email",
-    "passwordPlaceholder": "Entrez votre mot de passe",
-    "welcomeToGrengin": "Bienvenue sur Grengin",
-    "signInToContinue": "Connectez-vous pour accéder à votre espace de travail",
-    "emailAddress": "Adresse e-mail",
-    "password": "Mot de passe",
-    "signingIn": "Connexion en cours...",
-    "emailAndPassword": "E-mail et mot de passe",
-    "orContinueWith": "ou continuer avec",
-    "signInWith": "Se connecter avec {provider}",
-    "connectingTo": "Connexion à {provider}...",
-    "noAuthMethods": "Aucune méthode d'authentification",
-    "noAuthMethodsDescription": "Veuillez contacter votre administrateur pour configurer les options d'authentification.",
-    "termsOfService": "Conditions d'utilisation",
-    "privacyPolicy": "Politique de confidentialité",
-    "copyright": "© 2025-2026 Perter. Tous droits réservés.",
-    "demoAccount": "Compte de démonstration",
-    "authenticationInProgress": "Authentification en cours",
-    "completingSignIn": "Finalisation de la connexion...",
-    "pleaseWaitVerifying": "Veuillez patienter pendant que nous vérifions vos identifiants",
-    "authenticationComplete": "Authentification terminée",
-    "signInSuccessful": "Connexion réussie !",
-    "redirectingToWorkspace": "Redirection vers votre espace de travail...",
-    "authenticationFailed": "Échec de l'authentification",
-    "signInFailed": "Échec de la connexion",
-    "redirectingToLogin": "Redirection vers la page de connexion...",
-    "mfaRequired": "L'authentification à deux facteurs est requise mais n'est pas encore implémentée",
-    "unexpectedError": "Une erreur inattendue s'est produite",
-    "missingOAuthParams": "Paramètres OAuth requis manquants (state ou code)",
-    "oauthProviderNotFound": "Fournisseur OAuth introuvable. Veuillez réessayer de vous connecter.",
-    "invalidAuthResponse": "Réponse d'authentification invalide du serveur",
-    "unexpectedAuthError": "Une erreur inattendue s'est produite lors de l'authentification",
-    "failedToInitiateLogin": "Échec de l'initiation de la connexion {provider}",
-    "socialLogin": "Options de connexion sociale",
-    "legalLinks": "Mentions légales"
-  },
-  "components": {
-    "typingIndicator": "L'assistant écrit"
-  },
-  "sidebar": {
-    "newChat": "Nouvelle conversation",
-    "users": "Utilisateurs",
-    "adminPanel": "Espace de gestion",
-    "backToChat": "Retour à la conversation",
-    "toggleSidebar": "Basculer la barre latérale",
-    "expandSidebar": "Développer la barre latérale",
-    "searchPlaceholder": "Rechercher...",
-    "searchTitle": "Rechercher dans vos conversations",
-    "clearSearch": "Effacer la recherche",
-    "chats": "Conversations",
-    "loadingChats": "Chargement des conversations...",
-    "noChatsYet": "Aucune conversation pour le moment",
-    "noChatsFound": "Aucune conversation trouvée",
-    "chatOptions": "Options de conversation",
-    "delete": "Supprimer",
-    "archive": "Archiver",
-    "rename": "Renommer",
-    "renamePlaceholder": "Entrez un titre",
-    "chatRenamed": "{title} renommé avec succès",
-    "renameChatError": "Échec du renommage",
-    "emptyChatTitle": "Le titre ne peut pas être vide",
-    "userMenu": "Menu utilisateur",
-    "user": "Utilisateur",
-    "settings": "Paramètres",
-    "admin": "Espace de gestion",
-    "signOut": "Se déconnecter",
-    "deleteChat": "Supprimer la conversation",
-    "deleteChatConfirm": "Êtes-vous sûr de vouloir supprimer cette conversation ? Cette action est irréversible.",
-    "cancel": "Annuler",
-    "navigation": "Navigation principale",
-    "adminNavigation": "Navigation d'administration",
-    "openAlerts": "Ouvrir les alertes",
-    "deleting": "Suppression...",
-    "close": "Fermer",
-    "chatDeleted": "{title} supprimé avec succès",
-    "chatArchived": "{title} archivé avec succès",
-    "deleteChatError": "Échec de la suppression de la conversation",
-    "archiveChatError": "Échec de l'archivage de la conversation",
-    "chat": "Conversation",
-    "untitledChat": "Conversation sans titre",
-    "usageAnalytics": "Suivi d'Usage",
-    "userAnalytics": "Analytique Utilisateurs",
-    "aiEngines": "Moteurs IA",
-    "sectionManage": "Gérer",
-    "sectionMonitor": "Surveiller",
-    "sectionConfigure": "Configurer",
-    "overview": "Aperçu",
-    "organization": "Organisation",
-    "accessControl": "Contrôle d'accès",
-    "connectors": "Connecteurs",
-    "viewAllAlerts": "Voir toutes les alertes",
-    "noRecentAlerts": "Pas encore d'alertes",
-    "newAlert": "Nouvelle alerte",
-    "promptLibrary": "Instructions",
-    "promptEffectiveness": "Métriques des Instructions",
-    "auditLogs": "Journaux d'audit"
-  },
-  "alerts": {
-    "title": "Alertes",
-    "subtitle": "Vos notifications et mises à jour",
-    "filterAll": "Toutes",
-    "filterUnread": "Non lues",
-    "filterLabel": "Filtrer les alertes par statut",
-    "notificationsList": "Liste des notifications",
-    "empty": "Aucune alerte à afficher",
-    "loading": "Chargement des alertes...",
-    "loadMore": "Charger plus",
-    "unread": "Non lue",
-    "loadError": "Échec du chargement des alertes",
-    "markReadError": "Impossible de marquer l'alerte comme lue"
-  },
-  "app": {
-    "closeSidebar": "Fermer la barre latérale",
-    "openMenu": "Ouvrir le menu",
-    "closeMenu": "Fermer le menu",
-    "notifications": "Notifications"
-  },
   "admin": {
     "common": {
       "closeModal": "Fermer la fenêtre",
@@ -151,7 +10,7 @@
       "status": "Statut",
       "active": "Actif",
       "deactivated": "Désactivé",
-      "actions": "Actions",
+      "actions": "Opérations",
       "pagination": "Pagination",
       "previous": "Précédent",
       "previousPage": "Page précédente",
@@ -178,7 +37,8 @@
     "tabListLabels": {
       "accessControl": "Onglets Contrôle d'accès",
       "settings": "Onglets Paramètres",
-      "analytics": "Vues Analytiques"
+      "analytics": "Vues Analytiques",
+      "systemMetrics": "Onglets Système"
     },
     "users": {
       "userManagement": "Gestion des utilisateurs",
@@ -412,7 +272,8 @@
         "actions": {
           "retry": "Réessayer",
           "deleting": "Suppression…",
-          "saving": "Enregistrement…"
+          "saving": "Enregistrement…",
+          "validating": "Validation…"
         },
         "messages": {
           "loading": "Chargement des fournisseurs OAuth...",
@@ -427,7 +288,7 @@
           "provider": "Fournisseur",
           "allowedDomains": "Domaines autorisés",
           "status": "Statut",
-          "actions": "Actions"
+          "actions": "Opérations"
         },
         "modals": {
           "confirmDeleteTitle": "Confirmer la suppression",
@@ -440,6 +301,7 @@
           "statusUpdateError": "Impossible de {action} {name}",
           "deleted": "Fournisseur SSO supprimé",
           "deleteError": "Échec de la suppression du fournisseur SSO",
+          "validationFailed": "La validation des identifiants SSO a échoué. Veuillez vérifier vos identifiants et réessayer.",
           "updated": "Fournisseur SSO mis à jour",
           "updateError": "Échec de la mise à jour du fournisseur"
         },
@@ -470,6 +332,10 @@
           "hideClientSecret": "Masquer le secret client",
           "showClientSecret": "Afficher le secret client",
           "removeDomain": "Supprimer le domaine {domain}"
+        },
+        "selfProvisioning": {
+          "label": "Auto-provisionnement",
+          "hint": "Lorsqu'il est activé, les utilisateurs se connectant via ce fournisseur pour la première fois seront automatiquement créés avec un statut en attente, nécessitant l'approbation de l'administrateur."
         }
       }
     },
@@ -478,7 +344,7 @@
       "subtitle": "Gérer les rôles et les permissions",
       "tabs": {
         "roles": "Rôles",
-        "permissions": "Permissions"
+        "permissions": "Autorisations"
       },
       "loadingRoles": "Chargement des rôles…",
       "noRolesTitle": "Aucun rôle",
@@ -563,12 +429,12 @@
         "noPermissionsTitle": "Aucune permission",
         "noPermissionsDescription": "Aucune permission n’a été configurée dans le système.",
         "columns": {
-          "action": "Action",
+          "action": "Opération",
           "scope": "Portée"
         },
         "scopeableBadge": "Limitable",
         "scopeableBadgeTitle": "Peut être limité à des départements",
-        "globalBadge": "Global",
+        "globalBadge": "Général",
         "domainCount": "{count} autorisations"
       }
     },
@@ -597,7 +463,7 @@
       "namePlaceholder": "Saisir le nom du serveur",
       "description": "Description",
       "descriptionPlaceholder": "Saisir la description du serveur",
-      "transport": "Transport",
+      "transport": "Protocole",
       "transportRequired": "Le transport est requis",
       "transportHttp": "HTTP",
       "transportStdio": "STDIO",
@@ -623,12 +489,12 @@
       "emptyMessage": "Commencez par ajouter votre premier serveur MCP",
       "columns": {
         "name": "Nom",
-        "transport": "Transport",
+        "transport": "Protocole",
         "enabled": "Statut",
         "status": "Connexion",
         "tools": "Outils",
-        "auth": "Auth",
-        "actions": "Actions"
+        "auth": "Authentif.",
+        "actions": "Opérations"
       },
       "status": {
         "connected": "Connecté",
@@ -761,7 +627,7 @@
       "selectRole": "Sélectionner un rôle",
       "selectDepartment": "Sélectionner un département",
       "searchUser": "Rechercher un utilisateur",
-      "permission": "Permission",
+      "permission": "Autorisation",
       "includeSubDepartments": "Inclure les sous-départements",
       "includesSubDepts": "Inclut les sous-dép.",
       "inherited": "Hérité",
@@ -837,10 +703,10 @@
         "name": "Nom",
         "role": "Rôle",
         "type": "Type",
-        "variables": "Variables",
+        "variables": "Paramètres",
         "usage": "Utilisation",
         "updated": "Mis à jour",
-        "actions": "Actions"
+        "actions": "Opérations"
       },
       "form": {
         "name": "Nom",
@@ -852,7 +718,7 @@
         "promptText": "Texte de l'Instruction",
         "promptTextPlaceholder": "Saisissez le texte de l'instruction... Utilisez {{variable_name}} pour les variables dynamiques",
         "promptTextRequired": "Le texte de l'instruction est requis",
-        "variables": "Variables",
+        "variables": "Paramètres",
         "addVariable": "Ajouter",
         "addVariablePlaceholder": "Ajouter un nom de variable...",
         "variableExists": "La variable existe déjà",
@@ -1008,7 +874,7 @@
       "columns": {
         "timestamp": "Horodatage",
         "userId": "ID Utilisateur",
-        "action": "Action",
+        "action": "Opération",
         "resourceType": "Type de Ressource",
         "resourceId": "ID Ressource",
         "ipAddress": "Adresse IP",
@@ -1068,7 +934,134 @@
         "admin_department_prompt_assigned": "Prompt Département Assigné",
         "admin_department_prompt_updated": "Prompt Département Mis à Jour",
         "admin_department_prompt_deleted": "Prompt Département Supprimé",
-        "admin_audit_logs_redacted_for_user": "Journaux d'Audit Censurés pour l'Utilisateur"
+        "admin_audit_logs_redacted_for_user": "Journaux d'Audit Censurés pour l'Utilisateur",
+        "admin_domain_reconfigured": "Domaine Reconfiguré",
+        "admin_binaries_updated": "Application mise à jour"
+      }
+    },
+    "maintenance": {
+      "title": "Maintenance",
+      "subtitle": "Reconfigurez l'hôte sur lequel cette instance Grengin s'exécute.",
+      "yes": "Oui",
+      "no": "Non",
+      "comingSoon": "Bientôt disponible",
+      "foundationNote": "Les commandes de cette action arriveront dans une version ultérieure.",
+      "preflight": {
+        "checking": "Vérification des capacités de l'hôte…",
+        "privilege": "Privilège",
+        "runningAsRoot": "Exécution en tant que root",
+        "sudoAvailable": "sudo disponible",
+        "privilegeMissing": "Cet hôte ne peut pas exécuter les scripts de reconfiguration (ni root ni sudo). Les deux actions sont désactivées.",
+        "recheck": "Revérifier",
+        "advancedDetails": "Détails avancés",
+        "exists": "Existe",
+        "executable": "Exécutable",
+        "effectiveSudo": "Utilise sudo",
+        "reason": "Raison",
+        "loadError": "Impossible de charger l'état de l'hôte."
+      },
+      "viewAuditLogs": "Voir dans les journaux d'audit",
+      "domain": {
+        "title": "Domaine et TLS",
+        "description": "Modifier le domaine de service et le mode TLS.",
+        "apply": "Appliquer les modifications",
+        "unavailable": "La reconfiguration du domaine n'est pas disponible sur cet hôte.",
+        "domainLabel": "Domaine",
+        "domainPlaceholder": "chat.example.com",
+        "domainHint": "Le nom d'hôte à partir duquel Grengin sera servi. Sans préfixe http:// ni chemin.",
+        "domainRequired": "Saisissez un domaine.",
+        "domainNoScheme": "Saisissez uniquement un nom d'hôte — supprimez le préfixe http:// ou https://.",
+        "domainInvalid": "Saisissez un nom d'hôte valide, par exemple chat.example.com.",
+        "sslMode": "Mode TLS / SSL",
+        "sslLetsencrypt": "Let's Encrypt",
+        "sslSelfsigned": "Auto-signé",
+        "sslNone": "Aucun",
+        "emailLabel": "E-mail de contact",
+        "emailPlaceholder": "ops@example.com",
+        "emailHint": "Utilisé pour l'inscription à Let's Encrypt et les avis d'expiration de certificat.",
+        "emailRequired": "Une adresse e-mail est requise pour Let's Encrypt.",
+        "emailInvalid": "Saisissez une adresse e-mail valide.",
+        "selfSignedDaysLabel": "Validité du certificat (jours)",
+        "selfSignedDaysHint": "Les navigateurs avertiront les visiteurs au sujet du certificat auto-signé non approuvé.",
+        "selfSignedDaysInvalid": "Saisissez un nombre entier de jours égal ou supérieur à 1.",
+        "sslNoneNote": "Le trafic sera servi sans TLS. Cela n'est pas sécurisé et n'est pas recommandé.",
+        "prereqTitle": "Avant d'émettre un certificat Let's Encrypt, confirmez que :",
+        "prereqDns": "Les enregistrements DNS A/AAAA de ce domaine pointent déjà vers l'adresse IP publique de ce serveur.",
+        "prereqPorts": "Les ports 80 et 443 sont accessibles depuis Internet.",
+        "prereqProxy": "Cet hôte n'est pas derrière un proxy distinct assurant la terminaison TLS.",
+        "serviceUnavailable": "Service indisponible — l'hôte est peut-être occupé. Veuillez réessayer.",
+        "confirm": {
+          "title": "Confirmer le changement de domaine",
+          "warning": "Appliquer cette modification changera l'adresse à laquelle Grengin est servi pour {domain}. Votre session actuelle peut prendre fin et vous devrez peut-être vous reconnecter à la nouvelle adresse. Assurez-vous que le DNS pointe déjà ici.",
+          "typeToConfirm": "Saisissez le nouveau domaine pour confirmer :",
+          "confirm": "Appliquer le changement de domaine",
+          "cancel": "Annuler"
+        },
+        "verify": {
+          "checking": "Vérification que Grengin est accessible à {origin}…",
+          "reachable": "Grengin est en ligne à la nouvelle adresse.",
+          "timeout": "Impossible de confirmer la nouvelle adresse pour l'instant — le DNS ou le TLS est peut-être encore en cours de propagation.",
+          "goToNewAddress": "Aller à {origin}",
+          "retryCheck": "Relancer la vérification",
+          "openAnyway": "Ouvrir quand même",
+          "sessionWarning": "Ouvrir la nouvelle adresse peut mettre fin à votre session actuelle — vous devrez peut-être vous reconnecter."
+        }
+      },
+      "console": {
+        "title": "Sortie du script",
+        "copy": "Copier le journal",
+        "copied": "Copié",
+        "scriptDetails": "Détails du script",
+        "scriptPath": "Chemin du script",
+        "noOutput": "Aucune sortie n'a été capturée.",
+        "success": "Succès",
+        "failure": "Échec"
+      },
+      "binaries": {
+        "title": "Mises à jour de l'application",
+        "description": "Télécharger et installer de nouveaux binaires d'application.",
+        "currentVersion": "Version actuelle",
+        "update": "Mettre à jour les binaires",
+        "unavailable": "Les mises à jour de l'application ne sont pas disponibles sur cet hôte.",
+        "version": "Version cible",
+        "versionHint": "« latest » ou une version précise comme v1.2.3.",
+        "versionRequired": "Saisissez une version.",
+        "versionInvalid": "Saisissez « latest » ou une version comme v1.2.3.",
+        "versionUnknown": "Inconnue",
+        "releaseBaseUrl": "URL de la source des versions (facultatif)",
+        "releaseBaseUrlPlaceholder": "https://releases.example.com",
+        "releaseBaseUrlHint": "Emplacement de téléchargement des binaires. Laissez vide pour utiliser la source par défaut de l'hôte. Pointer vers un hôte non fiable installe des binaires non fiables en tant que root.",
+        "releaseBaseUrlInvalid": "Saisissez une URL valide ou laissez vide.",
+        "releaseBaseUrlInsecure": "La source des versions doit utiliser HTTPS.",
+        "arch": "Architecture",
+        "archAuto": "Détection automatique",
+        "targets": "Éléments à mettre à jour",
+        "updateApi": "Serveur API",
+        "updateApiHint": "Redémarre le service API — bref temps d'arrêt à prévoir.",
+        "updateWebapp": "Application web",
+        "updateWebappHint": "Remplace cette interface — un rechargement complet sera nécessaire ensuite.",
+        "updateInstaller": "Programme d'installation",
+        "updateInstallerHint": "Met à jour le binaire du programme d'installation. Avancé.",
+        "noTarget": "Sélectionnez au moins un composant à mettre à jour.",
+        "verifyChecksums": "Vérifier les sommes de contrôle",
+        "verifyChecksumsHint": "Valider les artefacts téléchargés avant l'installation. Recommandé.",
+        "verifyChecksumsWarning": "Ignorer la vérification des sommes de contrôle installe des binaires non vérifiés. Ne désactivez ceci que si vous savez ce que vous faites.",
+        "advanced": "Avancé",
+        "apiServiceName": "Nom du service API",
+        "apiServiceNameHint": "À définir uniquement si l'API s'exécute sous un nom de service non standard.",
+        "serviceUnavailable": "Service indisponible — l'hôte est peut-être occupé. Veuillez réessayer.",
+        "confirm": {
+          "title": "Confirmer la mise à jour de l'application",
+          "warning": "Cela redémarre les services Grengin. Si l'application web est mise à jour, cette page nécessitera un rechargement complet. Bref temps d'arrêt à prévoir. Effectuez d'abord un instantané ou une sauvegarde.",
+          "typeToConfirm": "Saisissez CONFIRM pour continuer :",
+          "confirm": "Mettre à jour les binaires"
+        },
+        "result": {
+          "reloadPrompt": "Une nouvelle version de l'application a été installée. Rechargez pour l'utiliser.",
+          "reload": "Recharger maintenant",
+          "waitingForApi": "En attente du retour de l'API…",
+          "newVersion": "Grengin est de retour, exécutant désormais la v{version}."
+        }
       }
     }
   },
@@ -1139,108 +1132,11 @@
       "manage": {
         "description": "Configurer et gérer les fournisseurs SSO"
       }
-    }
-  },
-  "chat": {
-    "emptyState": {
-      "title": "Démarrer une conversation",
-      "description": "Envoyez un message pour commencer à discuter avec l'assistant IA !",
-      "aiDisclaimer": "L'IA peut faire des erreurs. Veuillez vérifier les réponses."
     },
-    "errors": {
-      "somethingWentWrong": "Quelque chose s'est mal passé",
-      "dismissError": "Ignorer l'erreur",
-      "failedToLoadModels": "Échec du chargement des modèles",
-      "failedToLoadConnectors": "Échec du chargement des connecteurs",
-      "failedToLoadConversation": "Échec du chargement de la conversation",
-      "failedToSendMessage": "Échec de l'envoi du message",
-      "budgetAboutToExhaust": "Le budget du département est sur le point d'être épuisé.",
-      "budgetExhaustedWarn": "Le budget du département est épuisé pour la période en cours. Le chat continuera, mais l'utilisation risque de dépasser le budget.",
-      "budgetExhaustedBlock": "Budget épuisé et aucune nouvelle requête n'est acceptée",
-      "budgetExhaustedBlockSolution": "Contactez votre administrateur pour demander un budget supplémentaire ou réessayez plus tard"
-    },
-    "messageInput": {
-      "placeholder": "Demander n'importe quoi",
-      "placeholderWithModel": "Message à {model}",
-      "recordingPlaceholder": "En cours d'écoute... Parlez maintenant",
-      "addContent": "Ajouter du contenu",
-      "addPhotos": "Ajouter des photos",
-      "addFiles": "Ajouter des fichiers",
-      "selectModel": "Sélectionner un modèle",
-      "selectModelFallback": "Sélectionner un modèle",
-      "loadingModels": "Chargement des modèles...",
-      "selectConnectorsFallback": "Connecteurs",
-      "selectConnectors": "Sélectionner les connecteurs",
-      "loadingConnectors": "Chargement des connecteurs...",
-      "noConnectors": "Aucun connecteur disponible",
-      "connectors": "connecteurs",
-      "enableWebSearch": "Activer la recherche web",
-      "disableWebSearch": "Désactiver la recherche web",
-      "search": "Rechercher",
-      "voiceInput": "Saisie vocale",
-      "stopRecording": "Arrêter l'enregistrement",
-      "sendMessage": "Envoyer le message",
-      "sendMessageTitle": "Envoyer le message (Entrée)",
-      "messageInput": "Saisie de message",
-      "visionCapable": "Capacité de vision",
-      "removeFile": "Supprimer le fichier",
-      "previewImage": "Aperçu de l'image : {name}",
-      "previewFile": "Aperçu du fichier : {name}",
-      "fileLabel": "Fichier : {name}",
-      "closePreview": "Fermer l'aperçu",
-      "speechRecognitionNotSupported": "La reconnaissance vocale n'est pas prise en charge dans votre navigateur",
-      "microphoneAccessDenied": "Accès au microphone refusé. Veuillez autoriser l'accès au microphone.",
-      "voiceInputError": "Erreur de saisie vocale : {error}",
-      "failedToStartVoiceInput": "Échec du démarrage de la saisie vocale",
-      "uploading": "Téléversement…",
-      "uploadFailed": "Échec"
-    },
-    "message": {
-      "copy": "Copier",
-      "copied": "Copié !",
-      "copyContent": "Copier le contenu",
-      "loadingImage": "Chargement de l'image...",
-      "imagePreview": "Aperçu de l'image",
-      "imageAlt": "Image",
-      "fileFallback": "Fichier",
-      "pause": "Pause",
-      "resume": "Reprendre",
-      "listen": "Écouter",
-      "stop": "Arrêter",
-      "closePreview": "Fermer l'aperçu"
-    },
-    "toolCalls": {
-      "searching": "Recherche sur le web",
-      "searchedTheWeb": "Recherché sur le web",
-      "results": "résultats"
-    },
-    "toolExecution": {
-      "timeline": "Chronologie d'exécution des outils",
-      "input": "Entrée",
-      "output": "Sortie",
-      "running": "En cours",
-      "completed": "Terminé",
-      "failed": "Échoué",
-      "row": "ligne",
-      "rows": "lignes",
-      "imageResult": "Résultat d'image",
-      "resource": "Ressource",
-      "unknownError": "Une erreur inconnue s'est produite",
-      "duration": "Durée"
-    },
-    "mcpAuth": {
-      "connectTo": "Se connecter à {name}",
-      "connectedTo": "Connecté à {name}",
-      "description": "Pour utiliser {tool}, j'ai besoin d'accéder à votre compte {name}. Vos permissions s'appliqueront à toutes les actions.",
-      "connectAccount": "Connecter le compte {name}",
-      "connecting": "Connexion...",
-      "connectionFailed": "Échec de la connexion",
-      "failedToGetAuthUrl": "Échec de l'obtention de l'URL d'autorisation",
-      "popupBlocked": "La fenêtre contextuelle a été bloquée. Veuillez autoriser les popups pour ce site.",
-      "retry": "Réessayer",
-      "notNow": "Pas maintenant",
-      "requestedPermissions": "Permissions demandées :",
-      "manageInSettings": "Vous pouvez gérer les comptes connectés dans Paramètres."
+    "system": {
+      "maintain": {
+        "description": "Reconfigurer le système hôte (domaine, TLS et mises à jour de l'application)"
+      }
     }
   },
   "aiEngines": {
@@ -1352,479 +1248,78 @@
     "viewAnalytics": "Voir les analytics d'utilisation détaillés",
     "viewPromptEffectiveness": "Voir les métriques d'efficacité des prompts",
     "configureSettings": "Configurer les paramètres du système",
+    "viewSystemMetrics": "Santé et diagnostics du système",
     "retry": "Réessayer",
     "errors": {
       "fetchFailed": "Échec de la récupération des données d'aperçu"
     }
   },
-  "userAnalytics": {
-    "title": "Analytique utilisateur",
-    "subtitle": "Analytique d'utilisation détaillée par utilisateur",
-    "filters": {
-      "startDate": "Date de début",
-      "endDate": "Date de fin",
-      "search": "Rechercher",
-      "searchPlaceholder": "Rechercher par nom, email ou département...",
-      "perPage": "Par page"
+  "systemMetrics": {
+    "title": "Système",
+    "subtitle": "État en temps réel du serveur, de la base de données et des conteneurs",
+    "refresh": "Actualiser",
+    "autoRefresh": "Actualisation automatique",
+    "lastUpdated": "Dernière mise à jour",
+    "generatedAt": "Généré à",
+    "machine": {
+      "title": "Serveur",
+      "cpuUsage": "Utilisation CPU",
+      "memoryUsage": "Utilisation mémoire",
+      "swapUsage": "Utilisation du swap",
+      "usedMemory": "Utilisée",
+      "freeMemory": "Libre",
+      "totalMemory": "Totale",
+      "usedSwap": "Swap utilisé",
+      "totalSwap": "Swap total",
+      "loadAverage": "Charge moyenne",
+      "load1m": "1 min",
+      "load5m": "5 min",
+      "load15m": "15 min",
+      "uptime": "Temps de fonctionnement",
+      "disks": "Utilisation du disque"
     },
-    "stats": {
-      "totalUsers": "Utilisateurs totaux",
-      "showing": "Affichage",
-      "showingCount": "{filtered} sur {total}"
+    "database": {
+      "title": "Base de données",
+      "connections": "Connexions",
+      "active": "Actives",
+      "idle": "Inactives",
+      "total": "Total",
+      "backends": "Processus backend",
+      "latency": "Latence aller-retour",
+      "size": "Taille de la base",
+      "cacheHitRatio": "Taux de réussite du cache",
+      "blocksHit": "Blocs en cache",
+      "blocksRead": "Blocs lus",
+      "transactions": "Transactions BD",
+      "commits": "Validations",
+      "rollbacks": "Annulations",
+      "tuples": "Opérations sur tuples",
+      "fetched": "Récupérés",
+      "inserted": "Insérés",
+      "updated": "Mis à jour",
+      "deleted": "Supprimés",
+      "returned": "Retournés"
     },
-    "table": {
-      "userName": "Nom d'utilisateur",
-      "email": "E-mail",
-      "department": "Département",
-      "requests": "Requêtes",
-      "success": "Succès",
-      "errors": "Erreurs",
-      "tokens": "Jetons",
-      "cost": "Coût",
-      "avgLatency": "Latence moyenne",
-      "lastActivity": "Dernière activité"
-    },
-    "emptyState": {
-      "noMatch": "Aucun utilisateur trouvé correspondant à \"{query}\"",
-      "noData": "Aucune donnée analytique utilisateur disponible pour la plage de dates sélectionnée"
-    },
-    "pagination": {
-      "previous": "Précédent",
-      "next": "Suivant",
-      "pageInfo": "Page {current} sur {total}"
-    },
-    "errors": {
-      "fetchFailed": "Échec de la récupération de l'analytique utilisateur"
-    }
-  },
-  "departmentAnalytics": {
-    "title": "Analyse par département",
-    "subtitle": "Analyses d'utilisation détaillées par département",
-    "filters": {
-      "search": "Rechercher",
-      "searchPlaceholder": "Rechercher par nom de département...",
-      "perPage": "Par page"
-    },
-    "stats": {
-      "totalDepartments": "Départements au total",
-      "showing": "Affichage",
-      "showingCount": "{showing} sur {total}"
-    },
-    "table": {
-      "department": "Département",
-      "users": "Utilisateurs",
-      "requests": "Requêtes",
-      "success": "Succès",
-      "errors": "Erreurs",
-      "tokens": "Jetons",
-      "cost": "Coût",
-      "avgLatency": "Latence moyenne"
-    },
-    "emptyState": {
-      "noMatch": "Aucun département trouvé correspondant à \"{query}\"",
-      "noData": "Aucune donnée d'analyse de département disponible pour la plage de dates sélectionnée"
-    },
-    "pagination": {
-      "previous": "Précédent",
-      "next": "Suivant",
-      "pageInfo": "Page {current} sur {total}"
-    },
-    "errors": {
-      "fetchFailed": "Échec de récupération des analyses de département"
-    }
-  },
-  "analytics": {
-    "title": "Suivi d'Usage",
-    "subtitle": "Surveiller les performances du système et les métriques d'utilisation",
-    "tabs": {
-      "overview": "Aperçu",
-      "byUser": "Par Utilisateur",
-      "byDepartment": "Par Département",
-      "byModel": "Par Modèle"
-    },
-    "tabsAria": {
-      "overview": "Métriques d'utilisation et tendances",
-      "byUser": "Répartition de l'utilisation par utilisateur",
-      "byDepartment": "Répartition de l'utilisation par département",
-      "byModel": "Répartition de l'utilisation par modèle"
-    },
-    "byModel": {
-      "title": "Par modèle",
-      "comingSoon": "Bientôt disponible",
-      "hint": "Les analyses par modèle seront disponibles ici."
-    },
-    "aria": {
-      "mainRegion": "Analytique d'utilisation",
-      "dateRangeGroup": "Plage de dates du rapport",
-      "startDate": "Date de début",
-      "endDate": "Date de fin",
-      "pagination": "Pagination des résultats",
-      "topModelsCaption": "Principaux modèles par utilisation pour la plage de dates sélectionnée",
-      "departmentTableCaption": "Utilisation par département pour la plage de dates sélectionnée",
-      "userTableCaption": "Utilisation par utilisateur pour la plage de dates sélectionnée"
-    },
-    "filters": {
-      "dateRange": "Plage de dates",
-      "presets": {
-        "last7Days": "7 derniers jours",
-        "last30Days": "30 derniers jours",
-        "last90Days": "90 derniers jours",
-        "thisMonth": "Ce mois-ci",
-        "custom": "Personnalisé"
-      },
-      "to": "à",
-      "aggregated": "Agrégé",
-      "hour": "Horaire",
-      "day": "Quotidien",
-      "week": "Hebdomadaire",
-      "month": "Mensuel"
-    },
-    "loading": "Chargement de l'analytique...",
-    "retry": "Réessayer",
-    "refresh": "Actualiser les analyses",
-    "refreshButton": "Actualiser",
-    "overview": {
-      "title": "Aperçu",
-      "totalUsers": "Utilisateurs totaux",
-      "activeUsers": "{count} actifs",
-      "totalRequests": "Requêtes totales",
-      "avgPerUser": "{count} moyenne par utilisateur",
-      "totalTokens": "Tokens totaux",
-      "totalCost": "Coût total",
-      "vsPreviousDays": "vs {count} jours précédents"
-    },
-    "topModels": {
-      "title": "Modèles principaux",
-      "model": "Modèle",
-      "provider": "Fournisseur",
-      "requests": "Requêtes",
-      "tokens": "Jetons",
-      "cost": "Coût"
-    },
-    "charts": {
-      "title": "Tendances de performance",
-      "multiMetric": {
-        "title": "Tendances multi-métriques",
-        "subtitle": "Requêtes • Tokens • Latence",
-        "requests": "Requêtes",
-        "tokens": "Jetons",
-        "latency": "Latence",
-        "date": "Date",
-        "latencyMs": "Latence (ms)"
-      },
-      "usageGrowth": {
-        "title": "Croissance de l'utilisation",
-        "subtitle": "Requêtes (barres) • Tokens (ligne)",
-        "requests": "Requêtes",
-        "tokens": "Jetons"
-      },
-      "apiReliability": {
-        "title": "Fiabilité de l'API",
-        "subtitle": "Succès vs Erreurs",
-        "success": "Succès",
-        "errors": "Erreurs",
-        "type": "Type",
-        "count": "Nombre"
-      },
-      "costTrend": {
-        "title": "Tendance des coûts",
-        "subtitle": "Dépenses totales au fil du temps",
-        "totalCost": "Coût total"
-      },
-      "emptyState": {
-        "title": "Aucune donnée de série temporelle disponible pour la plage de dates sélectionnée",
-        "hint": "Essayez de sélectionner une plage de dates différente ou revenez plus tard"
-      },
-      "accessibility": {
-        "keyboardInstructions": "Appuyez sur Entrée ou Espace pour afficher le tableau de données. Appuyez sur Échap pour fermer.",
-        "dataPoints": "{count} points de données",
-        "viewDataTable": "Afficher le tableau de données",
-        "viewDataTableFor": "Afficher le tableau de données pour {chartName}",
-        "closeDataTable": "Fermer le tableau de données",
-        "dataTableRegion": "Tableau de données de {chartName}"
-      }
-    },
-    "errors": {
-      "fetchFailed": "Échec de la récupération des données analytiques"
-    }
-  },
-  "error": {
-    "not_found": {
-      "description": "La ressource demandée est introuvable",
-      "solution": "La ressource que vous recherchez n'existe pas ou a été supprimée. Veuillez vérifier l'URL ou réessayer. Si le problème persiste, contactez le support {app}"
-    },
-    "validation": {
-      "missing_field": {
-        "description": "Le champ requis `{field}` est manquant",
-        "solution": "Veuillez fournir tous les champs requis, y compris `{field}`"
-      },
-      "empty_field": {
-        "description": "Le champ requis `{field}` ne peut pas être vide",
-        "solution": "Veuillez fournir une valeur pour le champ `{field}`"
-      }
-    },
-    "sso": {
-      "conditional_access": {
-        "description": "Accès refusé en raison de la politique d'accès conditionnel pour `{provider}`",
-        "solution": "La politique de sécurité de votre organisation bloque l'accès. Contactez votre administrateur ou essayez une autre méthode d'authentification"
-      }
-    },
-    "llm": {
-      "disabled_by_admin": {
-        "description": "Le fournisseur LLM `{provider}` est désactivé par un administrateur",
-        "solution": "Demandez à un administrateur d'activer `{provider}` ou sélectionnez un autre fournisseur"
-      },
-      "invalid_provider": {
-        "description": "Le fournisseur LLM `{provider}` est invalide ou non pris en charge",
-        "solution": "Veuillez sélectionner un fournisseur valide parmi les options disponibles"
-      },
-      "not_configured": {
-        "description": "Le fournisseur LLM `{provider}` n'est pas correctement configuré",
-        "solution": "Veuillez configurer les paramètres du fournisseur ou contacter un administrateur"
-      }
-    },
-    "db": {
-      "not_found": {
-        "description": "Ressource introuvable dans la base de données {app}",
-        "solution": "La ressource que vous recherchez n'existe pas. Essayez de démarrer un nouveau chat ou contactez le support {app}"
-      },
-      "unavailable": {
-        "description": "La base de données {app} est temporairement indisponible",
-        "solution": "Veuillez réessayer dans quelques instants. Si le problème persiste, contactez le support {app}"
-      },
-      "timeout": {
-        "description": "La requête à la base de données {app} a expiré",
-        "solution": "L'opération a pris trop de temps. Veuillez réessayer avec une requête plus petite ou contactez le support {app}"
-      },
-      "conflict": {
-        "description": "Un conflit s'est produit lors du traitement de votre requête {app}",
-        "solution": "La ressource a été modifiée par un autre processus. Veuillez actualiser et réessayer"
-      }
-    },
-    "service_unavailable": {
-      "description": "Le service {app} est temporairement indisponible",
-      "solution": "Nous rencontrons des difficultés techniques. Veuillez réessayer dans quelques instants. Si le problème persiste, contactez le support {app}"
-    },
-    "auth": {
-      "service_unavailable": {
-        "description": "Le service d'authentification {app} est temporairement indisponible",
-        "solution": "Veuillez réessayer dans quelques instants. Si le problème persiste, contactez le support {app}"
-      },
-      "invalid_credentials": {
-        "description": "Email ou mot de passe invalide pour {app}",
-        "solution": "Veuillez vérifier vos identifiants et réessayer. Si vous avez oublié votre mot de passe, utilisez l'option de réinitialisation"
-      },
-      "email_not_found": {
-        "description": "Aucun compte {app} trouvé avec cette adresse email",
-        "solution": "Veuillez vérifier votre adresse email ou créer un nouveau compte {app}"
-      },
-      "missing_credentials": {
-        "description": "L'email et le mot de passe sont requis pour se connecter à {app}",
-        "solution": "Veuillez fournir votre adresse email et votre mot de passe pour vous connecter"
-      },
-      "invalid_token": {
-        "description": "Votre session {app} a expiré",
-        "solution": "Veuillez vous reconnecter pour continuer à utiliser {app}"
-      },
-      "invalid_user_status": {
-        "description": "Le statut de votre compte {app} est invalide",
-        "solution": "Veuillez contacter le support {app} pour résoudre ce problème avec votre compte"
-      },
-      "account_deactivated": {
-        "description": "Votre compte {app} a été désactivé",
-        "solution": "Veuillez contacter votre administrateur ou le support {app} pour réactiver votre compte"
-      },
-      "email_already_exists": {
-        "description": "Un compte {app} avec cet email existe déjà",
-        "solution": "Veuillez vous connecter avec votre compte {app} existant ou utiliser une autre adresse email"
-      },
-      "invalid_provider": {
-        "description": "Le fournisseur d'authentification `{provider}` est invalide ou non pris en charge par {app}",
-        "solution": "Veuillez sélectionner un fournisseur d'authentification valide pour {app}"
-      },
-      "invalid_callback_params": {
-        "description": "Paramètres de rappel d'authentification invalides pour {app}",
-        "solution": "Le processus d'authentification {app} a rencontré une erreur. Veuillez réessayer de vous connecter"
-      },
-      "missing_oauth_params": "Paramètres OAuth requis manquants (state ou code)",
-      "oauth_provider_not_found": "Fournisseur OAuth introuvable. Veuillez réessayer de vous connecter",
-      "invalid_auth_response": "Réponse d'authentification invalide du serveur",
-      "mfa_not_implemented": "L'authentification multi-facteurs est requise mais n'est pas encore implémentée",
-      "invalid_redirect_uri": {
-        "description": "URI de redirection invalide `{redirect_uri}` pour {app}",
-        "solution": "L'URI de redirection n'est pas autorisée pour {app}. Veuillez contacter le support {app} si ce problème persiste"
-      },
-      "permission_denied": {
-        "description": "Vous n'avez pas la permission d'effectuer cette action dans {app}",
-        "solution": "Veuillez contacter votre administrateur {app} si vous pensez avoir accès"
-      },
-      "org_not_found": {
-        "description": "Organisation introuvable dans {app}",
-        "solution": "L'organisation {app} avec l'ID `{org_id}` n'existe pas. Veuillez vérifier les paramètres de votre organisation"
-      },
-      "resource_not_found": {
-        "description": "La ressource demandée est introuvable dans {app}",
-        "solution": "La ressource que vous recherchez n'existe pas ou a été supprimée de {app}"
-      },
-      "email_domain_not_allowed": {
-        "description": "Le domaine email `{domain}` n'est pas autorisé pour {app}",
-        "solution": "Votre organisation {app} n'autorise que certains domaines email. Veuillez utiliser un email d'un domaine autorisé"
-      },
-      "sso": {
-        "not_configured": {
-          "description": "Le fournisseur SSO `{provider}` n'est pas configuré pour {app}",
-          "solution": "Veuillez contacter votre administrateur {app} pour configurer SSO pour `{provider}`"
-        },
-        "disabled_by_admin": {
-          "description": "Le fournisseur SSO `{provider}` est désactivé par un administrateur {app}",
-          "solution": "Veuillez contacter votre administrateur {app} pour activer SSO pour `{provider}` ou utiliser une autre méthode d'authentification"
-        }
-      },
-      "no_token": {
-        "description": "Aucun jeton d'authentification disponible",
-        "solution": "Veuillez vous connecter pour continuer"
-      }
-    },
-    "request": {
-      "no_response_body": {
-        "description": "Aucun corps de réponse reçu",
-        "solution": "Le serveur n'a renvoyé aucune donnée. Veuillez réessayer"
-      },
-      "send_message_failed": {
-        "description": "Échec de l'envoi du message",
-        "solution": "Impossible d'envoyer votre message. Veuillez vérifier votre connexion et réessayer"
-      },
-      "archive_conversation_failed": {
-        "description": "Échec de l'archivage de la conversation",
-        "solution": "Impossible d'archiver la conversation. Veuillez réessayer"
-      }
-    },
-    "fallback": {
-      "description": "Quelque chose s'est mal passé",
-      "solution": "Une erreur inattendue s'est produite. Veuillez réessayer"
-    }
-  },
-  "userSettings": {
-    "title": "Paramètres",
-    "subtitle": "Gérez vos préférences personnelles et les intégrations connectées.",
-    "tabs": {
-      "integrations": "Intégrations",
-      "integrationsAria": "Intégrations connectées",
-      "promptSettings": "Paramètres des Instructions",
-      "promptSettingsAria": "Gérer vos préférences d'instructions"
-    }
-  },
-  "userIntegrations": {
-    "loading": "Chargement des intégrations...",
-    "failedToLoad": "Échec du chargement des intégrations",
-    "failedToGetAuthUrl": "Échec de l'obtention de l'URL d'autorisation",
-    "failedToConnect": "Échec de la connexion à {name}",
-    "failedToDisconnect": "Échec de la déconnexion de {name}",
-    "disconnected": "{name} déconnecté",
-    "stats": {
-      "connected": "Connecté",
-      "available": "Disponible",
-      "total": "Total"
-    },
-    "filters": {
-      "all": "Toutes",
-      "connected": "Connectées",
-      "available": "Disponibles",
-      "filterAria": "Filtrer les intégrations"
-    },
-    "empty": {
-      "title": "Aucune intégration trouvée",
-      "noConnected": "Vous n'avez pas encore connecté d'intégrations.",
-      "noAvailable": "Aucune intégration n'est disponible pour le moment.",
-      "noConfigured": "Votre organisation n'a configuré aucune intégration.",
-      "viewAll": "Voir toutes les intégrations"
-    },
-    "columns": {
-      "name": "Nom",
-      "transport": "Transport",
-      "status": "Statut",
-      "tools": "Outils",
-      "connectedAt": "Connecté",
-      "actions": "Actions"
-    },
-    "status": {
-      "connected": "Connecté",
-      "disconnected": "Déconnecté",
-      "expired": "Expiré",
-      "error": "Erreur",
-      "expiredWarning": "La connexion a expiré. Reconnectez-vous pour actualiser votre accès."
-    },
-    "actions": {
-      "connect": "Connecter",
-      "connecting": "Connexion...",
-      "disconnect": "Déconnecter",
-      "reconnect": "Reconnecter",
-      "disconnectConfirm": "Déconnecter ?",
+    "container": {
+      "title": "Conteneur",
+      "insideContainer": "Exécuté dans un conteneur",
       "yes": "Oui",
       "no": "Non",
-      "viewTools": "Voir les outils"
+      "cgroupVersion": "Version Cgroup",
+      "cpuQuota": "Quota CPU",
+      "cpuUsage": "Utilisation CPU",
+      "cores": "cœurs",
+      "seconds": "secondes",
+      "memoryUsage": "Utilisation mémoire",
+      "memoryLimit": "Limite mémoire",
+      "memoryAvailable": "Mémoire disponible"
     },
-    "connectedSince": "Connecté depuis {date}",
-    "toolCount": "{count} {count, plural, one {outil} other {outils}}",
-    "tools": {
-      "modalTitle": "{name} — Outils",
-      "loading": "Chargement des outils...",
-      "empty": "Aucun outil disponible pour ce serveur."
-    }
-  },
-  "userPromptSettings": {
-    "loading": "Chargement des paramètres d'instructions...",
-    "failedToLoad": "Échec du chargement des paramètres d'instructions",
-    "activePrompt": "Instruction Active",
-    "source": {
-      "label": "Source",
-      "user_custom": "Instruction Personnalisée",
-      "department_default": "Par Défaut du Département",
-      "system_default": "Par Défaut du Système"
+    "errors": {
+      "fetchFailed": "Échec de récupération des métriques système"
     },
-    "variables": {
-      "title": "Variables Disponibles",
-      "empty": "Aucune variable disponible",
-      "insertHint": "Cliquez sur une variable pour l'insérer dans l'éditeur",
-      "copied": "Variable insérée"
-    },
-    "editor": {
-      "title": "Éditeur d'Instruction Personnalisée",
-      "placeholder": "Rédigez votre instruction système personnalisée ici. Utilisez des variables comme {{variable_name}} pour insérer des valeurs dynamiques...",
-      "charCount": "{count} caractères",
-      "preview": "Aperçu",
-      "edit": "Modifier",
-      "previewTitle": "Aperçu de l'Instruction",
-      "previewEmpty": "Rien à prévisualiser. Commencez à rédiger votre instruction personnalisée ci-dessus."
-    },
-    "actions": {
-      "save": "Enregistrer l'Instruction",
-      "saving": "Enregistrement...",
-      "resetToDefault": "Réinitialiser par Défaut",
-      "resetting": "Réinitialisation...",
-      "resetConfirmTitle": "Réinitialiser par Défaut ?",
-      "resetConfirmMessage": "Cela supprimera votre instruction personnalisée et reviendra au paramètre par défaut du département ou du système. Cette action est irréversible.",
-      "resetConfirmButton": "Oui, Réinitialiser",
-      "cancel": "Annuler"
-    },
-    "messages": {
-      "saved": "Instruction personnalisée enregistrée avec succès",
-      "failedToSave": "Échec de l'enregistrement de l'instruction",
-      "reset": "Instruction réinitialisée par défaut",
-      "failedToReset": "Échec de la réinitialisation de l'instruction",
-      "noChanges": "Aucune modification à enregistrer"
-    },
-    "feedback": {
-      "title": "Retour sur l'Instruction",
-      "subtitle": "Aidez-nous à améliorer en évaluant l'efficacité de l'instruction actuelle",
-      "thumbsUp": "Cette instruction fonctionne bien",
-      "thumbsDown": "Cette instruction a besoin d'améliorations",
-      "commentPlaceholder": "Facultatif : Dites-nous en plus sur votre expérience avec cette instruction...",
-      "submit": "Envoyer le Retour",
-      "submitting": "Envoi en cours...",
-      "submitted": "Merci pour votre retour !",
-      "failedToSubmit": "Échec de l'envoi du retour",
-      "ratingRequired": "Veuillez sélectionner une note avant d'envoyer"
+    "tabs": {
+      "metrics": "Métriques",
+      "maintenance": "Maintenance"
     }
   }
 }

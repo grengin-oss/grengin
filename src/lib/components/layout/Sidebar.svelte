@@ -183,7 +183,6 @@
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
     type: 'item',
   };
-  
   function isMenuItem(value: AdminMenuItem | null): value is AdminMenuItem {
     return value !== null;
   }
@@ -414,7 +413,7 @@
           title={$_('sidebar.backToChat')}
           aria-label={$_('sidebar.backToChat')}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg data-rtl-flip width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12,19 5,12 12,5"></polyline>
           </svg>
@@ -542,7 +541,7 @@
   /* ===== Sidebar Container (Layer 1 - floats above main content) ===== */
   .sidebar {
     position: fixed;
-    left: 0;
+    inset-inline-start: 0;
     top: 0;
     width: 260px;
     height: 100vh;
@@ -555,7 +554,7 @@
 
     /* Liquid Glass Layer 1 - Primary navigation surface */
     background: var(--bg-primary);
-    border-right: 1px solid var(--glass-stroke-dark);
+    border-inline-end: 1px solid var(--glass-stroke-dark);
     box-shadow: var(--glass-shadow-dark);
   }
 
@@ -876,7 +875,7 @@
   .alerts-badge {
     position: absolute;
     top: -2px;
-    right: -2px;
+    inset-inline-end: -2px;
     min-width: 1.125rem;
     height: 1.125rem;
     padding: 0 4px;
@@ -910,7 +909,7 @@
     font-size: 0.875rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    text-align: left;
+    text-align: start;
     border-radius: 0;
     box-shadow: none;
     backdrop-filter: none;
@@ -1075,7 +1074,7 @@
   .user-menu-dropdown {
     position: fixed;
     bottom: 3rem;
-    left: var(--space-lg);
+    inset-inline-start: var(--space-lg);
     min-width: 200px;
     background: color-mix(in oklab, var(--bg-primary) 85%, var(--btn-secondary));
     backdrop-filter: blur(calc(var(--glass-blur) * 1.5)) saturate(1.5);
@@ -1108,7 +1107,7 @@
     cursor: pointer;
     transition: all 0.2s ease;
     border-radius: var(--radius-md);
-    text-align: left;
+    text-align: start;
   }
 
   .menu-item:hover {
@@ -1222,7 +1221,7 @@
     }
 
     .user-menu-dropdown {
-      left: var(--space-md);
+      inset-inline-start: var(--space-md);
     }
 
     /* Mobile notifications live in App's mobile header */

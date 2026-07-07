@@ -132,11 +132,11 @@
     height: 22px;
     width: auto;
     object-fit: contain;
-    margin-left: var(--space-sm);
+    margin-inline-start: var(--space-sm);
   }
 
   .mobile-alerts-btn {
-    margin-left: auto;
+    margin-inline-start: auto;
     position: relative;
     display: flex;
     align-items: center;
@@ -174,7 +174,7 @@
   .mobile-alerts-badge {
     position: absolute;
     top: -2px;
-    right: -2px;
+    inset-inline-end: -2px;
     min-width: 1.125rem;
     height: 1.125rem;
     padding: 0 4px;

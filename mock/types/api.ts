@@ -2445,7 +2445,7 @@ export interface components {
             /** @description Depth in hierarchy (0 = root) */
             readonly depth: number;
             /** @description Users who can manage this department */
-            leader_ids?: string[];
+            admin_ids?: string[];
             /** @description Direct members in this department */
             readonly member_count: number;
             /** @description All members including sub-departments */
@@ -2483,12 +2483,12 @@ export interface components {
             description?: string;
             /** Format: uuid */
             parent_id?: string | null;
-            leader_ids?: string[];
+            admin_ids?: string[];
         };
         DepartmentUpdate: {
             name?: string;
             description?: string;
-            leader_ids?: string[];
+            admin_ids?: string[];
         };
         DepartmentTree: components["schemas"]["Department"] & {
             children?: components["schemas"]["DepartmentTree"][];

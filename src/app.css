@@ -1,3 +1,9 @@
+/* Syntax highlighting themes for code blocks (highlight.js).
+   Loaded statically and gated by prefers-color-scheme so the theme
+   always matches the page palette — no JS race, no Windows quirks. */
+@import 'highlight.js/styles/github-dark.css' screen and (prefers-color-scheme: dark);
+@import 'highlight.js/styles/github.css' screen and (prefers-color-scheme: light);
+
 /* ===== Root tokens ===== */
 :root {
   /* Typography & rendering - system fonts */
@@ -898,4 +904,142 @@ pre {
       0 0.375rem 1rem rgba(0, 0, 0, 0.25),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
+}
+
+/* ===========================================================================
+ * Right-to-Left (RTL) language support
+ *
+ * The app's primary direction is controlled by the `dir` attribute on the
+ * <html> element (managed by `applyDocumentDirection` in src/lib/i18n).
+ *
+ * Strategy:
+ *   1. Most spacing/borders use *logical* properties (margin-inline-start,
+ *      border-inline-end, inset-inline-start, padding-inline, …) so they
+ *      mirror automatically under `dir="rtl"`.
+ *   2. The few rules below patch components that still rely on physical
+ *      left/right offsets, transforms, or directional iconography.
+ *   3. Bidirectional (mixed RTL/LTR) text in chat messages is rendered with
+ *      `unicode-bidi: plaintext`, which lets each paragraph pick its own
+ *      direction from its first strong character — the standard solution
+ *      for chat content where the UI direction may differ from the message
+ *      direction (e.g. an Arabic UI showing an English code snippet).
+ * ========================================================================= */
+
+/* Default body alignment follows direction. */
+html[dir="rtl"] body {
+  text-align: right;
+}
+
+/* Buttons and `.btn` elements default to left-aligned text via `.menu-item`
+ * and similar utility classes; flip those that rely on physical alignment. */
+html[dir="rtl"] .menu-item,
+html[dir="rtl"] .sidebar-item,
+html[dir="rtl"] .user-menu-trigger {
+  text-align: right;
+}
+
+/* Inputs honor the document direction natively (cursor + caret position),
+ * but explicit overrides sometimes leak from older rules. Reset them. */
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select {
+  text-align: right;
+}
+
+/* Some inputs hold inherently LTR content (URLs, emails, code, numbers).
+ * Authors can opt-in by adding `dir="ltr"` on the element OR using the
+ * `.ltr-content` utility below. */
+.ltr-content {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: isolate;
+}
+
+/* Bidirectional text: chat message bodies should render in the natural
+ * direction of their content rather than the surrounding UI direction.
+ * `unicode-bidi: plaintext` is the cleanest way to achieve this — each
+ * paragraph picks up its direction from the first strong character. */
+.message-body,
+.message-body p,
+.user-message .message-body,
+.assistant-message .message-body {
+  unicode-bidi: plaintext;
+}
+
+/* Code blocks and inline code are inherently LTR regardless of UI direction. */
+html[dir="rtl"] code,
+html[dir="rtl"] pre,
+html[dir="rtl"] kbd,
+html[dir="rtl"] samp {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+/* ---- Directional icons -----------------------------------------------------
+ * Icons that *imply* direction (back arrows, chevrons used for "next",
+ * progress bars, sliders, etc.) should be horizontally mirrored under RTL.
+ * Authors mark such icons with `data-rtl-flip` (already present on the
+ * sidebar collapse SVG) or with the `.rtl-flip` utility class. Icons that
+ * are direction-neutral (bell, gear, search) MUST NOT carry these markers. */
+html[dir="rtl"] [data-rtl-flip],
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* SVGs nested inside a flipped container should not double-flip. */
+html[dir="rtl"] [data-rtl-flip] svg,
+html[dir="rtl"] .rtl-flip svg {
+  transform: none;
+}
+
+/* ---- App shell -------------------------------------------------------------
+ * The sidebar is fixed to the inline-start edge; the main content reserves
+ * matching margin. Both already use logical properties (see App.svelte and
+ * Sidebar.svelte). The transforms below mirror the off-canvas slide-out on
+ * mobile so the sidebar slides off the correct edge under RTL. */
+/* Default sidebar slide-out uses translateX(-100%) which is physical — under
+ * RTL the inline-start edge is on the right, so reverse the translate. */
+@media (max-width: 768px) {
+  html[dir="rtl"] .sidebar.collapsed {
+    transform: translateX(100%);
+  }
+}
+
+/* Drop-shadow on the sidebar always points away from the content area. */
+html[dir="rtl"] .sidebar {
+  box-shadow: -4px 0 32px rgba(0, 0, 0, 0.18);
+}
+
+/* ---- Form layout patches ---------------------------------------------------
+ * Form controls that explicitly position adornments (icons inside inputs,
+ * clear buttons, dropdown arrows, …) typically use absolute positioning with
+ * left/right values. Component authors should migrate to logical properties;
+ * these utility overrides cover the common patterns until they do. */
+html[dir="rtl"] .input-icon-leading {
+  left: auto;
+  right: 0.75rem;
+}
+
+html[dir="rtl"] .input-icon-trailing {
+  right: auto;
+  left: 0.75rem;
+}
+
+/* ---- Numeric / tabular content --------------------------------------------
+ * Tables of numbers and dates should remain LTR even when the surrounding
+ * UI is RTL, matching how spreadsheets render in Arabic / Hebrew Excel. */
+html[dir="rtl"] .numeric,
+html[dir="rtl"] [data-numeric] {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: right;
+}
+
+/* ---- Logo / branding -------------------------------------------------------
+ * Brand wordmarks are typically asymmetric and should not be mirrored. */
+html[dir="rtl"] .brand-logo,
+html[dir="rtl"] .logo-icon,
+html[dir="rtl"] .mobile-header-logo {
+  transform: none;
 }

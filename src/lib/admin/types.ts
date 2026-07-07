@@ -6,8 +6,10 @@ export interface User {
   email: string;
   name?: string;
   role?: string;
+  roles?: string[];
   status?: string;
   department?: string;
+  department_id?: string;
   is_super_admin?: boolean;
   has_password?: boolean;
   mfa_enabled?: boolean;
@@ -48,10 +50,10 @@ export interface SSOProviderDetails {
   provider: EditableField;
   name: EditableField;
   client_id: EditableField;
-  client_secret_preview: EditableField;
+  client_secret_preview?: EditableField;
   issuer_url: EditableField;
   redirect_url: EditableField;
-  tenant_id: string | null;
+  tenant_id?: EditableField;
   allowed_domains: string[];
   is_enabled: boolean;
   created_at: string;
@@ -298,7 +300,7 @@ export interface Department {
   name: string;
   description: string;
   parent_id: string | null;
-  leader_ids: string[];
+  admin_ids: string[];
   path: string;
   depth: number;
   child_count: number;
@@ -329,14 +331,14 @@ export interface CreateDepartmentRequest {
   name: string;
   description: string;
   parent_id?: string | null;
-  leader_ids?: string[];
+  admin_ids?: string[];
 }
 
 export interface UpdateDepartmentRequest {
   name?: string;
   description?: string;
   parent_id?: string | null;
-  leader_ids?: string[];
+  admin_ids?: string[];
 }
 
 export interface SetBudgetRequest {
@@ -355,7 +357,7 @@ export interface DepartmentMember {
 }
 
 export interface DepartmentMembersResponse {
-  members: DepartmentMember[];
+  members: User[];
   total: number;
 }
 
@@ -403,11 +405,29 @@ export interface AuditLog {
   userId: string;
   action: string;
   resourceType: string;
-  resourceId: string;
-  details: string;
+  resourceId: string | null;
+  details: AuditLogDetails;
   ipAddress: string;
   userAgent: string;
   createdAt: string;
+}
+
+export interface AuditLogDetails {
+  after: any;
+  before: any;
+  changed_fields: string[];
+  method: string;
+  path: string;
+  query: any;
+  route: string;
+  status_code: number;
+  success: boolean;
+}
+
+export interface RoleUserAssignment {
+  id: string;
+  role_id: string;
+  scope_department_id?: string | null;
 }
 
 export interface PaginatedAuditLogs {
@@ -415,4 +435,59 @@ export interface PaginatedAuditLogs {
   total: number;
   page: number;
   limit: number;
+}
+
+export interface SystemMetricsDisk {
+  availableSpaceBytes: number;
+  mountPoint: string;
+  totalSpaceBytes: number;
+}
+
+export interface SystemMetricsContainer {
+  cgroupVersion: string;
+  cpuQuotaCores: number;
+  cpuUsageSeconds: number;
+  insideContainer: boolean;
+  memoryAvailableBytes: number;
+  memoryLimitBytes: number;
+  memoryUsageBytes: number;
+}
+
+export interface SystemMetricsDatabase {
+  activeConnections: number;
+  blksHit: number;
+  blksRead: number;
+  databaseSizeBytes: number;
+  idleConnections: number;
+  numbackends: number;
+  roundtripLatencyMs: number;
+  totalConnections: number;
+  tupDeleted: number;
+  tupFetched: number;
+  tupInserted: number;
+  tupReturned: number;
+  tupUpdated: number;
+  xactCommit: number;
+  xactRollback: number;
+}
+
+export interface SystemMetricsMachine {
+  cpuUsagePercent: number;
+  disks: SystemMetricsDisk[];
+  freeMemoryBytes: number;
+  loadAverage15m: number;
+  loadAverage1m: number;
+  loadAverage5m: number;
+  totalMemoryBytes: number;
+  totalSwapBytes: number;
+  uptimeSeconds: number;
+  usedMemoryBytes: number;
+  usedSwapBytes: number;
+}
+
+export interface SystemMetrics {
+  container: SystemMetricsContainer;
+  database: SystemMetricsDatabase;
+  generatedAt: string;
+  machine: SystemMetricsMachine;
 }

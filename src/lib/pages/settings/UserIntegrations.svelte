@@ -993,23 +993,6 @@
     align-items: center;
   }
 
-  /* Tools expandable row */
-  .tools-row td {
-    padding: 0 !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .tools-panel {
-    padding: var(--space-md) var(--space-xl);
-    background: rgba(var(--glass-tint), 0.02);
-  }
-
-  .tools-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: var(--space-sm);
-  }
-
   .tool-item {
     display: flex;
     flex-direction: column;
@@ -1282,22 +1265,6 @@
 
   .card-expired-warning svg {
     flex-shrink: 0;
-  }
-
-  /* Card tools panel */
-  .card-tools-panel {
-    padding: var(--space-sm);
-    background: rgba(var(--glass-tint), 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: var(--radius-sm);
-    max-height: 200px;
-    overflow-y: auto;
-  }
-
-  .card-tools-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
   }
 
   /* Connection info */

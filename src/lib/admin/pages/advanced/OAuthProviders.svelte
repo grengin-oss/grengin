@@ -12,9 +12,10 @@
     deleteSSOProvider,
     getSSOProvider,
     updateSSOProvider,
+    validateSSOProvider,
     toggleSSOProviderStatus,
   } from "../../../api/admin/SSOProviders.js";
-  import type { UpdateSSOProviderPayload } from "../../../api/admin/SSOProviders.js";
+  import type { UpdateSSOProviderPayload, ValidateSSOProviderPayload } from "../../../api/admin/SSOProviders.js";
   import type { SSOProvider, SSOProviderDetails } from "../../types.js";
 
   const providerIcons: Record<string, string> = {
@@ -35,6 +36,7 @@
   let editingProvider = $state<SSOProviderDetails | null>(null);
   let isEditLoading = $state(false);
   let isEditSaving = $state(false);
+  let isValidating = $state(false);
   let editErrors = $state<Record<string, string>>({});
   let editTitle = $state("");
 
@@ -43,6 +45,7 @@
     client_secret: "",
     tenant_id: "",
     is_enabled: false,
+    allow_self_provisioning: false,
     allowed_domains: [] as string[],
   });
   let domainInput = $state("");
@@ -50,6 +53,7 @@
   let isTenantFieldAvailable = $state(false);
   let showClientSecret = $state(false);
   let editClientIdInputEl = $state<HTMLInputElement | null>(null);
+
   const canManageSsoProviders = $derived(
     permissionsStore.canManageSsoProviders()
   );
@@ -144,6 +148,7 @@
       client_secret: "",
       tenant_id: "",
       is_enabled: false,
+      allow_self_provisioning: false,
       allowed_domains: [],
     };
     domainInput = "";
@@ -154,15 +159,16 @@
     try {
       const data = await getSSOProvider(provider.id);
       editingProvider = data;
-      clientSecretPreview = data.client_secret_preview.value ?? "";
+      clientSecretPreview = data.client_secret_preview?.value ?? "";
       isTenantFieldAvailable = data.provider.value === "azure";
       showClientSecret = false;
 
       editForm = {
         client_id: data.client_id.value,
-        client_secret: data.client_secret_preview.value,
-        tenant_id: data.tenant_id ?? "",
+        client_secret: data.client_secret_preview?.value ?? "",
+        tenant_id: typeof data.tenant_id === 'string' ? data.tenant_id : data.tenant_id?.value ?? "",
         is_enabled: data.is_enabled,
+        allow_self_provisioning: (data as any).allow_self_provisioning ?? false,
         allowed_domains: data.allowed_domains || [],
       };
       tick().then(() => {
@@ -247,11 +253,70 @@
   }
 
   async function handleEditSubmit() {
-    if (!editingProvider || isEditSaving) {
+    if (!editingProvider || isEditSaving || isValidating) {
       return;
     }
     if (!validateEditForm()) {
       return;
+    }
+
+    const clientSecret = editForm.client_secret.trim();
+    const hasSecretChanged =
+      clientSecret &&
+      clientSecret.length > 0 &&
+      clientSecret !== clientSecretPreview;
+    const hasClientIdChanged =
+      editForm.client_id.trim() !== editingProvider.client_id.value;
+    const hasTenantIdChanged =
+      isTenantFieldAvailable &&
+      editForm.tenant_id.trim() !== (editingProvider.tenant_id?.value ?? "");
+    const credentialsChanged =
+      hasSecretChanged || hasClientIdChanged || hasTenantIdChanged;
+
+    let validationToken: string | undefined;
+
+    if (credentialsChanged) {
+      isValidating = true;
+      try {
+        const validatePayload: ValidateSSOProviderPayload = {
+          client_id: editForm.client_id.trim(),
+          provider: editingProvider.provider.value,
+          issuer_url: editingProvider.issuer_url.value,
+          redirect_url: editingProvider.redirect_url.value,
+          frontend_hosted_url: window.location.origin,
+        };
+
+        if (hasSecretChanged) {
+          validatePayload.client_secret = clientSecret;
+        }
+
+        if (isTenantFieldAvailable) {
+          validatePayload.tenant_id = editForm.tenant_id.trim();
+        }
+
+        const result = await validateSSOProvider(
+          editingProvider.id,
+          validatePayload,
+        );
+
+        if (!result.valid) {
+          toast.error(
+            result.message ||
+              $_("admin.settings.oauthProviders.toasts.validationFailed"),
+          );
+          return;
+        }
+
+        validationToken = result.validation_token;
+      } catch (err: any) {
+        toast.error(
+          err?.message ||
+            $_("admin.settings.oauthProviders.toasts.validationFailed"),
+        );
+        return;
+      } finally {
+        isValidating = false;
+      }
     }
 
     isEditSaving = true;
@@ -263,20 +328,19 @@
           domain.trim(),
         ),
         is_enabled: editForm.is_enabled,
+        jit_provisioning: editForm.allow_self_provisioning,
       };
 
       if (isTenantFieldAvailable) {
         payload.tenant_id = editForm.tenant_id.trim();
       }
 
-      // Only update client secret if it has changed
-      const clientSecret = editForm.client_secret.trim();
-      if (
-        clientSecret &&
-        clientSecret.length &&
-        clientSecret !== clientSecretPreview
-      ) {
+      if (hasSecretChanged) {
         payload.client_secret = clientSecret;
+      }
+
+      if (validationToken) {
+        payload.validation_token = validationToken;
       }
 
       await updateSSOProvider(editingProvider.id, payload);
@@ -651,21 +715,60 @@
             </label>
           </div>
 
+          <div class="form-row">
+            <div class="switch-label-row">
+              <span class="switch-label switch-label--with-icon">
+                <svg class="provisioning-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <line x1="19" y1="8" x2="19" y2="14" />
+                  <line x1="22" y1="11" x2="16" y2="11" />
+                </svg>
+                {$_("admin.settings.oauthProviders.selfProvisioning.label")}
+              </span>
+              <button
+                type="button"
+                class="info-icon-btn"
+                title={$_("admin.settings.oauthProviders.selfProvisioning.hint")}
+                aria-label={$_("admin.settings.oauthProviders.selfProvisioning.hint")}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+              </button>
+            </div>
+            <label class="status-switch">
+              <input type="checkbox" bind:checked={editForm.allow_self_provisioning} />
+              <span class="status-slider"></span>
+              <span class="status-label">
+                {editForm.allow_self_provisioning
+                  ? $_("admin.settings.oauthProviders.common.enabled")
+                  : $_("admin.settings.oauthProviders.common.disabled")}
+              </span>
+            </label>
+          </div>
+
           <div class="confirm-actions">
             <button
               class="btn"
               type="button"
               onclick={closeEditModal}
-              disabled={isEditSaving}
+              disabled={isEditSaving || isValidating}
             >
               {$_("common.cancel")}
             </button>
             <button
               class="btn btn-accent"
               type="submit"
-              disabled={isEditSaving || isEditLoading}
+              disabled={isEditSaving || isEditLoading || isValidating}
             >
-              {isEditSaving ? $_("admin.settings.oauthProviders.actions.saving") : $_("common.save")}
+              {isValidating
+                ? $_("admin.settings.oauthProviders.actions.validating")
+                : isEditSaving
+                  ? $_("admin.settings.oauthProviders.actions.saving")
+                  : $_("common.save")}
             </button>
           </div>
         </form>
@@ -925,6 +1028,39 @@
   .empty-state p {
     margin: 0;
     color: var(--text-secondary);
+  }
+
+  .switch-label-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+  }
+
+  .switch-label--with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .provisioning-icon {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  .info-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: help;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+  }
+
+  .info-icon-btn:hover {
+    color: var(--text-primary);
   }
 
   .confirm-body {
