@@ -132,7 +132,6 @@
           bind:value={name}
           bind:this={nameInputEl}
           maxlength="100"
-          autofocus
         />
       </div>
 
@@ -167,8 +166,8 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">{$_('sidebar.projectVisibility')}</label>
-        <div class="visibility-options">
+        <span class="form-label" id="visibility-label">{$_('sidebar.projectVisibility')}</span>
+        <div class="visibility-options" role="radiogroup" aria-labelledby="visibility-label">
           <button
             type="button"
             class="visibility-option"

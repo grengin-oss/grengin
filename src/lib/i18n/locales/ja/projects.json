@@ -47,6 +47,8 @@
     "toolCount": "{count} ツール",
     "disableServer": "サーバーを無効化",
     "enableServer": "サーバーを有効化",
+    "enableServerError": "サーバーの有効化に失敗しました",
+    "disableServerError": "サーバーの無効化に失敗しました",
     "instructionsInfo": "このプロジェクトのすべてのチャットに適用されるカスタム指示を追加します。AIのペルソナ、応答、動作をガイドするのに役立ちます。",
     "instructionsPlaceholder": "例: 常にフォーマルなトーンで応答する。技術的な正確性を重視する。関連する場合はコード例を含める...",
     "charCount": "{count} / {max} 文字",

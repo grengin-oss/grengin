@@ -125,3 +125,30 @@ export async function unlinkProjectFromConversation(conversationId: string, proj
     method: 'DELETE',
   });
 }
+
+// --- Project MCP Servers ---
+
+export interface ProjectMcpServerEntry {
+  addedAt: string;
+  description: string;
+  id: string;
+  name: string;
+  serverId: string;
+}
+
+export async function getProjectMcpServers(projectId: string): Promise<ProjectMcpServerEntry[]> {
+  return request<ProjectMcpServerEntry[]>(`/projects/${projectId}/mcp-servers`);
+}
+
+export async function enableProjectMcpServer(projectId: string, serverId: string): Promise<void> {
+  await request<void>(`/projects/${projectId}/mcp-servers`, {
+    method: 'POST',
+    body: JSON.stringify({ serverId }),
+  });
+}
+
+export async function disableProjectMcpServer(projectId: string, serverId: string): Promise<void> {
+  await request<void>(`/projects/${projectId}/mcp-servers/${serverId}`, {
+    method: 'DELETE',
+  });
+}

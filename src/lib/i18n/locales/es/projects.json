@@ -47,6 +47,8 @@
     "toolCount": "{count} herramienta | {count} herramientas",
     "disableServer": "Deshabilitar servidor",
     "enableServer": "Habilitar servidor",
+    "enableServerError": "Error al habilitar el servidor",
+    "disableServerError": "Error al deshabilitar el servidor",
     "instructionsInfo": "Agrega instrucciones personalizadas que se aplicaran a todos los chats en este proyecto. Esto ayuda a guiar la personalidad, respuestas y comportamiento de la IA.",
     "instructionsPlaceholder": "ej. Siempre responde en un tono formal. Enfocate en la precision tecnica. Incluye ejemplos de codigo cuando sea relevante...",
     "charCount": "{count} / {max} caracteres",

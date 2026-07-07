@@ -47,6 +47,8 @@
     "toolCount": "{count} tool | {count} tools",
     "disableServer": "Disable server",
     "enableServer": "Enable server",
+    "enableServerError": "Failed to enable server",
+    "disableServerError": "Failed to disable server",
     "instructionsInfo": "Add custom instructions that will be applied to all chats in this project. This helps guide the AI's persona, responses, and behavior.",
     "instructionsPlaceholder": "e.g. Always respond in a formal tone. Focus on technical accuracy. Include code examples where relevant...",
     "charCount": "{count} / {max} chars",

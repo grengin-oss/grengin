@@ -47,6 +47,8 @@
     "toolCount": "{count}개 도구",
     "disableServer": "서버 비활성화",
     "enableServer": "서버 활성화",
+    "enableServerError": "서버 활성화에 실패했습니다",
+    "disableServerError": "서버 비활성화에 실패했습니다",
     "instructionsInfo": "이 프로젝트의 모든 채팅에 적용될 맞춤 지침을 추가하세요. AI의 페르소나, 응답 및 동작을 안내하는 데 도움이 됩니다.",
     "instructionsPlaceholder": "예: 항상 격식체로 응답하세요. 기술적 정확성에 집중하세요. 관련이 있는 경우 코드 예제를 포함하세요...",
     "charCount": "{count} / {max}자",

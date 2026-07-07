@@ -12,6 +12,9 @@
     removeProjectMember,
     getProjectArtifacts,
     unlinkProjectFromConversation,
+    getProjectMcpServers,
+    enableProjectMcpServer,
+    disableProjectMcpServer,
   } from "../../api/projectsApi";
   import CreateProjectModal from "./CreateProjectModal.svelte";
   import AddMemberModal from "./AddMemberModal.svelte";
@@ -174,11 +177,20 @@
     }
   }
 
+  let togglingServerId = $state<string | null>(null);
+
   async function fetchMcpServers() {
     loadingTools = true;
     try {
-      const { servers } = await getChatMcpServers();
-      mcpServers = servers.map((s: any) => ({ ...s, enabled: s.connected }));
+      const [{ servers }, projectServers] = await Promise.all([
+        getChatMcpServers(),
+        getProjectMcpServers(id),
+      ]);
+      const enabledIds = new Set(projectServers.map((ps) => ps.serverId));
+      mcpServers = servers.map((s: any) => ({
+        ...s,
+        enabled: enabledIds.has(s.id),
+      }));
     } catch {
       console.error("Failed to fetch MCP servers");
     } finally {
@@ -186,8 +198,22 @@
     }
   }
 
-  function toggleServer(index: number) {
-    mcpServers[index].enabled = !mcpServers[index].enabled;
+  async function toggleServer(index: number) {
+    const server = mcpServers[index];
+    const newEnabled = !server.enabled;
+    togglingServerId = server.id;
+    try {
+      if (newEnabled) {
+        await enableProjectMcpServer(id, server.id);
+      } else {
+        await disableProjectMcpServer(id, server.id);
+      }
+      mcpServers[index].enabled = newEnabled;
+    } catch {
+      toast.error(newEnabled ? $_('projects.enableServerError') : $_('projects.disableServerError'));
+    } finally {
+      togglingServerId = null;
+    }
   }
 
   function toggleExpand(serverId: string) {
@@ -1037,7 +1063,7 @@
           {:else}
             <div class="chat-list">
               {#each filteredChats as chat (chat.id)}
-                <div class="chat-card glass" onclick={() => openChat(chat)} role="button" tabindex="0">
+                <div class="chat-card glass" onclick={() => openChat(chat)} onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openChat(chat); } }} role="button" tabindex="0">
                   <div
                     class="chat-card-icon"
                     style:background-color="rgba(var(--brand-rgb), 0.08)"
@@ -1404,13 +1430,18 @@
                       <button
                         class="toggle-btn"
                         onclick={() => toggleServer(i)}
+                        disabled={togglingServerId === server.id}
                         title={server.enabled
                           ? $_('projects.disableServer')
                           : $_('projects.enableServer')}
                       >
-                        <div class="toggle-track" class:on={server.enabled}>
-                          <div class="toggle-thumb"></div>
-                        </div>
+                        {#if togglingServerId === server.id}
+                          <div class="loading-spinner tiny"></div>
+                        {:else}
+                          <div class="toggle-track" class:on={server.enabled}>
+                            <div class="toggle-thumb"></div>
+                          </div>
+                        {/if}
                       </button>
                     </div>
                   </div>
@@ -1706,8 +1737,8 @@
 {/if}
 
 {#if confirmRemoveMember}
-  <div class="confirm-overlay" onclick={cancelRemoveMember} role="dialog" aria-modal="true">
-    <div class="confirm-dialog glass glass--elev1" onclick={(e) => e.stopPropagation()}>
+  <div class="confirm-overlay" onclick={(e) => { if (e.target === e.currentTarget) cancelRemoveMember(); }} onkeydown={(e) => { if (e.key === 'Escape') cancelRemoveMember(); }} role="dialog" aria-modal="true" tabindex="-1">
+    <div class="confirm-dialog glass glass--elev1">
       <div class="confirm-icon-wrapper">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10" />
@@ -1728,8 +1759,8 @@
 {/if}
 
 {#if confirmDeleteSource}
-  <div class="confirm-overlay" onclick={cancelDeleteSource} role="dialog" aria-modal="true">
-    <div class="confirm-dialog glass glass--elev1" onclick={(e) => e.stopPropagation()}>
+  <div class="confirm-overlay" onclick={(e) => { if (e.target === e.currentTarget) cancelDeleteSource(); }} onkeydown={(e) => { if (e.key === 'Escape') cancelDeleteSource(); }} role="dialog" aria-modal="true" tabindex="-1">
+    <div class="confirm-dialog glass glass--elev1">
       <div class="confirm-icon-wrapper">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10" />
@@ -1750,8 +1781,8 @@
 {/if}
 
 {#if confirmRemoveChat}
-  <div class="confirm-overlay" onclick={cancelRemoveChat} role="dialog" aria-modal="true">
-    <div class="confirm-dialog glass glass--elev1" onclick={(e) => e.stopPropagation()}>
+  <div class="confirm-overlay" onclick={(e) => { if (e.target === e.currentTarget) cancelRemoveChat(); }} onkeydown={(e) => { if (e.key === 'Escape') cancelRemoveChat(); }} role="dialog" aria-modal="true" tabindex="-1">
+    <div class="confirm-dialog glass glass--elev1">
       <div class="confirm-icon-wrapper">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10" />
@@ -2012,37 +2043,6 @@
     font-size: 0.9rem;
     line-height: 1.4;
     opacity: 0.8;
-  }
-
-  .new-chat-btn {
-    align-self: center;
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: 0.75rem 1.5rem;
-    background: linear-gradient(
-      135deg,
-      var(--brand) 0%,
-      var(--brand-green-accent) 100%
-    );
-    color: white;
-    font-size: 0.875rem;
-    box-shadow:
-      0 4px 15px rgba(var(--brand-rgb), 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    cursor: pointer;
-  }
-
-  .new-chat-btn:hover {
-    transform: translateY(-2px);
-    box-shadow:
-      0 8px 24px rgba(var(--brand-rgb), 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    filter: brightness(1.08);
-  }
-
-  .new-chat-btn:active {
-    transform: translateY(0);
   }
 
   /* Segmented Control / Tabs Container */
@@ -3599,11 +3599,6 @@
       flex-direction: column;
       align-items: flex-start;
       gap: var(--space-md);
-    }
-
-    .new-chat-btn {
-      width: 100%;
-      justify-content: center;
     }
 
     .pill-group {

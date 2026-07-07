@@ -50,3 +50,11 @@ export interface WebSearchResult {
     title: string;
     url: string;
 }
+
+export interface Artifact {
+    id: string;
+    title: string;
+    content: string;
+    content_type: 'text/html' | 'text/markdown';
+    isStreaming?: boolean;
+}

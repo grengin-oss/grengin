@@ -114,8 +114,8 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Content type</label>
-      <div class="content-type-toggle">
+      <span class="field-label" id="content-type-label">Content type</span>
+      <div class="content-type-toggle" role="radiogroup" aria-labelledby="content-type-label">
         <button
           class="type-btn"
           class:active={contentType === 'text/markdown'}
@@ -142,13 +142,14 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Select project</label>
+      <label class="field-label" for="project-search">Select project</label>
       <div class="search-box">
         <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <input
+          id="project-search"
           type="text"
           class="search-input"
           bind:value={searchQuery}
@@ -196,7 +197,7 @@
     </div>
 
     <div class="preview-section">
-      <label class="field-label">Content preview</label>
+      <span class="field-label">Content preview</span>
       <div class="content-preview">
         {messageContent.slice(0, 300)}{messageContent.length > 300 ? '...' : ''}
       </div>

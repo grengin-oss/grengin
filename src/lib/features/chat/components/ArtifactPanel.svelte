@@ -385,12 +385,6 @@
   }
 
   /* ── Header buttons ── */
-  .icon-label {
-    font-size: 0.78rem;
-    font-weight: 500;
-    letter-spacing: 0.01em;
-  }
-
   .header-btn {
     display: flex;
     align-items: center;

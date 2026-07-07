@@ -47,6 +47,8 @@
     "toolCount": "{count} outil | {count} outils",
     "disableServer": "Desactiver le serveur",
     "enableServer": "Activer le serveur",
+    "enableServerError": "Échec de l'activation du serveur",
+    "disableServerError": "Échec de la désactivation du serveur",
     "instructionsInfo": "Ajoutez des instructions personnalisees qui seront appliquees a toutes les discussions de ce projet. Cela permet de guider la personnalite, les reponses et le comportement de l'IA.",
     "instructionsPlaceholder": "ex. Repondez toujours sur un ton formel. Privilegiez la precision technique. Incluez des exemples de code lorsque c'est pertinent...",
     "charCount": "{count} / {max} caracteres",
