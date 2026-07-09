@@ -563,7 +563,7 @@
           </div>
         </div>
       <!-- {/if} end of edit mode conditional -->
-    {:else if message.content || (message.files && message.files.length > 0)}
+    {:else if message.content || (message.files && message.files.length > 0) || hasPreviewableContent}
       <div class="assistant-message">
         {#if !message.isStreaming}
           <div class="message-actions" class:tts-active={isActive}>

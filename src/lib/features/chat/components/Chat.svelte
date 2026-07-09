@@ -4,6 +4,7 @@
   import MessageInput from './MessageInput.svelte';
   import TypingIndicator from './TypingIndicator.svelte';
   import ArtifactPanel from './ArtifactPanel.svelte';
+  import MessageScrollNavigator from './MessageScrollNavigator.svelte';
   import type { MergedToolResult, ToolCall, ToolResult, WebSearchResult } from '../../../types/toolCall';
   import type { BudgetWarningMessage, ChatMessage as ChatMessageType, McpAuthRequest } from '../../../types/chat';
   import { sendMessage, getConversation, getChatMcpServers, type UploadedFile } from '../../../api/chatApi';
@@ -905,6 +906,7 @@
         isLoadingConversation = true;
         isLoading = true;
         error = null;
+        showArtifactPanel = false;
 
         const conversation = await getConversation(chatId);
         conversationId = chatId;
@@ -1020,6 +1022,7 @@
       messages = [];
       error = null;
       isLoadingConversation = false;
+      showArtifactPanel = false;
 
       // Set model and provider from query params or defaults
       selectedModel = urlParams.get('model') || 'gpt-5.2';
@@ -1238,6 +1241,8 @@
         {/if}
       </div>
     </div>
+
+    <MessageScrollNavigator {messages} scrollContainer={messagesContainer} />
 
     <div class="input-container">
       <MessageInput
