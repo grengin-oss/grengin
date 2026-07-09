@@ -3,6 +3,7 @@
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
+  import { getOAuthRedirectUri } from '../../../platform/tauri';
 
   type OAuthProvider = 'google' | 'azure' | 'keycloak';
   type ButtonSize = 'small' | 'medium' | 'large';
@@ -28,10 +29,12 @@
     onError,
   }: Props = $props();
 
+  const configuredRedirectOrigin = import.meta.env?.VITE_OAUTH_REDIRECT_ORIGIN?.replace(/\/$/, '');
+
   // Always send redirect_uri so the backend knows where to redirect after OAuth
   // Use provider-specific callback path to match Azure/OAuth provider configuration
   const effectiveRedirectUri = $derived(
-    redirectUri ?? window.location.origin + `/auth/${provider}/callback`
+    getOAuthRedirectUri(provider, redirectUri, configuredRedirectOrigin)
   );
 
   let isLoading = $state(false);

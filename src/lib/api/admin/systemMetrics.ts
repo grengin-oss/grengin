@@ -1,5 +1,4 @@
-import { request } from '../client.js';
-import { API_BASE } from '../client.js';
+import { request, API_BASE, apiFetch } from '../client.js';
 import type { SystemMetrics } from '../../admin/types.js';
 
 export interface HealthStatus {
@@ -12,7 +11,7 @@ export async function getSystemMetrics(): Promise<SystemMetrics> {
 }
 
 export async function getHealthStatus(): Promise<HealthStatus> {
-  const response = await fetch(API_BASE, {
+  const response = await apiFetch(API_BASE, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });

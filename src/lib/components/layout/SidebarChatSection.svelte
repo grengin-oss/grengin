@@ -8,6 +8,7 @@
     deleteConversation,
     archiveConversation,
     renameConversation,
+    prefetchConversation,
   } from '../../api/chatApi.js';
   import { ApiError } from '../../api/client';
   import { getLocalizedError } from '../../utils/errorLocalization';
@@ -73,10 +74,20 @@
   function selectChat(chatId: string) {
     if (initializingConversation) return;
 
+    if (selectedChatId === chatId && currentPath === '/') {
+      activeChatMenu = null;
+      onCollapseSidebar();
+      return;
+    }
+
     selectedChatId = chatId;
     navigate(`/?chatId=${chatId}`);
     activeChatMenu = null;
     onCollapseSidebar();
+  }
+
+  function warmChat(chatId: string) {
+    prefetchConversation(chatId);
   }
 
   function deleteChat(chatId: string) {
@@ -434,10 +445,6 @@
           <div class="loading-spinner-small"></div>
           <span>{$_('sidebar.loadingChats')}</span>
         </div>
-      {:else if chatHistory.length === 0}
-        <div class="chat-empty">
-          <span>{$_('sidebar.noChatsYet')}</span>
-        </div>
       {:else if chatHistory.length === 0 && searchQuery}
         <div class="no-results">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -445,6 +452,10 @@
             <path d="m21 21-4.35-4.35" />
           </svg>
           <span>{$_('sidebar.noChatsFound')}</span>
+        </div>
+      {:else if chatHistory.length === 0}
+        <div class="chat-empty">
+          <span>{$_('sidebar.noChatsYet')}</span>
         </div>
       {:else}
         {#each chatHistory as chat (chat.id)}
@@ -478,6 +489,10 @@
                 class="menu-item chat-item-btn"
                 class:selected={selectedChatId === chat.id}
                 onclick={() => selectChat(chat.id)}
+                onpointerenter={() => warmChat(chat.id)}
+                onfocus={() => warmChat(chat.id)}
+                ontouchstart={() => warmChat(chat.id)}
+                aria-current={selectedChatId === chat.id ? 'page' : undefined}
                 title={chat.title}
               >
                 <span class="chat-item-title">{chat.title}</span>
@@ -600,7 +615,10 @@
     color: var(--text-secondary);
     font-size: 0.875rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.14s ease,
+      color 0.14s ease,
+      font-weight 0.14s ease;
     text-align: left;
     border-radius: 0;
     box-shadow: none;
@@ -647,6 +665,9 @@
     overflow-y: auto;
     padding: 0 var(--space-sm);
     margin-bottom: var(--space-sm);
+    flex: 1;
+    min-height: 0;
+    contain: content;
   }
 
   .chat-list-section {
@@ -729,12 +750,17 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    contain: layout paint;
   }
 
   .chat-item-btn {
     flex: 1;
     min-width: 0;
     color: var(--text-secondary);
+    transition:
+      background-color 0.12s ease,
+      color 0.12s ease,
+      font-weight 0.12s ease;
   }
 
   .chat-item-title {
@@ -760,7 +786,10 @@
     border-radius: var(--radius-full);
     opacity: 0;
     pointer-events: none;
-    transition: all 0.2s ease;
+    transition:
+      opacity 0.12s ease,
+      color 0.12s ease,
+      background-color 0.12s ease;
     box-shadow: none;
     backdrop-filter: none;
     right: 0px;

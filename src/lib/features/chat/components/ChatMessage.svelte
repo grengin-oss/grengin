@@ -4,12 +4,12 @@
   import { renderMarkdown, copyToClipboard } from '../../../utils/markdown';
   import { onMount, onDestroy, tick } from 'svelte';
   import type { ProviderInfo } from '../../../api/models';
+  import { getEffectiveIsDark, THEME_CHANGE_EVENT } from '$lib/theme.svelte.js';
 
   let isDarkMode = $state(false);
 
   function syncThemeState() {
-    isDarkMode = document.documentElement.classList.contains('dark')
-      || window.matchMedia('(prefers-color-scheme: dark)').matches;
+    isDarkMode = getEffectiveIsDark();
   }
 
   function getIconForTheme(provider?: ProviderInfo): string | undefined {
@@ -23,8 +23,15 @@
   onMount(() => {
     syncThemeState();
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', syncThemeState);
-    return () => mediaQuery.removeEventListener('change', syncThemeState);
+    const handleThemeChange = () => {
+      syncThemeState();
+    };
+    mediaQuery.addEventListener('change', handleThemeChange);
+    window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+    return () => {
+      mediaQuery.removeEventListener('change', handleThemeChange);
+      window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+    };
   });
   import {
     speechSynthesisSupported,

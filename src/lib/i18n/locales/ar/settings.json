@@ -3,6 +3,8 @@
     "title": "الإعدادات",
     "subtitle": "إدارة تفضيلاتك الشخصية والتكاملات المتصلة.",
     "tabs": {
+      "appearance": "المظهر",
+      "appearanceAria": "تفضيلات المظهر",
       "integrations": "التكاملات",
       "integrationsAria": "التكاملات المتصلة",
       "promptSettings": "إعدادات المطالبات",
@@ -121,6 +123,19 @@
       "modalTitle": "{name} — الأدوات",
       "loading": "جارٍ تحميل الأدوات...",
       "empty": "لا توجد أدوات متاحة لهذا الخادم."
+    }
+  },
+  "appearanceSettings": {
+    "title": "المظهر",
+    "subtitle": "اختر كيف يظهر Grengin على هذا الجهاز.",
+    "theme": {
+      "label": "سمة اللون",
+      "light": "فاتح",
+      "lightDescription": "استخدم الواجهة الفاتحة.",
+      "system": "النظام",
+      "systemDescription": "مطابقة إعدادات هذا الجهاز.",
+      "dark": "داكن",
+      "darkDescription": "استخدم الواجهة الداكنة."
     }
   }
 }

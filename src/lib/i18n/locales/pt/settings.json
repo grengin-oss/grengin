@@ -3,6 +3,8 @@
     "title": "Definições",
     "subtitle": "Gerir as suas preferências pessoais e integrações ligadas.",
     "tabs": {
+      "appearance": "Aparência",
+      "appearanceAria": "Preferências de aparência",
       "integrations": "Integrações",
       "integrationsAria": "Integrações ligadas",
       "promptSettings": "Definições de Prompt",
@@ -121,6 +123,19 @@
       "modalTitle": "{name} — Ferramentas",
       "loading": "Carregando ferramentas...",
       "empty": "Nenhuma ferramenta disponível para este servidor."
+    }
+  },
+  "appearanceSettings": {
+    "title": "Aparência",
+    "subtitle": "Escolha como o Grengin aparece neste dispositivo.",
+    "theme": {
+      "label": "Tema de cor",
+      "light": "Claro",
+      "lightDescription": "Usar a interface clara.",
+      "system": "Sistema",
+      "systemDescription": "Seguir este dispositivo.",
+      "dark": "Escuro",
+      "darkDescription": "Usar a interface escura."
     }
   }
 }

@@ -1,21 +1,41 @@
 import type { components } from '../types/api.js';
+import { isTauriRuntime } from '../platform/tauri.js';
 
 type User = components['schemas']['User'];
 
-// Always use /api - proxied by Vite dev server locally, Cloudflare Pages Function in production
-const defaultApiBase = '';
+const defaultWebApiBase = '/api';
+const defaultTauriApiBase =
+  import.meta.env?.VITE_TAURI_API_BASE || 'https://api.demo.devel.grengin.com';
 const rawApiBase = import.meta.env?.VITE_API_BASE;
 
-const normalizeBase = (base: string): string => {
+const getDefaultApiBase = (): string => {
+  return isTauriRuntime() ? defaultTauriApiBase : defaultWebApiBase;
+};
+
+const normalizeBase = (base: string, fallback = getDefaultApiBase()): string => {
   if (!base) {
-    return defaultApiBase;
+    return fallback;
   }
   return base.endsWith('/') ? base.slice(0, -1) : base;
 };
 
-// Use env override when provided, fall back to /api (proxied locally & via Pages Functions)
-export const API_BASE = normalizeBase(rawApiBase ?? defaultApiBase);
+// Web builds use /api so requests can be proxied locally and via Pages Functions.
+// Packaged Tauri builds need an absolute backend URL because local assets are not behind that proxy.
+export const API_BASE = normalizeBase(rawApiBase ?? getDefaultApiBase());
 
+export type ApiFetchInit = RequestInit & {
+  maxRedirections?: number;
+  connectTimeout?: number;
+};
+
+export async function apiFetch(input: URL | Request | string, init?: ApiFetchInit): Promise<Response> {
+  if (isTauriRuntime()) {
+    const { fetch: nativeFetch } = await import('@tauri-apps/plugin-http');
+    return nativeFetch(input, init);
+  }
+
+  return fetch(input, init);
+}
 
 export interface RichErrorDetail {
   type: 'rich';
@@ -130,7 +150,7 @@ async function tryRefreshToken(): Promise<boolean> {
   }
 
   try {
-    const response = await fetch(`${API_BASE}/auth/refresh`, {
+    const response = await apiFetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken }),
@@ -166,7 +186,7 @@ export async function request<T>(
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await apiFetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers,
   });
@@ -178,7 +198,7 @@ export async function request<T>(
       // Retry the original request with new token
       const newToken = getAccessTokenFn?.();
       (headers as Record<string, string>)['Authorization'] = `Bearer ${newToken}`;
-      const retryResponse = await fetch(`${API_BASE}${endpoint}`, {
+      const retryResponse = await apiFetch(`${API_BASE}${endpoint}`, {
         ...options,
         headers,
       });

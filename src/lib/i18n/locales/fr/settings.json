@@ -3,6 +3,8 @@
     "title": "Paramètres",
     "subtitle": "Gérez vos préférences personnelles et les intégrations connectées.",
     "tabs": {
+      "appearance": "Apparence",
+      "appearanceAria": "Préférences d'apparence",
       "integrations": "Intégrations",
       "integrationsAria": "Intégrations connectées",
       "promptSettings": "Paramètres des Instructions",
@@ -121,6 +123,19 @@
       "submitted": "Merci pour votre retour !",
       "failedToSubmit": "Échec de l'envoi du retour",
       "ratingRequired": "Veuillez sélectionner une note avant d'envoyer"
+    }
+  },
+  "appearanceSettings": {
+    "title": "Apparence",
+    "subtitle": "Choisissez l'apparence de Grengin sur cet appareil.",
+    "theme": {
+      "label": "Thème de couleur",
+      "light": "Clair",
+      "lightDescription": "Utiliser l'interface claire.",
+      "system": "Système",
+      "systemDescription": "Suivre cet appareil.",
+      "dark": "Sombre",
+      "darkDescription": "Utiliser l'interface sombre."
     }
   }
 }

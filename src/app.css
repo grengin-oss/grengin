@@ -5,7 +5,13 @@
 @import 'highlight.js/styles/github.css' screen and (prefers-color-scheme: light);
 
 /* ===== Root tokens ===== */
+
 :root {
+  --app-safe-area-top: env(safe-area-inset-top, 0px);
+  --app-safe-area-right: env(safe-area-inset-right, 0px);
+  --app-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --app-safe-area-left: env(safe-area-inset-left, 0px);
+
   /* Typography & rendering - system fonts */
   font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   line-height: 1.5;
@@ -111,7 +117,7 @@
 
   /* Status surfaces */
   --success-surface: color-mix(in oklab, var(--brand-green) 15%, #0d0d10);
-  --info-surface:    color-mix(in oklab, var(--brand-blue) 15%, #0d0d10);
+  --info-surface:    color-mix(in oklab, var(--brand) 15%, #0d0d10);
   --danger-surface:  color-mix(in oklab, var(--brand-red) 15%, #0d0d10);
 
   /* App base colors */
@@ -121,7 +127,7 @@
 
 /* Light scheme overrides */
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme]) {
     --bg-primary: #fcfcfc;
     --text-primary: #1a1d23;
     --text-secondary: #111827;
@@ -143,7 +149,7 @@
     --btn-quaternary: #e5e7eb;
 
     --success-surface: color-mix(in oklab, var(--brand-green) 10%, #fff);
-    --info-surface:    color-mix(in oklab, var(--brand-blue) 10%, #fff);
+    --info-surface:    color-mix(in oklab, var(--brand) 10%, #fff);
     --danger-surface:  color-mix(in oklab, var(--brand-red) 10%, #fff);
 
     --glass-bg-light: rgba(255, 255, 255, 0.85);
@@ -159,7 +165,7 @@
 
 /* Dark scheme glass adaptations */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --glass-bg-light: rgba(255, 255, 255, 0.08);
     --glass-bg-dark: rgba(18, 18, 22, var(--glass-opacity-regular));
     --glass-shadow-light: 0 0.5rem 2rem rgba(0, 0, 0, 0.15);
@@ -169,6 +175,80 @@
     --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.12);
     --glass-edge-glow: 0 0 0 0.5px rgba(255, 255, 255, 0.06);
   }
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+
+  --bg-primary: #fcfcfc;
+  --text-primary: #1a1d23;
+  --text-secondary: #111827;
+
+  --surface-elevated: #ffffff;
+  --surface-card: #f6f7fb;
+  --surface-card-interactive: #ffffff;
+  --surface-subtle: #f1f5f9;
+  --surface-accent: color-mix(in oklab, var(--brand) 8%, #ffffff);
+  --surface-border: #e5e7eb;
+
+  --link-color: var(--brand);
+  --link-hover: color-mix(in oklab, var(--brand) 80%, black);
+
+  --button-bg: #ffffff;
+  --button-border: #e5e7eb;
+  --btn-secondary: #f8fafc;
+  --btn-tertiary: #f1f5f9;
+  --btn-quaternary: #e5e7eb;
+
+  --success-surface: color-mix(in oklab, var(--brand-green) 10%, #fff);
+  --info-surface:    color-mix(in oklab, var(--brand) 10%, #fff);
+  --danger-surface:  color-mix(in oklab, var(--brand-red) 10%, #fff);
+
+  --glass-bg-light: rgba(255, 255, 255, 0.85);
+  --glass-bg-dark: rgba(255, 255, 255, 0.85);
+  --glass-shadow-light: 0 0.5rem 2rem rgba(0, 0, 0, 0.06);
+  --glass-shadow-dark: 0 0.5rem 2rem rgba(0, 0, 0, 0.1);
+  --glass-stroke-light: rgba(0, 0, 0, 0.08);
+  --glass-stroke-dark: rgba(0, 0, 0, 0.12);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --glass-edge-glow: 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg-primary: #0d0d10;
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.7);
+
+  --surface-elevated: #16181f;
+  --surface-card: #12141a;
+  --surface-card-interactive: #181b22;
+  --surface-subtle: #0f1115;
+  --surface-accent: color-mix(in oklab, var(--brand) 12%, #101218);
+  --surface-border: rgba(255, 255, 255, 0.08);
+
+  --link-color: var(--brand);
+  --link-hover: var(--brand-hover);
+
+  --button-bg: #1a1a1f;
+  --button-border: color-mix(in oklab, var(--brand) 40%, #2b2f3a);
+  --btn-secondary: #1e2026;
+  --btn-tertiary: #252831;
+  --btn-quaternary: #2d3340;
+
+  --success-surface: color-mix(in oklab, var(--brand-green) 15%, #0d0d10);
+  --info-surface:    color-mix(in oklab, var(--brand) 15%, #0d0d10);
+  --danger-surface:  color-mix(in oklab, var(--brand-red) 15%, #0d0d10);
+
+  --glass-bg-light: rgba(255, 255, 255, 0.08);
+  --glass-bg-dark: rgba(18, 18, 22, var(--glass-opacity-regular));
+  --glass-shadow-light: 0 0.5rem 2rem rgba(0, 0, 0, 0.15);
+  --glass-shadow-dark: 0 0.5rem 2rem rgba(0, 0, 0, 0.35);
+  --glass-stroke-light: rgba(255, 255, 255, 0.18);
+  --glass-stroke-dark: rgba(255, 255, 255, 0.06);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --glass-edge-glow: 0 0 0 0.5px rgba(255, 255, 255, 0.06);
 }
 
 /* ===== Base layout ===== */
@@ -183,6 +263,7 @@ html {
   text-size-adjust: 100%;
   /* Reserve scrollbar space so 100vw doesn't cause horizontal overflow when vertical scrollbar appears */
   scrollbar-gutter: stable;
+  background: var(--bg-primary);
 }
 
 body {
@@ -192,15 +273,28 @@ body {
   padding: 0;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
+  background: var(--bg-primary);
+  -webkit-tap-highlight-color: transparent;
 }
 
 #app {
   width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   position: relative;
+}
+
+a,
+button,
+[role='button'],
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
 }
 
 .sr-only {
@@ -1004,6 +1098,10 @@ html[dir="rtl"] .rtl-flip svg {
   html[dir="rtl"] .sidebar.collapsed {
     transform: translateX(100%);
   }
+}
+
+html[data-app-layout='mobile'][dir="rtl"] .sidebar.collapsed {
+  transform: translateX(100%);
 }
 
 /* Drop-shadow on the sidebar always points away from the content area. */

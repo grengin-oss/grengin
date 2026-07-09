@@ -698,6 +698,7 @@
 <style>
   .integrations-container {
     padding: var(--space-lg);
+    min-height: 100%;
   }
 
   /* Summary bar */
@@ -1490,6 +1491,37 @@
     .integrations-grid {
       grid-template-columns: 1fr;
       gap: var(--space-md);
+    }
+  }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    :global(html[data-app-layout='mobile']) .integrations-container {
+      padding: var(--space-sm);
+    }
+
+    :global(html[data-app-layout='mobile']) .integrations-summary {
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+
+    :global(html[data-app-layout='mobile']) .summary-stats {
+      gap: var(--space-lg);
+    }
+
+    :global(html[data-app-layout='mobile']) .toolbar-right {
+      justify-content: flex-start;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    :global(html[data-app-layout='mobile']) .integrations-grid {
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: var(--space-sm);
+    }
+
+    :global(html[data-app-layout='mobile']) .integration-card {
+      padding: var(--space-md);
+      gap: var(--space-sm);
     }
   }
 

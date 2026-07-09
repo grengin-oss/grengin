@@ -33,6 +33,7 @@
   let selectedMcpServers = $state<string[]>([]);
   let loadingMcpServers = $state(false);
   let mcpServersError = $state<string | null>(null);
+  let conversationLoadToken = 0;
 
   // Models state
   let providers = $state<ProviderInfo[]>([]);
@@ -810,14 +811,17 @@
   async function loadConversationFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chatId');
+    const loadToken = ++conversationLoadToken;
 
     if (chatId) {
       try {
-        isLoadingConversation = true;
+        isLoadingConversation = messages.length === 0;
         isLoading = true;
         error = null;
 
         const conversation = await getConversation(chatId);
+        if (loadToken !== conversationLoadToken) return;
+
         conversationId = chatId;
 
         // Convert messages to ChatMessageType format
@@ -893,6 +897,8 @@
           }
         }
       } catch (err) {
+        if (loadToken !== conversationLoadToken) return;
+
         // Convert all errors to ApiError for consistent handling
         const apiError = err instanceof ApiError 
           ? err 
@@ -902,6 +908,8 @@
         console.error('Failed to load conversation:', err);
         messages = []; // Clear messages on error
       } finally {
+        if (loadToken !== conversationLoadToken) return;
+
         isLoading = false;
         isLoadingConversation = false;
         
@@ -922,14 +930,16 @@
           });
         }
 
-        // Focus the input field
-        messageInput?.focus();
+        if (window.matchMedia('(pointer: fine)').matches) {
+          messageInput?.focus();
+        }
       }
     } else {
       // No chatId in URL, clear everything
       conversationId = null;
       messages = [];
       error = null;
+      isLoading = false;
       isLoadingConversation = false;
       // Set default model and provider
       selectedModel = 'gpt-5.2';
@@ -976,7 +986,7 @@
   });
 </script>
 
-{#if isLoadingConversation}
+{#if isLoadingConversation && messages.length === 0}
   <!-- Loading state: wait until we know if there are messages -->
   <div class="chat-container chat-container--loading" role="status" aria-label={$_('chat.messageInput.loadingModels')} aria-busy="true"></div>
 {:else if messages.length === 0}
@@ -1147,7 +1157,8 @@
   .chat-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100%;
+    min-height: 0;
     width: 100%;
     background: var(--bg-primary);
   }
@@ -1162,6 +1173,7 @@
     overflow-x: hidden;
     scroll-behavior: smooth;
     position: relative;
+    min-height: 0;
   }
 
   .messages-inner {
@@ -1385,7 +1397,7 @@
 
   .input-container {
     flex-shrink: 0;
-    padding: 1.25rem 1.5rem;
+    padding: 1.25rem 1.5rem calc(1rem + var(--app-safe-area-bottom));
     padding-top: 0;
     background: var(--bg-primary);
     position: relative;
@@ -1416,6 +1428,7 @@
   @media (max-width: 768px) {
     .chat-container {
       height: 100%;
+      min-height: 0;
     }
 
     .messages-inner {
@@ -1443,6 +1456,7 @@
     .input-container {
       padding: 0.75rem 1rem;
       padding-top: 0;
+      padding-bottom: calc(0.75rem + var(--app-safe-area-bottom));
       max-width: 100%;
     }
 
@@ -1453,6 +1467,63 @@
 
     .input-container .ai-disclaimer {
       margin: 0.25rem 0 -0.25rem 0;
+    }
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-container {
+    height: 100%;
+    min-height: 0;
+  }
+
+  :global(html[data-app-layout='mobile']) .messages-inner {
+    max-width: 100%;
+    padding: var(--space-md);
+  }
+
+  :global(html[data-app-layout='mobile']) .messages-container {
+    min-height: 0;
+  }
+
+  :global(html[data-app-layout='mobile']) .input-container {
+    padding: 0.75rem 1rem;
+    padding-top: 0;
+    padding-bottom: calc(0.75rem + var(--app-safe-area-bottom));
+    max-width: 100%;
+  }
+
+  :global(html[data-app-layout='mobile']) .input-container .ai-disclaimer {
+    margin: 0.25rem 0 -0.25rem 0;
+  }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    :global(html[data-app-layout='mobile']) .messages-inner {
+      padding: var(--space-sm) var(--space-md);
+      gap: var(--space-xs);
+    }
+
+    :global(html[data-app-layout='mobile']) .input-container {
+      padding: 0.35rem 0.75rem;
+      padding-top: 0;
+      padding-bottom: calc(0.4rem + var(--app-safe-area-bottom));
+    }
+
+    :global(html[data-app-layout='mobile']) .ai-disclaimer {
+      display: none;
+    }
+
+    :global(html[data-app-layout='mobile']) .empty-state-container {
+      padding: var(--space-sm);
+      gap: var(--space-sm);
+    }
+
+    :global(html[data-app-layout='mobile']) .empty-icon-wrapper,
+    :global(html[data-app-layout='mobile']) .empty-content p {
+      display: none;
+    }
+
+    :global(html[data-app-layout='mobile']) .empty-content h1 {
+      font-size: 1.15rem;
+      margin-bottom: 0;
     }
   }
 

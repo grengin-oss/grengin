@@ -1,10 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { navigate } from 'svelte-routing';
   import { setAuth, ApiError, handleOAuthCallback } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
-  import { API_BASE } from '../../../api/client.js';
+  import { API_BASE, apiFetch } from '../../../api/client.js';
+  import type { LoginResponse } from '../../../api/auth.js';
 
   // UI State
   type CallbackStatus = 'processing' | 'success' | 'error';
@@ -13,6 +15,14 @@
   // Constants
   const REDIRECT_DELAY_SUCCESS = 300; // ms
   const REDIRECT_DELAY_ERROR = 3000; // ms
+
+  function getProviderFromPath(): string | null {
+    return window.location.pathname.match(/^\/auth\/([^/]+)\/(?:mobile\/)?callback$/)?.[1] ?? null;
+  }
+
+  function isMobileCallbackPath(): boolean {
+    return /^\/auth\/[^/]+\/mobile\/callback$/.test(window.location.pathname);
+  }
 
   /**
    * Try SSO proxy fallback — frontend only.
@@ -42,7 +52,7 @@
 
     try {
       // SSO proxy passed a token directly — validate it and fetch user profile
-      const response = await fetch(`${API_BASE}/me`, {
+      const response = await apiFetch(`${API_BASE}/me`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Accept': 'application/json',
@@ -84,21 +94,28 @@
     const code = params.get('code') || hashParams.get('code');
     const assertion = params.get('assertion') || hashParams.get('assertion');
 
-    // 3. Retrieve provider from session storage
-    const provider = sessionStorage.getItem('oauth_provider');
+    // 3. Retrieve provider from session storage, with path fallback for native deep links
+    const provider = sessionStorage.getItem('oauth_provider') || getProviderFromPath();
     if (!provider) {
       const message = $_('error.auth.oauth_provider_not_found');
       throw new ApiError(400, message);
     }
 
     let response: LoginResponse;
+    const isMobileCallback =
+      isMobileCallbackPath() || sessionStorage.getItem('oauth_mobile_callback') === 'true';
 
     if (assertion && state) {
       // SSO proxy flow: assertion JWT + state — forward directly to API callback
-      response = await handleOAuthCallback(provider, null, state, assertion);
+      response = await handleOAuthCallback(provider, null, state, {
+        assertion,
+        mobile: isMobileCallback,
+      });
     } else if (code && state) {
       // Standard OAuth code flow
-      response = await handleOAuthCallback(provider, code, state, null);
+      response = await handleOAuthCallback(provider, code, state, {
+        mobile: isMobileCallback,
+      });
     } else {
       // No standard code/state and no assertion — try legacy SSO proxy fallback (token in URL)
       console.warn('[AuthCallback] No code/state/assertion in URL, attempting SSO proxy fallback...');
@@ -128,6 +145,21 @@
    */
   function cleanupSessionStorage(): void {
     sessionStorage.removeItem('oauth_provider');
+    sessionStorage.removeItem('oauth_mobile_callback');
+  }
+
+  function navigateInApp(target: string): void {
+    try {
+      const parsed = new URL(target, window.location.origin);
+      if (parsed.origin === window.location.origin) {
+        navigate(`${parsed.pathname}${parsed.search}${parsed.hash}`, { replace: true });
+        return;
+      }
+    } catch {
+      // Fallback below.
+    }
+
+    window.location.assign(target);
   }
 
   /**
@@ -138,7 +170,7 @@
     sessionStorage.removeItem('auth_return_url');
     
     setTimeout(() => {
-      window.location.href = returnUrl;
+      navigateInApp(returnUrl);
     }, REDIRECT_DELAY_SUCCESS);
   }
 
@@ -147,7 +179,7 @@
    */
   function redirectAfterError(): void {
     setTimeout(() => {
-      window.location.href = '/';
+      navigate('/', { replace: true });
     }, REDIRECT_DELAY_ERROR);
   }
 

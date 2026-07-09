@@ -3,6 +3,8 @@
     "title": "Settings",
     "subtitle": "Manage your personal preferences and connected integrations.",
     "tabs": {
+      "appearance": "Appearance",
+      "appearanceAria": "Appearance preferences",
       "integrations": "Integrations",
       "integrationsAria": "Connected integrations",
       "promptSettings": "Prompt Settings",
@@ -121,6 +123,19 @@
       "modalTitle": "{name} — Tools",
       "loading": "Loading tools...",
       "empty": "No tools available for this server."
+    }
+  },
+  "appearanceSettings": {
+    "title": "Appearance",
+    "subtitle": "Choose how Grengin looks on this device.",
+    "theme": {
+      "label": "Color theme",
+      "light": "Light",
+      "lightDescription": "Use the bright interface.",
+      "system": "System",
+      "systemDescription": "Match this device.",
+      "dark": "Dark",
+      "darkDescription": "Use the dark interface."
     }
   }
 }

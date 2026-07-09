@@ -1,0 +1,3 @@
+When modifying Tauri code, keep the Rust side type-safe and modular: prefer explicit types, small focused modules/functions, clear error types or `Result` returns, and avoid large untyped command handlers or duplicated platform logic.
+
+For voice-to-text testing, do not change the backend yet. Use frontend/mobile-only testing paths where possible. Later, the proper backend implementation should add an authenticated transcription endpoint that reuses the existing base64 `Attachment` request shape and sends audio to the provider without storing it as a normal file upload.

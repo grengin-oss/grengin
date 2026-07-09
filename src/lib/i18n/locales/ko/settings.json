@@ -3,6 +3,8 @@
     "title": "설정",
     "subtitle": "개인 기본 설정과 연결된 통합을 관리합니다.",
     "tabs": {
+      "appearance": "모양",
+      "appearanceAria": "모양 기본 설정",
       "integrations": "통합",
       "integrationsAria": "연결된 통합",
       "promptSettings": "프롬프트 설정",
@@ -121,6 +123,19 @@
       "submitted": "피드백 감사합니다!",
       "failedToSubmit": "피드백 제출 실패",
       "ratingRequired": "제출하기 전에 평가를 선택하세요"
+    }
+  },
+  "appearanceSettings": {
+    "title": "모양",
+    "subtitle": "이 기기에서 Grengin이 표시되는 방식을 선택합니다.",
+    "theme": {
+      "label": "색상 테마",
+      "light": "라이트",
+      "lightDescription": "밝은 인터페이스를 사용합니다.",
+      "system": "시스템",
+      "systemDescription": "이 기기 설정을 따릅니다.",
+      "dark": "다크",
+      "darkDescription": "어두운 인터페이스를 사용합니다."
     }
   }
 }

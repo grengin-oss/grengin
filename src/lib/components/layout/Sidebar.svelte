@@ -19,7 +19,7 @@
 
   // Auto-collapse sidebar on mobile after navigation actions
   function collapseSidebarOnMobile() {
-    if (window.innerWidth <= 768) {
+    if (isMobileShell()) {
       isCollapsed = true;
       onsidebarToggle?.(isCollapsed);
     }
@@ -28,6 +28,10 @@
   let showUserMenu = $state(false);
   let userMenuElement: HTMLElement;
   let userCollapsed = $state(false);
+  let closeSwipeStartX = 0;
+  let closeSwipeStartY = 0;
+  let isCloseSwipeTracking = false;
+  let lastResponsiveCompact = typeof window !== 'undefined' ? isResponsiveCompact() : false;
 
   const notifState = getNotificationsState();
   let showAlertsPopover = $state(false);
@@ -288,11 +292,32 @@
     onlogout?.();
   }
 
+  function isMobileShell(): boolean {
+    const coarsePointer =
+      window.matchMedia('(hover: none), (pointer: coarse)').matches ||
+      navigator.maxTouchPoints > 0;
+    const shortSide = Math.min(window.innerWidth, window.innerHeight);
+
+    return window.innerWidth <= 768 || (coarsePointer && shortSide <= 600);
+  }
+
+  function isResponsiveCompact(): boolean {
+    return window.innerWidth <= 1024 || isMobileShell();
+  }
+
   function handleResize() {
-    if (window.innerWidth > 1024 && isCollapsed && !userCollapsed) {
+    const nextResponsiveCompact = isResponsiveCompact();
+
+    if (nextResponsiveCompact === lastResponsiveCompact) {
+      return;
+    }
+
+    lastResponsiveCompact = nextResponsiveCompact;
+
+    if (!nextResponsiveCompact && isCollapsed && !userCollapsed) {
       isCollapsed = false;
       onsidebarToggle?.(isCollapsed);
-    } else if (window.innerWidth <= 1024 && !isCollapsed && !userCollapsed) {
+    } else if (nextResponsiveCompact && !isCollapsed && !userCollapsed) {
       isCollapsed = true;
       onsidebarToggle?.(isCollapsed);
     }
@@ -305,6 +330,42 @@
     collapseSidebarOnMobile();
   }
 
+  function handleSidebarTouchStart(event: TouchEvent): void {
+    if (window.innerWidth > 768 || isCollapsed || event.touches.length !== 1) {
+      return;
+    }
+
+    const touch = event.touches[0];
+    closeSwipeStartX = touch.clientX;
+    closeSwipeStartY = touch.clientY;
+    isCloseSwipeTracking = true;
+  }
+
+  function handleSidebarTouchMove(event: TouchEvent): void {
+    if (!isCloseSwipeTracking || event.touches.length !== 1) {
+      return;
+    }
+
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - closeSwipeStartX;
+    const deltaY = Math.abs(touch.clientY - closeSwipeStartY);
+
+    if (deltaY > 48) {
+      isCloseSwipeTracking = false;
+      return;
+    }
+
+    if (deltaX <= -72) {
+      isCollapsed = true;
+      onsidebarToggle?.(isCollapsed);
+      isCloseSwipeTracking = false;
+    }
+  }
+
+  function handleSidebarTouchEnd(): void {
+    isCloseSwipeTracking = false;
+  }
+
 </script>
 
 <svelte:window onclick={handleClickOutside} onresize={handleResize} onkeydown={(e) => {
@@ -313,7 +374,15 @@
   }
 }} />
 
-<aside class="sidebar" class:collapsed={isCollapsed} aria-label={$_('sidebar.navigation') || 'Main navigation'}>
+<aside
+  class="sidebar"
+  class:collapsed={isCollapsed}
+  aria-label={$_('sidebar.navigation') || 'Main navigation'}
+  ontouchstart={handleSidebarTouchStart}
+  ontouchmove={handleSidebarTouchMove}
+  ontouchend={handleSidebarTouchEnd}
+  ontouchcancel={handleSidebarTouchEnd}
+>
   {#snippet alertsUi()}
     <button
       type="button"
@@ -368,8 +437,10 @@
             {@render alertsUi()}
           </div>
           <button
+            type="button"
             class="burger-btn"
             onclick={toggleSidebar}
+            aria-expanded={!isCollapsed}
             aria-label={$_('sidebar.toggleSidebar')}
             title={$_('sidebar.toggleSidebar')}
           >
@@ -378,6 +449,7 @@
         {:else}
           <div class="collapsed-logo-container">
             <button
+              type="button"
               class="logo-btn"
               onclick={toggleSidebar}
               aria-label={$_('sidebar.toggleSidebar')}
@@ -386,8 +458,10 @@
               <img src="/grengin-icon.svg" alt="Grengin" class="logo-icon" />
             </button>
             <button
+              type="button"
               class="expand-btn"
               onclick={toggleSidebar}
+              aria-expanded={!isCollapsed}
               aria-label={$_('sidebar.expandSidebar')}
               title={$_('sidebar.expandSidebar')}
             >
@@ -550,7 +624,13 @@
     z-index: 1000;
     overflow-y: auto;
     overflow-x: hidden;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translate3d(0, 0, 0);
+    transition:
+      width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+    backface-visibility: hidden;
 
     /* Liquid Glass Layer 1 - Primary navigation surface */
     background: var(--bg-primary);
@@ -773,16 +853,21 @@
     border-radius: var(--radius-full);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      background-color 0.18s ease,
+      color 0.18s ease,
+      transform 0.18s ease;
     flex-shrink: 0;
     box-shadow: none;
     backdrop-filter: none;
   }
 
-  .burger-btn:hover {
-    background: var(--btn-quaternary);
-    color: var(--brand);
-    transform: scale(1.05);
+  @media (hover: hover) and (pointer: fine) {
+    .burger-btn:hover {
+      background: var(--btn-quaternary);
+      color: var(--brand);
+      transform: scale(1.05);
+    }
   }
 
   .burger-btn:focus-visible {
@@ -1213,11 +1298,15 @@
     .sidebar {
       width: 280px;
       box-shadow: 4px 0 32px rgba(0, 0, 0, 0.25);
+      transition:
+        transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.38s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .sidebar.collapsed {
-      transform: translateX(-100%);
+      transform: translate3d(-100%, 0, 0);
       width: 280px;
+      box-shadow: none;
     }
 
     .user-menu-dropdown {
@@ -1230,6 +1319,28 @@
     }
   }
 
+  :global(html[data-app-layout='mobile']) .sidebar {
+    width: 280px;
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.25);
+    transition:
+      transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  :global(html[data-app-layout='mobile']) .sidebar.collapsed {
+    transform: translate3d(-100%, 0, 0);
+    width: 280px;
+    box-shadow: none;
+  }
+
+  :global(html[data-app-layout='mobile']) .user-menu-dropdown {
+    inset-inline-start: var(--space-md);
+  }
+
+  :global(html[data-app-layout='mobile']) .alerts-btn {
+    display: none;
+  }
+
   @media (max-width: 480px) {
     .sidebar {
       width: 85vw;
@@ -1238,7 +1349,7 @@
     }
 
     .sidebar.collapsed {
-      transform: translateX(-100%);
+      transform: translate3d(-100%, 0, 0);
       width: 85vw;
       max-width: 320px;
     }

@@ -1,4 +1,4 @@
-import { API_BASE, request, ApiError, parseErrorDetail } from './client';
+import { API_BASE, request, ApiError, parseErrorDetail, apiFetch } from './client';
 import { getAccessToken } from '../features/auth';
 
 export interface NotificationItem {
@@ -52,7 +52,7 @@ async function tryRefreshTokenForStream(): Promise<string | null> {
   if (!refreshToken) return null;
 
   try {
-    const refreshResponse = await fetch(`${API_BASE}/auth/refresh`, {
+    const refreshResponse = await apiFetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken }),
@@ -64,8 +64,9 @@ async function tryRefreshTokenForStream(): Promise<string | null> {
     if (!data.accessToken || !data.user) return null;
 
     localStorage.setItem('grengin_access_token', data.accessToken);
-    if (data.refresh_token) {
-      localStorage.setItem('grengin_refresh_token', data.refresh_token);
+    const nextRefreshToken = data.refreshToken || data.refresh_token;
+    if (nextRefreshToken) {
+      localStorage.setItem('grengin_refresh_token', nextRefreshToken);
     }
     localStorage.setItem('grengin_user', JSON.stringify(data.user));
     return data.accessToken as string;
@@ -113,7 +114,7 @@ export async function openNotificationsStream(
   }
 
   const url = `${API_BASE}/me/notifications/stream`;
-  let response = await fetch(url, {
+  let response = await apiFetch(url, {
     method: 'GET',
     headers: { Authorization: `Bearer ${token}` },
     signal,
@@ -124,7 +125,7 @@ export async function openNotificationsStream(
     if (!newToken) {
       clearAuthAndRedirect();
     }
-    response = await fetch(url, {
+    response = await apiFetch(url, {
       method: 'GET',
       headers: { Authorization: `Bearer ${newToken}` },
       signal,

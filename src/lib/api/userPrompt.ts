@@ -1,4 +1,10 @@
 import { request } from './client.js';
+import {
+  cachedLoad,
+  clearCacheNamespace,
+  makeScopedCacheKey,
+  writeCache,
+} from '../utils/cache.js';
 
 export interface UserSystemPrompt {
   prompt_id: string;
@@ -19,23 +25,36 @@ export interface PromptFeedbackPayload {
   rating: number;
 }
 
+const SETTINGS_CACHE_TTL_MS = 5 * 60_000;
+
+function userPromptCacheKey(): string {
+  return makeScopedCacheKey('settings', ['user-system-prompt']);
+}
+
 export async function getUserSystemPrompt(): Promise<UserSystemPrompt> {
-  return request<UserSystemPrompt>('/me/system-prompt');
+  return cachedLoad(userPromptCacheKey(), () => request<UserSystemPrompt>('/me/system-prompt'), {
+    ttlMs: SETTINGS_CACHE_TTL_MS,
+  });
 }
 
 export async function updateUserSystemPrompt(
   payload: UpdateUserPromptPayload,
 ): Promise<UserSystemPrompt> {
-  return request<UserSystemPrompt>('/me/system-prompt', {
+  const prompt = await request<UserSystemPrompt>('/me/system-prompt', {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
+
+  writeCache(userPromptCacheKey(), prompt, SETTINGS_CACHE_TTL_MS);
+  return prompt;
 }
 
 export async function deleteUserSystemPrompt(): Promise<void> {
-  return request<void>('/me/system-prompt', {
+  const response = await request<void>('/me/system-prompt', {
     method: 'DELETE',
   });
+  clearCacheNamespace('settings');
+  return response;
 }
 
 export async function submitPromptFeedback(

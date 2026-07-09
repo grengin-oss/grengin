@@ -3,6 +3,8 @@
     "title": "設定",
     "subtitle": "個人の設定と接続済みの連携を管理します。",
     "tabs": {
+      "appearance": "外観",
+      "appearanceAria": "外観の設定",
       "integrations": "連携",
       "integrationsAria": "接続済みの連携",
       "promptSettings": "プロンプト設定",
@@ -121,6 +123,19 @@
       "submitted": "フィードバックありがとうございます！",
       "failedToSubmit": "フィードバックの送信に失敗しました",
       "ratingRequired": "送信前に評価を選択してください"
+    }
+  },
+  "appearanceSettings": {
+    "title": "外観",
+    "subtitle": "このデバイスでのGrenginの表示を選択します。",
+    "theme": {
+      "label": "カラーテーマ",
+      "light": "ライト",
+      "lightDescription": "明るいインターフェースを使用します。",
+      "system": "システム",
+      "systemDescription": "このデバイスに合わせます。",
+      "dark": "ダーク",
+      "darkDescription": "暗いインターフェースを使用します。"
     }
   }
 }

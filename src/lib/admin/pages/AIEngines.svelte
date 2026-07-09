@@ -9,6 +9,7 @@
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
+  import { getEffectiveIsDark, THEME_CHANGE_EVENT } from "$lib/theme.svelte.js";
   import type { AIEngine } from "../types.js";
   import { aiEnginesStore } from "../stores/index.js";
   import { permissionsStore } from "../../features/auth/index.js";
@@ -31,8 +32,7 @@
   }
 
   function syncThemeState() {
-    isDarkMode = document.documentElement.classList.contains("dark")
-      || window.matchMedia("(prefers-color-scheme: dark)").matches;
+    isDarkMode = getEffectiveIsDark();
   }
 
   function getIconForTheme(iconSource?: { icon?: string; icon_dark?: string }): string | undefined {
@@ -274,13 +274,17 @@
     syncThemeState();
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     mediaQuery.addEventListener("change", syncThemeState);
+    window.addEventListener(THEME_CHANGE_EVENT, syncThemeState);
 
     store.fetch().catch((err: any) => {
       const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
       toast.error(errorMessage || $_('aiEngines.toasts.failedToLoad'));
     });
 
-    return () => mediaQuery.removeEventListener("change", syncThemeState);
+    return () => {
+      mediaQuery.removeEventListener("change", syncThemeState);
+      window.removeEventListener(THEME_CHANGE_EVENT, syncThemeState);
+    };
   });
 </script>
 

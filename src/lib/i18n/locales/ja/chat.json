@@ -23,6 +23,7 @@
       "recordingPlaceholder": "聞いています... 今話してください",
       "addContent": "コンテンツを追加",
       "addPhotos": "写真を追加",
+      "takePhoto": "写真を撮る",
       "addFiles": "ファイルを追加",
       "selectModel": "モデルを選択",
       "selectModelFallback": "モデルを選択",

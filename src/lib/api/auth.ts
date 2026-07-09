@@ -1,5 +1,11 @@
 import type { components } from '../types/api.js';
-import { API_BASE, ApiError, request, parseErrorDetail } from './client.js';
+import { API_BASE, ApiError, request, parseErrorDetail, apiFetch } from './client.js';
+import {
+  isTauriRuntime,
+  openNativeExternalUrl,
+  openNativeOAuthPopup,
+  shouldUseNativeExternalOAuth,
+} from '../platform/tauri.js';
 
 type User = components['schemas']['User'];
 
@@ -16,8 +22,26 @@ interface AuthInitResponse {
   state: string;
 }
 
+async function openOAuthUrl(url: string, provider: string): Promise<void> {
+  if (isTauriRuntime()) {
+    if (shouldUseNativeExternalOAuth(provider)) {
+      const didOpenExternal = await openNativeExternalUrl(url);
+      if (didOpenExternal) {
+        return;
+      }
+    }
+
+    const didOpenPopup = await openNativeOAuthPopup(url);
+    if (didOpenPopup) {
+      return;
+    }
+  }
+
+  window.location.href = url;
+}
+
 export async function login(email: string, password: string): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE}/auth/login`, {
+  const response = await apiFetch(`${API_BASE}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -55,10 +79,11 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
   // Try fetch first to handle JSON response (200 with auth_url)
   // If backend returns redirect, fetch will fail due to opaque redirect, fall back to navigation
   try {
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
       redirect: 'manual', // Don't follow redirects automatically
+      maxRedirections: 0,
     });
 
     // If we get a redirect response, navigate to the redirect target
@@ -66,8 +91,8 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
       // When the API is same-origin (e.g. SSO proxy via Cloudflare Worker), the Location header
       // is readable. Navigate there directly to avoid a second backend request that would
       // generate a new state value and break SSO state validation.
-      const location = response.headers.get('Location');
-      window.location.href = location || url;
+      const location = response.headers.get('Location') || url;
+      await openOAuthUrl(location, provider);
       return;
     }
 
@@ -75,7 +100,7 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
     if (response.ok) {
       const data = await response.json();
       if (data.auth_url) {
-        window.location.href = data.auth_url;
+        await openOAuthUrl(data.auth_url, provider);
         return;
       }
     }
@@ -92,20 +117,28 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
       throw err;
     }
     // For network errors or other issues, fall back to direct navigation
-    window.location.href = url;
+    await openOAuthUrl(url, provider);
   }
 }
 
-export async function handleOAuthCallback(provider: string, code: string | null, state: string, assertion?: string | null): Promise<LoginResponse> {
-  const url = `${API_BASE}/auth/${provider}/callback`;
+export async function handleOAuthCallback(
+  provider: string,
+  code: string | null,
+  state: string,
+  options: { assertion?: string | null; mobile?: boolean } = {}
+): Promise<LoginResponse> {
+  const callbackPath = options.mobile
+    ? `/auth/${provider}/mobile/callback`
+    : `/auth/${provider}/callback`;
+  const url = `${API_BASE}${callbackPath}`;
   const payload: Record<string, string> = { state };
   if (code) payload.code = code;
-  if (assertion) payload.assertion = assertion;
+  if (options.assertion) payload.assertion = options.assertion;
   const body = JSON.stringify(payload);
 
   // Use POST with body to avoid URL length limits (Azure codes are very long)
   // Backend retrieves redirect_uri from stored state, so we only send code and state
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
