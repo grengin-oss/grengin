@@ -69,10 +69,19 @@ export interface ProjectInstruction {
   updatedAt: string;
 }
 
+export interface ProjectMcpServer {
+  id: string;
+  serverId: string;
+  name: string;
+  description: string;
+  addedAt: string;
+}
+
 export interface ProjectDetail extends Project {
   instructions: string;
   sources: ProjectSource[];
   chats: ProjectChat[];
+  mcpServers?: ProjectMcpServer[];
 }
 
 export interface ProjectChat {

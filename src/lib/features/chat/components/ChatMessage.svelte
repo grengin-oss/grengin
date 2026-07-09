@@ -95,6 +95,21 @@
   let renderedContent = $state('');
   let isRenderingMarkdown = $state(false);
   let artifactContent = $derived.by(() => {
+    // Check tool_calls for create_artifact first (persisted artifact from API)
+    if (message.toolCalls && message.toolCalls.length > 0) {
+      const artifactCall = message.toolCalls.find(tc => tc.tool_name === 'create_artifact');
+      if (artifactCall?.input?.value) {
+        const val = artifactCall.input.value as Record<string, unknown>;
+        const content = val.content as string | undefined;
+        const contentType = val.contentType as string | undefined;
+        const title = val.title as string | undefined;
+        if (content) {
+          const type = contentType === 'text/markdown' ? 'markdown' as const : 'html' as const;
+          return { code: content, type, title };
+        }
+      }
+    }
+
     const content = message.content;
     // Completed blocks
     const htmlMatch = content.match(/```html\s*\n([\s\S]*?)```/);
@@ -432,12 +447,12 @@
       </div>
     {/if}
 
-    <!-- MCP tool call timeline (non-web-search tools) -->
-    {#if message.toolCalls && message.toolCalls.some(tc => tc.kind !== 'web_search')}
+    <!-- MCP tool call timeline (non-web-search, non-artifact tools) -->
+    {#if message.toolCalls && message.toolCalls.some(tc => tc.kind !== 'web_search' && tc.tool_name !== 'create_artifact')}
       <div class="tool-calls-container">
         <ToolCallTimeline
-          toolCalls={message.toolCalls}
-          toolResults={message.toolsResults as ToolResult[] || []}
+          toolCalls={message.toolCalls.filter(tc => tc.tool_name !== 'create_artifact')}
+          toolResults={(message.toolsResults as ToolResult[] || []).filter(tr => tr.tool_name !== 'create_artifact')}
         />
       </div>
     {/if}
@@ -616,7 +631,7 @@
           {#if hasPreviewableContent}
             <button
               class="artifact-card"
-              onclick={() => onShowArtifact?.(artifactContent!.type === 'html' ? 'HTML Artifact' : 'Markdown Document', artifactContent!.code, artifactContent!.type)}
+              onclick={() => onShowArtifact?.(artifactContent!.title || (artifactContent!.type === 'html' ? 'HTML Artifact' : 'Markdown Document'), artifactContent!.code, artifactContent!.type)}
             >
               <div class="artifact-card-icon">
                 {#if artifactContent!.type === 'markdown'}
@@ -635,7 +650,7 @@
                 {/if}
               </div>
               <div class="artifact-card-info">
-                <span class="artifact-card-title">{artifactContent!.type === 'html' ? 'HTML Artifact' : 'Markdown Document'}</span>
+                <span class="artifact-card-title">{artifactContent!.title || (artifactContent!.type === 'html' ? 'HTML Artifact' : 'Markdown Document')}</span>
                 <span class="artifact-card-hint">Click to open preview</span>
               </div>
               <svg class="artifact-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

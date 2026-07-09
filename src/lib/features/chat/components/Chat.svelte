@@ -11,7 +11,7 @@
   import { getModels } from '../../../api/models';
   import type { MCPServer } from '../../../admin/types.js';
   import { getMcpServers } from '../../../api/admin/mcpServers.js';
-  import { linkProjectToConversation } from '../../../api/projectsApi';
+  import { linkProjectToConversation, getProjectDetail } from '../../../api/projectsApi';
   import { _ } from 'svelte-i18n';
   import { ApiError } from '../../../api/client';
   import { getLocalizedError } from '../../../utils/errorLocalization';
@@ -128,6 +128,19 @@
       mcpServersError = $_('chat.errors.failedToLoadConnectors');
     } finally {
       loadingMcpServers = false;
+    }
+  }
+
+  async function loadProjectMcpServers(projectId: string) {
+    try {
+      const detail = await getProjectDetail(projectId);
+      if (detail.mcpServers && detail.mcpServers.length > 0) {
+        const projectServerIds = detail.mcpServers.map(s => s.serverId);
+        const merged = new Set([...selectedMcpServers, ...projectServerIds]);
+        selectedMcpServers = Array.from(merged);
+      }
+    } catch (err) {
+      console.error('Failed to load project MCP servers:', err);
     }
   }
 
@@ -431,13 +444,17 @@
             currentStreamingMessage = {...pendingStreamingMessage};
 
             // Update the message in the array
-            messages = messages.map(m => 
+            messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
 
             isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
           }
+        },
+        onArtifact: (artifact) => {
+          const type = artifact.contentType === 'text/markdown' ? 'markdown' : 'html';
+          handleShowArtifact(artifact.title || 'Artifact', artifact.content, type);
         },
         onMcpAuthRequired: (authRequest: McpAuthRequest) => {
           if (pendingStreamingMessage) {
@@ -1017,6 +1034,10 @@
       // Keep projectId in the URL so the association survives a reload before the first message
       // and stays visible while chatting; linking runs once (pendingProjectId is cleared after).
       pendingProjectId = urlParams.get('projectId');
+
+      if (pendingProjectId) {
+        loadProjectMcpServers(pendingProjectId);
+      }
 
       // Check for an initial message in URL
       const initialMessage = urlParams.get('message');
