@@ -3,6 +3,7 @@
   import ChatMessage from './ChatMessage.svelte';
   import MessageInput from './MessageInput.svelte';
   import TypingIndicator from './TypingIndicator.svelte';
+  import ArtifactPanel from './ArtifactPanel.svelte';
   import type { MergedToolResult, ToolCall, ToolResult, WebSearchResult } from '../../../types/toolCall';
   import type { BudgetWarningMessage, ChatMessage as ChatMessageType, McpAuthRequest } from '../../../types/chat';
   import { sendMessage, getConversation, getChatMcpServers, type UploadedFile } from '../../../api/chatApi';
@@ -10,6 +11,7 @@
   import { getModels } from '../../../api/models';
   import type { MCPServer } from '../../../admin/types.js';
   import { getMcpServers } from '../../../api/admin/mcpServers.js';
+  import { linkProjectToConversation, getProjectDetail } from '../../../api/projectsApi';
   import { _ } from 'svelte-i18n';
   import { ApiError } from '../../../api/client';
   import { getLocalizedError } from '../../../utils/errorLocalization';
@@ -33,6 +35,68 @@
   let selectedMcpServers = $state<string[]>([]);
   let loadingMcpServers = $state(false);
   let mcpServersError = $state<string | null>(null);
+  // Project to link once a new conversation is created (chat started from a project workspace).
+  let pendingProjectId = $state<string | null>(null);
+
+  // Link a freshly-created conversation to the originating project (many-to-many). Runs once.
+  async function linkPendingProject(newConversationId: string) {
+    if (!pendingProjectId) return;
+    const projectId = pendingProjectId;
+    pendingProjectId = null;
+    try {
+      await linkProjectToConversation(newConversationId, projectId);
+      window.dispatchEvent(new CustomEvent('refreshChatHistory'));
+    } catch (err) {
+      console.error('Failed to link conversation to project:', err);
+    }
+  }
+
+  // Artifact panel state
+  let artifactTitle = $state('');
+  let artifactCode = $state('');
+  let artifactType = $state<'html' | 'markdown'>('html');
+  let artifactIsStreaming = $state(false);
+  let showArtifactPanel = $state(false);
+
+  function extractArtifactCodeBlock(content: string): { code: string; type: 'html' | 'markdown' } | null {
+    // Try HTML first
+    const htmlMatch = content.match(/```html\s*\n([\s\S]*?)```/);
+    if (htmlMatch) return { code: htmlMatch[1], type: 'html' };
+    // Try markdown/md
+    const mdMatch = content.match(/```(?:markdown|md)\s*\n([\s\S]*?)```/);
+    if (mdMatch) return { code: mdMatch[1], type: 'markdown' };
+    // Partial matches (still streaming, block not closed)
+    const htmlPartial = content.match(/```html\s*\n([\s\S]*)$/);
+    if (htmlPartial) return { code: htmlPartial[1], type: 'html' };
+    const mdPartial = content.match(/```(?:markdown|md)\s*\n([\s\S]*)$/);
+    if (mdPartial) return { code: mdPartial[1], type: 'markdown' };
+    return null;
+  }
+
+  function detectAndStreamArtifact(content: string, streaming: boolean) {
+    const result = extractArtifactCodeBlock(content);
+    if (result !== null) {
+      artifactCode = result.code;
+      artifactType = result.type;
+      artifactIsStreaming = streaming;
+      if (!showArtifactPanel) {
+        artifactTitle = result.type === 'html' ? 'HTML Artifact' : 'Markdown Document';
+        showArtifactPanel = true;
+      }
+    }
+  }
+
+  function handleShowArtifact(title: string, content: string, type: 'html' | 'markdown') {
+    artifactTitle = title;
+    artifactCode = content;
+    artifactType = type;
+    artifactIsStreaming = false;
+    showArtifactPanel = true;
+  }
+
+  function handleCloseArtifact() {
+    showArtifactPanel = false;
+  }
 
   // Models state
   let providers = $state<ProviderInfo[]>([]);
@@ -64,6 +128,19 @@
       mcpServersError = $_('chat.errors.failedToLoadConnectors');
     } finally {
       loadingMcpServers = false;
+    }
+  }
+
+  async function loadProjectMcpServers(projectId: string) {
+    try {
+      const detail = await getProjectDetail(projectId);
+      if (detail.mcpServers && detail.mcpServers.length > 0) {
+        const projectServerIds = detail.mcpServers.map(s => s.serverId);
+        const merged = new Set([...selectedMcpServers, ...projectServerIds]);
+        selectedMcpServers = Array.from(merged);
+      }
+    } catch (err) {
+      console.error('Failed to load project MCP servers:', err);
     }
   }
 
@@ -246,7 +323,8 @@
             conversationId = newConversationId;
             pendingConversationId = newConversationId;
             updateUrlWithConversationId(newConversationId);
-          }        
+          }
+          if (newConversationId) void linkPendingProject(newConversationId);
 
           // Update loading and typing states
           isLoading = true;
@@ -287,9 +365,12 @@
             currentStreamingMessage = {...pendingStreamingMessage};
 
             // Update the message in the array
-            messages = messages.map(m => 
+            messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
+
+            // Detect HTML artifact in streaming content
+            detectAndStreamArtifact(pendingStreamingMessage.content, true);
 
             isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
@@ -363,13 +444,17 @@
             currentStreamingMessage = {...pendingStreamingMessage};
 
             // Update the message in the array
-            messages = messages.map(m => 
+            messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
 
             isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
           }
+        },
+        onArtifact: (artifact) => {
+          const type = artifact.contentType === 'text/markdown' ? 'markdown' : 'html';
+          handleShowArtifact(artifact.title || 'Artifact', artifact.content, type);
         },
         onMcpAuthRequired: (authRequest: McpAuthRequest) => {
           if (pendingStreamingMessage) {
@@ -426,9 +511,12 @@
             currentStreamingMessage = {...pendingStreamingMessage};
 
             // Update the message in the array
-            messages = messages.map(m => 
+            messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
+
+            // Finalize artifact streaming
+            detectAndStreamArtifact(pendingStreamingMessage.content, false);
           }
         },
         onError: (errorMessage) => {
@@ -579,6 +667,7 @@
             conversationId = newConversationId;
             updateUrlWithConversationId(newConversationId);
           }
+          if (newConversationId) void linkPendingProject(newConversationId);
           window.dispatchEvent(new CustomEvent('refreshChatHistory'));
         },
         onStreamingStart: (messageId) => {
@@ -931,11 +1020,42 @@
       messages = [];
       error = null;
       isLoadingConversation = false;
-      // Set default model and provider
-      selectedModel = 'gpt-5.2';
-      selectedProvider = 'openai';
-      selectedModelInfo = providers.find(p => p.key === 'openai') || providers[0];
-      webSearchEnabled = false;
+
+      // Set model and provider from query params or defaults
+      selectedModel = urlParams.get('model') || 'gpt-5.2';
+      selectedProvider = urlParams.get('provider') || 'openai';
+      selectedModelInfo = providers.find(p => p.key === selectedProvider) || providers[0];
+      webSearchEnabled = urlParams.get('webSearch') === 'true';
+
+      const mcpServersParam = urlParams.get('mcpServers');
+      selectedMcpServers = mcpServersParam ? mcpServersParam.split(',') : [];
+
+      // Chat started from a project workspace: remember it so the new conversation gets linked.
+      // Keep projectId in the URL so the association survives a reload before the first message
+      // and stays visible while chatting; linking runs once (pendingProjectId is cleared after).
+      pendingProjectId = urlParams.get('projectId');
+
+      if (pendingProjectId) {
+        loadProjectMcpServers(pendingProjectId);
+      }
+
+      // Check for an initial message in URL
+      const initialMessage = urlParams.get('message');
+      if (initialMessage) {
+        // Clear the message and configuration params from URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete('message');
+        url.searchParams.delete('model');
+        url.searchParams.delete('provider');
+        url.searchParams.delete('webSearch');
+        url.searchParams.delete('mcpServers');
+        window.history.replaceState({}, '', url.toString());
+        
+        // Send the message after a microtask tick
+        tick().then(() => {
+          handleSendMessage(initialMessage);
+        });
+      }
     }
   }
 
@@ -1057,6 +1177,7 @@
   </div>
 {:else}
   <!-- Active chat: bottom-anchored input -->
+  <div class="chat-layout" class:chat-layout--with-artifact={showArtifactPanel}>
   <div class="chat-container">
     <div class="messages-container" bind:this={messagesContainer} onscroll={handleScroll} role="log" aria-live="polite" aria-label={$_('chat.messageInput.messageInput')}>
       <div class="messages-inner">
@@ -1070,6 +1191,7 @@
             onMcpAuthConnected={(serverId) => handleMcpAuthConnected(message.id, serverId)}
             onMcpAuthError={(serverId, err) => handleMcpAuthError(message.id, serverId, err)}
             onMcpAuthStatusChange={(serverId, status) => handleMcpAuthStatusChange(message.id, serverId, status)}
+            onShowArtifact={handleShowArtifact}
           />
         {/each}
 
@@ -1141,9 +1263,56 @@
       <p class="ai-disclaimer">{$_('chat.emptyState.aiDisclaimer')}</p>
     </div>
   </div>
+
+  {#if showArtifactPanel}
+    <div class="artifact-panel-wrapper">
+      <ArtifactPanel
+        title={artifactTitle}
+        code={artifactCode}
+        type={artifactType}
+        isStreaming={artifactIsStreaming}
+        onclose={handleCloseArtifact}
+      />
+    </div>
+  {/if}
+  </div>
 {/if}
 
 <style>
+  .chat-layout {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+  }
+
+  .chat-layout .chat-container {
+    flex: 1;
+    min-width: 0;
+    transition: flex 0.3s ease;
+  }
+
+  .chat-layout--with-artifact .chat-container {
+    flex: 1;
+  }
+
+  .artifact-panel-wrapper {
+    width: 50%;
+    max-width: 50%;
+    flex-shrink: 0;
+    animation: artifactPanelIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes artifactPanelIn {
+    from {
+      width: 0;
+      opacity: 0;
+    }
+    to {
+      width: 50%;
+      opacity: 1;
+    }
+  }
+
   .chat-container {
     display: flex;
     flex-direction: column;

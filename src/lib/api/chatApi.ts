@@ -17,6 +17,7 @@ export interface SendMessageOptions {
   onBudgetWarning?: (data: BudgetWarningMessage) => void;
   onToolCall?: (toolCall: any) => void;
   onToolResult?: (toolResult: any) => void;
+  onArtifact?: (artifact: { id: string; title: string; contentType: string; content: string }) => void;
   onMcpAuthRequired?: (authRequest: McpAuthRequest) => void;
   onDone?: (data: any) => void;
   onError?: (error: ApiError | Error) => void;
@@ -93,7 +94,7 @@ export async function uploadDocument(options: UploadDocumentOptions): Promise<Up
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onMcpAuthRequired, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onArtifact, onMcpAuthRequired, onDone, onError } = options;
 
   try {
     const token = getAccessToken();
@@ -323,6 +324,11 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
             case 'tool_result':
               if (data?.tool_result) {
                 onToolResult?.(data.tool_result);
+              }
+              break;
+            case 'artifact':
+              if (data) {
+                onArtifact?.(data);
               }
               break;
             case 'mcp_oauth_required':

@@ -66,7 +66,8 @@
       "resume": "再開",
       "listen": "聞く",
       "stop": "停止",
-      "closePreview": "プレビューを閉じる"
+      "closePreview": "プレビューを閉じる",
+      "clickToPreview": "クリックしてプレビューを開く"
     },
     "toolCalls": {
       "searching": "ウェブを検索中",

@@ -144,7 +144,7 @@ async function tryRefreshToken(): Promise<boolean> {
     if (!data.accessToken || !data.user) {
       return false;
     }
-    
+
     setAuthFn?.(data.accessToken, refreshToken, data.user);
     return true;
   } catch {

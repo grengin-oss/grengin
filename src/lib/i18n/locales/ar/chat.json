@@ -66,7 +66,8 @@
       "resume": "استئناف",
       "listen": "استماع",
       "stop": "إيقاف",
-      "closePreview": "إغلاق المعاينة"
+      "closePreview": "إغلاق المعاينة",
+      "clickToPreview": "انقر لفتح المعاينة"
     },
     "toolCalls": {
       "searching": "جارٍ البحث على الويب",

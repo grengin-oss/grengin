@@ -48,9 +48,10 @@
     onMcpAuthConnected?: (serverId: string) => void;
     onMcpAuthError?: (serverId: string, error: string) => void;
     onMcpAuthStatusChange?: (serverId: string, status: McpAuthRequest['status']) => void;
+    onShowArtifact?: (title: string, content: string, type: 'html' | 'markdown') => void;
   }
 
-  let { message, onEdit, selectedModelInfo, providers, onMcpAuthConnected, onMcpAuthError, onMcpAuthStatusChange }: Props = $props();
+  let { message, onEdit, selectedModelInfo, providers, onMcpAuthConnected, onMcpAuthError, onMcpAuthStatusChange, onShowArtifact }: Props = $props();
   let isEditing = $state(false);
   let editContent = $state(message.content);
   let showActions = $state(false);
@@ -93,27 +94,77 @@
 
   let renderedContent = $state('');
   let isRenderingMarkdown = $state(false);
+  let artifactContent = $derived.by(() => {
+    // Check tool_calls for create_artifact first (persisted artifact from API)
+    if (message.toolCalls && message.toolCalls.length > 0) {
+      const artifactCall = message.toolCalls.find(tc => tc.tool_name === 'create_artifact');
+      if (artifactCall?.input?.value) {
+        const val = artifactCall.input.value as Record<string, unknown>;
+        const content = val.content as string | undefined;
+        const contentType = val.contentType as string | undefined;
+        const title = val.title as string | undefined;
+        if (content) {
+          const type = contentType === 'text/markdown' ? 'markdown' as const : 'html' as const;
+          return { code: content, type, title };
+        }
+      }
+    }
+
+    const content = message.content;
+    // Completed blocks
+    const htmlMatch = content.match(/```html\s*\n([\s\S]*?)```/);
+    if (htmlMatch) return { code: htmlMatch[1].trim(), type: 'html' as const };
+    const mdMatch = content.match(/```(?:markdown|md)\s*\n([\s\S]*?)```/);
+    if (mdMatch) return { code: mdMatch[1].trim(), type: 'markdown' as const };
+    // Partial blocks (still streaming)
+    const htmlPartial = content.match(/```html\s*\n([\s\S]*)$/);
+    if (htmlPartial) return { code: htmlPartial[1].trim(), type: 'html' as const };
+    const mdPartial = content.match(/```(?:markdown|md)\s*\n([\s\S]*)$/);
+    if (mdPartial) return { code: mdPartial[1].trim(), type: 'markdown' as const };
+    // Raw HTML document
+    const trimmed = content.trim();
+    if (
+      trimmed.startsWith('<!DOCTYPE') ||
+      trimmed.startsWith('<html') ||
+      (trimmed.startsWith('<') && /<\/[a-z]+>\s*$/i.test(trimmed))
+    ) {
+      return { code: trimmed, type: 'html' as const };
+    }
+    return null;
+  });
+
+  let hasPreviewableContent = $derived(artifactContent !== null);
+
+  let displayContent = $derived.by(() => {
+    if (!hasPreviewableContent) return message.content;
+    return message.content
+      .replace(/```html\s*\n[\s\S]*?```/g, '')
+      .replace(/```(?:markdown|md)\s*\n[\s\S]*?```/g, '')
+      .replace(/```html\s*\n[\s\S]*$/g, '')
+      .replace(/```(?:markdown|md)\s*\n[\s\S]*$/g, '')
+      .trim();
+  });
 
   // Async markdown rendering with copy button addition
   $effect(() => {
+    const contentToRender = message.role === 'assistant' ? displayContent : message.content;
     const render = async () => {
       if (message.role === 'assistant') {
         isRenderingMarkdown = true;
         try {
-          renderedContent = await renderMarkdown(message.content);
-          // Add copy buttons after content is rendered
+          renderedContent = await renderMarkdown(contentToRender);
           await tick();
           addCopyButtonsToCodeBlocks();
         } catch {
-          renderedContent = `<p>${message.content}</p>`;
+          renderedContent = `<p>${contentToRender}</p>`;
         } finally {
           isRenderingMarkdown = false;
         }
       } else {
-        renderedContent = message.content;
+        renderedContent = contentToRender;
       }
     };
-    
+
     render();
   });
 
@@ -396,12 +447,12 @@
       </div>
     {/if}
 
-    <!-- MCP tool call timeline (non-web-search tools) -->
-    {#if message.toolCalls && message.toolCalls.some(tc => tc.kind !== 'web_search')}
+    <!-- MCP tool call timeline (non-web-search, non-artifact tools) -->
+    {#if message.toolCalls && message.toolCalls.some(tc => tc.kind !== 'web_search' && tc.tool_name !== 'create_artifact')}
       <div class="tool-calls-container">
         <ToolCallTimeline
-          toolCalls={message.toolCalls}
-          toolResults={message.toolsResults as ToolResult[] || []}
+          toolCalls={message.toolCalls.filter(tc => tc.tool_name !== 'create_artifact')}
+          toolResults={(message.toolsResults as ToolResult[] || []).filter(tr => tr.tool_name !== 'create_artifact')}
         />
       </div>
     {/if}
@@ -571,10 +622,43 @@
                 {/if}
               </svg>
             </button>
+            <!-- HTML Preview Button (opens side panel) -->
           </div>
         {/if}
         <div class="message-body">
           {@html renderedContent}
+
+          {#if hasPreviewableContent}
+            <button
+              class="artifact-card"
+              onclick={() => onShowArtifact?.(artifactContent!.title || (artifactContent!.type === 'html' ? 'HTML Artifact' : 'Markdown Document'), artifactContent!.code, artifactContent!.type)}
+            >
+              <div class="artifact-card-icon">
+                {#if artifactContent!.type === 'markdown'}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                  </svg>
+                {:else}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16 18 22 12 16 6" />
+                    <polyline points="8 6 2 12 8 18" />
+                  </svg>
+                {/if}
+              </div>
+              <div class="artifact-card-info">
+                <span class="artifact-card-title">{artifactContent!.title || (artifactContent!.type === 'html' ? 'HTML Artifact' : 'Markdown Document')}</span>
+                <span class="artifact-card-hint">Click to open preview</span>
+              </div>
+              <svg class="artifact-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </button>
+          {/if}
+
           {#if message.files && message.files.length > 0}
             <div
               class="message-files"
@@ -590,22 +674,22 @@
                   {:else if fileBlobUrls.has(file.id)}
                     {@const blobUrl = fileBlobUrls.get(file.id)}
                     {#if blobUrl}
-                      <button 
+                      <button
                         class="message-image-btn"
                         onclick={() => openImagePreview(blobUrl, file.name || $_('chat.message.imageAlt'))}
                         aria-label={file.name || $_('chat.message.imageAlt')}
                         title={file.name || $_('chat.message.imageAlt')}
                       >
-                        <img 
-                          src={blobUrl} 
-                          alt={file.name || $_('chat.message.imageAlt')} 
+                        <img
+                          src={blobUrl}
+                          alt={file.name || $_('chat.message.imageAlt')}
                           class="message-image"
                         />
                       </button>
                     {/if}
                   {/if}
                 {:else}
-                  <button 
+                  <button
                     class="file-box"
                     onclick={() => handleFileClick(file.id, file.name || $_('chat.message.fileFallback'))}
                     aria-label={file.name || $_('chat.message.fileFallback')}
@@ -624,6 +708,7 @@
             </div>
           {/if}
         </div>
+
       </div>
     {/if}
 
@@ -1181,6 +1266,72 @@
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Artifact card (replaces inline code block) */
+  .artifact-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    width: 100%;
+    margin-top: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: var(--glass-radius, 12px);
+    background: rgba(139, 92, 246, 0.06);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    color: inherit;
+  }
+
+  .artifact-card:hover {
+    background: rgba(139, 92, 246, 0.12);
+    border-color: rgba(139, 92, 246, 0.35);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+  }
+
+  .artifact-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(139, 92, 246, 0.12);
+    color: #8b5cf6;
+    flex-shrink: 0;
+  }
+
+  .artifact-card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .artifact-card-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .artifact-card-hint {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+  }
+
+  .artifact-card-arrow {
+    color: #8b5cf6;
+    flex-shrink: 0;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+  }
+
+  .artifact-card:hover .artifact-card-arrow {
+    opacity: 1;
   }
 
   /* ── Standardized Image Grid System ── */
