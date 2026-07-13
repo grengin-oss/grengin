@@ -1,4 +1,4 @@
-import { API_BASE, request, ApiError, parseErrorDetail } from './client';
+import { API_BASE, request, ApiError, parseErrorDetail, handleUnauthorized } from './client';
 import { getAccessToken } from '../features/auth';
 
 export interface NotificationItem {
@@ -47,50 +47,6 @@ export async function markNotificationRead(notificationId: string): Promise<void
   await request(`/me/notifications/${notificationId}/read`, { method: 'POST' });
 }
 
-async function tryRefreshTokenForStream(): Promise<string | null> {
-  const refreshToken = localStorage.getItem('grengin_refresh_token');
-  if (!refreshToken) return null;
-
-  try {
-    const refreshResponse = await fetch(`${API_BASE}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-
-    if (!refreshResponse.ok) return null;
-
-    const data = await refreshResponse.json();
-    if (!data.accessToken || !data.user) return null;
-
-    localStorage.setItem('grengin_access_token', data.accessToken);
-    if (data.refresh_token) {
-      localStorage.setItem('grengin_refresh_token', data.refresh_token);
-    }
-    localStorage.setItem('grengin_user', JSON.stringify(data.user));
-    return data.accessToken as string;
-  } catch {
-    return null;
-  }
-}
-
-function clearAuthAndRedirect(): never {
-  localStorage.removeItem('grengin_access_token');
-  localStorage.removeItem('grengin_refresh_token');
-  localStorage.removeItem('grengin_user');
-  window.location.href = '/';
-  throw new ApiError(401, {
-    type: 'rich',
-    code: 401,
-    description: 'Session expired. Please log in again.',
-    solution: 'Please log in again to continue using the application',
-    description_key: 'error.auth.invalid_token.description',
-    solution_key: 'error.auth.invalid_token.solution',
-    params: {},
-    external_code: null,
-  });
-}
-
 /**
  * Opens GET /me/notifications/stream with Bearer auth. Retries once after refresh on 401.
  * Caller reads the body as SSE (text/event-stream).
@@ -119,20 +75,29 @@ export async function openNotificationsStream(
     signal,
   });
 
+  // Handle token expiration for streaming requests
   if (response.status === 401) {
-    const newToken = await tryRefreshTokenForStream();
+    const newToken = await handleUnauthorized()
     if (!newToken) {
-      clearAuthAndRedirect();
+      // handleUnauthorized already cleared auth and redirected
+      throw new ApiError(401, {
+        type: 'rich',
+        code: 401,
+        description: 'Session expired. Please log in again.',
+        solution: 'Please log in again to continue using the application',
+        description_key: 'error.auth.invalid_token.description',
+        solution_key: 'error.auth.invalid_token.solution',
+        params: {},
+        external_code: null,
+      });
     }
+
+    // Retry with new token
     response = await fetch(url, {
       method: 'GET',
       headers: { Authorization: `Bearer ${newToken}` },
       signal,
     });
-  }
-
-  if (response.status === 401) {
-    clearAuthAndRedirect();
   }
 
   if (!response.ok) {

@@ -152,6 +152,19 @@ async function tryRefreshToken(): Promise<boolean> {
   }
 }
 
+// Handle 401 errors by attempting token refresh
+export async function handleUnauthorized(): Promise<string | null> {
+  const refreshed = await tryRefreshToken();
+  if (refreshed) {
+    return getAccessTokenFn?.() ?? null;
+  }
+  
+  // Refresh failed, clear auth and redirect to login
+  clearAuthFn?.();
+  window.location.href = '/';
+  return null;
+}
+
 export async function request<T>(
   endpoint: string,
   options: RequestInit = {}
