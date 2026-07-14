@@ -70,6 +70,7 @@ export const NAMESPACES = [
   'analytics',
   'settings',
   'error',
+  'projects',
 ] as const;
 
 export type Namespace = (typeof NAMESPACES)[number];
@@ -98,6 +99,7 @@ const ROUTE_NAMESPACES: Record<string, Namespace[]> = {
   '/admin/alerts':              ['alerts', 'admin', 'sidebar'],
   '/admin':                     ['admin', 'sidebar'],
   '/settings':                  ['settings', 'admin', 'sidebar'],
+  '/projects':                   ['sidebar', 'chat', 'projects'],
   '/alerts':                    ['alerts', 'sidebar'],
   '/auth':                      ['auth'],
   '/forbidden':                 ['sidebar'],
@@ -123,6 +125,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'en/analytics': () => import('./locales/en/analytics.json'),
   'en/settings':  () => import('./locales/en/settings.json'),
   'en/error':     () => import('./locales/en/error.json'),
+  'en/projects':  () => import('./locales/en/projects.json'),
 
   'es/common':    () => import('./locales/es/common.json'),
   'es/auth':      () => import('./locales/es/auth.json'),
@@ -133,6 +136,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'es/analytics': () => import('./locales/es/analytics.json'),
   'es/settings':  () => import('./locales/es/settings.json'),
   'es/error':     () => import('./locales/es/error.json'),
+  'es/projects':  () => import('./locales/es/projects.json'),
 
   'fr/common':    () => import('./locales/fr/common.json'),
   'fr/auth':      () => import('./locales/fr/auth.json'),
@@ -143,6 +147,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'fr/analytics': () => import('./locales/fr/analytics.json'),
   'fr/settings':  () => import('./locales/fr/settings.json'),
   'fr/error':     () => import('./locales/fr/error.json'),
+  'fr/projects':  () => import('./locales/fr/projects.json'),
 
   'ja/common':    () => import('./locales/ja/common.json'),
   'ja/auth':      () => import('./locales/ja/auth.json'),
@@ -153,6 +158,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'ja/analytics': () => import('./locales/ja/analytics.json'),
   'ja/settings':  () => import('./locales/ja/settings.json'),
   'ja/error':     () => import('./locales/ja/error.json'),
+  'ja/projects':  () => import('./locales/ja/projects.json'),
 
   'ko/common':    () => import('./locales/ko/common.json'),
   'ko/auth':      () => import('./locales/ko/auth.json'),
@@ -163,6 +169,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'ko/analytics': () => import('./locales/ko/analytics.json'),
   'ko/settings':  () => import('./locales/ko/settings.json'),
   'ko/error':     () => import('./locales/ko/error.json'),
+  'ko/projects':  () => import('./locales/ko/projects.json'),
 
   'pt/common':    () => import('./locales/pt/common.json'),
   'pt/auth':      () => import('./locales/pt/auth.json'),
@@ -173,8 +180,9 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'pt/analytics': () => import('./locales/pt/analytics.json'),
   'pt/settings':  () => import('./locales/pt/settings.json'),
   'pt/error':     () => import('./locales/pt/error.json'),
+  'pt/projects':  () => import('./locales/pt/projects.json'),
 
-  // RTL locales — partial coverage (common + sidebar + error). Other namespaces
+  // RTL locales
   'ar/common':    () => import('./locales/ar/common.json'),
   'ar/auth':      () => import('./locales/ar/auth.json'),
   'ar/sidebar':   () => import('./locales/ar/sidebar.json'),
@@ -184,6 +192,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'ar/analytics': () => import('./locales/ar/analytics.json'),
   'ar/settings':  () => import('./locales/ar/settings.json'),
   'ar/error':     () => import('./locales/ar/error.json'),
+  'ar/projects':  () => import('./locales/ar/projects.json'),
 };
 
 // ---------------------------------------------------------------------------

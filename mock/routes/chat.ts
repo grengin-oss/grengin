@@ -14,6 +14,92 @@ function getMessageNumber(conversationId: string): number {
   return count
 }
 
+// MCP Servers
+router.get('/mcp-servers', requireAuth, (_req, res) => {
+  res.json({
+    servers: [
+      {
+        id: 'srv-001',
+        name: 'Web Search',
+        description: 'Search the web for real-time information, news, and references.',
+        icon: '',
+        connected: true,
+        transport_type: 'stdio',
+        tools: [
+          { name: 'web_search', description: 'Search the internet for up-to-date information' },
+          { name: 'fetch_url', description: 'Fetch and extract content from a specific URL' },
+        ],
+      },
+      {
+        id: 'srv-002',
+        name: 'Code Interpreter',
+        description: 'Execute Python code, analyze data, and generate visualizations.',
+        icon: '',
+        connected: true,
+        transport_type: 'stdio',
+        tools: [
+          { name: 'execute_python', description: 'Run Python code in a sandboxed environment' },
+          { name: 'install_package', description: 'Install a Python package from PyPI' },
+          { name: 'plot_chart', description: 'Generate charts and data visualizations' },
+        ],
+      },
+      {
+        id: 'srv-003',
+        name: 'File Manager',
+        description: 'Read, parse, and analyze uploaded documents including PDFs, spreadsheets, and images.',
+        icon: '',
+        connected: true,
+        transport_type: 'sse',
+        tools: [
+          { name: 'read_document', description: 'Extract text content from PDF, DOCX, or TXT files' },
+          { name: 'parse_spreadsheet', description: 'Parse Excel or CSV files into structured data' },
+          { name: 'analyze_image', description: 'Describe and analyze image content using vision' },
+        ],
+      },
+      {
+        id: 'srv-004',
+        name: 'Database Connector',
+        description: 'Query and interact with connected databases.',
+        icon: '',
+        connected: false,
+        transport_type: 'stdio',
+        tools: [
+          { name: 'run_query', description: 'Execute a read-only SQL query' },
+          { name: 'describe_table', description: 'Get schema information for a database table' },
+        ],
+      },
+      {
+        id: 'srv-005',
+        name: 'Slack Integration',
+        description: 'Send messages, read channels, and interact with Slack workspaces.',
+        icon: '',
+        connected: true,
+        transport_type: 'sse',
+        tools: [
+          { name: 'send_message', description: 'Send a message to a Slack channel or user' },
+          { name: 'list_channels', description: 'List available Slack channels' },
+          { name: 'read_channel', description: 'Read recent messages from a channel' },
+          { name: 'search_messages', description: 'Search Slack messages by keyword' },
+        ],
+      },
+      {
+        id: 'srv-006',
+        name: 'GitHub',
+        description: 'Interact with GitHub repositories, issues, and pull requests.',
+        icon: '',
+        connected: false,
+        transport_type: 'stdio',
+        tools: [
+          { name: 'search_repos', description: 'Search for GitHub repositories' },
+          { name: 'list_issues', description: 'List issues in a repository' },
+          { name: 'create_issue', description: 'Create a new issue in a repository' },
+          { name: 'read_file', description: 'Read a file from a GitHub repository' },
+        ],
+      },
+    ],
+  })
+})
+
 router.get('/chat', requireAuth, (req, res) => {
   // Sort by updated_at descending (most recent first)
   const sorted = Array.from(conversations.values()).sort((a, b) => {
@@ -189,31 +275,43 @@ router.post('/chat/stream', requireAuth, async (req, res) => {
     conversations.set(conversationId, conversation)
   }
 
-  // Send first chunk with conversation ID
-  const chunks = responseText.split(' ')
-  let isFirst = true
-
-  for (const chunk of chunks) {
-    res.write(`event: chunk\ndata: ${JSON.stringify({
-      id: isFirst ? conversationId : undefined,
-      content: chunk + ' ',
-      conversation_id: conversationId
-    })}\n\n`)
-    isFirst = false
-    await new Promise(resolve => setTimeout(resolve, 30))
-  }
-
-  // Send title event for new conversations
+  // Send conversation event if it's a new conversation
   if (isNewConversation) {
-    const title = generateTitle(userMessageContent)
-    res.write(`event: set_title\ndata: ${JSON.stringify({
-      conversation_id: conversationId,
-      title: title
-    })}\n\n`)
+    res.write(`event: conversation\ndata: ${JSON.stringify({ id: conversationId })}\n\n`)
   }
 
-  // Send done event (frontend expects '[DONE]' event name)
-  res.write(`event: [DONE]\ndata: ${JSON.stringify({
+  // Send message_start event
+  res.write(`event: message_start\ndata: ${JSON.stringify({ message_id: assistantMsgId })}\n\n`)
+
+  // Send delta events — stream code blocks line-by-line for a live-coding effect
+  const hasCodeBlock = responseText.includes('```html') || responseText.includes('```markdown') || responseText.includes('```md')
+  if (hasCodeBlock) {
+    const parts = responseText.split(/(```(?:html|markdown|md)\s*\n[\s\S]*?```)/);
+    for (const part of parts) {
+      if (part.match(/^```(?:html|markdown|md)\s*\n/)) {
+        const lines = part.split('\n')
+        for (const line of lines) {
+          res.write(`event: delta\ndata: ${JSON.stringify({ text: line + '\n' })}\n\n`)
+          await new Promise(resolve => setTimeout(resolve, 18))
+        }
+      } else {
+        const words = part.split(' ')
+        for (const word of words) {
+          res.write(`event: delta\ndata: ${JSON.stringify({ text: word + ' ' })}\n\n`)
+          await new Promise(resolve => setTimeout(resolve, 25))
+        }
+      }
+    }
+  } else {
+    const chunks = responseText.split(' ')
+    for (const chunk of chunks) {
+      res.write(`event: delta\ndata: ${JSON.stringify({ text: chunk + ' ' })}\n\n`)
+      await new Promise(resolve => setTimeout(resolve, 30))
+    }
+  }
+
+  // Send done event
+  res.write(`event: done\ndata: ${JSON.stringify({
     conversation_id: conversationId,
     user_message_id: userMsgId,
     assistant_message_id: assistantMsgId
@@ -240,6 +338,14 @@ function getMockResponse(input: string, messageNum: number): string {
 
   if (input.includes('business') || input.includes('strategy') || input.includes('growth')) {
     return `${msgLabel}\n\nLet me share some insights on business growth:\n\n**Key Growth Levers:**\n• Customer acquisition cost optimization\n• Lifetime value maximization\n• Market expansion opportunities\n• Product-market fit refinement\n\n**Recommended Actions:**\n1. Analyze your current metrics\n2. Identify high-impact opportunities\n3. Test and iterate quickly\n\nWhat specific aspect of your business would you like to focus on?`
+  }
+
+  if (input.includes('markdown') || input.includes('document') || input.includes('report') || input.includes('article')) {
+    return `${msgLabel}\n\nHere's a document draft for you:\n\n\`\`\`markdown\n# Quarterly Business Review — Q2 2026\n\n## Executive Summary\n\nThis quarter saw **strong growth** across all key metrics. Revenue increased by 23% YoY, driven by enterprise adoption of the Grengin platform.\n\n## Key Highlights\n\n- **Revenue**: $4.2M (+23% YoY)\n- **Active Users**: 12,500 (+18% QoQ)\n- **Enterprise Clients**: 47 (up from 38)\n- **NPS Score**: 72 (industry avg: 45)\n\n## Department Performance\n\n### Engineering\n\n| Metric | Target | Actual | Status |\n|--------|--------|--------|--------|\n| Sprint velocity | 85 pts | 92 pts | Exceeded |\n| Bug resolution | < 48h | 36h avg | On track |\n| Uptime | 99.9% | 99.97% | Exceeded |\n\n### Sales\n\n1. Closed 12 new enterprise deals\n2. Pipeline grew to $8.5M\n3. Average deal size increased to **$89K** (from $72K)\n\n### Marketing\n\n> "Our content strategy pivot to thought leadership has driven a 3x increase in inbound qualified leads." — VP Marketing\n\n- Published 24 blog posts\n- Hosted 3 webinars (avg 450 attendees)\n- Social media engagement up **156%**\n\n## Risks & Mitigations\n\n- **Talent retention**: Implemented new equity refresh program\n- **Infrastructure costs**: Migrating to reserved instances (est. 30% savings)\n- **Competition**: Accelerating roadmap for AI governance features\n\n## Next Quarter Goals\n\n1. Launch **Projects v2** with artifact contributions\n2. Expand to 3 new geographic markets\n3. Achieve SOC 2 Type II certification\n4. Hire 15 engineers across platform and AI teams\n\n---\n\n*Prepared by the Strategy Team — Grengin Inc.*\n\`\`\`\n\nYou can click the **artifact card** to preview the formatted document, or save it to a project.`
+  }
+
+  if (input.includes('html') || input.includes('page') || input.includes('landing') || input.includes('website')) {
+    return `${msgLabel}\n\nHere's a landing page draft for you:\n\n\`\`\`html\n<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Grengin - AI for Teams</title>\n  <style>\n    * { margin: 0; padding: 0; box-sizing: border-box; }\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a2e; }\n    .hero { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%); color: white; padding: 80px 40px; text-align: center; }\n    .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 16px; }\n    .hero p { font-size: 1.25rem; opacity: 0.9; max-width: 600px; margin: 0 auto 32px; }\n    .btn { display: inline-block; padding: 14px 32px; background: white; color: #6366f1; font-weight: 700; border-radius: 12px; text-decoration: none; font-size: 1rem; transition: transform 0.2s; }\n    .btn:hover { transform: translateY(-2px); }\n    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; padding: 64px 40px; max-width: 1000px; margin: 0 auto; }\n    .card { padding: 32px; border-radius: 16px; background: #f8f9ff; border: 1px solid #e8e8f0; }\n    .card h3 { color: #6366f1; margin-bottom: 8px; }\n    .card p { color: #555; line-height: 1.6; }\n    .footer { text-align: center; padding: 32px; color: #888; font-size: 0.9rem; }\n  </style>\n</head>\n<body>\n  <div class="hero">\n    <h1>AI That Works With Your Team</h1>\n    <p>Grengin brings powerful AI into every department — with the governance and insights leadership needs.</p>\n    <a href="#" class="btn">Get Started Free</a>\n  </div>\n  <div class="features">\n    <div class="card">\n      <h3>Projects</h3>\n      <p>Shared context stores with instructions, knowledge, and tools — reusable across conversations.</p>\n    </div>\n    <div class="card">\n      <h3>Governance</h3>\n      <p>Department-level controls, tool ceilings, and audit trails — without blocking productivity.</p>\n    </div>\n    <div class="card">\n      <h3>Insights</h3>\n      <p>Per-project cost reporting and adoption analytics for executives and finance teams.</p>\n    </div>\n  </div>\n  <div class="footer">© 2026 Grengin. All rights reserved.</div>\n</body>\n</html>\n\`\`\`\n\nYou can click the **eye icon** above to preview this page, or save it to a project using the **save icon**.`
   }
 
   if (input.includes('thank')) {

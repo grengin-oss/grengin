@@ -67,7 +67,8 @@
       "resume": "Resume",
       "listen": "Listen",
       "stop": "Stop",
-      "closePreview": "Close preview"
+      "closePreview": "Close preview",
+      "clickToPreview": "Click to open preview"
     },
     "toolCalls": {
       "searching": "Searching the web",

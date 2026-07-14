@@ -726,10 +726,10 @@
                 </svg>
                 {$_("admin.settings.oauthProviders.selfProvisioning.label")}
               </span>
-              <button
-                type="button"
+              <span
                 class="info-icon-btn"
-                title={$_("admin.settings.oauthProviders.selfProvisioning.hint")}
+                role="button"
+                tabindex="0"
                 aria-label={$_("admin.settings.oauthProviders.selfProvisioning.hint")}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -737,7 +737,8 @@
                   <line x1="12" y1="16" x2="12" y2="12" />
                   <line x1="12" y1="8" x2="12.01" y2="8" />
                 </svg>
-              </button>
+                <span class="info-tooltip">{$_("admin.settings.oauthProviders.selfProvisioning.hint")}</span>
+              </span>
             </div>
             <label class="status-switch">
               <input type="checkbox" bind:checked={editForm.allow_self_provisioning} />
@@ -1051,6 +1052,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    position: relative;
     background: none;
     border: none;
     padding: 0;
@@ -1061,6 +1063,31 @@
 
   .info-icon-btn:hover {
     color: var(--text-primary);
+  }
+
+  .info-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-tertiary, #333);
+    color: var(--text-primary, #fff);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    padding: 6px 10px;
+    border-radius: 6px;
+    width: max-content;
+    max-width: 240px;
+    white-space: normal;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .info-icon-btn:hover .info-tooltip,
+  .info-icon-btn:focus .info-tooltip {
+    display: block;
   }
 
   .confirm-body {

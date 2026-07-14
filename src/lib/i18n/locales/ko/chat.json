@@ -67,7 +67,8 @@
       "resume": "재개",
       "listen": "듣기",
       "stop": "중지",
-      "closePreview": "미리보기 닫기"
+      "closePreview": "미리보기 닫기",
+      "clickToPreview": "클릭하여 미리보기 열기"
     },
     "toolCalls": {
       "searching": "웹 검색 중",

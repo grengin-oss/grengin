@@ -335,7 +335,7 @@
         },
         "selfProvisioning": {
           "label": "Aprovisionamiento automático",
-          "hint": "Cuando está habilitado, los usuarios que inicien sesión a través de este proveedor por primera vez se crearán automáticamente con estado pendiente, requiriendo aprobación del administrador."
+          "hint": "Crear cuentas automáticamente en el primer inicio de sesión"
         }
       }
     },
