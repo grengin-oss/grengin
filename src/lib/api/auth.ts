@@ -14,6 +14,8 @@ export interface LoginResponse {
   mfa_token?: string;
   accessToken?: string;
   refreshToken?: string;
+  access_token?: string;
+  refresh_token?: string;
   user?: User;
 }
 
@@ -53,7 +55,12 @@ export async function login(email: string, password: string): Promise<LoginRespo
     throw new ApiError(response.status, detail);
   }
 
-  return response.json();
+  const data: LoginResponse = await response.json();
+  return {
+    ...data,
+    accessToken: data.accessToken ?? data.access_token,
+    refreshToken: data.refreshToken ?? data.refresh_token,
+  };
 }
 
 export async function logout(): Promise<void> {
@@ -75,6 +82,16 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
 
   const query = params.toString();
   const url = `${API_BASE}/auth/${provider}${query ? `?${query}` : ''}`;
+
+  // On native Android, Azure/MSA should start in the external browser from the
+  // backend auth URL directly. Probing it first with native fetch creates an
+  // extra OAuth state and depends on platform redirect handling before the
+  // browser even opens.
+  if (isTauriRuntime() && shouldUseNativeExternalOAuth(provider)) {
+    sessionStorage.setItem('oauth_mobile_callback', 'true');
+    await openOAuthUrl(url, provider);
+    return;
+  }
 
   // Try fetch first to handle JSON response (200 with auth_url)
   // If backend returns redirect, fetch will fail due to opaque redirect, fall back to navigation
@@ -154,7 +171,12 @@ export async function handleOAuthCallback(
     throw new ApiError(response.status, detail);
   }
 
-  return response.json();
+  const data: LoginResponse = await response.json();
+  return {
+    ...data,
+    accessToken: data.accessToken ?? data.access_token,
+    refreshToken: data.refreshToken ?? data.refresh_token,
+  };
 }
 
 export async function getCurrentUser(): Promise<User> {

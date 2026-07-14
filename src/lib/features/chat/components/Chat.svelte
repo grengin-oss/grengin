@@ -1280,6 +1280,12 @@
   </div>
 
   {#if showArtifactPanel}
+    <button
+      type="button"
+      class="artifact-panel-backdrop"
+      onclick={handleCloseArtifact}
+      aria-label="Close artifact preview"
+    ></button>
     <div class="artifact-panel-wrapper">
       <ArtifactPanel
         title={artifactTitle}
@@ -1296,35 +1302,58 @@
 <style>
   .chat-layout {
     display: flex;
-    height: 100vh;
+    height: 100%;
     width: 100%;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
   }
 
   .chat-layout .chat-container {
     flex: 1;
     min-width: 0;
-    transition: flex 0.3s ease;
+    transition: min-width 0.24s ease;
   }
 
-  .chat-layout--with-artifact .chat-container {
-    flex: 1;
+  .chat-layout--with-artifact {
+    display: grid;
+    grid-template-columns: minmax(420px, 1fr) clamp(420px, 42vw, 760px);
   }
 
   .artifact-panel-wrapper {
-    width: 50%;
-    max-width: 50%;
-    flex-shrink: 0;
+    min-width: 0;
+    height: 100%;
+    position: relative;
+    z-index: 2;
+    border-left: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+    background: var(--bg-primary);
+    box-shadow: -16px 0 40px rgba(0, 0, 0, 0.18);
     animation: artifactPanelIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .artifact-panel-backdrop {
+    display: none;
   }
 
   @keyframes artifactPanelIn {
     from {
-      width: 0;
       opacity: 0;
+      transform: translateX(24px);
     }
     to {
-      width: 50%;
       opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes artifactSheetIn {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 
@@ -1394,6 +1423,77 @@
 
   .input-container .ai-disclaimer {
     margin: 0.5rem 0 -0.5rem 0;
+  }
+
+  @media (max-width: 1180px), (hover: none) and (pointer: coarse) {
+    .chat-layout--with-artifact {
+      display: block;
+    }
+
+    .artifact-panel-backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 1190;
+      border: 0;
+      padding: 0;
+      background: rgba(0, 0, 0, 0.38);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      cursor: pointer;
+    }
+
+    .artifact-panel-wrapper {
+      position: fixed;
+      inset: auto 0 0 0;
+      z-index: 1200;
+      width: 100%;
+      height: min(78vh, calc(var(--app-viewport-height, 100vh) - 56px));
+      border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.14));
+      border-left: 0;
+      border-radius: 18px 18px 0 0;
+      overflow: hidden;
+      box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.32);
+      animation: artifactSheetIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-layout--with-artifact {
+    display: block;
+  }
+
+  :global(html[data-app-layout='mobile']) .artifact-panel-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1190;
+    border: 0;
+    padding: 0;
+    background: rgba(0, 0, 0, 0.38);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  :global(html[data-app-layout='mobile']) .artifact-panel-wrapper {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 1200;
+    width: 100%;
+    height: min(78vh, calc(var(--app-viewport-height, 100vh) - 56px));
+    border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.14));
+    border-left: 0;
+    border-radius: 18px 18px 0 0;
+    overflow: hidden;
+    box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.32);
+    animation: artifactSheetIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @media (orientation: landscape) and (max-height: 640px) {
+    .artifact-panel-wrapper,
+    :global(html[data-app-layout='mobile']) .artifact-panel-wrapper {
+      height: min(84vh, calc(var(--app-viewport-height, 100vh) - 24px));
+      border-radius: 14px 14px 0 0;
+    }
   }
 
   .error-banner--centered {

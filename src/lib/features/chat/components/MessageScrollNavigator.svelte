@@ -359,7 +359,13 @@
 
   /* When artifact panel is open, shift left */
   :global(.chat-layout--with-artifact) .scroll-nav {
-    right: calc(50% + 8px);
+    right: calc(clamp(420px, 42vw, 760px) + 8px);
+  }
+
+  @media (max-width: 1180px), (hover: none) and (pointer: coarse) {
+    :global(.chat-layout--with-artifact) .scroll-nav {
+      right: 4px;
+    }
   }
 
   @media (max-width: 768px) {

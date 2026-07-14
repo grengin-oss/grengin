@@ -1,3 +1,7 @@
+<script module lang="ts">
+  const inFlightOAuthCallbacks = new Map<string, Promise<void>>();
+</script>
+
 <script lang="ts">
   import { onMount } from 'svelte';
   import { navigate } from 'svelte-routing';
@@ -101,23 +105,11 @@
       throw new ApiError(400, message);
     }
 
-    let response: LoginResponse;
     const isMobileCallback =
       isMobileCallbackPath() || sessionStorage.getItem('oauth_mobile_callback') === 'true';
 
-    if (assertion && state) {
-      // SSO proxy flow: assertion JWT + state — forward directly to API callback
-      response = await handleOAuthCallback(provider, null, state, {
-        assertion,
-        mobile: isMobileCallback,
-      });
-    } else if (code && state) {
-      // Standard OAuth code flow
-      response = await handleOAuthCallback(provider, code, state, {
-        mobile: isMobileCallback,
-      });
-    } else {
-      // No standard code/state and no assertion — try legacy SSO proxy fallback (token in URL)
+    if (!state || (!code && !assertion)) {
+      // No standard code/state and no assertion - try legacy SSO proxy fallback (token in URL)
       console.warn('[AuthCallback] No code/state/assertion in URL, attempting SSO proxy fallback...');
       const ssoSuccess = await trySSOProxyFallback();
       if (ssoSuccess) {
@@ -127,17 +119,50 @@
       throw new ApiError(400, message);
     }
 
-    // 4. Call backend OAuth callback endpoint — already done above
-
-    // 5. Validate response and store authentication
-    if (!response?.accessToken || !response?.user) {
-      const message = $_('error.auth.invalid_auth_response');
-      toast.error(message);
-      throw new Error(message);
+    const callbackKey = `${provider}:${state}:${isMobileCallback ? 'mobile' : 'web'}`;
+    const existingCallback = inFlightOAuthCallbacks.get(callbackKey);
+    if (existingCallback) {
+      await existingCallback;
+      return;
     }
 
-    setAuth(response.accessToken, response.refreshToken || '', response.user);
-    return;
+    const callbackPromise = (async () => {
+      let response: LoginResponse;
+
+      if (assertion) {
+        // SSO proxy flow: assertion JWT + state - forward directly to API callback
+        response = await handleOAuthCallback(provider, null, state, {
+          assertion,
+          mobile: isMobileCallback,
+        });
+      } else {
+        // Standard OAuth code flow
+        response = await handleOAuthCallback(provider, code, state, {
+          mobile: isMobileCallback,
+        });
+      }
+
+      // Validate response and store authentication
+      if (!response?.accessToken || !response?.user) {
+        const message = $_('error.auth.invalid_auth_response');
+        toast.error(message);
+        throw new Error(message);
+      }
+
+      setAuth(response.accessToken, response.refreshToken || '', response.user);
+    })();
+
+    inFlightOAuthCallbacks.set(callbackKey, callbackPromise);
+
+    try {
+      await callbackPromise;
+    } finally {
+      window.setTimeout(() => {
+        if (inFlightOAuthCallbacks.get(callbackKey) === callbackPromise) {
+          inFlightOAuthCallbacks.delete(callbackKey);
+        }
+      }, 30_000);
+    }
   }
 
   /**

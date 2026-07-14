@@ -77,18 +77,28 @@
   function handleReload() {
     iframeKey++;
   }
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === "Escape" && !showSaveToProject) {
+      onclose();
+    }
+  }
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 <div class="artifact-panel">
   <div class="artifact-header">
     <div class="header-left">
       <div class="view-toggle">
         <button
+          type="button"
           class="toggle-btn"
           class:active={activeView === "preview"}
           onclick={() => (activeView = "preview")}
           disabled={isStreaming}
           title="Preview"
+          aria-label="Preview"
         >
           <svg
             width="16"
@@ -105,10 +115,12 @@
           </svg>
         </button>
         <button
+          type="button"
           class="toggle-btn"
           class:active={activeView === "code"}
           onclick={() => (activeView = "code")}
           title="Code"
+          aria-label="Code"
         >
           <svg
             width="16"
@@ -131,12 +143,17 @@
         </span>
       {/if}
     </div>
+    <div class="artifact-title" title={title}>
+      {title}
+    </div>
     <div class="header-right">
       {#if activeView === "preview" && !isStreaming && type === "html"}
         <button
+          type="button"
           class="header-btn"
           onclick={handleReload}
           title="Reload preview"
+          aria-label="Reload preview"
         >
           <svg
             width="16"
@@ -154,9 +171,11 @@
         </button>
       {/if}
       <button
+        type="button"
         class="header-btn"
         onclick={handleDownload}
         title="Download as .{type === 'markdown' ? 'md' : 'html'}"
+        aria-label="Download artifact"
         disabled={isStreaming}
       >
         <svg
@@ -175,9 +194,11 @@
         </svg>
       </button>
       <button
+        type="button"
         class="header-btn"
         onclick={() => (showSaveToProject = true)}
         title="Save to project"
+        aria-label="Save to project"
         disabled={isStreaming}
       >
         <svg
@@ -196,10 +217,12 @@
         </svg>
       </button>
       <button
+        type="button"
         class="header-btn"
         class:success={copySuccess}
         onclick={handleCopy}
         title={copySuccess ? "Copied!" : "Copy code"}
+        aria-label={copySuccess ? "Copied" : "Copy code"}
       >
         <svg
           width="16"
@@ -216,6 +239,7 @@
         </svg>
       </button>
       <button
+        type="button"
         class="header-btn close-btn"
         onclick={onclose}
         title="Close"
@@ -279,10 +303,12 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100%;
+    min-height: 0;
     border-left: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
     background: var(--bg-primary);
     animation: panelSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    isolation: isolate;
   }
 
   @keyframes panelSlideIn {
@@ -298,12 +324,19 @@
 
   /* ── Header ── */
   .artifact-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    gap: 10px;
+    min-height: 52px;
+    padding: 8px 10px 8px 12px;
     border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
-    background: rgba(var(--glass-tint, 255, 255, 255), 0.06);
+    background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     flex-shrink: 0;
   }
 
@@ -311,12 +344,27 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
+    flex-shrink: 0;
   }
 
   .header-right {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .artifact-title {
+    min-width: 0;
+    flex: 1;
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-weight: 650;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* ── View toggle (icon-only pill) ── */
@@ -333,7 +381,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 12px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
     border: none;
     border-radius: 7px;
     background: transparent;
@@ -389,7 +439,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 10px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
     border: none;
     border-radius: 8px;
     background: transparent;
@@ -403,13 +455,29 @@
     color: #fff;
   }
 
+  .header-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.38;
+  }
+
+  .header-btn:focus-visible,
+  .toggle-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
   .header-btn.success {
     color: #22c55e;
   }
 
   .header-btn.close-btn {
-    font-weight: 600;
-    font-size: 0.85rem;
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+  }
+
+  .header-btn.close-btn:hover {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fff;
   }
 
   /* ── Toast ── */
@@ -461,7 +529,10 @@
   /* ── Body ── */
   .artifact-body {
     flex: 1;
+    min-height: 0;
     overflow: hidden;
+    position: relative;
+    z-index: 1;
   }
 
   /* ── Code view ── */
@@ -581,5 +652,40 @@
     height: 100%;
     border: none;
     background: #fff;
+    display: block;
+  }
+
+  @media (max-width: 640px) {
+    .artifact-header {
+      min-height: 56px;
+      padding: 9px 10px;
+    }
+
+    .artifact-title {
+      font-size: 0.82rem;
+    }
+
+    .header-right {
+      gap: 2px;
+    }
+
+    .header-btn {
+      width: 34px;
+      height: 34px;
+    }
+
+    .toggle-btn {
+      width: 32px;
+      height: 32px;
+    }
+
+    .markdown-preview {
+      padding: 12px 14px;
+    }
+
+    .code-view {
+      padding: 12px;
+      font-size: 0.78rem;
+    }
   }
 </style>

@@ -6,7 +6,18 @@ import {
 
 type Cleanup = () => void;
 
+let lastHandledCallbackPath: string | null = null;
+let lastHandledAt = 0;
+
 function openInternalCallback(path: string, onCallbackPath: (path: string) => void): void {
+  const now = Date.now();
+  if (path === lastHandledCallbackPath && now - lastHandledAt < 30_000) {
+    return;
+  }
+
+  lastHandledCallbackPath = path;
+  lastHandledAt = now;
+
   window.history.replaceState(null, '', path);
   window.dispatchEvent(new PopStateEvent('popstate'));
   onCallbackPath(path);
