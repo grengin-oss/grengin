@@ -9,6 +9,7 @@
     archiveConversation,
     renameConversation,
     prefetchConversation,
+    type ChatSemanticResult,
   } from '../../api/chatApi.js';
   import { ApiError } from '../../api/client';
   import { getLocalizedError } from '../../utils/errorLocalization';
@@ -38,11 +39,17 @@
   ]);
 
   let chatHistory = $state<any[]>([]);
+  let normalChatSnapshot = $state<any[]>([]);
+  let normalChatSnapshotTotal = $state<number | null>(null);
   let loadingChats = $state(false);
   let loadingMoreChats = $state(false);
   let searchQuery = $state('');
   let searchFocused = $state(false);
+  let semanticSearchEnabled = $state(false);
   const CHAT_PAGE_LIMIT = 20;
+  const TITLE_SEARCH_DEBOUNCE_MS = 250;
+  const SEMANTIC_SEARCH_DEBOUNCE_MS = 650;
+  const MIN_SEMANTIC_SEARCH_CHARS = 3;
   let chatOffset = $state(0);
   let chatHasMore = $state(true);
   let chatTotal = $state<number | null>(null);
@@ -51,6 +58,11 @@
   let renameTitle = $state('');
   let renamingChat = $state(false);
   let renameInputElement = $state<HTMLInputElement | null>(null);
+  let normalizedSearchQuery = $derived(normalizeSearchQuery(searchQuery));
+  let effectiveSearchMode = $derived(getEffectiveSearchMode(normalizedSearchQuery));
+  let canUseSemanticSearch = $derived(normalizedSearchQuery.length >= MIN_SEMANTIC_SEARCH_CHARS);
+  let activeFetchController: AbortController | null = null;
+  let fetchRequestSerial = 0;
 
   function handleItemClick(itemId: string) {
     if (itemId === 'chat') {
@@ -183,9 +195,63 @@
     chatToDelete = null;
   }
 
+  function normalizeSearchQuery(value: string): string {
+    return value.trim().replace(/\s+/g, ' ');
+  }
+
+  function getEffectiveSearchMode(query: string): 'none' | 'title' | 'semantic' {
+    if (!query) return 'none';
+    if (semanticSearchEnabled && query.length >= MIN_SEMANTIC_SEARCH_CHARS) {
+      return 'semantic';
+    }
+    return 'title';
+  }
+
+  function getSearchSignature(query = normalizeSearchQuery(searchQuery)): string {
+    return `${query}:${getEffectiveSearchMode(query)}`;
+  }
+
+  function isAbortError(error: unknown): boolean {
+    return error instanceof Error && error.name === 'AbortError';
+  }
+
+  function abortActiveChatFetch() {
+    fetchRequestSerial += 1;
+    activeFetchController?.abort();
+    activeFetchController = null;
+    loadingChats = false;
+    loadingMoreChats = false;
+  }
+
+  function restoreNormalChatSnapshot() {
+    chatHistory = normalChatSnapshot;
+    chatTotal = normalChatSnapshotTotal;
+    chatOffset = normalChatSnapshot.length;
+    chatHasMore =
+      normalChatSnapshotTotal !== null
+        ? chatOffset < normalChatSnapshotTotal
+        : normalChatSnapshot.length === CHAT_PAGE_LIMIT;
+  }
+
   function clearSearch() {
+    abortActiveChatFetch();
     searchQuery = '';
     searchFocused = false;
+    activeChatMenu = null;
+    restoreNormalChatSnapshot();
+  }
+
+  function setSearchMode(mode: 'title' | 'semantic') {
+    if (mode === 'semantic' && !canUseSemanticSearch) {
+      return;
+    }
+    abortActiveChatFetch();
+    semanticSearchEnabled = mode === 'semantic';
+  }
+
+  function getSemanticScore(result: ChatSemanticResult | null | undefined): number | null {
+    if (!result || typeof result.distance !== 'number') return null;
+    return Math.max(0, Math.min(100, Math.round((1 - result.distance) * 100)));
   }
 
   function archiveChat(chatId: string, title: string) {
@@ -220,15 +286,25 @@
   }
 
   async function fetchChats({ reset = false } = {}) {
-    try {
-      const trimmedSearchQuery = searchQuery.trim();
+    const trimmedSearchQuery = normalizedSearchQuery;
+    const usingSemanticSearch = effectiveSearchMode === 'semantic';
+    const requestSignature = getSearchSignature(trimmedSearchQuery);
+    const requestId = fetchRequestSerial + 1;
+    const controller = new AbortController();
 
+    fetchRequestSerial = requestId;
+    activeFetchController?.abort();
+    activeFetchController = controller;
+
+    try {
       if (reset) {
-        if (chatHistory.length === 0) {
-          loadingChats = true;
-        }
+        loadingChats = true;
+        loadingMoreChats = false;
         chatOffset = 0;
         chatTotal = null;
+        if (trimmedSearchQuery) {
+          chatHistory = [];
+        }
       } else {
         loadingMoreChats = true;
       }
@@ -239,14 +315,21 @@
         offset,
         limit: CHAT_PAGE_LIMIT,
         search: trimmedSearchQuery,
+        semantic: usingSemanticSearch,
+        signal: controller.signal,
       });
 
-      if (searchQuery.trim() !== trimmedSearchQuery) {
+      if (
+        controller.signal.aborted ||
+        requestId !== fetchRequestSerial ||
+        getSearchSignature() !== requestSignature
+      ) {
         return;
       }
 
       const responseChats = Array.isArray(response) ? response : response?.conversations ?? [];
       const total = !Array.isArray(response) && typeof response?.total === 'number' ? response.total : null;
+      const semanticResults = !Array.isArray(response) ? response?.semantic_results || {} : {};
 
       const mappedChats = responseChats.map((chat: any) => ({
         id: chat.id,
@@ -255,6 +338,7 @@
         createdAt: chat.created_at,
         lastMessageAt: chat.last_message_at,
         totalTokens: chat.total_tokens,
+        semanticResult: semanticResults?.[chat.id] || null,
       }));
 
       if (reset) {
@@ -265,6 +349,10 @@
       }
 
       chatOffset = offset + mappedChats.length;
+      if (!trimmedSearchQuery && reset) {
+        normalChatSnapshot = mappedChats;
+        normalChatSnapshotTotal = total;
+      }
       if (total !== null) {
         chatTotal = total;
         chatHasMore = chatOffset < total;
@@ -272,12 +360,20 @@
         chatHasMore = mappedChats.length === CHAT_PAGE_LIMIT;
       }
     } catch (error) {
+      if (controller.signal.aborted || isAbortError(error)) {
+        return;
+      }
       console.error('Failed to fetch chats:', error);
     } finally {
-      loadingChats = false;
-      loadingMoreChats = false;
-      await tick();
-      ensureChatListFilled();
+      if (requestId === fetchRequestSerial) {
+        if (activeFetchController === controller) {
+          activeFetchController = null;
+        }
+        loadingChats = false;
+        loadingMoreChats = false;
+        await tick();
+        ensureChatListFilled();
+      }
     }
   }
 
@@ -288,6 +384,9 @@
 
   function ensureChatListFilled() {
     if (!chatContainerElement || !chatHasMore || loadingChats || loadingMoreChats) {
+      return;
+    }
+    if (effectiveSearchMode === 'semantic') {
       return;
     }
 
@@ -352,11 +451,19 @@
   });
 
   $effect(() => {
-    searchQuery;
+    normalizedSearchQuery;
+    effectiveSearchMode;
+
+    const debounceMs =
+      effectiveSearchMode === 'semantic'
+        ? SEMANTIC_SEARCH_DEBOUNCE_MS
+        : normalizedSearchQuery
+          ? TITLE_SEARCH_DEBOUNCE_MS
+          : 80;
 
     const searchTimeout = setTimeout(() => {
       fetchChats({ reset: true });
-    }, 200);
+    }, debounceMs);
 
     return () => {
       clearTimeout(searchTimeout);
@@ -418,6 +525,29 @@
           </button>
         {/if}
       </div>
+      {#if normalizedSearchQuery}
+        <div class="search-mode-toggle" role="group" aria-label={$_('sidebar.searchModeLabel')}>
+          <button
+            type="button"
+            class:active={effectiveSearchMode !== 'semantic'}
+            onclick={() => setSearchMode('title')}
+            aria-pressed={effectiveSearchMode !== 'semantic'}
+            title={$_('sidebar.searchModeTitle')}
+          >
+            {$_('sidebar.searchModeTitle')}
+          </button>
+          <button
+            type="button"
+            class:active={effectiveSearchMode === 'semantic'}
+            onclick={() => setSearchMode('semantic')}
+            aria-pressed={effectiveSearchMode === 'semantic'}
+            disabled={!canUseSemanticSearch}
+            title={$_('sidebar.searchModeSemantic')}
+          >
+            {$_('sidebar.searchModeSemantic')}
+          </button>
+        </div>
+      {/if}
     </div>
   {/if}
 </nav>
@@ -445,7 +575,7 @@
           <div class="loading-spinner-small"></div>
           <span>{$_('sidebar.loadingChats')}</span>
         </div>
-      {:else if chatHistory.length === 0 && searchQuery}
+      {:else if chatHistory.length === 0 && normalizedSearchQuery}
         <div class="no-results">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8" />
@@ -493,9 +623,24 @@
                 onfocus={() => warmChat(chat.id)}
                 ontouchstart={() => warmChat(chat.id)}
                 aria-current={selectedChatId === chat.id ? 'page' : undefined}
-                title={chat.title}
+                title={chat.semanticResult?.snippet ? `${chat.title}\n${chat.semanticResult.snippet}` : chat.title}
               >
-                <span class="chat-item-title">{chat.title}</span>
+                <span class="chat-item-content">
+                  <span class="chat-item-title-row">
+                    <span class="chat-item-title">{chat.title}</span>
+                    {#if chat.semanticResult?.snippet}
+                      <span class="semantic-badge">
+                        {$_('sidebar.searchModeSemantic')}
+                        {#if getSemanticScore(chat.semanticResult) !== null}
+                          {getSemanticScore(chat.semanticResult)}%
+                        {/if}
+                      </span>
+                    {/if}
+                  </span>
+                  {#if chat.semanticResult?.snippet}
+                    <span class="chat-semantic-snippet">{chat.semanticResult.snippet}</span>
+                  {/if}
+                </span>
               </button>
             {/if}
             <button
@@ -757,17 +902,64 @@
     flex: 1;
     min-width: 0;
     color: var(--text-secondary);
+    align-items: flex-start;
+    padding-right: 1.8rem;
     transition:
       background-color 0.12s ease,
       color 0.12s ease,
       font-weight 0.12s ease;
   }
 
+  .chat-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .chat-item-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-width: 0;
+    width: 100%;
+  }
+
   .chat-item-title {
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-right: var(--space-sm);
+  }
+
+  .semantic-badge {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    max-width: 6.5rem;
+    padding: 0.08rem 0.34rem;
+    border-radius: var(--radius-full);
+    background: color-mix(in oklab, var(--brand) 12%, transparent);
+    color: var(--brand);
+    font-size: 0.625rem;
+    font-weight: 650;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chat-semantic-snippet {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--text-tertiary);
+    font-size: 0.72rem;
+    font-weight: 400;
+    line-height: 1.35;
   }
 
   .chat-item-menu {
@@ -907,6 +1099,53 @@
   .clear-search-btn:hover {
     color: var(--text-primary);
     background: var(--btn-tertiary);
+  }
+
+  .search-mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-top: var(--space-xs);
+    padding: 2px;
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-md);
+    background: var(--btn-secondary);
+  }
+
+  .search-mode-toggle button {
+    min-width: 0;
+    height: 1.65rem;
+    border: none;
+    border-radius: calc(var(--radius-md) - 2px);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 600;
+    transition:
+      background-color 0.14s ease,
+      color 0.14s ease,
+      box-shadow 0.14s ease;
+  }
+
+  .search-mode-toggle button.active {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    box-shadow: var(--glass-edge-glow);
+  }
+
+  .search-mode-toggle button:hover {
+    color: var(--text-primary);
+  }
+
+  .search-mode-toggle button:disabled {
+    cursor: not-allowed;
+    color: var(--text-tertiary);
+    opacity: 0.5;
+  }
+
+  .search-mode-toggle button:disabled:hover {
+    color: var(--text-tertiary);
   }
 
   .no-results {

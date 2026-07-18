@@ -41,6 +41,8 @@
       "stopRecording": "録音を停止",
       "sendMessage": "メッセージを送信",
       "sendMessageTitle": "メッセージを送信（Enter）",
+      "cancelResponse": "応答を停止",
+      "cancellingResponse": "応答を停止中...",
       "messageInput": "メッセージ入力",
       "visionCapable": "ビジョン対応",
       "removeFile": "ファイルを削除",

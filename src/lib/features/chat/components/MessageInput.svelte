@@ -16,7 +16,9 @@
 
   interface MessageInputProps {
     onSend: (message: string, uploadedFiles?: UploadedFile[], webSearch?: boolean) => void;
+    onCancel?: () => void;
     disabled?: boolean;
+    cancelling?: boolean;
     placeholder?: string;
     selectedModel?: string;
     selectedProvider?: string;
@@ -34,7 +36,7 @@
     onWebSearchToggle?: () => void;
   }
 
-let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, mcpServers = [], selectedMcpServers = [], loadingMcpServers = false, mcpServersError = null, onMcpToggle, webSearchEnabled = false, onWebSearchToggle }: MessageInputProps = $props();
+let { onSend, onCancel, disabled = false, cancelling = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, mcpServers = [], selectedMcpServers = [], loadingMcpServers = false, mcpServersError = null, onMcpToggle, webSearchEnabled = false, onWebSearchToggle }: MessageInputProps = $props();
   let isDarkMode = $state(false);
 
   function syncThemeState() {
@@ -90,7 +92,14 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
       ? ''
       : (placeholder || $_('chat.messageInput.placeholder'))
   );
+  let isUploading = $derived(uploadingFiles.size > 0);
   let micLevelOpacity = $derived((0.45 + Math.max(0, Math.min(1, voiceLevel)) * 0.55).toFixed(2));
+  let canCancelResponse = $derived(Boolean(disabled && onCancel));
+  let sendButtonDisabled = $derived(
+    canCancelResponse
+      ? cancelling
+      : disabled || isUploading || (!message.trim() && attachedFiles.length === 0)
+  );
 
   const connectorsLabel = $derived($_('chat.messageInput.tools'));
 
@@ -162,8 +171,6 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
       handleSend();
     }
   }
-
-  let isUploading = $derived(uploadingFiles.size > 0);
 
   async function uploadFileImmediately(file: File) {
     uploadingFiles.add(file.name);
@@ -914,16 +921,28 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
         </button>
 
         <button
+          type="button"
           class="input-btn send-btn"
-          onclick={handleSend}
-          disabled={disabled || isUploading || (!message.trim() && attachedFiles.length === 0)}
-          aria-label={isUploading ? $_('chat.messageInput.uploading') : $_('chat.messageInput.sendMessage')}
-          title={isUploading ? $_('chat.messageInput.uploading') : $_('chat.messageInput.sendMessageTitle')}
+          class:cancel-btn={canCancelResponse}
+          onclick={() => {
+            if (canCancelResponse) {
+              onCancel?.();
+              return;
+            }
+            void handleSend();
+          }}
+          disabled={sendButtonDisabled}
+          aria-label={canCancelResponse ? (cancelling ? $_('chat.messageInput.cancellingResponse') : $_('chat.messageInput.cancelResponse')) : (isUploading ? $_('chat.messageInput.uploading') : $_('chat.messageInput.sendMessage'))}
+          title={canCancelResponse ? (cancelling ? $_('chat.messageInput.cancellingResponse') : $_('chat.messageInput.cancelResponse')) : (isUploading ? $_('chat.messageInput.uploading') : $_('chat.messageInput.sendMessageTitle'))}
         >
-          {#if disabled || isUploading}
+          {#if cancelling || (!canCancelResponse && (disabled || isUploading))}
             <svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
               <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"></path>
+            </svg>
+          {:else if canCancelResponse}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <rect x="7" y="7" width="10" height="10" rx="2"></rect>
             </svg>
           {:else}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1217,6 +1236,25 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     color: var(--text-secondary);
     opacity: 0.5;
     box-shadow: none;
+  }
+
+  .input-btn.send-btn.cancel-btn {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    box-shadow:
+      0 var(--space-xs) var(--space-lg) rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+
+  .input-btn.send-btn.cancel-btn:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--text-primary) 88%, var(--brand-red));
+    color: var(--bg-primary);
+  }
+
+  .input-btn.send-btn.cancel-btn:disabled {
+    background: var(--btn-quaternary);
+    color: var(--text-secondary);
+    opacity: 0.65;
   }
 
   /* Microphone Recording State */

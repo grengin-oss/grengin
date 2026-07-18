@@ -7,7 +7,7 @@
   import MessageScrollNavigator from './MessageScrollNavigator.svelte';
   import type { MergedToolResult, ToolCall, ToolResult, WebSearchResult } from '../../../types/toolCall';
   import type { BudgetWarningMessage, ChatMessage as ChatMessageType, McpAuthRequest } from '../../../types/chat';
-  import { sendMessage, getConversation, getChatMcpServers, type UploadedFile } from '../../../api/chatApi';
+  import { cancelChatStream, sendMessage, getConversation, getChatMcpServers, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
   import { getModels } from '../../../api/models';
   import type { MCPServer } from '../../../admin/types.js';
@@ -15,6 +15,7 @@
   import { _ } from 'svelte-i18n';
   import { ApiError } from '../../../api/client';
   import { getLocalizedError } from '../../../utils/errorLocalization';
+  import { cacheConversationSnapshot } from '../storage/sqliteChatStore';
 
   let messages = $state<ChatMessageType[]>([]);
   let isLoading = $state(false);
@@ -36,9 +37,85 @@
   let loadingMcpServers = $state(false);
   let mcpServersError = $state<string | null>(null);
   let conversationLoadToken = 0;
+  let offlineSnapshotTimer: ReturnType<typeof setTimeout> | null = null;
+  let activeStreamAbortController = $state<AbortController | null>(null);
+  let activeStreamMessageId = $state<string | null>(null);
+  let activeStreamBackendMessageId = $state<string | null>(null);
+  let isCancellingStream = $state(false);
 
   // Project to link once a new conversation is created (chat started from a project workspace).
   let pendingProjectId = $state<string | null>(null);
+
+  function persistOfflineSnapshot() {
+    if (!conversationId || messages.length === 0) return;
+
+    void cacheConversationSnapshot({
+      conversationId,
+      messages,
+      model: selectedModel,
+      webSearchEnabled,
+    });
+  }
+
+  function scheduleOfflineSnapshot(delayMs = 600) {
+    if (!conversationId || messages.length === 0) return;
+
+    if (offlineSnapshotTimer) {
+      clearTimeout(offlineSnapshotTimer);
+    }
+
+    offlineSnapshotTimer = setTimeout(() => {
+      offlineSnapshotTimer = null;
+      persistOfflineSnapshot();
+    }, delayMs);
+  }
+
+  function finalizeStoppedMessage(messageId: string | null) {
+    if (!messageId) return;
+
+    messages = messages
+      .map((message) =>
+        message.id === messageId ? { ...message, isStreaming: false } : message,
+      )
+      .filter((message) => {
+        if (message.id !== messageId || message.role !== 'assistant') return true;
+        return Boolean(
+          message.content.trim() ||
+          message.toolCalls?.length ||
+          message.toolsResults?.length ||
+          message.mcpAuthRequests?.length,
+        );
+      });
+  }
+
+  async function handleCancelStream() {
+    if (isCancellingStream || (!activeStreamAbortController && !activeStreamMessageId && !isLoading && !isTyping)) {
+      return;
+    }
+
+    isCancellingStream = true;
+    const backendMessageId = activeStreamBackendMessageId;
+    const uiMessageId = activeStreamMessageId;
+    const cancelRequest = backendMessageId
+      ? cancelChatStream(backendMessageId).catch((err) => {
+          console.warn('Failed to cancel chat stream on backend:', err);
+        })
+      : Promise.resolve();
+
+    activeStreamAbortController?.abort();
+    finalizeStoppedMessage(uiMessageId);
+    currentStreamingMessage = null;
+    isTyping = false;
+    isLoading = false;
+    persistOfflineSnapshot();
+
+    await cancelRequest;
+    isCancellingStream = false;
+    activeStreamAbortController = null;
+    activeStreamMessageId = null;
+    activeStreamBackendMessageId = null;
+    window.dispatchEvent(new CustomEvent('refreshChatHistory'));
+  }
 
   // Link a freshly-created conversation to the originating project (many-to-many). Runs once.
   async function linkPendingProject(newConversationId: string) {
@@ -284,6 +361,7 @@
       })) || []
     };
     messages = [...messages, userMessage];
+    scheduleOfflineSnapshot(0);
 
     // Prepare streaming message
     let pendingStreamingMessage: ChatMessageType | null = {
@@ -300,6 +378,11 @@
 
     let messageAddedToArray = $state(false);
     let pendingConversationId = conversationId;
+    const streamAbortController = new AbortController();
+    activeStreamAbortController = streamAbortController;
+    activeStreamMessageId = pendingStreamingMessage.id;
+    activeStreamBackendMessageId = null;
+    isCancellingStream = false;
     isTyping = true;
     scrollToBottom();
 
@@ -318,6 +401,7 @@
         uploadedFiles: uploadedFiles,
         webSearch: webSearch,
         selectedMcpServers,
+        signal: streamAbortController.signal,
 
         onConversationInitialized: ({newConversationId}) => {
           // Update conversation ID and URL
@@ -327,6 +411,7 @@
             updateUrlWithConversationId(newConversationId);
           }
           if (newConversationId) void linkPendingProject(newConversationId);
+          scheduleOfflineSnapshot(0);
 
           // Update loading and typing states
           isLoading = true;
@@ -339,8 +424,11 @@
           if (pendingStreamingMessage) {
             messageAddedToArray = true;
             pendingStreamingMessage = {...pendingStreamingMessage, id: messageId};
+            activeStreamMessageId = messageId;
+            activeStreamBackendMessageId = messageId;
             currentStreamingMessage = {...pendingStreamingMessage};
             messages = [...messages, currentStreamingMessage as ChatMessageType];
+            scheduleOfflineSnapshot(0);
 
             // Update loading and typing states
             isTyping = false;
@@ -355,6 +443,7 @@
             if (!messageAddedToArray && token.trim()) {
               messages = [...messages, pendingStreamingMessage];
               messageAddedToArray = true;
+              activeStreamMessageId = pendingStreamingMessage.id;
             }
             
             // Create a new message object with updated content
@@ -370,6 +459,7 @@
             messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
+            scheduleOfflineSnapshot();
 
             // Detect HTML artifact in streaming content
             detectAndStreamArtifact(pendingStreamingMessage.content, true);
@@ -392,6 +482,7 @@
             if (!messageAddedToArray) {
               messages = [...messages, pendingStreamingMessage];
               messageAddedToArray = true;
+              activeStreamMessageId = pendingStreamingMessage.id;
             }
             // Merge by tool_id: update existing entry or add new one
             const existingCalls = pendingStreamingMessage.toolCalls || [];
@@ -417,6 +508,7 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
+            scheduleOfflineSnapshot();
 
             isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
@@ -449,6 +541,7 @@
             messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
+            scheduleOfflineSnapshot();
 
             isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
@@ -466,6 +559,7 @@
             if (!messageAddedToArray) {
               messages = [...messages, pendingStreamingMessage];
               messageAddedToArray = true;
+              activeStreamMessageId = pendingStreamingMessage.id;
             }
             const existingRequests = pendingStreamingMessage.mcpAuthRequests || [];
             const alreadyExists = existingRequests.some(r => r.server_id === authRequest.server_id);
@@ -480,6 +574,7 @@
               messages = messages.map(m =>
                 m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
               );
+              scheduleOfflineSnapshot();
 
               isLoading = true;
               scrollToStreamingMessageTop(pendingStreamingMessage.id);
@@ -516,6 +611,7 @@
             messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
+            persistOfflineSnapshot();
 
             // Finalize artifact streaming
             detectAndStreamArtifact(pendingStreamingMessage.content, false);
@@ -541,6 +637,7 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
+            persistOfflineSnapshot();
 
             isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
@@ -560,6 +657,12 @@
       isLoading = false;
       currentStreamingMessage = null;
       pendingStreamingMessage = null;
+      if (activeStreamAbortController === streamAbortController) {
+        activeStreamAbortController = null;
+        activeStreamMessageId = null;
+        activeStreamBackendMessageId = null;
+        isCancellingStream = false;
+      }
 
       // Refocus input after exception
       await tick();
@@ -571,6 +674,7 @@
     messages = messages.map(msg => 
       msg.id === id ? { ...msg, content: newContent } : msg
     );
+    scheduleOfflineSnapshot(0);
   }
 
   function handleMcpAuthStatusChange(messageId: string, serverId: string, status: McpAuthRequest['status']) {
@@ -583,6 +687,7 @@
         ),
       };
     });
+    scheduleOfflineSnapshot(0);
   }
 
   function handleMcpAuthConnected(messageId: string, serverId: string) {
@@ -595,6 +700,7 @@
         ),
       };
     });
+    scheduleOfflineSnapshot(0);
 
     // Check if all auth requests for this message are now connected
     const msg = messages.find(m => m.id === messageId);
@@ -613,6 +719,7 @@
         ),
       };
     });
+    scheduleOfflineSnapshot(0);
   }
 
   async function continueProcessingRequest(assistantMessageId: string) {
@@ -635,6 +742,11 @@
       toolsResults: [] as ToolResult[],
       mergedWebSearch: null as MergedToolResult | null,
     };
+    const streamAbortController = new AbortController();
+    activeStreamAbortController = streamAbortController;
+    activeStreamMessageId = assistantMessageId;
+    activeStreamBackendMessageId = assistantMessageId;
+    isCancellingStream = false;
 
     // Update the assistant message to show processing state
     messages = messages.map(msg => {
@@ -663,6 +775,7 @@
         })),
         webSearch: webSearchEnabled,
         selectedMcpServers,
+        signal: streamAbortController.signal,
 
         onConversationInitialized: ({newConversationId}) => {
           if (newConversationId && newConversationId !== conversationId) {
@@ -670,11 +783,14 @@
             updateUrlWithConversationId(newConversationId);
           }
           if (newConversationId) void linkPendingProject(newConversationId);
+          scheduleOfflineSnapshot(0);
           window.dispatchEvent(new CustomEvent('refreshChatHistory'));
         },
         onStreamingStart: (messageId) => {
           if (pendingStreamingMessage) {
             pendingStreamingMessage = { ...pendingStreamingMessage, id: messageId };
+            activeStreamMessageId = messageId;
+            activeStreamBackendMessageId = messageId;
             
             // Update the existing assistant message with the real message ID
             messages = messages.map(msg => {
@@ -683,6 +799,7 @@
               }
               return msg;
             });
+            scheduleOfflineSnapshot(0);
           }
           isTyping = false;
           isLoading = true;
@@ -699,6 +816,7 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
+            scheduleOfflineSnapshot();
           }
         },
         onToolCall: (toolCall) => {
@@ -725,6 +843,7 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
+            scheduleOfflineSnapshot();
           }
         },
         onToolResult: (toolResult) => {
@@ -751,6 +870,7 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
+            scheduleOfflineSnapshot();
           }
         },
         onDone: async (_data) => {
@@ -781,6 +901,7 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
+            persistOfflineSnapshot();
           }
           isLoading = false;
           isTyping = false;
@@ -803,6 +924,7 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
+            persistOfflineSnapshot();
           }
           isLoading = false;
           isTyping = false;
@@ -819,6 +941,13 @@
       }
       isLoading = false;
       isTyping = false;
+    } finally {
+      if (activeStreamAbortController === streamAbortController) {
+        activeStreamAbortController = null;
+        activeStreamMessageId = null;
+        activeStreamBackendMessageId = null;
+        isCancellingStream = false;
+      }
     }
   }
 
@@ -1105,6 +1234,10 @@
       window.removeEventListener('popstate', handleUrlChange);
       window.removeEventListener('focusChatInput', handleFocusChatInput);
       history.pushState = originalPushState;
+      if (offlineSnapshotTimer) {
+        clearTimeout(offlineSnapshotTimer);
+        offlineSnapshotTimer = null;
+      }
     };
   });
 </script>
@@ -1131,7 +1264,9 @@
         <MessageInput
           bind:this={messageInput}
           onSend={handleSendMessage}
+          onCancel={handleCancelStream}
           disabled={isLoading}
+          cancelling={isCancellingStream}
           placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
           {selectedModel}
           {selectedProvider}
@@ -1258,7 +1393,9 @@
       <MessageInput
         bind:this={messageInput}
         onSend={handleSendMessage}
+        onCancel={handleCancelStream}
         disabled={isLoading}
+        cancelling={isCancellingStream}
         placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
         {selectedModel}
         {selectedProvider}

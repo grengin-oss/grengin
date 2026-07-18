@@ -41,6 +41,8 @@
       "stopRecording": "녹음 중지",
       "sendMessage": "메시지 보내기",
       "sendMessageTitle": "메시지 보내기 (Enter)",
+      "cancelResponse": "응답 중지",
+      "cancellingResponse": "응답 중지 중...",
       "messageInput": "메시지 입력",
       "visionCapable": "비전 지원",
       "removeFile": "파일 제거",

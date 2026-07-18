@@ -41,6 +41,8 @@
       "stopRecording": "Arrêter l'enregistrement",
       "sendMessage": "Envoyer le message",
       "sendMessageTitle": "Envoyer le message (Entrée)",
+      "cancelResponse": "Arrêter la réponse",
+      "cancellingResponse": "Arrêt de la réponse...",
       "messageInput": "Saisie de message",
       "visionCapable": "Capacité de vision",
       "removeFile": "Supprimer le fichier",

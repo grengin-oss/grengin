@@ -41,6 +41,8 @@
       "stopRecording": "إيقاف التسجيل",
       "sendMessage": "إرسال رسالة",
       "sendMessageTitle": "إرسال رسالة (Enter)",
+      "cancelResponse": "إيقاف الرد",
+      "cancellingResponse": "جارٍ إيقاف الرد...",
       "messageInput": "إدخال الرسالة",
       "visionCapable": "قادر على الرؤية",
       "removeFile": "إزالة الملف",

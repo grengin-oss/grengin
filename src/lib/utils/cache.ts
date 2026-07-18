@@ -16,7 +16,7 @@ interface CachedLoadOptions {
 
 const pendingLoads = new Map<string, Promise<unknown>>();
 
-function getUserScope(): string {
+export function getCacheUserScope(): string {
   if (typeof localStorage === 'undefined') {
     return 'anonymous';
   }
@@ -42,7 +42,7 @@ export function makeScopedCacheKey(
   namespace: string,
   parts: Array<string | number | boolean | null | undefined> = [],
 ): string {
-  return [CACHE_PREFIX, getUserScope(), namespace, ...parts].map(encodePart).join(':');
+  return [CACHE_PREFIX, getCacheUserScope(), namespace, ...parts].map(encodePart).join(':');
 }
 
 export function readCache<T>(key: string, options: ReadCacheOptions = {}): T | null {
@@ -119,7 +119,7 @@ export function clearAllScopedCache(): void {
 }
 
 export function clearCacheNamespace(namespace: string): void {
-  removeCacheByPrefix([CACHE_PREFIX, getUserScope(), namespace].map(encodePart).join(':'));
+  removeCacheByPrefix([CACHE_PREFIX, getCacheUserScope(), namespace].map(encodePart).join(':'));
 }
 
 export async function cachedLoad<T>(
