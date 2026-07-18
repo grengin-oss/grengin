@@ -18,6 +18,13 @@
   let showSaveToProject = $state(false);
   let toastMessage = $state("");
   let showToast = $state(false);
+  let isFullscreen = $state(false);
+  let previewMode = $state<"responsive" | "desktop">("responsive");
+  let previewViewport: HTMLDivElement | undefined = $state(undefined);
+  let desktopScale = $state(1);
+
+  const DESKTOP_VIEWPORT_WIDTH = 1440;
+  const DESKTOP_VIEWPORT_HEIGHT = 900;
 
   function triggerToast(message: string) {
     toastMessage = message;
@@ -34,6 +41,9 @@
   let activeView = $state<"code" | "preview">("code");
   let codeContainer: HTMLPreElement | undefined = $state(undefined);
   let iframeKey = $state(0);
+  let desktopFrameWidth = $derived(`${Math.round(DESKTOP_VIEWPORT_WIDTH * desktopScale)}px`);
+  let desktopFrameHeight = $derived(`${Math.round(DESKTOP_VIEWPORT_HEIGHT * desktopScale)}px`);
+  let desktopPreviewTransform = $derived(`scale(${desktopScale})`);
 
   $effect(() => {
     if (!isStreaming && code.length > 0) {
@@ -49,6 +59,39 @@
         }
       });
     }
+  });
+
+  $effect(() => {
+    if (previewMode !== "desktop" || activeView !== "preview" || type !== "html" || !previewViewport) {
+      desktopScale = 1;
+      return;
+    }
+
+    const updateScale = () => {
+      if (!previewViewport) return;
+
+      const bounds = previewViewport.getBoundingClientRect();
+      const availableWidth = Math.max(bounds.width - 32, 320);
+      const availableHeight = Math.max(bounds.height - 32, 240);
+      const nextScale = Math.min(
+        1,
+        availableWidth / DESKTOP_VIEWPORT_WIDTH,
+        availableHeight / DESKTOP_VIEWPORT_HEIGHT,
+      );
+
+      desktopScale = Number(nextScale.toFixed(3));
+    };
+
+    updateScale();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", updateScale);
+      return () => window.removeEventListener("resize", updateScale);
+    }
+
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(previewViewport);
+    return () => observer.disconnect();
   });
 
   async function handleCopy() {
@@ -78,8 +121,21 @@
     iframeKey++;
   }
 
+  function togglePreviewMode() {
+    previewMode = previewMode === "desktop" ? "responsive" : "desktop";
+  }
+
+  function toggleFullscreen() {
+    isFullscreen = !isFullscreen;
+  }
+
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === "Escape" && !showSaveToProject) {
+      if (isFullscreen) {
+        isFullscreen = false;
+        return;
+      }
+
       onclose();
     }
   }
@@ -87,7 +143,7 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="artifact-panel">
+<div class="artifact-panel" class:fullscreen={isFullscreen}>
   <div class="artifact-header">
     <div class="header-left">
       <div class="view-toggle">
@@ -151,6 +207,29 @@
         <button
           type="button"
           class="header-btn"
+          class:active={previewMode === "desktop"}
+          onclick={togglePreviewMode}
+          title={previewMode === "desktop" ? "Use responsive preview" : "Preview at desktop size"}
+          aria-label={previewMode === "desktop" ? "Use responsive preview" : "Preview at desktop size"}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="4" width="18" height="12" rx="2" />
+            <path d="M8 20h8" />
+            <path d="M12 16v4" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="header-btn"
           onclick={handleReload}
           title="Reload preview"
           aria-label="Reload preview"
@@ -168,6 +247,50 @@
             <path d="M21 12a9 9 0 1 1-2.64-6.36" />
             <polyline points="21 3 21 9 15 9" />
           </svg>
+        </button>
+      {/if}
+      {#if !isStreaming}
+        <button
+          type="button"
+          class="header-btn"
+          class:active={isFullscreen}
+          onclick={toggleFullscreen}
+          title={isFullscreen ? "Exit fullscreen" : "Fullscreen preview"}
+          aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen preview"}
+        >
+          {#if isFullscreen}
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+              <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+              <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+              <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+            </svg>
+          {:else}
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+              <path d="M16 3h3a2 2 0 0 1 2 2v3" />
+              <path d="M21 16v3a2 2 0 0 1-2 2h-3" />
+              <path d="M8 21H5a2 2 0 0 1-2-2v-3" />
+            </svg>
+          {/if}
         </button>
       {/if}
       <button
@@ -279,14 +402,37 @@
     {:else if type === "markdown"}
       <div class="markdown-preview">{@html renderedMarkdown}</div>
     {:else}
-      {#key iframeKey}
-        <iframe
-          title="Artifact Preview"
-          class="preview-iframe"
-          srcdoc={code}
-          sandbox="allow-same-origin allow-scripts"
-        ></iframe>
-      {/key}
+      <div
+        class="preview-viewport"
+        class:desktop={previewMode === "desktop"}
+        bind:this={previewViewport}
+      >
+        {#key iframeKey}
+          {#if previewMode === "desktop"}
+            <div
+              class="desktop-preview-frame"
+              style:width={desktopFrameWidth}
+              style:height={desktopFrameHeight}
+            >
+              <div class="desktop-preview-inner" style:transform={desktopPreviewTransform}>
+                <iframe
+                  title="Artifact Preview"
+                  class="preview-iframe desktop-preview-iframe"
+                  srcdoc={code}
+                  sandbox="allow-same-origin allow-scripts"
+                ></iframe>
+              </div>
+            </div>
+          {:else}
+            <iframe
+              title="Artifact Preview"
+              class="preview-iframe"
+              srcdoc={code}
+              sandbox="allow-same-origin allow-scripts"
+            ></iframe>
+          {/if}
+        {/key}
+      </div>
     {/if}
   </div>
 </div>
@@ -309,6 +455,17 @@
     background: var(--bg-primary);
     animation: panelSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     isolation: isolate;
+  }
+
+  .artifact-panel.fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    width: 100vw;
+    height: var(--app-viewport-height, 100vh);
+    border-left: 0;
+    animation: none;
+    box-shadow: none;
   }
 
   @keyframes panelSlideIn {
@@ -338,6 +495,11 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     flex-shrink: 0;
+  }
+
+  .artifact-panel.fullscreen .artifact-header {
+    min-height: calc(52px + var(--app-safe-area-top, 0px));
+    padding-top: calc(8px + var(--app-safe-area-top, 0px));
   }
 
   .header-left {
@@ -468,6 +630,12 @@
 
   .header-btn.success {
     color: #22c55e;
+  }
+
+  .header-btn.active {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   }
 
   .header-btn.close-btn {
@@ -647,6 +815,49 @@
   }
 
   /* ── Preview iframe ── */
+  .preview-viewport {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .preview-viewport.desktop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: auto;
+    padding: 16px;
+    background:
+      linear-gradient(45deg, rgba(255, 255, 255, 0.045) 25%, transparent 25%),
+      linear-gradient(-45deg, rgba(255, 255, 255, 0.045) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.045) 75%),
+      linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.045) 75%),
+      #121417;
+    background-position:
+      0 0,
+      0 8px,
+      8px -8px,
+      -8px 0;
+    background-size: 16px 16px;
+  }
+
+  .desktop-preview-frame {
+    position: relative;
+    flex: 0 0 auto;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  }
+
+  .desktop-preview-inner {
+    width: 1440px;
+    height: 900px;
+    transform-origin: top left;
+  }
+
   .preview-iframe {
     width: 100%;
     height: 100%;
@@ -655,10 +866,20 @@
     display: block;
   }
 
+  .desktop-preview-iframe {
+    width: 1440px;
+    height: 900px;
+  }
+
   @media (max-width: 640px) {
     .artifact-header {
       min-height: 56px;
       padding: 9px 10px;
+    }
+
+    .artifact-panel.fullscreen .artifact-header {
+      min-height: calc(56px + var(--app-safe-area-top, 0px));
+      padding-top: calc(9px + var(--app-safe-area-top, 0px));
     }
 
     .artifact-title {
@@ -672,6 +893,15 @@
     .header-btn {
       width: 34px;
       height: 34px;
+    }
+
+    .header-right {
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .header-right::-webkit-scrollbar {
+      display: none;
     }
 
     .toggle-btn {
