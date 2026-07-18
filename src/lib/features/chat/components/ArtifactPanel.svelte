@@ -1,6 +1,13 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import { renderMarkdown, copyToClipboard } from "../../../utils/markdown";
+  import { renderMarkdown, highlightCode, copyToClipboard } from "../../../utils/markdown";
+  import {
+    attachDesktopPreviewPinch,
+    clampDesktopPreviewZoom,
+    DESKTOP_PREVIEW_ZOOM_MAX,
+    DESKTOP_PREVIEW_ZOOM_MIN,
+    DESKTOP_PREVIEW_ZOOM_STEP,
+  } from "../utils/desktopPreviewPinch";
   import SaveToProjectModal from "./SaveToProjectModal.svelte";
 
   interface Props {
@@ -21,7 +28,9 @@
   let isFullscreen = $state(false);
   let previewMode = $state<"responsive" | "desktop">("responsive");
   let previewViewport: HTMLDivElement | undefined = $state(undefined);
-  let desktopScale = $state(1);
+  let desktopIframe: HTMLIFrameElement | undefined = $state(undefined);
+  let desktopFitScale = $state(1);
+  let desktopZoom = $state(1);
 
   const DESKTOP_VIEWPORT_WIDTH = 1440;
   const DESKTOP_VIEWPORT_HEIGHT = 900;
@@ -41,9 +50,12 @@
   let activeView = $state<"code" | "preview">("code");
   let codeContainer: HTMLPreElement | undefined = $state(undefined);
   let iframeKey = $state(0);
+  let desktopScale = $derived(Number((desktopFitScale * desktopZoom).toFixed(3)));
   let desktopFrameWidth = $derived(`${Math.round(DESKTOP_VIEWPORT_WIDTH * desktopScale)}px`);
   let desktopFrameHeight = $derived(`${Math.round(DESKTOP_VIEWPORT_HEIGHT * desktopScale)}px`);
-  let desktopPreviewTransform = $derived(`scale(${desktopScale})`);
+  let desktopPreviewTransform = $derived(`translate3d(0, 0, 0) scale(${desktopScale})`);
+  let desktopZoomPercent = $derived(`${Math.round(desktopScale * 100)}%`);
+  let highlightedCode = $derived(highlightCode(code, type));
 
   $effect(() => {
     if (!isStreaming && code.length > 0) {
@@ -62,10 +74,18 @@
   });
 
   $effect(() => {
-    if (previewMode !== "desktop" || activeView !== "preview" || type !== "html" || !previewViewport) {
-      desktopScale = 1;
+    if (
+      previewMode !== "desktop" ||
+      activeView !== "preview" ||
+      type !== "html" ||
+      !previewViewport
+    ) {
+      desktopFitScale = 1;
       return;
     }
+
+    let animationFrame = 0;
+    let lastFitScale = 0;
 
     const updateScale = () => {
       if (!previewViewport) return;
@@ -79,19 +99,34 @@
         availableHeight / DESKTOP_VIEWPORT_HEIGHT,
       );
 
-      desktopScale = Number(nextScale.toFixed(3));
+      const roundedScale = Number(nextScale.toFixed(3));
+      if (Math.abs(roundedScale - lastFitScale) < 0.001) return;
+
+      lastFitScale = roundedScale;
+      desktopFitScale = roundedScale;
     };
 
-    updateScale();
+    const queueScaleUpdate = () => {
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(updateScale);
+    };
+
+    queueScaleUpdate();
 
     if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", updateScale);
-      return () => window.removeEventListener("resize", updateScale);
+      window.addEventListener("resize", queueScaleUpdate);
+      return () => {
+        cancelAnimationFrame(animationFrame);
+        window.removeEventListener("resize", queueScaleUpdate);
+      };
     }
 
-    const observer = new ResizeObserver(updateScale);
+    const observer = new ResizeObserver(queueScaleUpdate);
     observer.observe(previewViewport);
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      observer.disconnect();
+    };
   });
 
   async function handleCopy() {
@@ -120,6 +155,27 @@
   function handleReload() {
     iframeKey++;
   }
+
+  function adjustDesktopZoom(delta: number) {
+    desktopZoom = Number(clampDesktopPreviewZoom(desktopZoom + delta).toFixed(2));
+  }
+
+  $effect(() => {
+    const viewport = previewViewport;
+    if (!viewport) return;
+
+    return attachDesktopPreviewPinch({
+      viewport,
+      iframe: desktopIframe,
+      isEnabled: () => previewMode === "desktop" && activeView === "preview" && type === "html",
+      getZoom: () => desktopZoom,
+      setZoom: (zoom) => {
+        desktopZoom = zoom;
+      },
+      getFitScale: () => desktopFitScale,
+      getScale: () => desktopScale,
+    });
+  });
 
   function togglePreviewMode() {
     previewMode = previewMode === "desktop" ? "responsive" : "desktop";
@@ -209,24 +265,88 @@
           class="header-btn"
           class:active={previewMode === "desktop"}
           onclick={togglePreviewMode}
-          title={previewMode === "desktop" ? "Use responsive preview" : "Preview at desktop size"}
-          aria-label={previewMode === "desktop" ? "Use responsive preview" : "Preview at desktop size"}
+          title={previewMode === "desktop" ? "Switch to mobile preview" : "Preview at desktop size"}
+          aria-label={previewMode === "desktop" ? "Switch to mobile preview" : "Preview at desktop size"}
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <rect x="3" y="4" width="18" height="12" rx="2" />
-            <path d="M8 20h8" />
-            <path d="M12 16v4" />
-          </svg>
+          {#if previewMode === "desktop"}
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="7" y="2" width="10" height="20" rx="2" />
+              <path d="M11 18h2" />
+            </svg>
+          {:else}
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="4" width="18" height="12" rx="2" />
+              <path d="M8 20h8" />
+              <path d="M12 16v4" />
+            </svg>
+          {/if}
         </button>
+        {#if previewMode === "desktop"}
+          <div class="zoom-controls" role="group" aria-label="Desktop preview zoom">
+            <button
+              type="button"
+              class="zoom-btn"
+              onclick={() => adjustDesktopZoom(-DESKTOP_PREVIEW_ZOOM_STEP)}
+              disabled={desktopZoom <= DESKTOP_PREVIEW_ZOOM_MIN}
+              title="Zoom out"
+              aria-label="Zoom out"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M5 12h14" />
+              </svg>
+            </button>
+            <span class="zoom-value" aria-live="polite">{desktopZoomPercent}</span>
+            <button
+              type="button"
+              class="zoom-btn"
+              onclick={() => adjustDesktopZoom(DESKTOP_PREVIEW_ZOOM_STEP)}
+              disabled={desktopZoom >= DESKTOP_PREVIEW_ZOOM_MAX}
+              title="Zoom in"
+              aria-label="Zoom in"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 5v14" />
+                <path d="M5 12h14" />
+              </svg>
+            </button>
+          </div>
+        {/if}
         <button
           type="button"
           class="header-btn"
@@ -396,8 +516,8 @@
 
   <div class="artifact-body">
     {#if activeView === "code"}
-      <pre class="code-view" bind:this={codeContainer}><code
-          >{code}{#if isStreaming}<span class="cursor-blink">|</span>{/if}</code
+      <pre class="code-view" bind:this={codeContainer}><code class="hljs language-{type}"
+          >{@html highlightedCode}{#if isStreaming}<span class="cursor-blink">|</span>{/if}</code
         ></pre>
     {:else if type === "markdown"}
       <div class="markdown-preview">{@html renderedMarkdown}</div>
@@ -416,6 +536,7 @@
             >
               <div class="desktop-preview-inner" style:transform={desktopPreviewTransform}>
                 <iframe
+                  bind:this={desktopIframe}
                   title="Artifact Preview"
                   class="preview-iframe desktop-preview-iframe"
                   srcdoc={code}
@@ -453,7 +574,6 @@
     min-height: 0;
     border-left: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
     background: var(--bg-primary);
-    animation: panelSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     isolation: isolate;
   }
 
@@ -466,17 +586,6 @@
     border-left: 0;
     animation: none;
     box-shadow: none;
-  }
-
-  @keyframes panelSlideIn {
-    from {
-      opacity: 0;
-      transform: translateX(16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
   }
 
   /* ── Header ── */
@@ -638,6 +747,60 @@
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   }
 
+  .zoom-controls {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+    background: rgba(var(--glass-tint, 255, 255, 255), 0.08);
+    color: #d8d8d8;
+    flex-shrink: 0;
+  }
+
+  .zoom-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .zoom-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+
+  .zoom-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.38;
+  }
+
+  .zoom-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  .zoom-value {
+    min-width: 42px;
+    padding: 0 2px;
+    color: var(--text-secondary, #b8b8b8);
+    font-size: 0.76rem;
+    font-weight: 650;
+    line-height: 1;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+  }
+
   .header-btn.close-btn {
     background: rgba(239, 68, 68, 0.1);
     color: #f87171;
@@ -717,6 +880,18 @@
     white-space: pre-wrap;
     word-break: break-word;
     tab-size: 2;
+  }
+
+  .code-view code {
+    display: block;
+    min-width: 100%;
+    background: transparent;
+    color: inherit;
+  }
+
+  .code-view :global(.hljs) {
+    padding: 0;
+    background: transparent;
   }
 
   .cursor-blink {
@@ -825,8 +1000,10 @@
   .preview-viewport.desktop {
     display: flex;
     align-items: flex-start;
-    justify-content: center;
+    justify-content: flex-start;
     overflow: auto;
+    touch-action: pan-x pan-y;
+    overscroll-behavior: contain;
     padding: 16px;
     background:
       linear-gradient(45deg, rgba(255, 255, 255, 0.045) 25%, transparent 25%),
@@ -845,17 +1022,21 @@
   .desktop-preview-frame {
     position: relative;
     flex: 0 0 auto;
+    margin-inline: auto;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 10px;
     overflow: hidden;
     background: #fff;
     box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    contain: layout paint size;
   }
 
   .desktop-preview-inner {
     width: 1440px;
     height: 900px;
     transform-origin: top left;
+    backface-visibility: hidden;
+    will-change: transform;
   }
 
   .preview-iframe {
@@ -869,6 +1050,8 @@
   .desktop-preview-iframe {
     width: 1440px;
     height: 900px;
+    backface-visibility: hidden;
+    transform: translate3d(0, 0, 0);
   }
 
   @media (max-width: 640px) {
@@ -893,6 +1076,21 @@
     .header-btn {
       width: 34px;
       height: 34px;
+    }
+
+    .zoom-controls {
+      height: 34px;
+      padding: 0 3px;
+    }
+
+    .zoom-btn {
+      width: 26px;
+      height: 26px;
+    }
+
+    .zoom-value {
+      min-width: 38px;
+      font-size: 0.72rem;
     }
 
     .header-right {

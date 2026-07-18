@@ -2,6 +2,42 @@ import { marked } from 'marked';
 import hljs from 'highlight.js/lib/common';
 import DOMPurify from 'dompurify';
 
+export type ArtifactCodeLanguage = 'html' | 'markdown';
+
+function escapeHtml(content: string): string {
+  return content.replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      case "'":
+        return '&#39;';
+      default:
+        return char;
+    }
+  });
+}
+
+export function highlightCode(content: string, language: ArtifactCodeLanguage): string {
+  try {
+    return DOMPurify.sanitize(hljs.highlight(content, {
+      language,
+      ignoreIllegals: true,
+    }).value, {
+      ALLOWED_TAGS: ['span'],
+      ALLOWED_ATTR: ['class'],
+    });
+  } catch (err) {
+    console.error('Highlight error:', err);
+    return escapeHtml(content);
+  }
+}
+
 // Configure marked renderer for code blocks
 const renderer = new marked.Renderer();
 

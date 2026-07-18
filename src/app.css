@@ -261,6 +261,7 @@ html[data-theme='dark'] {
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  touch-action: pan-x pan-y;
   /* Reserve scrollbar space so 100vw doesn't cause horizontal overflow when vertical scrollbar appears */
   scrollbar-gutter: stable;
   background: var(--bg-primary);
@@ -271,6 +272,7 @@ body {
   min-height: 100dvh;
   margin: 0;
   padding: 0;
+  touch-action: pan-x pan-y;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
   background: var(--bg-primary);
@@ -286,6 +288,7 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   position: relative;
+  touch-action: pan-x pan-y;
 }
 
 a,
@@ -956,7 +959,7 @@ pre {
   }
 
   button, a {
-    touch-action: manipulation;
+    touch-action: pan-x pan-y;
   }
 }
 

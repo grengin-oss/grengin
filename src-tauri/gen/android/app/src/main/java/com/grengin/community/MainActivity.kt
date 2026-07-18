@@ -16,9 +16,19 @@ class MainActivity : TauriActivity() {
             return
         }
 
-        val bridge = NativeSpeechBridge(this, webView)
-        nativeSpeechBridge = bridge
-        webView.addJavascriptInterface(bridge, "GrenginSpeech")
+        configureMainWebView(webView)
+
+        val speechBridge = NativeSpeechBridge(this, webView)
+        nativeSpeechBridge = speechBridge
+        webView.addJavascriptInterface(speechBridge, "GrenginSpeech")
+    }
+
+    private fun configureMainWebView(webView: WebView) {
+        webView.settings.apply {
+            setSupportZoom(false)
+            builtInZoomControls = false
+            displayZoomControls = false
+        }
     }
 
     override fun onRequestPermissionsResult(
