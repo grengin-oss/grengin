@@ -11,7 +11,8 @@ import {
 
 export interface ChatSemanticResult {
   message_id: string;
-  snippet: string;
+  snippet?: string;
+  matched_text?: string;
   distance: number;
 }
 
