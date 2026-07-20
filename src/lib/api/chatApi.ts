@@ -8,15 +8,6 @@ import {
   makeScopedCacheKey,
   prefetchCachedLoad,
 } from '../utils/cache';
-import { isTauriRuntime } from '../platform/tauri';
-import {
-  cacheConversationDetail,
-  cacheConversationList,
-  getCachedConversationDetail,
-  getCachedConversationList,
-  getConversationHydrationStates,
-  removeCachedConversation,
-} from '../features/chat/storage/sqliteChatStore';
 
 export interface ChatSemanticResult {
   message_id: string;
@@ -66,13 +57,6 @@ export interface UploadDocumentOptions {
 const CHAT_LIST_CACHE_TTL_MS = 60_000;
 const CHAT_DETAIL_CACHE_TTL_MS = 5 * 60_000;
 const SETTINGS_CACHE_TTL_MS = 5 * 60_000;
-const OFFLINE_FULL_SYNC_PAGE_LIMIT = 100;
-const OFFLINE_FULL_SYNC_MIN_INTERVAL_MS = 10 * 60_000;
-const OFFLINE_DETAIL_HYDRATE_TTL_MS = 30 * 60_000;
-const OFFLINE_DETAIL_HYDRATE_CONCURRENCY = 2;
-
-let offlineFullSyncPromise: Promise<void> | null = null;
-let lastOfflineFullSyncStartedAt = 0;
 
 function chatListQuery(params?: {
   offset?: number;
@@ -102,88 +86,6 @@ function chatListQuery(params?: {
 
 function invalidateChatCache(): void {
   clearCacheNamespace('chat');
-}
-
-function shouldUseOfflineChatStore(): boolean {
-  return isTauriRuntime();
-}
-
-function scheduleOfflineFullChatSync(): void {
-  if (!shouldUseOfflineChatStore() || offlineFullSyncPromise) {
-    return;
-  }
-
-  const now = Date.now();
-  if (now - lastOfflineFullSyncStartedAt < OFFLINE_FULL_SYNC_MIN_INTERVAL_MS) {
-    return;
-  }
-
-  lastOfflineFullSyncStartedAt = now;
-  offlineFullSyncPromise = syncAllBackendChatsToOfflineStore()
-    .catch((err) => {
-      console.warn('Offline chat SQLite full sync failed:', err);
-    })
-    .finally(() => {
-      offlineFullSyncPromise = null;
-    });
-}
-
-async function hydrateConversationDetails(conversations: Array<{ id: string }>): Promise<void> {
-  if (!shouldUseOfflineChatStore() || conversations.length === 0) {
-    return;
-  }
-
-  const states = await getConversationHydrationStates(conversations.map((conversation) => conversation.id));
-  const now = Date.now();
-  const queue = conversations.filter((conversation) => {
-    const state = states.get(conversation.id);
-    return !state?.messagesSynced || now - state.syncedAt > OFFLINE_DETAIL_HYDRATE_TTL_MS;
-  });
-
-  async function worker(): Promise<void> {
-    while (queue.length > 0) {
-      const conversation = queue.shift();
-      if (!conversation) continue;
-
-      try {
-        const detail = await request<ConversationDetail>(`/chat/${conversation.id}`);
-        await cacheConversationDetail(detail);
-      } catch (err) {
-        console.warn(`Failed to hydrate cached conversation ${conversation.id}:`, err);
-      }
-    }
-  }
-
-  await Promise.all(
-    Array.from(
-      { length: Math.min(OFFLINE_DETAIL_HYDRATE_CONCURRENCY, queue.length) },
-      () => worker(),
-    ),
-  );
-}
-
-async function syncAllBackendChatsToOfflineStore(): Promise<void> {
-  let offset = 0;
-  let total: number | null = null;
-
-  while (true) {
-    const query = chatListQuery({
-      offset,
-      limit: OFFLINE_FULL_SYNC_PAGE_LIMIT,
-    });
-    const response = await request<ChatConversationList>(`/chat${query ? `?${query}` : ''}`);
-    await cacheConversationList(response);
-
-    const conversations = response.conversations || [];
-    await hydrateConversationDetails(conversations);
-
-    offset += conversations.length;
-    total = typeof response.total === 'number' ? response.total : total;
-
-    if (conversations.length === 0) break;
-    if (total !== null && offset >= total) break;
-    if (total === null && conversations.length < OFFLINE_FULL_SYNC_PAGE_LIMIT) break;
-  }
 }
 
 export async function getChatMcpServers(): Promise<{servers: any[]}> {
@@ -345,7 +247,6 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
           switch (event) {
             case 'conversation':
               invalidateChatCache();
-              void cacheConversationList({ conversations: [data], total: 1 });
               onConversationInitialized?.({newConversationId: data.id});
               break;
             case 'message_start':
@@ -460,29 +361,6 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
  * Fetch conversation history
  */
 export async function getConversation(conversationId: string): Promise<ConversationDetail> {
-  if (shouldUseOfflineChatStore()) {
-    const cached = await getCachedConversationDetail(conversationId);
-    const cachedIsFresh = cached && Date.now() - cached.syncedAt < CHAT_DETAIL_CACHE_TTL_MS;
-
-    if (cachedIsFresh) {
-      void request<ConversationDetail>(`/chat/${conversationId}`)
-        .then((conversation) => cacheConversationDetail(conversation))
-        .catch(() => undefined);
-      return cached.conversation;
-    }
-
-    try {
-      const conversation = await request<ConversationDetail>(`/chat/${conversationId}`);
-      await cacheConversationDetail(conversation);
-      return conversation;
-    } catch (error) {
-      if (cached) {
-        return cached.conversation;
-      }
-      throw error;
-    }
-  }
-
   const cacheKey = makeScopedCacheKey('chat', ['detail', conversationId]);
   return cachedLoad(cacheKey, () => request<ConversationDetail>(`/chat/${conversationId}`), {
     ttlMs: CHAT_DETAIL_CACHE_TTL_MS,
@@ -511,43 +389,6 @@ export async function listConversations(params?: {
   const query = chatListQuery(queryParams);
   const endpoint = `/chat${query ? `?${query}` : ''}`;
   const hasSearch = Boolean(queryParams.search?.trim());
-  const isSemanticSearch = Boolean(hasSearch && queryParams.semantic);
-
-  if (shouldUseOfflineChatStore()) {
-    if (isSemanticSearch) {
-      const response = await request<ChatConversationList>(endpoint, { signal });
-      await cacheConversationList(response);
-
-      if (response.conversations?.length) {
-        void hydrateConversationDetails(response.conversations);
-      }
-
-      return response;
-    }
-
-    const cached = await getCachedConversationList(queryParams);
-
-    try {
-      const response = await request<ChatConversationList>(endpoint, { signal });
-      await cacheConversationList(response);
-
-      if (!queryParams.search?.trim() && (queryParams.offset ?? 0) === 0) {
-        scheduleOfflineFullChatSync();
-      } else if (response.conversations?.length) {
-        void hydrateConversationDetails(response.conversations);
-      }
-
-      return response;
-    } catch (error) {
-      if (signal?.aborted) {
-        throw error;
-      }
-      if (cached) {
-        return cached;
-      }
-      throw error;
-    }
-  }
 
   if (signal || hasSearch) {
     return request<ChatConversationList>(endpoint, { signal });
@@ -565,7 +406,6 @@ export async function listConversations(params?: {
 export async function deleteConversation(conversationId: string): Promise<void> {
   const response = await request<void>(`/chat/${conversationId}`, { method: 'DELETE' });
   invalidateChatCache();
-  await removeCachedConversation(conversationId);
   return response;
 }
 
@@ -599,7 +439,6 @@ export async function archiveConversation(conversationId: string, title: string)
     }),
   });
   invalidateChatCache();
-  await cacheConversationDetail(conversation);
   return conversation;
 }
 
@@ -615,7 +454,6 @@ export async function renameConversation(
     body: JSON.stringify(payload),
   });
   invalidateChatCache();
-  await cacheConversationDetail(response);
   return response;
 }
 

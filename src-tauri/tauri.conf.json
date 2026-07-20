@@ -47,9 +47,6 @@
     }
   },
   "plugins": {
-    "sql": {
-      "preload": ["sqlite:grengin-chat.db"]
-    },
     "deep-link": {
       "mobile": [
         {

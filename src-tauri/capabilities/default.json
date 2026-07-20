@@ -20,8 +20,6 @@
       ]
     },
     "notification:default",
-    "opener:default",
-    "sql:default",
-    "sql:allow-execute"
+    "opener:default"
   ]
 }

@@ -475,8 +475,9 @@
   .splash-logo {
     width: clamp(5rem, 18vw, 8rem);
     height: clamp(5rem, 18vw, 8rem);
-    border-radius: 1.5rem;
-    box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.28);
+    display: block;
+    object-fit: contain;
+    filter: drop-shadow(0 1.25rem 2.5rem rgba(0, 0, 0, 0.24));
   }
 
   .splash-title {

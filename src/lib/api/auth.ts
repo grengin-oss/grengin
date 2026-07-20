@@ -24,6 +24,31 @@ interface AuthInitResponse {
   state: string;
 }
 
+async function getOAuthRedirectTarget(url: string): Promise<string> {
+  const response = await apiFetch(url, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+    redirect: 'manual',
+    maxRedirections: 0,
+  });
+
+  if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
+    return response.headers.get('Location') || url;
+  }
+
+  if (response.ok) {
+    const data: Partial<AuthInitResponse> = await response.json();
+    if (data.auth_url) {
+      return data.auth_url;
+    }
+    return url;
+  }
+
+  const body = await response.json().catch(() => null);
+  const detail = parseErrorDetail(body);
+  throw new ApiError(response.status, detail);
+}
+
 async function openOAuthUrl(url: string, provider: string): Promise<void> {
   if (isTauriRuntime()) {
     if (shouldUseNativeExternalOAuth(provider)) {
@@ -83,51 +108,19 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
   const query = params.toString();
   const url = `${API_BASE}/auth/${provider}${query ? `?${query}` : ''}`;
 
-  // On native Android, Azure/MSA should start in the external browser from the
-  // backend auth URL directly. Probing it first with native fetch creates an
-  // extra OAuth state and depends on platform redirect handling before the
-  // browser even opens.
+  // On native Android, use the system auth surface for Azure/MSA. Opening the
+  // resolved Microsoft URL avoids rendering the backend redirect hop.
   if (isTauriRuntime() && shouldUseNativeExternalOAuth(provider)) {
     sessionStorage.setItem('oauth_mobile_callback', 'true');
-    await openOAuthUrl(url, provider);
+    const authUrl = await getOAuthRedirectTarget(url);
+    await openOAuthUrl(authUrl, provider);
     return;
   }
 
   // Try fetch first to handle JSON response (200 with auth_url)
   // If backend returns redirect, fetch will fail due to opaque redirect, fall back to navigation
   try {
-    const response = await apiFetch(url, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      redirect: 'manual', // Don't follow redirects automatically
-      maxRedirections: 0,
-    });
-
-    // If we get a redirect response, navigate to the redirect target
-    if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
-      // When the API is same-origin (e.g. SSO proxy via Cloudflare Worker), the Location header
-      // is readable. Navigate there directly to avoid a second backend request that would
-      // generate a new state value and break SSO state validation.
-      const location = response.headers.get('Location') || url;
-      await openOAuthUrl(location, provider);
-      return;
-    }
-
-    // If we get a JSON response with auth_url, redirect to it
-    if (response.ok) {
-      const data = await response.json();
-      if (data.auth_url) {
-        await openOAuthUrl(data.auth_url, provider);
-        return;
-      }
-    }
-
-    // If response wasn't ok and wasn't a redirect, throw error
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      const detail = parseErrorDetail(body);
-      throw new ApiError(response.status, detail);
-    }
+    await openOAuthUrl(await getOAuthRedirectTarget(url), provider);
   } catch (err) {
     // If it's already an ApiError, rethrow it
     if (err instanceof ApiError) {

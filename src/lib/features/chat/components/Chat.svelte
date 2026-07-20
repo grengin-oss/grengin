@@ -15,7 +15,6 @@
   import { _ } from 'svelte-i18n';
   import { ApiError } from '../../../api/client';
   import { getLocalizedError } from '../../../utils/errorLocalization';
-  import { cacheConversationSnapshot } from '../storage/sqliteChatStore';
 
   let messages = $state<ChatMessageType[]>([]);
   let isLoading = $state(false);
@@ -37,7 +36,6 @@
   let loadingMcpServers = $state(false);
   let mcpServersError = $state<string | null>(null);
   let conversationLoadToken = 0;
-  let offlineSnapshotTimer: ReturnType<typeof setTimeout> | null = null;
   let activeStreamAbortController = $state<AbortController | null>(null);
   let activeStreamMessageId = $state<string | null>(null);
   let activeStreamBackendMessageId = $state<string | null>(null);
@@ -45,30 +43,6 @@
 
   // Project to link once a new conversation is created (chat started from a project workspace).
   let pendingProjectId = $state<string | null>(null);
-
-  function persistOfflineSnapshot() {
-    if (!conversationId || messages.length === 0) return;
-
-    void cacheConversationSnapshot({
-      conversationId,
-      messages,
-      model: selectedModel,
-      webSearchEnabled,
-    });
-  }
-
-  function scheduleOfflineSnapshot(delayMs = 600) {
-    if (!conversationId || messages.length === 0) return;
-
-    if (offlineSnapshotTimer) {
-      clearTimeout(offlineSnapshotTimer);
-    }
-
-    offlineSnapshotTimer = setTimeout(() => {
-      offlineSnapshotTimer = null;
-      persistOfflineSnapshot();
-    }, delayMs);
-  }
 
   function finalizeStoppedMessage(messageId: string | null) {
     if (!messageId) return;
@@ -107,7 +81,6 @@
     currentStreamingMessage = null;
     isTyping = false;
     isLoading = false;
-    persistOfflineSnapshot();
 
     await cancelRequest;
     isCancellingStream = false;
@@ -361,7 +334,6 @@
       })) || []
     };
     messages = [...messages, userMessage];
-    scheduleOfflineSnapshot(0);
 
     // Prepare streaming message
     let pendingStreamingMessage: ChatMessageType | null = {
@@ -411,7 +383,6 @@
             updateUrlWithConversationId(newConversationId);
           }
           if (newConversationId) void linkPendingProject(newConversationId);
-          scheduleOfflineSnapshot(0);
 
           // Update loading and typing states
           isLoading = true;
@@ -428,7 +399,6 @@
             activeStreamBackendMessageId = messageId;
             currentStreamingMessage = {...pendingStreamingMessage};
             messages = [...messages, currentStreamingMessage as ChatMessageType];
-            scheduleOfflineSnapshot(0);
 
             // Update loading and typing states
             isTyping = false;
@@ -459,7 +429,6 @@
             messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
-            scheduleOfflineSnapshot();
 
             // Detect HTML artifact in streaming content
             detectAndStreamArtifact(pendingStreamingMessage.content, true);
@@ -508,7 +477,6 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
-            scheduleOfflineSnapshot();
 
             isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
@@ -541,7 +509,6 @@
             messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
-            scheduleOfflineSnapshot();
 
             isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
@@ -574,7 +541,6 @@
               messages = messages.map(m =>
                 m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
               );
-              scheduleOfflineSnapshot();
 
               isLoading = true;
               scrollToStreamingMessageTop(pendingStreamingMessage.id);
@@ -611,7 +577,6 @@
             messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
-            persistOfflineSnapshot();
 
             // Finalize artifact streaming
             detectAndStreamArtifact(pendingStreamingMessage.content, false);
@@ -637,7 +602,6 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
-            persistOfflineSnapshot();
 
             isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
@@ -674,7 +638,6 @@
     messages = messages.map(msg => 
       msg.id === id ? { ...msg, content: newContent } : msg
     );
-    scheduleOfflineSnapshot(0);
   }
 
   function handleMcpAuthStatusChange(messageId: string, serverId: string, status: McpAuthRequest['status']) {
@@ -687,7 +650,6 @@
         ),
       };
     });
-    scheduleOfflineSnapshot(0);
   }
 
   function handleMcpAuthConnected(messageId: string, serverId: string) {
@@ -700,7 +662,6 @@
         ),
       };
     });
-    scheduleOfflineSnapshot(0);
 
     // Check if all auth requests for this message are now connected
     const msg = messages.find(m => m.id === messageId);
@@ -719,7 +680,6 @@
         ),
       };
     });
-    scheduleOfflineSnapshot(0);
   }
 
   async function continueProcessingRequest(assistantMessageId: string) {
@@ -783,7 +743,6 @@
             updateUrlWithConversationId(newConversationId);
           }
           if (newConversationId) void linkPendingProject(newConversationId);
-          scheduleOfflineSnapshot(0);
           window.dispatchEvent(new CustomEvent('refreshChatHistory'));
         },
         onStreamingStart: (messageId) => {
@@ -799,7 +758,6 @@
               }
               return msg;
             });
-            scheduleOfflineSnapshot(0);
           }
           isTyping = false;
           isLoading = true;
@@ -816,7 +774,6 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
-            scheduleOfflineSnapshot();
           }
         },
         onToolCall: (toolCall) => {
@@ -843,7 +800,6 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
-            scheduleOfflineSnapshot();
           }
         },
         onToolResult: (toolResult) => {
@@ -870,7 +826,6 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
-            scheduleOfflineSnapshot();
           }
         },
         onDone: async (_data) => {
@@ -901,7 +856,6 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
-            persistOfflineSnapshot();
           }
           isLoading = false;
           isTyping = false;
@@ -924,7 +878,6 @@
             messages = messages.map(m => 
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
-            persistOfflineSnapshot();
           }
           isLoading = false;
           isTyping = false;
@@ -1234,10 +1187,6 @@
       window.removeEventListener('popstate', handleUrlChange);
       window.removeEventListener('focusChatInput', handleFocusChatInput);
       history.pushState = originalPushState;
-      if (offlineSnapshotTimer) {
-        clearTimeout(offlineSnapshotTimer);
-        offlineSnapshotTimer = null;
-      }
     };
   });
 </script>
