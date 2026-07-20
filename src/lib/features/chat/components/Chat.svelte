@@ -23,6 +23,7 @@
   let conversationId = $state<string | null>(null);
   // Track if we're still loading the initial conversation
   let isLoadingConversation = $state(typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('chatId'));
+  let chatLayoutElement = $state<HTMLDivElement | undefined>(undefined);
   let messagesContainer = $state<HTMLDivElement | undefined>(undefined);
   let messageInput = $state<MessageInput | undefined>(undefined);
   let currentStreamingMessage = $state<ChatMessageType | null>(null);
@@ -272,14 +273,58 @@
     }
   }
 
+  function isNearMessageBottom(threshold = 120): boolean {
+    if (!messagesContainer) return false;
+
+    return (
+      messagesContainer.scrollHeight -
+        messagesContainer.scrollTop -
+        messagesContainer.clientHeight <
+      threshold
+    );
+  }
+
+  function preserveBottomAfterViewportChange(): void {
+    if (!messagesContainer || (!autoScrollEnabled && !isNearMessageBottom(160))) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      if (!messagesContainer) return;
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      requestAnimationFrame(() => {
+        if (!messagesContainer) return;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      });
+    });
+  }
+
+  function syncChatViewportHeight(): void {
+    if (!chatLayoutElement) {
+      return;
+    }
+
+    const viewport = window.visualViewport;
+    const viewportHeight = viewport?.height ?? window.innerHeight;
+    const viewportOffsetTop = viewport?.offsetTop ?? 0;
+    const layoutTop = chatLayoutElement.getBoundingClientRect().top - viewportOffsetTop;
+    const visibleHeight = Math.max(240, Math.floor(viewportHeight - Math.max(0, layoutTop)));
+
+    chatLayoutElement.style.setProperty('--chat-visible-height', `${visibleHeight}px`);
+    preserveBottomAfterViewportChange();
+  }
+
   // Handle manual scrolling to detect if user wants to stop auto-scroll
   function handleScroll() {
     if (!messagesContainer || isTyping) return;
 
     // Check if user is near the bottom (within 100px)
-    const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 80;
-    if(!isNearBottom) {
+    const isNearBottom = isNearMessageBottom(80);
+    if (!isNearBottom) {
       autoScrollEnabled = false;
+    } else {
+      autoScrollEnabled = true;
     }
   }
 
@@ -1159,11 +1204,23 @@
     messageInput?.focus();
   }
 
+  $effect(() => {
+    messages.length;
+    showArtifactPanel;
+
+    if (!chatLayoutElement) {
+      return;
+    }
+
+    requestAnimationFrame(syncChatViewportHeight);
+  });
+
   onMount(() => {
     scrollToBottom(false);
     loadConversationFromUrl();
     loadModels();
     loadMcpServers();
+    syncChatViewportHeight();
 
     // Focus the chat input if nothing else is focused
     if (!document.activeElement || document.activeElement === document.body) {
@@ -1172,6 +1229,9 @@
 
     // Listen for URL changes (when using history.pushState)
     window.addEventListener('popstate', handleUrlChange);
+    window.visualViewport?.addEventListener('resize', syncChatViewportHeight);
+    window.visualViewport?.addEventListener('scroll', syncChatViewportHeight);
+    window.addEventListener('resize', syncChatViewportHeight);
 
     // Listen for focus chat input event (from Sidebar "New Chat" button)
     window.addEventListener('focusChatInput', handleFocusChatInput);
@@ -1185,6 +1245,9 @@
 
     return () => {
       window.removeEventListener('popstate', handleUrlChange);
+      window.visualViewport?.removeEventListener('resize', syncChatViewportHeight);
+      window.visualViewport?.removeEventListener('scroll', syncChatViewportHeight);
+      window.removeEventListener('resize', syncChatViewportHeight);
       window.removeEventListener('focusChatInput', handleFocusChatInput);
       history.pushState = originalPushState;
     };
@@ -1274,7 +1337,7 @@
   </div>
 {:else}
   <!-- Active chat: bottom-anchored input -->
-  <div class="chat-layout" class:chat-layout--with-artifact={showArtifactPanel}>
+  <div class="chat-layout" bind:this={chatLayoutElement} class:chat-layout--with-artifact={showArtifactPanel}>
   <div class="chat-container">
     <div class="messages-container" bind:this={messagesContainer} onscroll={handleScroll} role="log" aria-live="polite" aria-label={$_('chat.messageInput.messageInput')}>
       <div class="messages-inner">
@@ -1756,6 +1819,11 @@
   }
 
   @media (max-width: 768px) {
+    .chat-layout {
+      height: var(--chat-visible-height, 100%);
+      max-height: var(--chat-visible-height, 100%);
+    }
+
     .chat-container {
       height: 100%;
       min-height: 0;
@@ -1800,9 +1868,26 @@
     }
   }
 
+  @media (hover: none) and (pointer: coarse) {
+    .chat-layout {
+      height: var(--chat-visible-height, 100%);
+      max-height: var(--chat-visible-height, 100%);
+    }
+
+    .chat-container {
+      height: 100%;
+      min-height: 0;
+    }
+  }
+
   :global(html[data-app-layout='mobile']) .chat-container {
     height: 100%;
     min-height: 0;
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-layout {
+    height: var(--chat-visible-height, 100%);
+    max-height: var(--chat-visible-height, 100%);
   }
 
   :global(html[data-app-layout='mobile']) .messages-inner {

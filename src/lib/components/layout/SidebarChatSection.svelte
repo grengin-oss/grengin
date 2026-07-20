@@ -61,6 +61,7 @@
   let normalizedSearchQuery = $derived(normalizeSearchQuery(searchQuery));
   let effectiveSearchMode = $derived(getEffectiveSearchMode(normalizedSearchQuery));
   let canUseSemanticSearch = $derived(normalizedSearchQuery.length >= MIN_SEMANTIC_SEARCH_CHARS);
+  let didRequestInitialChats = false;
   let activeFetchController: AbortController | null = null;
   let fetchRequestSerial = 0;
 
@@ -454,14 +455,17 @@
     normalizedSearchQuery;
     effectiveSearchMode;
 
-    const debounceMs =
-      effectiveSearchMode === 'semantic'
-        ? SEMANTIC_SEARCH_DEBOUNCE_MS
-        : normalizedSearchQuery
-          ? TITLE_SEARCH_DEBOUNCE_MS
-          : 80;
+    let debounceMs = 80;
+    if (!didRequestInitialChats && !normalizedSearchQuery) {
+      debounceMs = 0;
+    } else if (effectiveSearchMode === 'semantic') {
+      debounceMs = SEMANTIC_SEARCH_DEBOUNCE_MS;
+    } else if (normalizedSearchQuery) {
+      debounceMs = TITLE_SEARCH_DEBOUNCE_MS;
+    }
 
     const searchTimeout = setTimeout(() => {
+      didRequestInitialChats = true;
       fetchChats({ reset: true });
     }, debounceMs);
 

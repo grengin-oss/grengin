@@ -31,6 +31,7 @@
   let closeSwipeStartY = 0;
   let isCloseSwipeTracking = false;
   let lastLayoutIsMobile = false;
+  let didWarmUserStartup = false;
   let shouldShowSplash = $derived(showSplash && !isAuthCallback());
 
   const authState = getAuthState();
@@ -166,6 +167,28 @@
     showSplash = false;
   }
 
+  function warmUserStartup(): void {
+    if (didWarmUserStartup || authState.isLoading || !authState.isAuthenticated) {
+      return;
+    }
+
+    if (isAuthCallback() || isAdminView()) {
+      return;
+    }
+
+    didWarmUserStartup = true;
+
+    void import('$lib/bundles/user-chunk').catch((error) => {
+      console.debug('Failed to warm user bundle:', error);
+    });
+
+    void import('$lib/api/chatApi').then(({ listConversations }) => {
+      void listConversations({ offset: 0, limit: 20 }).catch((error) => {
+        console.debug('Failed to warm chat history:', error);
+      });
+    });
+  }
+
   function handleSwipeStart(event: TouchEvent): void {
     if (!isMobile() || !sidebarCollapsed || event.touches.length !== 1) {
       return;
@@ -271,6 +294,7 @@
     // Subscribe to currentPath so this fires on every navigation
     const path = currentPath;
     loadNamespacesForRoute(path);
+    warmUserStartup();
   });
 
   onMount(() => {
