@@ -1321,5 +1321,59 @@
       "metrics": "メトリクス",
       "maintenance": "メンテナンス"
     }
+  },
+  "adminSkills": {
+    "title": "スキル",
+    "subtitle": "ユーザーが利用できる組織・部門のスキルを作成・管理します。",
+    "createSkill": "新しいスキル",
+    "searchPlaceholder": "スキルを検索…",
+    "loading": "スキルを読み込み中…",
+    "empty": "スキルがまだありません。組織用に最初のスキルを作成してください。",
+    "editor": {
+      "title": "スキルエディター",
+      "createTitle": "スキルを作成",
+      "editTitle": "スキルを編集",
+      "subtitle": "スキルは、システムプロンプト・ウェブ検索・ツール権限を会話に追加します。",
+      "close": "閉じる",
+      "avatar": "アイコン",
+      "name": "名前",
+      "namePlaceholder": "例: リサーチアシスタント",
+      "identifier": "識別子",
+      "identifierHint": "API が使用する固定スラッグ。作成後は変更できません。",
+      "description": "説明",
+      "descriptionPlaceholder": "このスキルの概要",
+      "departmentId": "部門 ID",
+      "departmentIdHint": "任意。このスキルを単一の部門に限定します。組織全体の場合は空欄にします。",
+      "systemRole": "システムプロンプト",
+      "systemRolePlaceholder": "あなたは綿密なリサーチアシスタントです…",
+      "webSearch": "ウェブ検索",
+      "webSearchHint": "このスキルがウェブ検索を行えるようにします。",
+      "cancel": "キャンセル",
+      "save": "変更を保存",
+      "create": "スキルを作成",
+      "saving": "保存中…",
+      "toolGrants": "ツール権限",
+      "toolGrantsHint": "このスキルが使用できる MCP サーバーを選択します。",
+      "toolCount": "ツール {count} 個",
+      "loadingServers": "利用可能なサーバーを読み込み中…",
+      "noServers": "利用可能な MCP サーバーがありません。連携から接続してください。"
+    },
+    "delete": {
+      "title": "スキルを削除",
+      "message": "「{name}」を削除してもよろしいですか？利用可能なすべての対象に影響し、取り消せません。",
+      "cancel": "キャンセル",
+      "confirm": "削除",
+      "deleting": "削除中…"
+    },
+    "messages": {
+      "loadFailed": "スキルの読み込みに失敗しました",
+      "created": "スキルを作成しました",
+      "updated": "スキルを更新しました",
+      "saveFailed": "スキルの保存に失敗しました",
+      "toggleFailed": "スキルの更新に失敗しました",
+      "deleted": "スキルを削除しました",
+      "deleteFailed": "スキルの削除に失敗しました",
+      "builtinReadOnly": "組み込みスキルは変更できません"
+    }
   }
 }

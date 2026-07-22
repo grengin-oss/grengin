@@ -101,6 +101,16 @@
       "notNow": "Pas maintenant",
       "requestedPermissions": "Permissions demandées :",
       "manageInSettings": "Vous pouvez gérer les comptes connectés dans Paramètres."
+    },
+    "skills": {
+      "label": "Compétences",
+      "tooltip": "Associer des compétences à cette conversation",
+      "menuTitle": "Compétences",
+      "countSelected": "{count} compétences",
+      "loading": "Chargement des compétences…",
+      "empty": "Aucune compétence disponible. Créez-en une dans les Paramètres.",
+      "builtin": "Intégrée",
+      "updateFailed": "Échec de la mise à jour de la compétence"
     }
   }
 }

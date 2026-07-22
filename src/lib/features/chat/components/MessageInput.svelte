@@ -4,6 +4,7 @@
   import { uploadDocument, type UploadedFile } from '../../../api/chatApi';
   import type { MCPServer } from '../../../admin/types.js';
   import { _ } from 'svelte-i18n';
+  import SkillPicker from './SkillPicker.svelte';
 
   interface MessageInputProps {
     onSend: (message: string, uploadedFiles?: UploadedFile[], webSearch?: boolean) => void;
@@ -23,9 +24,11 @@
     onMcpToggle?: (serverId: string) => void;
     webSearchEnabled?: boolean;
     onWebSearchToggle?: () => void;
+    conversationId?: string | null;
+    pendingSkillIds?: string[];
   }
 
-let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, mcpServers = [], selectedMcpServers = [], loadingMcpServers = false, mcpServersError = null, onMcpToggle, webSearchEnabled = false, onWebSearchToggle }: MessageInputProps = $props();
+let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, mcpServers = [], selectedMcpServers = [], loadingMcpServers = false, mcpServersError = null, onMcpToggle, webSearchEnabled = false, onWebSearchToggle, conversationId = null, pendingSkillIds = $bindable([]) }: MessageInputProps = $props();
   let isDarkMode = $state(false);
 
   function syncThemeState() {
@@ -53,6 +56,7 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   let currentPreviewFile = $state<File | null>(null);
   let currentPreviewImage = $state<{ file: File; url: string } | null>(null);
   let showPlusMenu = $state(false);
+  let skillPickerOpen = $state(false);
   let showModelDropdown = $state(false);
   let showConnectorsDropdown = $state(false);
 
@@ -540,8 +544,21 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
                 </svg>
                 <span>{$_('chat.messageInput.addFiles')}</span>
               </button>
+              <button class="menu-item" onclick={(e) => { e.stopPropagation(); showPlusMenu = false; skillPickerOpen = true; }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2l2.4 5.5L20 8l-4 4 1 6-5-3-5 3 1-6-4-4 5.6-.5z"></path>
+                </svg>
+                <span>{$_('chat.skills.label')}</span>
+              </button>
             </div>
           {/if}
+
+          <SkillPicker
+            {conversationId}
+            bind:pendingSkillIds
+            bind:open={skillPickerOpen}
+            showTrigger={false}
+          />
         </div>
 
         <div class="model-dropdown-container">

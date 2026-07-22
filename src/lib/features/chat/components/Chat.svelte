@@ -13,6 +13,7 @@
   import type { MCPServer } from '../../../admin/types.js';
   import { getMcpServers } from '../../../api/admin/mcpServers.js';
   import { linkProjectToConversation, getProjectDetail } from '../../../api/projectsApi';
+  import { linkSkill } from '../../../api/skills.js';
   import { _ } from 'svelte-i18n';
   import { ApiError } from '../../../api/client';
   import { getLocalizedError } from '../../../utils/errorLocalization';
@@ -38,6 +39,8 @@
   let mcpServersError = $state<string | null>(null);
   // Project to link once a new conversation is created (chat started from a project workspace).
   let pendingProjectId = $state<string | null>(null);
+  // Skills selected in the composer before the conversation exists; linked on first send.
+  let pendingSkillIds = $state<string[]>([]);
 
   // Link a freshly-created conversation to the originating project (many-to-many). Runs once.
   async function linkPendingProject(newConversationId: string) {
@@ -50,6 +53,20 @@
     } catch (err) {
       console.error('Failed to link conversation to project:', err);
     }
+  }
+
+  // Link skills chosen before the conversation existed. Runs once per new conversation.
+  async function linkPendingSkills(newConversationId: string) {
+    if (pendingSkillIds.length === 0) return;
+    const ids = pendingSkillIds;
+    pendingSkillIds = [];
+    await Promise.all(
+      ids.map((skillId) =>
+        linkSkill(newConversationId, skillId).catch((err) =>
+          console.error('Failed to link skill to conversation:', err),
+        ),
+      ),
+    );
   }
 
   // Artifact panel state
@@ -326,6 +343,7 @@
             updateUrlWithConversationId(newConversationId);
           }
           if (newConversationId) void linkPendingProject(newConversationId);
+          if (newConversationId) void linkPendingSkills(newConversationId);
 
           // Update loading and typing states
           isLoading = true;
@@ -669,6 +687,7 @@
             updateUrlWithConversationId(newConversationId);
           }
           if (newConversationId) void linkPendingProject(newConversationId);
+          if (newConversationId) void linkPendingSkills(newConversationId);
           window.dispatchEvent(new CustomEvent('refreshChatHistory'));
         },
         onStreamingStart: (messageId) => {
@@ -1137,6 +1156,8 @@
           {providers}
           {loadingModels}
           {modelsError}
+          {conversationId}
+          bind:pendingSkillIds
         />
         <p class="ai-disclaimer">{$_('chat.emptyState.aiDisclaimer')}</p>
       </div>
@@ -1264,6 +1285,8 @@
         {providers}
         {loadingModels}
         {modelsError}
+        {conversationId}
+        bind:pendingSkillIds
       />
       <p class="ai-disclaimer">{$_('chat.emptyState.aiDisclaimer')}</p>
     </div>

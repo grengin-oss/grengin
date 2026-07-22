@@ -100,6 +100,7 @@
     "saving": "저장 중...",
     "viewAll": "모두 보기",
     "showMore": "{count}개 더 보기",
-    "showLess": "접기"
+    "showLess": "접기",
+    "skills": "스킬"
   }
 }

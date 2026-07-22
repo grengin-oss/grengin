@@ -6,7 +6,9 @@
       "integrations": "التكاملات",
       "integrationsAria": "التكاملات المتصلة",
       "promptSettings": "إعدادات المطالبات",
-      "promptSettingsAria": "إدارة تفضيلات المطالبات"
+      "promptSettingsAria": "إدارة تفضيلات المطالبات",
+      "skills": "المهارات",
+      "skillsAria": "إدارة مهاراتك"
     }
   },
   "userPromptSettings": {
@@ -121,6 +123,144 @@
       "modalTitle": "{name} — الأدوات",
       "loading": "جارٍ تحميل الأدوات...",
       "empty": "لا توجد أدوات متاحة لهذا الخادم."
+    }
+  },
+  "userSkills": {
+    "loading": "جارٍ تحميل المهارات…",
+    "createSkill": "مهارة جديدة",
+    "searchPlaceholder": "البحث عن المهارات…",
+    "filters": {
+      "all": "الكل",
+      "mine": "مهاراتي",
+      "builtin": "مدمجة"
+    },
+    "banner": {
+      "title": "Artifacts مهارة مدمجة",
+      "body": "تتحكم في إنشاء العناصر الغنية في محادثاتك. تُدار المهارات المدمجة من قِبل المنصة."
+    },
+    "badges": {
+      "builtin": "مدمجة",
+      "artifacts": "العناصر",
+      "systemPrompt": "موجّه النظام",
+      "webSearch": "بحث الويب",
+      "tools": "{count} أدوات",
+      "instructions": "التعليمات",
+      "files": "{count} ملفات"
+    },
+    "card": {
+      "noDescription": "لا يوجد وصف.",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "managedByPlatform": "تُدار من قِبل المنصة",
+      "toggleAria": "تبديل {name}"
+    },
+    "empty": {
+      "title": "لا توجد مهارات بعد",
+      "body": "تضيف المهارات سلوكيات قابلة للتخصيص — موجّه نظام وبحث ويب وأذونات أدوات — إلى محادثاتك. أنشئ أول مهارة للبدء."
+    },
+    "editor": {
+      "title": "محرر المهارات",
+      "createTitle": "إنشاء مهارة",
+      "editTitle": "تعديل المهارة",
+      "subtitle": "اضبط السلوكيات التي تضيفها هذه المهارة إلى المحادثة.",
+      "close": "إغلاق",
+      "avatar": "أيقونة",
+      "name": "الاسم",
+      "namePlaceholder": "مثال: مساعد بحث",
+      "description": "الوصف",
+      "descriptionPlaceholder": "ملخص موجز لما تفعله هذه المهارة",
+      "systemRole": "موجّه النظام",
+      "systemRoleHint": "يُدرَج في المحادثة عندما تكون هذه المهارة نشطة.",
+      "systemRolePlaceholder": "أنت مساعد بحث دقيق يستشهد دائمًا بالمصادر…",
+      "webSearch": "بحث الويب",
+      "webSearchHint": "السماح لهذه المهارة بالبحث في الويب عن معلومات محدّثة.",
+      "toolGrants": "أذونات الأدوات",
+      "toolGrantsHint": "حدّد خوادم MCP التي يُسمح لهذه المهارة باستخدامها.",
+      "toolCount": "{count} أدوات",
+      "loadingServers": "جارٍ تحميل الخوادم المتاحة…",
+      "noServers": "لا توجد خوادم MCP متاحة. قم بتوصيل واحد من التكاملات.",
+      "cancel": "إلغاء",
+      "save": "حفظ التغييرات",
+      "create": "إنشاء المهارة",
+      "saving": "جارٍ الحفظ…",
+      "created": "تم إنشاء المهارة",
+      "updated": "تم تحديث المهارة",
+      "saveFailed": "فشل حفظ المهارة",
+      "nameHint": "أحرف صغيرة بنمط kebab-case، مثل research-assistant.",
+      "instructions": "التعليمات",
+      "instructionsHint": "تعليمات بصيغة Markdown تُدرَج في المحادثة عندما تكون هذه المهارة نشطة.",
+      "instructionsPlaceholder": "## الدور\nأنت مساعد بحث دقيق يستشهد دائمًا بالمصادر…",
+      "preview": "معاينة",
+      "code": "الكود",
+      "previewEmpty": "لا يوجد شيء للمعاينة بعد.",
+      "errors": {
+        "nameRequired": "الاسم مطلوب.",
+        "nameKebab": "استخدم نمط kebab-case بأحرف صغيرة (حروف وأرقام وشرطات مفردة).",
+        "instructionsRequired": "التعليمات مطلوبة.",
+        "descriptionRequired": "الوصف مطلوب.",
+        "identifierRequired": "المعرّف مطلوب.",
+        "identifierKebab": "استخدم نمط kebab-case بأحرف صغيرة (حروف وأرقام وشرطات مفردة)."
+      },
+      "identifier": "المعرّف",
+      "identifierHint": "معرّف نصي بنمط kebab-case غير قابل للتغيير. لا يمكن تعديله بعد الإنشاء.",
+      "departmentId": "معرّف القسم",
+      "departmentIdHint": "اختياري. اقصر هذه المهارة على قسم عبر معرّف UUID الخاص به.",
+      "department": "القسم",
+      "departmentHint": "اختياري. عيّن هذه المهارة إلى قسم.",
+      "loadingDepartments": "جارٍ تحميل الأقسام…",
+      "departmentNone": "بلا قسم (على مستوى المؤسسة)"
+    },
+    "delete": {
+      "title": "حذف المهارة",
+      "message": "هل أنت متأكد أنك تريد حذف «{name}»؟ لا يمكن التراجع عن هذا الإجراء.",
+      "cancel": "إلغاء",
+      "confirm": "حذف",
+      "deleting": "جارٍ الحذف…"
+    },
+    "messages": {
+      "loadFailed": "فشل تحميل المهارات",
+      "toggleFailed": "فشل تحديث المهارة",
+      "deleted": "تم حذف المهارة",
+      "deleteFailed": "فشل حذف المهارة",
+      "builtinReadOnly": "لا يمكن تغيير المهارات المدمجة هنا"
+    },
+    "addMenu": {
+      "writeTitle": "الكتابة في التطبيق",
+      "writeDesc": "أنشئ مهارة باستخدام تعليمات Markdown من هنا مباشرةً.",
+      "importTitle": "استيراد ملف",
+      "importDesc": "ارفع حزمة مهارة بصيغة .md أو .zip من جهازك."
+    },
+    "import": {
+      "title": "استيراد مهارة",
+      "subtitle": "ارفع ملف .md أو حزمة .zip لاستيراد مهارة.",
+      "close": "إغلاق",
+      "dropTitle": "أفلِت ملفًا هنا أو انقر للتصفح",
+      "dropHint": "يقبل .md (مهارة واحدة) أو .zip (حزمة).",
+      "assetsNote": "استيراد ملف .zip هو الطريقة الوحيدة لتضمين النصوص البرمجية والأصول والمهارات المرتبطة.",
+      "remove": "إزالة الملف",
+      "name": "الاسم",
+      "nameHint": "أحرف صغيرة بنمط kebab-case، مثل research-assistant.",
+      "namePlaceholder": "مثال: research-assistant",
+      "description": "الوصف",
+      "descriptionPlaceholder": "ملخص قصير لما تفعله هذه المهارة",
+      "cancel": "إلغاء",
+      "importBtn": "استيراد",
+      "importing": "جارٍ الاستيراد…",
+      "imported": "تم استيراد المهارة",
+      "replaced": "تم استبدال المهارة",
+      "failed": "فشل استيراد المهارة",
+      "conflictTitle": "توجد مهارة بهذا الاسم بالفعل",
+      "conflictMessage": "لديك بالفعل مهارة باسم «{name}». استبدلها بالمستوردة أو تخطَّ للاحتفاظ بالحالية.",
+      "replace": "استبدال",
+      "skip": "تخطّي",
+      "errors": {
+        "type": "نوع الملف غير مدعوم. ارفع ملف .md أو .zip.",
+        "size": "حجم الملف كبير جدًا. الحد الأقصى هو {max}.",
+        "empty": "هذا الملف فارغ.",
+        "nameRequired": "الاسم مطلوب.",
+        "nameKebab": "استخدم نمط kebab-case بأحرف صغيرة (حروف وأرقام وشرطات مفردة)."
+      },
+      "willImportAs": "سيتم استيراده باسم"
     }
   }
 }

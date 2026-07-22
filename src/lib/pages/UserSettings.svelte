@@ -4,9 +4,10 @@
   import PageHeader from "../admin/components/PageHeader.svelte";
   import UserIntegrations from "./settings/UserIntegrations.svelte";
   import UserPromptSettings from "./settings/UserPromptSettings.svelte";
+  import UserSkills from "./settings/UserSkills.svelte";
   import { loadNamespaces } from "$lib/i18n/index.js";
 
-  type TabId = "integrations" | "promptSettings";
+  type TabId = "skills" | "integrations" | "promptSettings";
 
   interface TabConfig {
     id: TabId;
@@ -15,6 +16,11 @@
   }
 
   const TABS: TabConfig[] = $derived([
+    {
+      id: "skills",
+      label: $_("userSettings.tabs.skills"),
+      ariaLabel: $_("userSettings.tabs.skillsAria"),
+    },
     {
       id: "integrations",
       label: $_("userSettings.tabs.integrations"),
@@ -27,7 +33,7 @@
     },
   ]);
 
-  const DEFAULT_TAB: TabId = "integrations";
+  const DEFAULT_TAB: TabId = "skills";
   const availableTabIds = $derived(TABS.map((t) => t.id));
 
   let currentTab = $state<TabId>(DEFAULT_TAB);
@@ -120,7 +126,9 @@
     aria-labelledby={currentTab}
     tabindex="0"
   >
-    {#if currentTab === "integrations"}
+    {#if currentTab === "skills"}
+      <UserSkills />
+    {:else if currentTab === "integrations"}
       <UserIntegrations />
     {:else if currentTab === "promptSettings"}
       <UserPromptSettings />

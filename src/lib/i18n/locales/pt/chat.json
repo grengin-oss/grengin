@@ -101,6 +101,16 @@
       "notNow": "Agora não",
       "requestedPermissions": "Permissões solicitadas:",
       "manageInSettings": "Pode gerir contas ligadas em Definições."
+    },
+    "skills": {
+      "label": "Habilidades",
+      "tooltip": "Anexar habilidades a esta conversa",
+      "menuTitle": "Habilidades",
+      "countSelected": "{count} habilidades",
+      "loading": "Carregando habilidades…",
+      "empty": "Nenhuma habilidade disponível. Crie uma nas Configurações.",
+      "builtin": "Integrada",
+      "updateFailed": "Falha ao atualizar a habilidade"
     }
   }
 }

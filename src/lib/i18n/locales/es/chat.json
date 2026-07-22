@@ -101,6 +101,16 @@
       "notNow": "Ahora no",
       "requestedPermissions": "Permisos solicitados:",
       "manageInSettings": "Puede gestionar las cuentas conectadas en Ajustes."
+    },
+    "skills": {
+      "label": "Habilidades",
+      "tooltip": "Adjunta habilidades a esta conversación",
+      "menuTitle": "Habilidades",
+      "countSelected": "{count} habilidades",
+      "loading": "Cargando habilidades…",
+      "empty": "No hay habilidades disponibles. Crea una en Ajustes.",
+      "builtin": "Integrada",
+      "updateFailed": "No se pudo actualizar la habilidad"
     }
   }
 }

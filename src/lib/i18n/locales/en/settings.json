@@ -3,10 +3,150 @@
     "title": "Settings",
     "subtitle": "Manage your personal preferences and connected integrations.",
     "tabs": {
+      "skills": "Skills",
+      "skillsAria": "Manage your skills",
       "integrations": "Integrations",
       "integrationsAria": "Connected integrations",
       "promptSettings": "Prompt Settings",
       "promptSettingsAria": "Manage your prompt preferences"
+    }
+  },
+  "userSkills": {
+    "loading": "Loading skills…",
+    "createSkill": "New Skill",
+    "searchPlaceholder": "Search skills…",
+    "filters": {
+      "all": "All",
+      "mine": "My Skills",
+      "builtin": "Built-in"
+    },
+    "banner": {
+      "title": "Artifacts is a built-in skill",
+      "body": "It gates rich artifact generation for your conversations. Built-in skills are managed by the platform."
+    },
+    "badges": {
+      "builtin": "Built-in",
+      "artifacts": "Artifacts",
+      "systemPrompt": "System prompt",
+      "webSearch": "Web search",
+      "tools": "{count} tools",
+      "instructions": "Instructions",
+      "files": "{count} files"
+    },
+    "card": {
+      "noDescription": "No description provided.",
+      "edit": "Edit",
+      "delete": "Delete",
+      "managedByPlatform": "Managed by platform",
+      "toggleAria": "Toggle {name}"
+    },
+    "empty": {
+      "title": "No skills yet",
+      "body": "Skills attach configurable behaviours — a system prompt, web search, and tool grants — to your conversations. Create your first one to get started."
+    },
+    "editor": {
+      "title": "Skill editor",
+      "createTitle": "Create skill",
+      "editTitle": "Edit skill",
+      "subtitle": "Configure the behaviours this skill adds to a conversation.",
+      "close": "Close",
+      "avatar": "Icon",
+      "name": "Name",
+      "namePlaceholder": "e.g. Research Assistant",
+      "description": "Description",
+      "descriptionPlaceholder": "A short summary of what this skill does",
+      "systemRole": "System prompt",
+      "systemRoleHint": "Injected into the conversation when this skill is active.",
+      "systemRolePlaceholder": "You are a meticulous research assistant who always cites sources…",
+      "webSearch": "Web search",
+      "webSearchHint": "Allow this skill to search the web for up-to-date information.",
+      "toolGrants": "Tool grants",
+      "toolGrantsHint": "Select the MCP servers this skill is allowed to use.",
+      "toolCount": "{count} tools",
+      "loadingServers": "Loading available servers…",
+      "noServers": "No MCP servers available. Connect one from Integrations.",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "create": "Create skill",
+      "saving": "Saving…",
+      "created": "Skill created",
+      "updated": "Skill updated",
+      "saveFailed": "Failed to save skill",
+      "nameHint": "Lowercase kebab-case, e.g. research-assistant.",
+      "instructions": "Instructions",
+      "instructionsHint": "Markdown instructions injected into the conversation when this skill is active.",
+      "instructionsPlaceholder": "## Role\nYou are a meticulous research assistant who always cites sources…",
+      "preview": "Preview",
+      "code": "Code",
+      "previewEmpty": "Nothing to preview yet.",
+      "errors": {
+        "nameRequired": "Name is required.",
+        "nameKebab": "Use lowercase kebab-case (letters, numbers and single hyphens).",
+        "instructionsRequired": "Instructions are required.",
+        "descriptionRequired": "Description is required.",
+        "identifierRequired": "Identifier is required.",
+        "identifierKebab": "Use lowercase kebab-case (letters, numbers and single hyphens)."
+      },
+      "identifier": "Identifier",
+      "identifierHint": "Immutable kebab-case slug. Cannot be changed after creation.",
+      "departmentId": "Department ID",
+      "departmentIdHint": "Optional. Scope this skill to a department by its UUID.",
+      "department": "Department",
+      "departmentHint": "Optional. Assign this skill to a department.",
+      "loadingDepartments": "Loading departments…",
+      "departmentNone": "No department (organization-wide)"
+    },
+    "delete": {
+      "title": "Delete skill",
+      "message": "Are you sure you want to delete \"{name}\"? This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "deleting": "Deleting…"
+    },
+    "messages": {
+      "loadFailed": "Failed to load skills",
+      "toggleFailed": "Failed to update skill",
+      "deleted": "Skill deleted",
+      "deleteFailed": "Failed to delete skill",
+      "builtinReadOnly": "Built-in skills can't be changed here"
+    },
+    "addMenu": {
+      "writeTitle": "Write on the app",
+      "writeDesc": "Compose a skill with Markdown instructions, right here.",
+      "importTitle": "Import file",
+      "importDesc": "Upload a .md or .zip skill package from your computer."
+    },
+    "import": {
+      "title": "Import skill",
+      "subtitle": "Upload a .md file or a .zip bundle to import a skill.",
+      "close": "Close",
+      "dropTitle": "Drop a file here or click to browse",
+      "dropHint": "Accepts .md (single skill) or .zip (bundle).",
+      "assetsNote": "Importing a .zip is the only way to include scripts, assets, and linked skills.",
+      "remove": "Remove file",
+      "name": "Name",
+      "nameHint": "Lowercase kebab-case, e.g. research-assistant.",
+      "namePlaceholder": "e.g. research-assistant",
+      "description": "Description",
+      "descriptionPlaceholder": "A short summary of what this skill does",
+      "cancel": "Cancel",
+      "importBtn": "Import",
+      "importing": "Importing…",
+      "imported": "Skill imported",
+      "replaced": "Skill replaced",
+      "failed": "Failed to import skill",
+      "conflictTitle": "A skill with this name already exists",
+      "conflictMessage": "You already have a skill named \"{name}\". Replace it with the imported one, or skip to keep the existing skill.",
+      "replace": "Replace",
+      "skip": "Skip",
+      "errors": {
+        "type": "Unsupported file type. Upload a .md or .zip file.",
+        "size": "File is too large. Maximum size is {max}.",
+        "empty": "That file is empty.",
+        "nameRequired": "Name is required.",
+        "nameKebab": "Use lowercase kebab-case (letters, numbers and single hyphens)."
+      },
+      "willImportAs": "Will be imported as"
     }
   },
   "userPromptSettings": {

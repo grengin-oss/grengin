@@ -101,6 +101,16 @@
       "notNow": "지금은 안 함",
       "requestedPermissions": "요청된 권한:",
       "manageInSettings": "연결된 계정은 설정에서 관리할 수 있습니다."
+    },
+    "skills": {
+      "label": "스킬",
+      "tooltip": "이 대화에 스킬 추가",
+      "menuTitle": "스킬",
+      "countSelected": "스킬 {count}개",
+      "loading": "스킬 불러오는 중…",
+      "empty": "사용 가능한 스킬이 없습니다. 설정에서 만드세요.",
+      "builtin": "기본 제공",
+      "updateFailed": "스킬 업데이트에 실패했습니다"
     }
   }
 }

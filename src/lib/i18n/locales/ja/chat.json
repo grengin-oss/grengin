@@ -101,6 +101,16 @@
       "notNow": "今はしない",
       "requestedPermissions": "要求された権限:",
       "manageInSettings": "接続済みアカウントは設定で管理できます。"
+    },
+    "skills": {
+      "label": "スキル",
+      "tooltip": "この会話にスキルを追加",
+      "menuTitle": "スキル",
+      "countSelected": "スキル {count} 個",
+      "loading": "スキルを読み込み中…",
+      "empty": "利用可能なスキルがありません。設定で作成してください。",
+      "builtin": "組み込み",
+      "updateFailed": "スキルの更新に失敗しました"
     }
   }
 }

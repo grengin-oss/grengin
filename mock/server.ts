@@ -13,6 +13,7 @@ import analyticsRoutes from './routes/analytics.js'
 import onboardingRoutes from './routes/onboarding.js'
 import integrationsRoutes from './routes/integrations.js'
 import projectsRoutes from './routes/projects.js'
+import skillsRoutes from './routes/skills.js'
 
 // Seed initial data
 seedData()
@@ -37,6 +38,7 @@ app.use(analyticsRoutes)
 app.use(onboardingRoutes)
 app.use(integrationsRoutes)
 app.use(projectsRoutes)
+app.use(skillsRoutes)
 
 // Fallback 404 handler - always returns JSON
 app.use((req, res) => {
