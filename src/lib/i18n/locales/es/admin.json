@@ -1188,7 +1188,9 @@
       "defaultModelWarning": "Por favor agregue al menos un modelo a la lista blanca antes de seleccionar un modelo predeterminado.",
       "defaultBadge": "Predeterminado",
       "mustRemainWhitelisted": "El modelo predeterminado debe permanecer en la lista blanca",
-      "cannotRemoveDefault": "No se puede eliminar el modelo predeterminado de la lista blanca. Por favor cambie el modelo predeterminado primero."
+      "cannotRemoveDefault": "No se puede eliminar el modelo predeterminado de la lista blanca. Por favor cambie el modelo predeterminado primero.",
+      "imageModel": "Modelo de generación de imágenes",
+      "textModel": "Modelo de texto"
     },
     "systemDefault": {
       "title": "Establecer como motor predeterminado del sistema",

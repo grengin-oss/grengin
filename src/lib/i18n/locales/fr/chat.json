@@ -52,7 +52,11 @@
       "voiceInputError": "Erreur de saisie vocale : {error}",
       "failedToStartVoiceInput": "Échec du démarrage de la saisie vocale",
       "uploading": "Téléversement…",
-      "uploadFailed": "Échec"
+      "uploadFailed": "Échec",
+      "placeholderImage": "Décrivez une image à générer…",
+      "imageModelsGroup": "Génération d'images",
+      "imageBadge": "Image",
+      "imageModeHint": "Mode image — décrivez une image à générer, ou joignez-en une et décrivez votre modification."
     },
     "message": {
       "copy": "Copier",
@@ -67,7 +71,12 @@
       "listen": "Écouter",
       "stop": "Arrêter",
       "closePreview": "Fermer l'aperçu",
-      "clickToPreview": "Cliquer pour ouvrir l'aperçu"
+      "clickToPreview": "Cliquer pour ouvrir l'aperçu",
+      "generatingImage": "Génération de l'image…",
+      "generatedImageAlt": "Image générée",
+      "viewImage": "Afficher l'image : {name}",
+      "downloadImage": "Télécharger l'image",
+      "download": "Télécharger"
     },
     "toolCalls": {
       "searching": "Recherche sur le web",

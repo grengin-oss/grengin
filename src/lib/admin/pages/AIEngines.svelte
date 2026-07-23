@@ -15,6 +15,16 @@
 
   const store = aiEnginesStore;
   const canManageEngines = $derived(permissionsStore.canManageAiEngines());
+
+  // Whether a whitelist model generates images (vs. text). Prefer the registry
+  // `model_type` when the backend provides it; otherwise fall back to a
+  // name-based heuristic covering the known image models (gpt-image-*, the
+  // gemini "*-image" / Nano Banana family).
+  function isImageEngineModel(model: { model_type?: string; model_id?: string; display_name?: string }): boolean {
+    if (model.model_type) return model.model_type === 'image_generator';
+    const hint = `${model.model_id ?? ''} ${model.display_name ?? ''}`.toLowerCase();
+    return /image/.test(hint);
+  }
   const apiKeyHelperId = "ai-engine-api-key-helper";
   const apiKeyMessageId = "ai-engine-api-key-message";
   const defaultModelHintId = "ai-engine-default-model-hint";
@@ -802,6 +812,7 @@
               {#each store.availableModels.models as model}
                 {@const isDefaultModel =
                   model.model_id === store.formData.default_model}
+                {@const isImage = isImageEngineModel(model)}
                 <label class="model-item" class:is-default={isDefaultModel}>
                   <input
                     type="checkbox"
@@ -812,6 +823,34 @@
                       ? $_('aiEngines.modelWhitelist.mustRemainWhitelisted')
                       : ""}
                   />
+                  <span
+                    class="model-type-icon"
+                    class:image={isImage}
+                    class:text={!isImage}
+                    title={isImage
+                      ? $_('aiEngines.modelWhitelist.imageModel')
+                      : $_('aiEngines.modelWhitelist.textModel')}
+                    aria-label={isImage
+                      ? $_('aiEngines.modelWhitelist.imageModel')
+                      : $_('aiEngines.modelWhitelist.textModel')}
+                    role="img"
+                  >
+                    {#if isImage}
+                      <!-- Image model: picture icon -->
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                      </svg>
+                    {:else}
+                      <!-- Text model: text/type icon -->
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                        <line x1="9" y1="20" x2="15" y2="20"></line>
+                        <line x1="12" y1="4" x2="12" y2="20"></line>
+                      </svg>
+                    {/if}
+                  </span>
                   <div class="model-info">
                     <span class="model-name">
                       {model.display_name}
@@ -1537,6 +1576,30 @@
   .model-item.is-default:hover {
     background: rgba(59, 130, 246, 0.08);
     border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  .model-type-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+  }
+
+  /* Text models: neutral tint */
+  .model-type-icon.text {
+    background: rgba(var(--glass-tint), 0.06);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Image models: brand-purple accent to distinguish at a glance */
+  .model-type-icon.image {
+    background: rgba(139, 92, 246, 0.12);
+    color: #8b5cf6;
+    border: 1px solid rgba(139, 92, 246, 0.28);
   }
 
   .model-info {

@@ -62,6 +62,32 @@
           "supports_pdf_native": true,
           "supports_web_search": true,
           "max_images": 50
+        },
+        {
+          "key": "gpt-image-2",
+          "name": "GPT Image 2",
+          "engine": "openai",
+          "model_type": "image_generator",
+          "supports_streaming": true,
+          "supports_tools": false,
+          "supports_vision": true,
+          "supports_pdf_native": false,
+          "supports_web_search": false,
+          "max_images": 4,
+          "price_per_image": 0.00016,
+          "comment": "OpenAI image generation & editing"
+        },
+        {
+          "key": "text-embedding-3-large",
+          "name": "Text Embedding 3 Large",
+          "engine": "openai",
+          "model_type": "text_embedder",
+          "supports_streaming": false,
+          "supports_tools": false,
+          "supports_vision": false,
+          "supports_pdf_native": false,
+          "supports_web_search": false,
+          "dimensions": 3072
         }
       ]
     },
@@ -159,6 +185,34 @@
           "supports_pdf_native": true,
           "supports_web_search": true,
           "max_images": null
+        },
+        {
+          "key": "gemini-3-pro-image",
+          "name": "Gemini 3 Pro Image",
+          "engine": "google",
+          "model_type": "image_generator",
+          "supports_streaming": true,
+          "supports_tools": false,
+          "supports_vision": true,
+          "supports_pdf_native": false,
+          "supports_web_search": false,
+          "max_images": 4,
+          "price_per_image": 0.0002,
+          "comment": "Nano Banana — high quality"
+        },
+        {
+          "key": "gemini-3.1-flash-image",
+          "name": "Gemini 3.1 Flash Image",
+          "engine": "google",
+          "model_type": "image_generator",
+          "supports_streaming": true,
+          "supports_tools": false,
+          "supports_vision": true,
+          "supports_pdf_native": false,
+          "supports_web_search": false,
+          "max_images": 2,
+          "price_per_image": 9e-05,
+          "comment": "Nano Banana — fast"
         }
       ]
     },

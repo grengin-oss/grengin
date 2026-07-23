@@ -1242,7 +1242,9 @@
       "defaultModelWarning": "Please whitelist at least one model before selecting a default model.",
       "defaultBadge": "Default",
       "mustRemainWhitelisted": "Default model must remain whitelisted",
-      "cannotRemoveDefault": "Cannot remove the default model from the whitelist. Please change the default model first."
+      "cannotRemoveDefault": "Cannot remove the default model from the whitelist. Please change the default model first.",
+      "imageModel": "Image generation model",
+      "textModel": "Text model"
     },
     "systemDefault": {
       "title": "Set as system default engine",

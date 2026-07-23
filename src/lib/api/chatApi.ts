@@ -18,6 +18,7 @@ export interface SendMessageOptions {
   onToolCall?: (toolCall: any) => void;
   onToolResult?: (toolResult: any) => void;
   onArtifact?: (artifact: { id: string; title: string; contentType: string; content: string }) => void;
+  onImageGenerated?: (image: ImageGeneratedEvent) => void;
   onMcpAuthRequired?: (authRequest: McpAuthRequest) => void;
   onDone?: (data: any) => void;
   onError?: (error: ApiError | Error) => void;
@@ -28,6 +29,19 @@ export interface UploadedFile {
   name: string;
   size: number;
   type: string;
+}
+
+/**
+ * Payload of the `image_generated` SSE event. Emitted by the chat stream when a
+ * selected image model finishes generating (or editing) an image. The image is
+ * stored as a regular file — `file_id` is downloaded and rendered inline in the
+ * assistant message using the existing file rendering.
+ */
+export interface ImageGeneratedEvent {
+  file_id: string;
+  content_type: string;
+  cost?: number;
+  message_id?: string;
 }
 
 export interface UploadDocumentOptions {
@@ -68,7 +82,7 @@ export async function uploadDocument(options: UploadDocumentOptions): Promise<Up
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onArtifact, onMcpAuthRequired, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onArtifact, onImageGenerated, onMcpAuthRequired, onDone, onError } = options;
 
   try {
     const token = getAccessToken();
@@ -237,6 +251,18 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
             case 'artifact':
               if (data) {
                 onArtifact?.(data);
+              }
+              break;
+            case 'image_generated':
+              // An image model finished generating/editing an image. The image
+              // is a regular file (data.file_id) rendered inline in the message.
+              if (data?.file_id) {
+                onImageGenerated?.({
+                  file_id: data.file_id,
+                  content_type: data.content_type || 'image/png',
+                  cost: data.cost,
+                  message_id: data.message_id,
+                });
               }
               break;
             case 'mcp_oauth_required':

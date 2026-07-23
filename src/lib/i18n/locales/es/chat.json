@@ -52,7 +52,11 @@
       "voiceInputError": "Error de entrada de voz: {error}",
       "failedToStartVoiceInput": "Error al iniciar la entrada de voz",
       "uploading": "Subiendo…",
-      "uploadFailed": "Error"
+      "uploadFailed": "Error",
+      "placeholderImage": "Describe una imagen para generar…",
+      "imageModelsGroup": "Generación de imágenes",
+      "imageBadge": "Imagen",
+      "imageModeHint": "Modo imagen: describe una imagen para generarla, o adjunta una y describe tu edición."
     },
     "message": {
       "copy": "Copiar",
@@ -67,7 +71,12 @@
       "listen": "Escuchar",
       "stop": "Detener",
       "closePreview": "Cerrar vista previa",
-      "clickToPreview": "Haz clic para abrir la vista previa"
+      "clickToPreview": "Haz clic para abrir la vista previa",
+      "generatingImage": "Generando imagen…",
+      "generatedImageAlt": "Imagen generada",
+      "viewImage": "Ver imagen: {name}",
+      "downloadImage": "Descargar imagen",
+      "download": "Descargar"
     },
     "toolCalls": {
       "searching": "Buscando en la web",

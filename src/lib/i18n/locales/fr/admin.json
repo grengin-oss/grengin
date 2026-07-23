@@ -1188,7 +1188,9 @@
       "defaultModelWarning": "Veuillez ajouter au moins un modèle à la liste blanche avant de sélectionner un modèle par défaut.",
       "defaultBadge": "Par défaut",
       "mustRemainWhitelisted": "Le modèle par défaut doit rester dans la liste blanche",
-      "cannotRemoveDefault": "Impossible de retirer le modèle par défaut de la liste blanche. Veuillez d'abord changer le modèle par défaut."
+      "cannotRemoveDefault": "Impossible de retirer le modèle par défaut de la liste blanche. Veuillez d'abord changer le modèle par défaut.",
+      "imageModel": "Modèle de génération d'images",
+      "textModel": "Modèle de texte"
     },
     "systemDefault": {
       "title": "Définir comme moteur par défaut du système",

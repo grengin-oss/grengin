@@ -52,7 +52,11 @@
       "voiceInputError": "خطأ في الإدخال الصوتي: {error}",
       "failedToStartVoiceInput": "تعذر بدء الإدخال الصوتي",
       "uploading": "جارٍ الرفع…",
-      "uploadFailed": "فشل"
+      "uploadFailed": "فشل",
+      "placeholderImage": "صِف صورة لتوليدها…",
+      "imageModelsGroup": "توليد الصور",
+      "imageBadge": "صورة",
+      "imageModeHint": "وضع الصور — صِف صورة لتوليدها، أو أرفق صورة وصف التعديل المطلوب."
     },
     "message": {
       "copy": "نسخ",
@@ -67,7 +71,12 @@
       "listen": "استماع",
       "stop": "إيقاف",
       "closePreview": "إغلاق المعاينة",
-      "clickToPreview": "انقر لفتح المعاينة"
+      "clickToPreview": "انقر لفتح المعاينة",
+      "generatingImage": "جارٍ توليد الصورة…",
+      "generatedImageAlt": "صورة مُولّدة",
+      "viewImage": "عرض الصورة: {name}",
+      "downloadImage": "تنزيل الصورة",
+      "download": "تنزيل"
     },
     "toolCalls": {
       "searching": "جارٍ البحث على الويب",

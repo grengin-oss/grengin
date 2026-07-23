@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { ProviderInfo, ModelInfo, SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from '../../../api/models';
+  import { isImageModel, isSelectableChatModel } from '../../../api/models';
   import { uploadDocument, type UploadedFile } from '../../../api/chatApi';
   import type { MCPServer } from '../../../admin/types.js';
   import { _ } from 'svelte-i18n';
@@ -26,9 +27,21 @@
     onWebSearchToggle?: () => void;
     conversationId?: string | null;
     pendingSkillIds?: string[];
+    /** True when the selected model generates images (drives the composer hint & badge). */
+    imageModelSelected?: boolean;
   }
 
-let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, mcpServers = [], selectedMcpServers = [], loadingMcpServers = false, mcpServersError = null, onMcpToggle, webSearchEnabled = false, onWebSearchToggle, conversationId = null, pendingSkillIds = $bindable([]) }: MessageInputProps = $props();
+let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, mcpServers = [], selectedMcpServers = [], loadingMcpServers = false, mcpServersError = null, onMcpToggle, webSearchEnabled = false, onWebSearchToggle, conversationId = null, pendingSkillIds = $bindable([]), imageModelSelected = false }: MessageInputProps = $props();
+
+  // Split a provider's models into selectable text and image groups (embedding
+  // models are never selectable in chat). Loaded from the registry — not hardcoded.
+  function splitModels(models: ModelInfo[]) {
+    const selectable = models.filter(isSelectableChatModel);
+    return {
+      text: selectable.filter((m) => !isImageModel(m)),
+      image: selectable.filter(isImageModel),
+    };
+  }
   let isDarkMode = $state(false);
 
   function syncThemeState() {
@@ -493,6 +506,19 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     </div>
   {/if}
 
+  <!-- Image-generation hint: shown when an image model is selected. Reuses the
+       standard composer; describes the generate + edit-by-attachment flows. -->
+  {#if imageModelSelected}
+    <div class="image-mode-hint" role="note">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+        <polyline points="21 15 16 10 5 21"></polyline>
+      </svg>
+      <span>{$_('chat.messageInput.imageModeHint')}</span>
+    </div>
+  {/if}
+
   <!-- Main Input Container -->
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -587,10 +613,51 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
               {/if}
             </div>
             <span class="selector-label model-caption">{selectedModel || $_('chat.messageInput.selectModelFallback')}</span>
+            {#if imageModelSelected}
+              <svg class="trigger-type-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label={$_('chat.messageInput.imageModel')}>
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+            {/if}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow" class:open={showModelDropdown}>
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </button>
+
+          {#snippet modelOption(provider: ProviderInfo, model: ModelInfo, isImage: boolean)}
+            <button
+              class="menu-item model-option"
+              class:selected={selectedModel === model.key || selectedModel === model.name}
+              onclick={() => selectModel(provider, model)}
+              title={model.comment || model.name}
+            >
+              <span class="model-name">{model.name}</span>
+              <div class="model-capabilities">
+                {#if isImage}
+                  <!-- Image model: picture icon (replaces the old text badge) -->
+                  <svg class="capability-icon type-icon type-image active" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label={$_('chat.messageInput.imageModel')}>
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                {:else}
+                  <!-- Text model: text/type icon -->
+                  <svg class="capability-icon type-icon type-text active" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label={$_('chat.messageInput.textModel')}>
+                    <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                    <line x1="9" y1="20" x2="15" y2="20"></line>
+                    <line x1="12" y1="4" x2="12" y2="20"></line>
+                  </svg>
+                  {#if model.supports_vision}
+                    <svg class="capability-icon active" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label={$_('chat.messageInput.visionCapable')}>
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  {/if}
+                {/if}
+              </div>
+            </button>
+          {/snippet}
 
           {#if showModelDropdown}
             <div class="model-menu">
@@ -603,33 +670,35 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
                 <div class="dropdown-error">{modelsError}</div>
               {:else}
                 {#each providers as provider}
-                  <div class="provider-section">
-                    <div class="provider-header">
-                      <div class="provider-icon">
-                        <img src={getIconForTheme(provider)} alt="" class="provider-icon-img" />
+                  {@const grouped = splitModels(provider.models)}
+                  {#if grouped.text.length > 0 || grouped.image.length > 0}
+                    <div class="provider-section">
+                      <div class="provider-header">
+                        <div class="provider-icon">
+                          <img src={getIconForTheme(provider)} alt="" class="provider-icon-img" />
+                        </div>
+                        <span class="provider-name">{provider.name}</span>
                       </div>
-                      <span class="provider-name">{provider.name}</span>
-                    </div>
-                    <div class="provider-models">
-                      {#each provider.models as model}
-                        <button
-                          class="menu-item model-option"
-                          class:selected={selectedModel === model.name}
-                          onclick={() => selectModel(provider, model)}
-                        >
-                          <span class="model-name">{model.name}</span>
-                          <div class="model-capabilities">
-                            {#if model.supports_vision}
-                              <svg class="capability-icon active" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label={$_('chat.messageInput.visionCapable')}>
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                              </svg>
-                            {/if}
+                      <div class="provider-models">
+                        {#each grouped.text as model}
+                          {@render modelOption(provider, model, false)}
+                        {/each}
+                        {#if grouped.image.length > 0}
+                          <div class="model-subgroup-label" role="presentation">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                              <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span>{$_('chat.messageInput.imageModelsGroup')}</span>
                           </div>
-                        </button>
-                      {/each}
+                          {#each grouped.image as model}
+                            {@render modelOption(provider, model, true)}
+                          {/each}
+                        {/if}
+                      </div>
                     </div>
-                  </div>
+                  {/if}
                 {/each}
               {/if}
             </div>
@@ -1512,10 +1581,71 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
 
   .capability-icon {
     opacity: 0.6;
+    flex-shrink: 0;
   }
 
   .capability-icon.active {
     opacity: 1;
+  }
+
+  /* Model-type icons in the dropdown rows */
+  .capability-icon.type-image {
+    color: #8b5cf6;
+  }
+
+  .capability-icon.type-text {
+    color: var(--text-secondary);
+    opacity: 0.75;
+  }
+
+  /* Image-model indicator on the selected-model trigger */
+  .trigger-type-icon {
+    flex-shrink: 0;
+    color: #8b5cf6;
+  }
+
+  /* Sub-group heading inside a provider section ("Image generation") */
+  .model-subgroup-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-md) var(--space-2xs);
+    margin-top: var(--space-xs);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #8b5cf6;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .model-subgroup-label svg {
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+
+  /* Image-mode hint above the composer */
+  .image-mode-hint {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(139, 92, 246, 0.08);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    animation: hintSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .image-mode-hint svg {
+    flex-shrink: 0;
+    color: #8b5cf6;
+  }
+
+  @keyframes hintSlideIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .dropdown-loading,

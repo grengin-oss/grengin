@@ -9,7 +9,7 @@
   import type { BudgetWarningMessage, ChatMessage as ChatMessageType, McpAuthRequest } from '../../../types/chat';
   import { sendMessage, getConversation, getChatMcpServers, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
-  import { getModels } from '../../../api/models';
+  import { getModels, isImageModel, findModel } from '../../../api/models';
   import type { MCPServer } from '../../../admin/types.js';
   import { getMcpServers } from '../../../api/admin/mcpServers.js';
   import { linkProjectToConversation, getProjectDetail } from '../../../api/projectsApi';
@@ -120,6 +120,20 @@
   let providers = $state<ProviderInfo[]>([]);
   let loadingModels = $state(true);
   let modelsError = $state<string | null>(null);
+
+  // Whether the currently selected model generates images (vs. text). Drives the
+  // "generating image" progress state and the composer hint. Loaded from the
+  // registry — never hardcoded.
+  let selectedIsImageModel = $derived(isImageModel(findModel(providers, selectedModel)?.model));
+
+  // Build a meaningful, accessible name/alt for a generated image from the prompt.
+  function generatedImageName(prompt: string, index: number): string {
+    const base = prompt.trim();
+    const label = base.length > 0
+      ? (base.length > 120 ? base.slice(0, 117) + '…' : base)
+      : $_('chat.message.generatedImageAlt');
+    return index > 0 ? `${label} (${index + 1})` : label;
+  }
 
   async function loadModels() {
     loadingModels = true;
@@ -316,6 +330,9 @@
 
     let messageAddedToArray = $state(false);
     let pendingConversationId = conversationId;
+    // How many generated images have arrived for this assistant message (an
+    // image model may return more than one — cap is a model property).
+    let generatedImageIndex = 0;
     isTyping = true;
     scrollToBottom();
 
@@ -359,8 +376,11 @@
             currentStreamingMessage = {...pendingStreamingMessage};
             messages = [...messages, currentStreamingMessage as ChatMessageType];
 
-            // Update loading and typing states
-            isTyping = false;
+            // Update loading and typing states. For image models there may be no
+            // text deltas — keep the existing typing indicator visible until the
+            // image_generated event arrives (reuses the standard stream state,
+            // no bespoke image spinner).
+            isTyping = selectedIsImageModel;
             isLoading = true;
 
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
@@ -373,6 +393,7 @@
               messages = [...messages, pendingStreamingMessage];
               messageAddedToArray = true;
             }
+            if (token.trim()) isTyping = false;
             
             // Create a new message object with updated content
             pendingStreamingMessage = {
@@ -474,6 +495,42 @@
         onArtifact: (artifact) => {
           const type = artifact.contentType === 'text/markdown' ? 'markdown' : 'html';
           handleShowArtifact(artifact.title || 'Artifact', artifact.content, type);
+        },
+        onImageGenerated: (image) => {
+          if (pendingStreamingMessage) {
+            // Ensure the assistant placeholder is in the array (image models may
+            // emit no text deltas before the image arrives).
+            if (!messageAddedToArray) {
+              messages = [...messages, pendingStreamingMessage];
+              messageAddedToArray = true;
+            }
+
+            // Append the generated image as a regular file so it renders inline
+            // via the existing file rendering. A new image never replaces a
+            // previous one — each result is appended.
+            const generatedFile = {
+              id: image.file_id,
+              name: generatedImageName(content, generatedImageIndex),
+              type: image.content_type || 'image/png',
+              size: 0,
+            };
+            generatedImageIndex += 1;
+
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              files: [...(pendingStreamingMessage.files || []), generatedFile],
+            };
+
+            currentStreamingMessage = { ...pendingStreamingMessage };
+            messages = messages.map(m =>
+              m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
+            );
+
+            // Image has arrived — stop the "generating" typing indicator.
+            isTyping = false;
+            isLoading = true;
+            scrollToStreamingMessageTop(pendingStreamingMessage.id);
+          }
         },
         onMcpAuthRequired: (authRequest: McpAuthRequest) => {
           if (pendingStreamingMessage) {
@@ -640,6 +697,8 @@
     const userMessage = messages[msgIndex - 1];
     if (userMessage?.role !== 'user') return;
 
+    let generatedImageIndex = 0;
+
     // Set up pending streaming message for the existing assistant message
     let pendingStreamingMessage: ChatMessageType | null = {
       id: assistantMessageId,
@@ -766,9 +825,31 @@
             };
 
             // Update the message in the array
-            messages = messages.map(m => 
+            messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
+          }
+        },
+        onImageGenerated: (image) => {
+          if (pendingStreamingMessage) {
+            const generatedFile = {
+              id: image.file_id,
+              name: generatedImageName(userMessage.content, generatedImageIndex),
+              type: image.content_type || 'image/png',
+              size: 0,
+            };
+            generatedImageIndex += 1;
+
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              files: [...(pendingStreamingMessage.files || []), generatedFile],
+            };
+
+            messages = messages.map(m =>
+              m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
+            );
+            isTyping = false;
+            isLoading = true;
           }
         },
         onDone: async (_data) => {
@@ -796,7 +877,7 @@
             };
 
             // Update the message in the array
-            messages = messages.map(m => 
+            messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
           }
@@ -1141,7 +1222,10 @@
           bind:this={messageInput}
           onSend={handleSendMessage}
           disabled={isLoading}
-          placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
+          placeholder={selectedIsImageModel
+            ? $_('chat.messageInput.placeholderImage')
+            : $_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
+          imageModelSelected={selectedIsImageModel}
           {selectedModel}
           {selectedProvider}
           {mcpServers}

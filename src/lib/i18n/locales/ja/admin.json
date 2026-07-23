@@ -1188,7 +1188,9 @@
       "defaultModelWarning": "デフォルトモデルを選択する前に、少なくとも1つのモデルをホワイトリストに追加してください。",
       "defaultBadge": "デフォルト",
       "mustRemainWhitelisted": "デフォルトモデルはホワイトリストに残す必要があります",
-      "cannotRemoveDefault": "デフォルトモデルをホワイトリストから削除できません。まずデフォルトモデルを変更してください。"
+      "cannotRemoveDefault": "デフォルトモデルをホワイトリストから削除できません。まずデフォルトモデルを変更してください。",
+      "imageModel": "画像生成モデル",
+      "textModel": "テキストモデル"
     },
     "systemDefault": {
       "title": "システムのデフォルトエンジンとして設定",
