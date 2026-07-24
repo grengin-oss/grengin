@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { faker } from '@faker-js/faker'
 import { requireAuth } from '../lib/middleware.js'
-import { conversations, messages, type Conversation, type Message } from '../lib/store.js'
+import { conversations, messages, files, type Conversation, type Message, type UserFile } from '../lib/store.js'
 
 const router = Router()
 
@@ -248,6 +248,22 @@ router.post('/chat/stream', requireAuth, async (req, res) => {
   const conversationMessages = messages.get(conversationId) || []
   conversationMessages.push(userMsg)
 
+  // ── Image generation flow ─────────────────────────────────────────────
+  // Detect image models by key convention (mock heuristic; the real backend
+  // types them as `image_generator` in the registry).
+  const isImageModel = /image/i.test(model_name || '')
+  if (isImageModel) {
+    await handleImageGeneration({
+      res,
+      conversationId,
+      isNewConversation,
+      prompt: userMessageContent,
+      modelName: model_name || 'gpt-image-2',
+      conversationMessages,
+    })
+    return
+  }
+
   // Generate a contextual mock response based on user input
   const responseText = getMockResponse(userMessageContent.toLowerCase(), assistantMsgNum)
 
@@ -319,6 +335,112 @@ router.post('/chat/stream', requireAuth, async (req, res) => {
 
   res.end()
 })
+
+// Simulate the image-generation path of the chat stream. Emits the same events
+// the real backend does: message_start → (optional caption deltas) → one
+// image_generated event per image → done. Error keywords let the FE inline
+// error states be exercised.
+async function handleImageGeneration(opts: {
+  res: any
+  conversationId: string
+  isNewConversation: boolean
+  prompt: string
+  modelName: string
+  conversationMessages: Message[]
+}) {
+  const { res, conversationId, isNewConversation, prompt, modelName, conversationMessages } = opts
+  const assistantMsgId = faker.string.uuid()
+
+  if (isNewConversation) {
+    res.write(`event: conversation\ndata: ${JSON.stringify({ id: conversationId })}\n\n`)
+  }
+  res.write(`event: message_start\ndata: ${JSON.stringify({ message_id: assistantMsgId })}\n\n`)
+
+  // Simulate the provider working on the image.
+  await new Promise((r) => setTimeout(r, 900))
+
+  // Error-simulation keywords → inline error states (provider/timeout/safety/budget).
+  const lower = prompt.toLowerCase()
+  const emitError = (description: string, solution: string, externalCode: string | null) => {
+    res.write(`event: error\ndata: ${JSON.stringify({
+      detail: { type: 'rich', code: 400, description, solution, description_key: '', solution_key: '', params: {}, external_code: externalCode },
+    })}\n\n`)
+    res.end()
+  }
+  if (lower.includes('blocked') || lower.includes('unsafe')) {
+    return emitError('This request was blocked by the safety system.', 'Try a different prompt that follows the content policy.', 'safety_blocked')
+  }
+  if (lower.includes('timeout')) {
+    return emitError('The image generation request timed out.', 'Please try again in a moment.', 'timeout')
+  }
+  if (lower.includes('overbudget') || lower.includes('over budget')) {
+    return emitError('Department budget is exhausted; image generation is blocked.', 'Contact your administrator to request additional budget.', 'budget_exhausted')
+  }
+  if (lower.includes('providerfail') || lower.includes('provider error')) {
+    return emitError('The image provider returned an error.', 'Please try again shortly.', 'provider_error')
+  }
+
+  // Number of images: "flash" models return 2, otherwise 1 (a model property).
+  const count = /flash/i.test(modelName) ? 2 : 1
+  const generatedFiles: Array<{ id: string; name: string; type: string; size: number }> = []
+
+  for (let i = 0; i < count; i++) {
+    const fileId = faker.string.uuid()
+    const contentType = 'image/png'
+    const fileName = `${prompt.trim().slice(0, 40) || 'generated-image'}${count > 1 ? ` (${i + 1})` : ''}.png`
+
+    // Register the file so GET /files/:id/download can serve a placeholder image.
+    const record: UserFile = {
+      id: fileId,
+      name: fileName,
+      size: 0,
+      type: contentType,
+      description: prompt.trim() || 'Generated image',
+      url: `/files/${fileId}`,
+      download_url: `/files/${fileId}/download`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      user_id: 'auth0|507f1f77bcf86cd799439011',
+      status: 'uploaded',
+    }
+    files.set(fileId, record)
+    generatedFiles.push({ id: fileId, name: fileName, type: contentType, size: 0 })
+
+    // Emit the image_generated event (matches the backend contract).
+    res.write(`event: image_generated\ndata: ${JSON.stringify({
+      content_type: contentType,
+      cost: 0.00015999999595806003,
+      file_id: fileId,
+      message_id: assistantMsgId,
+    })}\n\n`)
+    await new Promise((r) => setTimeout(r, 500))
+  }
+
+  // Persist the assistant message with the generated images so reloads render them.
+  const assistantMsg: Message = {
+    id: assistantMsgId,
+    conversation_id: conversationId,
+    role: 'assistant',
+    model: modelName,
+    parts: { text: '', files: generatedFiles } as any,
+    created_at: new Date().toISOString(),
+    usage: { input_tokens: Math.floor(prompt.length / 4), output_tokens: 0 },
+  } as Message
+  conversationMessages.push(assistantMsg)
+  messages.set(conversationId, conversationMessages)
+
+  const conversation = conversations.get(conversationId)
+  if (conversation) {
+    conversation.updated_at = new Date().toISOString()
+    conversations.set(conversationId, conversation)
+  }
+
+  res.write(`event: done\ndata: ${JSON.stringify({
+    conversation_id: conversationId,
+    assistant_message_id: assistantMsgId,
+  })}\n\n`)
+  res.end()
+}
 
 // Generate contextual mock responses
 function getMockResponse(input: string, messageNum: number): string {

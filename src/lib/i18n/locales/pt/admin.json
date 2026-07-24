@@ -1188,7 +1188,9 @@
       "defaultModelWarning": "Adicione pelo menos um modelo à lista permitida antes de escolher um modelo predefinido.",
       "defaultBadge": "Predefinido",
       "mustRemainWhitelisted": "O modelo predefinido tem de permanecer na lista permitida",
-      "cannotRemoveDefault": "Não é possível remover o modelo predefinido da lista. Altere primeiro o modelo predefinido."
+      "cannotRemoveDefault": "Não é possível remover o modelo predefinido da lista. Altere primeiro o modelo predefinido.",
+      "imageModel": "Modelo de geração de imagens",
+      "textModel": "Modelo de texto"
     },
     "systemDefault": {
       "title": "Definir como motor predefinido do sistema",
@@ -1320,6 +1322,60 @@
     "tabs": {
       "metrics": "Métricas",
       "maintenance": "Manutenção"
+    }
+  },
+  "adminSkills": {
+    "title": "Habilidades",
+    "subtitle": "Crie e gerencie as habilidades da organização e dos departamentos disponíveis para seus usuários.",
+    "createSkill": "Nova habilidade",
+    "searchPlaceholder": "Buscar habilidades…",
+    "loading": "Carregando habilidades…",
+    "empty": "Nenhuma habilidade ainda. Crie a primeira para sua organização.",
+    "editor": {
+      "title": "Editor de habilidades",
+      "createTitle": "Criar habilidade",
+      "editTitle": "Editar habilidade",
+      "subtitle": "As habilidades adicionam um prompt do sistema, busca na web e permissões de ferramentas às conversas.",
+      "close": "Fechar",
+      "avatar": "Ícone",
+      "name": "Nome",
+      "namePlaceholder": "ex.: Assistente de pesquisa",
+      "identifier": "Identificador",
+      "identifierHint": "Slug estável usado pela API. Não pode ser alterado após a criação.",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Um breve resumo do que esta habilidade faz",
+      "departmentId": "ID do departamento",
+      "departmentIdHint": "Opcional. Restrinja esta habilidade a um único departamento; deixe em branco para toda a organização.",
+      "systemRole": "Prompt do sistema",
+      "systemRolePlaceholder": "Você é um assistente de pesquisa meticuloso…",
+      "webSearch": "Busca na web",
+      "webSearchHint": "Permitir que esta habilidade faça buscas na web.",
+      "cancel": "Cancelar",
+      "save": "Salvar alterações",
+      "create": "Criar habilidade",
+      "saving": "Salvando…",
+      "toolGrants": "Permissões de ferramentas",
+      "toolGrantsHint": "Selecione os servidores MCP que esta habilidade pode usar.",
+      "toolCount": "{count} ferramentas",
+      "loadingServers": "Carregando servidores disponíveis…",
+      "noServers": "Nenhum servidor MCP disponível. Conecte um em Integrações."
+    },
+    "delete": {
+      "title": "Excluir habilidade",
+      "message": "Tem certeza de que deseja excluir \"{name}\"? Isso afeta todos que têm acesso e não pode ser desfeito.",
+      "cancel": "Cancelar",
+      "confirm": "Excluir",
+      "deleting": "Excluindo…"
+    },
+    "messages": {
+      "loadFailed": "Falha ao carregar as habilidades",
+      "created": "Habilidade criada",
+      "updated": "Habilidade atualizada",
+      "saveFailed": "Falha ao salvar a habilidade",
+      "toggleFailed": "Falha ao atualizar a habilidade",
+      "deleted": "Habilidade excluída",
+      "deleteFailed": "Falha ao excluir a habilidade",
+      "builtinReadOnly": "As habilidades integradas não podem ser alteradas"
     }
   }
 }

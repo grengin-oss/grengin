@@ -189,6 +189,12 @@ export interface AIEngineModel {
   model_id: string;
   display_name: string;
   is_whitelisted: boolean;
+  /**
+   * Registry model type when the backend exposes it on the engine models
+   * endpoint (extended /models feature). May be absent on older responses;
+   * callers fall back to a name-based heuristic. See `isImageEngineModel`.
+   */
+  model_type?: 'text_generator' | 'image_generator' | 'text_embedder';
   capabilities?: {
     vision?: boolean;
     function_calling?: boolean;

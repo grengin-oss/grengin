@@ -1188,7 +1188,9 @@
       "defaultModelWarning": "Veuillez ajouter au moins un modèle à la liste blanche avant de sélectionner un modèle par défaut.",
       "defaultBadge": "Par défaut",
       "mustRemainWhitelisted": "Le modèle par défaut doit rester dans la liste blanche",
-      "cannotRemoveDefault": "Impossible de retirer le modèle par défaut de la liste blanche. Veuillez d'abord changer le modèle par défaut."
+      "cannotRemoveDefault": "Impossible de retirer le modèle par défaut de la liste blanche. Veuillez d'abord changer le modèle par défaut.",
+      "imageModel": "Modèle de génération d'images",
+      "textModel": "Modèle de texte"
     },
     "systemDefault": {
       "title": "Définir comme moteur par défaut du système",
@@ -1320,6 +1322,60 @@
     "tabs": {
       "metrics": "Métriques",
       "maintenance": "Maintenance"
+    }
+  },
+  "adminSkills": {
+    "title": "Compétences",
+    "subtitle": "Créez et gérez les compétences de l'organisation et des départements disponibles pour vos utilisateurs.",
+    "createSkill": "Nouvelle compétence",
+    "searchPlaceholder": "Rechercher des compétences…",
+    "loading": "Chargement des compétences…",
+    "empty": "Aucune compétence pour l'instant. Créez la première pour votre organisation.",
+    "editor": {
+      "title": "Éditeur de compétences",
+      "createTitle": "Créer une compétence",
+      "editTitle": "Modifier la compétence",
+      "subtitle": "Les compétences ajoutent une invite système, la recherche web et des accès aux outils aux conversations.",
+      "close": "Fermer",
+      "avatar": "Icône",
+      "name": "Nom",
+      "namePlaceholder": "ex. Assistant de recherche",
+      "identifier": "Identifiant",
+      "identifierHint": "Slug stable utilisé par l'API. Non modifiable après la création.",
+      "description": "Description",
+      "descriptionPlaceholder": "Un bref résumé de ce que fait cette compétence",
+      "departmentId": "ID du département",
+      "departmentIdHint": "Facultatif. Limitez cette compétence à un seul département ; laissez vide pour toute l'organisation.",
+      "systemRole": "Invite système",
+      "systemRolePlaceholder": "Vous êtes un assistant de recherche méticuleux…",
+      "webSearch": "Recherche web",
+      "webSearchHint": "Autoriser cette compétence à effectuer des recherches sur le web.",
+      "cancel": "Annuler",
+      "save": "Enregistrer les modifications",
+      "create": "Créer la compétence",
+      "saving": "Enregistrement…",
+      "toolGrants": "Accès aux outils",
+      "toolGrantsHint": "Sélectionnez les serveurs MCP que cette compétence peut utiliser.",
+      "toolCount": "{count} outils",
+      "loadingServers": "Chargement des serveurs disponibles…",
+      "noServers": "Aucun serveur MCP disponible. Connectez-en un depuis Intégrations."
+    },
+    "delete": {
+      "title": "Supprimer la compétence",
+      "message": "Voulez-vous vraiment supprimer « {name} » ? Cela affecte tous ceux qui y ont accès et est irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer",
+      "deleting": "Suppression…"
+    },
+    "messages": {
+      "loadFailed": "Échec du chargement des compétences",
+      "created": "Compétence créée",
+      "updated": "Compétence mise à jour",
+      "saveFailed": "Échec de l'enregistrement de la compétence",
+      "toggleFailed": "Échec de la mise à jour de la compétence",
+      "deleted": "Compétence supprimée",
+      "deleteFailed": "Échec de la suppression de la compétence",
+      "builtinReadOnly": "Les compétences intégrées ne peuvent pas être modifiées"
     }
   }
 }

@@ -111,6 +111,18 @@
     }
 
     const content = message.content;
+    // Persisted artifact wrapped in <artifact type="..." title="...">…</artifact>.
+    // This is how the backend stores artifacts inside the message text, so it is
+    // what we get back on reload / when loading conversation history.
+    const artifactTag = content.match(/<artifact\b([^>]*)>([\s\S]*?)<\/artifact>/i);
+    if (artifactTag) {
+      const attrs = artifactTag[1];
+      const code = artifactTag[2].trim();
+      const typeAttr = attrs.match(/type="([^"]*)"/)?.[1] || '';
+      const title = attrs.match(/title="([^"]*)"/)?.[1];
+      const type = typeAttr === 'text/markdown' ? 'markdown' as const : 'html' as const;
+      if (code) return { code, type, title };
+    }
     // Completed blocks
     const htmlMatch = content.match(/```html\s*\n([\s\S]*?)```/);
     if (htmlMatch) return { code: htmlMatch[1].trim(), type: 'html' as const };
@@ -138,6 +150,7 @@
   let displayContent = $derived.by(() => {
     if (!hasPreviewableContent) return message.content;
     return message.content
+      .replace(/<artifact\b[^>]*>[\s\S]*?<\/artifact>/gi, '')
       .replace(/```html\s*\n[\s\S]*?```/g, '')
       .replace(/```(?:markdown|md)\s*\n[\s\S]*?```/g, '')
       .replace(/```html\s*\n[\s\S]*$/g, '')
@@ -259,6 +272,33 @@
 
   function closeImagePreview() {
     previewImage = null;
+  }
+
+  // Download a rendered image (generated or attached) to the user's device,
+  // reusing the authenticated file download. Falls back to fetching if the
+  // blob URL isn't cached yet.
+  async function downloadImageFile(fileId: string, fileName: string) {
+    let blobUrl = fileBlobUrls.get(fileId);
+    if (!blobUrl) {
+      const fetched = await downloadFile(fileId);
+      if (!fetched) return;
+      blobUrl = fetched;
+    }
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = sanitizeDownloadName(fileName);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  // Turn a prompt-derived alt/name into a safe, readable download filename.
+  function sanitizeDownloadName(name: string): string {
+    const base = (name || 'image')
+      .replace(/[\\/:*?"<>|]+/g, ' ')
+      .trim()
+      .slice(0, 80) || 'image';
+    return /\.[a-z0-9]+$/i.test(base) ? base : `${base}.png`;
   }
 
   async function handleFileClick(fileId: string, fileName: string) {
@@ -669,23 +709,37 @@
                   {#if fileLoadingStates.get(file.id)}
                     <div class="image-loader">
                       <div class="spinner"></div>
-                      <div class="loader-text">{$_('chat.message.loadingImage')}</div>
+                      <div class="loader-text">{$_('chat.message.generatingImage')}</div>
                     </div>
                   {:else if fileBlobUrls.has(file.id)}
                     {@const blobUrl = fileBlobUrls.get(file.id)}
                     {#if blobUrl}
-                      <button
-                        class="message-image-btn"
-                        onclick={() => openImagePreview(blobUrl, file.name || $_('chat.message.imageAlt'))}
-                        aria-label={file.name || $_('chat.message.imageAlt')}
-                        title={file.name || $_('chat.message.imageAlt')}
-                      >
-                        <img
-                          src={blobUrl}
-                          alt={file.name || $_('chat.message.imageAlt')}
-                          class="message-image"
-                        />
-                      </button>
+                      <div class="generated-image">
+                        <button
+                          class="message-image-btn"
+                          onclick={() => openImagePreview(blobUrl, file.name || $_('chat.message.generatedImageAlt'))}
+                          aria-label={$_('chat.message.viewImage', { values: { name: file.name || $_('chat.message.generatedImageAlt') } })}
+                          title={file.name || $_('chat.message.generatedImageAlt')}
+                        >
+                          <img
+                            src={blobUrl}
+                            alt={file.name || $_('chat.message.generatedImageAlt')}
+                            class="message-image"
+                          />
+                        </button>
+                        <button
+                          class="image-download-btn"
+                          onclick={() => downloadImageFile(file.id, file.name || $_('chat.message.generatedImageAlt'))}
+                          aria-label={$_('chat.message.downloadImage')}
+                          title={$_('chat.message.downloadImage')}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                          </svg>
+                        </button>
+                      </div>
                     {/if}
                   {/if}
                 {:else}
@@ -762,7 +816,23 @@
         ✕
       </button>
       <img src={previewImage.url} alt={previewImage.name} class="preview-image" />
-      <div class="preview-filename">{previewImage.name}</div>
+      <div class="preview-toolbar">
+        <span class="preview-filename">{previewImage.name}</span>
+        <a
+          class="preview-download-btn"
+          href={previewImage.url}
+          download={sanitizeDownloadName(previewImage.name)}
+          aria-label={$_('chat.message.downloadImage')}
+          title={$_('chat.message.downloadImage')}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>{$_('chat.message.download')}</span>
+        </a>
+      </div>
     </div>
   </div>
 {/if}
@@ -1345,6 +1415,52 @@
     max-width: 100%;
   }
 
+  /* Generated image: image + hover/focus download action */
+  .generated-image {
+    position: relative;
+    width: var(--img-size);
+    height: var(--img-size);
+    flex-shrink: 0;
+  }
+
+  .image-download-btn {
+    position: absolute;
+    top: var(--space-xs);
+    inset-inline-end: var(--space-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: rgba(17, 24, 39, 0.62);
+    color: white;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .generated-image:hover .image-download-btn,
+  .image-download-btn:focus-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .image-download-btn:hover {
+    background: var(--brand);
+  }
+
+  .image-download-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
   .message-image-btn {
     background: none;
     border: none;
@@ -1645,6 +1761,13 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   }
 
+  .preview-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    max-width: 100%;
+  }
+
   .preview-filename {
     color: white;
     font-size: 14px;
@@ -1652,10 +1775,35 @@
     padding: var(--space-sm) var(--space-md);
     background: rgba(0, 0, 0, 0.5);
     border-radius: var(--radius-md);
-    max-width: 100%;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .preview-download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--brand);
+    color: white;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: background 0.18s ease, transform 0.18s ease;
+  }
+
+  .preview-download-btn:hover {
+    background: var(--brand-hover);
+    transform: translateY(-1px);
+  }
+
+  .preview-download-btn:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
   }
 
   .file-box {

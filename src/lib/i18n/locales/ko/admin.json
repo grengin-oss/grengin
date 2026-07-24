@@ -1188,7 +1188,9 @@
       "defaultModelWarning": "기본 모델을 선택하기 전에 최소한 하나의 모델을 화이트리스트에 추가해주세요.",
       "defaultBadge": "기본",
       "mustRemainWhitelisted": "기본 모델은 화이트리스트에 남아 있어야 합니다",
-      "cannotRemoveDefault": "기본 모델을 화이트리스트에서 제거할 수 없습니다. 먼저 기본 모델을 변경해주세요."
+      "cannotRemoveDefault": "기본 모델을 화이트리스트에서 제거할 수 없습니다. 먼저 기본 모델을 변경해주세요.",
+      "imageModel": "이미지 생성 모델",
+      "textModel": "텍스트 모델"
     },
     "systemDefault": {
       "title": "시스템 기본 엔진으로 설정",
@@ -1320,6 +1322,60 @@
     "tabs": {
       "metrics": "메트릭",
       "maintenance": "유지 관리"
+    }
+  },
+  "adminSkills": {
+    "title": "스킬",
+    "subtitle": "사용자가 사용할 수 있는 조직 및 부서 스킬을 만들고 관리합니다.",
+    "createSkill": "새 스킬",
+    "searchPlaceholder": "스킬 검색…",
+    "loading": "스킬 불러오는 중…",
+    "empty": "아직 스킬이 없습니다. 조직을 위한 첫 번째 스킬을 만드세요.",
+    "editor": {
+      "title": "스킬 편집기",
+      "createTitle": "스킬 만들기",
+      "editTitle": "스킬 편집",
+      "subtitle": "스킬은 대화에 시스템 프롬프트, 웹 검색, 도구 권한을 추가합니다.",
+      "close": "닫기",
+      "avatar": "아이콘",
+      "name": "이름",
+      "namePlaceholder": "예: 리서치 어시스턴트",
+      "identifier": "식별자",
+      "identifierHint": "API에서 사용하는 고정 슬러그입니다. 생성 후에는 변경할 수 없습니다.",
+      "description": "설명",
+      "descriptionPlaceholder": "이 스킬이 하는 일에 대한 간단한 요약",
+      "departmentId": "부서 ID",
+      "departmentIdHint": "선택 사항. 이 스킬을 단일 부서로 제한합니다. 조직 전체는 비워 두세요.",
+      "systemRole": "시스템 프롬프트",
+      "systemRolePlaceholder": "당신은 꼼꼼한 리서치 어시스턴트입니다…",
+      "webSearch": "웹 검색",
+      "webSearchHint": "이 스킬이 웹 검색을 수행하도록 허용합니다.",
+      "cancel": "취소",
+      "save": "변경 사항 저장",
+      "create": "스킬 만들기",
+      "saving": "저장 중…",
+      "toolGrants": "도구 권한",
+      "toolGrantsHint": "이 스킬이 사용할 수 있는 MCP 서버를 선택하세요.",
+      "toolCount": "도구 {count}개",
+      "loadingServers": "사용 가능한 서버 불러오는 중…",
+      "noServers": "사용 가능한 MCP 서버가 없습니다. 통합에서 연결하세요."
+    },
+    "delete": {
+      "title": "스킬 삭제",
+      "message": "\"{name}\"을(를) 삭제하시겠습니까? 접근 가능한 모든 사용자에게 영향을 미치며 취소할 수 없습니다.",
+      "cancel": "취소",
+      "confirm": "삭제",
+      "deleting": "삭제 중…"
+    },
+    "messages": {
+      "loadFailed": "스킬을 불러오지 못했습니다",
+      "created": "스킬이 생성되었습니다",
+      "updated": "스킬이 업데이트되었습니다",
+      "saveFailed": "스킬 저장에 실패했습니다",
+      "toggleFailed": "스킬 업데이트에 실패했습니다",
+      "deleted": "스킬이 삭제되었습니다",
+      "deleteFailed": "스킬 삭제에 실패했습니다",
+      "builtinReadOnly": "기본 제공 스킬은 변경할 수 없습니다"
     }
   }
 }

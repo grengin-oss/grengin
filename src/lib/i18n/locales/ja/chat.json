@@ -52,7 +52,12 @@
       "voiceInputError": "音声入力エラー: {error}",
       "failedToStartVoiceInput": "音声入力の開始に失敗しました",
       "uploading": "アップロード中…",
-      "uploadFailed": "失敗"
+      "uploadFailed": "失敗",
+      "placeholderImage": "生成する画像を説明してください…",
+      "imageModelsGroup": "画像生成",
+      "imageModeHint": "画像モード — 生成する画像を説明するか、画像を添付して編集内容を記述してください。",
+      "imageModel": "画像生成モデル",
+      "textModel": "テキストモデル"
     },
     "message": {
       "copy": "コピー",
@@ -67,7 +72,12 @@
       "listen": "聞く",
       "stop": "停止",
       "closePreview": "プレビューを閉じる",
-      "clickToPreview": "クリックしてプレビューを開く"
+      "clickToPreview": "クリックしてプレビューを開く",
+      "generatingImage": "画像を生成中…",
+      "generatedImageAlt": "生成された画像",
+      "viewImage": "画像を表示: {name}",
+      "downloadImage": "画像をダウンロード",
+      "download": "ダウンロード"
     },
     "toolCalls": {
       "searching": "ウェブを検索中",
@@ -101,6 +111,16 @@
       "notNow": "今はしない",
       "requestedPermissions": "要求された権限:",
       "manageInSettings": "接続済みアカウントは設定で管理できます。"
+    },
+    "skills": {
+      "label": "スキル",
+      "tooltip": "この会話にスキルを追加",
+      "menuTitle": "スキル",
+      "countSelected": "スキル {count} 個",
+      "loading": "スキルを読み込み中…",
+      "empty": "利用可能なスキルがありません。設定で作成してください。",
+      "builtin": "組み込み",
+      "updateFailed": "スキルの更新に失敗しました"
     }
   }
 }

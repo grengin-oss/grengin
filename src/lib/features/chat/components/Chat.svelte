@@ -9,10 +9,11 @@
   import type { BudgetWarningMessage, ChatMessage as ChatMessageType, McpAuthRequest } from '../../../types/chat';
   import { sendMessage, getConversation, getChatMcpServers, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
-  import { getModels } from '../../../api/models';
+  import { getModels, isImageModel, findModel } from '../../../api/models';
   import type { MCPServer } from '../../../admin/types.js';
   import { getMcpServers } from '../../../api/admin/mcpServers.js';
   import { linkProjectToConversation, getProjectDetail } from '../../../api/projectsApi';
+  import { linkSkill } from '../../../api/skills.js';
   import { _ } from 'svelte-i18n';
   import { ApiError } from '../../../api/client';
   import { getLocalizedError } from '../../../utils/errorLocalization';
@@ -38,6 +39,8 @@
   let mcpServersError = $state<string | null>(null);
   // Project to link once a new conversation is created (chat started from a project workspace).
   let pendingProjectId = $state<string | null>(null);
+  // Skills selected in the composer before the conversation exists; linked on first send.
+  let pendingSkillIds = $state<string[]>([]);
 
   // Link a freshly-created conversation to the originating project (many-to-many). Runs once.
   async function linkPendingProject(newConversationId: string) {
@@ -52,12 +55,49 @@
     }
   }
 
+  // Link skills chosen before the conversation existed. Runs once per new conversation.
+  async function linkPendingSkills(newConversationId: string) {
+    if (pendingSkillIds.length === 0) return;
+    const ids = pendingSkillIds;
+    pendingSkillIds = [];
+    await Promise.all(
+      ids.map((skillId) =>
+        linkSkill(newConversationId, skillId).catch((err) =>
+          console.error('Failed to link skill to conversation:', err),
+        ),
+      ),
+    );
+  }
+
   // Artifact panel state
   let artifactTitle = $state('');
   let artifactCode = $state('');
   let artifactType = $state<'html' | 'markdown'>('html');
   let artifactIsStreaming = $state(false);
   let showArtifactPanel = $state(false);
+  // Holds the artifact currently streaming in via artifact_* SSE events so it can
+  // be persisted into the finished assistant message on `done`.
+  let streamingArtifact = $state<{ title: string; contentType: string; content: string } | null>(null);
+
+  // Feed a streamed artifact into the side panel live.
+  function applyStreamingArtifact(artifact: { title: string; contentType: string; content: string; streaming?: boolean }) {
+    const type = artifact.contentType === 'text/markdown' ? 'markdown' : 'html';
+    streamingArtifact = { title: artifact.title, contentType: artifact.contentType, content: artifact.content };
+    artifactCode = artifact.content;
+    artifactType = type;
+    artifactTitle = artifact.title || (type === 'html' ? 'HTML Artifact' : 'Markdown Document');
+    artifactIsStreaming = artifact.streaming ?? false;
+    showArtifactPanel = true;
+  }
+
+  // Once streaming ends, inline the artifact into the message text using the same
+  // <artifact> wrapper the backend persists, so the message's preview card renders
+  // immediately (and identically to a reload) without refetching the conversation.
+  function withPersistedArtifact(content: string): string {
+    if (!streamingArtifact || /<artifact\b/i.test(content)) return content;
+    const title = (streamingArtifact.title || '').replace(/"/g, '&quot;');
+    return `${content}\n\n<artifact type="${streamingArtifact.contentType}" title="${title}">\n${streamingArtifact.content}\n</artifact>`;
+  }
 
   function extractArtifactCodeBlock(content: string): { code: string; type: 'html' | 'markdown' } | null {
     // Try HTML first
@@ -103,6 +143,20 @@
   let providers = $state<ProviderInfo[]>([]);
   let loadingModels = $state(true);
   let modelsError = $state<string | null>(null);
+
+  // Whether the currently selected model generates images (vs. text). Drives the
+  // "generating image" progress state and the composer hint. Loaded from the
+  // registry — never hardcoded.
+  let selectedIsImageModel = $derived(isImageModel(findModel(providers, selectedModel)?.model));
+
+  // Build a meaningful, accessible name/alt for a generated image from the prompt.
+  function generatedImageName(prompt: string, index: number): string {
+    const base = prompt.trim();
+    const label = base.length > 0
+      ? (base.length > 120 ? base.slice(0, 117) + '…' : base)
+      : $_('chat.message.generatedImageAlt');
+    return index > 0 ? `${label} (${index + 1})` : label;
+  }
 
   async function loadModels() {
     loadingModels = true;
@@ -299,6 +353,10 @@
 
     let messageAddedToArray = $state(false);
     let pendingConversationId = conversationId;
+    // How many generated images have arrived for this assistant message (an
+    // image model may return more than one — cap is a model property).
+    let generatedImageIndex = 0;
+    streamingArtifact = null;
     isTyping = true;
     scrollToBottom();
 
@@ -326,6 +384,7 @@
             updateUrlWithConversationId(newConversationId);
           }
           if (newConversationId) void linkPendingProject(newConversationId);
+          if (newConversationId) void linkPendingSkills(newConversationId);
 
           // Update loading and typing states
           isLoading = true;
@@ -341,8 +400,11 @@
             currentStreamingMessage = {...pendingStreamingMessage};
             messages = [...messages, currentStreamingMessage as ChatMessageType];
 
-            // Update loading and typing states
-            isTyping = false;
+            // Update loading and typing states. For image models there may be no
+            // text deltas — keep the existing typing indicator visible until the
+            // image_generated event arrives (reuses the standard stream state,
+            // no bespoke image spinner).
+            isTyping = selectedIsImageModel;
             isLoading = true;
 
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
@@ -355,6 +417,7 @@
               messages = [...messages, pendingStreamingMessage];
               messageAddedToArray = true;
             }
+            if (token.trim()) isTyping = false;
             
             // Create a new message object with updated content
             pendingStreamingMessage = {
@@ -454,8 +517,43 @@
           }
         },
         onArtifact: (artifact) => {
-          const type = artifact.contentType === 'text/markdown' ? 'markdown' : 'html';
-          handleShowArtifact(artifact.title || 'Artifact', artifact.content, type);
+          applyStreamingArtifact(artifact);
+        },
+        onImageGenerated: (image) => {
+          if (pendingStreamingMessage) {
+            // Ensure the assistant placeholder is in the array (image models may
+            // emit no text deltas before the image arrives).
+            if (!messageAddedToArray) {
+              messages = [...messages, pendingStreamingMessage];
+              messageAddedToArray = true;
+            }
+
+            // Append the generated image as a regular file so it renders inline
+            // via the existing file rendering. A new image never replaces a
+            // previous one — each result is appended.
+            const generatedFile = {
+              id: image.file_id,
+              name: generatedImageName(content, generatedImageIndex),
+              type: image.content_type || 'image/png',
+              size: 0,
+            };
+            generatedImageIndex += 1;
+
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              files: [...(pendingStreamingMessage.files || []), generatedFile],
+            };
+
+            currentStreamingMessage = { ...pendingStreamingMessage };
+            messages = messages.map(m =>
+              m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
+            );
+
+            // Image has arrived — stop the "generating" typing indicator.
+            isTyping = false;
+            isLoading = true;
+            scrollToStreamingMessageTop(pendingStreamingMessage.id);
+          }
         },
         onMcpAuthRequired: (authRequest: McpAuthRequest) => {
           if (pendingStreamingMessage) {
@@ -501,9 +599,11 @@
                 : { ...tc, status: 'error' as import('../../../types/toolCall').ToolCallStatus }
             );
 
-            // Mark all tool calls as completed when stream ends
+            // Mark all tool calls as completed when stream ends, and inline any
+            // streamed artifact into the message text so its preview card renders.
             pendingStreamingMessage = {
               ...pendingStreamingMessage,
+              content: withPersistedArtifact(pendingStreamingMessage.content),
               isStreaming: false,
               toolCalls: finalizedToolCalls,
               mergedWebSearch: updatedMergedWebSearch as MergedToolResult
@@ -517,7 +617,8 @@
             );
 
             // Finalize artifact streaming
-            detectAndStreamArtifact(pendingStreamingMessage.content, false);
+            artifactIsStreaming = false;
+            streamingArtifact = null;
           }
         },
         onError: (errorMessage) => {
@@ -622,6 +723,8 @@
     const userMessage = messages[msgIndex - 1];
     if (userMessage?.role !== 'user') return;
 
+    let generatedImageIndex = 0;
+
     // Set up pending streaming message for the existing assistant message
     let pendingStreamingMessage: ChatMessageType | null = {
       id: assistantMessageId,
@@ -644,6 +747,7 @@
     });
 
     // Process the original request without creating a new message
+    streamingArtifact = null;
     isLoading = true;
     isTyping = true;
     autoScrollEnabled = true;
@@ -669,6 +773,7 @@
             updateUrlWithConversationId(newConversationId);
           }
           if (newConversationId) void linkPendingProject(newConversationId);
+          if (newConversationId) void linkPendingSkills(newConversationId);
           window.dispatchEvent(new CustomEvent('refreshChatHistory'));
         },
         onStreamingStart: (messageId) => {
@@ -747,9 +852,34 @@
             };
 
             // Update the message in the array
-            messages = messages.map(m => 
+            messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
+          }
+        },
+        onArtifact: (artifact) => {
+          applyStreamingArtifact(artifact);
+        },
+        onImageGenerated: (image) => {
+          if (pendingStreamingMessage) {
+            const generatedFile = {
+              id: image.file_id,
+              name: generatedImageName(userMessage.content, generatedImageIndex),
+              type: image.content_type || 'image/png',
+              size: 0,
+            };
+            generatedImageIndex += 1;
+
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              files: [...(pendingStreamingMessage.files || []), generatedFile],
+            };
+
+            messages = messages.map(m =>
+              m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
+            );
+            isTyping = false;
+            isLoading = true;
           }
         },
         onDone: async (_data) => {
@@ -768,18 +898,23 @@
                 : { ...tc, status: 'error' as import('../../../types/toolCall').ToolCallStatus }
             );
 
-            // Mark all tool calls as completed when stream ends
+            // Mark all tool calls as completed when stream ends, and inline any
+            // streamed artifact into the message text so its preview card renders.
             pendingStreamingMessage = {
               ...pendingStreamingMessage,
+              content: withPersistedArtifact(pendingStreamingMessage.content),
               isStreaming: false,
               toolCalls: finalizedToolCalls,
               mergedWebSearch: updatedMergedWebSearch as MergedToolResult
             };
 
             // Update the message in the array
-            messages = messages.map(m => 
+            messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
+
+            artifactIsStreaming = false;
+            streamingArtifact = null;
           }
           isLoading = false;
           isTyping = false;
@@ -1122,7 +1257,10 @@
           bind:this={messageInput}
           onSend={handleSendMessage}
           disabled={isLoading}
-          placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
+          placeholder={selectedIsImageModel
+            ? $_('chat.messageInput.placeholderImage')
+            : $_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
+          imageModelSelected={selectedIsImageModel}
           {selectedModel}
           {selectedProvider}
           {mcpServers}
@@ -1137,6 +1275,8 @@
           {providers}
           {loadingModels}
           {modelsError}
+          {conversationId}
+          bind:pendingSkillIds
         />
         <p class="ai-disclaimer">{$_('chat.emptyState.aiDisclaimer')}</p>
       </div>
@@ -1264,6 +1404,8 @@
         {providers}
         {loadingModels}
         {modelsError}
+        {conversationId}
+        bind:pendingSkillIds
       />
       <p class="ai-disclaimer">{$_('chat.emptyState.aiDisclaimer')}</p>
     </div>

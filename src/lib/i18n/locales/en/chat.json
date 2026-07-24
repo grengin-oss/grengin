@@ -1,5 +1,15 @@
 {
   "chat": {
+    "skills": {
+      "label": "Skills",
+      "tooltip": "Attach skills to this conversation",
+      "menuTitle": "Skills",
+      "countSelected": "{count} skills",
+      "loading": "Loading skills…",
+      "empty": "No skills available. Create one in Settings.",
+      "builtin": "Built-in",
+      "updateFailed": "Failed to update skill"
+    },
     "emptyState": {
       "title": "Start a conversation",
       "description": "Send a message to begin chatting with the AI assistant!",
@@ -52,7 +62,12 @@
       "voiceInputError": "Voice input error: {error}",
       "failedToStartVoiceInput": "Failed to start voice input",
       "uploading": "Uploading…",
-      "uploadFailed": "Failed"
+      "uploadFailed": "Failed",
+      "placeholderImage": "Describe an image to generate…",
+      "imageModelsGroup": "Image generation",
+      "imageModeHint": "Image mode — describe an image to generate, or attach one and describe your edit.",
+      "imageModel": "Image generation model",
+      "textModel": "Text model"
     },
     "message": {
       "copy": "Copy",
@@ -67,7 +82,12 @@
       "listen": "Listen",
       "stop": "Stop",
       "closePreview": "Close preview",
-      "clickToPreview": "Click to open preview"
+      "clickToPreview": "Click to open preview",
+      "generatingImage": "Generating image…",
+      "generatedImageAlt": "Generated image",
+      "viewImage": "View image: {name}",
+      "downloadImage": "Download image",
+      "download": "Download"
     },
     "toolCalls": {
       "searching": "Searching the web",

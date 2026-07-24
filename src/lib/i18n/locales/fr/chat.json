@@ -52,7 +52,12 @@
       "voiceInputError": "Erreur de saisie vocale : {error}",
       "failedToStartVoiceInput": "Échec du démarrage de la saisie vocale",
       "uploading": "Téléversement…",
-      "uploadFailed": "Échec"
+      "uploadFailed": "Échec",
+      "placeholderImage": "Décrivez une image à générer…",
+      "imageModelsGroup": "Génération d'images",
+      "imageModeHint": "Mode image — décrivez une image à générer, ou joignez-en une et décrivez votre modification.",
+      "imageModel": "Modèle de génération d'images",
+      "textModel": "Modèle de texte"
     },
     "message": {
       "copy": "Copier",
@@ -67,7 +72,12 @@
       "listen": "Écouter",
       "stop": "Arrêter",
       "closePreview": "Fermer l'aperçu",
-      "clickToPreview": "Cliquer pour ouvrir l'aperçu"
+      "clickToPreview": "Cliquer pour ouvrir l'aperçu",
+      "generatingImage": "Génération de l'image…",
+      "generatedImageAlt": "Image générée",
+      "viewImage": "Afficher l'image : {name}",
+      "downloadImage": "Télécharger l'image",
+      "download": "Télécharger"
     },
     "toolCalls": {
       "searching": "Recherche sur le web",
@@ -101,6 +111,16 @@
       "notNow": "Pas maintenant",
       "requestedPermissions": "Permissions demandées :",
       "manageInSettings": "Vous pouvez gérer les comptes connectés dans Paramètres."
+    },
+    "skills": {
+      "label": "Compétences",
+      "tooltip": "Associer des compétences à cette conversation",
+      "menuTitle": "Compétences",
+      "countSelected": "{count} compétences",
+      "loading": "Chargement des compétences…",
+      "empty": "Aucune compétence disponible. Créez-en une dans les Paramètres.",
+      "builtin": "Intégrée",
+      "updateFailed": "Échec de la mise à jour de la compétence"
     }
   }
 }
