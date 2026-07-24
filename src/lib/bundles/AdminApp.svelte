@@ -12,6 +12,7 @@
     Analytics,
     AlertsPage,
     MCPServers,
+    AdminSkills,
     McpOAuthCallback,
     PromptLibrary,
     PromptEffectiveness,
@@ -74,6 +75,13 @@
   <PermissionGuard permission={PERMISSIONS.mcpServers.view}>
     {#snippet children()}
       <MCPServers />
+    {/snippet}
+  </PermissionGuard>
+</Route>
+<Route path="/admin/skills">
+  <PermissionGuard permission={PERMISSIONS.roles.view}>
+    {#snippet children()}
+      <AdminSkills />
     {/snippet}
   </PermissionGuard>
 </Route>

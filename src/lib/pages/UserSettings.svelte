@@ -5,9 +5,10 @@
   import AppearanceSettings from "./settings/AppearanceSettings.svelte";
   import UserIntegrations from "./settings/UserIntegrations.svelte";
   import UserPromptSettings from "./settings/UserPromptSettings.svelte";
+  import UserSkills from "./settings/UserSkills.svelte";
   import { loadNamespaces } from "$lib/i18n/index.js";
 
-  type TabId = "appearance" | "integrations" | "promptSettings";
+  type TabId = "appearance" | "skills" | "integrations" | "promptSettings";
 
   interface TabConfig {
     id: TabId;
@@ -20,6 +21,11 @@
       id: "appearance",
       label: $_("userSettings.tabs.appearance"),
       ariaLabel: $_("userSettings.tabs.appearanceAria"),
+    },
+    {
+      id: "skills",
+      label: $_("userSettings.tabs.skills"),
+      ariaLabel: $_("userSettings.tabs.skillsAria"),
     },
     {
       id: "integrations",
@@ -128,6 +134,8 @@
   >
     {#if currentTab === "appearance"}
       <AppearanceSettings />
+    {:else if currentTab === "skills"}
+      <UserSkills />
     {:else if currentTab === "integrations"}
       <UserIntegrations />
     {:else if currentTab === "promptSettings"}

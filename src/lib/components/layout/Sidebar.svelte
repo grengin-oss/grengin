@@ -171,6 +171,13 @@
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101"/><path d="M10.172 13.828a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1"/></svg>',
     type: "item",
   };
+  const skillsMenuItem: AdminMenuItem = {
+    id: "skills",
+    path: "/admin/skills",
+    label: $_("sidebar.skills"),
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 5.5L20 8l-4 4 1 6-5-3-5 3 1-6-4-4 5.6-.5z"/></svg>',
+    type: "item",
+  };
   const promptLibraryMenuItem: AdminMenuItem = {
     id: "prompt-library",
     path: "/admin/prompt-library",
@@ -215,6 +222,7 @@
   let configureItems = $derived<AdminMenuItem[]>(
     [
       canViewRoles ? accessControlMenuItem : null,
+      canViewRoles ? skillsMenuItem : null,
       canViewRoles ? promptLibraryMenuItem : null,
     ].filter(isMenuItem),
   );

@@ -1,4 +1,58 @@
 {
+  "adminSkills": {
+    "title": "Skills",
+    "subtitle": "Create and manage organization and department skills available to your users.",
+    "createSkill": "New Skill",
+    "searchPlaceholder": "Search skills…",
+    "loading": "Loading skills…",
+    "empty": "No skills yet. Create the first one for your organization.",
+    "editor": {
+      "title": "Skill editor",
+      "createTitle": "Create skill",
+      "editTitle": "Edit skill",
+      "subtitle": "Skills add a system prompt, web search, and tool grants to conversations.",
+      "close": "Close",
+      "avatar": "Icon",
+      "name": "Name",
+      "namePlaceholder": "e.g. Research Assistant",
+      "identifier": "Identifier",
+      "identifierHint": "Stable slug used by the API. Cannot be changed after creation.",
+      "description": "Description",
+      "descriptionPlaceholder": "A short summary of what this skill does",
+      "departmentId": "Department ID",
+      "departmentIdHint": "Optional. Scope this skill to a single department; leave blank for org-wide.",
+      "systemRole": "System prompt",
+      "systemRolePlaceholder": "You are a meticulous research assistant…",
+      "webSearch": "Web search",
+      "webSearchHint": "Allow this skill to search the web.",
+      "toolGrants": "Tool grants",
+      "toolGrantsHint": "Select the MCP servers this skill is allowed to use.",
+      "toolCount": "{count} tools",
+      "loadingServers": "Loading available servers…",
+      "noServers": "No MCP servers available. Connect one from Integrations.",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "create": "Create skill",
+      "saving": "Saving…"
+    },
+    "delete": {
+      "title": "Delete skill",
+      "message": "Are you sure you want to delete \"{name}\"? This affects everyone it's available to and cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "deleting": "Deleting…"
+    },
+    "messages": {
+      "loadFailed": "Failed to load skills",
+      "created": "Skill created",
+      "updated": "Skill updated",
+      "saveFailed": "Failed to save skill",
+      "toggleFailed": "Failed to update skill",
+      "deleted": "Skill deleted",
+      "deleteFailed": "Failed to delete skill",
+      "builtinReadOnly": "Built-in skills can't be changed"
+    }
+  },
   "admin": {
     "common": {
       "closeModal": "Close modal",
@@ -1188,7 +1242,9 @@
       "defaultModelWarning": "Please whitelist at least one model before selecting a default model.",
       "defaultBadge": "Default",
       "mustRemainWhitelisted": "Default model must remain whitelisted",
-      "cannotRemoveDefault": "Cannot remove the default model from the whitelist. Please change the default model first."
+      "cannotRemoveDefault": "Cannot remove the default model from the whitelist. Please change the default model first.",
+      "imageModel": "Image generation model",
+      "textModel": "Text model"
     },
     "systemDefault": {
       "title": "Set as system default engine",

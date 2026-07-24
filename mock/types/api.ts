@@ -2278,6 +2278,8 @@ export interface components {
                 display_name?: string;
                 /** @description Whether this model is in the whitelist */
                 is_whitelisted?: boolean;
+                /** @description Registry model type (extended /models feature) */
+                model_type?: "text_generator" | "image_generator" | "text_embedder";
                 capabilities?: {
                     vision?: boolean;
                     function_calling?: boolean;

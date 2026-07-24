@@ -46,7 +46,7 @@ export interface ChatMessage {
 }
 
 export interface StreamEvent {
-  event: 'conversation' | 'delta' | 'done' | 'event' | 'message_end' | 'message_start' | 'tool_call' | 'tool_result' | 'artifact' | 'mcp_oauth_required' | 'error';
+  event: 'conversation' | 'delta' | 'done' | 'event' | 'message_end' | 'message_start' | 'tool_call' | 'tool_result' | 'artifact' | 'image_generated' | 'mcp_oauth_required' | 'error';
   data: any;
 }
 

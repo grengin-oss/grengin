@@ -5,6 +5,8 @@
     "tabs": {
       "appearance": "外観",
       "appearanceAria": "外観の設定",
+      "skills": "スキル",
+      "skillsAria": "スキルを管理",
       "integrations": "連携",
       "integrationsAria": "接続済みの連携",
       "promptSettings": "プロンプト設定",
@@ -123,6 +125,144 @@
       "submitted": "フィードバックありがとうございます！",
       "failedToSubmit": "フィードバックの送信に失敗しました",
       "ratingRequired": "送信前に評価を選択してください"
+    }
+  },
+  "userSkills": {
+    "loading": "スキルを読み込み中…",
+    "createSkill": "新しいスキル",
+    "searchPlaceholder": "スキルを検索…",
+    "filters": {
+      "all": "すべて",
+      "mine": "自分のスキル",
+      "builtin": "組み込み"
+    },
+    "banner": {
+      "title": "Artifacts は組み込みスキルです",
+      "body": "会話でのリッチなアーティファクト生成を制御します。組み込みスキルはプラットフォームが管理します。"
+    },
+    "badges": {
+      "builtin": "組み込み",
+      "artifacts": "アーティファクト",
+      "systemPrompt": "システムプロンプト",
+      "webSearch": "ウェブ検索",
+      "tools": "ツール {count} 個",
+      "instructions": "指示",
+      "files": "{count} 個のファイル"
+    },
+    "card": {
+      "noDescription": "説明はありません。",
+      "edit": "編集",
+      "delete": "削除",
+      "managedByPlatform": "プラットフォームが管理",
+      "toggleAria": "{name} を切り替え"
+    },
+    "empty": {
+      "title": "スキルがまだありません",
+      "body": "スキルは、システムプロンプト・ウェブ検索・ツール権限といった設定可能な動作を会話に追加します。最初のスキルを作成して始めましょう。"
+    },
+    "editor": {
+      "title": "スキルエディター",
+      "createTitle": "スキルを作成",
+      "editTitle": "スキルを編集",
+      "subtitle": "このスキルが会話に追加する動作を設定します。",
+      "close": "閉じる",
+      "avatar": "アイコン",
+      "name": "名前",
+      "namePlaceholder": "例: リサーチアシスタント",
+      "description": "説明",
+      "descriptionPlaceholder": "このスキルの概要",
+      "systemRole": "システムプロンプト",
+      "systemRoleHint": "このスキルが有効なときに会話へ挿入されます。",
+      "systemRolePlaceholder": "あなたは常に出典を明記する綿密なリサーチアシスタントです…",
+      "webSearch": "ウェブ検索",
+      "webSearchHint": "このスキルが最新情報をウェブで検索できるようにします。",
+      "toolGrants": "ツール権限",
+      "toolGrantsHint": "このスキルが使用できる MCP サーバーを選択します。",
+      "toolCount": "ツール {count} 個",
+      "loadingServers": "利用可能なサーバーを読み込み中…",
+      "noServers": "利用可能な MCP サーバーがありません。連携から接続してください。",
+      "cancel": "キャンセル",
+      "save": "変更を保存",
+      "create": "スキルを作成",
+      "saving": "保存中…",
+      "created": "スキルを作成しました",
+      "updated": "スキルを更新しました",
+      "saveFailed": "スキルの保存に失敗しました",
+      "nameHint": "小文字のケバブケース（例: research-assistant）。",
+      "instructions": "指示",
+      "instructionsHint": "このスキルが有効なとき、会話に挿入される Markdown 形式の指示です。",
+      "instructionsPlaceholder": "## 役割\nあなたは常に出典を明記する綿密なリサーチアシスタントです…",
+      "preview": "プレビュー",
+      "code": "コード",
+      "previewEmpty": "プレビューする内容がまだありません。",
+      "errors": {
+        "nameRequired": "名前は必須です。",
+        "nameKebab": "小文字のケバブケース（英数字とハイフン1つ）を使用してください。",
+        "instructionsRequired": "指示は必須です。",
+        "descriptionRequired": "説明は必須です。",
+        "identifierRequired": "識別子は必須です。",
+        "identifierKebab": "小文字のケバブケース（英数字とハイフン1つ）を使用してください。"
+      },
+      "identifier": "識別子",
+      "identifierHint": "変更不可のケバブケースのスラッグ。作成後は変更できません。",
+      "departmentId": "部門 ID",
+      "departmentIdHint": "任意。UUID で部門にこのスキルを限定します。",
+      "department": "部門",
+      "departmentHint": "任意。このスキルを部門に割り当てます。",
+      "loadingDepartments": "部門を読み込み中…",
+      "departmentNone": "部門なし（組織全体）"
+    },
+    "delete": {
+      "title": "スキルを削除",
+      "message": "「{name}」を削除してもよろしいですか？この操作は取り消せません。",
+      "cancel": "キャンセル",
+      "confirm": "削除",
+      "deleting": "削除中…"
+    },
+    "messages": {
+      "loadFailed": "スキルの読み込みに失敗しました",
+      "toggleFailed": "スキルの更新に失敗しました",
+      "deleted": "スキルを削除しました",
+      "deleteFailed": "スキルの削除に失敗しました",
+      "builtinReadOnly": "組み込みスキルはここでは変更できません"
+    },
+    "addMenu": {
+      "writeTitle": "アプリで作成",
+      "writeDesc": "Markdown の指示を使って、この場でスキルを作成します。",
+      "importTitle": "ファイルをインポート",
+      "importDesc": ".md または .zip のスキルパッケージをパソコンからアップロードします。"
+    },
+    "import": {
+      "title": "スキルをインポート",
+      "subtitle": ".md ファイルまたは .zip バンドルをアップロードしてスキルをインポートします。",
+      "close": "閉じる",
+      "dropTitle": "ここにファイルをドロップするか、クリックして選択",
+      "dropHint": ".md（単一スキル）または .zip（バンドル）に対応。",
+      "assetsNote": ".zip のインポートは、スクリプト・アセット・リンクされたスキルを含める唯一の方法です。",
+      "remove": "ファイルを削除",
+      "name": "名前",
+      "nameHint": "小文字のケバブケース（例: research-assistant）。",
+      "namePlaceholder": "例: research-assistant",
+      "description": "説明",
+      "descriptionPlaceholder": "このスキルの機能の簡単な説明",
+      "cancel": "キャンセル",
+      "importBtn": "インポート",
+      "importing": "インポート中…",
+      "imported": "スキルをインポートしました",
+      "replaced": "スキルを置き換えました",
+      "failed": "スキルのインポートに失敗しました",
+      "conflictTitle": "同じ名前のスキルがすでに存在します",
+      "conflictMessage": "「{name}」という名前のスキルがすでにあります。インポートしたもので置き換えるか、スキップして既存のスキルを保持してください。",
+      "replace": "置き換える",
+      "skip": "スキップ",
+      "errors": {
+        "type": "対応していないファイル形式です。.md または .zip ファイルをアップロードしてください。",
+        "size": "ファイルが大きすぎます。最大サイズは {max} です。",
+        "empty": "そのファイルは空です。",
+        "nameRequired": "名前は必須です。",
+        "nameKebab": "小文字のケバブケース（英数字とハイフン1つ）を使用してください。"
+      },
+      "willImportAs": "次の名前でインポートされます"
     }
   },
   "appearanceSettings": {

@@ -55,7 +55,12 @@
       "voiceInputError": "خطأ في الإدخال الصوتي: {error}",
       "failedToStartVoiceInput": "تعذر بدء الإدخال الصوتي",
       "uploading": "جارٍ الرفع…",
-      "uploadFailed": "فشل"
+      "uploadFailed": "فشل",
+      "placeholderImage": "صِف صورة لتوليدها…",
+      "imageModelsGroup": "توليد الصور",
+      "imageModeHint": "وضع الصور — صِف صورة لتوليدها، أو أرفق صورة وصف التعديل المطلوب.",
+      "imageModel": "نموذج توليد الصور",
+      "textModel": "نموذج نصي"
     },
     "message": {
       "copy": "نسخ",
@@ -70,7 +75,12 @@
       "listen": "استماع",
       "stop": "إيقاف",
       "closePreview": "إغلاق المعاينة",
-      "clickToPreview": "انقر لفتح المعاينة"
+      "clickToPreview": "انقر لفتح المعاينة",
+      "generatingImage": "جارٍ توليد الصورة…",
+      "generatedImageAlt": "صورة مُولّدة",
+      "viewImage": "عرض الصورة: {name}",
+      "downloadImage": "تنزيل الصورة",
+      "download": "تنزيل"
     },
     "toolCalls": {
       "searching": "جارٍ البحث على الويب",
@@ -104,6 +114,16 @@
       "notNow": "ليس الآن",
       "requestedPermissions": "الصلاحيات المطلوبة:",
       "manageInSettings": "يمكنك إدارة الحسابات المتصلة في الإعدادات."
+    },
+    "skills": {
+      "label": "المهارات",
+      "tooltip": "إرفاق مهارات بهذه المحادثة",
+      "menuTitle": "المهارات",
+      "countSelected": "{count} مهارات",
+      "loading": "جارٍ تحميل المهارات…",
+      "empty": "لا توجد مهارات متاحة. أنشئ واحدة من الإعدادات.",
+      "builtin": "مدمجة",
+      "updateFailed": "فشل تحديث المهارة"
     }
   }
 }

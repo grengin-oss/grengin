@@ -5,6 +5,8 @@
     "tabs": {
       "appearance": "Apariencia",
       "appearanceAria": "Preferencias de apariencia",
+      "skills": "Habilidades",
+      "skillsAria": "Gestiona tus habilidades",
       "integrations": "Integraciones",
       "integrationsAria": "Integraciones conectadas",
       "promptSettings": "Configuración de Indicaciones",
@@ -123,6 +125,144 @@
       "submitted": "¡Gracias por sus comentarios!",
       "failedToSubmit": "Error al enviar comentarios",
       "ratingRequired": "Seleccione una calificación antes de enviar"
+    }
+  },
+  "userSkills": {
+    "loading": "Cargando habilidades…",
+    "createSkill": "Nueva habilidad",
+    "searchPlaceholder": "Buscar habilidades…",
+    "filters": {
+      "all": "Todas",
+      "mine": "Mis habilidades",
+      "builtin": "Integradas"
+    },
+    "banner": {
+      "title": "Artifacts es una habilidad integrada",
+      "body": "Controla la generación enriquecida de artefactos en tus conversaciones. Las habilidades integradas las gestiona la plataforma."
+    },
+    "badges": {
+      "builtin": "Integrada",
+      "artifacts": "Artefactos",
+      "systemPrompt": "Prompt de sistema",
+      "webSearch": "Búsqueda web",
+      "tools": "{count} herramientas",
+      "instructions": "Instrucciones",
+      "files": "{count} archivos"
+    },
+    "card": {
+      "noDescription": "Sin descripción.",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "managedByPlatform": "Gestionada por la plataforma",
+      "toggleAria": "Alternar {name}"
+    },
+    "empty": {
+      "title": "Aún no hay habilidades",
+      "body": "Las habilidades añaden comportamientos configurables —un prompt de sistema, búsqueda web y permisos de herramientas— a tus conversaciones. Crea la primera para empezar."
+    },
+    "editor": {
+      "title": "Editor de habilidades",
+      "createTitle": "Crear habilidad",
+      "editTitle": "Editar habilidad",
+      "subtitle": "Configura los comportamientos que esta habilidad añade a una conversación.",
+      "close": "Cerrar",
+      "avatar": "Icono",
+      "name": "Nombre",
+      "namePlaceholder": "p. ej. Asistente de investigación",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Un breve resumen de lo que hace esta habilidad",
+      "systemRole": "Prompt de sistema",
+      "systemRoleHint": "Se inyecta en la conversación cuando esta habilidad está activa.",
+      "systemRolePlaceholder": "Eres un asistente de investigación meticuloso que siempre cita sus fuentes…",
+      "webSearch": "Búsqueda web",
+      "webSearchHint": "Permite que esta habilidad busque en la web información actualizada.",
+      "toolGrants": "Permisos de herramientas",
+      "toolGrantsHint": "Selecciona los servidores MCP que esta habilidad puede usar.",
+      "toolCount": "{count} herramientas",
+      "loadingServers": "Cargando servidores disponibles…",
+      "noServers": "No hay servidores MCP disponibles. Conecta uno desde Integraciones.",
+      "cancel": "Cancelar",
+      "save": "Guardar cambios",
+      "create": "Crear habilidad",
+      "saving": "Guardando…",
+      "created": "Habilidad creada",
+      "updated": "Habilidad actualizada",
+      "saveFailed": "No se pudo guardar la habilidad",
+      "nameHint": "Minúsculas en kebab-case, p. ej. research-assistant.",
+      "instructions": "Instrucciones",
+      "instructionsHint": "Instrucciones en Markdown que se insertan en la conversación cuando esta habilidad está activa.",
+      "instructionsPlaceholder": "## Rol\nEres un asistente de investigación meticuloso que siempre cita sus fuentes…",
+      "preview": "Vista previa",
+      "code": "Código",
+      "previewEmpty": "Todavía no hay nada que previsualizar.",
+      "errors": {
+        "nameRequired": "El nombre es obligatorio.",
+        "nameKebab": "Usa kebab-case en minúsculas (letras, números y guiones simples).",
+        "instructionsRequired": "Las instrucciones son obligatorias.",
+        "descriptionRequired": "La descripción es obligatoria.",
+        "identifierRequired": "El identificador es obligatorio.",
+        "identifierKebab": "Usa kebab-case en minúsculas (letras, números y guiones simples)."
+      },
+      "identifier": "Identificador",
+      "identifierHint": "Slug kebab-case inmutable. No se puede cambiar tras la creación.",
+      "departmentId": "ID de departamento",
+      "departmentIdHint": "Opcional. Limita esta habilidad a un departamento por su UUID.",
+      "department": "Departamento",
+      "departmentHint": "Opcional. Asigna esta habilidad a un departamento.",
+      "loadingDepartments": "Cargando departamentos…",
+      "departmentNone": "Sin departamento (toda la organización)"
+    },
+    "delete": {
+      "title": "Eliminar habilidad",
+      "message": "¿Seguro que quieres eliminar «{name}»? Esta acción no se puede deshacer.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar",
+      "deleting": "Eliminando…"
+    },
+    "messages": {
+      "loadFailed": "No se pudieron cargar las habilidades",
+      "toggleFailed": "No se pudo actualizar la habilidad",
+      "deleted": "Habilidad eliminada",
+      "deleteFailed": "No se pudo eliminar la habilidad",
+      "builtinReadOnly": "Las habilidades integradas no se pueden cambiar aquí"
+    },
+    "addMenu": {
+      "writeTitle": "Escribir en la app",
+      "writeDesc": "Redacta una habilidad con instrucciones en Markdown, aquí mismo.",
+      "importTitle": "Importar archivo",
+      "importDesc": "Sube un paquete de habilidad .md o .zip desde tu ordenador."
+    },
+    "import": {
+      "title": "Importar habilidad",
+      "subtitle": "Sube un archivo .md o un paquete .zip para importar una habilidad.",
+      "close": "Cerrar",
+      "dropTitle": "Suelta un archivo aquí o haz clic para explorar",
+      "dropHint": "Acepta .md (una habilidad) o .zip (paquete).",
+      "assetsNote": "Importar un .zip es la única forma de incluir scripts, recursos y habilidades vinculadas.",
+      "remove": "Quitar archivo",
+      "name": "Nombre",
+      "nameHint": "Minúsculas en kebab-case, p. ej. research-assistant.",
+      "namePlaceholder": "p. ej. research-assistant",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Un breve resumen de lo que hace esta habilidad",
+      "cancel": "Cancelar",
+      "importBtn": "Importar",
+      "importing": "Importando…",
+      "imported": "Habilidad importada",
+      "replaced": "Habilidad reemplazada",
+      "failed": "No se pudo importar la habilidad",
+      "conflictTitle": "Ya existe una habilidad con este nombre",
+      "conflictMessage": "Ya tienes una habilidad llamada «{name}». Reemplázala por la importada u omite para conservar la existente.",
+      "replace": "Reemplazar",
+      "skip": "Omitir",
+      "errors": {
+        "type": "Tipo de archivo no admitido. Sube un archivo .md o .zip.",
+        "size": "El archivo es demasiado grande. El tamaño máximo es {max}.",
+        "empty": "Ese archivo está vacío.",
+        "nameRequired": "El nombre es obligatorio.",
+        "nameKebab": "Usa kebab-case en minúsculas (letras, números y guiones simples)."
+      },
+      "willImportAs": "Se importará como"
     }
   },
   "appearanceSettings": {

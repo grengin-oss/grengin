@@ -5,6 +5,8 @@
     "tabs": {
       "appearance": "Apparence",
       "appearanceAria": "Préférences d'apparence",
+      "skills": "Compétences",
+      "skillsAria": "Gérer vos compétences",
       "integrations": "Intégrations",
       "integrationsAria": "Intégrations connectées",
       "promptSettings": "Paramètres des Instructions",
@@ -123,6 +125,144 @@
       "submitted": "Merci pour votre retour !",
       "failedToSubmit": "Échec de l'envoi du retour",
       "ratingRequired": "Veuillez sélectionner une note avant d'envoyer"
+    }
+  },
+  "userSkills": {
+    "loading": "Chargement des compétences…",
+    "createSkill": "Nouvelle compétence",
+    "searchPlaceholder": "Rechercher des compétences…",
+    "filters": {
+      "all": "Toutes",
+      "mine": "Mes compétences",
+      "builtin": "Intégrées"
+    },
+    "banner": {
+      "title": "Artifacts est une compétence intégrée",
+      "body": "Elle contrôle la génération d'artefacts enrichis dans vos conversations. Les compétences intégrées sont gérées par la plateforme."
+    },
+    "badges": {
+      "builtin": "Intégrée",
+      "artifacts": "Artefacts",
+      "systemPrompt": "Invite système",
+      "webSearch": "Recherche web",
+      "tools": "{count} outils",
+      "instructions": "Consignes",
+      "files": "{count} fichiers"
+    },
+    "card": {
+      "noDescription": "Aucune description.",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "managedByPlatform": "Gérée par la plateforme",
+      "toggleAria": "Activer/désactiver {name}"
+    },
+    "empty": {
+      "title": "Aucune compétence pour l'instant",
+      "body": "Les compétences ajoutent des comportements configurables — une invite système, la recherche web et des accès aux outils — à vos conversations. Créez la première pour commencer."
+    },
+    "editor": {
+      "title": "Éditeur de compétences",
+      "createTitle": "Créer une compétence",
+      "editTitle": "Modifier la compétence",
+      "subtitle": "Configurez les comportements que cette compétence ajoute à une conversation.",
+      "close": "Fermer",
+      "avatar": "Icône",
+      "name": "Nom",
+      "namePlaceholder": "ex. Assistant de recherche",
+      "description": "Description",
+      "descriptionPlaceholder": "Un bref résumé de ce que fait cette compétence",
+      "systemRole": "Invite système",
+      "systemRoleHint": "Injectée dans la conversation lorsque cette compétence est active.",
+      "systemRolePlaceholder": "Vous êtes un assistant de recherche méticuleux qui cite toujours ses sources…",
+      "webSearch": "Recherche web",
+      "webSearchHint": "Autoriser cette compétence à chercher des informations à jour sur le web.",
+      "toolGrants": "Accès aux outils",
+      "toolGrantsHint": "Sélectionnez les serveurs MCP que cette compétence peut utiliser.",
+      "toolCount": "{count} outils",
+      "loadingServers": "Chargement des serveurs disponibles…",
+      "noServers": "Aucun serveur MCP disponible. Connectez-en un depuis Intégrations.",
+      "cancel": "Annuler",
+      "save": "Enregistrer les modifications",
+      "create": "Créer la compétence",
+      "saving": "Enregistrement…",
+      "created": "Compétence créée",
+      "updated": "Compétence mise à jour",
+      "saveFailed": "Échec de l'enregistrement de la compétence",
+      "nameHint": "Minuscules en kebab-case, p. ex. research-assistant.",
+      "instructions": "Consignes",
+      "instructionsHint": "Consignes en Markdown injectées dans la conversation lorsque cette compétence est active.",
+      "instructionsPlaceholder": "## Rôle\nVous êtes un assistant de recherche méticuleux qui cite toujours ses sources…",
+      "preview": "Aperçu",
+      "code": "Source",
+      "previewEmpty": "Rien à prévisualiser pour l'instant.",
+      "errors": {
+        "nameRequired": "Le nom est obligatoire.",
+        "nameKebab": "Utilisez le kebab-case en minuscules (lettres, chiffres et traits d'union simples).",
+        "instructionsRequired": "Les consignes sont obligatoires.",
+        "descriptionRequired": "La description est obligatoire.",
+        "identifierRequired": "L'identifiant est obligatoire.",
+        "identifierKebab": "Utilisez le kebab-case en minuscules (lettres, chiffres et traits d'union simples)."
+      },
+      "identifier": "Identifiant",
+      "identifierHint": "Slug kebab-case immuable. Ne peut pas être modifié après la création.",
+      "departmentId": "ID de département",
+      "departmentIdHint": "Facultatif. Limitez cette compétence à un département via son UUID.",
+      "department": "Département",
+      "departmentHint": "Facultatif. Attribuez cette compétence à un département.",
+      "loadingDepartments": "Chargement des départements…",
+      "departmentNone": "Aucun département (toute l’organisation)"
+    },
+    "delete": {
+      "title": "Supprimer la compétence",
+      "message": "Voulez-vous vraiment supprimer « {name} » ? Cette action est irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer",
+      "deleting": "Suppression…"
+    },
+    "messages": {
+      "loadFailed": "Échec du chargement des compétences",
+      "toggleFailed": "Échec de la mise à jour de la compétence",
+      "deleted": "Compétence supprimée",
+      "deleteFailed": "Échec de la suppression de la compétence",
+      "builtinReadOnly": "Les compétences intégrées ne peuvent pas être modifiées ici"
+    },
+    "addMenu": {
+      "writeTitle": "Écrire dans l'app",
+      "writeDesc": "Rédigez une compétence avec des instructions en Markdown, ici même.",
+      "importTitle": "Importer un fichier",
+      "importDesc": "Importez un paquet de compétence .md ou .zip depuis votre ordinateur."
+    },
+    "import": {
+      "title": "Importer une compétence",
+      "subtitle": "Importez un fichier .md ou un paquet .zip pour ajouter une compétence.",
+      "close": "Fermer",
+      "dropTitle": "Déposez un fichier ici ou cliquez pour parcourir",
+      "dropHint": "Accepte .md (compétence unique) ou .zip (paquet).",
+      "assetsNote": "Importer un .zip est le seul moyen d'inclure des scripts, des ressources et des compétences liées.",
+      "remove": "Retirer le fichier",
+      "name": "Nom",
+      "nameHint": "Minuscules en kebab-case, p. ex. research-assistant.",
+      "namePlaceholder": "p. ex. research-assistant",
+      "description": "Description",
+      "descriptionPlaceholder": "Un bref résumé de ce que fait cette compétence",
+      "cancel": "Annuler",
+      "importBtn": "Importer",
+      "importing": "Importation…",
+      "imported": "Compétence importée",
+      "replaced": "Compétence remplacée",
+      "failed": "Échec de l'importation de la compétence",
+      "conflictTitle": "Une compétence portant ce nom existe déjà",
+      "conflictMessage": "Vous avez déjà une compétence nommée « {name} ». Remplacez-la par celle importée ou ignorez pour conserver l'existante.",
+      "replace": "Remplacer",
+      "skip": "Ignorer",
+      "errors": {
+        "type": "Type de fichier non pris en charge. Importez un fichier .md ou .zip.",
+        "size": "Le fichier est trop volumineux. La taille maximale est {max}.",
+        "empty": "Ce fichier est vide.",
+        "nameRequired": "Le nom est obligatoire.",
+        "nameKebab": "Utilisez le kebab-case en minuscules (lettres, chiffres et traits d'union simples)."
+      },
+      "willImportAs": "Sera importé sous"
     }
   },
   "appearanceSettings": {

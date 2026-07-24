@@ -55,7 +55,12 @@
       "voiceInputError": "Erro de entrada de voz: {error}",
       "failedToStartVoiceInput": "Falha ao iniciar entrada de voz",
       "uploading": "Enviando…",
-      "uploadFailed": "Falhou"
+      "uploadFailed": "Falhou",
+      "placeholderImage": "Descreva uma imagem para gerar…",
+      "imageModelsGroup": "Geração de imagens",
+      "imageModeHint": "Modo imagem — descreva uma imagem para gerar, ou anexe uma e descreva sua edição.",
+      "imageModel": "Modelo de geração de imagens",
+      "textModel": "Modelo de texto"
     },
     "message": {
       "copy": "Copiar",
@@ -70,7 +75,12 @@
       "listen": "Ouvir",
       "stop": "Parar",
       "closePreview": "Fechar pré-visualização",
-      "clickToPreview": "Clique para abrir a pré-visualização"
+      "clickToPreview": "Clique para abrir a pré-visualização",
+      "generatingImage": "Gerando imagem…",
+      "generatedImageAlt": "Imagem gerada",
+      "viewImage": "Ver imagem: {name}",
+      "downloadImage": "Baixar imagem",
+      "download": "Baixar"
     },
     "toolCalls": {
       "searching": "Pesquisando na web",
@@ -104,6 +114,16 @@
       "notNow": "Agora não",
       "requestedPermissions": "Permissões solicitadas:",
       "manageInSettings": "Pode gerir contas ligadas em Definições."
+    },
+    "skills": {
+      "label": "Habilidades",
+      "tooltip": "Anexar habilidades a esta conversa",
+      "menuTitle": "Habilidades",
+      "countSelected": "{count} habilidades",
+      "loading": "Carregando habilidades…",
+      "empty": "Nenhuma habilidade disponível. Crie uma nas Configurações.",
+      "builtin": "Integrada",
+      "updateFailed": "Falha ao atualizar a habilidade"
     }
   }
 }
