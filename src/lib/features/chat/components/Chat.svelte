@@ -75,6 +75,29 @@
   let artifactType = $state<'html' | 'markdown'>('html');
   let artifactIsStreaming = $state(false);
   let showArtifactPanel = $state(false);
+  // Holds the artifact currently streaming in via artifact_* SSE events so it can
+  // be persisted into the finished assistant message on `done`.
+  let streamingArtifact = $state<{ title: string; contentType: string; content: string } | null>(null);
+
+  // Feed a streamed artifact into the side panel live.
+  function applyStreamingArtifact(artifact: { title: string; contentType: string; content: string; streaming?: boolean }) {
+    const type = artifact.contentType === 'text/markdown' ? 'markdown' : 'html';
+    streamingArtifact = { title: artifact.title, contentType: artifact.contentType, content: artifact.content };
+    artifactCode = artifact.content;
+    artifactType = type;
+    artifactTitle = artifact.title || (type === 'html' ? 'HTML Artifact' : 'Markdown Document');
+    artifactIsStreaming = artifact.streaming ?? false;
+    showArtifactPanel = true;
+  }
+
+  // Once streaming ends, inline the artifact into the message text using the same
+  // <artifact> wrapper the backend persists, so the message's preview card renders
+  // immediately (and identically to a reload) without refetching the conversation.
+  function withPersistedArtifact(content: string): string {
+    if (!streamingArtifact || /<artifact\b/i.test(content)) return content;
+    const title = (streamingArtifact.title || '').replace(/"/g, '&quot;');
+    return `${content}\n\n<artifact type="${streamingArtifact.contentType}" title="${title}">\n${streamingArtifact.content}\n</artifact>`;
+  }
 
   function extractArtifactCodeBlock(content: string): { code: string; type: 'html' | 'markdown' } | null {
     // Try HTML first
@@ -333,6 +356,7 @@
     // How many generated images have arrived for this assistant message (an
     // image model may return more than one — cap is a model property).
     let generatedImageIndex = 0;
+    streamingArtifact = null;
     isTyping = true;
     scrollToBottom();
 
@@ -493,8 +517,7 @@
           }
         },
         onArtifact: (artifact) => {
-          const type = artifact.contentType === 'text/markdown' ? 'markdown' : 'html';
-          handleShowArtifact(artifact.title || 'Artifact', artifact.content, type);
+          applyStreamingArtifact(artifact);
         },
         onImageGenerated: (image) => {
           if (pendingStreamingMessage) {
@@ -576,9 +599,11 @@
                 : { ...tc, status: 'error' as import('../../../types/toolCall').ToolCallStatus }
             );
 
-            // Mark all tool calls as completed when stream ends
+            // Mark all tool calls as completed when stream ends, and inline any
+            // streamed artifact into the message text so its preview card renders.
             pendingStreamingMessage = {
               ...pendingStreamingMessage,
+              content: withPersistedArtifact(pendingStreamingMessage.content),
               isStreaming: false,
               toolCalls: finalizedToolCalls,
               mergedWebSearch: updatedMergedWebSearch as MergedToolResult
@@ -592,7 +617,8 @@
             );
 
             // Finalize artifact streaming
-            detectAndStreamArtifact(pendingStreamingMessage.content, false);
+            artifactIsStreaming = false;
+            streamingArtifact = null;
           }
         },
         onError: (errorMessage) => {
@@ -721,6 +747,7 @@
     });
 
     // Process the original request without creating a new message
+    streamingArtifact = null;
     isLoading = true;
     isTyping = true;
     autoScrollEnabled = true;
@@ -830,6 +857,9 @@
             );
           }
         },
+        onArtifact: (artifact) => {
+          applyStreamingArtifact(artifact);
+        },
         onImageGenerated: (image) => {
           if (pendingStreamingMessage) {
             const generatedFile = {
@@ -868,9 +898,11 @@
                 : { ...tc, status: 'error' as import('../../../types/toolCall').ToolCallStatus }
             );
 
-            // Mark all tool calls as completed when stream ends
+            // Mark all tool calls as completed when stream ends, and inline any
+            // streamed artifact into the message text so its preview card renders.
             pendingStreamingMessage = {
               ...pendingStreamingMessage,
+              content: withPersistedArtifact(pendingStreamingMessage.content),
               isStreaming: false,
               toolCalls: finalizedToolCalls,
               mergedWebSearch: updatedMergedWebSearch as MergedToolResult
@@ -880,6 +912,9 @@
             messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
+
+            artifactIsStreaming = false;
+            streamingArtifact = null;
           }
           isLoading = false;
           isTyping = false;

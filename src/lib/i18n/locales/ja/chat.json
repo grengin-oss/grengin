@@ -55,8 +55,9 @@
       "uploadFailed": "失敗",
       "placeholderImage": "生成する画像を説明してください…",
       "imageModelsGroup": "画像生成",
-      "imageBadge": "画像",
-      "imageModeHint": "画像モード — 生成する画像を説明するか、画像を添付して編集内容を記述してください。"
+      "imageModeHint": "画像モード — 生成する画像を説明するか、画像を添付して編集内容を記述してください。",
+      "imageModel": "画像生成モデル",
+      "textModel": "テキストモデル"
     },
     "message": {
       "copy": "コピー",

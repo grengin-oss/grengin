@@ -17,7 +17,7 @@ export interface SendMessageOptions {
   onBudgetWarning?: (data: BudgetWarningMessage) => void;
   onToolCall?: (toolCall: any) => void;
   onToolResult?: (toolResult: any) => void;
-  onArtifact?: (artifact: { id: string; title: string; contentType: string; content: string }) => void;
+  onArtifact?: (artifact: { id: string; title: string; contentType: string; content: string; streaming?: boolean }) => void;
   onImageGenerated?: (image: ImageGeneratedEvent) => void;
   onMcpAuthRequired?: (authRequest: McpAuthRequest) => void;
   onDone?: (data: any) => void;
@@ -181,6 +181,11 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
     // Accumulate tool call input_text chunks by tool_id
     const toolCallAccumulator = new Map<string, { tool_name: string; tool_id: string; kind: string; input_text: string; input?: { type: string; value: Record<string, unknown> }; status: string }>();
 
+    // Accumulate streamed artifact content chunks by artifact id. The backend
+    // streams artifacts as artifact_start -> artifact_delta* -> artifact_end
+    // (then artifact_saved with the persisted file id).
+    const artifactAccumulator = new Map<string, { id: string; title: string; contentType: string; content: string }>();
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -249,8 +254,53 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
               }
               break;
             case 'artifact':
+              // Legacy single-shot artifact event (full payload at once).
               if (data) {
                 onArtifact?.(data);
+              }
+              break;
+            case 'artifact_start':
+              if (data?.id) {
+                const started = {
+                  id: data.id,
+                  title: data.title || 'Artifact',
+                  contentType: data.contentType || data.content_type || 'text/html',
+                  content: '',
+                };
+                artifactAccumulator.set(data.id, started);
+                onArtifact?.({ ...started, streaming: true });
+              }
+              break;
+            case 'artifact_delta':
+              if (data?.id) {
+                const acc = artifactAccumulator.get(data.id) || {
+                  id: data.id,
+                  title: 'Artifact',
+                  contentType: 'text/html',
+                  content: '',
+                };
+                acc.content += data.chunk || '';
+                artifactAccumulator.set(data.id, acc);
+                onArtifact?.({ ...acc, streaming: true });
+              }
+              break;
+            case 'artifact_end':
+              if (data?.id) {
+                const acc = artifactAccumulator.get(data.id);
+                if (acc) onArtifact?.({ ...acc, streaming: false });
+              }
+              break;
+            case 'artifact_saved':
+              if (data?.id) {
+                const acc = artifactAccumulator.get(data.id);
+                if (acc) {
+                  onArtifact?.({
+                    ...acc,
+                    title: data.title || acc.title,
+                    contentType: data.content_type || acc.contentType,
+                    streaming: false,
+                  });
+                }
               }
               break;
             case 'image_generated':

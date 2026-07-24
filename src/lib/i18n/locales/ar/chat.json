@@ -55,8 +55,9 @@
       "uploadFailed": "فشل",
       "placeholderImage": "صِف صورة لتوليدها…",
       "imageModelsGroup": "توليد الصور",
-      "imageBadge": "صورة",
-      "imageModeHint": "وضع الصور — صِف صورة لتوليدها، أو أرفق صورة وصف التعديل المطلوب."
+      "imageModeHint": "وضع الصور — صِف صورة لتوليدها، أو أرفق صورة وصف التعديل المطلوب.",
+      "imageModel": "نموذج توليد الصور",
+      "textModel": "نموذج نصي"
     },
     "message": {
       "copy": "نسخ",

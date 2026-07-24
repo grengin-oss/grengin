@@ -55,8 +55,9 @@
       "uploadFailed": "실패",
       "placeholderImage": "생성할 이미지를 설명하세요…",
       "imageModelsGroup": "이미지 생성",
-      "imageBadge": "이미지",
-      "imageModeHint": "이미지 모드 — 생성할 이미지를 설명하거나, 이미지를 첨부하고 편집 내용을 설명하세요."
+      "imageModeHint": "이미지 모드 — 생성할 이미지를 설명하거나, 이미지를 첨부하고 편집 내용을 설명하세요.",
+      "imageModel": "이미지 생성 모델",
+      "textModel": "텍스트 모델"
     },
     "message": {
       "copy": "복사",

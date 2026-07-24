@@ -55,8 +55,9 @@
       "uploadFailed": "Falhou",
       "placeholderImage": "Descreva uma imagem para gerar…",
       "imageModelsGroup": "Geração de imagens",
-      "imageBadge": "Imagem",
-      "imageModeHint": "Modo imagem — descreva uma imagem para gerar, ou anexe uma e descreva sua edição."
+      "imageModeHint": "Modo imagem — descreva uma imagem para gerar, ou anexe uma e descreva sua edição.",
+      "imageModel": "Modelo de geração de imagens",
+      "textModel": "Modelo de texto"
     },
     "message": {
       "copy": "Copiar",

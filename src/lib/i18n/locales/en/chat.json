@@ -65,8 +65,9 @@
       "uploadFailed": "Failed",
       "placeholderImage": "Describe an image to generate…",
       "imageModelsGroup": "Image generation",
-      "imageBadge": "Image",
-      "imageModeHint": "Image mode — describe an image to generate, or attach one and describe your edit."
+      "imageModeHint": "Image mode — describe an image to generate, or attach one and describe your edit.",
+      "imageModel": "Image generation model",
+      "textModel": "Text model"
     },
     "message": {
       "copy": "Copy",

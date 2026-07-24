@@ -111,6 +111,18 @@
     }
 
     const content = message.content;
+    // Persisted artifact wrapped in <artifact type="..." title="...">…</artifact>.
+    // This is how the backend stores artifacts inside the message text, so it is
+    // what we get back on reload / when loading conversation history.
+    const artifactTag = content.match(/<artifact\b([^>]*)>([\s\S]*?)<\/artifact>/i);
+    if (artifactTag) {
+      const attrs = artifactTag[1];
+      const code = artifactTag[2].trim();
+      const typeAttr = attrs.match(/type="([^"]*)"/)?.[1] || '';
+      const title = attrs.match(/title="([^"]*)"/)?.[1];
+      const type = typeAttr === 'text/markdown' ? 'markdown' as const : 'html' as const;
+      if (code) return { code, type, title };
+    }
     // Completed blocks
     const htmlMatch = content.match(/```html\s*\n([\s\S]*?)```/);
     if (htmlMatch) return { code: htmlMatch[1].trim(), type: 'html' as const };
@@ -138,6 +150,7 @@
   let displayContent = $derived.by(() => {
     if (!hasPreviewableContent) return message.content;
     return message.content
+      .replace(/<artifact\b[^>]*>[\s\S]*?<\/artifact>/gi, '')
       .replace(/```html\s*\n[\s\S]*?```/g, '')
       .replace(/```(?:markdown|md)\s*\n[\s\S]*?```/g, '')
       .replace(/```html\s*\n[\s\S]*$/g, '')

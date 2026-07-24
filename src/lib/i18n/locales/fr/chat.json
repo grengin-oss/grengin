@@ -55,8 +55,9 @@
       "uploadFailed": "Échec",
       "placeholderImage": "Décrivez une image à générer…",
       "imageModelsGroup": "Génération d'images",
-      "imageBadge": "Image",
-      "imageModeHint": "Mode image — décrivez une image à générer, ou joignez-en une et décrivez votre modification."
+      "imageModeHint": "Mode image — décrivez une image à générer, ou joignez-en une et décrivez votre modification.",
+      "imageModel": "Modèle de génération d'images",
+      "textModel": "Modèle de texte"
     },
     "message": {
       "copy": "Copier",
