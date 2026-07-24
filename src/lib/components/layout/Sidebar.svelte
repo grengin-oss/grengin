@@ -1479,6 +1479,40 @@
     display: none;
   }
 
+  @media (orientation: landscape) and (max-height: 600px) {
+    :global(html[data-app-layout='mobile']) .sidebar {
+      height: var(--app-viewport-height, 100dvh);
+    }
+
+    :global(html[data-app-layout='mobile']) .sidebar-header {
+      padding: 0.4rem 0.75rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .brand-logo {
+      height: 22px;
+    }
+
+    :global(html[data-app-layout='mobile']) .burger-btn,
+    :global(html[data-app-layout='mobile']) .logo-btn,
+    :global(html[data-app-layout='mobile']) .expand-btn {
+      width: 32px;
+      height: 32px;
+    }
+
+    :global(html[data-app-layout='mobile']) .sidebar-footer {
+      padding: 0.35rem 0.75rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .user-avatar {
+      width: 24px;
+      height: 24px;
+    }
+
+    :global(html[data-app-layout='mobile']) .user-name {
+      font-size: 0.8rem;
+    }
+  }
+
   @media (max-width: 480px) {
     .sidebar {
       width: 85vw;

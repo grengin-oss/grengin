@@ -299,54 +299,6 @@
             </svg>
           {/if}
         </button>
-        {#if previewMode === "desktop"}
-          <div class="zoom-controls" role="group" aria-label="Desktop preview zoom">
-            <button
-              type="button"
-              class="zoom-btn"
-              onclick={() => adjustDesktopZoom(-DESKTOP_PREVIEW_ZOOM_STEP)}
-              disabled={desktopZoom <= DESKTOP_PREVIEW_ZOOM_MIN}
-              title="Zoom out"
-              aria-label="Zoom out"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.4"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M5 12h14" />
-              </svg>
-            </button>
-            <span class="zoom-value" aria-live="polite">{desktopZoomPercent}</span>
-            <button
-              type="button"
-              class="zoom-btn"
-              onclick={() => adjustDesktopZoom(DESKTOP_PREVIEW_ZOOM_STEP)}
-              disabled={desktopZoom >= DESKTOP_PREVIEW_ZOOM_MAX}
-              title="Zoom in"
-              aria-label="Zoom in"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.4"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M12 5v14" />
-                <path d="M5 12h14" />
-              </svg>
-            </button>
-          </div>
-        {/if}
         <button
           type="button"
           class="header-btn"
@@ -522,37 +474,91 @@
     {:else if type === "markdown"}
       <div class="markdown-preview">{@html renderedMarkdown}</div>
     {:else}
-      <div
-        class="preview-viewport"
-        class:desktop={previewMode === "desktop"}
-        bind:this={previewViewport}
-      >
-        {#key iframeKey}
-          {#if previewMode === "desktop"}
-            <div
-              class="desktop-preview-frame"
-              style:width={desktopFrameWidth}
-              style:height={desktopFrameHeight}
-            >
-              <div class="desktop-preview-inner" style:transform={desktopPreviewTransform}>
-                <iframe
-                  bind:this={desktopIframe}
-                  title="Artifact Preview"
-                  class="preview-iframe desktop-preview-iframe"
-                  srcdoc={code}
-                  sandbox="allow-same-origin allow-scripts"
-                ></iframe>
+      <div class="preview-shell">
+        <div
+          class="preview-viewport"
+          class:desktop={previewMode === "desktop"}
+          bind:this={previewViewport}
+        >
+          {#key iframeKey}
+            {#if previewMode === "desktop"}
+              <div
+                class="desktop-preview-frame"
+                style:width={desktopFrameWidth}
+                style:height={desktopFrameHeight}
+              >
+                <div class="desktop-preview-inner" style:transform={desktopPreviewTransform}>
+                  <iframe
+                    bind:this={desktopIframe}
+                    title="Artifact Preview"
+                    class="preview-iframe desktop-preview-iframe"
+                    srcdoc={code}
+                    sandbox="allow-same-origin allow-scripts"
+                  ></iframe>
+                </div>
               </div>
-            </div>
-          {:else}
-            <iframe
-              title="Artifact Preview"
-              class="preview-iframe"
-              srcdoc={code}
-              sandbox="allow-same-origin allow-scripts"
-            ></iframe>
-          {/if}
-        {/key}
+            {:else}
+              <iframe
+                title="Artifact Preview"
+                class="preview-iframe"
+                srcdoc={code}
+                sandbox="allow-same-origin allow-scripts"
+              ></iframe>
+            {/if}
+          {/key}
+        </div>
+        {#if previewMode === "desktop"}
+          <div
+            class="zoom-controls preview-zoom-controls"
+            role="group"
+            aria-label="Desktop preview zoom"
+          >
+            <button
+              type="button"
+              class="zoom-btn"
+              onclick={() => adjustDesktopZoom(-DESKTOP_PREVIEW_ZOOM_STEP)}
+              disabled={desktopZoom <= DESKTOP_PREVIEW_ZOOM_MIN}
+              title="Zoom out"
+              aria-label="Zoom out"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M5 12h14" />
+              </svg>
+            </button>
+            <span class="zoom-value" aria-live="polite">{desktopZoomPercent}</span>
+            <button
+              type="button"
+              class="zoom-btn"
+              onclick={() => adjustDesktopZoom(DESKTOP_PREVIEW_ZOOM_STEP)}
+              disabled={desktopZoom >= DESKTOP_PREVIEW_ZOOM_MAX}
+              title="Zoom in"
+              aria-label="Zoom in"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 5v14" />
+                <path d="M5 12h14" />
+              </svg>
+            </button>
+          </div>
+        {/if}
       </div>
     {/if}
   </div>
@@ -990,6 +996,14 @@
   }
 
   /* ── Preview iframe ── */
+  .preview-shell {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .preview-viewport {
     width: 100%;
     height: 100%;
@@ -1004,7 +1018,7 @@
     overflow: auto;
     touch-action: pan-x pan-y;
     overscroll-behavior: contain;
-    padding: 16px;
+    padding: 16px 16px 72px;
     background:
       linear-gradient(45deg, rgba(255, 255, 255, 0.045) 25%, transparent 25%),
       linear-gradient(-45deg, rgba(255, 255, 255, 0.045) 25%, transparent 25%),
@@ -1029,6 +1043,18 @@
     background: #fff;
     box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
     contain: layout paint size;
+  }
+
+  .preview-zoom-controls {
+    position: absolute;
+    bottom: calc(14px + var(--app-safe-area-bottom, 0px));
+    left: 50%;
+    z-index: 6;
+    transform: translateX(-50%);
+    background: rgba(18, 20, 23, 0.88);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.34);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
 
   .desktop-preview-inner {
@@ -1091,6 +1117,14 @@
     .zoom-value {
       min-width: 38px;
       font-size: 0.72rem;
+    }
+
+    .preview-viewport.desktop {
+      padding: 12px 12px calc(64px + var(--app-safe-area-bottom, 0px));
+    }
+
+    .preview-zoom-controls {
+      bottom: calc(10px + var(--app-safe-area-bottom, 0px));
     }
 
     .header-right {

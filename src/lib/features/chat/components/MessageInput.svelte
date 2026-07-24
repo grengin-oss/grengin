@@ -19,6 +19,7 @@
   interface MessageInputProps {
     onSend: (message: string, uploadedFiles?: UploadedFile[], webSearch?: boolean) => void;
     onCancel?: () => void;
+    canCancel?: boolean;
     disabled?: boolean;
     cancelling?: boolean;
     placeholder?: string;
@@ -42,7 +43,31 @@
     imageModelSelected?: boolean;
   }
 
-let { onSend, onCancel, disabled = false, cancelling = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, mcpServers = [], selectedMcpServers = [], loadingMcpServers = false, mcpServersError = null, onMcpToggle, webSearchEnabled = false, onWebSearchToggle, conversationId = null, pendingSkillIds = $bindable([]), imageModelSelected = false }: MessageInputProps = $props();
+  let {
+    onSend,
+    onCancel,
+    canCancel = false,
+    disabled = false,
+    cancelling = false,
+    placeholder,
+    selectedModel,
+    selectedProvider,
+    onModelSelect,
+    onRemoveModel,
+    providers = [],
+    loadingModels = false,
+    modelsError = null,
+    mcpServers = [],
+    selectedMcpServers = [],
+    loadingMcpServers = false,
+    mcpServersError = null,
+    onMcpToggle,
+    webSearchEnabled = false,
+    onWebSearchToggle,
+    conversationId = null,
+    pendingSkillIds = $bindable([]),
+    imageModelSelected = false,
+  }: MessageInputProps = $props();
 
   // Split a provider's models into selectable text and image groups (embedding
   // models are never selectable in chat). Loaded from the registry — not hardcoded.
@@ -111,7 +136,7 @@ let { onSend, onCancel, disabled = false, cancelling = false, placeholder, selec
   );
   let isUploading = $derived(uploadingFiles.size > 0);
   let micLevelOpacity = $derived((0.45 + Math.max(0, Math.min(1, voiceLevel)) * 0.55).toFixed(2));
-  let canCancelResponse = $derived(Boolean(disabled && onCancel));
+  let canCancelResponse = $derived(Boolean(canCancel && onCancel));
   let sendButtonDisabled = $derived(
     canCancelResponse
       ? cancelling
@@ -2420,6 +2445,60 @@ let { onSend, onCancel, disabled = false, cancelling = false, placeholder, selec
     height: 2.25rem;
   }
 
+  :global(html[data-app-layout='mobile']) .model-dropdown-container {
+    position: static;
+  }
+
+  :global(html[data-app-layout='mobile']) .model-menu {
+    left: 50%;
+    right: auto;
+    width: min(16rem, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
+    transform: translateX(-50%);
+  }
+
+  @media (orientation: portrait) {
+    :global(html[data-app-layout='mobile']) .model-menu {
+      width: min(15rem, calc(100vw - 2rem));
+      min-width: min(13rem, calc(100vw - 2rem));
+      max-width: calc(100vw - 2rem);
+      max-height: min(16rem, max(8rem, calc(var(--app-viewport-height, 100vh) - 9.5rem)));
+      padding: 0.35rem;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-menu .provider-header {
+      gap: 0.4rem;
+      padding: 0.4rem 0.55rem;
+      margin-bottom: 0.25rem;
+      font-size: 0.66rem;
+      letter-spacing: 0.04em;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-menu .provider-section:not(:last-child) {
+      margin-bottom: 0.25rem;
+      padding-bottom: 0.25rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-option {
+      min-height: 2.25rem;
+      gap: 0.5rem;
+      padding: 0.45rem 0.55rem;
+      border-radius: var(--radius-sm);
+    }
+
+    :global(html[data-app-layout='mobile']) .model-option .model-name {
+      font-size: 0.82rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-subgroup-label {
+      padding: 0.35rem 0.55rem 0.2rem;
+      margin-top: 0.25rem;
+      font-size: 0.62rem;
+    }
+  }
+
   @media (orientation: landscape) and (max-height: 600px) {
     :global(html[data-app-layout='mobile']) .input-area-wrapper {
       gap: var(--space-xs);
@@ -2442,6 +2521,44 @@ let { onSend, onCancel, disabled = false, cancelling = false, placeholder, selec
     :global(html[data-app-layout='mobile']) .input-bottom-bar {
       min-height: 2rem;
       padding: 0 var(--space-xs) var(--space-xs);
+    }
+
+    :global(html[data-app-layout='mobile']) .model-menu {
+      width: min(15rem, calc(100vw - 2rem));
+      max-height: min(11rem, max(7rem, calc(var(--app-viewport-height, 100vh) - 4.75rem)));
+      padding: 0.3rem;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-menu .provider-header {
+      gap: 0.35rem;
+      padding: 0.3rem 0.5rem;
+      margin-bottom: 0.2rem;
+      font-size: 0.62rem;
+      letter-spacing: 0.035em;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-menu .provider-section:not(:last-child) {
+      margin-bottom: 0.2rem;
+      padding-bottom: 0.2rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-option {
+      min-height: 2rem;
+      gap: 0.45rem;
+      padding: 0.34rem 0.5rem;
+      border-radius: var(--radius-sm);
+    }
+
+    :global(html[data-app-layout='mobile']) .model-option .model-name {
+      font-size: 0.8rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-subgroup-label {
+      padding: 0.3rem 0.5rem 0.15rem;
+      margin-top: 0.2rem;
+      font-size: 0.6rem;
     }
 
     :global(html[data-app-layout='mobile']) .selector-btn,

@@ -540,7 +540,7 @@
         </div>
       {:else}
         {#each chatHistory as chat (chat.id)}
-          <div class="chat-item">
+          <div class="chat-item" class:chat-item--menu-open={activeChatMenu === chat.id}>
             {#if renameChatId === chat.id}
               <div class="chat-rename-form">
                 <input
@@ -846,7 +846,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    contain: layout paint;
+    contain: layout;
+    overflow: visible;
+  }
+
+  .chat-item--menu-open {
+    z-index: 20;
   }
 
   .chat-item-btn {
@@ -1085,6 +1090,101 @@
     color: var(--text-secondary);
     font-size: 0.8125rem;
     justify-content: center;
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-list-section {
+    padding: 0 0.5rem calc(0.75rem + var(--app-safe-area-bottom, 0px));
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-list {
+    gap: 2px;
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-item-btn {
+    min-height: 46px;
+    padding: 0.58rem 2.45rem 0.58rem 0.75rem;
+    border-radius: var(--radius-md);
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-item-title {
+    font-size: 0.92rem;
+    font-weight: 520;
+    line-height: 1.25;
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-semantic-snippet {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  :global(html[data-app-layout='mobile']) .semantic-badge {
+    max-width: 5.25rem;
+    font-size: 0.6rem;
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-item-menu {
+    top: 50%;
+    right: auto;
+    inset-inline-end: 0.25rem;
+    width: 34px;
+    height: 34px;
+    color: var(--text-tertiary);
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%);
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-dropdown {
+    right: auto;
+    inset-inline-end: 0.25rem;
+    min-width: 9rem;
+  }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    :global(html[data-app-layout='mobile']) .sidebar-nav {
+      padding: 0.35rem 0.5rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .sidebar-item {
+      padding: 0.45rem 0.75rem;
+      gap: 0.5rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-search-wrapper {
+      margin-top: 0.25rem;
+      padding: 0 0.75rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-search-container {
+      height: 1.75rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-section-title {
+      padding: 0.3rem 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-list-section {
+      padding: 0 0.5rem 0.35rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-item-btn {
+      min-height: 36px;
+      padding: 0.35rem 2.25rem 0.35rem 0.65rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-item-title {
+      font-size: 0.84rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-semantic-snippet {
+      display: none;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-item-menu {
+      width: 30px;
+      height: 30px;
+    }
   }
 
   /* ===== Confirmation Dialog Actions (with Modal component) ===== */

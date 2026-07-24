@@ -42,6 +42,9 @@
   let activeStreamMessageId = $state<string | null>(null);
   let activeStreamBackendMessageId = $state<string | null>(null);
   let isCancellingStream = $state(false);
+  let canCancelStream = $derived(
+    Boolean(isCancellingStream || activeStreamAbortController || activeStreamMessageId),
+  );
 
   // Project to link once a new conversation is created (chat started from a project workspace).
   let pendingProjectId = $state<string | null>(null);
@@ -1412,6 +1415,7 @@
           bind:this={messageInput}
           onSend={handleSendMessage}
           onCancel={handleCancelStream}
+          canCancel={canCancelStream}
           disabled={isLoading}
           cancelling={isCancellingStream}
           placeholder={selectedIsImageModel
@@ -1546,6 +1550,7 @@
         bind:this={messageInput}
         onSend={handleSendMessage}
         onCancel={handleCancelStream}
+        canCancel={canCancelStream}
         disabled={isLoading}
         cancelling={isCancellingStream}
         placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
@@ -2073,9 +2078,20 @@
       gap: var(--space-sm);
     }
 
-    :global(html[data-app-layout='mobile']) .empty-icon-wrapper,
     :global(html[data-app-layout='mobile']) .empty-content p {
       display: none;
+    }
+
+    :global(html[data-app-layout='mobile']) .empty-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      animation: none;
+    }
+
+    :global(html[data-app-layout='mobile']) .empty-icon svg {
+      width: 28px;
+      height: 28px;
     }
 
     :global(html[data-app-layout='mobile']) .empty-content h1 {

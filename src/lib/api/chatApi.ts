@@ -462,17 +462,21 @@ export async function listConversations(params?: {
   archived?: boolean;
   signal?: AbortSignal;
 }): Promise<ChatConversationList> {
-  const { signal, ...queryParams } = params ?? {};
+  const { signal, ...rawQueryParams } = params ?? {};
+  const queryParams = { ...rawQueryParams };
+  if (!queryParams.search?.trim() && queryParams.semantic === false) {
+    delete queryParams.semantic;
+  }
   const query = chatListQuery(queryParams);
   const endpoint = `/chat${query ? `?${query}` : ''}`;
   const hasSearch = Boolean(queryParams.search?.trim());
 
-  if (signal || hasSearch) {
+  if (hasSearch) {
     return request<ChatConversationList>(endpoint, { signal });
   }
 
   const cacheKey = makeScopedCacheKey('chat', ['list', query]);
-  return cachedLoad(cacheKey, () => request<ChatConversationList>(endpoint), {
+  return cachedLoad(cacheKey, () => request<ChatConversationList>(endpoint, signal ? { signal } : {}), {
     ttlMs: CHAT_LIST_CACHE_TTL_MS,
   });
 }
