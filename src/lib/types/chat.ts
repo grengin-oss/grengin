@@ -29,6 +29,18 @@ export interface McpAuthRequest {
   connected_as?: string;
 }
 
+/**
+ * Server-declared artifact reference, as returned in `parts.artifacts`. This is
+ * metadata only — the actual content is fetched from the backend by `id`
+ * (GET /artifacts/{id}). The client never derives artifacts by parsing text.
+ */
+export interface MessageArtifact {
+  id: string;
+  file_id?: string;
+  title?: string;
+  content_type?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: MessageRole;
@@ -43,6 +55,8 @@ export interface ChatMessage {
   toolsResults?: ToolResult[];
   mergedWebSearch?: MergedToolResult | null;
   mcpAuthRequests?: McpAuthRequest[];
+  /** Server-declared artifacts attached to this message (from parts.artifacts). */
+  artifacts?: MessageArtifact[];
 }
 
 export interface StreamEvent {
