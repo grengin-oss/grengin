@@ -13,6 +13,16 @@ interface UsersFilters {
 
 type SortField = 'name' | 'email' | 'created_at' | null;
 
+/**
+ * Upper bound for the client-side unassigned-users derivation.
+ *
+ * The users API has no "no department" filter (see ENGG-388 open question 2),
+ * so the Organization page derives the unassigned population by fetching a
+ * single large page and filtering client-side. If an installation ever exceeds
+ * this, a dedicated count/list endpoint should replace this derivation.
+ */
+const UNASSIGNED_FETCH_LIMIT = 1000;
+
 function createUsersStore() {
   let users = $state<User[]>([]);
   let total = $state(0);
@@ -20,6 +30,8 @@ function createUsersStore() {
   let offset = $state(0);
   let isLoading = $state(false);
   let error = $state<any | null>(null);
+  let unassignedUsers = $state<User[]>([]);
+  let isUnassignedLoading = $state(false);
   let filters = $state<UsersFilters>({
     search: '',
     role_id: '',
@@ -77,6 +89,25 @@ function createUsersStore() {
     }
   }
 
+  /**
+   * Loads the users that belong to no department. Uses the same endpoint (and
+   * scoping) as the main list so the count matches the population the Users tab
+   * shows, then filters client-side (see UNASSIGNED_FETCH_LIMIT).
+   */
+  async function fetchUnassignedUsers() {
+    isUnassignedLoading = true;
+    try {
+      const params: GetUsersParams = { limit: UNASSIGNED_FETCH_LIMIT, offset: 0 };
+      const useScopedEndpoint = permissionsStore.hasScopedUsersView();
+      const data = useScopedEndpoint ? await getScopedUsers(params) : await getUsers(params);
+      unassignedUsers = data.users.filter((user) => !user.department_id);
+    } catch (err: any) {
+      error = err;
+    } finally {
+      isUnassignedLoading = false;
+    }
+  }
+
   return {
     get users() { return users; },
     get total() { return total; },
@@ -87,8 +118,23 @@ function createUsersStore() {
     get filters() { return filters; },
     get sort() { return sort; },
     get ascending() { return ascending; },
+    get unassignedUsers() { return unassignedUsers; },
+    get unassignedCount() { return unassignedUsers.length; },
+    get isUnassignedLoading() { return isUnassignedLoading; },
 
     fetchUsers,
+    fetchUnassignedUsers,
+
+    /** Assigns a user to a department (team). */
+    async assignDepartment(userId: string, departmentId: string) {
+      try {
+        await updateUser(userId, { department_id: departmentId });
+        await Promise.all([updateUsersInBackground(), fetchUnassignedUsers()]);
+      } catch (err: any) {
+        error = err;
+        throw err;
+      }
+    },
 
     async setFilters(newFilters: Partial<UsersFilters>) {
       filters = { ...filters, ...newFilters };
@@ -163,6 +209,8 @@ function createUsersStore() {
       offset = 0;
       isLoading = false;
       error = null;
+      unassignedUsers = [];
+      isUnassignedLoading = false;
       filters = {
         search: '',
         role_id: '',

@@ -10,9 +10,11 @@
         openEditModal: (user: User) => void;
         currentUserId?: string;
         canManageUsers: boolean;
+        /** Opens the team picker for this user. When omitted, the department cell stays read-only. */
+        onAssignTeam?: (user: User) => void;
     }
 
-    let { user, toggleUserStatus, openEditModal, currentUserId, canManageUsers }: Props = $props();
+    let { user, toggleUserStatus, openEditModal, currentUserId, canManageUsers, onAssignTeam }: Props = $props();
     let isPendingStatusUpdate = $state(false);
     
     // Check if this is the current user's own row
@@ -69,7 +71,39 @@
     <td>
         <RolesBadgeList roles={user.roles}/>
     </td>
-    <td>{user.department || "-"}</td>
+    <td>
+        {#if canManageUsers && onAssignTeam}
+            {#if user.department}
+                <span class="department-cell">
+                    <span class="department-name">{user.department}</span>
+                    <button
+                        type="button"
+                        class="department-edit-btn"
+                        onclick={() => onAssignTeam?.(user)}
+                        title={$_('admin.organization.changeTeamTooltip')}
+                        aria-label={$_('admin.organization.changeTeamTooltip')}
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 20h9"/>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                        </svg>
+                    </button>
+                </span>
+            {:else}
+                <button
+                    type="button"
+                    class="department-assign-pill"
+                    onclick={() => onAssignTeam?.(user)}
+                    title={$_('admin.organization.assignToATeamTooltip')}
+                    aria-label={$_('admin.organization.assignToATeamTooltip')}
+                >
+                    {$_('admin.organization.assign')}
+                </button>
+            {/if}
+        {:else}
+            {user.department || "-"}
+        {/if}
+    </td>
     <td>
         {#if !user.is_super_admin}
             {#if canManageUsers}
@@ -134,6 +168,67 @@
     .status-badge.active {
         background: rgba(var(--brand-green-rgb), 0.15);
         color: var(--brand-green);
+    }
+
+    /* Department cell */
+    .department-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .department-name {
+        color: var(--text-primary);
+    }
+
+    .department-edit-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-radius: var(--radius-sm);
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .department-edit-btn:hover {
+        background: rgba(var(--glass-tint), 0.08);
+        color: var(--brand);
+    }
+
+    .department-edit-btn:focus-visible {
+        outline: 2px solid var(--brand);
+        outline-offset: 2px;
+    }
+
+    .department-assign-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: var(--space-xs) var(--space-md);
+        border: 1px dashed color-mix(in oklab, var(--brand) 60%, transparent);
+        border-radius: var(--radius-full);
+        background: color-mix(in oklab, var(--brand) 8%, transparent);
+        color: var(--brand);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .department-assign-pill:hover {
+        background: color-mix(in oklab, var(--brand) 16%, transparent);
+        border-style: solid;
+    }
+
+    .department-assign-pill:focus-visible {
+        outline: 2px solid var(--brand);
+        outline-offset: 2px;
     }
 
     .actions {
