@@ -3,7 +3,7 @@ import { isTauriRuntime } from '../platform/tauri.js';
 
 type User = components['schemas']['User'];
 
-const defaultWebApiBase = '/api';
+const defaultWebApiBase = 'https://grengin-test-production.up.railway.app';
 const defaultTauriApiBase =
   import.meta.env?.VITE_TAURI_API_BASE || 'https://api.demo.devel.grengin.com';
 const rawApiBase = import.meta.env?.VITE_API_BASE;
@@ -19,7 +19,7 @@ const normalizeBase = (base: string, fallback = getDefaultApiBase()): string => 
   return base.endsWith('/') ? base.slice(0, -1) : base;
 };
 
-// Web builds use /api so requests can be proxied locally and via Pages Functions.
+// Web builds use main's default backend unless VITE_API_BASE overrides it.
 // Packaged Tauri builds need an absolute backend URL because local assets are not behind that proxy.
 export const API_BASE = normalizeBase(rawApiBase ?? getDefaultApiBase());
 
@@ -178,7 +178,7 @@ export async function handleUnauthorized(): Promise<string | null> {
   if (refreshed) {
     return getAccessTokenFn?.() ?? null;
   }
-  
+
   // Refresh failed, clear auth and redirect to login
   clearAuthFn?.();
   window.location.href = '/';

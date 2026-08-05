@@ -46,6 +46,7 @@
   import WebSearch from './WebSearch.svelte';
   import ToolCallTimeline from './ToolCallTimeline.svelte';
   import McpOAuthPrompt from './McpOAuthPrompt.svelte';
+  import { extractMessageArtifacts, stripArtifactTags, type ArtifactItem } from '../artifacts';
 
   interface Props {
     message: ChatMessage & { files?: Array<{ id: string; name?: string; type?: string }> };
@@ -55,7 +56,7 @@
     onMcpAuthConnected?: (serverId: string) => void;
     onMcpAuthError?: (serverId: string, error: string) => void;
     onMcpAuthStatusChange?: (serverId: string, status: McpAuthRequest['status']) => void;
-    onShowArtifact?: (title: string, content: string, type: 'html' | 'markdown') => void;
+    onShowArtifact?: (artifacts: ArtifactItem[], index: number) => void;
   }
 
   let { message, onEdit, selectedModelInfo, providers, onMcpAuthConnected, onMcpAuthError, onMcpAuthStatusChange, onShowArtifact }: Props = $props();
@@ -101,69 +102,19 @@
 
   let renderedContent = $state('');
   let isRenderingMarkdown = $state(false);
-  let artifactContent = $derived.by(() => {
-    // Check tool_calls for create_artifact first (persisted artifact from API)
-    if (message.toolCalls && message.toolCalls.length > 0) {
-      const artifactCall = message.toolCalls.find(tc => tc.tool_name === 'create_artifact');
-      if (artifactCall?.input?.value) {
-        const val = artifactCall.input.value as Record<string, unknown>;
-        const content = val.content as string | undefined;
-        const contentType = val.contentType as string | undefined;
-        const title = val.title as string | undefined;
-        if (content) {
-          const type = contentType === 'text/markdown' ? 'markdown' as const : 'html' as const;
-          return { code: content, type, title };
-        }
-      }
-    }
+  // Every artifact belonging to this message, taken ONLY from the backend's
+  // structured `parts.artifacts` metadata (ENGG-387). The client never parses
+  // <artifact> tags or code fences to *derive* artifacts — content is fetched
+  // by id in the panel.
+  let artifactContents = $derived<ArtifactItem[]>(
+    extractMessageArtifacts(message.artifacts),
+  );
 
-    const content = message.content;
-    // Persisted artifact wrapped in <artifact type="..." title="...">…</artifact>.
-    // This is how the backend stores artifacts inside the message text, so it is
-    // what we get back on reload / when loading conversation history.
-    const artifactTag = content.match(/<artifact\b([^>]*)>([\s\S]*?)<\/artifact>/i);
-    if (artifactTag) {
-      const attrs = artifactTag[1];
-      const code = artifactTag[2].trim();
-      const typeAttr = attrs.match(/type="([^"]*)"/)?.[1] || '';
-      const title = attrs.match(/title="([^"]*)"/)?.[1];
-      const type = typeAttr === 'text/markdown' ? 'markdown' as const : 'html' as const;
-      if (code) return { code, type, title };
-    }
-    // Completed blocks
-    const htmlMatch = content.match(/```html\s*\n([\s\S]*?)```/);
-    if (htmlMatch) return { code: htmlMatch[1].trim(), type: 'html' as const };
-    const mdMatch = content.match(/```(?:markdown|md)\s*\n([\s\S]*?)```/);
-    if (mdMatch) return { code: mdMatch[1].trim(), type: 'markdown' as const };
-    // Partial blocks (still streaming)
-    const htmlPartial = content.match(/```html\s*\n([\s\S]*)$/);
-    if (htmlPartial) return { code: htmlPartial[1].trim(), type: 'html' as const };
-    const mdPartial = content.match(/```(?:markdown|md)\s*\n([\s\S]*)$/);
-    if (mdPartial) return { code: mdPartial[1].trim(), type: 'markdown' as const };
-    // Raw HTML document
-    const trimmed = content.trim();
-    if (
-      trimmed.startsWith('<!DOCTYPE') ||
-      trimmed.startsWith('<html') ||
-      (trimmed.startsWith('<') && /<\/[a-z]+>\s*$/i.test(trimmed))
-    ) {
-      return { code: trimmed, type: 'html' as const };
-    }
-    return null;
-  });
+  let hasPreviewableContent = $derived(artifactContents.length > 0);
 
-  let hasPreviewableContent = $derived(artifactContent !== null);
-
-  let displayContent = $derived.by(() => {
-    if (!hasPreviewableContent) return message.content;
-    return message.content
-      .replace(/<artifact\b[^>]*>[\s\S]*?<\/artifact>/gi, '')
-      .replace(/```html\s*\n[\s\S]*?```/g, '')
-      .replace(/```(?:markdown|md)\s*\n[\s\S]*?```/g, '')
-      .replace(/```html\s*\n[\s\S]*$/g, '')
-      .replace(/```(?:markdown|md)\s*\n[\s\S]*$/g, '')
-      .trim();
-  });
+  // Strip the server-delimited <artifact> block from the shown text so the chat
+  // renders clean prose (the artifact itself is surfaced via its card/panel).
+  let displayContent = $derived(stripArtifactTags(message.content));
 
   // Async markdown rendering with copy button addition
   $effect(() => {
@@ -676,34 +627,36 @@
           {@html renderedContent}
 
           {#if hasPreviewableContent}
-            <button
-              class="artifact-card"
-              onclick={() => onShowArtifact?.(artifactContent!.title || (artifactContent!.type === 'html' ? 'HTML Artifact' : 'Markdown Document'), artifactContent!.code, artifactContent!.type)}
-            >
-              <div class="artifact-card-icon">
-                {#if artifactContent!.type === 'markdown'}
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
-                  </svg>
-                {:else}
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="16 18 22 12 16 6" />
-                    <polyline points="8 6 2 12 8 18" />
-                  </svg>
-                {/if}
-              </div>
-              <div class="artifact-card-info">
-                <span class="artifact-card-title">{artifactContent!.title || (artifactContent!.type === 'html' ? 'HTML Artifact' : 'Markdown Document')}</span>
-                <span class="artifact-card-hint">Click to open preview</span>
-              </div>
-              <svg class="artifact-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </button>
+            {#each artifactContents as artifact, i}
+              <button
+                class="artifact-card"
+                onclick={() => onShowArtifact?.(artifactContents, i)}
+              >
+                <div class="artifact-card-icon">
+                  {#if artifact.type === 'markdown'}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                      <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                  {:else}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="16 18 22 12 16 6" />
+                      <polyline points="8 6 2 12 8 18" />
+                    </svg>
+                  {/if}
+                </div>
+                <div class="artifact-card-info">
+                  <span class="artifact-card-title">{artifact.title || (artifact.type === 'html' ? 'HTML Artifact' : 'Markdown Document')}</span>
+                  <span class="artifact-card-hint">Click to open preview</span>
+                </div>
+                <svg class="artifact-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            {/each}
           {/if}
 
           {#if message.files && message.files.length > 0}

@@ -33,9 +33,26 @@
       "last_login_at": "2024-01-14T14:30:00Z",
       "created_at": "2024-01-05T00:00:00Z",
       "updated_at": "2024-01-14T14:30:00Z"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440003",
+      "sub": "auth0|ghi789jkl012",
+      "email": "casey.the.longest.email.address.for.testing@really-long-subdomain.grengin.com",
+      "name": "Casey Unassigned",
+      "picture": "https://ui-avatars.com/api/?name=Casey+Unassigned",
+      "role": "user",
+      "roles": ["User"],
+      "status": "active",
+      "department_id": null,
+      "is_super_admin": false,
+      "has_password": true,
+      "mfa_enabled": false,
+      "last_login_at": "2024-01-13T09:15:00Z",
+      "created_at": "2024-01-06T00:00:00Z",
+      "updated_at": "2024-01-13T09:15:00Z"
     }
   ],
-  "total": 2,
+  "total": 3,
   "limit": 20,
   "offset": 0
 }

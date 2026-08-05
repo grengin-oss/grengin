@@ -29,13 +29,8 @@
     {/snippet}
   </PermissionGuard>
 </Route>
-<Route path="/admin/users">
-  <PermissionGuard permission={PERMISSIONS.users.view}>
-    {#snippet children()}
-      <Users />
-    {/snippet}
-  </PermissionGuard>
-</Route>
+<!-- Legacy User Management route — redirects to Organization › Users tab (ENGG-388). -->
+<Route path="/admin/users"><Users /></Route>
 <Route path="/admin/departments">
   <PermissionGuard permission={PERMISSIONS.departments.view}>
     {#snippet children()}

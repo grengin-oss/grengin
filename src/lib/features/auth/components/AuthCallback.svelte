@@ -6,11 +6,11 @@
   import { onMount } from 'svelte';
   import { navigate } from 'svelte-routing';
   import { setAuth, ApiError, handleOAuthCallback } from '../index.js';
+  import type { LoginResponse } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
   import { API_BASE, apiFetch } from '../../../api/client.js';
-  import type { LoginResponse } from '../../../api/auth.js';
 
   // UI State
   type CallbackStatus = 'processing' | 'success' | 'error';

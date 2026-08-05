@@ -233,6 +233,24 @@ router.get('/admin/departments/:departmentId', requireAuth, (req, res) => {
   res.json(dept)
 })
 
+// --- "My administered departments" aliases -------------------------------
+// The frontend reads the department tree/list and scoped users through the
+// /me/administered-departments* endpoints. In the mock these mirror the full
+// data set (the mock user is a super admin who administers everything).
+router.get('/me/administered-departments/tree', requireAuth, (_req, res) => {
+  const allDepts = Array.from(departments.values())
+  res.json({ tree: buildDepartmentTree(allDepts, null, 10) })
+})
+
+router.get('/me/administered-departments/users', requireAuth, (_req, res) => {
+  res.json(usersListExample)
+})
+
+router.get('/me/administered-departments', requireAuth, (_req, res) => {
+  const result = Array.from(departments.values())
+  res.json({ departments: result, total: result.length })
+})
+
 // Update department
 router.put('/admin/departments/:departmentId', requireAuth, (req, res) => {
   const dept = departments.get(req.params.departmentId)

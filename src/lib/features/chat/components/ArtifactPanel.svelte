@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import { renderMarkdown, highlightCode, copyToClipboard } from "../../../utils/markdown";
+  import { getArtifact } from "../../../api/artifactsApi";
   import {
     attachDesktopPreviewPinch,
     clampDesktopPreviewZoom,
@@ -9,16 +10,51 @@
     DESKTOP_PREVIEW_ZOOM_STEP,
   } from "../utils/desktopPreviewPinch";
   import SaveToProjectModal from "./SaveToProjectModal.svelte";
+  import type { ArtifactItem } from "../artifacts";
 
   interface Props {
-    title: string;
-    code: string;
-    type?: "html" | "markdown";
-    isStreaming: boolean;
+    /** All artifacts to show. More than one renders a tab bar to switch between
+     *  them — a single response can produce several (ENGG-387). */
+    artifacts: ArtifactItem[];
+    /** Index of the artifact to show. */
+    activeIndex?: number;
+    onselect?: (index: number) => void;
     onclose: () => void;
   }
 
-  let { title, code, type = "html", isStreaming, onclose }: Props = $props();
+  let { artifacts, activeIndex = 0, onselect, onclose }: Props = $props();
+
+  // Clamp to a valid entry and fall back to a harmless empty artifact so the
+  // template never dereferences undefined while the list settles.
+  const EMPTY: ArtifactItem = { code: "", type: "html", title: "" };
+  let clampedIndex = $derived(Math.min(Math.max(activeIndex, 0), Math.max(artifacts.length - 1, 0)));
+  let current = $derived<ArtifactItem>(artifacts[clampedIndex] ?? EMPTY);
+  let artifactId = $derived(current.id);
+  let title = $derived(current.title ?? "");
+  let type = $derived<"html" | "markdown">(current.type);
+  // Streaming state follows the ACTIVE artifact — so a finished artifact stays
+  // downloadable even while another one is still streaming in another tab.
+  let isStreaming = $derived(current.streaming ?? false);
+
+  // Content cache for persisted artifacts (reload / card click): those arrive as
+  // metadata only, so we fetch content from the backend by id — the client never
+  // reads it out of the message text (ENGG-387, server-driven).
+  let contentById = $state<Record<string, string>>({});
+  let isLoadingContent = $state(false);
+  // Effective content: in-memory (streaming) if present, else the fetched copy.
+  let code = $derived(current.code || (current.id ? contentById[current.id] ?? "" : ""));
+
+  $effect(() => {
+    const id = current.id;
+    // Fetch once per id when we have no in-memory content yet.
+    if (id && current.code.length === 0 && contentById[id] === undefined && !isLoadingContent) {
+      isLoadingContent = true;
+      getArtifact(id)
+        .then((a) => { contentById = { ...contentById, [id]: a.content ?? "" }; })
+        .catch(() => { contentById = { ...contentById, [id]: "" }; })
+        .finally(() => { isLoadingContent = false; });
+    }
+  });
 
   let renderedMarkdown = $state("");
   let copySuccess = $state(false);
@@ -31,6 +67,7 @@
   let desktopIframe: HTMLIFrameElement | undefined = $state(undefined);
   let desktopFitScale = $state(1);
   let desktopZoom = $state(1);
+  let isDownloading = $state(false);
 
   const DESKTOP_VIEWPORT_WIDTH = 1440;
   const DESKTOP_VIEWPORT_HEIGHT = 900;
@@ -53,7 +90,7 @@
   let desktopScale = $derived(Number((desktopFitScale * desktopZoom).toFixed(3)));
   let desktopFrameWidth = $derived(`${Math.round(DESKTOP_VIEWPORT_WIDTH * desktopScale)}px`);
   let desktopFrameHeight = $derived(`${Math.round(DESKTOP_VIEWPORT_HEIGHT * desktopScale)}px`);
-  let desktopPreviewTransform = $derived(`translate3d(0, 0, 0) scale(${desktopScale})`);
+  let desktopPreviewTransform = $derived(`scale(${desktopScale})`);
   let desktopZoomPercent = $derived(`${Math.round(desktopScale * 100)}%`);
   let highlightedCode = $derived(highlightCode(code, type));
 
@@ -138,18 +175,46 @@
     }
   }
 
-  function handleDownload() {
-    const ext = type === "markdown" ? "md" : "html";
-    const mimeType = type === "markdown" ? "text/markdown" : "text/html";
-    const fileName = title.replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "-").toLowerCase() || "artifact";
-    const blob = new Blob([code], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${fileName}.${ext}`;
-    a.click();
-    URL.revokeObjectURL(url);
-    triggerToast(`Downloaded ${fileName}.${ext}`);
+  async function handleDownload() {
+    if (isDownloading || isStreaming || (code.length === 0 && !artifactId)) return;
+    isDownloading = true;
+    try {
+      // Prefer the backend copy (source of truth) when we have a persisted id,
+      // but fall back to the in-memory content so download always works once the
+      // artifact has finished generating — even if the backend didn't return an
+      // id (ENGG-387: download must not be blocked on a missing id).
+      let downloadContent = code;
+      let downloadType = type;
+      let downloadTitle = title;
+      if (artifactId) {
+        try {
+          const artifact = await getArtifact(artifactId);
+          downloadContent = artifact.content;
+          downloadType = artifact.content_type === "text/markdown" ? "markdown" : "html";
+          downloadTitle = artifact.title || title;
+        } catch {
+          // Backend fetch failed — fall through to the in-memory content.
+        }
+      }
+      const isMarkdown = downloadType === "markdown";
+      const ext = isMarkdown ? "md" : "html";
+      const mimeType = isMarkdown ? "text/markdown" : "text/html";
+      const fileName =
+        (downloadTitle || title).replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "-").toLowerCase() ||
+        "artifact";
+      const blob = new Blob([downloadContent], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${fileName}.${ext}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      triggerToast(`Downloaded ${fileName}.${ext}`);
+    } catch {
+      triggerToast("Download failed");
+    } finally {
+      isDownloading = false;
+    }
   }
 
   function handleReload() {
@@ -371,7 +436,7 @@
         onclick={handleDownload}
         title="Download as .{type === 'markdown' ? 'md' : 'html'}"
         aria-label="Download artifact"
-        disabled={isStreaming}
+        disabled={isStreaming || isDownloading || (code.length === 0 && !artifactId)}
       >
         <svg
           width="16"
@@ -457,6 +522,25 @@
     </div>
   </div>
 
+  {#if artifacts.length > 1}
+    <div class="artifact-tabs" role="tablist">
+      {#each artifacts as artifact, i}
+        {@const label = artifact.title || (artifact.type === "markdown" ? "Markdown Document" : "HTML Artifact")}
+        <button
+          class="artifact-tab"
+          class:active={i === clampedIndex}
+          role="tab"
+          aria-selected={i === clampedIndex}
+          onclick={() => onselect?.(i)}
+          title={label}
+        >
+          <span class="artifact-tab-index">{i + 1}</span>
+          <span class="artifact-tab-label">{label}</span>
+        </button>
+      {/each}
+    </div>
+  {/if}
+
   {#if showToast}
     <div class="toast">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -467,7 +551,12 @@
   {/if}
 
   <div class="artifact-body">
-    {#if activeView === "code"}
+    {#if isLoadingContent && code.length === 0}
+      <div class="artifact-loading">
+        <span class="artifact-spinner"></span>
+        <span>Loading artifact...</span>
+      </div>
+    {:else if activeView === "code"}
       <pre class="code-view" bind:this={codeContainer}><code class="hljs language-{type}"
           >{@html highlightedCode}{#if isStreaming}<span class="cursor-blink">|</span>{/if}</code
         ></pre>
@@ -623,6 +712,103 @@
     gap: 8px;
     min-width: 0;
     flex-shrink: 0;
+  }
+
+  /* ── Loading state (fetching persisted content) ── */
+  .artifact-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100%;
+    color: #888;
+    font-size: 13px;
+  }
+
+  .artifact-spinner {
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-top-color: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    animation: artifactSpin 0.7s linear infinite;
+  }
+
+  @keyframes artifactSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── Multi-artifact tabs ── */
+  .artifact-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+    background: rgba(var(--glass-tint, 255, 255, 255), 0.03);
+    flex-shrink: 0;
+    scrollbar-width: thin;
+  }
+
+  .artifact-tab {
+    /* Share the row evenly, shrink to fit, but stay readable. min-width:0 is
+       required so the label can ellipsize inside a flex item. */
+    flex: 1 1 0;
+    min-width: 96px;
+    max-width: 220px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: transparent;
+    color: #aaa;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+  }
+
+  .artifact-tab-index {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .artifact-tab-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .artifact-tab:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .artifact-tab.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .artifact-tab.active .artifact-tab-index {
+    background: rgba(255, 255, 255, 0.28);
+    color: #fff;
   }
 
   .header-right {
@@ -1042,7 +1228,6 @@
     overflow: hidden;
     background: #fff;
     box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
-    contain: layout paint size;
   }
 
   .preview-zoom-controls {
@@ -1061,8 +1246,6 @@
     width: 1440px;
     height: 900px;
     transform-origin: top left;
-    backface-visibility: hidden;
-    will-change: transform;
   }
 
   .preview-iframe {
@@ -1076,8 +1259,6 @@
   .desktop-preview-iframe {
     width: 1440px;
     height: 900px;
-    backface-visibility: hidden;
-    transform: translate3d(0, 0, 0);
   }
 
   @media (max-width: 640px) {

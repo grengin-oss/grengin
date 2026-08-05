@@ -5,6 +5,7 @@
   import TypingIndicator from './TypingIndicator.svelte';
   import ArtifactPanel from './ArtifactPanel.svelte';
   import MessageScrollNavigator from './MessageScrollNavigator.svelte';
+  import type { ArtifactItem, StreamedArtifact } from '../artifacts';
   import type { MergedToolResult, ToolCall, ToolResult, WebSearchResult } from '../../../types/toolCall';
   import type { BudgetWarningMessage, ChatMessage as ChatMessageType, McpAuthRequest } from '../../../types/chat';
   import { cancelChatStream, sendMessage, getConversation, getChatMcpServers, type UploadedFile } from '../../../api/chatApi';
@@ -124,74 +125,89 @@
     );
   }
 
-  // Artifact panel state
-  let artifactTitle = $state('');
-  let artifactCode = $state('');
-  let artifactType = $state<'html' | 'markdown'>('html');
-  let artifactIsStreaming = $state(false);
+  // Artifact panel state. Several artifacts can exist at once (a response may
+  // produce more than one), reachable via tabs — but only ONE is ever shown
+  // automatically; the rest are opened by clicking their card/tab (ENGG-387).
+  let panelArtifacts = $state<ArtifactItem[]>([]);
+  let panelActiveIndex = $state(0);
   let showArtifactPanel = $state(false);
-  // Holds the artifact currently streaming in via artifact_* SSE events so it can
-  // be persisted into the finished assistant message on `done`.
-  let streamingArtifact = $state<{ title: string; contentType: string; content: string } | null>(null);
+  // Ids of artifacts the user has closed ("viewed"). A viewed artifact never
+  // auto-reopens — only an explicit click brings it back (ENGG-387 Bug 1).
+  let viewedArtifactIds = new Set<string>();
+  // Whether we've already auto-opened the panel this generation. Enforces
+  // "auto-show only one artifact in automatic loading".
+  let autoShownArtifact = false;
+  // All artifacts streaming in via artifact_* SSE events, keyed by id in arrival
+  // order, so the panel can offer tabs across them.
+  let streamingArtifacts = new Map<string, StreamedArtifact>();
+
+  // Reset all per-generation artifact accumulation/UI state. Called at the start
+  // of every send/regenerate so a fresh generation starts clean.
+  function resetArtifactState() {
+    streamingArtifacts = new Map();
+    panelArtifacts = [];
+    panelActiveIndex = 0;
+    viewedArtifactIds = new Set();
+    autoShownArtifact = false;
+  }
 
   // Feed a streamed artifact into the side panel live.
-  function applyStreamingArtifact(artifact: { title: string; contentType: string; content: string; streaming?: boolean }) {
-    const type = artifact.contentType === 'text/markdown' ? 'markdown' : 'html';
-    streamingArtifact = { title: artifact.title, contentType: artifact.contentType, content: artifact.content };
-    artifactCode = artifact.content;
-    artifactType = type;
-    artifactTitle = artifact.title || (type === 'html' ? 'HTML Artifact' : 'Markdown Document');
-    artifactIsStreaming = artifact.streaming ?? false;
-    showArtifactPanel = true;
-  }
+  function applyStreamingArtifact(artifact: { id?: string; title: string; contentType: string; content: string; streaming?: boolean }) {
+    const key = artifact.id ?? `__artifact_${streamingArtifacts.size}`;
+    const isNew = !streamingArtifacts.has(key);
+    streamingArtifacts.set(key, {
+      id: artifact.id ?? key,
+      title: artifact.title,
+      contentType: artifact.contentType,
+      content: artifact.content,
+      streaming: artifact.streaming ?? false,
+    });
 
-  // Once streaming ends, inline the artifact into the message text using the same
-  // <artifact> wrapper the backend persists, so the message's preview card renders
-  // immediately (and identically to a reload) without refetching the conversation.
-  function withPersistedArtifact(content: string): string {
-    if (!streamingArtifact || /<artifact\b/i.test(content)) return content;
-    const title = (streamingArtifact.title || '').replace(/"/g, '&quot;');
-    return `${content}\n\n<artifact type="${streamingArtifact.contentType}" title="${title}">\n${streamingArtifact.content}\n</artifact>`;
-  }
+    panelArtifacts = [...streamingArtifacts.values()].map((a) => {
+      const type = a.contentType === 'text/markdown' ? 'markdown' as const : 'html' as const;
+      return {
+        id: a.id,
+        title: a.title || (type === 'html' ? 'HTML Artifact' : 'Markdown Document'),
+        code: a.content,
+        type,
+        streaming: a.streaming,
+      };
+    });
 
-  function extractArtifactCodeBlock(content: string): { code: string; type: 'html' | 'markdown' } | null {
-    // Try HTML first
-    const htmlMatch = content.match(/```html\s*\n([\s\S]*?)```/);
-    if (htmlMatch) return { code: htmlMatch[1], type: 'html' };
-    // Try markdown/md
-    const mdMatch = content.match(/```(?:markdown|md)\s*\n([\s\S]*?)```/);
-    if (mdMatch) return { code: mdMatch[1], type: 'markdown' };
-    // Partial matches (still streaming, block not closed)
-    const htmlPartial = content.match(/```html\s*\n([\s\S]*)$/);
-    if (htmlPartial) return { code: htmlPartial[1], type: 'html' };
-    const mdPartial = content.match(/```(?:markdown|md)\s*\n([\s\S]*)$/);
-    if (mdPartial) return { code: mdPartial[1], type: 'markdown' };
-    return null;
-  }
-
-  function detectAndStreamArtifact(content: string, streaming: boolean) {
-    const result = extractArtifactCodeBlock(content);
-    if (result !== null) {
-      artifactCode = result.code;
-      artifactType = result.type;
-      artifactIsStreaming = streaming;
-      if (!showArtifactPanel) {
-        artifactTitle = result.type === 'html' ? 'HTML Artifact' : 'Markdown Document';
-        showArtifactPanel = true;
-      }
+    // Auto-open the panel for the FIRST artifact only, once per generation, and
+    // never for one the user already closed. Subsequent artifacts stay in the
+    // tab list but do not steal focus or force the panel back open.
+    if (isNew && !autoShownArtifact && !viewedArtifactIds.has(key)) {
+      autoShownArtifact = true;
+      panelActiveIndex = panelArtifacts.length - 1;
+      showArtifactPanel = true;
     }
   }
 
-  function handleShowArtifact(title: string, content: string, type: 'html' | 'markdown') {
-    artifactTitle = title;
-    artifactCode = content;
-    artifactType = type;
-    artifactIsStreaming = false;
+  function activePanelArtifact(): ArtifactItem | undefined {
+    if (panelArtifacts.length === 0) return undefined;
+    const i = Math.min(Math.max(panelActiveIndex, 0), panelArtifacts.length - 1);
+    return panelArtifacts[i];
+  }
+
+  function handleShowArtifact(artifacts: ArtifactItem[], index: number) {
+    panelArtifacts = artifacts;
+    panelActiveIndex = index;
+    // Explicit open clears any "viewed" mark for that artifact.
+    const opened = artifacts[index];
+    if (opened?.id) viewedArtifactIds.delete(opened.id);
     showArtifactPanel = true;
+  }
+
+  function handleSelectArtifact(index: number) {
+    panelActiveIndex = index;
   }
 
   function handleCloseArtifact() {
     showArtifactPanel = false;
+    // Mark the shown artifact as viewed so it won't auto-reopen (Bug 1).
+    const current = activePanelArtifact();
+    if (current?.id) viewedArtifactIds.add(current.id);
   }
 
   // Models state
@@ -460,7 +476,7 @@
     // How many generated images have arrived for this assistant message (an
     // image model may return more than one — cap is a model property).
     let generatedImageIndex = 0;
-    streamingArtifact = null;
+    resetArtifactState();
     isTyping = true;
     scrollToBottom();
 
@@ -540,9 +556,6 @@
             messages = messages.map(m =>
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
-
-            // Detect HTML artifact in streaming content
-            detectAndStreamArtifact(pendingStreamingMessage.content, true);
 
             isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
@@ -709,14 +722,21 @@
                 : { ...tc, status: 'error' as import('../../../types/toolCall').ToolCallStatus }
             );
 
-            // Mark all tool calls as completed when stream ends, and inline any
-            // streamed artifact into the message text so its preview card renders.
+            // Mark all tool calls as completed when the stream ends. Artifacts are
+            // NOT inlined/parsed into the message text (ENGG-387). We attach the
+            // streamed artifacts as structured metadata so the message renders a
+            // card afterwards, mirroring how the backend returns parts.artifacts
+            // on reload; the content is fetched by id when opened.
             pendingStreamingMessage = {
               ...pendingStreamingMessage,
-              content: withPersistedArtifact(pendingStreamingMessage.content),
               isStreaming: false,
               toolCalls: finalizedToolCalls,
-              mergedWebSearch: updatedMergedWebSearch as MergedToolResult
+              mergedWebSearch: updatedMergedWebSearch as MergedToolResult,
+              artifacts: [...streamingArtifacts.values()].map(a => ({
+                id: a.id,
+                title: a.title,
+                content_type: a.contentType,
+              })),
             };
 
             currentStreamingMessage = {...pendingStreamingMessage};
@@ -726,9 +746,10 @@
               m.id === pendingStreamingMessage?.id ? currentStreamingMessage as ChatMessageType : m
             );
 
-            // Finalize artifact streaming
-            artifactIsStreaming = false;
-            streamingArtifact = null;
+            // Streaming finished — clear the per-artifact streaming flag so the
+            // panel enables download/save.
+            panelArtifacts = panelArtifacts.map(a => ({ ...a, streaming: false }));
+            streamingArtifacts = new Map();
           }
         },
         onError: (errorMessage) => {
@@ -868,7 +889,7 @@
     });
 
     // Process the original request without creating a new message
-    streamingArtifact = null;
+    resetArtifactState();
     isLoading = true;
     isTyping = true;
     autoScrollEnabled = true;
@@ -1022,14 +1043,18 @@
                 : { ...tc, status: 'error' as import('../../../types/toolCall').ToolCallStatus }
             );
 
-            // Mark all tool calls as completed when stream ends, and inline any
-            // streamed artifact into the message text so its preview card renders.
+            // Mark all tool calls as completed when the stream ends. Artifacts are
+            // NOT inlined into the message text (ENGG-387) — see the send() path.
             pendingStreamingMessage = {
               ...pendingStreamingMessage,
-              content: withPersistedArtifact(pendingStreamingMessage.content),
               isStreaming: false,
               toolCalls: finalizedToolCalls,
-              mergedWebSearch: updatedMergedWebSearch as MergedToolResult
+              mergedWebSearch: updatedMergedWebSearch as MergedToolResult,
+              artifacts: [...streamingArtifacts.values()].map(a => ({
+                id: a.id,
+                title: a.title,
+                content_type: a.contentType,
+              })),
             };
 
             // Update the message in the array
@@ -1037,8 +1062,10 @@
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
 
-            artifactIsStreaming = false;
-            streamingArtifact = null;
+            // Streaming finished — clear the per-artifact streaming flag so the
+            // panel enables download/save.
+            panelArtifacts = panelArtifacts.map(a => ({ ...a, streaming: false }));
+            streamingArtifacts = new Map();
           }
           isLoading = false;
           isTyping = false;
@@ -1220,6 +1247,8 @@
             toolsResults: toolResults,
             mergedWebSearch: mergeWebSearchResults(toolCalls, toolResults, 'completed'),
             mcpAuthRequests: mcpAuthRequests.length > 0 ? mcpAuthRequests : undefined,
+            // Server-declared artifacts (metadata only — content fetched by id).
+            artifacts: msg.parts.artifacts || [],
           };
         });
 
@@ -1584,10 +1613,9 @@
     ></button>
     <div class="artifact-panel-wrapper">
       <ArtifactPanel
-        title={artifactTitle}
-        code={artifactCode}
-        type={artifactType}
-        isStreaming={artifactIsStreaming}
+        artifacts={panelArtifacts}
+        activeIndex={panelActiveIndex}
+        onselect={handleSelectArtifact}
         onclose={handleCloseArtifact}
       />
     </div>
