@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { setAuth, ApiError, handleOAuthCallback } from '../index.js';
+  import type { LoginResponse } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';

@@ -16,8 +16,28 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout frontend
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read pinned backend commit
+        id: backend
+        shell: bash
+        run: |
+          BACKEND_COMMIT="$(tr -d '[:space:]' < release/backend-commit.txt)"
+          if [[ ! "${BACKEND_COMMIT}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "release/backend-commit.txt must contain a full commit SHA" >&2
+            exit 1
+          fi
+          echo "commit=${BACKEND_COMMIT}" >> "${GITHUB_OUTPUT}"
+
+      - name: Checkout pinned backend
+        uses: actions/checkout@v4
+        with:
+          repository: grengin-oss/grengin-api
+          ref: ${{ steps.backend.outputs.commit }}
+          path: .release-work/grengin-api
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -36,23 +56,31 @@ jobs:
       - name: Type-check
         run: pnpm check
 
-      - name: Build
+      - name: Test frontend
+        run: pnpm test
+
+      - name: Build frontend
         run: pnpm build
 
-      - name: Package dist
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          PKG="grengin-webapp-${VERSION}"
-          mkdir -p "staging/${PKG}"
-          cp -R dist/. "staging/${PKG}/"
-          tar -czf "${PKG}.tar.gz" -C staging "${PKG}"
-          echo "ARCHIVE=${PKG}.tar.gz" >> "$GITHUB_ENV"
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Validate backend build
+        working-directory: .release-work/grengin-api
+        run: cargo build --release --locked --workspace --jobs 2
+
+      - name: Package complete release
+        env:
+          BACKEND_SOURCE_DIR: ${{ github.workspace }}/.release-work/grengin-api
+        run: ./scripts/package-release.sh "${GITHUB_REF_NAME}"
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "${GITHUB_REF_NAME}" \
-            --title "${GITHUB_REF_NAME}" \
+            --title "Grengin ${GITHUB_REF_NAME}" \
             --generate-notes \
-            "${ARCHIVE}"
+            release-dist/grengin-*.tar.gz \
+            release-dist/grengin-*.zip \
+            release-dist/grengin-*-SHA256SUMS.txt

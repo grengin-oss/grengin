@@ -1,7 +1,7 @@
 {
   "name": "@grengin/community",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.1",
   "license": "SEE LICENSE IN LICENSE.md",
   "edition": "community",
   "type": "module",
