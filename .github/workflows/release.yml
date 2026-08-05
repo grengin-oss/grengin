@@ -4,17 +4,90 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Product version to preview (for example, v0.3.1)
+        required: true
+        default: v0.3.1
 
 permissions:
-  contents: write   # required for gh release create
+  contents: read
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+
 jobs:
-  release:
-    runs-on: ubuntu-latest
+  backend-binaries:
+    name: Backend (${{ matrix.architecture }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - architecture: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      - name: Read pinned backend commit
+        id: backend
+        shell: bash
+        run: |
+          BACKEND_COMMIT="$(tr -d '[:space:]' < release/backend-commit.txt)"
+          if [[ ! "${BACKEND_COMMIT}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "release/backend-commit.txt must contain a full commit SHA" >&2
+            exit 1
+          fi
+          echo "commit=${BACKEND_COMMIT}" >> "${GITHUB_OUTPUT}"
+
+      - name: Checkout pinned backend
+        uses: actions/checkout@v4
+        with:
+          repository: grengin-oss/grengin-api
+          ref: ${{ steps.backend.outputs.commit }}
+          path: .release-work/grengin-api
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build static backend binaries
+        shell: bash
+        run: |
+          docker buildx build \
+            --platform "${{ matrix.platform }}" \
+            --file release/backend-binaries.Dockerfile \
+            --provenance=false \
+            --cache-from "type=gha,scope=grengin-backend-${{ matrix.architecture }}" \
+            --cache-to "type=gha,mode=max,scope=grengin-backend-${{ matrix.architecture }}" \
+            --output "type=local,dest=${RUNNER_TEMP}/rootfs" \
+            .release-work/grengin-api
+          tar -C "${RUNNER_TEMP}/rootfs" -czf \
+            "${RUNNER_TEMP}/grengin-backend-${{ matrix.architecture }}.tar.gz" .
+
+      - name: Upload backend binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: grengin-backend-${{ matrix.architecture }}
+          path: ${{ runner.temp }}/grengin-backend-${{ matrix.architecture }}.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  package:
+    name: Package release
+    needs: backend-binaries
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - name: Checkout frontend
         uses: actions/checkout@v4
@@ -62,25 +135,52 @@ jobs:
       - name: Build frontend
         run: pnpm build
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Download amd64 backend
+        uses: actions/download-artifact@v4
+        with:
+          name: grengin-backend-amd64
+          path: .release-work/backend-archives
 
-      - name: Validate backend build
-        working-directory: .release-work/grengin-api
-        run: cargo build --release --locked --workspace --jobs 2
+      - name: Download arm64 backend
+        uses: actions/download-artifact@v4
+        with:
+          name: grengin-backend-arm64
+          path: .release-work/backend-archives
+
+      - name: Extract backend binaries
+        shell: bash
+        run: |
+          mkdir -p .release-work/backend-amd64 .release-work/backend-arm64
+          tar -xzf .release-work/backend-archives/grengin-backend-amd64.tar.gz \
+            -C .release-work/backend-amd64
+          tar -xzf .release-work/backend-archives/grengin-backend-arm64.tar.gz \
+            -C .release-work/backend-arm64
 
       - name: Package complete release
         env:
           BACKEND_SOURCE_DIR: ${{ github.workspace }}/.release-work/grengin-api
-        run: ./scripts/package-release.sh "${GITHUB_REF_NAME}"
+          BACKEND_AMD64_ROOTFS: ${{ github.workspace }}/.release-work/backend-amd64
+          BACKEND_ARM64_ROOTFS: ${{ github.workspace }}/.release-work/backend-arm64
+        run: ./scripts/package-release.sh "${RELEASE_TAG}"
+
+      - name: Upload release assets for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: grengin-${{ env.RELEASE_TAG }}-release-assets
+          path: release-dist/*
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Create GitHub Release
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
-            --title "Grengin ${GITHUB_REF_NAME}" \
+          gh release create "${RELEASE_TAG}" \
+            --title "Grengin ${RELEASE_TAG}" \
             --generate-notes \
-            release-dist/grengin-*.tar.gz \
-            release-dist/grengin-*.zip \
+            release-dist/grengin-*-source.tar.gz \
+            release-dist/grengin-*-source.zip \
+            release-dist/grengin-*-linux-amd64.tar.gz \
+            release-dist/grengin-*-linux-arm64.tar.gz \
             release-dist/grengin-*-SHA256SUMS.txt
