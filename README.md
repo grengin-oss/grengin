@@ -196,4 +196,4 @@ modify, and use internally, including for commercial operations. Selling,
 white-labeling, or operating Grengin as a competing hosted service requires a
 separate agreement.
 
-For managed hosting or commercial permissions, contact `sales@grengin.com`.
+For managed hosting or commercial permissions, contact `contact@grengin.com`.
