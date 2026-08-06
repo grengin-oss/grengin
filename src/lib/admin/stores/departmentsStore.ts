@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 import { writable } from 'svelte/store';
 import type { Department, SetBudgetRequest } from '../types.js';
 import * as departmentsApi from '../../api/admin/departments.js';

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 import type { PermissionScope } from '../../api/permissions.js';
 import { getMyPermissions } from '../../api/permissions.js';
 import { getAuthState } from './state.svelte.js';

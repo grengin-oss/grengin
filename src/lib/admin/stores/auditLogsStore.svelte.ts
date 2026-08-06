@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 // Audit Logs Store - Audit log state using Svelte 5 runes
 import type { AuditLog } from '../types.js';
 import { getAuditLogs, getAuditActions } from '../../api/admin/auditLogs.js';

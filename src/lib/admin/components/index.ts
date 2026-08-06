@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 // Admin UI Components
 export { default as AdminTableCard } from './AdminTableCard.svelte';
 export { default as PageHeader } from './PageHeader.svelte';

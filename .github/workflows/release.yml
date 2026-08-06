@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Product version to preview (for example, v0.3.1)
+        description: Product version to preview (for example, v0.3.2)
         required: true
-        default: v0.3.1
+        default: v0.3.2
 
 permissions:
   contents: read
@@ -176,9 +176,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          RELEASE_NOTES_ARGS=()
+          if [[ -f "release/notes/${RELEASE_TAG}.md" ]]; then
+            RELEASE_NOTES_ARGS+=(--notes-file "release/notes/${RELEASE_TAG}.md")
+          fi
           gh release create "${RELEASE_TAG}" \
             --title "Grengin ${RELEASE_TAG}" \
             --generate-notes \
+            "${RELEASE_NOTES_ARGS[@]}" \
             release-dist/grengin-*-source.tar.gz \
             release-dist/grengin-*-source.zip \
             release-dist/grengin-*-linux-amd64.tar.gz \

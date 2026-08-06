@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 // AI Engines Store - AI engine management state using Svelte 5 runes
 import type { AIEngine, AIEngineModels, Branding } from '../types.js';
 import {

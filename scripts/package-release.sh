@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+# SPDX-License-Identifier: Apache-2.0
+
 set -euo pipefail
 
 REPOSITORY_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -11,7 +14,7 @@ RELEASE_OUTPUT_DIR="${RELEASE_OUTPUT_DIR:-${REPOSITORY_ROOT}/release-dist}"
 BACKEND_PIN_FILE="${REPOSITORY_ROOT}/release/backend-commit.txt"
 
 if [[ ! "${RELEASE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
-  echo "Usage: $0 <version> (for example: $0 v0.3.1)" >&2
+  echo "Usage: $0 <version> (for example: $0 v0.3.2)" >&2
   exit 1
 fi
 
@@ -107,6 +110,7 @@ cat > "${SOURCE_ROOT}/RELEASE-MANIFEST.json" <<EOF
 {
   "release": "v${RELEASE_VERSION}",
   "artifact_type": "source",
+  "license": "Apache-2.0",
   "frontend": {
     "repository": "https://github.com/grengin-oss/grengin",
     "commit": "${FRONTEND_COMMIT}",
@@ -130,13 +134,16 @@ create_linux_bundle() {
   install -m 0755 "${rootfs}/usr/local/bin/grengin-api" "${bundle_root}/bin/grengin-api"
   install -m 0755 "${rootfs}/usr/local/bin/sqlx-mcp" "${bundle_root}/bin/sqlx-mcp"
   cp -R "${REPOSITORY_ROOT}/dist/." "${bundle_root}/webapp/"
-  cp "${REPOSITORY_ROOT}/LICENSE.md" "${bundle_root}/licenses/frontend-LICENSE.md"
-  cp "${BACKEND_SOURCE_DIR}/LICENSE.md" "${bundle_root}/licenses/backend-LICENSE.md"
+  cp "${REPOSITORY_ROOT}/LICENSE" "${bundle_root}/licenses/frontend-LICENSE"
+  cp "${REPOSITORY_ROOT}/NOTICE" "${bundle_root}/licenses/frontend-NOTICE"
+  cp "${BACKEND_SOURCE_DIR}/LICENSE" "${bundle_root}/licenses/backend-LICENSE"
+  cp "${BACKEND_SOURCE_DIR}/NOTICE" "${bundle_root}/licenses/backend-NOTICE"
 
   cat > "${bundle_root}/RELEASE-MANIFEST.json" <<EOF
 {
   "release": "v${RELEASE_VERSION}",
   "artifact_type": "linux-bundle",
+  "license": "Apache-2.0",
   "platform": {
     "os": "linux",
     "architecture": "${architecture}"
