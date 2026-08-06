@@ -18,6 +18,7 @@
   } from "../../api/integrations.js";
   import { ApiError } from "../../api/client.js";
   import { toast } from "../../components/Toaster.svelte";
+  import { openNativeMcpOAuth } from "$lib/platform/nativeMcpOAuth";
 
   type ConnectionStatus = 'connected' | 'expired' | 'error' | 'disconnected';
 
@@ -125,6 +126,18 @@
       if (response?.authorization_url) {
         sessionStorage.setItem('mcp_oauth_origin', 'user');
         sessionStorage.setItem('mcp_oauth_redirect_url', window.location.pathname + window.location.search);
+
+        const nativeResult = await openNativeMcpOAuth(response.authorization_url);
+        if (nativeResult) {
+          if (nativeResult.success) {
+            await loadData();
+          } else {
+            toast.error(nativeResult.error || $_("userIntegrations.failedToConnect", { values: { name: server.name } }));
+          }
+          connectingId = null;
+          return;
+        }
+
         window.location.href = response.authorization_url;
       } else {
         toast.error($_("userIntegrations.failedToGetAuthUrl"));

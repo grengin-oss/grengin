@@ -10,6 +10,16 @@
     DESKTOP_PREVIEW_ZOOM_STEP,
   } from "../utils/desktopPreviewPinch";
   import SaveToProjectModal from "./SaveToProjectModal.svelte";
+  import {
+    desktopLayoutWidthFor,
+    hideNativeArtifactPreview,
+    isNativeArtifactPreviewAvailable,
+    onNativeArtifactPreviewViewport,
+    resetNativeArtifactPreviewZoom,
+    setNativeArtifactPreviewRect,
+    showNativeArtifactPreview,
+    withDesktopViewport,
+  } from "$lib/platform/nativeArtifactPreview";
   import type { ArtifactItem } from "../artifacts";
 
   interface Props {
@@ -63,14 +73,74 @@
   let showToast = $state(false);
   let isFullscreen = $state(false);
   let previewMode = $state<"responsive" | "desktop">("responsive");
-  let previewViewport: HTMLDivElement | undefined = $state(undefined);
-  let desktopIframe: HTMLIFrameElement | undefined = $state(undefined);
-  let desktopFitScale = $state(1);
-  let desktopZoom = $state(1);
-  let isDownloading = $state(false);
 
   const DESKTOP_VIEWPORT_WIDTH = 1440;
   const DESKTOP_VIEWPORT_HEIGHT = 900;
+  /** Keeps the native card in the same 16:10 desktop-window proportions. */
+  const DESKTOP_VIEWPORT_HEIGHT_RATIO = DESKTOP_VIEWPORT_HEIGHT / DESKTOP_VIEWPORT_WIDTH;
+  /** Border width of the native card; must match .native-preview-card. */
+  const NATIVE_CARD_BORDER = 1;
+
+  let previewViewport: HTMLDivElement | undefined = $state(undefined);
+  let desktopIframe: HTMLIFrameElement | undefined = $state(undefined);
+  let desktopPreviewFrame: HTMLDivElement | undefined = $state(undefined);
+  let desktopPreviewInner: HTMLDivElement | undefined = $state(undefined);
+  // Native preview: the card the native WebView is positioned over, kept in the
+  // same 16:10 desktop-window proportions the CSS path used.
+  let nativePreviewCard: HTMLDivElement | undefined = $state(undefined);
+  let nativeLayoutWidth = $state(1440);
+  let nativeAvailWidth = $state(0);
+  let nativeAvailHeight = $state(0);
+  /** Page scale reported by the native preview; 0 until it first reports. */
+  let nativePageScale = $state(0);
+  /**
+   * Fit scale computed from the panel, used to size the card before the WebView
+   * has loaded and reported. Without it the card would be 0x0, so nothing would be
+   * shown, so the page would never load and never report.
+   */
+  let nativeFitScale = $state(0);
+  let nativeEffectiveScale = $derived(nativePageScale || nativeFitScale);
+
+  // The card is the rendered page (layout width x the page's own zoom), clamped to
+  // the space available. Below the clamp it is a card on the checkerboard that
+  // grows as you pinch; at the clamp it fills the panel and the WebView takes over
+  // panning, which is what the CSS-transform path did with viewport scrolling.
+  // These are the size of the WebView surface, i.e. the card's *content* box. The
+  // card's border sits outside it (see nativeCardOuter*), so the surface width is
+  // always exactly layoutWidth x scale. Insetting the surface inside a fixed outer
+  // size instead would feed a 2px-smaller width back to the WebView, which would
+  // report a smaller scale, shrinking the card on every report.
+  let nativeCardWidth = $derived(
+    nativeAvailWidth === 0 || nativeEffectiveScale === 0
+      ? 0
+      : Math.round(
+          Math.min(
+            nativeAvailWidth - 2 * NATIVE_CARD_BORDER,
+            nativeLayoutWidth * nativeEffectiveScale,
+          ),
+        ),
+  );
+  let nativeCardHeight = $derived(
+    nativeAvailHeight === 0 || nativeEffectiveScale === 0
+      ? 0
+      : Math.round(
+          Math.min(
+            nativeAvailHeight - 2 * NATIVE_CARD_BORDER,
+            nativeLayoutWidth * DESKTOP_VIEWPORT_HEIGHT_RATIO * nativeEffectiveScale,
+          ),
+        ),
+  );
+  let nativeCardOuterWidth = $derived(nativeCardWidth + 2 * NATIVE_CARD_BORDER);
+  let nativeCardOuterHeight = $derived(nativeCardHeight + 2 * NATIVE_CARD_BORDER);
+  let desktopFitScale = $state(1);
+  let desktopZoom = $state(1);
+  /** True only while a pinch is in flight — see `attachDesktopPreviewPinch`. */
+  let isPinchZooming = $state(false);
+  let isDownloading = $state(false);
+
+  // Android renders the desktop preview in a real WebView layered over the app,
+  // which zooms on the GPU instead of re-rasterising a CSS-scaled iframe.
+  const useNativePreview = isNativeArtifactPreviewAvailable();
 
   function triggerToast(message: string) {
     toastMessage = message;
@@ -130,6 +200,21 @@
       const bounds = previewViewport.getBoundingClientRect();
       const availableWidth = Math.max(bounds.width - 32, 320);
       const availableHeight = Math.max(bounds.height - 32, 240);
+
+      if (useNativePreview) {
+        // The native preview lays its page out at a width chosen for legibility
+        // rather than a fixed 1440. Card size is derived from the page scale the
+        // WebView reports, so it tracks the page's rendered size exactly.
+        const layoutWidth = desktopLayoutWidthFor(availableWidth, DESKTOP_VIEWPORT_WIDTH);
+        const layoutHeight = layoutWidth * DESKTOP_VIEWPORT_HEIGHT_RATIO;
+
+        nativeLayoutWidth = layoutWidth;
+        nativeAvailWidth = Math.round(availableWidth);
+        nativeAvailHeight = Math.round(availableHeight);
+        nativeFitScale = Math.min(1, availableWidth / layoutWidth, availableHeight / layoutHeight);
+        return;
+      }
+
       const nextScale = Math.min(
         1,
         availableWidth / DESKTOP_VIEWPORT_WIDTH,
@@ -218,6 +303,13 @@
   }
 
   function handleReload() {
+    if (useNativePreview && previewMode === "desktop") {
+      // Drop back to the panel-derived fit until the reloaded page reports again.
+      nativePageScale = 0;
+      resetNativeArtifactPreviewZoom();
+      return;
+    }
+
     iframeKey++;
   }
 
@@ -225,20 +317,115 @@
     desktopZoom = Number(clampDesktopPreviewZoom(desktopZoom + delta).toFixed(2));
   }
 
+  // The card follows the page scale the native preview reports, so pinching grows
+  // the card rather than only magnifying its contents.
+  $effect(() => {
+    if (!useNativePreview) return;
+
+    return onNativeArtifactPreviewViewport(({ scale }) => {
+      nativePageScale = scale;
+    });
+  });
+
+  // Android: keep the native WebView aligned with the placeholder that stands in
+  // for the iframe, and tear it down whenever the preview is not on screen.
+  $effect(() => {
+    if (!useNativePreview) return;
+
+    const viewport = previewViewport;
+    // Position over the card, not the viewport: the viewport's padding,
+    // checkerboard backdrop and the card's border/shadow all have to stay visible
+    // around the native view, or the preview stops reading as a scaled desktop
+    // page and just fills the panel edge to edge.
+    const card = nativePreviewCard;
+    const active = previewMode === "desktop" && activeView === "preview" && type === "html";
+
+    if (!active || !viewport || !card || code.length === 0 || nativeCardWidth === 0) {
+      hideNativeArtifactPreview();
+      return;
+    }
+
+    const layoutWidth = nativeLayoutWidth;
+    let frame = 0;
+    let last = "";
+    let shown = false;
+
+    const sync = () => {
+      const box = card.getBoundingClientRect();
+      if (box.width === 0 || box.height === 0) return;
+
+      const rect = { x: box.left, y: box.top, width: box.width, height: box.height };
+      const key = `${rect.x}|${rect.y}|${rect.width}|${rect.height}`;
+
+      if (!shown) {
+        shown = true;
+        showNativeArtifactPreview(withDesktopViewport(code, layoutWidth), rect);
+        last = key;
+        return;
+      }
+
+      if (key !== last) {
+        last = key;
+        setNativeArtifactPreviewRect(rect);
+      }
+    };
+
+    sync(true);
+
+    const queue = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => sync());
+    };
+
+    const observer =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(queue);
+    // The card resizes as the page is zoomed, independently of the viewport.
+    observer?.observe(card);
+    observer?.observe(viewport);
+    window.addEventListener("resize", queue);
+    window.addEventListener("scroll", queue, true);
+    window.visualViewport?.addEventListener("resize", queue);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener("resize", queue);
+      window.removeEventListener("scroll", queue, true);
+      window.visualViewport?.removeEventListener("resize", queue);
+      hideNativeArtifactPreview();
+    };
+  });
+
   $effect(() => {
     const viewport = previewViewport;
-    if (!viewport) return;
+    // The native preview owns its own gesture handling.
+    if (!viewport || useNativePreview) return;
 
     return attachDesktopPreviewPinch({
       viewport,
       iframe: desktopIframe,
       isEnabled: () => previewMode === "desktop" && activeView === "preview" && type === "html",
       getZoom: () => desktopZoom,
-      setZoom: (zoom) => {
-        desktopZoom = zoom;
-      },
       getFitScale: () => desktopFitScale,
       getScale: () => desktopScale,
+      // Written straight to the DOM during the gesture. Going through
+      // `desktopZoom` here would re-run the derived chain on every frame; the
+      // same values are re-rendered declaratively by `commitZoom` at the end.
+      previewScale: (scale) => {
+        if (desktopPreviewFrame) {
+          desktopPreviewFrame.style.width = `${Math.round(DESKTOP_VIEWPORT_WIDTH * scale)}px`;
+          desktopPreviewFrame.style.height = `${Math.round(DESKTOP_VIEWPORT_HEIGHT * scale)}px`;
+        }
+        if (desktopPreviewInner) {
+          desktopPreviewInner.style.transform = `scale(${scale})`;
+        }
+      },
+      commitZoom: (zoom) => {
+        desktopZoom = zoom;
+      },
+      setGestureActive: (active) => {
+        isPinchZooming = active;
+      },
     });
   });
 
@@ -570,13 +757,32 @@
           bind:this={previewViewport}
         >
           {#key iframeKey}
-            {#if previewMode === "desktop"}
+            {#if previewMode === "desktop" && useNativePreview}
+              <!-- Same card as the CSS path (border, radius, shadow, centred on the
+                   checkerboard). The native WebView is layered exactly over it. -->
+              <div
+                class="desktop-preview-frame native-preview-card"
+                style:width={`${nativeCardOuterWidth}px`}
+                style:height={`${nativeCardOuterHeight}px`}
+              >
+                <!-- The native WebView is positioned over this, not over the card,
+                     so the card's border stays visible around it. -->
+                <div class="native-preview-surface" bind:this={nativePreviewCard}></div>
+              </div>
+            {:else if previewMode === "desktop"}
               <div
                 class="desktop-preview-frame"
+                class:zooming={isPinchZooming}
+                bind:this={desktopPreviewFrame}
                 style:width={desktopFrameWidth}
                 style:height={desktopFrameHeight}
               >
-                <div class="desktop-preview-inner" style:transform={desktopPreviewTransform}>
+                <div
+                  class="desktop-preview-inner"
+                  class:zooming={isPinchZooming}
+                  bind:this={desktopPreviewInner}
+                  style:transform={desktopPreviewTransform}
+                >
                   <iframe
                     bind:this={desktopIframe}
                     title="Artifact Preview"
@@ -596,7 +802,7 @@
             {/if}
           {/key}
         </div>
-        {#if previewMode === "desktop"}
+        {#if previewMode === "desktop" && !useNativePreview}
           <div
             class="zoom-controls preview-zoom-controls"
             role="group"
@@ -1246,6 +1452,26 @@
     width: 1440px;
     height: 900px;
     transform-origin: top left;
+    backface-visibility: hidden;
+  }
+
+  /* Only while pinching. `will-change: transform` pins the layer's raster scale,
+     so mid-gesture frames composite instead of re-rasterizing the iframe — that
+     re-raster is what flickers on artifacts heavy enough to miss a frame (SVG in
+     particular, which has no bitmap to interpolate). Dropping the hint at the end
+     of the gesture triggers a single crisp re-raster. It is not applied
+     permanently because a pinned layer this large costs real GPU memory. */
+  .desktop-preview-inner.zooming {
+    will-change: transform;
+  }
+
+  /* Both of these are recomputed every frame while the box resizes: a 50px-blur
+     shadow, and a rounded `overflow: hidden` clip — which needs a mask layer,
+     whereas a square clip is a cheap compositor rect. Restore them on release.
+     Purely cosmetic during the gesture; drop this rule to keep the chrome. */
+  .desktop-preview-frame.zooming {
+    box-shadow: none;
+    border-radius: 0;
   }
 
   .preview-iframe {
@@ -1259,6 +1485,23 @@
   .desktop-preview-iframe {
     width: 1440px;
     height: 900px;
+  }
+
+  /* Frames the native WebView. A single light hairline disappeared against dark
+     artifacts, so pair it with a dark outer ring: one of the two always contrasts
+     with whatever the artifact renders at its edge, and with the checkerboard. */
+  .native-preview-card {
+    flex: 0 0 auto;
+    border-color: rgba(255, 255, 255, 0.45);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.55),
+      0 18px 50px rgba(0, 0, 0, 0.35);
+  }
+
+  /* Exactly the card's content box — the rect the native view is placed over. */
+  .native-preview-surface {
+    width: 100%;
+    height: 100%;
   }
 
   @media (max-width: 640px) {

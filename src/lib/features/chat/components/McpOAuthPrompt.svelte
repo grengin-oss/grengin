@@ -2,6 +2,7 @@
   import type { McpAuthRequest } from '../../../types/chat';
   import { authorizeMcpConnection, getMcpConnections } from '../../../api/integrations.js';
   import { _ } from 'svelte-i18n';
+  import { openNativeMcpOAuth } from '$lib/platform/nativeMcpOAuth';
 
   interface Props {
     authRequest: McpAuthRequest;
@@ -35,6 +36,16 @@
           throw new Error($_('chat.mcpAuth.failedToGetAuthUrl'));
         }
         authUrl = response.authorization_url;
+      }
+
+      const nativeResult = await openNativeMcpOAuth(authUrl);
+      if (nativeResult) {
+        if (nativeResult.success) {
+          await verifyConnectionStatus();
+        } else {
+          onError(authRequest.server_id, nativeResult.error || $_('chat.mcpAuth.connectionFailed'));
+        }
+        return;
       }
 
       const width = 600;

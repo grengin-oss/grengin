@@ -15,6 +15,15 @@ export default defineConfig(({ mode }) => {
       }
     },
     build: {
+      assetsInlineLimit: 0,
+      cssMinify: 'esbuild',
+      emptyOutDir: true,
+      minify: 'esbuild',
+      modulePreload: {
+        polyfill: false,
+      },
+      reportCompressedSize: false,
+      sourcemap: false,
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
@@ -29,6 +38,11 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
+    },
+    esbuild: {
+      drop: mode === 'production' ? ['debugger'] : [],
+      legalComments: 'none',
+      pure: mode === 'production' ? ['console.debug'] : [],
     },
     server: {
       port: 5173,

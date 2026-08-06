@@ -5,6 +5,8 @@
     "tabs": {
       "appearance": "Appearance",
       "appearanceAria": "Appearance preferences",
+      "backend": "Backend",
+      "backendAria": "Backend URL configuration",
       "skills": "Skills",
       "skillsAria": "Manage your skills",
       "integrations": "Integrations",
@@ -277,5 +279,9 @@
       "dark": "Dark",
       "darkDescription": "Use the dark interface."
     }
+  },
+  "backendSettings": {
+    "title": "Backend URL config",
+    "subtitle": "Choose which Grengin backend this device should use."
   }
 }

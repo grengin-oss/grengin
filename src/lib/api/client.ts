@@ -7,21 +7,118 @@ const defaultWebApiBase = 'https://grengin-test-production.up.railway.app';
 const defaultTauriApiBase =
   import.meta.env?.VITE_TAURI_API_BASE || 'https://api.demo.devel.grengin.com';
 const rawApiBase = import.meta.env?.VITE_API_BASE;
+const apiBaseOverrideStorageKey = 'grengin_api_base_override';
 
-const getDefaultApiBase = (): string => {
+export const API_BASE_CHANGE_EVENT = 'grengin-api-base-change';
+
+const getRuntimeDefaultApiBase = (): string => {
   return isTauriRuntime() ? defaultTauriApiBase : defaultWebApiBase;
 };
 
-const normalizeBase = (base: string, fallback = getDefaultApiBase()): string => {
-  if (!base) {
-    return fallback;
-  }
-  return base.endsWith('/') ? base.slice(0, -1) : base;
+const normalizeBase = (base: string, fallback = getRuntimeDefaultApiBase()): string => {
+  const value = base.trim() || fallback;
+  return value.replace(/\/+$/, '');
 };
+
+function getLocalStorage(): Storage | null {
+  try {
+    return typeof window === 'undefined' ? null : window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function readStoredApiBaseOverride(): string | null {
+  const stored = getLocalStorage()?.getItem(apiBaseOverrideStorageKey)?.trim();
+
+  return stored ? normalizeBase(stored) : null;
+}
+
+function emitApiBaseChange(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent(API_BASE_CHANGE_EVENT, {
+      detail: { apiBase: API_BASE, override: getApiBaseOverride() },
+    }),
+  );
+}
+
+export function getDefaultApiBase(): string {
+  if (isTauriRuntime()) {
+    return normalizeBase(defaultTauriApiBase);
+  }
+
+  return normalizeBase(rawApiBase ?? defaultWebApiBase);
+}
+
+export function getApiBaseOverride(): string | null {
+  return readStoredApiBaseOverride();
+}
+
+export function getApiBase(): string {
+  return API_BASE;
+}
+
+export function normalizeApiBaseInput(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error('Backend URL is required.');
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new Error('Enter a valid absolute URL.');
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error('Backend URL must start with http:// or https://.');
+  }
+
+  if (parsed.search || parsed.hash) {
+    throw new Error('Backend URL cannot include query parameters or fragments.');
+  }
+
+  return normalizeBase(parsed.href);
+}
+
+export function setApiBaseOverride(value: string): string {
+  const storage = getLocalStorage();
+  if (!storage) {
+    throw new Error('Backend URL storage is unavailable.');
+  }
+
+  const normalized = normalizeApiBaseInput(value);
+  try {
+    storage.setItem(apiBaseOverrideStorageKey, normalized);
+  } catch {
+    throw new Error('Backend URL storage is unavailable.');
+  }
+
+  API_BASE = normalized;
+  emitApiBaseChange();
+  return API_BASE;
+}
+
+export function resetApiBaseOverride(): string {
+  try {
+    getLocalStorage()?.removeItem(apiBaseOverrideStorageKey);
+  } catch {
+    // Ignore storage failures; the in-memory value still resets for this session.
+  }
+
+  API_BASE = getDefaultApiBase();
+  emitApiBaseChange();
+  return API_BASE;
+}
 
 // Web builds use main's default backend unless VITE_API_BASE overrides it.
 // Packaged Tauri builds need an absolute backend URL because local assets are not behind that proxy.
-export const API_BASE = normalizeBase(rawApiBase ?? getDefaultApiBase());
+export let API_BASE = getApiBaseOverride() ?? getDefaultApiBase();
 
 export type ApiFetchInit = RequestInit & {
   maxRedirections?: number;

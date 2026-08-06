@@ -8,7 +8,7 @@
   import MainAreaRoutes from '$lib/bundles/MainAreaRoutes.svelte';
   import { loadNamespacesForRoute } from '$lib/i18n/index.js';
   import { initAuth, getAuthState, logout, permissionsStore } from './lib/features/auth/index.js';
-  import { initNativeOAuthDeepLinks } from './lib/features/auth/nativeDeepLink.js';
+  import { onNativeOAuthCallbackPath } from './lib/features/auth/nativeDeepLink.js';
   import {
     dismissStreamToast,
     fetchNotificationFeed,
@@ -307,9 +307,9 @@
     splashTimer = setTimeout(() => {
       showSplash = false;
     }, 1100);
-    void initNativeOAuthDeepLinks(handleNativeOAuthCallbackPath).then((cleanup) => {
-      nativeDeepLinkCleanup = cleanup;
-    });
+    // Replays a callback that resolved before this component mounted, so a deep
+    // link that arrived during startup is not lost to mount ordering.
+    nativeDeepLinkCleanup = onNativeOAuthCallbackPath(handleNativeOAuthCallbackPath);
 
     const visualViewport = window.visualViewport;
     visualViewport?.addEventListener('resize', updateViewportCssVars);

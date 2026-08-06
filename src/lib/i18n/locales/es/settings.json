@@ -5,6 +5,8 @@
     "tabs": {
       "appearance": "Apariencia",
       "appearanceAria": "Preferencias de apariencia",
+      "backend": "Servidor",
+      "backendAria": "Configuración de URL del backend",
       "skills": "Habilidades",
       "skillsAria": "Gestiona tus habilidades",
       "integrations": "Integraciones",
@@ -277,5 +279,9 @@
       "dark": "Oscuro",
       "darkDescription": "Usar la interfaz oscura."
     }
+  },
+  "backendSettings": {
+    "title": "Configuración de URL del backend",
+    "subtitle": "Elige qué backend de Grengin debe usar este dispositivo."
   }
 }

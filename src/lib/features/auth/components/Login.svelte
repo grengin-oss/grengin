@@ -8,6 +8,7 @@
   import { _ } from 'svelte-i18n';
   import { loadNamespaces } from '$lib/i18n/index.js';
   import { isTauriRuntime } from '../../../platform/tauri.js';
+  import BackendUrlSettings from '../../../components/BackendUrlSettings.svelte';
 
   // TODO: This should come from the server (API update)
   type AuthMode = 'google' | 'azure' | 'keycloak' | 'admin';
@@ -82,6 +83,10 @@
         <h1 class="brand-name">{$_('auth.welcomeToGrengin')}</h1>
         <p class="brand-tagline">{$_('auth.signInToContinue')}</p>
       </div>
+    </div>
+
+    <div class="login-backend-settings">
+      <BackendUrlSettings compact />
     </div>
 
     <div class="auth-content">
@@ -160,6 +165,7 @@
                 disabled={isOAuthLoading}
                 onStart={handleOAuthStart}
                 onError={handleOAuthError}
+                onCancel={handleOAuthError}
                 onSuccess={handleOAuthSuccess}
               />
             {/each}
@@ -237,6 +243,11 @@
 
   .brand-text {
     min-width: 0;
+  }
+
+  .login-backend-settings {
+    padding: var(--space-md) var(--space-3xl) 0;
+    background: var(--surface-elevated);
   }
 
   .brand-name {
@@ -547,6 +558,10 @@
     .login-logo {
       width: 4rem;
       height: 4rem;
+    }
+
+    .login-backend-settings {
+      padding: 0 1.5rem var(--space-md);
     }
 
     .brand-name {

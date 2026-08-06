@@ -99,6 +99,7 @@
       },
       "missing_oauth_params": "Faltan parámetros OAuth requeridos (state o code)",
       "oauth_provider_not_found": "Proveedor OAuth no encontrado. Por favor, intente iniciar sesión nuevamente",
+      "oauth_code_already_used": "Este enlace de inicio de sesión ya se ha utilizado. Por favor, inicia sesión de nuevo",
       "invalid_auth_response": "Respuesta de autenticación inválida del servidor",
       "mfa_not_implemented": "La autenticación de múltiples factores es requerida pero aún no está implementada",
       "invalid_redirect_uri": {

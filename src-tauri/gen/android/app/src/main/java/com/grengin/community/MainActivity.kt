@@ -7,6 +7,7 @@ private const val MAIN_WEBVIEW_LABEL = "main"
 
 class MainActivity : TauriActivity() {
     private var nativeSpeechBridge: NativeSpeechBridge? = null
+    private var nativeArtifactPreview: NativeArtifactPreview? = null
 
     override fun onWebViewCreate(webView: WebView) {
         super.onWebViewCreate(webView)
@@ -21,6 +22,10 @@ class MainActivity : TauriActivity() {
         val speechBridge = NativeSpeechBridge(this, webView)
         nativeSpeechBridge = speechBridge
         webView.addJavascriptInterface(speechBridge, "GrenginSpeech")
+
+        val artifactPreview = NativeArtifactPreview(this, webView)
+        nativeArtifactPreview = artifactPreview
+        webView.addJavascriptInterface(artifactPreview, "GrenginArtifactPreview")
     }
 
     private fun configureMainWebView(webView: WebView) {
@@ -49,6 +54,8 @@ class MainActivity : TauriActivity() {
     override fun onDestroy() {
         nativeSpeechBridge?.destroy()
         nativeSpeechBridge = null
+        nativeArtifactPreview?.destroy()
+        nativeArtifactPreview = null
         super.onDestroy()
     }
 }

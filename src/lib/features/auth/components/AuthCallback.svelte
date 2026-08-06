@@ -5,12 +5,20 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { navigate } from 'svelte-routing';
-  import { setAuth, ApiError, handleOAuthCallback } from '../index.js';
+  import { setAuth, ApiError, handleOAuthCallback, isAuthenticated } from '../index.js';
   import type { LoginResponse } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
   import { API_BASE, apiFetch } from '../../../api/client.js';
+  import {
+    clearPendingOAuth,
+    isOAuthCallbackConsumed,
+    markOAuthCallbackConsumed,
+    oauthCallbackKey,
+    readPendingOAuth,
+  } from '../pendingOAuth.js';
+  import { notifyOAuthCallbackSettled } from '../nativeDeepLink.js';
 
   // UI State
   type CallbackStatus = 'processing' | 'success' | 'error';
@@ -98,15 +106,22 @@
     const code = params.get('code') || hashParams.get('code');
     const assertion = params.get('assertion') || hashParams.get('assertion');
 
-    // 3. Retrieve provider from session storage, with path fallback for native deep links
-    const provider = sessionStorage.getItem('oauth_provider') || getProviderFromPath();
+    // 3. Resolve the provider. The callback path is authoritative — it was built
+    //    from the deep link that just arrived — and only then the durable record.
+    //    sessionStorage is last: it is empty whenever Android recreated the
+    //    WebView during the browser hand-off, and stale otherwise.
+    const pending = readPendingOAuth();
+    const provider =
+      getProviderFromPath() || pending?.provider || sessionStorage.getItem('oauth_provider');
     if (!provider) {
       const message = $_('error.auth.oauth_provider_not_found');
       throw new ApiError(400, message);
     }
 
     const isMobileCallback =
-      isMobileCallbackPath() || sessionStorage.getItem('oauth_mobile_callback') === 'true';
+      isMobileCallbackPath() ||
+      pending?.mobile === true ||
+      sessionStorage.getItem('oauth_mobile_callback') === 'true';
 
     if (!state || (!code && !assertion)) {
       // No standard code/state and no assertion - try legacy SSO proxy fallback (token in URL)
@@ -126,21 +141,46 @@
       return;
     }
 
+    // A WebView reload wipes `inFlightOAuthCallbacks`, so the in-memory guard
+    // above cannot see an exchange from a previous JS context. Authorization
+    // codes are single-use: replaying one fails at the provider and would report
+    // a login that already worked as broken.
+    const consumedKey = oauthCallbackKey(provider, state);
+    if (isOAuthCallbackConsumed(consumedKey)) {
+      if (isAuthenticated()) {
+        return;
+      }
+
+      throw new ApiError(400, $_('error.auth.oauth_code_already_used'));
+    }
+
     const callbackPromise = (async () => {
       let response: LoginResponse;
 
-      if (assertion) {
-        // SSO proxy flow: assertion JWT + state - forward directly to API callback
-        response = await handleOAuthCallback(provider, null, state, {
-          assertion,
-          mobile: isMobileCallback,
-        });
-      } else {
-        // Standard OAuth code flow
-        response = await handleOAuthCallback(provider, code, state, {
-          mobile: isMobileCallback,
-        });
+      try {
+        if (assertion) {
+          // SSO proxy flow: assertion JWT + state - forward directly to API callback
+          response = await handleOAuthCallback(provider, null, state, {
+            assertion,
+            mobile: isMobileCallback,
+          });
+        } else {
+          // Standard OAuth code flow
+          response = await handleOAuthCallback(provider, code, state, {
+            mobile: isMobileCallback,
+          });
+        }
+      } catch (err) {
+        // A rejection the backend reasoned about means it already redeemed the
+        // code at the provider, so it is spent. Transport failures and 5xx may
+        // never have reached the provider — leave those replayable.
+        if (err instanceof ApiError && err.status < 500) {
+          markOAuthCallbackConsumed(consumedKey);
+        }
+        throw err;
       }
+
+      markOAuthCallbackConsumed(consumedKey);
 
       // Validate response and store authentication
       if (!response?.accessToken || !response?.user) {
@@ -171,6 +211,9 @@
   function cleanupSessionStorage(): void {
     sessionStorage.removeItem('oauth_provider');
     sessionStorage.removeItem('oauth_mobile_callback');
+    // Also retires the durable record and stops the deep-link recovery poll.
+    clearPendingOAuth();
+    notifyOAuthCallbackSettled();
   }
 
   function navigateInApp(target: string): void {
@@ -190,10 +233,13 @@
   /**
    * Redirect to return URL after successful authentication
    */
-  function redirectAfterSuccess(): void {
-    const returnUrl = sessionStorage.getItem('auth_return_url') || '/';
+  function redirectAfterSuccess(returnUrlFromPending: string | null): void {
+    // sessionStorage is gone if Android recreated the WebView mid-handshake, so
+    // fall back to the value captured when the flow started.
+    const returnUrl =
+      sessionStorage.getItem('auth_return_url') || returnUrlFromPending || '/';
     sessionStorage.removeItem('auth_return_url');
-    
+
     setTimeout(() => {
       navigateInApp(returnUrl);
     }, REDIRECT_DELAY_SUCCESS);
@@ -225,11 +271,14 @@
 
   // Initialize OAuth callback processing on component mount
   onMount(async () => {
+    // Captured before cleanup clears it.
+    const returnUrlFromPending = readPendingOAuth()?.returnUrl ?? null;
+
     try {
       await processOAuthCallback();
       cleanupSessionStorage();
       status = 'success';
-      redirectAfterSuccess();
+      redirectAfterSuccess(returnUrlFromPending);
     } catch (err: unknown) {
       cleanupSessionStorage();
       // Convert all errors to ApiError for consistent handling

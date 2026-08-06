@@ -6,8 +6,14 @@ cd "$ROOT_DIR"
 
 ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
 ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+NDK_HOME="${NDK_HOME:-}"
+ANDROID_API_LEVEL="${ANDROID_API_LEVEL:-24}"
 DEVICE_SERIAL="${1:-${ANDROID_SERIAL:-}}"
-APK_UNSIGNED="$ROOT_DIR/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk"
+RUST_TARGET="aarch64-linux-android"
+RUST_BUILD_JOBS="${RUST_BUILD_JOBS:-4}"
+GRADLE_VARIANT="Arm64Release"
+JNI_ABI="arm64-v8a"
+APK_UNSIGNED="$ROOT_DIR/src-tauri/gen/android/app/build/outputs/apk/arm64/release/app-arm64-release-unsigned.apk"
 APK_ALIGNED="${APK_UNSIGNED%-unsigned.apk}-aligned.apk"
 APK="${APK_UNSIGNED%-unsigned.apk}-debug-signed.apk"
 
@@ -47,6 +53,17 @@ detect_build_tools() {
   [[ -x "$APKSIGNER" ]] || fail "apksigner not found: $APKSIGNER"
 }
 
+detect_ndk() {
+  if [[ -n "$NDK_HOME" ]]; then
+    [[ -d "$NDK_HOME" ]] || fail "NDK_HOME does not exist: $NDK_HOME"
+    return
+  fi
+
+  [[ -d "$ANDROID_HOME/ndk" ]] || fail "Android NDK not found under $ANDROID_HOME/ndk"
+  NDK_HOME="$(find "$ANDROID_HOME/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+  [[ -n "$NDK_HOME" ]] || fail "Android NDK not found under $ANDROID_HOME/ndk"
+}
+
 ensure_debug_keystore() {
   DEBUG_KEYSTORE="${DEBUG_KEYSTORE:-$HOME/.android/debug.keystore}"
 
@@ -79,9 +96,50 @@ assert_supported_device() {
 }
 
 build_apk() {
+  local linker
+  local lib_dst
+  local lib_src
+  local toolchain
+
   echo "building production APK..."
-  rm -f "$APK_UNSIGNED" "$APK_ALIGNED" "$APK"
-  pnpm tauri android build --apk --target aarch64
+
+  toolchain="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+  linker="$toolchain/aarch64-linux-android${ANDROID_API_LEVEL}-clang"
+  [[ -x "$linker" ]] || fail "Android linker not found: $linker"
+
+  export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$linker"
+  export CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS="-Clink-arg=-landroid -Clink-arg=-llog -Clink-arg=-lOpenSLES"
+  export CC_aarch64_linux_android="$linker"
+  export CXX_aarch64_linux_android="$toolchain/aarch64-linux-android${ANDROID_API_LEVEL}-clang++"
+  export AR_aarch64_linux_android="$toolchain/llvm-ar"
+  export TAURI_ANDROID_PROJECT_PATH="$ROOT_DIR/src-tauri/gen/android"
+  export WRY_ANDROID_LIBRARY="grengin_lib"
+  export WRY_ANDROID_PACKAGE="com.grengin.community"
+  export TAURI_ANDROID_PACKAGE_UNESCAPED="com.grengin.community"
+  export WRY_ANDROID_KOTLIN_FILES_OUT_DIR="$ROOT_DIR/src-tauri/gen/android/app/src/main/java/com/grengin/community/generated"
+  export CARGO_BUILD_JOBS="$RUST_BUILD_JOBS"
+  export PATH="$toolchain:$PATH"
+
+  pnpm build
+  cargo build \
+    --manifest-path "$ROOT_DIR/src-tauri/Cargo.toml" \
+    --target "$RUST_TARGET" \
+    --features "tauri/custom-protocol" \
+    --lib \
+    --release \
+    -j "$RUST_BUILD_JOBS"
+
+  lib_src="$ROOT_DIR/src-tauri/target/$RUST_TARGET/release/libgrengin_lib.so"
+  lib_dst="$ROOT_DIR/src-tauri/gen/android/app/src/main/jniLibs/$JNI_ABI/libgrengin_lib.so"
+  [[ -f "$lib_src" ]] || fail "Rust library was not produced: $lib_src"
+  mkdir -p "$(dirname "$lib_dst")"
+  ln -sfn "$lib_src" "$lib_dst"
+
+  "$ROOT_DIR/src-tauri/gen/android/gradlew" \
+    --project-dir "$ROOT_DIR/src-tauri/gen/android" \
+    ":app:assemble$GRADLE_VARIANT" \
+    -x ":app:rustBuild$GRADLE_VARIANT"
+
   [[ -f "$APK_UNSIGNED" ]] || fail "APK was not produced: $APK_UNSIGNED"
 }
 
@@ -108,6 +166,7 @@ install_apk() {
 
 main() {
   require_cmd adb
+  require_cmd cargo
   require_cmd keytool
   require_cmd pnpm
 
@@ -115,6 +174,7 @@ main() {
   select_device
   assert_supported_device
   detect_build_tools
+  detect_ndk
   ensure_debug_keystore
 
   export ANDROID_HOME
@@ -122,7 +182,9 @@ main() {
 
   echo "device: $DEVICE_SERIAL ($ABI)"
   echo "android sdk: $ANDROID_HOME"
+  echo "android ndk: $NDK_HOME"
   echo "build tools: $(dirname "$APKSIGNER")"
+  echo "rust jobs: $RUST_BUILD_JOBS"
 
   build_apk
   sign_apk

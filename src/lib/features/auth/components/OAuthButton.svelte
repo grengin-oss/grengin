@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { initiateOAuth, ApiError } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
@@ -16,7 +17,8 @@
     onStart?: () => void;
     onSuccess?: () => void;
     onError?: (error: string) => void;
-
+    /** The flow was abandoned (user returned without completing sign-in). */
+    onCancel?: () => void;
   }
 
   let {
@@ -27,6 +29,7 @@
     onStart,
     onSuccess,
     onError,
+    onCancel,
   }: Props = $props();
 
   const configuredRedirectOrigin = import.meta.env?.VITE_OAUTH_REDIRECT_ORIGIN?.replace(/\/$/, '');
@@ -63,6 +66,31 @@
       onError?.(errorMessage);
     }
   }
+
+  // The native flow leaves for the system browser and only unmounts this button
+  // if a callback arrives. If the user backs out instead, the app resumes with the
+  // button still spinning and no way to retry — so release it once we're visible
+  // again. The delay lets a real callback navigate away first.
+  onMount(() => {
+    function releaseStuckLoadingState(): void {
+      if (!isLoading || document.visibilityState !== 'visible') return;
+
+      setTimeout(() => {
+        if (isLoading && document.visibilityState === 'visible') {
+          isLoading = false;
+          onCancel?.();
+        }
+      }, 600);
+    }
+
+    document.addEventListener('visibilitychange', releaseStuckLoadingState);
+    window.addEventListener('focus', releaseStuckLoadingState);
+
+    return () => {
+      document.removeEventListener('visibilitychange', releaseStuckLoadingState);
+      window.removeEventListener('focus', releaseStuckLoadingState);
+    };
+  });
 </script>
 
 <button 

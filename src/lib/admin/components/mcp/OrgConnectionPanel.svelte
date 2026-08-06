@@ -7,6 +7,7 @@
     disconnectOrgConnection,
     getOrgConnection,
   } from '../../../api/admin/mcpServers.js';
+  import { openNativeMcpOAuth } from '$lib/platform/nativeMcpOAuth';
 
   interface Props {
     server: MCPServer;
@@ -81,6 +82,17 @@
       const response = await authorizeMcpConnection(server.id);
       if (!response?.authorization_url) {
         throw new Error($_('admin.mcpOAuth.orgConnection.failedToGetUrl'));
+      }
+
+      const nativeResult = await openNativeMcpOAuth(response.authorization_url);
+      if (nativeResult) {
+        if (nativeResult.success) {
+          await refreshConnection();
+        } else {
+          toast.error(nativeResult.error || $_('admin.mcpOAuth.orgConnection.connectFailed'));
+        }
+        connecting = false;
+        return;
       }
 
       const width = 600;

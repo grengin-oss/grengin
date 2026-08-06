@@ -99,6 +99,7 @@
       },
       "missing_oauth_params": "必須OAuthパラメータが不足しています（stateまたはcode）",
       "oauth_provider_not_found": "OAuthプロバイダーが見つかりませんでした。もう一度ログインをお試しください",
+      "oauth_code_already_used": "このサインインリンクは既に使用されています。もう一度サインインしてください",
       "invalid_auth_response": "サーバーから無効な認証応答が返されました",
       "mfa_not_implemented": "多要素認証が必要ですが、まだ実装されていません",
       "invalid_redirect_uri": {

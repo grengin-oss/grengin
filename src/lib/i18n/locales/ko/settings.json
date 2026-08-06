@@ -5,6 +5,8 @@
     "tabs": {
       "appearance": "모양",
       "appearanceAria": "모양 기본 설정",
+      "backend": "백엔드",
+      "backendAria": "백엔드 URL 설정",
       "skills": "스킬",
       "skillsAria": "스킬 관리",
       "integrations": "통합",
@@ -277,5 +279,9 @@
       "dark": "다크",
       "darkDescription": "어두운 인터페이스를 사용합니다."
     }
+  },
+  "backendSettings": {
+    "title": "백엔드 URL 설정",
+    "subtitle": "이 기기에서 사용할 Grengin 백엔드를 선택합니다."
   }
 }

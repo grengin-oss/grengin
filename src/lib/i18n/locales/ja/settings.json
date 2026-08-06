@@ -5,6 +5,8 @@
     "tabs": {
       "appearance": "外観",
       "appearanceAria": "外観の設定",
+      "backend": "バックエンド",
+      "backendAria": "バックエンドURL設定",
       "skills": "スキル",
       "skillsAria": "スキルを管理",
       "integrations": "連携",
@@ -277,5 +279,9 @@
       "dark": "ダーク",
       "darkDescription": "暗いインターフェースを使用します。"
     }
+  },
+  "backendSettings": {
+    "title": "バックエンドURL設定",
+    "subtitle": "このデバイスで使用するGrenginバックエンドを選択します。"
   }
 }

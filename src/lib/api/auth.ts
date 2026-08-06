@@ -2,10 +2,13 @@ import type { components } from '../types/api.js';
 import { API_BASE, ApiError, request, parseErrorDetail, apiFetch } from './client.js';
 import {
   isTauriRuntime,
+  normalizeMobileCallbackProvider,
   openNativeExternalUrl,
   openNativeOAuthPopup,
   shouldUseNativeExternalOAuth,
 } from '../platform/tauri.js';
+import { savePendingOAuth } from '../features/auth/pendingOAuth.js';
+import { watchForPendingOAuthCallback } from '../features/auth/nativeDeepLink.js';
 
 type User = components['schemas']['User'];
 
@@ -56,6 +59,12 @@ async function openOAuthUrl(url: string, provider: string): Promise<void> {
       if (didOpenExternal) {
         return;
       }
+
+      // Microsoft refuses to sign in from an embedded WebView, and navigating the
+      // app's own WebView to the auth URL destroys the app shell with no way back
+      // (the `msauth://` redirect cannot re-enter a page that no longer exists).
+      // Surface the failure instead of falling into either dead end.
+      throw new Error(`Failed to open the system browser for ${provider} sign-in`);
     }
 
     const didOpenPopup = await openNativeOAuthPopup(url);
@@ -102,17 +111,33 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
     params.set('redirect_uri', redirectUri);
   }
 
+  const isNativeExternal = isTauriRuntime() && shouldUseNativeExternalOAuth(provider);
+
   // Store provider in sessionStorage so callback can retrieve it
   sessionStorage.setItem('oauth_provider', provider);
+
+  // The native flow hands off to the system browser, and Android may destroy this
+  // WebView (or the whole process) before the callback returns — which wipes
+  // sessionStorage. Everything the callback needs also goes to localStorage.
+  savePendingOAuth({
+    provider,
+    mobile: isNativeExternal,
+    returnUrl: sessionStorage.getItem('auth_return_url') || '/',
+  });
 
   const query = params.toString();
   const url = `${API_BASE}/auth/${provider}${query ? `?${query}` : ''}`;
 
   // On native Android, use the system auth surface for Azure/MSA. Opening the
   // resolved Microsoft URL avoids rendering the backend redirect hop.
-  if (isTauriRuntime() && shouldUseNativeExternalOAuth(provider)) {
+  if (isNativeExternal) {
     sessionStorage.setItem('oauth_mobile_callback', 'true');
     const authUrl = await getOAuthRedirectTarget(url);
+
+    // Arm the deep-link recovery poll before we lose the foreground, so a dropped
+    // `deep-link://new-url` event is still picked up from the native intent.
+    watchForPendingOAuthCallback();
+
     await openOAuthUrl(authUrl, provider);
     return;
   }
@@ -137,8 +162,10 @@ export async function handleOAuthCallback(
   state: string,
   options: { assertion?: string | null; mobile?: boolean } = {}
 ): Promise<LoginResponse> {
+  // The mobile (public-client) exchange only exists for Azure; a tenant labelled
+  // `microsoft` must still POST to the azure route.
   const callbackPath = options.mobile
-    ? `/auth/${provider}/mobile/callback`
+    ? `/auth/${normalizeMobileCallbackProvider(provider)}/mobile/callback`
     : `/auth/${provider}/callback`;
   const url = `${API_BASE}${callbackPath}`;
   const payload: Record<string, string> = { state };

@@ -1,0 +1,6 @@
+# Cap parallel rustc jobs. Cargo otherwise defaults to one per logical core
+# (16 here), and the Android build's linker steps hold enough memory at once to
+# freeze the machine. Cargo reads this file for any build run from src-tauri,
+# which is where the Tauri CLI invokes it.
+[build]
+jobs = 4

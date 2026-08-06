@@ -2,15 +2,36 @@ use tauri::{Emitter, Manager, Url, WebviewUrl, WebviewWindowBuilder};
 
 const OAUTH_POPUP_LABEL: &str = "oauth-login";
 const NATIVE_OAUTH_CALLBACK_EVENT: &str = "native-oauth-callback";
+const NATIVE_MCP_OAUTH_CALLBACK_EVENT: &str = "native-mcp-oauth-callback";
 const NATIVE_OAUTH_SCHEME: &str = "com.grengin.community";
 const MICROSOFT_OAUTH_SCHEME: &str = "msauth";
 const MICROSOFT_OAUTH_HOST: &str = "com.grengin.community";
+const MCP_OAUTH_CALLBACK_PATH: &str = "/mcp/oauth/callback";
 
 fn is_oauth_callback_url(url: &Url) -> bool {
     match url.scheme() {
         NATIVE_OAUTH_SCHEME => url.host_str() == Some("auth"),
         MICROSOFT_OAUTH_SCHEME => url.host_str() == Some(MICROSOFT_OAUTH_HOST),
         _ => false,
+    }
+}
+
+fn is_mcp_oauth_callback_url(url: &Url) -> bool {
+    matches!(url.scheme(), "http" | "https")
+        && url.path().trim_end_matches('/') == MCP_OAUTH_CALLBACK_PATH
+}
+
+fn close_oauth_popup(app: &tauri::AppHandle) {
+    #[cfg(desktop)]
+    {
+        if let Some(popup) = app.get_webview_window(OAUTH_POPUP_LABEL) {
+            let _ = popup.close();
+        }
+    }
+
+    #[cfg(mobile)]
+    {
+        let _ = app;
     }
 }
 
@@ -37,8 +58,6 @@ fn open_oauth_popup(app: tauri::AppHandle, url: String) -> Result<(), String> {
     }
 
     let app_for_navigation = app.clone();
-    #[cfg(desktop)]
-    let popup_label = OAUTH_POPUP_LABEL.to_string();
 
     let builder =
         WebviewWindowBuilder::new(&app, OAUTH_POPUP_LABEL, WebviewUrl::External(auth_url))
@@ -46,13 +65,15 @@ fn open_oauth_popup(app: tauri::AppHandle, url: String) -> Result<(), String> {
                 if is_oauth_callback_url(navigation_url) {
                     let callback_url = navigation_url.as_str().to_string();
                     let _ = app_for_navigation.emit(NATIVE_OAUTH_CALLBACK_EVENT, callback_url);
+                    close_oauth_popup(&app_for_navigation);
 
-                    #[cfg(desktop)]
-                    {
-                        if let Some(popup) = app_for_navigation.get_webview_window(&popup_label) {
-                            let _ = popup.close();
-                        }
-                    }
+                    return false;
+                }
+
+                if is_mcp_oauth_callback_url(navigation_url) {
+                    let callback_url = navigation_url.as_str().to_string();
+                    let _ = app_for_navigation.emit(NATIVE_MCP_OAUTH_CALLBACK_EVENT, callback_url);
+                    close_oauth_popup(&app_for_navigation);
 
                     return false;
                 }

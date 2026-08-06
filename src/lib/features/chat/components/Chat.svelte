@@ -639,6 +639,11 @@
           }
         },
         onArtifact: (artifact) => {
+          if (pendingStreamingMessage && !messageAddedToArray) {
+            messages = [...messages, pendingStreamingMessage];
+            messageAddedToArray = true;
+            activeStreamMessageId = pendingStreamingMessage.id;
+          }
           applyStreamingArtifact(artifact);
         },
         onImageGenerated: (image) => {
@@ -776,6 +781,7 @@
             isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
           }
+          resetArtifactState();
         },
       });
     } catch (err) {
@@ -1089,6 +1095,7 @@
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
           }
+          resetArtifactState();
           isLoading = false;
           isTyping = false;
         }
@@ -1201,6 +1208,7 @@
         isLoading = true;
         error = null;
         showArtifactPanel = false;
+        resetArtifactState();
 
         const conversation = await getConversation(chatId);
         if (loadToken !== conversationLoadToken) return;
@@ -1327,6 +1335,7 @@
       isLoading = false;
       isLoadingConversation = false;
       showArtifactPanel = false;
+      resetArtifactState();
 
       // Set model and provider from query params or defaults
       selectedModel = urlParams.get('model') || 'gpt-5.2';
@@ -1518,6 +1527,7 @@
           <!-- Chat message -->
           <ChatMessage
             {message}
+            streamingArtifacts={activeStreamMessageId === message.id ? panelArtifacts : []}
             onEdit={handleEditMessage}
             selectedModelInfo={selectedModelInfo}
             providers={providers}

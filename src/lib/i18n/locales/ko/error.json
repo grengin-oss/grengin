@@ -99,6 +99,7 @@
       },
       "missing_oauth_params": "필수 OAuth 매개변수가 누락되었습니다 (state 또는 code)",
       "oauth_provider_not_found": "OAuth 프로바이더를 찾을 수 없습니다. 다시 로그인해 주세요",
+      "oauth_code_already_used": "이 로그인 링크는 이미 사용되었습니다. 다시 로그인해 주세요",
       "invalid_auth_response": "서버에서 유효하지 않은 인증 응답을 받았습니다",
       "mfa_not_implemented": "다중 인증이 필요하지만 아직 구현되지 않았습니다",
       "invalid_redirect_uri": {

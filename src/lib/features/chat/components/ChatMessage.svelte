@@ -50,6 +50,7 @@
 
   interface Props {
     message: ChatMessage & { files?: Array<{ id: string; name?: string; type?: string }> };
+    streamingArtifacts?: ArtifactItem[];
     onEdit?: (id: string, newContent: string) => void;
     selectedModelInfo?: ProviderInfo;
     providers?: ProviderInfo[];
@@ -59,7 +60,17 @@
     onShowArtifact?: (artifacts: ArtifactItem[], index: number) => void;
   }
 
-  let { message, onEdit, selectedModelInfo, providers, onMcpAuthConnected, onMcpAuthError, onMcpAuthStatusChange, onShowArtifact }: Props = $props();
+  let {
+    message,
+    streamingArtifacts = [],
+    onEdit,
+    selectedModelInfo,
+    providers,
+    onMcpAuthConnected,
+    onMcpAuthError,
+    onMcpAuthStatusChange,
+    onShowArtifact,
+  }: Props = $props();
   let isEditing = $state(false);
   let editContent = $state(message.content);
   let showActions = $state(false);
@@ -103,11 +114,10 @@
   let renderedContent = $state('');
   let isRenderingMarkdown = $state(false);
   // Every artifact belonging to this message, taken ONLY from the backend's
-  // structured `parts.artifacts` metadata (ENGG-387). The client never parses
-  // <artifact> tags or code fences to *derive* artifacts — content is fetched
-  // by id in the panel.
+  // structured `parts.artifacts` metadata (ENGG-387), with live streamed
+  // artifacts injected by Chat while the active response is still generating.
   let artifactContents = $derived<ArtifactItem[]>(
-    extractMessageArtifacts(message.artifacts),
+    streamingArtifacts.length > 0 ? streamingArtifacts : extractMessageArtifacts(message.artifacts),
   );
 
   let hasPreviewableContent = $derived(artifactContents.length > 0);
@@ -630,6 +640,7 @@
             {#each artifactContents as artifact, i}
               <button
                 class="artifact-card"
+                class:artifact-card--streaming={artifact.streaming}
                 onclick={() => onShowArtifact?.(artifactContents, i)}
               >
                 <div class="artifact-card-icon">
@@ -650,7 +661,7 @@
                 </div>
                 <div class="artifact-card-info">
                   <span class="artifact-card-title">{artifact.title || (artifact.type === 'html' ? 'HTML Artifact' : 'Markdown Document')}</span>
-                  <span class="artifact-card-hint">Click to open preview</span>
+                  <span class="artifact-card-hint">{artifact.streaming ? 'Generating - tap to preview' : 'Click to open preview'}</span>
                 </div>
                 <svg class="artifact-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M5 12h14M12 5l7 7-7 7" />
@@ -1320,6 +1331,26 @@
     border-color: rgba(139, 92, 246, 0.35);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+  }
+
+  .artifact-card--streaming {
+    border-color: rgba(34, 197, 94, 0.34);
+    background: rgba(34, 197, 94, 0.08);
+  }
+
+  .artifact-card--streaming:hover {
+    border-color: rgba(34, 197, 94, 0.48);
+    background: rgba(34, 197, 94, 0.12);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.1);
+  }
+
+  .artifact-card--streaming .artifact-card-icon {
+    background: rgba(34, 197, 94, 0.14);
+    color: #22c55e;
+  }
+
+  .artifact-card--streaming .artifact-card-arrow {
+    color: #22c55e;
   }
 
   .artifact-card-icon {
