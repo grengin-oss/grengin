@@ -7,7 +7,7 @@
 <h1 align="center">Grengin</h1>
 
 <p align="center">
-  A source-available, self-hosted AI platform for secure multi-provider chat,
+  An open-source, self-hosted AI platform for secure multi-provider chat,
   team governance, MCP tools, projects, analytics, and enterprise SSO.
 </p>
 
@@ -25,6 +25,7 @@
   <img alt="Axum" src="https://img.shields.io/badge/Axum-1f2937">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&amp;logoColor=white">
   <img alt="Linux amd64 and arm64" src="https://img.shields.io/badge/Linux-amd64%20%7C%20arm64-FCC624?logo=linux&amp;logoColor=black">
+  <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-16a34a">
 </p>
 
 Grengin gives teams governed access to leading AI models without sending their
@@ -72,7 +73,8 @@ Grengin uses one public product version across its release assets:
 Each archive contains a `RELEASE-MANIFEST.json` with the exact repositories,
 component versions, commit SHAs, platform, and architecture. The backend commit
 is pinned in [`release/backend-commit.txt`](release/backend-commit.txt), so a
-release never depends on a moving branch.
+release never depends on a moving branch. Source and Linux archives also carry
+the applicable Apache 2.0 license and attribution notices.
 
 ## Architecture
 
@@ -185,15 +187,18 @@ Bug fixes, documentation improvements, and focused feature contributions are
 welcome. Open an issue before starting a large change so scope and API contracts
 can be agreed first.
 
-By contributing, you agree that your contribution is licensed under the
-[Grengin Sustainable Use License](LICENSE.md).
+Unless stated otherwise, contributions submitted to this repository are
+licensed under the [Apache License 2.0](LICENSE.md), as described in Section 5
+of the license.
 
 ## License
 
-Grengin is source-available under the
-[Grengin Sustainable Use License 1.1](LICENSE.md). It is free to self-host,
-modify, and use internally, including for commercial operations. Selling,
-white-labeling, or operating Grengin as a competing hosted service requires a
-separate agreement.
+Grengin is open source under the [Apache License 2.0](LICENSE.md). You may use,
+modify, and distribute it, including for commercial purposes, subject to the
+license terms and the attribution notices in [NOTICE](NOTICE).
 
-For managed hosting or commercial permissions, contact `contact@grengin.com`.
+The Apache License does not grant permission to use the Grengin trademarks,
+service marks, or branding except as allowed by Section 6 of the license.
+
+Release `v0.3.2` is the first Apache 2.0 product release. Earlier release tags
+and archives remain governed by the license included with those versions.

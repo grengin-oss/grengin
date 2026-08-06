@@ -1,121 +1,201 @@
-# Grengin Sustainable Use License (SUL)
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
 
-Version 1.1 - June 2026
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 
-Copyright (c) 2025–2026 Perter Technology Solutions Private Limited
+   1. Definitions.
 
-Grengin is **source-available and self-host first.** This single document is the entire license: it covers your right to use the software, contributions, the optional commercial/managed options, and the brand. (These previously lived in separate `LICENSE`, `CONTRIBUTOR_LICENSE`, and `LICENSE_ENTERPRISE` files and are now folded together.)
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
 
----
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
 
-## Plain-English summary
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
 
-*This summary is for convenience only; the numbered terms below are what actually govern.*
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
 
-- **Free for everyone** — individuals, companies of any size, non-profits, schools, open-source projects — **including internal commercial use.** No fee, no seat minimum, no revenue threshold.
-- You may **self-host, modify, and redistribute** the software free of charge.
-- You may **not** sell it, host it for third parties, white-label it, resell it, or build a competing service from it. Those require a **separate written agreement** from the Licensor.
-- **Optional** managed hosting, support, and indemnification are available from the Licensor — these add services, not features. Every feature ships in the free software.
-- **"Grengin" and the logo are reserved** — a fork or redistribution must use its own name.
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
 
----
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
 
-## 1. Definitions
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
 
-- **"Software"** means Grengin, including its source code, documentation, and associated files.
-- **"You"** / **"Your"** means the individual or entity exercising rights under this License.
-- **"Licensor"** means Perter Technology Solutions Private Limited, a company incorporated in India, the copyright holder named above.
-- **"Reserved Use"** means any activity listed in Section 3.
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
 
----
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
 
-## 2. Free Use
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
 
-The Licensor grants You a perpetual, worldwide, non-exclusive, royalty-free license to use, copy, modify, create derivative works of, and redistribute the Software — **including for internal commercial purposes** — subject to Sections 2.1 and 3. There is no fee, seat minimum, or revenue threshold.
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
 
-### 2.1 Conditions
-- Retain all copyright, license, and attribution notices.
-- Do not remove or circumvent any license validation or identification mechanism.
-- Include a copy of this License with any copy You distribute, and distribute the Software itself only free of charge.
-- Do not imply endorsement by, or affiliation with, the Grengin project or the Licensor.
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
 
-### 2.2 Patent License
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
 
-The Licensor grants You a license, under any patent claims the Licensor can license or becomes able to license, to make, have made, use, sell, offer for sale, import, and have imported the Software, in each case subject to the conditions and limitations in this License. This patent license does not extend to any patent claims that You cause to be infringed by Your modifications or additions to the Software. If You, or any organization You act on behalf of, make a written claim that the Software infringes or contributes to the infringement of any patent, the patent license granted to You in this Section 2.2 terminates immediately.
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
 
----
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
 
-## 3. Reserved Uses — Separate Agreement Required
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
 
-You need a separate written agreement from the Licensor to:
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
 
-- offer the Software as a hosted, managed, or SaaS product to third parties;
-- sell, resell, sublicense, white-label, or redistribute the Software for a fee; or
-- build or operate a product or service that competes with the Licensor's official Grengin offerings.
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
 
-Using the Software **internally is not a Reserved Use** — including in revenue-generating operations, in client work produced with it, or as a tool Your own team relies on.
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
 
----
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
 
-## 4. Commercial, Managed & Support Options
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
 
-Managed hosting (Grengin Cloud), priority support with response-time SLAs, indemnification, and permission for the Reserved Uses in Section 3 are available from the Licensor on an **optional, opt-in** basis, for any deployment mode. These are **services and permissions, not feature unlocks** — all functionality of the Software is available to every user for free under Section 2. Contact sales@grengin.com or see https://grengin.com/pricing.
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
 
----
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
 
-## 5. Contributions
+   END OF TERMS AND CONDITIONS
 
-By submitting a contribution (code, documentation, or other material) to the project, You:
+   APPENDIX: How to apply the Apache License to your work.
 
-- license Your contribution to all recipients under this same License;
-- grant the Licensor a **perpetual, worldwide, non-exclusive, royalty-free, irrevocable, sublicensable license** to use, reproduce, modify, distribute, and **relicense** Your contribution, including under different or commercial terms (so it may be included in the Licensor's commercial and managed offerings);
-- grant a matching patent license for any patent claims Your contribution necessarily infringes; and
-- confirm that the contribution is Your original work and that You have the right to submit it (and, if Your employer holds rights, that You have permission).
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
 
-You retain ownership of Your contribution and may use it elsewhere. For significant or corporate contributions, the Licensor may ask You to confirm agreement on the pull request or to sign a separate corporate agreement — contact legal@grengin.com. Contributors are credited in the Git history and `CONTRIBUTORS.md` unless You ask otherwise.
+   Copyright [yyyy] [name of copyright owner]
 
----
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
 
-## 6. Trademark
+       http://www.apache.org/licenses/LICENSE-2.0
 
-This License grants no rights in the **"Grengin"** name, logo, or brand assets. You may state factually that Your work uses or is based on Grengin, but You may not use the name or logo in any way that implies endorsement or affiliation, and any redistributed or forked version must be **clearly renamed.**
-
----
-
-## 7. Attribution and Modified Versions
-
-When You redistribute or publicly deploy the Software, retain the copyright notices and provide attribution with a link to the official repository. If You distribute a modified version, clearly mark it as modified, do not present it as an official release, and make the modified source available if You distribute binaries.
-
----
-
-## 8. Disclaimer of Warranty
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
----
-
-## 9. Limitation of Liability
-
-IN NO EVENT SHALL THE LICENSOR OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
----
-
-## 10. Termination
-
-If You use the Software in violation of this License, that use is not licensed and Your rights under this License terminate automatically.
-
-If the Licensor notifies You of the violation and You cease all violation within 30 days of receiving that notice, Your rights are reinstated retroactively. To resume a Reserved Use after stopping it, You must obtain a separate written agreement under Section 4.
-
-If You violate this License again after a reinstatement, Your rights terminate automatically and permanently.
-
----
-
-## 11. Miscellaneous
-
-- This License is the entire agreement between You and the Licensor regarding use of the Software.
-- The Licensor may publish revised versions of this License. You may use the Software under the version You received or any later version.
-- **Governing law:** This License is governed by the laws of the Republic of India, without regard to conflict-of-law principles.
-
----
-
-**Questions:** licensing@grengin.com · **Commercial & managed:** https://grengin.com/pricing · **Website:** https://grengin.com
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
