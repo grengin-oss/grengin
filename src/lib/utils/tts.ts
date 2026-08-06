@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Text-to-Speech Utilities
  * Manages TTS state across all messages, ensuring only one speaks at a time

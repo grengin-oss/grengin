@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 /** Single entry for the user/chat area — keeps Chat, alerts, sidebar chat, projects, and forbidden in one async chunk. */
 export { default as Chat } from '$lib/features/chat/components/Chat.svelte';
 export { default as AlertsPage } from '$lib/features/notifications/AlertsPage.svelte';

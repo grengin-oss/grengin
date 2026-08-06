@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+SPDX-License-Identifier: Apache-2.0
+-->
+
 <script lang="ts">
   import type { Department, BudgetPeriod, BudgetOverview, ActionOnExceed } from "../types.js";
   import { departmentsStore } from "../stores/index.js";

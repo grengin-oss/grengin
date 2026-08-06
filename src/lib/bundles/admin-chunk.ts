@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 /** Single entry for the admin panel — all admin pages (and admin alerts) in one async chunk. */
 export { default as Overview } from '$lib/admin/pages/Overview.svelte';
 export { default as Users } from '$lib/admin/pages/Users.svelte';

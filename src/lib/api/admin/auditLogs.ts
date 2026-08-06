@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 import { request, API_BASE } from '../client.js';
 import type { PaginatedAuditLogs } from '../../admin/types.js';
 

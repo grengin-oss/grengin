@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+SPDX-License-Identifier: Apache-2.0
+-->
+
 <script lang="ts">
   import type { ToolCall, ToolResult, ToolResultContent } from '../../../types/toolCall';
   import { _ } from 'svelte-i18n';

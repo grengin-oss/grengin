@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 // Users Store - User management state using Svelte 5 runes
 import type { User } from '../types.js';
 import { getUsers, getScopedUsers, createUser, updateUser, updateUserStatus } from '../../api/admin/users.js';

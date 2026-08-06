@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+# SPDX-License-Identifier: Apache-2.0
+
 FROM rust:1.91-alpine AS builder
 
 ARG TARGETARCH
