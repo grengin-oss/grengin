@@ -16,16 +16,17 @@
   <a href="https://grengin.com/docs">Documentation</a> |
   <a href="https://grengin.com/aws">Deploy on AWS</a> |
   <a href="https://github.com/grengin-oss/grengin/releases">Releases</a> |
-  <a href="LICENSE.md">License</a>
+  <a href="LICENSE">License</a>
 </p>
 
 <p align="center">
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
+  <a href="LICENSE_FAQ.md"><img alt="License FAQ" src="https://img.shields.io/badge/license-FAQ-blue"></a>
   <img alt="Svelte 5" src="https://img.shields.io/badge/Svelte_5-FF3E00?logo=svelte&amp;logoColor=white">
   <img alt="Rust" src="https://img.shields.io/badge/Rust-000000?logo=rust&amp;logoColor=white">
   <img alt="Axum" src="https://img.shields.io/badge/Axum-1f2937">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&amp;logoColor=white">
   <img alt="Linux amd64 and arm64" src="https://img.shields.io/badge/Linux-amd64%20%7C%20arm64-FCC624?logo=linux&amp;logoColor=black">
-  <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-16a34a">
 </p>
 
 Grengin gives teams governed access to leading AI models without sending their
@@ -183,22 +184,24 @@ grengin/
 
 ## Contributing
 
-Bug fixes, documentation improvements, and focused feature contributions are
-welcome. Open an issue before starting a large change so scope and API contracts
-can be agreed first.
-
-Unless stated otherwise, contributions submitted to this repository are
-licensed under the [Apache License 2.0](LICENSE.md), as described in Section 5
-of the license.
+Issues and small pull requests are welcome; see
+[CONTRIBUTING.md](CONTRIBUTING.md). There is no contributor agreement
+to sign, since Apache 2.0 Section 5 already covers submissions.
 
 ## License
 
-Grengin is open source under the [Apache License 2.0](LICENSE.md). You may use,
-modify, and distribute it, including for commercial purposes, subject to the
-license terms and the attribution notices in [NOTICE](NOTICE).
+Grengin is free and open source software under the
+[Apache License 2.0](LICENSE).
 
-The Apache License does not grant permission to use the Grengin trademarks,
-service marks, or branding except as allowed by Section 6 of the license.
+Use it, modify it, self-host it, embed it, resell it, or run it as a
+managed service, commercially or not, at any company size. No usage
+caps, no commercial license, nothing to sign. Releases published
+before this one remain under the Grengin Sustainable Use License they
+shipped with.
 
-Release `v0.3.2` is the first Apache 2.0 product release. Earlier release tags
-and archives remain governed by the license included with those versions.
+The Grengin name and logo are trademarks of Perter Technology
+Solutions Private Limited and are not covered by the Apache license.
+Forks and third-party distributions need their own name; see
+[TRADEMARKS.md](TRADEMARKS.md).
+
+Questions: [LICENSE_FAQ.md](LICENSE_FAQ.md) or licensing@grengin.com

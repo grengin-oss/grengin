@@ -42,5 +42,6 @@ RUN case "${TARGETARCH}" in \
 RUN strip /usr/local/bin/grengin-api /usr/local/bin/sqlx-mcp
 
 FROM scratch
+LABEL org.opencontainers.image.licenses="Apache-2.0"
 COPY --from=builder /usr/local/bin/grengin-api /usr/local/bin/grengin-api
 COPY --from=builder /usr/local/bin/sqlx-mcp /usr/local/bin/sqlx-mcp

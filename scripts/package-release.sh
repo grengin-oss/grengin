@@ -131,9 +131,9 @@ create_linux_bundle() {
   install -m 0755 "${rootfs}/usr/local/bin/grengin-api" "${bundle_root}/bin/grengin-api"
   install -m 0755 "${rootfs}/usr/local/bin/sqlx-mcp" "${bundle_root}/bin/sqlx-mcp"
   cp -R "${REPOSITORY_ROOT}/dist/." "${bundle_root}/webapp/"
-  cp "${REPOSITORY_ROOT}/LICENSE.md" "${bundle_root}/licenses/frontend-LICENSE.md"
+  cp "${REPOSITORY_ROOT}/LICENSE" "${bundle_root}/licenses/frontend-LICENSE"
   cp "${REPOSITORY_ROOT}/NOTICE" "${bundle_root}/licenses/frontend-NOTICE"
-  cp "${BACKEND_SOURCE_DIR}/LICENSE.md" "${bundle_root}/licenses/backend-LICENSE.md"
+  cp "${BACKEND_SOURCE_DIR}/LICENSE" "${bundle_root}/licenses/backend-LICENSE"
   cp "${BACKEND_SOURCE_DIR}/NOTICE" "${bundle_root}/licenses/backend-NOTICE"
 
   cat > "${bundle_root}/RELEASE-MANIFEST.json" <<EOF
