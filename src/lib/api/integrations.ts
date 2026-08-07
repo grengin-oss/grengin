@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 import { request } from './client.js';
 import { cachedLoad, clearCacheNamespace, makeScopedCacheKey } from '../utils/cache.js';
 import type {

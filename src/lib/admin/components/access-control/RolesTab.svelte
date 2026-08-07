@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+SPDX-License-Identifier: Apache-2.0
+-->
+
 <script lang="ts">
   import type { Role } from "../../../api/admin/roles.js";
   import type { Permission } from "../../../api/admin/permissions.js";

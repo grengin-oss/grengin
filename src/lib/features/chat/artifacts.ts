@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 export type ArtifactType = 'html' | 'markdown';
 
 /** A single artifact ready to render in the preview panel or a message card. */

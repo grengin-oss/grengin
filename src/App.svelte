@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+SPDX-License-Identifier: Apache-2.0
+-->
+
 <script lang="ts">
   import { onMount, onDestroy, untrack } from 'svelte';
   import { Router, Route, navigate } from 'svelte-routing';

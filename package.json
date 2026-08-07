@@ -1,8 +1,8 @@
 {
   "name": "@grengin/community",
   "private": true,
-  "version": "0.3.1",
-  "license": "SEE LICENSE IN LICENSE.md",
+  "version": "0.3.2",
+  "license": "Apache-2.0",
   "edition": "community",
   "type": "module",
   "scripts": {

@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+SPDX-License-Identifier: Apache-2.0
+-->
+
 <script lang="ts">
   import { Route } from 'svelte-routing';
   import PermissionGuard from '$lib/components/PermissionGuard.svelte';

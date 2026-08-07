@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 import { API_BASE, request, ApiError, apiFetch } from './client';
 import { getAccessToken } from '../features/auth';
 

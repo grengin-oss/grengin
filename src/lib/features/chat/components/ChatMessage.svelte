@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+SPDX-License-Identifier: Apache-2.0
+-->
+
 <script lang="ts">
   import type { ChatMessage, McpAuthRequest } from '../../../types/chat';
   import type { ToolResult } from '../../../types/toolCall';

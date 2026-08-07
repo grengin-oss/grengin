@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+SPDX-License-Identifier: Apache-2.0
+-->
+
 <script lang="ts">
   // The standalone User Management page was merged into the Organization page
   // (ENGG-388). This route now redirects to the Users tab so existing bookmarks

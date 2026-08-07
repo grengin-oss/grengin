@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 import { addMessages, init, getLocaleFromNavigator, locale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 

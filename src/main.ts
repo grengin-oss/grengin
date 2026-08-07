@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 import { mount } from 'svelte'
 import './app.css'
 import { i18nReady, loadNamespaces, loadNamespacesForRoute } from './lib/i18n'

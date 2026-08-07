@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 import { request } from './client.js';
 
 /** Full persisted artifact as returned by `GET /artifacts/{id}`. */

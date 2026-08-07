@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 import type { Request, Response, NextFunction } from 'express'
 
 export const requireAuth = (req: Request, res: Response, next: NextFunction) => {

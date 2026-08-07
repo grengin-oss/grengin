@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+SPDX-License-Identifier: Apache-2.0
+-->
+
 <script lang="ts">
   import type { McpAccessType, McpPermission, McpAccessRuleCreatePayload } from '../../types.js';
   import type { Role } from '../../../api/admin/roles.js';

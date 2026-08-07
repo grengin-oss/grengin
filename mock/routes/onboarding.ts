@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 import { Router } from 'express'
 import { faker } from '@faker-js/faker'
 import onboardingStartExample from '../examples/auth/onboarding-start.response.json' with { type: 'json' }

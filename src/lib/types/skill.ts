@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 // Skills system types — mirrors the /me/skills, /skills and /conversations/{id}/skills API.
 // A "skill" attaches configurable behaviours to a conversation:
 //   - instructions              → Markdown instructions injected into the system prompt
