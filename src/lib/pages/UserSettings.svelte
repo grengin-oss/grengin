@@ -8,13 +8,12 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from "svelte-i18n";
   import PageHeader from "../admin/components/PageHeader.svelte";
   import AppearanceSettings from "./settings/AppearanceSettings.svelte";
-  import BackendSettings from "./settings/BackendSettings.svelte";
   import UserIntegrations from "./settings/UserIntegrations.svelte";
   import UserPromptSettings from "./settings/UserPromptSettings.svelte";
   import UserSkills from "./settings/UserSkills.svelte";
   import { loadNamespaces } from "$lib/i18n/index.js";
 
-  type TabId = "appearance" | "backend" | "skills" | "integrations" | "promptSettings";
+  type TabId = "appearance" | "skills" | "integrations" | "promptSettings";
 
   interface TabConfig {
     id: TabId;
@@ -27,11 +26,6 @@ SPDX-License-Identifier: Apache-2.0
       id: "appearance",
       label: $_("userSettings.tabs.appearance"),
       ariaLabel: $_("userSettings.tabs.appearanceAria"),
-    },
-    {
-      id: "backend",
-      label: $_("userSettings.tabs.backend"),
-      ariaLabel: $_("userSettings.tabs.backendAria"),
     },
     {
       id: "skills",
@@ -145,8 +139,6 @@ SPDX-License-Identifier: Apache-2.0
   >
     {#if currentTab === "appearance"}
       <AppearanceSettings />
-    {:else if currentTab === "backend"}
-      <BackendSettings />
     {:else if currentTab === "skills"}
       <UserSkills />
     {:else if currentTab === "integrations"}

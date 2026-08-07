@@ -5,8 +5,6 @@
     "tabs": {
       "appearance": "المظهر",
       "appearanceAria": "تفضيلات المظهر",
-      "backend": "الخلفية",
-      "backendAria": "إعدادات عنوان URL للخلفية",
       "skills": "المهارات",
       "skillsAria": "إدارة مهاراتك",
       "integrations": "التكاملات",
@@ -279,9 +277,5 @@
       "dark": "داكن",
       "darkDescription": "استخدم الواجهة الداكنة."
     }
-  },
-  "backendSettings": {
-    "title": "إعدادات عنوان URL للخلفية",
-    "subtitle": "اختر خلفية Grengin التي يجب أن يستخدمها هذا الجهاز."
   }
 }

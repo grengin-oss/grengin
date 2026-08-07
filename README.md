@@ -180,18 +180,56 @@ pnpm build
 The Tauri application source and platform configuration live in `src-tauri/`.
 Install Rust and the Tauri prerequisites before building a native application.
 
-For Android, install the Android SDK, NDK, Java, and an ARM64 Rust Android
-target. Run on an emulator or connected ADB device with:
+#### Android
+
+Install Java 17 or newer, the Android SDK command-line tools, platform tools,
+build tools, an Android NDK, Rust, and the ARM64 Android Rust target:
+
+```bash
+rustup target add aarch64-linux-android
+export ANDROID_HOME="$HOME/Android/Sdk"
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+```
+
+Run the Tauri development build on an emulator or connected ADB device:
 
 ```bash
 pnpm android:dev
 ```
 
-Create and install an optimized ARM64 APK on a connected device with:
+Create a release APK through the Tauri CLI without installing it:
 
 ```bash
+pnpm android:build
+```
+
+For an ARM64 device, the repository also provides a one-command production
+build and ADB installation workflow:
+
+```bash
+adb devices
 ./install_android_adb.sh
 ```
+
+The script builds the optimized Rust library with four compiler jobs, assembles
+the `arm64-v8a` release variant, aligns and debug-signs the APK, and installs it
+with `adb install -r -d`. It creates `$HOME/.android/debug.keystore` when needed;
+that key is for device testing and must not be used for a store release.
+
+When multiple devices are connected, pass the target serial explicitly:
+
+```bash
+./install_android_adb.sh emulator-5554
+# or
+ANDROID_SERIAL=emulator-5554 ./install_android_adb.sh
+```
+
+`ANDROID_HOME`, `ANDROID_SDK_ROOT`, `NDK_HOME`, `ANDROID_API_LEVEL`, and
+`RUST_BUILD_JOBS` can be overridden for non-default SDK installations. The
+installer currently supports `arm64-v8a` devices and installs the application as
+`com.grengin.community`.
+
+#### iOS
 
 For iOS, use macOS with Xcode and its command-line tools. Initialize the Xcode
 project on the first build, then run it on a simulator:

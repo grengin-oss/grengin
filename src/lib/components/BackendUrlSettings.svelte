@@ -9,10 +9,6 @@
     setApiBaseOverride,
   } from '../api/client.js';
 
-  interface Props {
-    compact?: boolean;
-  }
-
   function readApiBaseState(): {
     currentUrl: string;
     defaultUrl: string;
@@ -25,7 +21,6 @@
     };
   }
 
-  let { compact = false }: Props = $props();
   const initialApiBaseState = readApiBaseState();
 
   let currentUrl = $state(initialApiBaseState.currentUrl);
@@ -37,7 +32,6 @@
   let compactEditorOpen = $state(false);
 
   let isUsingDefault = $derived(overrideUrl === null);
-  let showEditor = $derived(!compact || compactEditorOpen);
   let canSave = $derived(draftUrl.trim() !== (overrideUrl ?? currentUrl));
 
   function syncFromClient(): void {
@@ -66,9 +60,7 @@
       overrideUrl = getApiBaseOverride();
       draftUrl = currentUrl;
       status = 'Backend URL saved.';
-      if (compact) {
-        compactEditorOpen = false;
-      }
+      compactEditorOpen = false;
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to save backend URL.';
     }
@@ -80,9 +72,7 @@
     overrideUrl = null;
     draftUrl = currentUrl;
     status = 'Using default backend URL.';
-    if (compact) {
-      compactEditorOpen = false;
-    }
+    compactEditorOpen = false;
   }
 
   onMount(() => {
@@ -97,46 +87,34 @@
   });
 </script>
 
-<section
-  class="backend-settings"
-  class:backend-settings--compact={compact}
-  aria-labelledby={compact ? undefined : 'backend-url-heading'}
->
+<section class="backend-settings" aria-label="Backend URL">
   <div class="backend-header">
     <div>
-      {#if compact}
-        <p class="backend-eyebrow">Backend</p>
-      {:else}
-        <h2 id="backend-url-heading">Backend URL</h2>
-      {/if}
+      <p class="backend-eyebrow">Backend</p>
       <p class="backend-summary">
         {isUsingDefault ? 'Default' : 'Custom'}: <span title={currentUrl}>{displayHost(currentUrl)}</span>
       </p>
     </div>
-    {#if compact}
-      <button
-        type="button"
-        class="backend-edit"
-        aria-expanded={compactEditorOpen}
-        onclick={() => {
-          error = '';
-          status = '';
-          compactEditorOpen = !compactEditorOpen;
-        }}
-      >
-        {compactEditorOpen ? 'Close' : 'Edit'}
-      </button>
-    {:else if !isUsingDefault}
-      <span class="backend-badge">Custom</span>
-    {/if}
+    <button
+      type="button"
+      class="backend-edit"
+      aria-expanded={compactEditorOpen}
+      onclick={() => {
+        error = '';
+        status = '';
+        compactEditorOpen = !compactEditorOpen;
+      }}
+    >
+      {compactEditorOpen ? 'Close' : 'Edit'}
+    </button>
   </div>
 
-  {#if showEditor}
+  {#if compactEditorOpen}
     <form class="backend-form" onsubmit={handleSave}>
-      <label for={compact ? 'login-backend-url' : 'settings-backend-url'}>API base URL</label>
+      <label for="login-backend-url">API base URL</label>
       <div class="backend-input-row">
         <input
-          id={compact ? 'login-backend-url' : 'settings-backend-url'}
+          id="login-backend-url"
           type="url"
           bind:value={draftUrl}
           placeholder={defaultUrl}
@@ -165,16 +143,10 @@
   .backend-settings {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
-    padding: var(--space-lg);
-    border: 1px solid var(--surface-border);
-    border-radius: 8px;
-    background: var(--surface-card);
-  }
-
-  .backend-settings--compact {
     gap: var(--space-sm);
     padding: var(--space-md);
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
     background: color-mix(in oklab, var(--surface-card) 86%, transparent);
   }
 
@@ -185,7 +157,6 @@
     gap: var(--space-md);
   }
 
-  .backend-header h2,
   .backend-eyebrow {
     margin: 0 0 var(--space-xs);
     color: var(--text-primary);
@@ -207,17 +178,6 @@
     font-weight: 600;
     line-height: 1.35;
     word-break: break-word;
-  }
-
-  .backend-badge {
-    flex: 0 0 auto;
-    padding: 0.22rem 0.45rem;
-    border: 1px solid color-mix(in oklab, var(--brand) 40%, var(--surface-border));
-    border-radius: 6px;
-    color: var(--brand);
-    font-size: 0.7rem;
-    font-weight: 750;
-    line-height: 1;
   }
 
   .backend-edit {

@@ -4,7 +4,7 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
-  import { onMount, onDestroy, untrack } from 'svelte';
+  import { onMount, onDestroy, untrack, type Component } from 'svelte';
   import { Router, Route, navigate } from 'svelte-routing';
   import { Sidebar, MobileHeader } from './lib/components/layout/index.js';
   import Toaster from './lib/components/Toaster.svelte';
@@ -22,11 +22,19 @@ SPDX-License-Identifier: Apache-2.0
     stopNotificationsStream,
   } from './lib/features/notifications/index.js';
   import { NOTIFICATIONS_STREAM_TOAST_ID, toast } from '$lib/components/Toaster.svelte';
+  import { isTauriRuntime } from '$lib/platform/tauri.js';
   import { _ } from 'svelte-i18n';
+
+  const isNativeApp = isTauriRuntime();
+
+  type NativeLoginProps = {
+    modes?: Array<'google' | 'azure' | 'keycloak' | 'admin'>;
+    onLoginSuccess?: () => void;
+  };
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
-  let showSplash = $state(true);
+  let showSplash = $state(isNativeApp);
   let splashTimer: ReturnType<typeof setTimeout> | null = null;
   let nativeDeepLinkCleanup: (() => void) | null = null;
   let swipeStartX = 0;
@@ -37,7 +45,14 @@ SPDX-License-Identifier: Apache-2.0
   let isCloseSwipeTracking = false;
   let lastLayoutIsMobile = false;
   let didWarmUserStartup = false;
-  let shouldShowSplash = $derived(showSplash && !isAuthCallback());
+  let NativeLogin = $state<Component<NativeLoginProps> | null>(null);
+  let shouldShowSplash = $derived(isNativeApp && showSplash && !isAuthCallback());
+
+  if (isNativeApp) {
+    void import('./lib/features/auth/components/NativeLogin.svelte').then(({ default: component }) => {
+      NativeLogin = component;
+    });
+  }
 
   const authState = getAuthState();
   const notifState = getNotificationsState();
@@ -309,12 +324,14 @@ SPDX-License-Identifier: Apache-2.0
     updateAppLayoutAttribute(lastLayoutIsMobile);
     sidebarCollapsed = lastLayoutIsMobile;
     updateViewportCssVars();
-    splashTimer = setTimeout(() => {
-      showSplash = false;
-    }, 1100);
-    // Replays a callback that resolved before this component mounted, so a deep
-    // link that arrived during startup is not lost to mount ordering.
-    nativeDeepLinkCleanup = onNativeOAuthCallbackPath(handleNativeOAuthCallbackPath);
+    if (isNativeApp) {
+      splashTimer = setTimeout(() => {
+        showSplash = false;
+      }, 1100);
+      // Replays a callback that resolved before this component mounted, so a deep
+      // link that arrived during startup is not lost to mount ordering.
+      nativeDeepLinkCleanup = onNativeOAuthCallbackPath(handleNativeOAuthCallbackPath);
+    }
 
     const visualViewport = window.visualViewport;
     visualViewport?.addEventListener('resize', updateViewportCssVars);
@@ -408,13 +425,25 @@ SPDX-License-Identifier: Apache-2.0
     </div>
   {:else if isAdminLogin() && !authState.isAuthenticated}
     <!-- Admin login route -->
-    <Login modes={['admin']} onLoginSuccess={handleLoginSuccess} />
+    {#if isNativeApp && NativeLogin}
+      <NativeLogin modes={['admin']} onLoginSuccess={handleLoginSuccess} />
+    {:else if !isNativeApp}
+      <Login modes={['admin']} onLoginSuccess={handleLoginSuccess} />
+    {:else}
+      <div class="loading-screen"><div class="loading-spinner"></div></div>
+    {/if}
   {:else if authState.isLoading}
     <div class="loading-screen">
       <div class="loading-spinner"></div>
     </div>
   {:else if !authState.isAuthenticated}
-    <Login onLoginSuccess={handleLoginSuccess} />
+    {#if isNativeApp && NativeLogin}
+      <NativeLogin onLoginSuccess={handleLoginSuccess} />
+    {:else if !isNativeApp}
+      <Login onLoginSuccess={handleLoginSuccess} />
+    {:else}
+      <div class="loading-screen"><div class="loading-spinner"></div></div>
+    {/if}
   {:else}
     <Sidebar
       isCollapsed={sidebarCollapsed}
