@@ -11,6 +11,7 @@
     "clearSearch": "Effacer la recherche",
     "searchModeLabel": "Mode de recherche",
     "searchModeTitle": "Titre",
+    "searchModeLexical": "Mots-clés",
     "searchModeSemantic": "Sémantique",
     "chats": "Conversations",
     "loadingChats": "Chargement des conversations...",

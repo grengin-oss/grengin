@@ -11,6 +11,7 @@
     "clearSearch": "検索をクリア",
     "searchModeLabel": "検索モード",
     "searchModeTitle": "タイトル",
+    "searchModeLexical": "キーワード",
     "searchModeSemantic": "セマンティック",
     "chats": "チャット",
     "loadingChats": "チャットを読み込み中...",

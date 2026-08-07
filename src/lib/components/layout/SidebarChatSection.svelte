@@ -15,7 +15,7 @@ SPDX-License-Identifier: Apache-2.0
     prefetchConversation,
   } from '../../api/chatApi.js';
   import {
-    getSemanticScore,
+    getSearchScore,
     loadSidebarChats,
     type SidebarChat,
   } from '$lib/features/chat/utils/sidebarChatSearch';
@@ -54,7 +54,7 @@ SPDX-License-Identifier: Apache-2.0
   let searchQuery = $state('');
   let searchFocused = $state(false);
   const CHAT_PAGE_LIMIT = 20;
-  const SEMANTIC_SEARCH_DEBOUNCE_MS = 650;
+  const CHAT_SEARCH_DEBOUNCE_MS = 650;
   let chatOffset = $state(0);
   let chatHasMore = $state(true);
   let chatTotal = $state<number | null>(null);
@@ -298,8 +298,6 @@ SPDX-License-Identifier: Apache-2.0
         query: trimmedSearchQuery,
         offset,
         limit: CHAT_PAGE_LIMIT,
-        normalChats: normalChatSnapshot,
-        normalTotal: normalChatSnapshotTotal,
         signal: controller.signal,
         untitledTitle: $_('sidebar.untitledChat'),
       });
@@ -436,7 +434,7 @@ SPDX-License-Identifier: Apache-2.0
     if (!didRequestInitialChats && !normalizedSearchQuery) {
       debounceMs = 0;
     } else if (normalizedSearchQuery) {
-      debounceMs = SEMANTIC_SEARCH_DEBOUNCE_MS;
+      debounceMs = CHAT_SEARCH_DEBOUNCE_MS;
     }
 
     const searchTimeout = setTimeout(() => {
@@ -579,22 +577,24 @@ SPDX-License-Identifier: Apache-2.0
                 onfocus={() => warmChat(chat.id)}
                 ontouchstart={() => warmChat(chat.id)}
                 aria-current={selectedChatId === chat.id ? 'page' : undefined}
-                title={chat.semanticResult?.snippet ? `${chat.title}\n${chat.semanticResult.snippet}` : chat.title}
+                title={chat.searchSnippet ? `${chat.title}\n${chat.searchSnippet}` : chat.title}
               >
                 <span class="chat-item-content">
                   <span class="chat-item-title-row">
                     <span class="chat-item-title">{chat.title}</span>
-                    {#if chat.semanticResult?.snippet}
-                      <span class="semantic-badge">
-                        {$_('sidebar.searchModeSemantic')}
-                        {#if getSemanticScore(chat.semanticResult) !== null}
-                          {getSemanticScore(chat.semanticResult)}%
+                    {#if chat.searchMode && chat.searchSnippet}
+                      <span class="search-badge">
+                        {chat.searchMode === 'semantic'
+                          ? $_('sidebar.searchModeSemantic')
+                          : $_('sidebar.searchModeLexical')}
+                        {#if getSearchScore(chat) !== null}
+                          {getSearchScore(chat)}%
                         {/if}
                       </span>
                     {/if}
                   </span>
-                  {#if chat.semanticResult?.snippet}
-                    <span class="chat-semantic-snippet">{chat.semanticResult.snippet}</span>
+                  {#if chat.searchSnippet}
+                    <span class="chat-search-snippet">{chat.searchSnippet}</span>
                   {/if}
                 </span>
               </button>
@@ -894,7 +894,7 @@ SPDX-License-Identifier: Apache-2.0
     text-overflow: ellipsis;
   }
 
-  .semantic-badge {
+  .search-badge {
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
@@ -911,7 +911,7 @@ SPDX-License-Identifier: Apache-2.0
     text-overflow: ellipsis;
   }
 
-  .chat-semantic-snippet {
+  .chat-search-snippet {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -1117,12 +1117,12 @@ SPDX-License-Identifier: Apache-2.0
     line-height: 1.25;
   }
 
-  :global(html[data-app-layout='mobile']) .chat-semantic-snippet {
+  :global(html[data-app-layout='mobile']) .chat-search-snippet {
     font-size: 0.78rem;
     line-height: 1.35;
   }
 
-  :global(html[data-app-layout='mobile']) .semantic-badge {
+  :global(html[data-app-layout='mobile']) .search-badge {
     max-width: 5.25rem;
     font-size: 0.6rem;
   }
@@ -1182,7 +1182,7 @@ SPDX-License-Identifier: Apache-2.0
       font-size: 0.84rem;
     }
 
-    :global(html[data-app-layout='mobile']) .chat-semantic-snippet {
+    :global(html[data-app-layout='mobile']) .chat-search-snippet {
       display: none;
     }
 

@@ -23,7 +23,10 @@
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
   <a href="LICENSE_FAQ.md"><img alt="License FAQ" src="https://img.shields.io/badge/license-FAQ-blue"></a>
   <img alt="Svelte 5" src="https://img.shields.io/badge/Svelte_5-FF3E00?logo=svelte&amp;logoColor=white">
+  <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri_2-24C8DB?logo=tauri&amp;logoColor=white">
   <img alt="Rust" src="https://img.shields.io/badge/Rust-000000?logo=rust&amp;logoColor=white">
+  <img alt="Android" src="https://img.shields.io/badge/Android_7%2B-3DDC84?logo=android&amp;logoColor=white">
+  <img alt="iOS" src="https://img.shields.io/badge/iOS_14%2B-000000?logo=apple&amp;logoColor=white">
   <img alt="Axum" src="https://img.shields.io/badge/Axum-1f2937">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&amp;logoColor=white">
   <img alt="Linux amd64 and arm64" src="https://img.shields.io/badge/Linux-amd64%20%7C%20arm64-FCC624?logo=linux&amp;logoColor=black">
@@ -46,7 +49,25 @@ logs.
 - **Enterprise authentication**: Google and Microsoft Entra ID OAuth/OIDC with domain controls
 - **Security and auditability**: encrypted provider credentials, scoped authorization, and administrative audit logs
 - **Internationalization**: English, Arabic, Spanish, French, Japanese, Korean, and Portuguese interfaces
+- **Native applications**: Tauri 2 shell for desktop, Android 7.0+, and iOS 14+ with native deep links, notifications, camera access, and mobile SSO handoff
 - **Self-hosted deployment**: run Grengin in your own cloud account and retain control of infrastructure and data
+
+## Technology Stack
+
+| Area | Technologies |
+|---|---|
+| Web interface | Svelte 5, TypeScript, Vite |
+| Native application shell | Tauri 2 and Rust |
+| Android | Android WebView, Kotlin native bridges, minimum API 24 (Android 7.0) |
+| iOS | WKWebView through Tauri, minimum iOS 14.0 |
+| API | Rust, Axum, SeaORM, Server-Sent Events |
+| Data and search | PostgreSQL, pgvector, PostgreSQL full-text search |
+| AI and tools | OpenAI, Anthropic, Mistral, Gemini, MCP |
+
+Android builds are supported from Linux, macOS, and Windows with the Android
+SDK and NDK installed. Apple requires iOS applications to be compiled and
+simulator-tested on macOS with Xcode; the iOS target cannot be built on Linux or
+Windows.
 
 ## Deploy Grengin
 
@@ -80,19 +101,21 @@ the applicable Apache 2.0 license and attribution notices.
 ## Architecture
 
 ```text
-Browser
-   |
-   v
-Grengin web application (Svelte 5)
-   |
-   | REST + Server-Sent Events
-   v
-Grengin API (Rust + Axum)
-   |
-   +-- PostgreSQL + pgvector
-   +-- OpenAI / Anthropic / Mistral / Gemini
-   +-- MCP tool servers
-   +-- Google / Microsoft Entra ID
+Browser        Tauri desktop        Android        iOS
+   |                 |                 |             |
+   +-----------------+-----------------+-------------+
+                             |
+                             v
+                Grengin interface (Svelte 5)
+                             |
+                  REST + Server-Sent Events
+                             |
+                             v
+                   Grengin API (Rust + Axum)
+                             |
+          +------------------+------------------+
+          |                  |                  |
+  PostgreSQL + pgvector   AI providers     MCP tool servers
 ```
 
 The frontend in this repository is compiled to static assets. The backend is
@@ -152,6 +175,38 @@ pnpm test
 pnpm build
 ```
 
+### Native Applications
+
+The Tauri application source and platform configuration live in `src-tauri/`.
+Install Rust and the Tauri prerequisites before building a native application.
+
+For Android, install the Android SDK, NDK, Java, and an ARM64 Rust Android
+target. Run on an emulator or connected ADB device with:
+
+```bash
+pnpm android:dev
+```
+
+Create and install an optimized ARM64 APK on a connected device with:
+
+```bash
+./install_android_adb.sh
+```
+
+For iOS, use macOS with Xcode and its command-line tools. Initialize the Xcode
+project on the first build, then run it on a simulator:
+
+```bash
+pnpm tauri ios init
+pnpm tauri ios dev
+```
+
+Create an iOS release build with:
+
+```bash
+pnpm tauri ios build
+```
+
 ### Backend
 
 The backend is developed separately:
@@ -176,6 +231,7 @@ grengin/
 |   |-- lib/features/       # Authentication, chat, and notifications
 |   |-- lib/i18n/           # Locale modules
 |   `-- lib/routes/         # Application routes
+|-- src-tauri/              # Rust shell and Android/iOS configuration
 |-- mock/                   # Local mock API
 |-- scripts/                # Build and release utilities
 |-- release/                # Backend pin and release build definition

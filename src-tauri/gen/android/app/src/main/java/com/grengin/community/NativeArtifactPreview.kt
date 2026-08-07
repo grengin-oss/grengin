@@ -1,11 +1,12 @@
+// SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
+// SPDX-License-Identifier: Apache-2.0
+
 package com.grengin.community
 
 import android.annotation.SuppressLint
 import android.graphics.Color
-import android.graphics.Outline
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewOutlineProvider
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -29,16 +30,10 @@ import kotlin.math.roundToInt
  * path is only available to a document that owns its own viewport, hence a real
  * WebView rather than a nested frame.
  *
- * The overlay is a sibling of the Tauri WebView, so the rectangles JS sends are
- * already in the same coordinate space — only CSS px -> device px scaling is
- * needed.
+ * The overlay is a sibling of the Tauri WebView and fills the artifact body like
+ * a mobile browser in desktop-site mode. The page keeps a desktop layout width,
+ * while the WebView handles fitting, pinch zoom and panning natively.
  */
-/** Matches .desktop-preview-frame's border-radius in ArtifactPanel.svelte. */
-private const val CARD_CORNER_RADIUS_DP = 10f
-
-/** Event the host page listens on to learn the preview's current page scale. */
-private const val SCALE_EVENT = "grengin-artifact-preview-scale"
-
 @Keep
 class NativeArtifactPreview(
     private val activity: MainActivity,
@@ -46,31 +41,6 @@ class NativeArtifactPreview(
 ) {
     private var preview: WebView? = null
     private var lastHtml: String? = null
-
-    /**
-     * Reports the preview page's own zoom state back to the host page.
-     *
-     * The host sizes the preview card from this, so the card grows as you pinch
-     * and the frame keeps hugging the rendered page. Reported from inside the
-     * preview document (visualViewport.scale) rather than from
-     * WebViewClient.onScaleChanged, because that callback's units are
-     * density-dependent while visualViewport.scale is in the same CSS-pixel terms
-     * the host's layout maths uses.
-     */
-    @Keep
-    inner class ScaleReporter {
-        @JavascriptInterface
-        fun report(scale: Float, contentWidth: Int, contentHeight: Int) {
-            hostWebView.post {
-                hostWebView.evaluateJavascript(
-                    "window.dispatchEvent(new CustomEvent('$SCALE_EVENT'," +
-                        "{detail:{scale:$scale,contentWidth:$contentWidth," +
-                        "contentHeight:$contentHeight}}))",
-                    null
-                )
-            }
-        }
-    }
 
     @JavascriptInterface
     fun isAvailable(): Boolean = true
@@ -92,7 +62,8 @@ class NativeArtifactPreview(
                 view.loadDataWithBaseURL(null, html, "text/html", "utf-8", null)
             }
 
-            view.visibility = android.view.View.VISIBLE
+            view.onResume()
+            view.visibility = View.VISIBLE
         }
     }
 
@@ -106,7 +77,10 @@ class NativeArtifactPreview(
     @JavascriptInterface
     fun hide() {
         activity.runOnUiThread {
-            preview?.visibility = android.view.View.GONE
+            preview?.let { view ->
+                view.onPause()
+                view.visibility = View.GONE
+            }
         }
     }
 
@@ -127,6 +101,7 @@ class NativeArtifactPreview(
     fun destroy() {
         activity.runOnUiThread {
             preview?.let { view ->
+                view.onPause()
                 (view.parent as? ViewGroup)?.removeView(view)
                 view.destroy()
             }
@@ -176,18 +151,6 @@ class NativeArtifactPreview(
         view.isVerticalScrollBarEnabled = false
         view.isHorizontalScrollBarEnabled = false
         view.overScrollMode = WebView.OVER_SCROLL_NEVER
-
-        // A native view is not clipped by the HTML card's border-radius, so round
-        // it here to match (.desktop-preview-frame uses 10px).
-        val radiusPx = CARD_CORNER_RADIUS_DP * activity.resources.displayMetrics.density
-        view.outlineProvider = object : ViewOutlineProvider() {
-            override fun getOutline(v: View, outline: Outline) {
-                outline.setRoundRect(0, 0, v.width, v.height, radiusPx)
-            }
-        }
-        view.clipToOutline = true
-
-        view.addJavascriptInterface(ScaleReporter(), "GrenginPreviewReport")
 
         // Artifacts are inert previews: keep every navigation inside this view.
         view.webViewClient = object : WebViewClient() {

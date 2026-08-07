@@ -16,14 +16,9 @@ SPDX-License-Identifier: Apache-2.0
   } from "../utils/desktopPreviewPinch";
   import SaveToProjectModal from "./SaveToProjectModal.svelte";
   import {
-    desktopLayoutWidthFor,
-    hideNativeArtifactPreview,
+    attachNativeArtifactPreview,
     isNativeArtifactPreviewAvailable,
-    onNativeArtifactPreviewViewport,
     resetNativeArtifactPreviewZoom,
-    setNativeArtifactPreviewRect,
-    showNativeArtifactPreview,
-    withDesktopViewport,
   } from "$lib/platform/nativeArtifactPreview";
   import type { ArtifactItem } from "../artifacts";
 
@@ -81,62 +76,13 @@ SPDX-License-Identifier: Apache-2.0
 
   const DESKTOP_VIEWPORT_WIDTH = 1440;
   const DESKTOP_VIEWPORT_HEIGHT = 900;
-  /** Keeps the native card in the same 16:10 desktop-window proportions. */
-  const DESKTOP_VIEWPORT_HEIGHT_RATIO = DESKTOP_VIEWPORT_HEIGHT / DESKTOP_VIEWPORT_WIDTH;
-  /** Border width of the native card; must match .native-preview-card. */
-  const NATIVE_CARD_BORDER = 1;
+  const NATIVE_DESKTOP_VIEWPORT_WIDTH = 1024;
 
   let previewViewport: HTMLDivElement | undefined = $state(undefined);
   let desktopIframe: HTMLIFrameElement | undefined = $state(undefined);
   let desktopPreviewFrame: HTMLDivElement | undefined = $state(undefined);
   let desktopPreviewInner: HTMLDivElement | undefined = $state(undefined);
-  // Native preview: the card the native WebView is positioned over, kept in the
-  // same 16:10 desktop-window proportions the CSS path used.
-  let nativePreviewCard: HTMLDivElement | undefined = $state(undefined);
-  let nativeLayoutWidth = $state(1440);
-  let nativeAvailWidth = $state(0);
-  let nativeAvailHeight = $state(0);
-  /** Page scale reported by the native preview; 0 until it first reports. */
-  let nativePageScale = $state(0);
-  /**
-   * Fit scale computed from the panel, used to size the card before the WebView
-   * has loaded and reported. Without it the card would be 0x0, so nothing would be
-   * shown, so the page would never load and never report.
-   */
-  let nativeFitScale = $state(0);
-  let nativeEffectiveScale = $derived(nativePageScale || nativeFitScale);
-
-  // The card is the rendered page (layout width x the page's own zoom), clamped to
-  // the space available. Below the clamp it is a card on the checkerboard that
-  // grows as you pinch; at the clamp it fills the panel and the WebView takes over
-  // panning, which is what the CSS-transform path did with viewport scrolling.
-  // These are the size of the WebView surface, i.e. the card's *content* box. The
-  // card's border sits outside it (see nativeCardOuter*), so the surface width is
-  // always exactly layoutWidth x scale. Insetting the surface inside a fixed outer
-  // size instead would feed a 2px-smaller width back to the WebView, which would
-  // report a smaller scale, shrinking the card on every report.
-  let nativeCardWidth = $derived(
-    nativeAvailWidth === 0 || nativeEffectiveScale === 0
-      ? 0
-      : Math.round(
-          Math.min(
-            nativeAvailWidth - 2 * NATIVE_CARD_BORDER,
-            nativeLayoutWidth * nativeEffectiveScale,
-          ),
-        ),
-  );
-  let nativeCardHeight = $derived(
-    nativeAvailHeight === 0 || nativeEffectiveScale === 0
-      ? 0
-      : Math.round(
-          Math.min(
-            nativeAvailHeight - 2 * NATIVE_CARD_BORDER,
-            nativeLayoutWidth * DESKTOP_VIEWPORT_HEIGHT_RATIO * nativeEffectiveScale,
-          ),
-        ),
-  );
-  let nativeCardOuterWidth = $derived(nativeCardWidth + 2 * NATIVE_CARD_BORDER);
-  let nativeCardOuterHeight = $derived(nativeCardHeight + 2 * NATIVE_CARD_BORDER);
+  let nativePreviewSurface: HTMLDivElement | undefined = $state(undefined);
   let desktopFitScale = $state(1);
   let desktopZoom = $state(1);
   /** True only while a pinch is in flight — see `attachDesktopPreviewPinch`. */
@@ -190,7 +136,8 @@ SPDX-License-Identifier: Apache-2.0
       previewMode !== "desktop" ||
       activeView !== "preview" ||
       type !== "html" ||
-      !previewViewport
+      !previewViewport ||
+      useNativePreview
     ) {
       desktopFitScale = 1;
       return;
@@ -203,23 +150,9 @@ SPDX-License-Identifier: Apache-2.0
       if (!previewViewport) return;
 
       const bounds = previewViewport.getBoundingClientRect();
+
       const availableWidth = Math.max(bounds.width - 32, 320);
       const availableHeight = Math.max(bounds.height - 32, 240);
-
-      if (useNativePreview) {
-        // The native preview lays its page out at a width chosen for legibility
-        // rather than a fixed 1440. Card size is derived from the page scale the
-        // WebView reports, so it tracks the page's rendered size exactly.
-        const layoutWidth = desktopLayoutWidthFor(availableWidth, DESKTOP_VIEWPORT_WIDTH);
-        const layoutHeight = layoutWidth * DESKTOP_VIEWPORT_HEIGHT_RATIO;
-
-        nativeLayoutWidth = layoutWidth;
-        nativeAvailWidth = Math.round(availableWidth);
-        nativeAvailHeight = Math.round(availableHeight);
-        nativeFitScale = Math.min(1, availableWidth / layoutWidth, availableHeight / layoutHeight);
-        return;
-      }
-
       const nextScale = Math.min(
         1,
         availableWidth / DESKTOP_VIEWPORT_WIDTH,
@@ -309,8 +242,6 @@ SPDX-License-Identifier: Apache-2.0
 
   function handleReload() {
     if (useNativePreview && previewMode === "desktop") {
-      // Drop back to the panel-derived fit until the reloaded page reports again.
-      nativePageScale = 0;
       resetNativeArtifactPreviewZoom();
       return;
     }
@@ -322,83 +253,18 @@ SPDX-License-Identifier: Apache-2.0
     desktopZoom = Number(clampDesktopPreviewZoom(desktopZoom + delta).toFixed(2));
   }
 
-  // The card follows the page scale the native preview reports, so pinching grows
-  // the card rather than only magnifying its contents.
   $effect(() => {
-    if (!useNativePreview) return;
+    const surface = nativePreviewSurface;
+    const active =
+      useNativePreview &&
+      previewMode === "desktop" &&
+      activeView === "preview" &&
+      type === "html" &&
+      !showSaveToProject;
 
-    return onNativeArtifactPreviewViewport(({ scale }) => {
-      nativePageScale = scale;
-    });
-  });
+    if (!active || !surface || code.length === 0) return;
 
-  // Android: keep the native WebView aligned with the placeholder that stands in
-  // for the iframe, and tear it down whenever the preview is not on screen.
-  $effect(() => {
-    if (!useNativePreview) return;
-
-    const viewport = previewViewport;
-    // Position over the card, not the viewport: the viewport's padding,
-    // checkerboard backdrop and the card's border/shadow all have to stay visible
-    // around the native view, or the preview stops reading as a scaled desktop
-    // page and just fills the panel edge to edge.
-    const card = nativePreviewCard;
-    const active = previewMode === "desktop" && activeView === "preview" && type === "html";
-
-    if (!active || !viewport || !card || code.length === 0 || nativeCardWidth === 0) {
-      hideNativeArtifactPreview();
-      return;
-    }
-
-    const layoutWidth = nativeLayoutWidth;
-    let frame = 0;
-    let last = "";
-    let shown = false;
-
-    const sync = () => {
-      const box = card.getBoundingClientRect();
-      if (box.width === 0 || box.height === 0) return;
-
-      const rect = { x: box.left, y: box.top, width: box.width, height: box.height };
-      const key = `${rect.x}|${rect.y}|${rect.width}|${rect.height}`;
-
-      if (!shown) {
-        shown = true;
-        showNativeArtifactPreview(withDesktopViewport(code, layoutWidth), rect);
-        last = key;
-        return;
-      }
-
-      if (key !== last) {
-        last = key;
-        setNativeArtifactPreviewRect(rect);
-      }
-    };
-
-    sync(true);
-
-    const queue = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => sync());
-    };
-
-    const observer =
-      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(queue);
-    // The card resizes as the page is zoomed, independently of the viewport.
-    observer?.observe(card);
-    observer?.observe(viewport);
-    window.addEventListener("resize", queue);
-    window.addEventListener("scroll", queue, true);
-    window.visualViewport?.addEventListener("resize", queue);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer?.disconnect();
-      window.removeEventListener("resize", queue);
-      window.removeEventListener("scroll", queue, true);
-      window.visualViewport?.removeEventListener("resize", queue);
-      hideNativeArtifactPreview();
-    };
+    return attachNativeArtifactPreview(surface, code, NATIVE_DESKTOP_VIEWPORT_WIDTH);
   });
 
   $effect(() => {
@@ -759,21 +625,12 @@ SPDX-License-Identifier: Apache-2.0
         <div
           class="preview-viewport"
           class:desktop={previewMode === "desktop"}
+          class:native={previewMode === "desktop" && useNativePreview}
           bind:this={previewViewport}
         >
           {#key iframeKey}
             {#if previewMode === "desktop" && useNativePreview}
-              <!-- Same card as the CSS path (border, radius, shadow, centred on the
-                   checkerboard). The native WebView is layered exactly over it. -->
-              <div
-                class="desktop-preview-frame native-preview-card"
-                style:width={`${nativeCardOuterWidth}px`}
-                style:height={`${nativeCardOuterHeight}px`}
-              >
-                <!-- The native WebView is positioned over this, not over the card,
-                     so the card's border stays visible around it. -->
-                <div class="native-preview-surface" bind:this={nativePreviewCard}></div>
-              </div>
+              <div class="native-preview-surface" bind:this={nativePreviewSurface}></div>
             {:else if previewMode === "desktop"}
               <div
                 class="desktop-preview-frame"
@@ -1492,21 +1349,18 @@ SPDX-License-Identifier: Apache-2.0
     height: 900px;
   }
 
-  /* Frames the native WebView. A single light hairline disappeared against dark
-     artifacts, so pair it with a dark outer ring: one of the two always contrasts
-     with whatever the artifact renders at its edge, and with the checkerboard. */
-  .native-preview-card {
-    flex: 0 0 auto;
-    border-color: rgba(255, 255, 255, 0.45);
-    box-shadow:
-      0 0 0 1px rgba(0, 0, 0, 0.55),
-      0 18px 50px rgba(0, 0, 0, 0.35);
+  .preview-viewport.desktop.native {
+    display: block;
+    overflow: hidden;
+    padding: 0;
+    background: #fff;
+    touch-action: auto;
   }
 
-  /* Exactly the card's content box — the rect the native view is placed over. */
   .native-preview-surface {
     width: 100%;
     height: 100%;
+    background: #fff;
   }
 
   @media (max-width: 640px) {
@@ -1577,6 +1431,59 @@ SPDX-License-Identifier: Apache-2.0
     .code-view {
       padding: 12px;
       font-size: 0.78rem;
+    }
+  }
+
+  @media (orientation: landscape) and (max-height: 640px) {
+    .artifact-header {
+      min-height: 40px;
+      gap: 6px;
+      padding: 4px 6px 4px 8px;
+    }
+
+    .artifact-panel.fullscreen .artifact-header {
+      min-height: calc(40px + var(--app-safe-area-top, 0px));
+      padding-top: calc(4px + var(--app-safe-area-top, 0px));
+    }
+
+    .artifact-title {
+      font-size: 0.78rem;
+    }
+
+    .view-toggle {
+      gap: 0;
+      padding: 1px;
+      border-radius: 8px;
+    }
+
+    .toggle-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
+
+    .header-right {
+      gap: 0;
+    }
+
+    .header-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+    }
+
+    .artifact-tabs {
+      gap: 4px;
+      padding: 4px 8px;
+    }
+
+    .artifact-tab {
+      min-height: 28px;
+      padding: 3px 8px;
+    }
+
+    .toast {
+      top: 44px;
     }
   }
 </style>

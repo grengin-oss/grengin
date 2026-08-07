@@ -12,17 +12,20 @@ import {
   prefetchCachedLoad,
 } from '../utils/cache';
 
-export interface ChatSemanticResult {
-  message_id: string;
-  snippet?: string;
-  matched_text?: string;
-  distance: number;
-}
+export type ChatSearchMode = 'lexical' | 'semantic';
 
-export type ChatConversationList = ConversationList & {
+export type ChatConversation = ConversationList['conversations'][number] & {
+  last_message_at?: string | null;
+  search_mode?: ChatSearchMode | null;
+  search_score?: number | null;
+  search_snippet?: string | null;
+  total_tokens?: number;
+};
+
+export type ChatConversationList = Omit<ConversationList, 'conversations'> & {
+  conversations: ChatConversation[];
   limit?: number;
   offset?: number;
-  semantic_results?: Record<string, ChatSemanticResult> | null;
 };
 
 export interface SendMessageOptions {
@@ -80,7 +83,6 @@ function chatListQuery(params?: {
   offset?: number;
   limit?: number;
   search?: string;
-  semantic?: boolean;
   archived?: boolean;
 }): string {
   const searchParams = new URLSearchParams();
@@ -92,9 +94,6 @@ function chatListQuery(params?: {
   }
   if (params?.search !== undefined && params.search.trim()) {
     searchParams.set('search', params.search);
-  }
-  if (params?.semantic !== undefined) {
-    searchParams.set('semantic', String(params.semantic));
   }
   if (params?.archived !== undefined) {
     searchParams.set('archived', String(params.archived));
@@ -461,15 +460,10 @@ export async function listConversations(params?: {
   offset?: number;
   limit?: number,
   search?: string;
-  semantic?: boolean;
   archived?: boolean;
   signal?: AbortSignal;
 }): Promise<ChatConversationList> {
-  const { signal, ...rawQueryParams } = params ?? {};
-  const queryParams = { ...rawQueryParams };
-  if (!queryParams.search?.trim() && queryParams.semantic === false) {
-    delete queryParams.semantic;
-  }
+  const { signal, ...queryParams } = params ?? {};
   const query = chatListQuery(queryParams);
   const endpoint = `/chat${query ? `?${query}` : ''}`;
   const hasSearch = Boolean(queryParams.search?.trim());
@@ -501,7 +495,6 @@ export async function searchConversations(query: string): Promise<ChatConversati
     offset: 0,
     limit: 50,
     search: query,
-    semantic: true,
   });
 }
 

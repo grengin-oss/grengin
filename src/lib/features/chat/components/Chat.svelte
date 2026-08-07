@@ -1801,7 +1801,7 @@ SPDX-License-Identifier: Apache-2.0
   @media (orientation: landscape) and (max-height: 640px) {
     .artifact-panel-wrapper,
     :global(html[data-app-layout='mobile']) .artifact-panel-wrapper {
-      height: min(84vh, calc(var(--app-viewport-height, 100vh) - 24px));
+      height: calc(var(--app-viewport-height, 100vh) - var(--app-safe-area-top, 0px));
     }
   }
 

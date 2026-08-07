@@ -12,6 +12,7 @@
     "clearSearch": "Clear search",
     "searchModeLabel": "Search mode",
     "searchModeTitle": "Title",
+    "searchModeLexical": "Keyword",
     "searchModeSemantic": "Semantic",
     "chats": "Chats",
     "loadingChats": "Loading chats...",
