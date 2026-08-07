@@ -12,10 +12,10 @@
       "identifier": "http:default",
       "allow": [
         {
-          "url": "https://api.demo.devel.grengin.com/**"
+          "url": "https://*:*"
         },
         {
-          "url": "https://grengin-test-production.up.railway.app/**"
+          "url": "http://*:*"
         }
       ]
     },

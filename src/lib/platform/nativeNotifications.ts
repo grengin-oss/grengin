@@ -5,6 +5,12 @@ interface NativeNotificationOptions {
   title: string;
   body?: string;
   group?: string;
+  channel?: {
+    id: string;
+    name: string;
+    description?: string;
+    importance?: 'default' | 'high';
+  };
 }
 
 let permissionRequest: Promise<boolean> | null = null;
@@ -65,12 +71,25 @@ export async function showNativeNotification(options: NativeNotificationOptions)
   }
 
   try {
-    const { sendNotification } = await import('@tauri-apps/plugin-notification');
+    const { createChannel, Importance, sendNotification } = await import(
+      '@tauri-apps/plugin-notification'
+    );
+    if (options.channel) {
+      await createChannel({
+        id: options.channel.id,
+        name: options.channel.name,
+        description: options.channel.description,
+        importance:
+          options.channel.importance === 'high' ? Importance.High : Importance.Default,
+      });
+    }
+
     sendNotification({
       id: options.id ? hashNotificationId(options.id) : undefined,
       title: options.title,
       body: options.body,
       group: options.group,
+      channelId: options.channel?.id,
     });
     return true;
   } catch (error) {

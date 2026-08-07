@@ -242,6 +242,8 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   async function handleSend() {
+    if (canCancelResponse) return;
+
     const trimmed = message.trim();
     if ((trimmed || attachedFiles.length > 0) && !disabled && !isUploading) {
       stopVoiceInput({ cancelNative: true });
@@ -299,6 +301,7 @@ SPDX-License-Identifier: Apache-2.0
       mediaQuery.removeEventListener('change', syncThemeState);
       window.removeEventListener(THEME_CHANGE_EVENT, syncThemeState);
       unsubscribeNativeSpeechVolume();
+      cancelNativeSpeechRecognition();
       if (recognition) {
         try {
           recognition.stop();

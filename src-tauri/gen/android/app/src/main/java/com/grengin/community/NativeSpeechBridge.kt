@@ -78,7 +78,13 @@ class NativeSpeechBridge(
     @JavascriptInterface
     fun cancel() {
         activity.runOnUiThread {
+            val wasWaitingForPermission = pendingPermissionLanguage != null
+            pendingPermissionLanguage = null
+
             if (!isListening) {
+                if (wasWaitingForPermission) {
+                    dispatch(NativeSpeechStatus.Cancelled)
+                }
                 return@runOnUiThread
             }
 
@@ -93,7 +99,11 @@ class NativeSpeechBridge(
             val language = pendingPermissionLanguage
             pendingPermissionLanguage = null
 
-            if (!granted || language.isNullOrBlank()) {
+            if (language.isNullOrBlank()) {
+                return@runOnUiThread
+            }
+
+            if (!granted) {
                 dispatch(NativeSpeechStatus.Error, error = "microphone_permission_denied")
                 return@runOnUiThread
             }
@@ -104,6 +114,7 @@ class NativeSpeechBridge(
 
     fun destroy() {
         activity.runOnUiThread {
+            pendingPermissionLanguage = null
             speechRecognizer?.destroy()
             speechRecognizer = null
             finishListening()
@@ -112,6 +123,7 @@ class NativeSpeechBridge(
 
     private fun startListening(language: String) {
         if (isListening) {
+            dispatch(NativeSpeechStatus.Error, error = "recognizer_busy")
             return
         }
 

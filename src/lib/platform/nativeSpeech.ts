@@ -148,7 +148,7 @@ export function cancelNativeSpeechRecognition(): boolean {
 export function subscribeNativeSpeechVolume(
   callback: (volume: NativeSpeechVolume) => void
 ): () => void {
-  if (typeof window === 'undefined') {
+  if (!isTauriRuntime() || typeof window === 'undefined') {
     return () => {};
   }
 

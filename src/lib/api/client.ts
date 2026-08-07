@@ -32,9 +32,23 @@ function getLocalStorage(): Storage | null {
 }
 
 function readStoredApiBaseOverride(): string | null {
-  const stored = getLocalStorage()?.getItem(apiBaseOverrideStorageKey)?.trim();
+  const storage = getLocalStorage();
+  const stored = storage?.getItem(apiBaseOverrideStorageKey)?.trim();
 
-  return stored ? normalizeBase(stored) : null;
+  if (!stored) {
+    return null;
+  }
+
+  try {
+    return normalizeApiBaseInput(stored);
+  } catch {
+    try {
+      storage?.removeItem(apiBaseOverrideStorageKey);
+    } catch {
+      // Ignore storage failures and fall back to the configured default.
+    }
+    return null;
+  }
 }
 
 function emitApiBaseChange(): void {
@@ -80,6 +94,10 @@ export function normalizeApiBaseInput(value: string): string {
 
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
     throw new Error('Backend URL must start with http:// or https://.');
+  }
+
+  if (isTauriRuntime() && !import.meta.env.DEV && parsed.protocol !== 'https:') {
+    throw new Error('Packaged apps require an HTTPS backend URL.');
   }
 
   if (parsed.search || parsed.hash) {

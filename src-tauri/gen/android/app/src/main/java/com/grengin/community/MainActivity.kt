@@ -1,13 +1,21 @@
 package com.grengin.community
 
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.webkit.WebView
+import androidx.activity.result.contract.ActivityResultContracts
 
 private const val MAIN_WEBVIEW_LABEL = "main"
 
 class MainActivity : TauriActivity() {
     private var nativeSpeechBridge: NativeSpeechBridge? = null
     private var nativeArtifactPreview: NativeArtifactPreview? = null
+    private var nativeArtifactDownloadBridge: NativeArtifactDownloadBridge? = null
+    private val artifactDocumentLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        nativeArtifactDownloadBridge?.onDocumentResult(result.resultCode, result.data?.data)
+    }
 
     override fun onWebViewCreate(webView: WebView) {
         super.onWebViewCreate(webView)
@@ -26,6 +34,20 @@ class MainActivity : TauriActivity() {
         val artifactPreview = NativeArtifactPreview(this, webView)
         nativeArtifactPreview = artifactPreview
         webView.addJavascriptInterface(artifactPreview, "GrenginArtifactPreview")
+
+        val artifactDownloadBridge = NativeArtifactDownloadBridge(this, webView)
+        nativeArtifactDownloadBridge = artifactDownloadBridge
+        webView.addJavascriptInterface(artifactDownloadBridge, "GrenginArtifactDownload")
+    }
+
+    internal fun openArtifactDocument(fileName: String, mimeType: String) {
+        artifactDocumentLauncher.launch(
+            Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = mimeType
+                putExtra(Intent.EXTRA_TITLE, fileName)
+            }
+        )
     }
 
     private fun configureMainWebView(webView: WebView) {
@@ -56,6 +78,8 @@ class MainActivity : TauriActivity() {
         nativeSpeechBridge = null
         nativeArtifactPreview?.destroy()
         nativeArtifactPreview = null
+        nativeArtifactDownloadBridge?.destroy()
+        nativeArtifactDownloadBridge = null
         super.onDestroy()
     }
 }

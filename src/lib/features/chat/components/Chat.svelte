@@ -48,6 +48,7 @@ SPDX-License-Identifier: Apache-2.0
   let activeStreamMessageId = $state<string | null>(null);
   let activeStreamBackendMessageId = $state<string | null>(null);
   let isCancellingStream = $state(false);
+  let activeCancellation: Promise<void> | null = null;
   let canCancelStream = $derived(
     Boolean(isCancellingStream || activeStreamAbortController || activeStreamMessageId),
   );
@@ -75,12 +76,25 @@ SPDX-License-Identifier: Apache-2.0
       });
   }
 
-  async function handleCancelStream() {
-    if (isCancellingStream || (!activeStreamAbortController && !activeStreamMessageId && !isLoading && !isTyping)) {
-      return;
+  function releaseActiveStream(owner: AbortController | null) {
+    if (activeStreamAbortController !== owner) return;
+
+    activeStreamAbortController = null;
+    activeStreamMessageId = null;
+    activeStreamBackendMessageId = null;
+  }
+
+  function handleCancelStream(): Promise<void> {
+    if (activeCancellation) {
+      return activeCancellation;
+    }
+
+    if (!activeStreamAbortController && !activeStreamMessageId && !isLoading && !isTyping) {
+      return Promise.resolve();
     }
 
     isCancellingStream = true;
+    const streamOwner = activeStreamAbortController;
     const backendMessageId = activeStreamBackendMessageId;
     const uiMessageId = activeStreamMessageId;
     const cancelRequest = backendMessageId
@@ -89,18 +103,24 @@ SPDX-License-Identifier: Apache-2.0
         })
       : Promise.resolve();
 
-    activeStreamAbortController?.abort();
+    streamOwner?.abort();
     finalizeStoppedMessage(uiMessageId);
     currentStreamingMessage = null;
     isTyping = false;
     isLoading = false;
 
-    await cancelRequest;
-    isCancellingStream = false;
-    activeStreamAbortController = null;
-    activeStreamMessageId = null;
-    activeStreamBackendMessageId = null;
-    window.dispatchEvent(new CustomEvent('refreshChatHistory'));
+    const cancellation = cancelRequest.finally(() => {
+      releaseActiveStream(streamOwner);
+      isCancellingStream = false;
+      window.dispatchEvent(new CustomEvent('refreshChatHistory'));
+    });
+    activeCancellation = cancellation;
+    void cancellation.finally(() => {
+      if (activeCancellation === cancellation) {
+        activeCancellation = null;
+      }
+    });
+    return cancellation;
   }
 
   // Link a freshly-created conversation to the originating project (many-to-many). Runs once.
@@ -437,7 +457,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   async function handleSendMessage(content: string, uploadedFiles?: UploadedFile[], webSearch?: boolean) {
-    if (isLoading) return;
+    if (isLoading || isCancellingStream || activeStreamAbortController) return;
 
     error = null;
     isLoading = true;
@@ -802,11 +822,8 @@ SPDX-License-Identifier: Apache-2.0
       isLoading = false;
       currentStreamingMessage = null;
       pendingStreamingMessage = null;
-      if (activeStreamAbortController === streamAbortController) {
-        activeStreamAbortController = null;
-        activeStreamMessageId = null;
-        activeStreamBackendMessageId = null;
-        isCancellingStream = false;
+      if (!isCancellingStream) {
+        releaseActiveStream(streamAbortController);
       }
 
       // Refocus input after exception
@@ -864,6 +881,8 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   async function continueProcessingRequest(assistantMessageId: string) {
+    if (isLoading || isCancellingStream || activeStreamAbortController) return;
+
     // Find the user message that preceded this assistant message
     const msgIndex = messages.findIndex(m => m.id === assistantMessageId);
     if (msgIndex <= 0) return;
@@ -1117,11 +1136,8 @@ SPDX-License-Identifier: Apache-2.0
       isLoading = false;
       isTyping = false;
     } finally {
-      if (activeStreamAbortController === streamAbortController) {
-        activeStreamAbortController = null;
-        activeStreamMessageId = null;
-        activeStreamBackendMessageId = null;
-        isCancellingStream = false;
+      if (!isCancellingStream) {
+        releaseActiveStream(streamAbortController);
       }
     }
   }
@@ -1207,9 +1223,15 @@ SPDX-License-Identifier: Apache-2.0
     const chatId = urlParams.get('chatId');
     const loadToken = ++conversationLoadToken;
 
+    if (chatId !== conversationId && (canCancelStream || activeCancellation)) {
+      isLoadingConversation = Boolean(chatId);
+      await handleCancelStream();
+      if (loadToken !== conversationLoadToken) return;
+    }
+
     if (chatId) {
       try {
-        isLoadingConversation = messages.length === 0;
+        isLoadingConversation = true;
         isLoading = true;
         error = null;
         showArtifactPanel = false;
@@ -1311,16 +1333,13 @@ SPDX-License-Identifier: Apache-2.0
         isLoading = false;
         isLoadingConversation = false;
         
-        // Wait for Svelte to finish updating the DOM with the new messages.
         await tick();
-        
+
         if (messagesContainer) {
-          // Save the original scroll behavior (likely 'smooth' from CSS).
-          // We'll temporarily change it to 'auto' to prevent smooth scrolling animation.
           const container = messagesContainer;
           const originalScrollBehavior = container.style.scrollBehavior;
           container.style.scrollBehavior = 'auto';
-          
+
           requestAnimationFrame(() => {
             void container.offsetHeight;
             container.scrollTop = container.scrollHeight;
@@ -1435,7 +1454,7 @@ SPDX-License-Identifier: Apache-2.0
   });
 </script>
 
-{#if isLoadingConversation && messages.length === 0}
+{#if isLoadingConversation}
   <!-- Loading state: wait until we know if there are messages -->
   <div class="chat-container chat-container--loading" role="status" aria-label={$_('chat.messageInput.loadingModels')} aria-busy="true"></div>
 {:else if messages.length === 0}
@@ -1641,7 +1660,7 @@ SPDX-License-Identifier: Apache-2.0
 <style>
   .chat-layout {
     display: flex;
-    height: 100%;
+    height: 100vh;
     width: 100%;
     min-height: 0;
     position: relative;
@@ -1651,17 +1670,23 @@ SPDX-License-Identifier: Apache-2.0
   .chat-layout .chat-container {
     flex: 1;
     min-width: 0;
-    transition: min-width 0.24s ease;
+    transition: flex 0.3s ease;
   }
 
   .chat-layout--with-artifact {
-    display: grid;
-    grid-template-columns: minmax(420px, 1fr) clamp(420px, 42vw, 760px);
+    display: flex;
+  }
+
+  .chat-layout--with-artifact .chat-container {
+    flex: 1;
   }
 
   .artifact-panel-wrapper {
+    width: 50%;
+    max-width: 50%;
     min-width: 0;
-    height: 100%;
+    height: 100vh;
+    flex-shrink: 0;
     position: relative;
     z-index: 2;
     border-left: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
@@ -1676,7 +1701,7 @@ SPDX-License-Identifier: Apache-2.0
   .chat-container {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100vh;
     min-height: 0;
     width: 100%;
     background: var(--bg-primary);
@@ -1762,6 +1787,7 @@ SPDX-License-Identifier: Apache-2.0
       inset: auto 0 0 0;
       z-index: 1200;
       width: 100%;
+      max-width: 100%;
       height: min(78vh, calc(var(--app-viewport-height, 100vh) - 56px));
       border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.14));
       border-left: 0;
@@ -1790,6 +1816,7 @@ SPDX-License-Identifier: Apache-2.0
     inset: auto 0 0 0;
     z-index: 1200;
     width: 100%;
+    max-width: 100%;
     height: min(78vh, calc(var(--app-viewport-height, 100vh) - 56px));
     border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.14));
     border-left: 0;

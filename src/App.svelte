@@ -119,6 +119,8 @@ SPDX-License-Identifier: Apache-2.0
   function isInteractiveTarget(target: HTMLElement | null): boolean {
     if (target == null) return false;
 
+    const roleButton = target.closest('[role="button"]');
+
     return (
       target.tagName === 'BUTTON' ||
       target.tagName === 'INPUT' ||
@@ -131,7 +133,7 @@ SPDX-License-Identifier: Apache-2.0
       target.closest('input') != null ||
       target.closest('select') != null ||
       target.closest('textarea') != null ||
-      target.closest('[role="button"]') != null
+      (roleButton != null && !roleButton.classList.contains('message'))
     );
   }
 
@@ -217,7 +219,7 @@ SPDX-License-Identifier: Apache-2.0
     const touch = event.touches[0];
     const target = event.target as HTMLElement | null;
 
-    if (touch.clientX > 28 || isInteractiveTarget(target)) {
+    if (touch.clientX > 32 || isInteractiveTarget(target)) {
       return;
     }
 
@@ -233,14 +235,19 @@ SPDX-License-Identifier: Apache-2.0
 
     const touch = event.touches[0];
     const deltaX = touch.clientX - swipeStartX;
+    const distanceX = Math.abs(deltaX);
     const deltaY = Math.abs(touch.clientY - swipeStartY);
 
-    if (deltaY > 42) {
+    if (deltaX < -16 || (deltaY > 28 && deltaY > distanceX)) {
       isSwipeTracking = false;
       return;
     }
 
-    if (deltaX >= 70) {
+    if (deltaX > 12 && distanceX > deltaY) {
+      event.preventDefault();
+    }
+
+    if (deltaX >= 64 && deltaX > deltaY * 1.1) {
       sidebarCollapsed = false;
       isSwipeTracking = false;
     }

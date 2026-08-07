@@ -20,6 +20,8 @@ SPDX-License-Identifier: Apache-2.0
     isNativeArtifactPreviewAvailable,
     resetNativeArtifactPreviewZoom,
   } from "$lib/platform/nativeArtifactPreview";
+  import { saveNativeArtifact } from "$lib/platform/nativeArtifactDownload";
+  import { showNativeNotification } from "$lib/platform/nativeNotifications";
   import type { ArtifactItem } from "../artifacts";
 
   interface Props {
@@ -74,7 +76,7 @@ SPDX-License-Identifier: Apache-2.0
   let isFullscreen = $state(false);
   let previewMode = $state<"responsive" | "desktop">("responsive");
 
-  const DESKTOP_VIEWPORT_WIDTH = 1440;
+  const DESKTOP_VIEWPORT_WIDTH = 1024;
   const DESKTOP_VIEWPORT_HEIGHT = 900;
   const NATIVE_DESKTOP_VIEWPORT_WIDTH = 1024;
 
@@ -84,6 +86,7 @@ SPDX-License-Identifier: Apache-2.0
   let desktopPreviewInner: HTMLDivElement | undefined = $state(undefined);
   let nativePreviewSurface: HTMLDivElement | undefined = $state(undefined);
   let desktopFitScale = $state(1);
+  let desktopViewportHeight = $state(DESKTOP_VIEWPORT_HEIGHT);
   let desktopZoom = $state(1);
   /** True only while a pinch is in flight — see `attachDesktopPreviewPinch`. */
   let isPinchZooming = $state(false);
@@ -110,9 +113,10 @@ SPDX-License-Identifier: Apache-2.0
   let iframeKey = $state(0);
   let desktopScale = $derived(Number((desktopFitScale * desktopZoom).toFixed(3)));
   let desktopFrameWidth = $derived(`${Math.round(DESKTOP_VIEWPORT_WIDTH * desktopScale)}px`);
-  let desktopFrameHeight = $derived(`${Math.round(DESKTOP_VIEWPORT_HEIGHT * desktopScale)}px`);
+  let desktopFrameHeight = $derived(`${Math.round(desktopViewportHeight * desktopScale)}px`);
+  let desktopViewportHeightCss = $derived(`${desktopViewportHeight}px`);
   let desktopPreviewTransform = $derived(`scale(${desktopScale})`);
-  let desktopZoomPercent = $derived(`${Math.round(desktopScale * 100)}%`);
+  let desktopZoomPercent = $derived(`${Math.round(desktopZoom * 100)}%`);
   let highlightedCode = $derived(highlightCode(code, type));
 
   $effect(() => {
@@ -140,30 +144,39 @@ SPDX-License-Identifier: Apache-2.0
       useNativePreview
     ) {
       desktopFitScale = 1;
+      desktopViewportHeight = DESKTOP_VIEWPORT_HEIGHT;
       return;
     }
 
     let animationFrame = 0;
     let lastFitScale = 0;
+    let lastViewportHeight = 0;
 
     const updateScale = () => {
       if (!previewViewport) return;
 
       const bounds = previewViewport.getBoundingClientRect();
-
-      const availableWidth = Math.max(bounds.width - 32, 320);
-      const availableHeight = Math.max(bounds.height - 32, 240);
-      const nextScale = Math.min(
-        1,
-        availableWidth / DESKTOP_VIEWPORT_WIDTH,
-        availableHeight / DESKTOP_VIEWPORT_HEIGHT,
-      );
+      const style = getComputedStyle(previewViewport);
+      const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+      const verticalPadding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+      const availableWidth = Math.max(bounds.width - horizontalPadding, 320);
+      const availableHeight = Math.max(bounds.height - verticalPadding, 240);
+      const nextScale = Math.min(1, availableWidth / DESKTOP_VIEWPORT_WIDTH);
 
       const roundedScale = Number(nextScale.toFixed(3));
-      if (Math.abs(roundedScale - lastFitScale) < 0.001) return;
+      const nextViewportHeight = Math.max(
+        DESKTOP_VIEWPORT_HEIGHT,
+        Math.ceil(availableHeight / roundedScale),
+      );
+      if (
+        Math.abs(roundedScale - lastFitScale) < 0.001 &&
+        nextViewportHeight === lastViewportHeight
+      ) return;
 
       lastFitScale = roundedScale;
+      lastViewportHeight = nextViewportHeight;
       desktopFitScale = roundedScale;
+      desktopViewportHeight = nextViewportHeight;
     };
 
     const queueScaleUpdate = () => {
@@ -225,14 +238,40 @@ SPDX-License-Identifier: Apache-2.0
       const fileName =
         (downloadTitle || title).replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "-").toLowerCase() ||
         "artifact";
+      const fullFileName = `${fileName}.${ext}`;
+      const nativeResult = await saveNativeArtifact(downloadContent, fullFileName, mimeType);
+      if (nativeResult) {
+        if (nativeResult.status === "error") {
+          throw new Error(nativeResult.error || "Native download failed");
+        }
+        if (nativeResult.status === "success") {
+          const notified = await showNativeNotification({
+            id: `artifact-download-${Date.now()}`,
+            title: "Artifact downloaded",
+            body: `${fullFileName} saved to Downloads`,
+            group: "grengin-downloads",
+            channel: {
+              id: "grengin-downloads-v1",
+              name: "Downloads",
+              description: "Completed artifact downloads",
+              importance: "high",
+            },
+          });
+          if (!notified) {
+            triggerToast("Saved to Downloads");
+          }
+        }
+        return;
+      }
+
       const blob = new Blob([downloadContent], { type: mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${fileName}.${ext}`;
+      a.download = fullFileName;
       a.click();
       URL.revokeObjectURL(url);
-      triggerToast(`Downloaded ${fileName}.${ext}`);
+      triggerToast(`Downloaded ${fullFileName}`);
     } catch {
       triggerToast("Download failed");
     } finally {
@@ -285,7 +324,7 @@ SPDX-License-Identifier: Apache-2.0
       previewScale: (scale) => {
         if (desktopPreviewFrame) {
           desktopPreviewFrame.style.width = `${Math.round(DESKTOP_VIEWPORT_WIDTH * scale)}px`;
-          desktopPreviewFrame.style.height = `${Math.round(DESKTOP_VIEWPORT_HEIGHT * scale)}px`;
+          desktopPreviewFrame.style.height = `${Math.round(desktopViewportHeight * scale)}px`;
         }
         if (desktopPreviewInner) {
           desktopPreviewInner.style.transform = `scale(${scale})`;
@@ -600,7 +639,7 @@ SPDX-License-Identifier: Apache-2.0
   {/if}
 
   {#if showToast}
-    <div class="toast">
+    <div class="toast" role="status" aria-live="polite">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="20 6 9 17 4 12" />
       </svg>
@@ -644,6 +683,7 @@ SPDX-License-Identifier: Apache-2.0
                   class:zooming={isPinchZooming}
                   bind:this={desktopPreviewInner}
                   style:transform={desktopPreviewTransform}
+                  style:height={desktopViewportHeightCss}
                 >
                   <iframe
                     bind:this={desktopIframe}
@@ -651,6 +691,7 @@ SPDX-License-Identifier: Apache-2.0
                     class="preview-iframe desktop-preview-iframe"
                     srcdoc={code}
                     sandbox="allow-same-origin allow-scripts"
+                    style:height={desktopViewportHeightCss}
                   ></iframe>
                 </div>
               </div>
@@ -733,7 +774,7 @@ SPDX-License-Identifier: Apache-2.0
     position: relative;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100vh;
     min-height: 0;
     border-left: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
     background: var(--bg-primary);
@@ -1092,7 +1133,7 @@ SPDX-License-Identifier: Apache-2.0
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
     z-index: 100;
     animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1), toastOut 0.25s 1.9s ease-in forwards;
-    pointer-events: none;
+    pointer-events: auto;
   }
 
   @keyframes toastIn {
@@ -1365,8 +1406,8 @@ SPDX-License-Identifier: Apache-2.0
 
   @media (max-width: 640px) {
     .artifact-header {
-      min-height: 56px;
-      padding: 9px 10px;
+      min-height: calc(56px + var(--app-safe-area-top, 0px));
+      padding: calc(9px + var(--app-safe-area-top, 0px)) 10px 9px;
     }
 
     .artifact-panel.fullscreen .artifact-header {
@@ -1436,9 +1477,9 @@ SPDX-License-Identifier: Apache-2.0
 
   @media (orientation: landscape) and (max-height: 640px) {
     .artifact-header {
-      min-height: 40px;
+      min-height: calc(40px + var(--app-safe-area-top, 0px));
       gap: 6px;
-      padding: 4px 6px 4px 8px;
+      padding: calc(4px + var(--app-safe-area-top, 0px)) 6px 4px 8px;
     }
 
     .artifact-panel.fullscreen .artifact-header {
@@ -1485,5 +1526,43 @@ SPDX-License-Identifier: Apache-2.0
     .toast {
       top: 44px;
     }
+  }
+
+  @media (max-width: 1180px), (hover: none) and (pointer: coarse) {
+    .artifact-panel {
+      height: 100%;
+    }
+
+    .artifact-header {
+      padding-top: calc(8px + var(--app-safe-area-top, 0px));
+    }
+
+    .preview-viewport.desktop {
+      padding: 0;
+      background: #fff;
+    }
+
+    .desktop-preview-frame {
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
+
+  :global(html[data-app-layout='mobile']) .artifact-panel:not(.fullscreen) {
+    height: 100%;
+  }
+
+  :global(html[data-app-layout='mobile']) .preview-viewport.desktop {
+    padding: 0;
+    background: #fff;
+  }
+
+  :global(html[data-app-layout='mobile']) .desktop-preview-frame {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 </style>
