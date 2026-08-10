@@ -551,6 +551,69 @@ cargo test -p grengin-provider -j 2
 cargo test --workspace --all-features -j 2
 ```
 
+### Local Live-Provider Credentials
+
+The development machine keeps optional provider credentials in:
+
+```text
+/home/anurag/work/secrets/grengin.sh
+```
+
+It currently defines these credential variables:
+
+- `OPENAI_API_KEY`
+- `ANTHROPIC_API_KEY`
+- `MISTRAL_API_KEY`
+- `GEMINI_API_KEY`
+- `GROQ_API_KEY`
+
+This file is local-only test infrastructure. It must never be copied into the
+repository, Docker image, release archive, test fixture, log, or CI artifact.
+Agents must never print its values, run shell tracing while it is sourced, or
+include environment dumps in test output.
+
+Normal unit, integration, parser, mapping, security, and edge-case tests remain
+fully deterministic and use local mock HTTP/SSE servers. Invalid payloads,
+fragmented streams, 429 responses, timeouts, malformed tool calls, and similar
+edge cases must not be produced by deliberately abusing or exhausting live
+provider APIs.
+
+Live provider tests are opt-in smoke and compatibility checks. Mark them
+ignored by default and require `GRENGIN_LIVE_PROVIDER_TESTS=1`. Run them with
+one test thread to control cost and provider rate limits:
+
+```bash
+set +x
+set -a
+source /home/anurag/work/secrets/grengin.sh
+set +a
+GRENGIN_LIVE_PROVIDER_TESTS=1 \
+  cargo test -p grengin-provider --test live_providers -j 2 -- \
+  --ignored --test-threads=1
+```
+
+The live test harness must:
+
+- Discover configured providers by known variable name without logging the
+  value.
+- Skip a provider with a clear non-secret reason when its key is absent.
+- Use minimal prompts, token limits, embedding inputs, and tool schemas.
+- Disable image-generation smoke tests unless
+  `GRENGIN_LIVE_IMAGE_TESTS=1` is also set because image calls can incur
+  materially higher cost.
+- Apply strict connect, first-byte, idle, and total timeouts.
+- Avoid automatic retries after any response bytes are received.
+- Redact authorization headers, query credentials, provider response bodies,
+  and prompt content from failure messages.
+- Write generated outputs only to temporary directories and remove them after
+  the test.
+- Assert canonical Grengin events and results rather than provider-specific
+  implementation details.
+
+CI must obtain equivalent variables from its secret manager. CI must not
+depend on the local absolute path or upload live-test request/response bodies as
+artifacts.
+
 Required unit and integration coverage includes:
 
 - Valid, invalid, incomplete, duplicate, and unknown-version manifests.
@@ -587,8 +650,8 @@ Parser and mapping modules should additionally receive property tests or fuzz
 targets. Fuzz failures must become deterministic regression tests.
 
 No default test may require a real provider credential or public network
-access. Live provider smoke tests belong in an explicitly invoked, secret-aware
-CI job.
+access. Live provider smoke tests belong only in the explicitly invoked local
+command above or a secret-aware CI job.
 
 ## Acceptance Criteria
 
