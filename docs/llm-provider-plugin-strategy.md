@@ -9,6 +9,38 @@ Before changing provider architecture, schema, persistence, or runtime
 behaviour, update this document first. Implementation decisions that conflict
 with this document require an explicit design change here.
 
+## Implementation Status
+
+The `feat/llm-plugin` branches contain the first end-to-end implementation
+slice:
+
+- The internal `grengin-provider` crate, v1 manifest schema, bounded mapping
+  AST, restricted HTTP executor, SSE decoder, typed capability traits, and
+  hot-swappable registry.
+- Declarative chat streaming and tool continuation, embeddings, image
+  generation, and model discovery integrated with the existing application
+  policy, storage, and frontend SSE boundaries.
+- Encrypted plugin credentials, provider persistence and migration, permissioned
+  validation/install/test/enable/disable/delete APIs, OpenAPI coverage, and a
+  work-focused admin UI for JSON manifest installation.
+- Reference OpenAI-compatible and Anthropic manifests, deterministic HTTP/SSE
+  tests, ignored credential-aware live smoke tests, and local mock UI coverage.
+
+This slice is suitable for review and controlled local testing. The following
+items remain before calling the plugin contract stable or publishing a public
+plugin catalogue:
+
+- ZIP package ingestion with path/size limits, icons, licenses, fixtures,
+  package signatures, and provider-author documentation.
+- Versioned update history, atomic update failure records, and rollback APIs/UI.
+- Native adapters and parity fixtures for every built-in provider, followed by
+  removal of the remaining provider-name branches in application code.
+- A DNS resolver that pins validated addresses for the actual connection,
+  additional timeout/cancellation coverage, property/fuzz targets, and the
+  remaining matrix of malformed tool, embedding, image, and status responses.
+- Production migration rehearsal and opt-in live compatibility tests. Live
+  tests are never part of the default deterministic suite.
+
 ## Objective
 
 Allow administrators and third-party provider authors to add hosted or

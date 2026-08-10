@@ -945,4 +945,169 @@ router.post('/admin/reconfigure/binaries', requireAuth, (req, res) => {
   })
 })
 
+type MockProviderPlugin = {
+  id: string
+  providerKey: string
+  version: string
+  name: string
+  digest: string
+  source: string
+  status: 'enabled' | 'disabled' | 'invalid'
+  validationError: string | null
+  destination: string
+  capabilities: Record<string, unknown>
+  credentialSlots: Array<{
+    slotId: string
+    configured: boolean
+    status: 'valid' | 'invalid' | 'not_validated' | 'not_configured'
+    validatedAt: string | null
+  }>
+  allowInsecureHttp: boolean
+  allowPrivateNetwork: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+const mockProviderPlugins = new Map<string, MockProviderPlugin>([
+  ['local-openai', {
+    id: crypto.randomUUID(),
+    providerKey: 'local-openai',
+    version: '1.0.0',
+    name: 'Local OpenAI-compatible',
+    digest: 'b042947b1cdaaf0d32a98921146645dd81565e2b38f6a405b7b7a920f3d225b7',
+    source: 'admin_upload',
+    status: 'enabled',
+    validationError: null,
+    destination: 'http://host.docker.internal:11434/v1/',
+    capabilities: {
+      chat: { streaming: true, tools: true, vision: false, reasoning: false },
+      embeddings: true,
+      imageGeneration: false,
+      modelListing: true,
+    },
+    credentialSlots: [{
+      slotId: 'api_key',
+      configured: true,
+      status: 'valid',
+      validatedAt: new Date().toISOString(),
+    }],
+    allowInsecureHttp: true,
+    allowPrivateNetwork: true,
+    createdAt: new Date(Date.now() - 86_400_000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  }],
+])
+
+router.get('/admin/provider-plugins', requireAuth, (_req, res) => {
+  res.json(Array.from(mockProviderPlugins.values()))
+})
+
+router.post('/admin/provider-plugins/validate', requireAuth, (req, res) => {
+  const manifest = req.body?.manifest
+  if (!manifest || manifest.manifestVersion !== '1.0' || !manifest.id || !manifest.name) {
+    return res.json({
+      valid: false,
+      providerKey: null,
+      version: null,
+      name: null,
+      digest: null,
+      destination: null,
+      credentialSlots: [],
+      capabilities: null,
+      error: 'Manifest must declare manifestVersion 1.0, id, and name',
+    })
+  }
+  res.json({
+    valid: true,
+    providerKey: manifest.id,
+    version: manifest.version,
+    name: manifest.name,
+    digest: 'f6d7daac1ec9ca06be84a9e24536479780ffbcb1e0f6f7de0911d17404f9a847',
+    destination: req.body.baseUrlOverride || manifest.baseUrl,
+    credentialSlots: (manifest.credentials ?? []).map((slot: {
+      id: string
+      label?: string
+      type: 'secret' | 'text'
+      required?: boolean
+    }) => ({
+      slotId: slot.id,
+      label: slot.label ?? null,
+      credentialType: slot.type,
+      required: Boolean(slot.required),
+    })),
+    capabilities: manifest.capabilities,
+    error: null,
+  })
+})
+
+router.post('/admin/provider-plugins', requireAuth, (req, res) => {
+  const manifest = req.body.manifest
+  if (mockProviderPlugins.has(manifest.id)) {
+    return res.status(400).json({ detail: 'Provider ID is already installed' })
+  }
+  const now = new Date().toISOString()
+  const plugin: MockProviderPlugin = {
+    id: crypto.randomUUID(),
+    providerKey: manifest.id,
+    version: manifest.version,
+    name: manifest.name,
+    digest: 'f6d7daac1ec9ca06be84a9e24536479780ffbcb1e0f6f7de0911d17404f9a847',
+    source: 'admin_upload',
+    status: req.body.enabled ? 'enabled' : 'disabled',
+    validationError: null,
+    destination: req.body.baseUrlOverride || manifest.baseUrl,
+    capabilities: manifest.capabilities,
+    credentialSlots: (manifest.credentials ?? []).map((slot: { id: string }) => ({
+      slotId: slot.id,
+      configured: Boolean(req.body.credentials?.[slot.id]),
+      status: 'not_validated' as const,
+      validatedAt: null,
+    })),
+    allowInsecureHttp: Boolean(req.body.allowInsecureHttp),
+    allowPrivateNetwork: Boolean(req.body.allowPrivateNetwork),
+    createdAt: now,
+    updatedAt: now,
+  }
+  mockProviderPlugins.set(plugin.providerKey, plugin)
+  res.status(201).json(plugin)
+})
+
+router.post('/admin/provider-plugins/:providerKey/test', requireAuth, (req, res) => {
+  const plugin = mockProviderPlugins.get(req.params.providerKey)
+  if (!plugin) return res.status(404).json({ detail: 'Provider not found' })
+  plugin.credentialSlots = plugin.credentialSlots.map((slot) => ({
+    ...slot,
+    status: slot.configured ? 'valid' : 'not_configured',
+    validatedAt: slot.configured ? new Date().toISOString() : null,
+  }))
+  res.json({ valid: true, mode: 'model_list', modelsAvailable: 4, errorClass: null })
+})
+
+function setMockProviderStatus(
+  req: express.Request,
+  res: express.Response,
+  status: 'enabled' | 'disabled',
+) {
+  const plugin = mockProviderPlugins.get(req.params.providerKey)
+  if (!plugin) return res.status(404).json({ detail: 'Provider not found' })
+  plugin.status = status
+  plugin.updatedAt = new Date().toISOString()
+  res.json(plugin)
+}
+
+router.post('/admin/provider-plugins/:providerKey/enable', requireAuth, (req, res) => {
+  setMockProviderStatus(req, res, 'enabled')
+})
+
+router.post('/admin/provider-plugins/:providerKey/disable', requireAuth, (req, res) => {
+  setMockProviderStatus(req, res, 'disabled')
+})
+
+router.delete('/admin/provider-plugins/:providerKey', requireAuth, (req, res) => {
+  if (!mockProviderPlugins.delete(req.params.providerKey)) {
+    return res.status(404).json({ detail: 'Provider not found' })
+  }
+  res.status(204).send()
+})
+
 export default router

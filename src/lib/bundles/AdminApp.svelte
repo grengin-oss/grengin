@@ -9,6 +9,7 @@
     AccessControl,
     Settings,
     AIEngines,
+    ProviderPlugins,
     Analytics,
     AlertsPage,
     MCPServers,
@@ -56,6 +57,13 @@
   <PermissionGuard permission={PERMISSIONS.aiPlatform.view}>
     {#snippet children()}
       <AIEngines />
+    {/snippet}
+  </PermissionGuard>
+</Route>
+<Route path="/admin/provider-plugins">
+  <PermissionGuard permission={PERMISSIONS.aiPlatform.view}>
+    {#snippet children()}
+      <ProviderPlugins />
     {/snippet}
   </PermissionGuard>
 </Route>

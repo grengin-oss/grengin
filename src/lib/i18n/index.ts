@@ -86,6 +86,7 @@ export type Namespace = (typeof NAMESPACES)[number];
 const ROUTE_NAMESPACES: Record<string, Namespace[]> = {
   '/admin/analytics':           ['admin', 'analytics', 'sidebar'],
   '/admin/ai-engines':          ['admin', 'sidebar'],
+  '/admin/provider-plugins':     ['admin', 'sidebar'],
   '/admin/users':               ['admin', 'sidebar'],
   '/admin/departments':         ['admin', 'sidebar'],
   '/admin/access-control':      ['admin', 'sidebar'],

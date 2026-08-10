@@ -131,6 +131,13 @@
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>',
     type: "item",
   };
+  const providerPluginsMenuItem: AdminMenuItem = {
+    id: "provider-plugins",
+    path: "/admin/provider-plugins",
+    label: "Provider Plugins",
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="M8 4h8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M8 13h.01"/><path d="M12 13h4"/><path d="M8 17h8"/></svg>',
+    type: "item",
+  };
   const manageSectionItem: AdminMenuItem = {
     id: "section-manage",
     label: $_("sidebar.sectionManage"),
@@ -203,6 +210,7 @@
     [
       canViewUsers || canViewDepartments ? organizationMenuItem : null,
       canViewAiEngines ? aiEnginesMenuItem : null,
+      canViewAiEngines ? providerPluginsMenuItem : null,
       canViewMcpServers ? connectorsMenuItem : null,
     ].filter(isMenuItem),
   );
