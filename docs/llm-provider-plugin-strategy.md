@@ -600,6 +600,7 @@ It currently defines these credential variables:
 - `GROQ_API_KEY`
 - `OPEN_ROUTER_API_KEY`
 - `CEREBRAS_API_KEY`
+- `DEEPSEEK_API_KEY`
 
 This file is local-only test infrastructure. It must never be copied into the
 repository, Docker image, release archive, test fixture, log, or CI artifact.
