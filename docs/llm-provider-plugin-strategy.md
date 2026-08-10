@@ -17,7 +17,8 @@ plugin is a declarative package that describes:
 
 - Provider identity, configuration, credentials, models, and capabilities.
 - HTTP endpoints and methods.
-- Request headers, query parameters, and JSON payloads.
+- Request headers, query parameters, content types, body encodings, and payload
+  shapes for chat, image generation, and embeddings.
 - Chat SSE event parsing and normalized stream events.
 - Tool definitions, streamed tool calls, and tool-result continuation.
 - Embedding request and response mappings.
@@ -32,15 +33,19 @@ manifest compiler and wire-format boundary.
 
 The first stable plugin contract has deliberately limited transport scope.
 
-- Plugins are declarative data packages, not executable native or WASM code.
+- Plugins are JSON-based declarative data packages, not executable native or
+  WASM code. "JSON-based" describes the plugin manifest, not the provider's
+  request or response content type.
 - Provider communication uses HTTP or HTTPS only.
 - Chat streaming uses Server-Sent Events (SSE) only.
 - HTTP `POST` is the default method, but a manifest may select another approved
   method when a provider requires it.
-- Headers, query parameters, URL path variables, and JSON payloads are
-  configurable.
-- Embeddings and image generation use ordinary HTTP JSON responses because
-  they are non-streaming operations.
+- Every operation independently configures headers, query parameters, URL path
+  variables, content type, body encoding, and complete payload shape.
+- Chat, image-generation, and embedding payloads are all produced by the same
+  manifest mapping system; none has a hard-coded provider payload.
+- Chat responses remain SSE. Embedding and image-generation response decoding
+  is declared by the plugin and is not restricted to JSON-only responses.
 - Provider responses are normalized into Grengin-owned typed events and
   results before reaching application code.
 - Existing frontend SSE event names and payloads remain unchanged.
@@ -86,7 +91,7 @@ service/crates/grengin-provider/
 │   ├── traits.rs       Object-safe provider capability interfaces
 │   ├── manifest.rs     Versioned Serde manifest types
 │   ├── validation.rs   Schema and semantic validation
-│   ├── mapping.rs      Bounded request/response mapping language
+│   ├── mapping.rs      Bounded payload and response mapping language
 │   ├── http.rs         Restricted HTTP executor
 │   ├── sse.rs          Incremental SSE decoder
 │   ├── runtime.rs      Declarative provider implementation
@@ -177,7 +182,8 @@ my-provider.grengin-provider/
     ├── chat-stream.sse
     ├── tool-stream.sse
     ├── embedding-response.json
-    └── image-response.json
+    ├── image-response.json
+    └── image-response.bin
 ```
 
 `provider.json` follows JSON Schema 2020-12 and includes a mandatory
@@ -203,7 +209,7 @@ The following is an outline, not the final complete schema:
   "capabilities": {
     "chat": { "streaming": true, "tools": true, "vision": false },
     "embeddings": true,
-    "imageGeneration": false
+    "imageGeneration": true
   },
   "operations": {
     "chatStream": {
@@ -229,19 +235,74 @@ The following is an outline, not the final complete schema:
           }
         ]
       }
+    },
+    "embeddings": {
+      "method": "POST",
+      "path": "/v1/embeddings",
+      "bodyEncoding": "json",
+      "body": {
+        "model": { "$get": "request.model" },
+        "input": { "$get": "request.inputs" }
+      },
+      "response": {
+        "bodyEncoding": "json",
+        "vectors": "/data"
+      }
+    },
+    "imageGeneration": {
+      "method": "PUT",
+      "path": "/v1/images",
+      "bodyEncoding": "multipart",
+      "body": {
+        "prompt": { "$get": "request.prompt" },
+        "images": { "$map": "request.inputImages", "using": "imagePart" }
+      },
+      "response": {
+        "bodyEncoding": "binary"
+      }
     }
   }
 }
 ```
 
 The final schema must separately define provider metadata, administrator
-configuration, secrets, model catalogues, operation mappings, and response
-rules. Do not place all fields in one unstructured object.
+configuration, secrets, model catalogues, operation request mappings, body
+encodings, and response rules. Do not place all fields in one unstructured
+object.
+
+## Per-Operation Wire Contract
+
+The manifest is JSON, but each operation owns its complete HTTP wire contract.
+Chat, image generation, and embeddings may therefore use different methods,
+headers, query parameters, content types, and payload structures within the
+same plugin.
+
+Initial request body encodings should include:
+
+- `json`: construct any JSON object, array, scalar, or nested provider payload.
+- `form`: construct `application/x-www-form-urlencoded` fields.
+- `multipart`: construct text, JSON, and approved attachment parts.
+- `text`: construct a UTF-8 request body.
+- `binary`: pass through an explicitly selected attachment for an operation
+  that accepts a raw binary body.
+
+Initial response body decoders should include:
+
+- `sse`: mandatory for chat streaming, with each event decoded as JSON or text
+  according to the operation mapping.
+- `json`: extract structured values through validated selectors.
+- `text`: extract or transform a bounded UTF-8 body.
+- `binary`: accept direct image bytes after content-type and size validation.
+
+This is payload flexibility over a fixed HTTP transport. It does not introduce
+arbitrary network protocols or executable plugin logic.
 
 ## Request Mapping Language
 
 The mapping language is a small JSON abstract syntax tree, not string-based
-code. Initially support only reviewed operators:
+code. It can emit the operation's configured body encoding, so using a JSON
+manifest does not force the resulting provider payload to be JSON. Initially
+support only reviewed operators:
 
 - `$literal`: emit a constant JSON value.
 - `$get`: read a value from a documented canonical request path.
@@ -270,8 +331,10 @@ The SSE decoder must correctly support comments, keepalive events, CRLF, blank
 line delimiters, multiple `data:` lines, events split across network chunks,
 UTF-8 split across chunks, and a configurable completion sentinel.
 
-After decoding JSON, response rules use RFC 6901 JSON Pointers and typed
-conditions to produce canonical events. Supported rules must cover:
+For JSON event data, response rules use RFC 6901 JSON Pointers and typed
+conditions to produce canonical events. Text event data uses bounded typed
+extractors rather than arbitrary regular-expression programs. Supported rules
+must cover:
 
 - Request and response IDs.
 - Text and reasoning deltas.
@@ -312,8 +375,8 @@ unknown tools, and continuation beyond the configured maximum round count.
 ## Embedding Contract
 
 `EmbeddingProvider` accepts a typed model, ordered input list, and optional
-target dimensions. The manifest maps these values into one or more HTTP JSON
-requests and maps the response back to indexed vectors.
+target dimensions. The manifest maps these values into one or more configured
+HTTP payloads and maps the declared response format back to indexed vectors.
 
 The runtime must validate:
 
@@ -331,8 +394,9 @@ path rather than retaining duplicate provider branches.
 ## Image-Generation Contract
 
 `ImageProvider` accepts a typed prompt, model, input images, output count, size,
-quality, and supported provider options. The manifest maps the request and
-extracts base64 image data or approved HTTPS image URLs from a JSON response.
+quality, and supported provider options. The manifest controls the complete
+request payload and can extract base64 image data or approved HTTPS image URLs
+from a structured response, or accept validated image bytes directly.
 
 The host validates content type, decoded size, image count, download URL, and
 maximum response size before saving a file. Downloads use the same SSRF rules
@@ -343,7 +407,7 @@ as provider endpoints and do not forward provider credentials to another host.
 A plugin can supply models through either:
 
 - An inline model catalogue in `provider.json`.
-- A configurable HTTP JSON model-list operation with response mappings.
+- A configurable HTTP model-list operation with request and response mappings.
 
 Model capabilities are data, not assumptions inferred from provider names.
 They include streaming, tools, vision, PDF input, image generation, embeddings,
@@ -462,7 +526,8 @@ default.
 
 - Finalize and publish the v1 JSON Schema.
 - Implement the bounded mapping language and manifest compiler.
-- Implement generic HTTP, JSON, and SSE execution.
+- Implement generic HTTP payload encoding, response decoding, and SSE
+  execution.
 - Convert one OpenAI-compatible provider into a manifest as the reference
   implementation.
 - Convert remaining built-in providers only after parity tests pass.
@@ -509,9 +574,9 @@ Required unit and integration coverage includes:
   missing.
 - Ordered and out-of-order embeddings, empty batches, dimension mismatches,
   missing vectors, extra vectors, `NaN`, infinity, and oversized batches.
-- Base64 image responses, HTTPS image URLs, wrong MIME type, invalid base64,
-  oversized images, partial multi-image responses, and cross-host credential
-  stripping.
+- Base64 image responses, direct binary image responses, HTTPS image URLs,
+  wrong MIME type, invalid base64, oversized images, partial multi-image
+  responses, and cross-host credential stripping.
 - Registry replacement during active streams, failed updates, rollback, and
   concurrent lookup.
 - Parity fixtures for every built-in provider.
@@ -530,8 +595,9 @@ CI job.
 - A third party can add an HTTP/SSE provider without changing Grengin source.
 - A self-hosted OpenAI-compatible provider can be configured with a private
   base URL after explicit administrator approval.
-- Provider-specific payloads, headers, model fields, stream paths, tool calls,
-  usage, errors, embeddings, and image responses are defined declaratively.
+- Provider-specific methods, headers, content types, payload encodings, payload
+  shapes, stream paths, tool calls, usage, errors, embeddings, and image
+  responses are defined declaratively for each operation.
 - Application code contains no provider-name branches for chat, embeddings, or
   image generation after migration is complete.
 - Unsupported capabilities are rejected before a request is sent.
@@ -555,4 +621,3 @@ CI job.
   merely to make a regression pass.
 - Do not add executable plugin support or another transport without explicit
   approval and a versioned strategy update.
-
