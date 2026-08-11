@@ -281,7 +281,8 @@ SPDX-License-Identifier: Apache-2.0
 
     try {
       if (reset) {
-        loadingChats = true;
+        // Keep existing chats visible while refreshing after a conversation starts.
+        loadingChats = chatHistory.length === 0 || Boolean(trimmedSearchQuery);
         loadingMoreChats = false;
         chatOffset = 0;
         chatTotal = null;

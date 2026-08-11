@@ -755,13 +755,10 @@ SPDX-License-Identifier: Apache-2.0
     z-index: 1000;
     overflow-y: auto;
     overflow-x: hidden;
-    transform: translate3d(0, 0, 0);
     transition:
       width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
       transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 0.38s cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: transform;
-    backface-visibility: hidden;
 
     /* Liquid Glass Layer 1 - Primary navigation surface */
     background: var(--bg-primary);
