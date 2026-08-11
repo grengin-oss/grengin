@@ -13,12 +13,18 @@
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "test": "tsx scripts/artifacts.parity.test.ts",
     "i18n:check": "tsx scripts/sync-i18n.ts",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "android:dev": "tauri android dev",
+    "android:build": "tauri android build",
     "mock:dev": "tsx mock/server.ts",
     "mock:generate-types": "openapi-typescript api/openapi.yaml -o mock/types/api.ts"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.8.0",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "@tauri-apps/cli": "^2.10.1",
     "@tsconfig/svelte": "^5.0.6",
     "@types/cors": "^2.8.17",
     "@types/dompurify": "^3.2.0",
@@ -39,6 +45,11 @@
     }
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/plugin-deep-link": "^2.4.8",
+    "@tauri-apps/plugin-http": "^2.5.9",
+    "@tauri-apps/plugin-notification": "^2.3.3",
+    "@tauri-apps/plugin-opener": "^2.5.3",
     "dompurify": "^3.3.0",
     "highlight.js": "^11.11.1",
     "marked": "^17.0.1",

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
 // SPDX-License-Identifier: Apache-2.0
 
-import { API_BASE, request, ApiError, parseErrorDetail, handleUnauthorized } from './client';
+import { API_BASE, request, ApiError, parseErrorDetail, apiFetch, handleUnauthorized } from './client';
 import { getAccessToken } from '../features/auth';
 
 export interface NotificationItem {
@@ -72,7 +72,7 @@ export async function openNotificationsStream(
   }
 
   const url = `${API_BASE}/me/notifications/stream`;
-  let response = await fetch(url, {
+  let response = await apiFetch(url, {
     method: 'GET',
     headers: { Authorization: `Bearer ${token}` },
     signal,
@@ -80,7 +80,7 @@ export async function openNotificationsStream(
 
   // Handle token expiration for streaming requests
   if (response.status === 401) {
-    const newToken = await handleUnauthorized()
+    const newToken = await handleUnauthorized();
     if (!newToken) {
       // handleUnauthorized already cleared auth and redirected
       throw new ApiError(401, {
@@ -95,8 +95,7 @@ export async function openNotificationsStream(
       });
     }
 
-    // Retry with new token
-    response = await fetch(url, {
+    response = await apiFetch(url, {
       method: 'GET',
       headers: { Authorization: `Bearer ${newToken}` },
       signal,

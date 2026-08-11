@@ -2,23 +2,158 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { components } from '../types/api.js';
+import { isTauriRuntime } from '../platform/tauri.js';
 
 type User = components['schemas']['User'];
 
-// Always use /api - proxied by Vite dev server locally, Cloudflare Pages Function in production
-const defaultApiBase = 'https://grengin-test-production.up.railway.app';
+const defaultWebApiBase = 'https://grengin-test-production.up.railway.app';
+const defaultTauriApiBase =
+  import.meta.env?.VITE_TAURI_API_BASE || 'https://api.demo.devel.grengin.com';
 const rawApiBase = import.meta.env?.VITE_API_BASE;
+const apiBaseOverrideStorageKey = 'grengin_api_base_override';
 
-const normalizeBase = (base: string): string => {
-  if (!base) {
-    return defaultApiBase;
-  }
-  return base.endsWith('/') ? base.slice(0, -1) : base;
+export const API_BASE_CHANGE_EVENT = 'grengin-api-base-change';
+
+const getRuntimeDefaultApiBase = (): string => {
+  return isTauriRuntime() ? defaultTauriApiBase : defaultWebApiBase;
 };
 
-// Use env override when provided, fall back to /api (proxied locally & via Pages Functions)
-export const API_BASE = normalizeBase(rawApiBase ?? defaultApiBase);
+const normalizeBase = (base: string, fallback = getRuntimeDefaultApiBase()): string => {
+  const value = base.trim() || fallback;
+  return value.replace(/\/+$/, '');
+};
 
+function getLocalStorage(): Storage | null {
+  try {
+    return typeof window === 'undefined' ? null : window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function readStoredApiBaseOverride(): string | null {
+  const storage = getLocalStorage();
+  const stored = storage?.getItem(apiBaseOverrideStorageKey)?.trim();
+
+  if (!stored) {
+    return null;
+  }
+
+  try {
+    return normalizeApiBaseInput(stored);
+  } catch {
+    try {
+      storage?.removeItem(apiBaseOverrideStorageKey);
+    } catch {
+      // Ignore storage failures and fall back to the configured default.
+    }
+    return null;
+  }
+}
+
+function emitApiBaseChange(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent(API_BASE_CHANGE_EVENT, {
+      detail: { apiBase: API_BASE, override: getApiBaseOverride() },
+    }),
+  );
+}
+
+export function getDefaultApiBase(): string {
+  if (isTauriRuntime()) {
+    return normalizeBase(defaultTauriApiBase);
+  }
+
+  return normalizeBase(rawApiBase ?? defaultWebApiBase);
+}
+
+export function getApiBaseOverride(): string | null {
+  return readStoredApiBaseOverride();
+}
+
+export function getApiBase(): string {
+  return API_BASE;
+}
+
+export function normalizeApiBaseInput(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error('Backend URL is required.');
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new Error('Enter a valid absolute URL.');
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error('Backend URL must start with http:// or https://.');
+  }
+
+  if (isTauriRuntime() && !import.meta.env.DEV && parsed.protocol !== 'https:') {
+    throw new Error('Packaged apps require an HTTPS backend URL.');
+  }
+
+  if (parsed.search || parsed.hash) {
+    throw new Error('Backend URL cannot include query parameters or fragments.');
+  }
+
+  return normalizeBase(parsed.href);
+}
+
+export function setApiBaseOverride(value: string): string {
+  const storage = getLocalStorage();
+  if (!storage) {
+    throw new Error('Backend URL storage is unavailable.');
+  }
+
+  const normalized = normalizeApiBaseInput(value);
+  try {
+    storage.setItem(apiBaseOverrideStorageKey, normalized);
+  } catch {
+    throw new Error('Backend URL storage is unavailable.');
+  }
+
+  API_BASE = normalized;
+  emitApiBaseChange();
+  return API_BASE;
+}
+
+export function resetApiBaseOverride(): string {
+  try {
+    getLocalStorage()?.removeItem(apiBaseOverrideStorageKey);
+  } catch {
+    // Ignore storage failures; the in-memory value still resets for this session.
+  }
+
+  API_BASE = getDefaultApiBase();
+  emitApiBaseChange();
+  return API_BASE;
+}
+
+// Web builds use main's default backend unless VITE_API_BASE overrides it.
+// Packaged Tauri builds need an absolute backend URL because local assets are not behind that proxy.
+export let API_BASE = getApiBaseOverride() ?? getDefaultApiBase();
+
+export type ApiFetchInit = RequestInit & {
+  maxRedirections?: number;
+  connectTimeout?: number;
+};
+
+export async function apiFetch(input: URL | Request | string, init?: ApiFetchInit): Promise<Response> {
+  if (isTauriRuntime()) {
+    const { fetch: nativeFetch } = await import('@tauri-apps/plugin-http');
+    return nativeFetch(input, init);
+  }
+
+  return fetch(input, init);
+}
 
 export interface RichErrorDetail {
   type: 'rich';
@@ -133,7 +268,7 @@ async function tryRefreshToken(): Promise<boolean> {
   }
 
   try {
-    const response = await fetch(`${API_BASE}/auth/refresh`, {
+    const response = await apiFetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken }),
@@ -182,7 +317,7 @@ export async function request<T>(
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await apiFetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers,
   });
@@ -194,7 +329,7 @@ export async function request<T>(
       // Retry the original request with new token
       const newToken = getAccessTokenFn?.();
       (headers as Record<string, string>)['Authorization'] = `Bearer ${newToken}`;
-      const retryResponse = await fetch(`${API_BASE}${endpoint}`, {
+      const retryResponse = await apiFetch(`${API_BASE}${endpoint}`, {
         ...options,
         headers,
       });

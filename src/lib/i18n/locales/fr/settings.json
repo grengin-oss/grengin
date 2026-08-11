@@ -3,12 +3,14 @@
     "title": "Paramètres",
     "subtitle": "Gérez vos préférences personnelles et les intégrations connectées.",
     "tabs": {
+      "appearance": "Apparence",
+      "appearanceAria": "Préférences d'apparence",
+      "skills": "Compétences",
+      "skillsAria": "Gérer vos compétences",
       "integrations": "Intégrations",
       "integrationsAria": "Intégrations connectées",
       "promptSettings": "Paramètres des Instructions",
-      "promptSettingsAria": "Gérer vos préférences d'instructions",
-      "skills": "Compétences",
-      "skillsAria": "Gérer vos compétences"
+      "promptSettingsAria": "Gérer vos préférences d'instructions"
     }
   },
   "userIntegrations": {
@@ -261,6 +263,19 @@
         "nameKebab": "Utilisez le kebab-case en minuscules (lettres, chiffres et traits d'union simples)."
       },
       "willImportAs": "Sera importé sous"
+    }
+  },
+  "appearanceSettings": {
+    "title": "Apparence",
+    "subtitle": "Choisissez l'apparence de Grengin sur cet appareil.",
+    "theme": {
+      "label": "Thème de couleur",
+      "light": "Clair",
+      "lightDescription": "Utiliser l'interface claire.",
+      "system": "Système",
+      "systemDescription": "Suivre cet appareil.",
+      "dark": "Sombre",
+      "darkDescription": "Utiliser l'interface sombre."
     }
   }
 }

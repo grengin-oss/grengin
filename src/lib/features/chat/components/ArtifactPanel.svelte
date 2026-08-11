@@ -5,9 +5,23 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { tick } from "svelte";
-  import { renderMarkdown, copyToClipboard } from "../../../utils/markdown";
+  import { renderMarkdown, highlightCode, copyToClipboard } from "../../../utils/markdown";
   import { getArtifact } from "../../../api/artifactsApi";
+  import {
+    attachDesktopPreviewPinch,
+    clampDesktopPreviewZoom,
+    DESKTOP_PREVIEW_ZOOM_MAX,
+    DESKTOP_PREVIEW_ZOOM_MIN,
+    DESKTOP_PREVIEW_ZOOM_STEP,
+  } from "../utils/desktopPreviewPinch";
   import SaveToProjectModal from "./SaveToProjectModal.svelte";
+  import {
+    attachNativeArtifactPreview,
+    isNativeArtifactPreviewAvailable,
+    resetNativeArtifactPreviewZoom,
+  } from "$lib/platform/nativeArtifactPreview";
+  import { saveNativeArtifact } from "$lib/platform/nativeArtifactDownload";
+  import { showNativeNotification } from "$lib/platform/nativeNotifications";
   import type { ArtifactItem } from "../artifacts";
 
   interface Props {
@@ -59,7 +73,28 @@ SPDX-License-Identifier: Apache-2.0
   let showSaveToProject = $state(false);
   let toastMessage = $state("");
   let showToast = $state(false);
+  let isFullscreen = $state(false);
+  let previewMode = $state<"responsive" | "desktop">("responsive");
+
+  const DESKTOP_VIEWPORT_WIDTH = 1024;
+  const DESKTOP_VIEWPORT_HEIGHT = 900;
+  const NATIVE_DESKTOP_VIEWPORT_WIDTH = 1024;
+
+  let previewViewport: HTMLDivElement | undefined = $state(undefined);
+  let desktopIframe: HTMLIFrameElement | undefined = $state(undefined);
+  let desktopPreviewFrame: HTMLDivElement | undefined = $state(undefined);
+  let desktopPreviewInner: HTMLDivElement | undefined = $state(undefined);
+  let nativePreviewSurface: HTMLDivElement | undefined = $state(undefined);
+  let desktopFitScale = $state(1);
+  let desktopViewportHeight = $state(DESKTOP_VIEWPORT_HEIGHT);
+  let desktopZoom = $state(1);
+  /** True only while a pinch is in flight — see `attachDesktopPreviewPinch`. */
+  let isPinchZooming = $state(false);
   let isDownloading = $state(false);
+
+  // Android renders the desktop preview in a real WebView layered over the app,
+  // which zooms on the GPU instead of re-rasterising a CSS-scaled iframe.
+  const useNativePreview = isNativeArtifactPreviewAvailable();
 
   function triggerToast(message: string) {
     toastMessage = message;
@@ -76,6 +111,13 @@ SPDX-License-Identifier: Apache-2.0
   let activeView = $state<"code" | "preview">("code");
   let codeContainer: HTMLPreElement | undefined = $state(undefined);
   let iframeKey = $state(0);
+  let desktopScale = $derived(Number((desktopFitScale * desktopZoom).toFixed(3)));
+  let desktopFrameWidth = $derived(`${Math.round(DESKTOP_VIEWPORT_WIDTH * desktopScale)}px`);
+  let desktopFrameHeight = $derived(`${Math.round(desktopViewportHeight * desktopScale)}px`);
+  let desktopViewportHeightCss = $derived(`${desktopViewportHeight}px`);
+  let desktopPreviewTransform = $derived(`scale(${desktopScale})`);
+  let desktopZoomPercent = $derived(`${Math.round(desktopZoom * 100)}%`);
+  let highlightedCode = $derived(highlightCode(code, type));
 
   $effect(() => {
     if (!isStreaming && code.length > 0) {
@@ -93,6 +135,73 @@ SPDX-License-Identifier: Apache-2.0
     }
   });
 
+  $effect(() => {
+    if (
+      previewMode !== "desktop" ||
+      activeView !== "preview" ||
+      type !== "html" ||
+      !previewViewport ||
+      useNativePreview
+    ) {
+      desktopFitScale = 1;
+      desktopViewportHeight = DESKTOP_VIEWPORT_HEIGHT;
+      return;
+    }
+
+    let animationFrame = 0;
+    let lastFitScale = 0;
+    let lastViewportHeight = 0;
+
+    const updateScale = () => {
+      if (!previewViewport) return;
+
+      const bounds = previewViewport.getBoundingClientRect();
+      const style = getComputedStyle(previewViewport);
+      const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+      const verticalPadding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+      const availableWidth = Math.max(bounds.width - horizontalPadding, 320);
+      const availableHeight = Math.max(bounds.height - verticalPadding, 240);
+      const nextScale = Math.min(1, availableWidth / DESKTOP_VIEWPORT_WIDTH);
+
+      const roundedScale = Number(nextScale.toFixed(3));
+      const nextViewportHeight = Math.max(
+        DESKTOP_VIEWPORT_HEIGHT,
+        Math.ceil(availableHeight / roundedScale),
+      );
+      if (
+        Math.abs(roundedScale - lastFitScale) < 0.001 &&
+        nextViewportHeight === lastViewportHeight
+      ) return;
+
+      lastFitScale = roundedScale;
+      lastViewportHeight = nextViewportHeight;
+      desktopFitScale = roundedScale;
+      desktopViewportHeight = nextViewportHeight;
+    };
+
+    const queueScaleUpdate = () => {
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(updateScale);
+    };
+
+    queueScaleUpdate();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", queueScaleUpdate);
+      return () => {
+        cancelAnimationFrame(animationFrame);
+        window.removeEventListener("resize", queueScaleUpdate);
+      };
+    }
+
+    const observer = new ResizeObserver(queueScaleUpdate);
+    observer.observe(previewViewport);
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      observer.disconnect();
+    };
+  });
+
   async function handleCopy() {
     const success = await copyToClipboard(code);
     if (success) {
@@ -103,7 +212,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   async function handleDownload() {
-    if (isDownloading || isStreaming || code.length === 0) return;
+    if (isDownloading || isStreaming || (code.length === 0 && !artifactId)) return;
     isDownloading = true;
     try {
       // Prefer the backend copy (source of truth) when we have a persisted id,
@@ -129,14 +238,40 @@ SPDX-License-Identifier: Apache-2.0
       const fileName =
         (downloadTitle || title).replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "-").toLowerCase() ||
         "artifact";
+      const fullFileName = `${fileName}.${ext}`;
+      const nativeResult = await saveNativeArtifact(downloadContent, fullFileName, mimeType);
+      if (nativeResult) {
+        if (nativeResult.status === "error") {
+          throw new Error(nativeResult.error || "Native download failed");
+        }
+        if (nativeResult.status === "success") {
+          const notified = await showNativeNotification({
+            id: `artifact-download-${Date.now()}`,
+            title: "Artifact downloaded",
+            body: `${fullFileName} saved to Downloads`,
+            group: "grengin-downloads",
+            channel: {
+              id: "grengin-downloads-v1",
+              name: "Downloads",
+              description: "Completed artifact downloads",
+              importance: "high",
+            },
+          });
+          if (!notified) {
+            triggerToast("Saved to Downloads");
+          }
+        }
+        return;
+      }
+
       const blob = new Blob([downloadContent], { type: mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${fileName}.${ext}`;
+      a.download = fullFileName;
       a.click();
       URL.revokeObjectURL(url);
-      triggerToast(`Downloaded ${fileName}.${ext}`);
+      triggerToast(`Downloaded ${fullFileName}`);
     } catch {
       triggerToast("Download failed");
     } finally {
@@ -145,20 +280,99 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   function handleReload() {
+    if (useNativePreview && previewMode === "desktop") {
+      resetNativeArtifactPreviewZoom();
+      return;
+    }
+
     iframeKey++;
+  }
+
+  function adjustDesktopZoom(delta: number) {
+    desktopZoom = Number(clampDesktopPreviewZoom(desktopZoom + delta).toFixed(2));
+  }
+
+  $effect(() => {
+    const surface = nativePreviewSurface;
+    const active =
+      useNativePreview &&
+      previewMode === "desktop" &&
+      activeView === "preview" &&
+      type === "html" &&
+      !showSaveToProject;
+
+    if (!active || !surface || code.length === 0) return;
+
+    return attachNativeArtifactPreview(surface, code, NATIVE_DESKTOP_VIEWPORT_WIDTH);
+  });
+
+  $effect(() => {
+    const viewport = previewViewport;
+    // The native preview owns its own gesture handling.
+    if (!viewport || useNativePreview) return;
+
+    return attachDesktopPreviewPinch({
+      viewport,
+      iframe: desktopIframe,
+      isEnabled: () => previewMode === "desktop" && activeView === "preview" && type === "html",
+      getZoom: () => desktopZoom,
+      getFitScale: () => desktopFitScale,
+      getScale: () => desktopScale,
+      // Written straight to the DOM during the gesture. Going through
+      // `desktopZoom` here would re-run the derived chain on every frame; the
+      // same values are re-rendered declaratively by `commitZoom` at the end.
+      previewScale: (scale) => {
+        if (desktopPreviewFrame) {
+          desktopPreviewFrame.style.width = `${Math.round(DESKTOP_VIEWPORT_WIDTH * scale)}px`;
+          desktopPreviewFrame.style.height = `${Math.round(desktopViewportHeight * scale)}px`;
+        }
+        if (desktopPreviewInner) {
+          desktopPreviewInner.style.transform = `scale(${scale})`;
+        }
+      },
+      commitZoom: (zoom) => {
+        desktopZoom = zoom;
+      },
+      setGestureActive: (active) => {
+        isPinchZooming = active;
+      },
+    });
+  });
+
+  function togglePreviewMode() {
+    previewMode = previewMode === "desktop" ? "responsive" : "desktop";
+  }
+
+  function toggleFullscreen() {
+    isFullscreen = !isFullscreen;
+  }
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === "Escape" && !showSaveToProject) {
+      if (isFullscreen) {
+        isFullscreen = false;
+        return;
+      }
+
+      onclose();
+    }
   }
 </script>
 
-<div class="artifact-panel">
+<svelte:window onkeydown={handleKeydown} />
+
+<div class="artifact-panel" class:fullscreen={isFullscreen}>
   <div class="artifact-header">
     <div class="header-left">
       <div class="view-toggle">
         <button
+          type="button"
           class="toggle-btn"
           class:active={activeView === "preview"}
           onclick={() => (activeView = "preview")}
           disabled={isStreaming}
           title="Preview"
+          aria-label="Preview"
         >
           <svg
             width="16"
@@ -175,10 +389,12 @@ SPDX-License-Identifier: Apache-2.0
           </svg>
         </button>
         <button
+          type="button"
           class="toggle-btn"
           class:active={activeView === "code"}
           onclick={() => (activeView = "code")}
           title="Code"
+          aria-label="Code"
         >
           <svg
             width="16"
@@ -201,12 +417,56 @@ SPDX-License-Identifier: Apache-2.0
         </span>
       {/if}
     </div>
+    <div class="artifact-title" title={title}>
+      {title}
+    </div>
     <div class="header-right">
       {#if activeView === "preview" && !isStreaming && type === "html"}
         <button
+          type="button"
+          class="header-btn"
+          class:active={previewMode === "desktop"}
+          onclick={togglePreviewMode}
+          title={previewMode === "desktop" ? "Switch to mobile preview" : "Preview at desktop size"}
+          aria-label={previewMode === "desktop" ? "Switch to mobile preview" : "Preview at desktop size"}
+        >
+          {#if previewMode === "desktop"}
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="7" y="2" width="10" height="20" rx="2" />
+              <path d="M11 18h2" />
+            </svg>
+          {:else}
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="4" width="18" height="12" rx="2" />
+              <path d="M8 20h8" />
+              <path d="M12 16v4" />
+            </svg>
+          {/if}
+        </button>
+        <button
+          type="button"
           class="header-btn"
           onclick={handleReload}
           title="Reload preview"
+          aria-label="Reload preview"
         >
           <svg
             width="16"
@@ -223,10 +483,56 @@ SPDX-License-Identifier: Apache-2.0
           </svg>
         </button>
       {/if}
+      {#if !isStreaming}
+        <button
+          type="button"
+          class="header-btn"
+          class:active={isFullscreen}
+          onclick={toggleFullscreen}
+          title={isFullscreen ? "Exit fullscreen" : "Fullscreen preview"}
+          aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen preview"}
+        >
+          {#if isFullscreen}
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+              <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+              <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+              <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+            </svg>
+          {:else}
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+              <path d="M16 3h3a2 2 0 0 1 2 2v3" />
+              <path d="M21 16v3a2 2 0 0 1-2 2h-3" />
+              <path d="M8 21H5a2 2 0 0 1-2-2v-3" />
+            </svg>
+          {/if}
+        </button>
+      {/if}
       <button
+        type="button"
         class="header-btn"
         onclick={handleDownload}
         title="Download as .{type === 'markdown' ? 'md' : 'html'}"
+        aria-label="Download artifact"
         disabled={isStreaming || isDownloading || (code.length === 0 && !artifactId)}
       >
         <svg
@@ -245,9 +551,11 @@ SPDX-License-Identifier: Apache-2.0
         </svg>
       </button>
       <button
+        type="button"
         class="header-btn"
         onclick={() => (showSaveToProject = true)}
         title="Save to project"
+        aria-label="Save to project"
         disabled={isStreaming}
       >
         <svg
@@ -266,10 +574,12 @@ SPDX-License-Identifier: Apache-2.0
         </svg>
       </button>
       <button
+        type="button"
         class="header-btn"
         class:success={copySuccess}
         onclick={handleCopy}
         title={copySuccess ? "Copied!" : "Copy code"}
+        aria-label={copySuccess ? "Copied" : "Copy code"}
       >
         <svg
           width="16"
@@ -286,6 +596,7 @@ SPDX-License-Identifier: Apache-2.0
         </svg>
       </button>
       <button
+        type="button"
         class="header-btn close-btn"
         onclick={onclose}
         title="Close"
@@ -328,7 +639,7 @@ SPDX-License-Identifier: Apache-2.0
   {/if}
 
   {#if showToast}
-    <div class="toast">
+    <div class="toast" role="status" aria-live="polite">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="20 6 9 17 4 12" />
       </svg>
@@ -340,23 +651,113 @@ SPDX-License-Identifier: Apache-2.0
     {#if isLoadingContent && code.length === 0}
       <div class="artifact-loading">
         <span class="artifact-spinner"></span>
-        <span>Loading artifact…</span>
+        <span>Loading artifact...</span>
       </div>
     {:else if activeView === "code"}
-      <pre class="code-view" bind:this={codeContainer}><code
-          >{code}{#if isStreaming}<span class="cursor-blink">|</span>{/if}</code
+      <pre class="code-view" bind:this={codeContainer}><code class="hljs language-{type}"
+          >{@html highlightedCode}{#if isStreaming}<span class="cursor-blink">|</span>{/if}</code
         ></pre>
     {:else if type === "markdown"}
       <div class="markdown-preview">{@html renderedMarkdown}</div>
     {:else}
-      {#key iframeKey}
-        <iframe
-          title="Artifact Preview"
-          class="preview-iframe"
-          srcdoc={code}
-          sandbox="allow-same-origin allow-scripts"
-        ></iframe>
-      {/key}
+      <div class="preview-shell">
+        <div
+          class="preview-viewport"
+          class:desktop={previewMode === "desktop"}
+          class:native={previewMode === "desktop" && useNativePreview}
+          bind:this={previewViewport}
+        >
+          {#key iframeKey}
+            {#if previewMode === "desktop" && useNativePreview}
+              <div class="native-preview-surface" bind:this={nativePreviewSurface}></div>
+            {:else if previewMode === "desktop"}
+              <div
+                class="desktop-preview-frame"
+                class:zooming={isPinchZooming}
+                bind:this={desktopPreviewFrame}
+                style:width={desktopFrameWidth}
+                style:height={desktopFrameHeight}
+              >
+                <div
+                  class="desktop-preview-inner"
+                  class:zooming={isPinchZooming}
+                  bind:this={desktopPreviewInner}
+                  style:transform={desktopPreviewTransform}
+                  style:height={desktopViewportHeightCss}
+                >
+                  <iframe
+                    bind:this={desktopIframe}
+                    title="Artifact Preview"
+                    class="preview-iframe desktop-preview-iframe"
+                    srcdoc={code}
+                    sandbox="allow-same-origin allow-scripts"
+                    style:height={desktopViewportHeightCss}
+                  ></iframe>
+                </div>
+              </div>
+            {:else}
+              <iframe
+                title="Artifact Preview"
+                class="preview-iframe"
+                srcdoc={code}
+                sandbox="allow-same-origin allow-scripts"
+              ></iframe>
+            {/if}
+          {/key}
+        </div>
+        {#if previewMode === "desktop" && !useNativePreview}
+          <div
+            class="zoom-controls preview-zoom-controls"
+            role="group"
+            aria-label="Desktop preview zoom"
+          >
+            <button
+              type="button"
+              class="zoom-btn"
+              onclick={() => adjustDesktopZoom(-DESKTOP_PREVIEW_ZOOM_STEP)}
+              disabled={desktopZoom <= DESKTOP_PREVIEW_ZOOM_MIN}
+              title="Zoom out"
+              aria-label="Zoom out"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M5 12h14" />
+              </svg>
+            </button>
+            <span class="zoom-value" aria-live="polite">{desktopZoomPercent}</span>
+            <button
+              type="button"
+              class="zoom-btn"
+              onclick={() => adjustDesktopZoom(DESKTOP_PREVIEW_ZOOM_STEP)}
+              disabled={desktopZoom >= DESKTOP_PREVIEW_ZOOM_MAX}
+              title="Zoom in"
+              aria-label="Zoom in"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 5v14" />
+                <path d="M5 12h14" />
+              </svg>
+            </button>
+          </div>
+        {/if}
+      </div>
     {/if}
   </div>
 </div>
@@ -374,37 +775,52 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     flex-direction: column;
     height: 100vh;
+    min-height: 0;
     border-left: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
     background: var(--bg-primary);
-    animation: panelSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    isolation: isolate;
   }
 
-  @keyframes panelSlideIn {
-    from {
-      opacity: 0;
-      transform: translateX(16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
+  .artifact-panel.fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    width: 100vw;
+    height: var(--app-viewport-height, 100vh);
+    border-left: 0;
+    animation: none;
+    box-shadow: none;
   }
 
   /* ── Header ── */
   .artifact-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    gap: 10px;
+    min-height: 52px;
+    padding: 8px 10px 8px 12px;
     border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
-    background: rgba(var(--glass-tint, 255, 255, 255), 0.06);
+    background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     flex-shrink: 0;
+  }
+
+  .artifact-panel.fullscreen .artifact-header {
+    min-height: calc(52px + var(--app-safe-area-top, 0px));
+    padding-top: calc(8px + var(--app-safe-area-top, 0px));
   }
 
   .header-left {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
+    flex-shrink: 0;
   }
 
   /* ── Loading state (fetching persisted content) ── */
@@ -507,7 +923,20 @@ SPDX-License-Identifier: Apache-2.0
   .header-right {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .artifact-title {
+    min-width: 0;
+    flex: 1;
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-weight: 650;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* ── View toggle (icon-only pill) ── */
@@ -524,7 +953,9 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 12px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
     border: none;
     border-radius: 7px;
     background: transparent;
@@ -580,7 +1011,9 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 10px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
     border: none;
     border-radius: 8px;
     background: transparent;
@@ -594,13 +1027,89 @@ SPDX-License-Identifier: Apache-2.0
     color: #fff;
   }
 
+  .header-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.38;
+  }
+
+  .header-btn:focus-visible,
+  .toggle-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
   .header-btn.success {
     color: #22c55e;
   }
 
+  .header-btn.active {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .zoom-controls {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+    background: rgba(var(--glass-tint, 255, 255, 255), 0.08);
+    color: #d8d8d8;
+    flex-shrink: 0;
+  }
+
+  .zoom-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .zoom-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+
+  .zoom-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.38;
+  }
+
+  .zoom-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  .zoom-value {
+    min-width: 42px;
+    padding: 0 2px;
+    color: var(--text-secondary, #b8b8b8);
+    font-size: 0.76rem;
+    font-weight: 650;
+    line-height: 1;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+  }
+
   .header-btn.close-btn {
-    font-weight: 600;
-    font-size: 0.85rem;
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+  }
+
+  .header-btn.close-btn:hover {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fff;
   }
 
   /* ── Toast ── */
@@ -624,7 +1133,7 @@ SPDX-License-Identifier: Apache-2.0
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
     z-index: 100;
     animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1), toastOut 0.25s 1.9s ease-in forwards;
-    pointer-events: none;
+    pointer-events: auto;
   }
 
   @keyframes toastIn {
@@ -652,7 +1161,10 @@ SPDX-License-Identifier: Apache-2.0
   /* ── Body ── */
   .artifact-body {
     flex: 1;
+    min-height: 0;
     overflow: hidden;
+    position: relative;
+    z-index: 1;
   }
 
   /* ── Code view ── */
@@ -669,6 +1181,18 @@ SPDX-License-Identifier: Apache-2.0
     white-space: pre-wrap;
     word-break: break-word;
     tab-size: 2;
+  }
+
+  .code-view code {
+    display: block;
+    min-width: 100%;
+    background: transparent;
+    color: inherit;
+  }
+
+  .code-view :global(.hljs) {
+    padding: 0;
+    background: transparent;
   }
 
   .cursor-blink {
@@ -767,10 +1291,278 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   /* ── Preview iframe ── */
+  .preview-shell {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .preview-viewport {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .preview-viewport.desktop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    overflow: auto;
+    touch-action: pan-x pan-y;
+    overscroll-behavior: contain;
+    padding: 16px 16px 72px;
+    background:
+      linear-gradient(45deg, rgba(255, 255, 255, 0.045) 25%, transparent 25%),
+      linear-gradient(-45deg, rgba(255, 255, 255, 0.045) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.045) 75%),
+      linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.045) 75%),
+      #121417;
+    background-position:
+      0 0,
+      0 8px,
+      8px -8px,
+      -8px 0;
+    background-size: 16px 16px;
+  }
+
+  .desktop-preview-frame {
+    position: relative;
+    flex: 0 0 auto;
+    margin-inline: auto;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  }
+
+  .preview-zoom-controls {
+    position: absolute;
+    bottom: calc(14px + var(--app-safe-area-bottom, 0px));
+    left: 50%;
+    z-index: 6;
+    transform: translateX(-50%);
+    background: rgba(18, 20, 23, 0.88);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.34);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .desktop-preview-inner {
+    width: 1440px;
+    height: 900px;
+    transform-origin: top left;
+    backface-visibility: hidden;
+  }
+
+  /* Only while pinching. `will-change: transform` pins the layer's raster scale,
+     so mid-gesture frames composite instead of re-rasterizing the iframe — that
+     re-raster is what flickers on artifacts heavy enough to miss a frame (SVG in
+     particular, which has no bitmap to interpolate). Dropping the hint at the end
+     of the gesture triggers a single crisp re-raster. It is not applied
+     permanently because a pinned layer this large costs real GPU memory. */
+  .desktop-preview-inner.zooming {
+    will-change: transform;
+  }
+
+  /* Both of these are recomputed every frame while the box resizes: a 50px-blur
+     shadow, and a rounded `overflow: hidden` clip — which needs a mask layer,
+     whereas a square clip is a cheap compositor rect. Restore them on release.
+     Purely cosmetic during the gesture; drop this rule to keep the chrome. */
+  .desktop-preview-frame.zooming {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
   .preview-iframe {
     width: 100%;
     height: 100%;
     border: none;
     background: #fff;
+    display: block;
+  }
+
+  .desktop-preview-iframe {
+    width: 1440px;
+    height: 900px;
+  }
+
+  .preview-viewport.desktop.native {
+    display: block;
+    overflow: hidden;
+    padding: 0;
+    background: #fff;
+    touch-action: auto;
+  }
+
+  .native-preview-surface {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+  }
+
+  @media (max-width: 640px) {
+    .artifact-header {
+      min-height: calc(56px + var(--app-safe-area-top, 0px));
+      padding: calc(9px + var(--app-safe-area-top, 0px)) 10px 9px;
+    }
+
+    .artifact-panel.fullscreen .artifact-header {
+      min-height: calc(56px + var(--app-safe-area-top, 0px));
+      padding-top: calc(9px + var(--app-safe-area-top, 0px));
+    }
+
+    .artifact-title {
+      font-size: 0.82rem;
+    }
+
+    .header-right {
+      gap: 2px;
+    }
+
+    .header-btn {
+      width: 34px;
+      height: 34px;
+    }
+
+    .zoom-controls {
+      height: 34px;
+      padding: 0 3px;
+    }
+
+    .zoom-btn {
+      width: 26px;
+      height: 26px;
+    }
+
+    .zoom-value {
+      min-width: 38px;
+      font-size: 0.72rem;
+    }
+
+    .preview-viewport.desktop {
+      padding: 12px 12px calc(64px + var(--app-safe-area-bottom, 0px));
+    }
+
+    .preview-zoom-controls {
+      bottom: calc(10px + var(--app-safe-area-bottom, 0px));
+    }
+
+    .header-right {
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .header-right::-webkit-scrollbar {
+      display: none;
+    }
+
+    .toggle-btn {
+      width: 32px;
+      height: 32px;
+    }
+
+    .markdown-preview {
+      padding: 12px 14px;
+    }
+
+    .code-view {
+      padding: 12px;
+      font-size: 0.78rem;
+    }
+  }
+
+  @media (orientation: landscape) and (max-height: 640px) {
+    .artifact-header {
+      min-height: calc(40px + var(--app-safe-area-top, 0px));
+      gap: 6px;
+      padding: calc(4px + var(--app-safe-area-top, 0px)) 6px 4px 8px;
+    }
+
+    .artifact-panel.fullscreen .artifact-header {
+      min-height: calc(40px + var(--app-safe-area-top, 0px));
+      padding-top: calc(4px + var(--app-safe-area-top, 0px));
+    }
+
+    .artifact-title {
+      font-size: 0.78rem;
+    }
+
+    .view-toggle {
+      gap: 0;
+      padding: 1px;
+      border-radius: 8px;
+    }
+
+    .toggle-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
+
+    .header-right {
+      gap: 0;
+    }
+
+    .header-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+    }
+
+    .artifact-tabs {
+      gap: 4px;
+      padding: 4px 8px;
+    }
+
+    .artifact-tab {
+      min-height: 28px;
+      padding: 3px 8px;
+    }
+
+    .toast {
+      top: 44px;
+    }
+  }
+
+  @media (max-width: 1180px), (hover: none) and (pointer: coarse) {
+    .artifact-panel {
+      height: 100%;
+    }
+
+    .artifact-header {
+      padding-top: calc(8px + var(--app-safe-area-top, 0px));
+    }
+
+    .preview-viewport.desktop {
+      padding: 0;
+      background: #fff;
+    }
+
+    .desktop-preview-frame {
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
+
+  :global(html[data-app-layout='mobile']) .artifact-panel:not(.fullscreen) {
+    height: 100%;
+  }
+
+  :global(html[data-app-layout='mobile']) .preview-viewport.desktop {
+    padding: 0;
+    background: #fff;
+  }
+
+  :global(html[data-app-layout='mobile']) .desktop-preview-frame {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 </style>

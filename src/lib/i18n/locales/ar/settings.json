@@ -3,12 +3,14 @@
     "title": "الإعدادات",
     "subtitle": "إدارة تفضيلاتك الشخصية والتكاملات المتصلة.",
     "tabs": {
+      "appearance": "المظهر",
+      "appearanceAria": "تفضيلات المظهر",
+      "skills": "المهارات",
+      "skillsAria": "إدارة مهاراتك",
       "integrations": "التكاملات",
       "integrationsAria": "التكاملات المتصلة",
       "promptSettings": "إعدادات المطالبات",
-      "promptSettingsAria": "إدارة تفضيلات المطالبات",
-      "skills": "المهارات",
-      "skillsAria": "إدارة مهاراتك"
+      "promptSettingsAria": "إدارة تفضيلات المطالبات"
     }
   },
   "userPromptSettings": {
@@ -261,6 +263,19 @@
         "nameKebab": "استخدم نمط kebab-case بأحرف صغيرة (حروف وأرقام وشرطات مفردة)."
       },
       "willImportAs": "سيتم استيراده باسم"
+    }
+  },
+  "appearanceSettings": {
+    "title": "المظهر",
+    "subtitle": "اختر كيف يظهر Grengin على هذا الجهاز.",
+    "theme": {
+      "label": "سمة اللون",
+      "light": "فاتح",
+      "lightDescription": "استخدم الواجهة الفاتحة.",
+      "system": "النظام",
+      "systemDescription": "مطابقة إعدادات هذا الجهاز.",
+      "dark": "داكن",
+      "darkDescription": "استخدم الواجهة الداكنة."
     }
   }
 }

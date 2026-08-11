@@ -10,11 +10,23 @@ SPDX-License-Identifier: Apache-2.0
   import { uploadDocument, type UploadedFile } from '../../../api/chatApi';
   import type { MCPServer } from '../../../admin/types.js';
   import { _ } from 'svelte-i18n';
+  import { getEffectiveIsDark, THEME_CHANGE_EVENT } from '$lib/theme.svelte.js';
+  import { prepareImageForUpload } from '../utils/imageUpload.js';
+  import {
+    cancelNativeSpeechRecognition,
+    isNativeSpeechRecognitionAvailable,
+    startNativeSpeechRecognition,
+    stopNativeSpeechRecognition,
+    subscribeNativeSpeechVolume,
+  } from '../../../platform/nativeSpeech.js';
   import SkillPicker from './SkillPicker.svelte';
 
   interface MessageInputProps {
     onSend: (message: string, uploadedFiles?: UploadedFile[], webSearch?: boolean) => void;
+    onCancel?: () => void;
+    canCancel?: boolean;
     disabled?: boolean;
+    cancelling?: boolean;
     placeholder?: string;
     selectedModel?: string;
     selectedProvider?: string;
@@ -36,7 +48,31 @@ SPDX-License-Identifier: Apache-2.0
     imageModelSelected?: boolean;
   }
 
-let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, onModelSelect, onRemoveModel, providers = [], loadingModels = false, modelsError = null, mcpServers = [], selectedMcpServers = [], loadingMcpServers = false, mcpServersError = null, onMcpToggle, webSearchEnabled = false, onWebSearchToggle, conversationId = null, pendingSkillIds = $bindable([]), imageModelSelected = false }: MessageInputProps = $props();
+  let {
+    onSend,
+    onCancel,
+    canCancel = false,
+    disabled = false,
+    cancelling = false,
+    placeholder,
+    selectedModel,
+    selectedProvider,
+    onModelSelect,
+    onRemoveModel,
+    providers = [],
+    loadingModels = false,
+    modelsError = null,
+    mcpServers = [],
+    selectedMcpServers = [],
+    loadingMcpServers = false,
+    mcpServersError = null,
+    onMcpToggle,
+    webSearchEnabled = false,
+    onWebSearchToggle,
+    conversationId = null,
+    pendingSkillIds = $bindable([]),
+    imageModelSelected = false,
+  }: MessageInputProps = $props();
 
   // Split a provider's models into selectable text and image groups (embedding
   // models are never selectable in chat). Loaded from the registry — not hardcoded.
@@ -50,8 +86,7 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   let isDarkMode = $state(false);
 
   function syncThemeState() {
-    isDarkMode = document.documentElement.classList.contains('dark')
-      || window.matchMedia('(prefers-color-scheme: dark)').matches;
+    isDarkMode = getEffectiveIsDark();
   }
 
   function getIconForTheme(provider?: ProviderInfo): string | undefined {
@@ -62,6 +97,7 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   let textarea: HTMLTextAreaElement;
   let fileInput: HTMLInputElement;
   let photoInput: HTMLInputElement;
+  let cameraInput: HTMLInputElement;
   let message = $state('');
   let attachedFiles = $state<File[]>([]);
   let uploadingFiles = $state<Set<string>>(new Set());
@@ -80,30 +116,99 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
 
   // Voice input state
   let isRecording = $state(false);
+  let nativeSpeechPending = $state(false);
+  let isReceivingNativeVoiceLevel = $state(false);
+  let voiceLevel = $state(0);
+  let voicePeak = $state(0);
   let recognition: SpeechRecognition | null = null;
   let microphoneError = $state<string | null>(null);
+  const voiceLevelNoiseFloor = 0.08;
+  const voiceLevelAttack = 0.72;
+  const voiceLevelRelease = 0.24;
+  const micLevelBars = [
+    { base: 0.28, gain: 0.58 },
+    { base: 0.34, gain: 0.92 },
+    { base: 0.38, gain: 1.18 },
+    { base: 0.34, gain: 0.92 },
+    { base: 0.28, gain: 0.58 },
+  ] as const;
 
   // Dynamic placeholder based on recording state
   let currentPlaceholder = $derived(
     isRecording 
-      ? $_('chat.messageInput.recordingPlaceholder') 
+      ? ''
       : (placeholder || $_('chat.messageInput.placeholder'))
+  );
+  let isUploading = $derived(uploadingFiles.size > 0);
+  let micLevelOpacity = $derived((0.45 + Math.max(0, Math.min(1, voiceLevel)) * 0.55).toFixed(2));
+  let canCancelResponse = $derived(Boolean(canCancel && onCancel));
+  let sendButtonDisabled = $derived(
+    canCancelResponse
+      ? cancelling
+      : disabled || isUploading || (!message.trim() && attachedFiles.length === 0)
   );
 
   const connectorsLabel = $derived($_('chat.messageInput.tools'));
 
+  function getTextareaMaxHeight() {
+    const viewportHeight = window.visualViewport?.height || window.innerHeight;
+    const compactLandscape =
+      document.documentElement.dataset.appLayout === 'mobile' &&
+      window.matchMedia('(orientation: landscape)').matches &&
+      viewportHeight <= 600;
+
+    if (compactLandscape) {
+      return Math.min(Math.max(72, viewportHeight * 0.28), 120);
+    }
+
+    return Math.min(Math.max(160, viewportHeight * 0.52), 420);
+  }
 
   function autoResize() {
     if (!textarea) return;
     textarea.style.height = 'auto';
-    const maxHeight = window.innerHeight * 0.4;
+    const maxHeight = getTextareaMaxHeight();
     const scrollHeight = textarea.scrollHeight;
     const newHeight = Math.max(24, Math.min(scrollHeight, maxHeight));
     textarea.style.height = newHeight + 'px';
     textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
   }
 
+  function resetVoiceLevel() {
+    voiceLevel = 0;
+    voicePeak = 0;
+    isReceivingNativeVoiceLevel = false;
+  }
+
+  function normalizeUiVoiceLevel(level: number): number {
+    const clamped = Math.max(0, Math.min(1, level));
+    if (clamped < voiceLevelNoiseFloor) return 0;
+
+    const normalized = (clamped - voiceLevelNoiseFloor) / (1 - voiceLevelNoiseFloor);
+    return Math.pow(normalized, 0.82);
+  }
+
+  function updateVoiceLevel(level: number) {
+    const target = normalizeUiVoiceLevel(level);
+    const rate = target > voiceLevel ? voiceLevelAttack : voiceLevelRelease;
+    const nextLevel = voiceLevel + (target - voiceLevel) * rate;
+
+    voiceLevel = nextLevel < 0.025 ? 0 : nextLevel;
+    voicePeak = Math.max(target, voicePeak * 0.84);
+  }
+
+  function getMicBarScale(index: number): string {
+    const level = Math.max(0, Math.min(1, voiceLevel));
+    const peak = Math.max(0, Math.min(1, voicePeak));
+    const bar = micLevelBars[index] ?? micLevelBars[2];
+    const shapedLevel = Math.pow(level, 0.9);
+    const peakLift = Math.max(0, peak - level) * 0.18;
+    const scale = Math.min(1.68, bar.base + shapedLevel * bar.gain + peakLift * bar.gain);
+    return scale.toFixed(2);
+  }
+
   function handleInput() {
+    microphoneError = null;
     autoResize();
   }
 
@@ -113,8 +218,6 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
       handleSend();
     }
   }
-
-  let isUploading = $derived(uploadingFiles.size > 0);
 
   async function uploadFileImmediately(file: File) {
     uploadingFiles.add(file.name);
@@ -139,8 +242,12 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   }
 
   async function handleSend() {
+    if (canCancelResponse) return;
+
     const trimmed = message.trim();
     if ((trimmed || attachedFiles.length > 0) && !disabled && !isUploading) {
+      stopVoiceInput({ cancelNative: true });
+
       // Collect already-uploaded file results
       const uploadedFiles: UploadedFile[] = [];
       for (const file of attachedFiles) {
@@ -182,11 +289,19 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     syncThemeState();
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     mediaQuery.addEventListener('change', syncThemeState);
+    window.addEventListener(THEME_CHANGE_EVENT, syncThemeState);
+    const unsubscribeNativeSpeechVolume = subscribeNativeSpeechVolume(({ level }) => {
+      isReceivingNativeVoiceLevel = true;
+      updateVoiceLevel(level);
+    });
     autoResize();
 
     // Cleanup speech recognition on unmount
     return () => {
       mediaQuery.removeEventListener('change', syncThemeState);
+      window.removeEventListener(THEME_CHANGE_EVENT, syncThemeState);
+      unsubscribeNativeSpeechVolume();
+      cancelNativeSpeechRecognition();
       if (recognition) {
         try {
           recognition.stop();
@@ -216,15 +331,23 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     showPlusMenu = false;
   }
 
+  function handleCameraSelect() {
+    cameraInput?.click();
+    showPlusMenu = false;
+  }
+
   function handleFileSelect() {
     fileInput?.click();
     showPlusMenu = false;
   }
 
-  function handleFileChange(event: Event) {
+  async function handleFileChange(event: Event) {
     const target = event.target as HTMLInputElement;
-    if (target.files) {
-      const newFiles = Array.from(target.files);
+    try {
+      if (!target.files) return;
+
+      const selectedFiles = Array.from(target.files);
+      const newFiles = await Promise.all(selectedFiles.map(prepareImageForUpload));
       attachedFiles = [...attachedFiles, ...newFiles];
 
       // Generate previews and start uploading immediately
@@ -249,9 +372,10 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
           reader.readAsDataURL(file);
         }
       }
+    } finally {
+      showPlusMenu = false;
+      target.value = '';
     }
-    showPlusMenu = false;
-    target.value = '';
   }
 
   function removeFile(index: number) {
@@ -288,8 +412,8 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   }
 
   function isImageFile(file: File): boolean {
-    const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff'];
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif'];
+    const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff', 'image/heic', 'image/heif', 'image/avif'];
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif', '.heic', '.heif', '.avif'];
     return imageTypes.includes(file.type) || imageExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
   }
 
@@ -335,6 +459,42 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   }
 
   // ===== Speech Recognition =====
+  function stopVoiceInput(options: { cancelNative?: boolean } = {}) {
+    if (nativeSpeechPending) {
+      const didStop = options.cancelNative
+        ? cancelNativeSpeechRecognition()
+        : stopNativeSpeechRecognition();
+
+      if (didStop) {
+        return;
+      }
+    }
+
+    if (recognition && isRecording) {
+      try {
+        recognition.stop();
+      } catch (error) {
+        console.warn('Failed to stop speech recognition:', error);
+      }
+    }
+
+    if (!nativeSpeechPending) {
+      isRecording = false;
+      resetVoiceLevel();
+    }
+  }
+
+  function appendTranscript(textBeforeRecording: string, transcript: string) {
+    const trimmedTranscript = transcript.trim();
+    if (!trimmedTranscript) return;
+
+    message = textBeforeRecording
+      ? `${textBeforeRecording} ${trimmedTranscript}`
+      : trimmedTranscript;
+
+    requestAnimationFrame(autoResize);
+  }
+
   function initializeSpeechRecognition(): SpeechRecognition | null {
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -346,18 +506,54 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     const recognitionInstance = new SpeechRecognitionAPI();
     recognitionInstance.continuous = true;
     recognitionInstance.interimResults = true;
-    recognitionInstance.lang = 'en-US';
+    recognitionInstance.lang = navigator.language || 'en-US';
 
     return recognitionInstance;
   }
 
-  function toggleVoiceInput() {
+  async function startNativeVoiceInput() {
+    if (nativeSpeechPending) return;
+
+    const textBeforeRecording = message.trim();
+    microphoneError = null;
+    resetVoiceLevel();
+    nativeSpeechPending = true;
+    isRecording = true;
+
+    try {
+      const result = await startNativeSpeechRecognition(navigator.language || 'en-US');
+
+      if (result.status === 'success' && result.transcript) {
+        appendTranscript(textBeforeRecording, result.transcript);
+      } else if (result.status === 'unavailable') {
+        microphoneError = $_('chat.messageInput.speechRecognitionNotSupported');
+      } else if (result.status === 'error') {
+        microphoneError = $_('chat.messageInput.voiceInputError', {
+          values: { error: result.error || 'native_speech_error' },
+        });
+      }
+    } finally {
+      nativeSpeechPending = false;
+      isRecording = false;
+      resetVoiceLevel();
+    }
+  }
+
+  async function toggleVoiceInput() {
     if (disabled) return;
 
+    if (nativeSpeechPending) {
+      stopVoiceInput();
+      return;
+    }
+
     if (isRecording && recognition) {
-      // Stop recording
-      recognition.stop();
-      isRecording = false;
+      stopVoiceInput();
+      return;
+    }
+
+    if (isNativeSpeechRecognitionAvailable()) {
+      await startNativeVoiceInput();
       return;
     }
 
@@ -371,22 +567,23 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
 
     // Store the text that existed before we started recording
     const textBeforeRecording = message.trim();
+    let finalTranscript = '';
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // Build the full transcript from all results
-      let fullTranscript = '';
+      let interimTranscript = '';
 
-      for (let i = 0; i < event.results.length; i++) {
-        fullTranscript += event.results[i][0].transcript;
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const transcript = result[0]?.transcript || '';
+
+        if (result.isFinal) {
+          finalTranscript = `${finalTranscript} ${transcript}`.trim();
+        } else {
+          interimTranscript = `${interimTranscript} ${transcript}`.trim();
+        }
       }
 
-      // Combine pre-existing text with new transcription
-      message = textBeforeRecording
-        ? textBeforeRecording + ' ' + fullTranscript
-        : fullTranscript;
-
-      // Trigger auto-resize for growing textarea
-      requestAnimationFrame(autoResize);
+      appendTranscript(textBeforeRecording, `${finalTranscript} ${interimTranscript}`);
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -400,13 +597,18 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
       isRecording = false;
     };
 
+    recognition.onstart = () => {
+      isRecording = true;
+      voiceLevel = 0.35;
+    };
+
     recognition.onend = () => {
       isRecording = false;
+      resetVoiceLevel();
     };
 
     try {
       recognition.start();
-      isRecording = true;
     } catch (error) {
       console.error('Failed to start speech recognition:', error);
       microphoneError = $_('chat.messageInput.failedToStartVoiceInput');
@@ -442,6 +644,14 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   multiple
   style="display: none"
   accept="image/*"
+/>
+<input
+  type="file"
+  bind:this={cameraInput}
+  onchange={handleFileChange}
+  style="display: none"
+  accept="image/*"
+  capture="environment"
 />
 <input
   type="file"
@@ -539,7 +749,13 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
       class="chat-input-textarea"
       class:recording={isRecording}
       aria-label={$_('chat.messageInput.messageInput')}
+      aria-describedby={isRecording ? 'voice-recording-status' : undefined}
     ></textarea>
+    {#if isRecording}
+      <span id="voice-recording-status" class="sr-only">
+        {$_('chat.messageInput.recordingPlaceholder')}
+      </span>
+    {/if}
 
     <!-- Floating Bottom Bar -->
     <div class="input-bottom-bar">
@@ -567,6 +783,13 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
                   <polyline points="21 15 16 10 5 21"></polyline>
                 </svg>
                 <span>{$_('chat.messageInput.addPhotos')}</span>
+              </button>
+              <button class="menu-item" onclick={handleCameraSelect}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14.5 4h-5L8 6H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3l-1.5-2z"></path>
+                  <circle cx="12" cy="12.5" r="3.5"></circle>
+                </svg>
+                <span>{$_('chat.messageInput.takePhoto')}</span>
               </button>
               <button class="menu-item" onclick={handleFileSelect}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -766,6 +989,7 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
         </div>
 
         <button
+          type="button"
           class="toggle-btn"
           class:active={webSearchEnabled}
           onclick={onWebSearchToggle}
@@ -795,13 +1019,15 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
           onclick={toggleVoiceInput}
           aria-label={isRecording ? $_('chat.messageInput.stopRecording') : $_('chat.messageInput.voiceInput')}
           title={isRecording ? $_('chat.messageInput.stopRecording') : $_('chat.messageInput.voiceInput')}
+          style={`--voice-level: ${voiceLevel.toFixed(3)}; --voice-opacity: ${micLevelOpacity}`}
           {disabled}
         >
           {#if isRecording}
-            <!-- Filled circle during recording -->
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-              <circle cx="12" cy="12" r="8"/>
-            </svg>
+            <span class="mic-level-meter" class:live-level={isReceivingNativeVoiceLevel} aria-hidden="true">
+              {#each micLevelBars as _, index}
+                <span style={`--bar-scale: ${getMicBarScale(index)}`}></span>
+              {/each}
+            </span>
           {:else}
             <!-- Microphone icon when idle -->
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -814,16 +1040,28 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
         </button>
 
         <button
+          type="button"
           class="input-btn send-btn"
-          onclick={handleSend}
-          disabled={disabled || isUploading || (!message.trim() && attachedFiles.length === 0)}
-          aria-label={isUploading ? $_('chat.messageInput.uploading') : $_('chat.messageInput.sendMessage')}
-          title={isUploading ? $_('chat.messageInput.uploading') : $_('chat.messageInput.sendMessageTitle')}
+          class:cancel-btn={canCancelResponse}
+          onclick={() => {
+            if (canCancelResponse) {
+              onCancel?.();
+              return;
+            }
+            void handleSend();
+          }}
+          disabled={sendButtonDisabled}
+          aria-label={canCancelResponse ? (cancelling ? $_('chat.messageInput.cancellingResponse') : $_('chat.messageInput.cancelResponse')) : (isUploading ? $_('chat.messageInput.uploading') : $_('chat.messageInput.sendMessage'))}
+          title={canCancelResponse ? (cancelling ? $_('chat.messageInput.cancellingResponse') : $_('chat.messageInput.cancelResponse')) : (isUploading ? $_('chat.messageInput.uploading') : $_('chat.messageInput.sendMessageTitle'))}
         >
-          {#if disabled || isUploading}
+          {#if cancelling || (!canCancelResponse && (disabled || isUploading))}
             <svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
               <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"></path>
+            </svg>
+          {:else if canCancelResponse}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <rect x="7" y="7" width="10" height="10" rx="2"></rect>
             </svg>
           {:else}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -835,6 +1073,12 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
       </div>
     </div>
   </div>
+
+  {#if microphoneError}
+    <div class="microphone-error" role="status" aria-live="polite">
+      {microphoneError}
+    </div>
+  {/if}
 </div>
 
 <!-- File Preview Modal -->
@@ -935,8 +1179,12 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
       var(--glass-highlight),
       var(--glass-edge-glow),
       var(--glass-shadow-dark);
-    min-height: 2.5rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 3rem;
+    transition:
+      background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: text;
   }
 
@@ -976,9 +1224,9 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   .chat-input-textarea {
     width: 100%;
     min-height: 1.6rem;
-    max-height: 30vh;
+    max-height: min(52vh, 26.25rem);
     padding: var(--space-sm) var(--space-md);
-    padding-bottom: calc(2rem + var(--space-xs));
+    padding-bottom: var(--space-xs);
     border: none !important;
     outline: none !important;
     background: transparent !important;
@@ -1017,20 +1265,18 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
 
   /* ===== Floating Bottom Bar ===== */
   .input-bottom-bar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-xs) var(--space-sm);
+    flex-wrap: wrap;
+    padding: var(--space-xs) var(--space-sm) var(--space-sm);
     background: transparent;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     gap: var(--space-sm);
-    min-height: 2rem;
+    min-height: 2.25rem;
     z-index: 2;
-    pointer-events: none;
+    pointer-events: auto;
   }
 
   .bottom-bar-left,
@@ -1052,8 +1298,8 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 2rem;
+    height: 2rem;
     padding: 0;
     border: none;
     border-radius: var(--radius-full);
@@ -1066,8 +1312,8 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   }
 
   .input-btn svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
   }
 
   .input-btn:hover:not(:disabled) {
@@ -1111,6 +1357,25 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     box-shadow: none;
   }
 
+  .input-btn.send-btn.cancel-btn {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    box-shadow:
+      0 var(--space-xs) var(--space-lg) rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+
+  .input-btn.send-btn.cancel-btn:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--text-primary) 88%, var(--brand-red));
+    color: var(--bg-primary);
+  }
+
+  .input-btn.send-btn.cancel-btn:disabled {
+    background: var(--btn-quaternary);
+    color: var(--text-secondary);
+    opacity: 0.65;
+  }
+
   /* Microphone Recording State */
   .input-btn.mic-btn.recording {
     background: linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(185, 28, 28, 0.15) 100%);
@@ -1148,10 +1413,78 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     }
   }
 
-  /* Recording placeholder style */
+  .chat-input-textarea.recording {
+    caret-color: rgb(220, 38, 38);
+  }
+
   .chat-input-textarea.recording::placeholder {
-    color: rgb(220, 38, 38);
-    opacity: 0.8;
+    color: transparent;
+    opacity: 0;
+  }
+
+  .mic-level-meter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .mic-level-meter span {
+    width: 2px;
+    height: 9px;
+    border-radius: var(--radius-full);
+    background: currentColor;
+    transform-origin: center;
+    transform: scaleY(var(--bar-scale, 0.5));
+    opacity: var(--voice-opacity, 0.55);
+    transition:
+      transform 42ms linear,
+      opacity 70ms ease-out;
+  }
+
+  .mic-level-meter:not(.live-level) span {
+    animation: mic-meter-idle 900ms ease-in-out infinite;
+  }
+
+  .mic-level-meter:not(.live-level) span:nth-child(2),
+  .mic-level-meter:not(.live-level) span:nth-child(4) {
+    animation-delay: 90ms;
+  }
+
+  .mic-level-meter:not(.live-level) span:nth-child(3) {
+    animation-delay: 180ms;
+  }
+
+  @keyframes mic-meter-idle {
+    0%,
+    100% {
+      transform: scaleY(0.45);
+    }
+
+    50% {
+      transform: scaleY(1.2);
+    }
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .microphone-error {
+    color: var(--brand-red);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    padding: 0 var(--space-sm);
   }
 
   /* ===== Selector Button (Dropdowns) ===== */
@@ -1167,7 +1500,12 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      background-color 0.18s ease,
+      border-color 0.18s ease,
+      color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.18s ease;
     white-space: nowrap;
     box-shadow: var(--glass-edge-glow);
   }
@@ -1191,8 +1529,8 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     align-items: center;
     justify-content: center;
     gap: var(--space-xs);
-    min-width: 1.75rem;
-    height: 1.75rem;
+    min-width: 2rem;
+    height: 2rem;
     padding: 0 var(--space-sm);
     border: 1px solid var(--glass-stroke-dark);
     border-radius: var(--radius-full);
@@ -1208,20 +1546,27 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
 
   .toggle-btn:not(.active) {
     padding: 0;
-    width: 1.75rem;
+    width: 2rem;
   }
 
   .toggle-btn svg {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
     flex-shrink: 0;
   }
 
-  .toggle-btn:hover:not(:disabled) {
-    background: var(--btn-tertiary);
-    border-color: color-mix(in oklab, var(--brand) 30%, transparent);
-    color: var(--link-color);
-    transform: translateY(-1px);
+  .toggle-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .toggle-btn:hover:not(:disabled) {
+      background: var(--btn-tertiary);
+      border-color: color-mix(in oklab, var(--brand) 30%, transparent);
+      color: var(--link-color);
+      transform: translateY(-1px);
+    }
   }
 
   .toggle-btn.active {
@@ -1239,28 +1584,28 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
   }
 
   .model-icon :global(svg) {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
   }
 
   .connectors-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
   }
 
   .connectors-icon :global(svg) {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
   }
 
   .model-icon .provider-icon-img {
@@ -1986,19 +2331,19 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
 
     .input-container-main {
       border-radius: var(--radius-md);
-      min-height: 2.25rem;
+      min-height: 3rem;
     }
 
     .chat-input-textarea {
       font-size: 1rem; /* Prevent iOS zoom */
       padding: var(--space-xs) var(--space-sm);
-      padding-bottom: calc(1.75rem + var(--space-xs));
+      padding-bottom: var(--space-xs);
     }
 
     .input-bottom-bar {
-      padding: var(--space-2xs) var(--space-xs);
+      padding: var(--space-xs) var(--space-sm);
       gap: var(--space-xs);
-      min-height: 1.75rem;
+      min-height: 2.5rem;
     }
 
     .selector-label,
@@ -2008,15 +2353,19 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     }
 
     .selector-btn {
-      padding: var(--space-xs);
+      width: 2.25rem;
+      min-width: 2.25rem;
+      height: 2.25rem;
+      padding: 0;
       border-radius: 50%;
       gap: 0;
+      justify-content: center;
     }
 
     .connectors-trigger {
-      width: 1.625rem;
-      min-width: 1.625rem;
-      height: 1.625rem;
+      width: 2.25rem;
+      min-width: 2.25rem;
+      height: 2.25rem;
       padding: 0;
       border-radius: 50%;
       justify-content: center;
@@ -2024,15 +2373,15 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     }
 
     .toggle-btn {
-      width: 1.625rem;
-      min-width: 1.625rem;
-      height: 1.625rem;
+      width: 2.25rem;
+      min-width: 2.25rem;
+      height: 2.25rem;
       padding: 0;
     }
 
     .toggle-btn svg {
-      width: 12px;
-      height: 12px;
+      width: 16px;
+      height: 16px;
     }
 
     .dropdown-arrow {
@@ -2040,42 +2389,228 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     }
 
     .input-btn {
-      width: 1.625rem;
-      height: 1.625rem;
+      width: 2.25rem;
+      height: 2.25rem;
     }
 
     .input-btn svg {
-      width: 12px;
-      height: 12px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  :global(html[data-app-layout='mobile']) .input-area-wrapper {
+    max-width: 100%;
+  }
+
+  :global(html[data-app-layout='mobile']) .input-container-main {
+    border-radius: var(--radius-md);
+    min-height: 3rem;
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-input-textarea {
+    font-size: 1rem;
+    padding: var(--space-xs) var(--space-sm);
+    padding-bottom: var(--space-xs);
+  }
+
+  :global(html[data-app-layout='mobile']) .input-bottom-bar {
+    padding: var(--space-xs) var(--space-sm);
+    gap: var(--space-xs);
+    min-height: 2.5rem;
+  }
+
+  :global(html[data-app-layout='mobile']) .selector-label,
+  :global(html[data-app-layout='mobile']) .toggle-label,
+  :global(html[data-app-layout='mobile']) .connectors-label {
+    display: none;
+  }
+
+  :global(html[data-app-layout='mobile']) .selector-btn,
+  :global(html[data-app-layout='mobile']) .connectors-trigger,
+  :global(html[data-app-layout='mobile']) .toggle-btn {
+    width: 2.25rem;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border-radius: 50%;
+    justify-content: center;
+    gap: 0;
+  }
+
+  :global(html[data-app-layout='mobile']) .toggle-btn svg,
+  :global(html[data-app-layout='mobile']) .input-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  :global(html[data-app-layout='mobile']) .dropdown-arrow {
+    display: none;
+  }
+
+  :global(html[data-app-layout='mobile']) .input-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  :global(html[data-app-layout='mobile']) .model-dropdown-container {
+    position: static;
+  }
+
+  :global(html[data-app-layout='mobile']) .model-menu {
+    left: 50%;
+    right: auto;
+    width: min(16rem, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
+    transform: translateX(-50%);
+  }
+
+  @media (orientation: portrait) {
+    :global(html[data-app-layout='mobile']) .model-menu {
+      width: min(15rem, calc(100vw - 2rem));
+      min-width: min(13rem, calc(100vw - 2rem));
+      max-width: calc(100vw - 2rem);
+      max-height: min(16rem, max(8rem, calc(var(--app-viewport-height, 100vh) - 9.5rem)));
+      padding: 0.35rem;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-menu .provider-header {
+      gap: 0.4rem;
+      padding: 0.4rem 0.55rem;
+      margin-bottom: 0.25rem;
+      font-size: 0.66rem;
+      letter-spacing: 0.04em;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-menu .provider-section:not(:last-child) {
+      margin-bottom: 0.25rem;
+      padding-bottom: 0.25rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-option {
+      min-height: 2.25rem;
+      gap: 0.5rem;
+      padding: 0.45rem 0.55rem;
+      border-radius: var(--radius-sm);
+    }
+
+    :global(html[data-app-layout='mobile']) .model-option .model-name {
+      font-size: 0.82rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-subgroup-label {
+      padding: 0.35rem 0.55rem 0.2rem;
+      margin-top: 0.25rem;
+      font-size: 0.62rem;
+    }
+  }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    :global(html[data-app-layout='mobile']) .input-area-wrapper {
+      gap: var(--space-xs);
+    }
+
+    :global(html[data-app-layout='mobile']) .input-container-main {
+      min-height: 2.45rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .input-container-main:focus-within {
+      transform: none;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-input-textarea {
+      max-height: min(28vh, 7.5rem);
+      padding: 0.35rem var(--space-sm);
+      line-height: 1.35;
+    }
+
+    :global(html[data-app-layout='mobile']) .input-bottom-bar {
+      min-height: 2rem;
+      padding: 0 var(--space-xs) var(--space-xs);
+    }
+
+    :global(html[data-app-layout='mobile']) .model-menu {
+      width: min(15rem, calc(100vw - 2rem));
+      max-height: min(11rem, max(7rem, calc(var(--app-viewport-height, 100vh) - 4.75rem)));
+      padding: 0.3rem;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-menu .provider-header {
+      gap: 0.35rem;
+      padding: 0.3rem 0.5rem;
+      margin-bottom: 0.2rem;
+      font-size: 0.62rem;
+      letter-spacing: 0.035em;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-menu .provider-section:not(:last-child) {
+      margin-bottom: 0.2rem;
+      padding-bottom: 0.2rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-option {
+      min-height: 2rem;
+      gap: 0.45rem;
+      padding: 0.34rem 0.5rem;
+      border-radius: var(--radius-sm);
+    }
+
+    :global(html[data-app-layout='mobile']) .model-option .model-name {
+      font-size: 0.8rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .model-subgroup-label {
+      padding: 0.3rem 0.5rem 0.15rem;
+      margin-top: 0.2rem;
+      font-size: 0.6rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .selector-btn,
+    :global(html[data-app-layout='mobile']) .connectors-trigger,
+    :global(html[data-app-layout='mobile']) .toggle-btn,
+    :global(html[data-app-layout='mobile']) .input-btn {
+      width: 2rem;
+      min-width: 2rem;
+      height: 2rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .toggle-btn svg,
+    :global(html[data-app-layout='mobile']) .input-btn svg {
+      width: 14px;
+      height: 14px;
     }
   }
 
   @media (max-width: 480px) {
     .input-btn {
-      width: 1.5rem;
-      height: 1.5rem;
+      width: 2.125rem;
+      height: 2.125rem;
     }
 
     .input-btn svg {
-      width: 11px;
-      height: 11px;
+      width: 15px;
+      height: 15px;
     }
 
     .toggle-btn {
-      width: 1.5rem;
-      min-width: 1.5rem;
-      height: 1.5rem;
+      width: 2.125rem;
+      min-width: 2.125rem;
+      height: 2.125rem;
     }
 
     .connectors-trigger {
-      width: 1.5rem;
-      min-width: 1.5rem;
-      height: 1.5rem;
+      width: 2.125rem;
+      min-width: 2.125rem;
+      height: 2.125rem;
     }
 
     .toggle-btn svg {
-      width: 11px;
-      height: 11px;
+      width: 15px;
+      height: 15px;
     }
 
     .file-pill {

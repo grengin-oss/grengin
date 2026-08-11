@@ -44,12 +44,15 @@ SPDX-License-Identifier: Apache-2.0
 
 <div class="mobile-header">
   <button
+    type="button"
     class="mobile-menu-btn"
+    class:mobile-menu-btn-open={!sidebarCollapsed}
     onclick={onToggleMenu}
+    aria-expanded={!sidebarCollapsed}
     aria-label={sidebarCollapsed ? $_('app.openMenu') : $_('app.closeMenu')}
     title={sidebarCollapsed ? $_('app.openMenu') : $_('app.closeMenu')}
   >
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
   </button>
   <img src={grenginLogo} alt="Grengin" class="mobile-header-logo" />
 
@@ -68,8 +71,8 @@ SPDX-License-Identifier: Apache-2.0
   >
     <svg
       class="mobile-alerts-bell-icon"
-      width="16"
-      height="16"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -99,34 +102,50 @@ SPDX-License-Identifier: Apache-2.0
   .mobile-header {
     display: none;
     align-items: center;
-    padding: var(--space-md);
+    gap: var(--space-sm);
+    min-height: 3.5rem;
+    padding: var(--space-sm) var(--space-md);
     background: var(--bg-primary);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-    z-index: 10;
+    position: sticky;
+    top: 0;
+    z-index: 520;
   }
 
   .mobile-menu-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     border: 1px solid transparent;
     background: var(--btn-secondary);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      background-color 0.18s ease,
+      border-color 0.18s ease,
+      color 0.18s ease,
+      transform 0.18s ease;
     flex-shrink: 0;
   }
 
-  .mobile-menu-btn:hover {
-    background: var(--btn-tertiary);
-    border-color: var(--brand);
+  .mobile-menu-btn-open {
+    background: color-mix(in oklab, var(--btn-tertiary) 82%, var(--brand));
+    border-color: rgba(var(--brand-rgb), 0.45);
     color: var(--brand);
-    transform: translateY(-1px);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .mobile-menu-btn:hover {
+      background: var(--btn-tertiary);
+      border-color: var(--brand);
+      color: var(--brand);
+      transform: translateY(-1px);
+    }
   }
 
   .mobile-menu-btn:active {
@@ -134,7 +153,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .mobile-header-logo {
-    height: 22px;
+    height: 28px;
     width: auto;
     object-fit: contain;
     margin-inline-start: var(--space-sm);
@@ -146,8 +165,8 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(var(--glass-tint), 0.06);
@@ -188,7 +207,7 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--bg-primary);
     font-size: 0.625rem;
     font-weight: 700;
-    line-height: 1.125rem;
+    line-height: 1.2rem;
     text-align: center;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   }
@@ -199,23 +218,45 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
+  :global(html[data-app-layout='mobile']) .mobile-header {
+    display: flex;
+  }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    :global(html[data-app-layout='mobile']) .mobile-header {
+      min-height: 2.75rem;
+      padding: var(--space-xs) var(--space-sm);
+    }
+
+    :global(html[data-app-layout='mobile']) .mobile-menu-btn,
+    :global(html[data-app-layout='mobile']) .mobile-alerts-btn {
+      width: 38px;
+      height: 38px;
+    }
+
+    :global(html[data-app-layout='mobile']) .mobile-header-logo {
+      height: 22px;
+    }
+  }
+
   @media (max-width: 480px) {
     .mobile-header {
+      min-height: 3.25rem;
       padding: var(--space-sm);
     }
 
     .mobile-menu-btn {
-      width: 28px;
-      height: 28px;
+      width: 42px;
+      height: 42px;
     }
 
     .mobile-header-logo {
-      height: 18px;
+      height: 24px;
     }
 
     .mobile-alerts-btn {
-      width: 28px;
-      height: 28px;
+      width: 42px;
+      height: 42px;
     }
   }
 </style>

@@ -99,6 +99,7 @@
       },
       "missing_oauth_params": "معلمات OAuth المطلوبة مفقودة (state أو code)",
       "oauth_provider_not_found": "مزود OAuth غير موجود. يرجى محاولة تسجيل الدخول مرة أخرى",
+      "oauth_code_already_used": "تم استخدام رابط تسجيل الدخول هذا بالفعل. يرجى تسجيل الدخول مرة أخرى",
       "invalid_auth_response": "استجابة مصادقة غير صالحة من الخادم",
       "mfa_not_implemented": "المصادقة الثنائية مطلوبة ولكن لم يتم تنفيذها بعد",
       "invalid_redirect_uri": {

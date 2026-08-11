@@ -3,12 +3,14 @@
     "title": "Ajustes",
     "subtitle": "Administre sus preferencias personales e integraciones conectadas.",
     "tabs": {
+      "appearance": "Apariencia",
+      "appearanceAria": "Preferencias de apariencia",
+      "skills": "Habilidades",
+      "skillsAria": "Gestiona tus habilidades",
       "integrations": "Integraciones",
       "integrationsAria": "Integraciones conectadas",
       "promptSettings": "Configuración de Indicaciones",
-      "promptSettingsAria": "Gestionar sus preferencias de indicaciones",
-      "skills": "Habilidades",
-      "skillsAria": "Gestiona tus habilidades"
+      "promptSettingsAria": "Gestionar sus preferencias de indicaciones"
     }
   },
   "userIntegrations": {
@@ -261,6 +263,19 @@
         "nameKebab": "Usa kebab-case en minúsculas (letras, números y guiones simples)."
       },
       "willImportAs": "Se importará como"
+    }
+  },
+  "appearanceSettings": {
+    "title": "Apariencia",
+    "subtitle": "Elija cómo se ve Grengin en este dispositivo.",
+    "theme": {
+      "label": "Tema de color",
+      "light": "Claro",
+      "lightDescription": "Usar la interfaz clara.",
+      "system": "Sistema",
+      "systemDescription": "Coincidir con este dispositivo.",
+      "dark": "Oscuro",
+      "darkDescription": "Usar la interfaz oscura."
     }
   }
 }

@@ -185,7 +185,11 @@ SPDX-License-Identifier: Apache-2.0
     font-size: 0.875rem;
     font-weight: 500;
     cursor: default;
-    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    transition:
+      background-color 0.18s ease,
+      color 0.18s ease;
   }
 
   .tool-call-toggle.clickable {
@@ -194,6 +198,10 @@ SPDX-License-Identifier: Apache-2.0
 
   .tool-call-toggle.clickable:hover {
     background: var(--surface-subtle);
+  }
+
+  .tool-call-toggle.clickable:active {
+    background: color-mix(in oklab, var(--surface-subtle) 88%, var(--brand) 12%);
   }
 
   .tool-call-toggle.completed {
@@ -247,17 +255,18 @@ SPDX-License-Identifier: Apache-2.0
   .tool-details {
     padding: 0 1rem 1rem 1rem;
     border-top: 1px solid var(--glass-stroke-light);
-    animation: slideDown 0.2s ease;
+    overflow: hidden;
+    animation: detailsIn 0.16s ease-out;
   }
 
-  @keyframes slideDown {
+  @keyframes detailsIn {
     from {
       opacity: 0;
-      max-height: 0;
+      transform: translateY(-0.25rem);
     }
     to {
       opacity: 1;
-      max-height: 500px;
+      transform: translateY(0);
     }
   }
 
@@ -269,7 +278,7 @@ SPDX-License-Identifier: Apache-2.0
     margin: 0.75rem 0;
     background: var(--surface-subtle);
     border-radius: 0.5rem;
-    border-left: 3px solid var(--color-accent-primary);
+    border-left: 3px solid var(--brand);
   }
 
   .globe-icon {
@@ -306,11 +315,24 @@ SPDX-License-Identifier: Apache-2.0
     text-decoration: none;
     color: var(--text-primary);
     border-radius: 0.5rem;
-    transition: background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background-color 0.16s ease,
+      transform 0.16s ease;
   }
 
   .source-item:hover {
     background: var(--surface-subtle);
+  }
+
+  .source-item:active {
+    background: color-mix(in oklab, var(--surface-subtle) 88%, var(--brand) 12%);
+    transform: scale(0.995);
+  }
+
+  .source-item:focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
   }
 
   .source-favicon {

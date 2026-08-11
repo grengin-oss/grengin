@@ -29,7 +29,7 @@ SPDX-License-Identifier: Apache-2.0
 
   // Auto-collapse sidebar on mobile after navigation actions
   function collapseSidebarOnMobile() {
-    if (window.innerWidth <= 768) {
+    if (isMobileShell()) {
       isCollapsed = true;
       onsidebarToggle?.(isCollapsed);
     }
@@ -38,6 +38,10 @@ SPDX-License-Identifier: Apache-2.0
   let showUserMenu = $state(false);
   let userMenuElement: HTMLElement;
   let userCollapsed = $state(false);
+  let closeSwipeStartX = 0;
+  let closeSwipeStartY = 0;
+  let isCloseSwipeTracking = false;
+  let lastResponsiveCompact = typeof window !== 'undefined' ? isResponsiveCompact() : false;
 
   const notifState = getNotificationsState();
   let showAlertsPopover = $state(false);
@@ -314,11 +318,32 @@ SPDX-License-Identifier: Apache-2.0
     onlogout?.();
   }
 
+  function isMobileShell(): boolean {
+    const coarsePointer =
+      window.matchMedia('(hover: none), (pointer: coarse)').matches ||
+      navigator.maxTouchPoints > 0;
+    const shortSide = Math.min(window.innerWidth, window.innerHeight);
+
+    return window.innerWidth <= 768 || (coarsePointer && shortSide <= 600);
+  }
+
+  function isResponsiveCompact(): boolean {
+    return window.innerWidth <= 1024 || isMobileShell();
+  }
+
   function handleResize() {
-    if (window.innerWidth > 1024 && isCollapsed && !userCollapsed) {
+    const nextResponsiveCompact = isResponsiveCompact();
+
+    if (nextResponsiveCompact === lastResponsiveCompact) {
+      return;
+    }
+
+    lastResponsiveCompact = nextResponsiveCompact;
+
+    if (!nextResponsiveCompact && isCollapsed && !userCollapsed) {
       isCollapsed = false;
       onsidebarToggle?.(isCollapsed);
-    } else if (window.innerWidth <= 1024 && !isCollapsed && !userCollapsed) {
+    } else if (nextResponsiveCompact && !isCollapsed && !userCollapsed) {
       isCollapsed = true;
       onsidebarToggle?.(isCollapsed);
     }
@@ -330,6 +355,42 @@ SPDX-License-Identifier: Apache-2.0
     navigate(path);
     collapseSidebarOnMobile();
   }
+  function handleSidebarTouchStart(event: TouchEvent): void {
+    if (window.innerWidth > 768 || isCollapsed || event.touches.length !== 1) {
+      return;
+    }
+
+    const touch = event.touches[0];
+    closeSwipeStartX = touch.clientX;
+    closeSwipeStartY = touch.clientY;
+    isCloseSwipeTracking = true;
+  }
+
+  function handleSidebarTouchMove(event: TouchEvent): void {
+    if (!isCloseSwipeTracking || event.touches.length !== 1) {
+      return;
+    }
+
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - closeSwipeStartX;
+    const deltaY = Math.abs(touch.clientY - closeSwipeStartY);
+
+    if (deltaY > 48) {
+      isCloseSwipeTracking = false;
+      return;
+    }
+
+    if (deltaX <= -72) {
+      isCollapsed = true;
+      onsidebarToggle?.(isCollapsed);
+      isCloseSwipeTracking = false;
+    }
+  }
+
+  function handleSidebarTouchEnd(): void {
+    isCloseSwipeTracking = false;
+  }
+
 </script>
 
 <svelte:window
@@ -346,6 +407,10 @@ SPDX-License-Identifier: Apache-2.0
   class="sidebar"
   class:collapsed={isCollapsed}
   aria-label={$_("sidebar.navigation") || "Main navigation"}
+  ontouchstart={handleSidebarTouchStart}
+  ontouchmove={handleSidebarTouchMove}
+  ontouchend={handleSidebarTouchEnd}
+  ontouchcancel={handleSidebarTouchEnd}
 >
   {#snippet alertsUi()}
     <button
@@ -406,8 +471,10 @@ SPDX-License-Identifier: Apache-2.0
             {@render alertsUi()}
           </div>
           <button
+            type="button"
             class="burger-btn"
             onclick={toggleSidebar}
+            aria-expanded={!isCollapsed}
             aria-label={$_("sidebar.toggleSidebar")}
             title={$_("sidebar.toggleSidebar")}
           >
@@ -427,6 +494,7 @@ SPDX-License-Identifier: Apache-2.0
         {:else}
           <div class="collapsed-logo-container">
             <button
+              type="button"
               class="logo-btn"
               onclick={toggleSidebar}
               aria-label={$_("sidebar.toggleSidebar")}
@@ -435,8 +503,10 @@ SPDX-License-Identifier: Apache-2.0
               <img src="/grengin-icon.svg" alt="Grengin" class="logo-icon" />
             </button>
             <button
+              type="button"
               class="expand-btn"
               onclick={toggleSidebar}
+              aria-expanded={!isCollapsed}
               aria-label={$_("sidebar.expandSidebar")}
               title={$_("sidebar.expandSidebar")}
             >
@@ -687,7 +757,8 @@ SPDX-License-Identifier: Apache-2.0
     overflow-x: hidden;
     transition:
       width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.38s cubic-bezier(0.22, 1, 0.36, 1);
 
     /* Liquid Glass Layer 1 - Primary navigation surface */
     background: var(--bg-primary);
@@ -914,16 +985,21 @@ SPDX-License-Identifier: Apache-2.0
     border-radius: var(--radius-full);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      background-color 0.18s ease,
+      color 0.18s ease,
+      transform 0.18s ease;
     flex-shrink: 0;
     box-shadow: none;
     backdrop-filter: none;
   }
 
-  .burger-btn:hover {
-    background: var(--btn-quaternary);
-    color: var(--brand);
-    transform: scale(1.05);
+  @media (hover: hover) and (pointer: fine) {
+    .burger-btn:hover {
+      background: var(--btn-quaternary);
+      color: var(--brand);
+      transform: scale(1.05);
+    }
   }
 
   .burger-btn:focus-visible {
@@ -1362,11 +1438,15 @@ SPDX-License-Identifier: Apache-2.0
     .sidebar {
       width: 280px;
       box-shadow: 4px 0 32px rgba(0, 0, 0, 0.25);
+      transition:
+        transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.38s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .sidebar.collapsed {
-      transform: translateX(-100%);
+      transform: translate3d(-100%, 0, 0);
       width: 280px;
+      box-shadow: none;
     }
 
     .user-menu-dropdown {
@@ -1379,6 +1459,62 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
+  :global(html[data-app-layout='mobile']) .sidebar {
+    width: 280px;
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.25);
+    transition:
+      transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  :global(html[data-app-layout='mobile']) .sidebar.collapsed {
+    transform: translate3d(-100%, 0, 0);
+    width: 280px;
+    box-shadow: none;
+  }
+
+  :global(html[data-app-layout='mobile']) .user-menu-dropdown {
+    inset-inline-start: var(--space-md);
+  }
+
+  :global(html[data-app-layout='mobile']) .alerts-btn {
+    display: none;
+  }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    :global(html[data-app-layout='mobile']) .sidebar {
+      height: var(--app-viewport-height, 100dvh);
+    }
+
+    :global(html[data-app-layout='mobile']) .sidebar-header {
+      padding: 0.4rem 0.75rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .brand-logo {
+      height: 22px;
+    }
+
+    :global(html[data-app-layout='mobile']) .burger-btn,
+    :global(html[data-app-layout='mobile']) .logo-btn,
+    :global(html[data-app-layout='mobile']) .expand-btn {
+      width: 32px;
+      height: 32px;
+    }
+
+    :global(html[data-app-layout='mobile']) .sidebar-footer {
+      padding: 0.35rem 0.75rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .user-avatar {
+      width: 24px;
+      height: 24px;
+    }
+
+    :global(html[data-app-layout='mobile']) .user-name {
+      font-size: 0.8rem;
+    }
+  }
+
   @media (max-width: 480px) {
     .sidebar {
       width: 85vw;
@@ -1387,7 +1523,7 @@ SPDX-License-Identifier: Apache-2.0
     }
 
     .sidebar.collapsed {
-      transform: translateX(-100%);
+      transform: translate3d(-100%, 0, 0);
       width: 85vw;
       max-width: 320px;
     }

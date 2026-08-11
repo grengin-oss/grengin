@@ -211,7 +211,7 @@ SPDX-License-Identifier: Apache-2.0
     background: rgba(255, 255, 255, 0.98);
     border-radius: 20px;
     border: 1px solid #eaeaea;
-    box-shadow: 
+    box-shadow:
       0 32px 64px rgba(0, 0, 0, 0.12),
       0 0 0 1px rgba(255, 255, 255, 0.1);
     overflow: hidden;

@@ -710,4 +710,23 @@ SPDX-License-Identifier: Apache-2.0
     from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
   }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    :global(html[data-app-layout='mobile']) .projects-section {
+      padding: 0 0.5rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .projects-header {
+      padding: 0.3rem 0.75rem;
+      margin-top: 0.2rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .projects-list {
+      display: none;
+    }
+
+    :global(html[data-app-layout='mobile']) .section-divider {
+      margin: 0.25rem 0.75rem;
+    }
+  }
 </style>

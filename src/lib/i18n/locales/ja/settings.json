@@ -3,12 +3,14 @@
     "title": "設定",
     "subtitle": "個人の設定と接続済みの連携を管理します。",
     "tabs": {
+      "appearance": "外観",
+      "appearanceAria": "外観の設定",
+      "skills": "スキル",
+      "skillsAria": "スキルを管理",
       "integrations": "連携",
       "integrationsAria": "接続済みの連携",
       "promptSettings": "プロンプト設定",
-      "promptSettingsAria": "プロンプトの設定を管理",
-      "skills": "スキル",
-      "skillsAria": "スキルを管理"
+      "promptSettingsAria": "プロンプトの設定を管理"
     }
   },
   "userIntegrations": {
@@ -261,6 +263,19 @@
         "nameKebab": "小文字のケバブケース（英数字とハイフン1つ）を使用してください。"
       },
       "willImportAs": "次の名前でインポートされます"
+    }
+  },
+  "appearanceSettings": {
+    "title": "外観",
+    "subtitle": "このデバイスでのGrenginの表示を選択します。",
+    "theme": {
+      "label": "カラーテーマ",
+      "light": "ライト",
+      "lightDescription": "明るいインターフェースを使用します。",
+      "system": "システム",
+      "systemDescription": "このデバイスに合わせます。",
+      "dark": "ダーク",
+      "darkDescription": "暗いインターフェースを使用します。"
     }
   }
 }

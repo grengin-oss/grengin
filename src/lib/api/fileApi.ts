@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
 // SPDX-License-Identifier: Apache-2.0
 
-import { API_BASE, request, ApiError } from './client';
+import { API_BASE, request, ApiError, apiFetch } from './client';
 import { getAccessToken } from '../features/auth';
 
 /**
@@ -32,7 +32,7 @@ export async function downloadFile(fileId: string): Promise<string | null> {
 
     const downloadUrl = `${API_BASE}/files/${fileId}/download`;
     
-    const response = await fetch(downloadUrl, {
+    const response = await apiFetch(downloadUrl, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

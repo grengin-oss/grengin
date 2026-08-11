@@ -18,6 +18,16 @@ dist
 dist-ssr
 *.local
 
+# This repository uses pnpm as its package manager
+package-lock.json
+
+# Mobile build packages and signing credentials
+*.apk
+*.aab
+*.apks
+*.jks
+*.keystore
+
 # Local release assembly
 .release-work/
 release-dist/

@@ -3,14 +3,27 @@ SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
 SPDX-License-Identifier: Apache-2.0
 -->
 
+<script module lang="ts">
+  const inFlightOAuthCallbacks = new Map<string, Promise<void>>();
+</script>
+
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { setAuth, ApiError, handleOAuthCallback } from '../index.js';
+  import { navigate } from 'svelte-routing';
+  import { setAuth, ApiError, handleOAuthCallback, isAuthenticated } from '../index.js';
   import type { LoginResponse } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
-  import { API_BASE } from '../../../api/client.js';
+  import { API_BASE, apiFetch } from '../../../api/client.js';
+  import {
+    clearPendingOAuth,
+    isOAuthCallbackConsumed,
+    markOAuthCallbackConsumed,
+    oauthCallbackKey,
+    readPendingOAuth,
+  } from '../pendingOAuth.js';
+  import { notifyOAuthCallbackSettled } from '../nativeDeepLink.js';
 
   // UI State
   type CallbackStatus = 'processing' | 'success' | 'error';
@@ -19,6 +32,14 @@ SPDX-License-Identifier: Apache-2.0
   // Constants
   const REDIRECT_DELAY_SUCCESS = 300; // ms
   const REDIRECT_DELAY_ERROR = 3000; // ms
+
+  function getProviderFromPath(): string | null {
+    return window.location.pathname.match(/^\/auth\/([^/]+)\/(?:mobile\/)?callback$/)?.[1] ?? null;
+  }
+
+  function isMobileCallbackPath(): boolean {
+    return /^\/auth\/[^/]+\/mobile\/callback$/.test(window.location.pathname);
+  }
 
   /**
    * Try SSO proxy fallback — frontend only.
@@ -48,7 +69,7 @@ SPDX-License-Identifier: Apache-2.0
 
     try {
       // SSO proxy passed a token directly — validate it and fetch user profile
-      const response = await fetch(`${API_BASE}/me`, {
+      const response = await apiFetch(`${API_BASE}/me`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Accept': 'application/json',
@@ -90,23 +111,25 @@ SPDX-License-Identifier: Apache-2.0
     const code = params.get('code') || hashParams.get('code');
     const assertion = params.get('assertion') || hashParams.get('assertion');
 
-    // 3. Retrieve provider from session storage
-    const provider = sessionStorage.getItem('oauth_provider');
+    // 3. Resolve the provider. The callback path is authoritative — it was built
+    //    from the deep link that just arrived — and only then the durable record.
+    //    sessionStorage is last: it is empty whenever Android recreated the
+    //    WebView during the browser hand-off, and stale otherwise.
+    const pending = readPendingOAuth();
+    const provider =
+      getProviderFromPath() || pending?.provider || sessionStorage.getItem('oauth_provider');
     if (!provider) {
       const message = $_('error.auth.oauth_provider_not_found');
       throw new ApiError(400, message);
     }
 
-    let response: LoginResponse;
+    const isMobileCallback =
+      isMobileCallbackPath() ||
+      pending?.mobile === true ||
+      sessionStorage.getItem('oauth_mobile_callback') === 'true';
 
-    if (assertion && state) {
-      // SSO proxy flow: assertion JWT + state — forward directly to API callback
-      response = await handleOAuthCallback(provider, null, state, assertion);
-    } else if (code && state) {
-      // Standard OAuth code flow
-      response = await handleOAuthCallback(provider, code, state, null);
-    } else {
-      // No standard code/state and no assertion — try legacy SSO proxy fallback (token in URL)
+    if (!state || (!code && !assertion)) {
+      // No standard code/state and no assertion - try legacy SSO proxy fallback (token in URL)
       console.warn('[AuthCallback] No code/state/assertion in URL, attempting SSO proxy fallback...');
       const ssoSuccess = await trySSOProxyFallback();
       if (ssoSuccess) {
@@ -116,17 +139,75 @@ SPDX-License-Identifier: Apache-2.0
       throw new ApiError(400, message);
     }
 
-    // 4. Call backend OAuth callback endpoint — already done above
-
-    // 5. Validate response and store authentication
-    if (!response?.accessToken || !response?.user) {
-      const message = $_('error.auth.invalid_auth_response');
-      toast.error(message);
-      throw new Error(message);
+    const callbackKey = `${provider}:${state}:${isMobileCallback ? 'mobile' : 'web'}`;
+    const existingCallback = inFlightOAuthCallbacks.get(callbackKey);
+    if (existingCallback) {
+      await existingCallback;
+      return;
     }
 
-    setAuth(response.accessToken, response.refreshToken || '', response.user);
-    return;
+    // A WebView reload wipes `inFlightOAuthCallbacks`, so the in-memory guard
+    // above cannot see an exchange from a previous JS context. Authorization
+    // codes are single-use: replaying one fails at the provider and would report
+    // a login that already worked as broken.
+    const consumedKey = oauthCallbackKey(provider, state);
+    if (isOAuthCallbackConsumed(consumedKey)) {
+      if (isAuthenticated()) {
+        return;
+      }
+
+      throw new ApiError(400, $_('error.auth.oauth_code_already_used'));
+    }
+
+    const callbackPromise = (async () => {
+      let response: LoginResponse;
+
+      try {
+        if (assertion) {
+          // SSO proxy flow: assertion JWT + state - forward directly to API callback
+          response = await handleOAuthCallback(provider, null, state, {
+            assertion,
+            mobile: isMobileCallback,
+          });
+        } else {
+          // Standard OAuth code flow
+          response = await handleOAuthCallback(provider, code, state, {
+            mobile: isMobileCallback,
+          });
+        }
+      } catch (err) {
+        // A rejection the backend reasoned about means it already redeemed the
+        // code at the provider, so it is spent. Transport failures and 5xx may
+        // never have reached the provider — leave those replayable.
+        if (err instanceof ApiError && err.status < 500) {
+          markOAuthCallbackConsumed(consumedKey);
+        }
+        throw err;
+      }
+
+      markOAuthCallbackConsumed(consumedKey);
+
+      // Validate response and store authentication
+      if (!response?.accessToken || !response?.user) {
+        const message = $_('error.auth.invalid_auth_response');
+        toast.error(message);
+        throw new Error(message);
+      }
+
+      setAuth(response.accessToken, response.refreshToken || '', response.user);
+    })();
+
+    inFlightOAuthCallbacks.set(callbackKey, callbackPromise);
+
+    try {
+      await callbackPromise;
+    } finally {
+      window.setTimeout(() => {
+        if (inFlightOAuthCallbacks.get(callbackKey) === callbackPromise) {
+          inFlightOAuthCallbacks.delete(callbackKey);
+        }
+      }, 30_000);
+    }
   }
 
   /**
@@ -134,17 +215,38 @@ SPDX-License-Identifier: Apache-2.0
    */
   function cleanupSessionStorage(): void {
     sessionStorage.removeItem('oauth_provider');
+    sessionStorage.removeItem('oauth_mobile_callback');
+    // Also retires the durable record and stops the deep-link recovery poll.
+    clearPendingOAuth();
+    notifyOAuthCallbackSettled();
+  }
+
+  function navigateInApp(target: string): void {
+    try {
+      const parsed = new URL(target, window.location.origin);
+      if (parsed.origin === window.location.origin) {
+        navigate(`${parsed.pathname}${parsed.search}${parsed.hash}`, { replace: true });
+        return;
+      }
+    } catch {
+      // Fallback below.
+    }
+
+    window.location.assign(target);
   }
 
   /**
    * Redirect to return URL after successful authentication
    */
-  function redirectAfterSuccess(): void {
-    const returnUrl = sessionStorage.getItem('auth_return_url') || '/';
+  function redirectAfterSuccess(returnUrlFromPending: string | null): void {
+    // sessionStorage is gone if Android recreated the WebView mid-handshake, so
+    // fall back to the value captured when the flow started.
+    const returnUrl =
+      sessionStorage.getItem('auth_return_url') || returnUrlFromPending || '/';
     sessionStorage.removeItem('auth_return_url');
-    
+
     setTimeout(() => {
-      window.location.href = returnUrl;
+      navigateInApp(returnUrl);
     }, REDIRECT_DELAY_SUCCESS);
   }
 
@@ -153,7 +255,7 @@ SPDX-License-Identifier: Apache-2.0
    */
   function redirectAfterError(): void {
     setTimeout(() => {
-      window.location.href = '/';
+      navigate('/', { replace: true });
     }, REDIRECT_DELAY_ERROR);
   }
 
@@ -174,11 +276,14 @@ SPDX-License-Identifier: Apache-2.0
 
   // Initialize OAuth callback processing on component mount
   onMount(async () => {
+    // Captured before cleanup clears it.
+    const returnUrlFromPending = readPendingOAuth()?.returnUrl ?? null;
+
     try {
       await processOAuthCallback();
       cleanupSessionStorage();
       status = 'success';
-      redirectAfterSuccess();
+      redirectAfterSuccess(returnUrlFromPending);
     } catch (err: unknown) {
       cleanupSessionStorage();
       // Convert all errors to ApiError for consistent handling

@@ -4,10 +4,12 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { initiateOAuth, ApiError } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
+  import { getOAuthRedirectUri } from '../../../platform/tauri';
 
   type OAuthProvider = 'google' | 'azure' | 'keycloak';
   type ButtonSize = 'small' | 'medium' | 'large';
@@ -20,7 +22,8 @@ SPDX-License-Identifier: Apache-2.0
     onStart?: () => void;
     onSuccess?: () => void;
     onError?: (error: string) => void;
-
+    /** The flow was abandoned (user returned without completing sign-in). */
+    onCancel?: () => void;
   }
 
   let {
@@ -31,12 +34,15 @@ SPDX-License-Identifier: Apache-2.0
     onStart,
     onSuccess,
     onError,
+    onCancel,
   }: Props = $props();
+
+  const configuredRedirectOrigin = import.meta.env?.VITE_OAUTH_REDIRECT_ORIGIN?.replace(/\/$/, '');
 
   // Always send redirect_uri so the backend knows where to redirect after OAuth
   // Use provider-specific callback path to match Azure/OAuth provider configuration
   const effectiveRedirectUri = $derived(
-    redirectUri ?? window.location.origin + `/auth/${provider}/callback`
+    getOAuthRedirectUri(provider, redirectUri, configuredRedirectOrigin)
   );
 
   let isLoading = $state(false);
@@ -65,6 +71,31 @@ SPDX-License-Identifier: Apache-2.0
       onError?.(errorMessage);
     }
   }
+
+  // The native flow leaves for the system browser and only unmounts this button
+  // if a callback arrives. If the user backs out instead, the app resumes with the
+  // button still spinning and no way to retry — so release it once we're visible
+  // again. The delay lets a real callback navigate away first.
+  onMount(() => {
+    function releaseStuckLoadingState(): void {
+      if (!isLoading || document.visibilityState !== 'visible') return;
+
+      setTimeout(() => {
+        if (isLoading && document.visibilityState === 'visible') {
+          isLoading = false;
+          onCancel?.();
+        }
+      }, 600);
+    }
+
+    document.addEventListener('visibilitychange', releaseStuckLoadingState);
+    window.addEventListener('focus', releaseStuckLoadingState);
+
+    return () => {
+      document.removeEventListener('visibilitychange', releaseStuckLoadingState);
+      window.removeEventListener('focus', releaseStuckLoadingState);
+    };
+  });
 </script>
 
 <button 

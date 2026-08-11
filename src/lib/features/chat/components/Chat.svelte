@@ -13,11 +13,10 @@ SPDX-License-Identifier: Apache-2.0
   import type { ArtifactItem, StreamedArtifact } from '../artifacts';
   import type { MergedToolResult, ToolCall, ToolResult, WebSearchResult } from '../../../types/toolCall';
   import type { BudgetWarningMessage, ChatMessage as ChatMessageType, McpAuthRequest } from '../../../types/chat';
-  import { sendMessage, getConversation, getChatMcpServers, type UploadedFile } from '../../../api/chatApi';
+  import { cancelChatStream, sendMessage, getConversation, getChatMcpServers, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
   import { getModels, isImageModel, findModel } from '../../../api/models';
   import type { MCPServer } from '../../../admin/types.js';
-  import { getMcpServers } from '../../../api/admin/mcpServers.js';
   import { linkProjectToConversation, getProjectDetail } from '../../../api/projectsApi';
   import { linkSkill } from '../../../api/skills.js';
   import { _ } from 'svelte-i18n';
@@ -31,6 +30,7 @@ SPDX-License-Identifier: Apache-2.0
   let conversationId = $state<string | null>(null);
   // Track if we're still loading the initial conversation
   let isLoadingConversation = $state(typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('chatId'));
+  let chatLayoutElement = $state<HTMLDivElement | undefined>(undefined);
   let messagesContainer = $state<HTMLDivElement | undefined>(undefined);
   let messageInput = $state<MessageInput | undefined>(undefined);
   let currentStreamingMessage = $state<ChatMessageType | null>(null);
@@ -43,10 +43,85 @@ SPDX-License-Identifier: Apache-2.0
   let selectedMcpServers = $state<string[]>([]);
   let loadingMcpServers = $state(false);
   let mcpServersError = $state<string | null>(null);
+  let conversationLoadToken = 0;
+  let activeStreamAbortController = $state<AbortController | null>(null);
+  let activeStreamMessageId = $state<string | null>(null);
+  let activeStreamBackendMessageId = $state<string | null>(null);
+  let isCancellingStream = $state(false);
+  let activeCancellation: Promise<void> | null = null;
+  let canCancelStream = $derived(
+    Boolean(isCancellingStream || activeStreamAbortController || activeStreamMessageId),
+  );
+
   // Project to link once a new conversation is created (chat started from a project workspace).
   let pendingProjectId = $state<string | null>(null);
   // Skills selected in the composer before the conversation exists; linked on first send.
   let pendingSkillIds = $state<string[]>([]);
+
+  function finalizeStoppedMessage(messageId: string | null) {
+    if (!messageId) return;
+
+    messages = messages
+      .map((message) =>
+        message.id === messageId ? { ...message, isStreaming: false } : message,
+      )
+      .filter((message) => {
+        if (message.id !== messageId || message.role !== 'assistant') return true;
+        return Boolean(
+          message.content.trim() ||
+          message.toolCalls?.length ||
+          message.toolsResults?.length ||
+          message.mcpAuthRequests?.length,
+        );
+      });
+  }
+
+  function releaseActiveStream(owner: AbortController | null) {
+    if (activeStreamAbortController !== owner) return;
+
+    activeStreamAbortController = null;
+    activeStreamMessageId = null;
+    activeStreamBackendMessageId = null;
+  }
+
+  function handleCancelStream(): Promise<void> {
+    if (activeCancellation) {
+      return activeCancellation;
+    }
+
+    if (!activeStreamAbortController && !activeStreamMessageId && !isLoading && !isTyping) {
+      return Promise.resolve();
+    }
+
+    isCancellingStream = true;
+    const streamOwner = activeStreamAbortController;
+    const backendMessageId = activeStreamBackendMessageId;
+    const uiMessageId = activeStreamMessageId;
+    const cancelRequest = backendMessageId
+      ? cancelChatStream(backendMessageId).catch((err) => {
+          console.warn('Failed to cancel chat stream on backend:', err);
+        })
+      : Promise.resolve();
+
+    streamOwner?.abort();
+    finalizeStoppedMessage(uiMessageId);
+    currentStreamingMessage = null;
+    isTyping = false;
+    isLoading = false;
+
+    const cancellation = cancelRequest.finally(() => {
+      releaseActiveStream(streamOwner);
+      isCancellingStream = false;
+      window.dispatchEvent(new CustomEvent('refreshChatHistory'));
+    });
+    activeCancellation = cancellation;
+    void cancellation.finally(() => {
+      if (activeCancellation === cancellation) {
+        activeCancellation = null;
+      }
+    });
+    return cancellation;
+  }
 
   // Link a freshly-created conversation to the originating project (many-to-many). Runs once.
   async function linkPendingProject(newConversationId: string) {
@@ -296,14 +371,58 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
+  function isNearMessageBottom(threshold = 120): boolean {
+    if (!messagesContainer) return false;
+
+    return (
+      messagesContainer.scrollHeight -
+        messagesContainer.scrollTop -
+        messagesContainer.clientHeight <
+      threshold
+    );
+  }
+
+  function preserveBottomAfterViewportChange(): void {
+    if (!messagesContainer || (!autoScrollEnabled && !isNearMessageBottom(160))) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      if (!messagesContainer) return;
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      requestAnimationFrame(() => {
+        if (!messagesContainer) return;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      });
+    });
+  }
+
+  function syncChatViewportHeight(): void {
+    if (!chatLayoutElement) {
+      return;
+    }
+
+    const viewport = window.visualViewport;
+    const viewportHeight = viewport?.height ?? window.innerHeight;
+    const viewportOffsetTop = viewport?.offsetTop ?? 0;
+    const layoutTop = chatLayoutElement.getBoundingClientRect().top - viewportOffsetTop;
+    const visibleHeight = Math.max(240, Math.floor(viewportHeight - Math.max(0, layoutTop)));
+
+    chatLayoutElement.style.setProperty('--chat-visible-height', `${visibleHeight}px`);
+    preserveBottomAfterViewportChange();
+  }
+
   // Handle manual scrolling to detect if user wants to stop auto-scroll
   function handleScroll() {
     if (!messagesContainer || isTyping) return;
 
     // Check if user is near the bottom (within 100px)
-    const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 80;
-    if(!isNearBottom) {
+    const isNearBottom = isNearMessageBottom(80);
+    if (!isNearBottom) {
       autoScrollEnabled = false;
+    } else {
+      autoScrollEnabled = true;
     }
   }
 
@@ -338,7 +457,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   async function handleSendMessage(content: string, uploadedFiles?: UploadedFile[], webSearch?: boolean) {
-    if (isLoading) return;
+    if (isLoading || isCancellingStream || activeStreamAbortController) return;
 
     error = null;
     isLoading = true;
@@ -374,6 +493,11 @@ SPDX-License-Identifier: Apache-2.0
 
     let messageAddedToArray = $state(false);
     let pendingConversationId = conversationId;
+    const streamAbortController = new AbortController();
+    activeStreamAbortController = streamAbortController;
+    activeStreamMessageId = pendingStreamingMessage.id;
+    activeStreamBackendMessageId = null;
+    isCancellingStream = false;
     // How many generated images have arrived for this assistant message (an
     // image model may return more than one — cap is a model property).
     let generatedImageIndex = 0;
@@ -396,6 +520,7 @@ SPDX-License-Identifier: Apache-2.0
         uploadedFiles: uploadedFiles,
         webSearch: webSearch,
         selectedMcpServers,
+        signal: streamAbortController.signal,
 
         onConversationInitialized: ({newConversationId}) => {
           // Update conversation ID and URL
@@ -418,6 +543,8 @@ SPDX-License-Identifier: Apache-2.0
           if (pendingStreamingMessage) {
             messageAddedToArray = true;
             pendingStreamingMessage = {...pendingStreamingMessage, id: messageId};
+            activeStreamMessageId = messageId;
+            activeStreamBackendMessageId = messageId;
             currentStreamingMessage = {...pendingStreamingMessage};
             messages = [...messages, currentStreamingMessage as ChatMessageType];
 
@@ -437,6 +564,7 @@ SPDX-License-Identifier: Apache-2.0
             if (!messageAddedToArray && token.trim()) {
               messages = [...messages, pendingStreamingMessage];
               messageAddedToArray = true;
+              activeStreamMessageId = pendingStreamingMessage.id;
             }
             if (token.trim()) isTyping = false;
             
@@ -472,6 +600,7 @@ SPDX-License-Identifier: Apache-2.0
             if (!messageAddedToArray) {
               messages = [...messages, pendingStreamingMessage];
               messageAddedToArray = true;
+              activeStreamMessageId = pendingStreamingMessage.id;
             }
             // Merge by tool_id: update existing entry or add new one
             const existingCalls = pendingStreamingMessage.toolCalls || [];
@@ -535,6 +664,11 @@ SPDX-License-Identifier: Apache-2.0
           }
         },
         onArtifact: (artifact) => {
+          if (pendingStreamingMessage && !messageAddedToArray) {
+            messages = [...messages, pendingStreamingMessage];
+            messageAddedToArray = true;
+            activeStreamMessageId = pendingStreamingMessage.id;
+          }
           applyStreamingArtifact(artifact);
         },
         onImageGenerated: (image) => {
@@ -581,6 +715,7 @@ SPDX-License-Identifier: Apache-2.0
             if (!messageAddedToArray) {
               messages = [...messages, pendingStreamingMessage];
               messageAddedToArray = true;
+              activeStreamMessageId = pendingStreamingMessage.id;
             }
             const existingRequests = pendingStreamingMessage.mcpAuthRequests || [];
             const alreadyExists = existingRequests.some(r => r.server_id === authRequest.server_id);
@@ -671,6 +806,7 @@ SPDX-License-Identifier: Apache-2.0
             isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
           }
+          resetArtifactState();
         },
       });
     } catch (err) {
@@ -686,6 +822,9 @@ SPDX-License-Identifier: Apache-2.0
       isLoading = false;
       currentStreamingMessage = null;
       pendingStreamingMessage = null;
+      if (!isCancellingStream) {
+        releaseActiveStream(streamAbortController);
+      }
 
       // Refocus input after exception
       await tick();
@@ -742,6 +881,8 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   async function continueProcessingRequest(assistantMessageId: string) {
+    if (isLoading || isCancellingStream || activeStreamAbortController) return;
+
     // Find the user message that preceded this assistant message
     const msgIndex = messages.findIndex(m => m.id === assistantMessageId);
     if (msgIndex <= 0) return;
@@ -763,6 +904,11 @@ SPDX-License-Identifier: Apache-2.0
       toolsResults: [] as ToolResult[],
       mergedWebSearch: null as MergedToolResult | null,
     };
+    const streamAbortController = new AbortController();
+    activeStreamAbortController = streamAbortController;
+    activeStreamMessageId = assistantMessageId;
+    activeStreamBackendMessageId = assistantMessageId;
+    isCancellingStream = false;
 
     // Update the assistant message to show processing state
     messages = messages.map(msg => {
@@ -792,6 +938,7 @@ SPDX-License-Identifier: Apache-2.0
         })),
         webSearch: webSearchEnabled,
         selectedMcpServers,
+        signal: streamAbortController.signal,
 
         onConversationInitialized: ({newConversationId}) => {
           if (newConversationId && newConversationId !== conversationId) {
@@ -805,6 +952,8 @@ SPDX-License-Identifier: Apache-2.0
         onStreamingStart: (messageId) => {
           if (pendingStreamingMessage) {
             pendingStreamingMessage = { ...pendingStreamingMessage, id: messageId };
+            activeStreamMessageId = messageId;
+            activeStreamBackendMessageId = messageId;
             
             // Update the existing assistant message with the real message ID
             messages = messages.map(msg => {
@@ -970,6 +1119,7 @@ SPDX-License-Identifier: Apache-2.0
               m.id === pendingStreamingMessage?.id ? pendingStreamingMessage as ChatMessageType : m
             );
           }
+          resetArtifactState();
           isLoading = false;
           isTyping = false;
         }
@@ -985,6 +1135,10 @@ SPDX-License-Identifier: Apache-2.0
       }
       isLoading = false;
       isTyping = false;
+    } finally {
+      if (!isCancellingStream) {
+        releaseActiveStream(streamAbortController);
+      }
     }
   }
 
@@ -1067,6 +1221,13 @@ SPDX-License-Identifier: Apache-2.0
   async function loadConversationFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chatId');
+    const loadToken = ++conversationLoadToken;
+
+    if (chatId !== conversationId && (canCancelStream || activeCancellation)) {
+      isLoadingConversation = Boolean(chatId);
+      await handleCancelStream();
+      if (loadToken !== conversationLoadToken) return;
+    }
 
     if (chatId) {
       try {
@@ -1074,8 +1235,11 @@ SPDX-License-Identifier: Apache-2.0
         isLoading = true;
         error = null;
         showArtifactPanel = false;
+        resetArtifactState();
 
         const conversation = await getConversation(chatId);
+        if (loadToken !== conversationLoadToken) return;
+
         conversationId = chatId;
 
         // Convert messages to ChatMessageType format
@@ -1135,7 +1299,7 @@ SPDX-License-Identifier: Apache-2.0
             modelToUse = lastMessage.model;
           }
         }
-        
+
         if (modelToUse) {
           selectedModel = modelToUse;
           // Find the provider that contains this model
@@ -1153,6 +1317,8 @@ SPDX-License-Identifier: Apache-2.0
           }
         }
       } catch (err) {
+        if (loadToken !== conversationLoadToken) return;
+
         // Convert all errors to ApiError for consistent handling
         const apiError = err instanceof ApiError 
           ? err 
@@ -1162,19 +1328,18 @@ SPDX-License-Identifier: Apache-2.0
         console.error('Failed to load conversation:', err);
         messages = []; // Clear messages on error
       } finally {
+        if (loadToken !== conversationLoadToken) return;
+
         isLoading = false;
         isLoadingConversation = false;
         
-        // Wait for Svelte to finish updating the DOM with the new messages.
         await tick();
-        
+
         if (messagesContainer) {
-          // Save the original scroll behavior (likely 'smooth' from CSS).
-          // We'll temporarily change it to 'auto' to prevent smooth scrolling animation.
           const container = messagesContainer;
           const originalScrollBehavior = container.style.scrollBehavior;
           container.style.scrollBehavior = 'auto';
-          
+
           requestAnimationFrame(() => {
             void container.offsetHeight;
             container.scrollTop = container.scrollHeight;
@@ -1182,16 +1347,19 @@ SPDX-License-Identifier: Apache-2.0
           });
         }
 
-        // Focus the input field
-        messageInput?.focus();
+        if (window.matchMedia('(pointer: fine)').matches) {
+          messageInput?.focus();
+        }
       }
     } else {
       // No chatId in URL, clear everything
       conversationId = null;
       messages = [];
       error = null;
+      isLoading = false;
       isLoadingConversation = false;
       showArtifactPanel = false;
+      resetArtifactState();
 
       // Set model and provider from query params or defaults
       selectedModel = urlParams.get('model') || 'gpt-5.2';
@@ -1222,7 +1390,7 @@ SPDX-License-Identifier: Apache-2.0
         url.searchParams.delete('webSearch');
         url.searchParams.delete('mcpServers');
         window.history.replaceState({}, '', url.toString());
-        
+
         // Send the message after a microtask tick
         tick().then(() => {
           handleSendMessage(initialMessage);
@@ -1236,11 +1404,23 @@ SPDX-License-Identifier: Apache-2.0
     messageInput?.focus();
   }
 
+  $effect(() => {
+    messages.length;
+    showArtifactPanel;
+
+    if (!chatLayoutElement) {
+      return;
+    }
+
+    requestAnimationFrame(syncChatViewportHeight);
+  });
+
   onMount(() => {
     scrollToBottom(false);
     loadConversationFromUrl();
     loadModels();
     loadMcpServers();
+    syncChatViewportHeight();
 
     // Focus the chat input if nothing else is focused
     if (!document.activeElement || document.activeElement === document.body) {
@@ -1249,6 +1429,9 @@ SPDX-License-Identifier: Apache-2.0
 
     // Listen for URL changes (when using history.pushState)
     window.addEventListener('popstate', handleUrlChange);
+    window.visualViewport?.addEventListener('resize', syncChatViewportHeight);
+    window.visualViewport?.addEventListener('scroll', syncChatViewportHeight);
+    window.addEventListener('resize', syncChatViewportHeight);
 
     // Listen for focus chat input event (from Sidebar "New Chat" button)
     window.addEventListener('focusChatInput', handleFocusChatInput);
@@ -1262,6 +1445,9 @@ SPDX-License-Identifier: Apache-2.0
 
     return () => {
       window.removeEventListener('popstate', handleUrlChange);
+      window.visualViewport?.removeEventListener('resize', syncChatViewportHeight);
+      window.visualViewport?.removeEventListener('scroll', syncChatViewportHeight);
+      window.removeEventListener('resize', syncChatViewportHeight);
       window.removeEventListener('focusChatInput', handleFocusChatInput);
       history.pushState = originalPushState;
     };
@@ -1290,7 +1476,10 @@ SPDX-License-Identifier: Apache-2.0
         <MessageInput
           bind:this={messageInput}
           onSend={handleSendMessage}
+          onCancel={handleCancelStream}
+          canCancel={canCancelStream}
           disabled={isLoading}
+          cancelling={isCancellingStream}
           placeholder={selectedIsImageModel
             ? $_('chat.messageInput.placeholderImage')
             : $_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
@@ -1354,7 +1543,7 @@ SPDX-License-Identifier: Apache-2.0
   </div>
 {:else}
   <!-- Active chat: bottom-anchored input -->
-  <div class="chat-layout" class:chat-layout--with-artifact={showArtifactPanel}>
+  <div class="chat-layout" bind:this={chatLayoutElement} class:chat-layout--with-artifact={showArtifactPanel}>
   <div class="chat-container">
     <div class="messages-container" bind:this={messagesContainer} onscroll={handleScroll} role="log" aria-live="polite" aria-label={$_('chat.messageInput.messageInput')}>
       <div class="messages-inner">
@@ -1362,6 +1551,7 @@ SPDX-License-Identifier: Apache-2.0
           <!-- Chat message -->
           <ChatMessage
             {message}
+            streamingArtifacts={activeStreamMessageId === message.id ? panelArtifacts : []}
             onEdit={handleEditMessage}
             selectedModelInfo={selectedModelInfo}
             providers={providers}
@@ -1422,7 +1612,10 @@ SPDX-License-Identifier: Apache-2.0
       <MessageInput
         bind:this={messageInput}
         onSend={handleSendMessage}
+        onCancel={handleCancelStream}
+        canCancel={canCancelStream}
         disabled={isLoading}
+        cancelling={isCancellingStream}
         placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
         {selectedModel}
         {selectedProvider}
@@ -1446,6 +1639,12 @@ SPDX-License-Identifier: Apache-2.0
   </div>
 
   {#if showArtifactPanel}
+    <button
+      type="button"
+      class="artifact-panel-backdrop"
+      onclick={handleCloseArtifact}
+      aria-label="Close artifact preview"
+    ></button>
     <div class="artifact-panel-wrapper">
       <ArtifactPanel
         artifacts={panelArtifacts}
@@ -1463,12 +1662,19 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     height: 100vh;
     width: 100%;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
   }
 
   .chat-layout .chat-container {
     flex: 1;
     min-width: 0;
     transition: flex 0.3s ease;
+  }
+
+  .chat-layout--with-artifact {
+    display: flex;
   }
 
   .chat-layout--with-artifact .chat-container {
@@ -1478,25 +1684,25 @@ SPDX-License-Identifier: Apache-2.0
   .artifact-panel-wrapper {
     width: 50%;
     max-width: 50%;
+    min-width: 0;
+    height: 100vh;
     flex-shrink: 0;
-    animation: artifactPanelIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 2;
+    border-left: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+    background: var(--bg-primary);
+    box-shadow: -16px 0 40px rgba(0, 0, 0, 0.18);
   }
 
-  @keyframes artifactPanelIn {
-    from {
-      width: 0;
-      opacity: 0;
-    }
-    to {
-      width: 50%;
-      opacity: 1;
-    }
+  .artifact-panel-backdrop {
+    display: none;
   }
 
   .chat-container {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    min-height: 0;
     width: 100%;
     background: var(--bg-primary);
   }
@@ -1511,6 +1717,7 @@ SPDX-License-Identifier: Apache-2.0
     overflow-x: hidden;
     scroll-behavior: smooth;
     position: relative;
+    min-height: 0;
   }
 
   .messages-inner {
@@ -1557,6 +1764,72 @@ SPDX-License-Identifier: Apache-2.0
 
   .input-container .ai-disclaimer {
     margin: 0.5rem 0 -0.5rem 0;
+  }
+
+  @media (max-width: 1180px), (hover: none) and (pointer: coarse) {
+    .chat-layout--with-artifact {
+      display: block;
+    }
+
+    .artifact-panel-backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 1190;
+      border: 0;
+      padding: 0;
+      background: rgba(0, 0, 0, 0.38);
+      cursor: pointer;
+    }
+
+    .artifact-panel-wrapper {
+      position: fixed;
+      inset: auto 0 0 0;
+      z-index: 1200;
+      width: 100%;
+      max-width: 100%;
+      height: min(78vh, calc(var(--app-viewport-height, 100vh) - 56px));
+      border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.14));
+      border-left: 0;
+      border-radius: 0;
+      overflow: visible;
+      box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.32);
+    }
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-layout--with-artifact {
+    display: block;
+  }
+
+  :global(html[data-app-layout='mobile']) .artifact-panel-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1190;
+    border: 0;
+    padding: 0;
+    background: rgba(0, 0, 0, 0.38);
+  }
+
+  :global(html[data-app-layout='mobile']) .artifact-panel-wrapper {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 1200;
+    width: 100%;
+    max-width: 100%;
+    height: min(78vh, calc(var(--app-viewport-height, 100vh) - 56px));
+    border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.14));
+    border-left: 0;
+    border-radius: 0;
+    overflow: visible;
+    box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.32);
+  }
+
+  @media (orientation: landscape) and (max-height: 640px) {
+    .artifact-panel-wrapper,
+    :global(html[data-app-layout='mobile']) .artifact-panel-wrapper {
+      height: calc(var(--app-viewport-height, 100vh) - var(--app-safe-area-top, 0px));
+    }
   }
 
   .error-banner--centered {
@@ -1734,7 +2007,7 @@ SPDX-License-Identifier: Apache-2.0
 
   .input-container {
     flex-shrink: 0;
-    padding: 1.25rem 1.5rem;
+    padding: 1.25rem 1.5rem calc(1rem + var(--app-safe-area-bottom));
     padding-top: 0;
     background: var(--bg-primary);
     position: relative;
@@ -1763,8 +2036,14 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   @media (max-width: 768px) {
+    .chat-layout {
+      height: var(--chat-visible-height, 100%);
+      max-height: var(--chat-visible-height, 100%);
+    }
+
     .chat-container {
       height: 100%;
+      min-height: 0;
     }
 
     .messages-inner {
@@ -1792,6 +2071,7 @@ SPDX-License-Identifier: Apache-2.0
     .input-container {
       padding: 0.75rem 1rem;
       padding-top: 0;
+      padding-bottom: calc(0.75rem + var(--app-safe-area-bottom));
       max-width: 100%;
     }
 
@@ -1802,6 +2082,91 @@ SPDX-License-Identifier: Apache-2.0
 
     .input-container .ai-disclaimer {
       margin: 0.25rem 0 -0.25rem 0;
+    }
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .chat-layout {
+      height: var(--chat-visible-height, 100%);
+      max-height: var(--chat-visible-height, 100%);
+    }
+
+    .chat-container {
+      height: 100%;
+      min-height: 0;
+    }
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-container {
+    height: 100%;
+    min-height: 0;
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-layout {
+    height: var(--chat-visible-height, 100%);
+    max-height: var(--chat-visible-height, 100%);
+  }
+
+  :global(html[data-app-layout='mobile']) .messages-inner {
+    max-width: 100%;
+    padding: var(--space-md);
+  }
+
+  :global(html[data-app-layout='mobile']) .messages-container {
+    min-height: 0;
+  }
+
+  :global(html[data-app-layout='mobile']) .input-container {
+    padding: 0.75rem 1rem;
+    padding-top: 0;
+    padding-bottom: calc(0.75rem + var(--app-safe-area-bottom));
+    max-width: 100%;
+  }
+
+  :global(html[data-app-layout='mobile']) .input-container .ai-disclaimer {
+    margin: 0.25rem 0 -0.25rem 0;
+  }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    :global(html[data-app-layout='mobile']) .messages-inner {
+      padding: var(--space-sm) var(--space-md);
+      gap: var(--space-xs);
+    }
+
+    :global(html[data-app-layout='mobile']) .input-container {
+      padding: 0.35rem 0.75rem;
+      padding-top: 0;
+      padding-bottom: calc(0.4rem + var(--app-safe-area-bottom));
+    }
+
+    :global(html[data-app-layout='mobile']) .ai-disclaimer {
+      display: none;
+    }
+
+    :global(html[data-app-layout='mobile']) .empty-state-container {
+      padding: var(--space-sm);
+      gap: var(--space-sm);
+    }
+
+    :global(html[data-app-layout='mobile']) .empty-content p {
+      display: none;
+    }
+
+    :global(html[data-app-layout='mobile']) .empty-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      animation: none;
+    }
+
+    :global(html[data-app-layout='mobile']) .empty-icon svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    :global(html[data-app-layout='mobile']) .empty-content h1 {
+      font-size: 1.15rem;
+      margin-bottom: 0;
     }
   }
 

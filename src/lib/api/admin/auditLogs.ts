@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
 // SPDX-License-Identifier: Apache-2.0
 
-import { request, API_BASE } from '../client.js';
+import { request, API_BASE, apiFetch } from '../client.js';
 import type { PaginatedAuditLogs } from '../../admin/types.js';
 
 export interface GetAuditLogsParams {
@@ -48,7 +48,7 @@ export async function exportAuditLogs(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}/admin/audit-logs/export${queryString}`, {
+  const response = await apiFetch(`${API_BASE}/admin/audit-logs/export${queryString}`, {
     headers,
   });
 

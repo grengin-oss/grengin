@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>NSCameraUsageDescription</key>
+  <string>Grengin needs camera access so you can take photos and attach them to chat messages.</string>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>Grengin needs photo library access so you can attach images to chat messages.</string>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>com.grengin.community.oauth</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>com.grengin.community</string>
+        <string>msauth</string>
+      </array>
+    </dict>
+  </array>
+</dict>
+</plist>

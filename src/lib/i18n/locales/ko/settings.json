@@ -3,12 +3,14 @@
     "title": "설정",
     "subtitle": "개인 기본 설정과 연결된 통합을 관리합니다.",
     "tabs": {
+      "appearance": "모양",
+      "appearanceAria": "모양 기본 설정",
+      "skills": "스킬",
+      "skillsAria": "스킬 관리",
       "integrations": "통합",
       "integrationsAria": "연결된 통합",
       "promptSettings": "프롬프트 설정",
-      "promptSettingsAria": "프롬프트 기본 설정 관리",
-      "skills": "스킬",
-      "skillsAria": "스킬 관리"
+      "promptSettingsAria": "프롬프트 기본 설정 관리"
     }
   },
   "userIntegrations": {
@@ -261,6 +263,19 @@
         "nameKebab": "소문자 케밥 케이스(문자, 숫자, 단일 하이픈)를 사용하세요."
       },
       "willImportAs": "다음 이름으로 가져옵니다"
+    }
+  },
+  "appearanceSettings": {
+    "title": "모양",
+    "subtitle": "이 기기에서 Grengin이 표시되는 방식을 선택합니다.",
+    "theme": {
+      "label": "색상 테마",
+      "light": "라이트",
+      "lightDescription": "밝은 인터페이스를 사용합니다.",
+      "system": "시스템",
+      "systemDescription": "이 기기 설정을 따릅니다.",
+      "dark": "다크",
+      "darkDescription": "어두운 인터페이스를 사용합니다."
     }
   }
 }

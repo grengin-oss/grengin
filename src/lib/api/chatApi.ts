@@ -1,10 +1,32 @@
 // SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
 // SPDX-License-Identifier: Apache-2.0
 
-import type { StreamEvent, ConversationDetail, ConversationList, BudgetWarningMessage, McpAuthRequest } from '../types/chat';
+import type { ConversationDetail, ConversationList, BudgetWarningMessage, McpAuthRequest } from '../types/chat';
 
-import { API_BASE, request, ApiError, parseErrorDetail, handleUnauthorized } from './client';
+import { API_BASE, request, ApiError, parseErrorDetail, apiFetch, handleUnauthorized } from './client';
 import { getAccessToken } from '../features/auth';
+import {
+  cachedLoad,
+  clearCacheNamespace,
+  makeScopedCacheKey,
+  prefetchCachedLoad,
+} from '../utils/cache';
+
+export type ChatSearchMode = 'lexical' | 'semantic';
+
+export type ChatConversation = ConversationList['conversations'][number] & {
+  last_message_at?: string | null;
+  search_mode?: ChatSearchMode | null;
+  search_score?: number | null;
+  search_snippet?: string | null;
+  total_tokens?: number;
+};
+
+export type ChatConversationList = Omit<ConversationList, 'conversations'> & {
+  conversations: ChatConversation[];
+  limit?: number;
+  offset?: number;
+};
 
 export interface SendMessageOptions {
   message: string;
@@ -14,6 +36,7 @@ export interface SendMessageOptions {
   uploadedFiles?: UploadedFile[];
   webSearch?: boolean;
   selectedMcpServers?: string[];
+  signal?: AbortSignal;
   onConversationInitialized?: (data: {newConversationId: string}) => void;
   onStreamingStart?: (messageId: string) => void;
   onResponseDelta?: (token: string) => void;
@@ -52,8 +75,41 @@ export interface UploadDocumentOptions {
   provider?: string;
 }
 
+const CHAT_LIST_CACHE_TTL_MS = 60_000;
+const CHAT_DETAIL_CACHE_TTL_MS = 5 * 60_000;
+const SETTINGS_CACHE_TTL_MS = 5 * 60_000;
+
+function chatListQuery(params?: {
+  offset?: number;
+  limit?: number;
+  search?: string;
+  archived?: boolean;
+}): string {
+  const searchParams = new URLSearchParams();
+  if (params?.offset !== undefined) {
+    searchParams.set('offset', String(params.offset));
+  }
+  if (params?.limit !== undefined) {
+    searchParams.set('limit', String(params.limit));
+  }
+  if (params?.search !== undefined && params.search.trim()) {
+    searchParams.set('search', params.search);
+  }
+  if (params?.archived !== undefined) {
+    searchParams.set('archived', String(params.archived));
+  }
+  return searchParams.toString();
+}
+
+function invalidateChatCache(): void {
+  clearCacheNamespace('chat');
+}
+
 export async function getChatMcpServers(): Promise<{servers: any[]}> {
-  return request<{servers: any[]}>('/mcp-servers', {});
+  const cacheKey = makeScopedCacheKey('settings', ['chat-mcp-servers']);
+  return cachedLoad(cacheKey, () => request<{servers: any[]}>('/mcp-servers', {}), {
+    ttlMs: SETTINGS_CACHE_TTL_MS,
+  });
 }
 
 export async function uploadDocument(options: UploadDocumentOptions): Promise<UploadedFile> {
@@ -85,7 +141,7 @@ export async function uploadDocument(options: UploadDocumentOptions): Promise<Up
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onArtifact, onImageGenerated, onMcpAuthRequired, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, signal, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onArtifact, onImageGenerated, onMcpAuthRequired, onDone, onError } = options;
 
   try {
     const token = getAccessToken();
@@ -121,13 +177,14 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
       }],
     });
 
-    let response = await fetch(streamUrl, {
+    let response = await apiFetch(streamUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
       body: requestBody,
+      signal,
     });
 
     // Handle token expiration for streaming requests
@@ -148,13 +205,14 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
       }
 
       // Retry the streaming request with new token
-      response = await fetch(streamUrl, {
+      response = await apiFetch(streamUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${newToken}`,
         },
         body: requestBody,
+        signal,
       });
     }
 
@@ -210,6 +268,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
           
           switch (event) {
             case 'conversation':
+              invalidateChatCache();
               onConversationInitialized?.({newConversationId: data.id});
               break;
             case 'message_start':
@@ -346,7 +405,13 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         }
       }
     }
+
+    invalidateChatCache();
   } catch (error) {
+    if (signal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
+      return;
+    }
+
     // Convert all errors to ApiError for consistent handling
     if (error instanceof ApiError) {
       onError?.(error);
@@ -375,52 +440,83 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
  * Fetch conversation history
  */
 export async function getConversation(conversationId: string): Promise<ConversationDetail> {
-  return request<ConversationDetail>(`/chat/${conversationId}`);
+  const cacheKey = makeScopedCacheKey('chat', ['detail', conversationId]);
+  return cachedLoad(cacheKey, () => request<ConversationDetail>(`/chat/${conversationId}`), {
+    ttlMs: CHAT_DETAIL_CACHE_TTL_MS,
+  });
+}
+
+export function prefetchConversation(conversationId: string): void {
+  const cacheKey = makeScopedCacheKey('chat', ['detail', conversationId]);
+  prefetchCachedLoad(cacheKey, () => request<ConversationDetail>(`/chat/${conversationId}`), {
+    ttlMs: CHAT_DETAIL_CACHE_TTL_MS,
+  });
 }
 
 /**
  * List all conversations
  */
-export async function listConversations(params?: { offset?: number; limit?: number, search?: string }): Promise<ConversationList> {
-  const searchParams = new URLSearchParams();
-  if (params?.offset !== undefined) {
-    searchParams.set('offset', String(params.offset));
+export async function listConversations(params?: {
+  offset?: number;
+  limit?: number,
+  search?: string;
+  archived?: boolean;
+  signal?: AbortSignal;
+}): Promise<ChatConversationList> {
+  const { signal, ...queryParams } = params ?? {};
+  const query = chatListQuery(queryParams);
+  const endpoint = `/chat${query ? `?${query}` : ''}`;
+  const hasSearch = Boolean(queryParams.search?.trim());
+
+  if (hasSearch) {
+    return request<ChatConversationList>(endpoint, { signal });
   }
-  if (params?.limit !== undefined) {
-    searchParams.set('limit', String(params.limit));
-  }
-  if (params?.search !== undefined && params.search.trim()) {
-    searchParams.set('search', params.search);
-  }
-  const query = searchParams.toString();
-  return request<ConversationList>(`/chat${query ? `?${query}` : ''}`);
+
+  const cacheKey = makeScopedCacheKey('chat', ['list', query]);
+  return cachedLoad(cacheKey, () => request<ChatConversationList>(endpoint, signal ? { signal } : {}), {
+    ttlMs: CHAT_LIST_CACHE_TTL_MS,
+  });
 }
 
 /**
  * Delete a conversation
  */
 export async function deleteConversation(conversationId: string): Promise<void> {
-  return request<void>(`/chat/${conversationId}`, { method: 'DELETE' });
+  const response = await request<void>(`/chat/${conversationId}`, { method: 'DELETE' });
+  invalidateChatCache();
+  return response;
 }
 
 /**
  * Search conversations
  */
-export async function searchConversations(query: string): Promise<ConversationList> {
-  return request<ConversationList>(`/chat/search?search=${encodeURIComponent(query)}`);
+export async function searchConversations(query: string): Promise<ChatConversationList> {
+  return listConversations({
+    offset: 0,
+    limit: 50,
+    search: query,
+  });
+}
+
+export async function cancelChatStream(messageId: string): Promise<void> {
+  await request<unknown>(`/chat/stream/${encodeURIComponent(messageId)}/cancel`, {
+    method: 'POST',
+  });
 }
 
 /**
  * Archive a conversation
  */
 export async function archiveConversation(conversationId: string, title: string): Promise<ConversationDetail> {
-  return request<ConversationDetail>(`/chat/${conversationId}`, {
+  const conversation = await request<ConversationDetail>(`/chat/${conversationId}`, {
     method: 'PUT',
     body: JSON.stringify({
       archived: true,
       title: title
     }),
   });
+  invalidateChatCache();
+  return conversation;
 }
 
 /**
@@ -430,10 +526,12 @@ export async function renameConversation(
   conversationId: string,
   payload: { title: string; archived: boolean }
 ): Promise<ConversationDetail> {
-  return request<ConversationDetail>(`/chat/${conversationId}`, {
+  const response = await request<ConversationDetail>(`/chat/${conversationId}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
+  invalidateChatCache();
+  return response;
 }
 
 /**

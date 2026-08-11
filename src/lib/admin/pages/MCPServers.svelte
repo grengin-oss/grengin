@@ -29,6 +29,7 @@ SPDX-License-Identifier: Apache-2.0
     testMcpConnection,
     updateMcpServer,
   } from "../../api/admin/mcpServers.js";
+  import { getMcpOAuthRedirectUrl, openNativeMcpOAuth } from "$lib/platform/nativeMcpOAuth";
 
   let servers = $state<MCPServer[]>([]);
   let isLoading = $state(false);
@@ -402,7 +403,7 @@ SPDX-License-Identifier: Apache-2.0
 
   async function handleConnect(server: MCPServer) {
     if (connectingServerId) return;
-    const redirectUrl = `${window.location.origin}/mcp/oauth/callback`;
+    const redirectUrl = getMcpOAuthRedirectUrl();
     const existingConfig = server.connection_config ?? {};
     const oauthConfig =
       (existingConfig as { oauth?: Record<string, unknown> }).oauth ?? {};
@@ -425,6 +426,16 @@ SPDX-License-Identifier: Apache-2.0
       // Store current URL for OAuth callback redirect
       sessionStorage.setItem('mcp_oauth_origin', 'admin');
       sessionStorage.setItem('mcp_oauth_redirect_url', window.location.pathname + window.location.search);
+
+      const nativeResult = await openNativeMcpOAuth(response.authorization_url);
+      if (nativeResult) {
+        if (!nativeResult.success) {
+          toast.error(nativeResult.error || $_("admin.mcpServers.connectFailed"));
+        }
+        connectingServerId = null;
+        await loadServers();
+        return;
+      }
 
       const width = 600;
       const height = 700;

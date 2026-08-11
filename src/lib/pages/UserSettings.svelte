@@ -7,12 +7,13 @@ SPDX-License-Identifier: Apache-2.0
   import { onMount } from "svelte";
   import { _ } from "svelte-i18n";
   import PageHeader from "../admin/components/PageHeader.svelte";
+  import AppearanceSettings from "./settings/AppearanceSettings.svelte";
   import UserIntegrations from "./settings/UserIntegrations.svelte";
   import UserPromptSettings from "./settings/UserPromptSettings.svelte";
   import UserSkills from "./settings/UserSkills.svelte";
   import { loadNamespaces } from "$lib/i18n/index.js";
 
-  type TabId = "skills" | "integrations" | "promptSettings";
+  type TabId = "appearance" | "skills" | "integrations" | "promptSettings";
 
   interface TabConfig {
     id: TabId;
@@ -21,6 +22,11 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   const TABS: TabConfig[] = $derived([
+    {
+      id: "appearance",
+      label: $_("userSettings.tabs.appearance"),
+      ariaLabel: $_("userSettings.tabs.appearanceAria"),
+    },
     {
       id: "skills",
       label: $_("userSettings.tabs.skills"),
@@ -38,7 +44,7 @@ SPDX-License-Identifier: Apache-2.0
     },
   ]);
 
-  const DEFAULT_TAB: TabId = "skills";
+  const DEFAULT_TAB: TabId = "appearance";
   const availableTabIds = $derived(TABS.map((t) => t.id));
 
   let currentTab = $state<TabId>(DEFAULT_TAB);
@@ -131,7 +137,9 @@ SPDX-License-Identifier: Apache-2.0
     aria-labelledby={currentTab}
     tabindex="0"
   >
-    {#if currentTab === "skills"}
+    {#if currentTab === "appearance"}
+      <AppearanceSettings />
+    {:else if currentTab === "skills"}
       <UserSkills />
     {:else if currentTab === "integrations"}
       <UserIntegrations />
@@ -146,12 +154,23 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
     width: 100%;
     background: var(--bg-primary);
     padding: var(--space-3xl);
+    gap: var(--space-lg);
+    overflow: hidden;
+  }
+
+  .tabs {
+    flex-shrink: 0;
   }
 
   .settings-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: var(--space-sm);
     background: rgba(var(--glass-tint), 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -172,6 +191,17 @@ SPDX-License-Identifier: Apache-2.0
 
     .tab {
       white-space: nowrap;
+    }
+  }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    :global(html[data-app-layout='mobile']) .settings-container {
+      padding: var(--space-md);
+      gap: var(--space-sm);
+    }
+
+    :global(html[data-app-layout='mobile']) .settings-content {
+      padding: var(--space-xs);
     }
   }
 

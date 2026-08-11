@@ -99,6 +99,7 @@
       },
       "missing_oauth_params": "Missing required OAuth parameters (state or code)",
       "oauth_provider_not_found": "OAuth provider not found. Please try logging in again",
+      "oauth_code_already_used": "This sign-in link has already been used. Please sign in again",
       "invalid_auth_response": "Invalid authentication response from server",
       "mfa_not_implemented": "Multi-factor authentication is required but not yet implemented",
       "invalid_redirect_uri": {

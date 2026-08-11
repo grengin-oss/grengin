@@ -7,6 +7,34 @@ import { requireAuth } from '../lib/middleware.js'
 import { conversations, messages, files, type Conversation, type Message, type UserFile } from '../lib/store.js'
 
 const router = Router()
+const cancelledStreams = new Set<string>()
+
+function getConversationSortTime(conversation: Conversation): number {
+  return new Date(conversation.updated_at || conversation.created_at).getTime()
+}
+
+function findSemanticResult(conversationId: string, query: string) {
+  const normalizedQuery = query.trim().toLowerCase()
+  if (!normalizedQuery) return null
+
+  const conversationMessages = messages.get(conversationId) || []
+  const match = conversationMessages.find((message) =>
+    (message.parts?.text || '').toLowerCase().includes(normalizedQuery),
+  )
+
+  if (!match) return null
+
+  const text = match.parts?.text || ''
+  const index = text.toLowerCase().indexOf(normalizedQuery)
+  const start = Math.max(0, index - 48)
+  const end = Math.min(text.length, index + normalizedQuery.length + 96)
+
+  return {
+    message_id: match.id,
+    snippet: `${start > 0 ? '...' : ''}${text.slice(start, end)}${end < text.length ? '...' : ''}`,
+    distance: 0.18,
+  }
+}
 
 // Track message count per conversation for mock numbering
 const messageCounters = new Map<string, number>()
@@ -104,13 +132,55 @@ router.get('/mcp-servers', requireAuth, (_req, res) => {
 })
 
 router.get('/chat', requireAuth, (req, res) => {
+  const limit = Math.min(Number(req.query.limit || 20), 100)
+  const offset = Number(req.query.offset || 0)
+  const search = String(req.query.search || '').trim()
+  const semantic = req.query.semantic === 'true'
+
+  let allConversations = Array.from(conversations.values())
+
+  if (search && semantic) {
+    const ranked = allConversations
+      .map((chat) => ({ chat, semanticResult: findSemanticResult(chat.id, search) }))
+      .filter(
+        (entry): entry is { chat: Conversation; semanticResult: NonNullable<ReturnType<typeof findSemanticResult>> } =>
+          Boolean(entry.semanticResult),
+      )
+      .sort((a, b) => a.semanticResult.distance - b.semanticResult.distance)
+
+    const paged = ranked.slice(offset, offset + limit)
+    const semanticResults: Record<string, NonNullable<ReturnType<typeof findSemanticResult>>> = {}
+    for (const entry of paged) {
+      semanticResults[entry.chat.id] = entry.semanticResult
+    }
+
+    res.json({
+      conversations: paged.map((entry) => entry.chat),
+      total: ranked.length,
+      limit,
+      offset,
+      semantic_results: semanticResults,
+    })
+    return
+  }
+
+  if (search) {
+    allConversations = allConversations.filter((chat) =>
+      chat.title.toLowerCase().includes(search.toLowerCase()),
+    )
+  }
+
   // Sort by updated_at descending (most recent first)
-  const sorted = Array.from(conversations.values()).sort((a, b) => {
-    const aTime = new Date(a.updated_at || a.created_at).getTime()
-    const bTime = new Date(b.updated_at || b.created_at).getTime()
-    return bTime - aTime
+  const sorted = allConversations.sort((a, b) => getConversationSortTime(b) - getConversationSortTime(a))
+  const paged = sorted.slice(offset, offset + limit)
+
+  res.json({
+    conversations: paged,
+    total: sorted.length,
+    limit,
+    offset,
+    semantic_results: null,
   })
-  res.json(sorted)
 })
 
 // Search conversations (must come before /:chatId route)
@@ -133,6 +203,11 @@ router.get('/chat/search', requireAuth, (req, res) => {
   })
 
   res.json(allConversations)
+})
+
+router.post('/chat/stream/:messageId/cancel', requireAuth, (req, res) => {
+  cancelledStreams.add(req.params.messageId)
+  res.status(202).send()
 })
 
 router.get('/chat/:chatId', requireAuth, (req, res) => {
@@ -303,6 +378,7 @@ router.post('/chat/stream', requireAuth, async (req, res) => {
   res.write(`event: message_start\ndata: ${JSON.stringify({ message_id: assistantMsgId })}\n\n`)
 
   // Send delta events — stream code blocks line-by-line for a live-coding effect
+  const shouldStop = () => cancelledStreams.has(assistantMsgId) || res.destroyed
   const hasCodeBlock = responseText.includes('```html') || responseText.includes('```markdown') || responseText.includes('```md')
   if (hasCodeBlock) {
     const parts = responseText.split(/(```(?:html|markdown|md)\s*\n[\s\S]*?```)/);
@@ -310,23 +386,33 @@ router.post('/chat/stream', requireAuth, async (req, res) => {
       if (part.match(/^```(?:html|markdown|md)\s*\n/)) {
         const lines = part.split('\n')
         for (const line of lines) {
+          if (shouldStop()) break
           res.write(`event: delta\ndata: ${JSON.stringify({ text: line + '\n' })}\n\n`)
           await new Promise(resolve => setTimeout(resolve, 18))
         }
       } else {
         const words = part.split(' ')
         for (const word of words) {
+          if (shouldStop()) break
           res.write(`event: delta\ndata: ${JSON.stringify({ text: word + ' ' })}\n\n`)
           await new Promise(resolve => setTimeout(resolve, 25))
         }
       }
+      if (shouldStop()) break
     }
   } else {
     const chunks = responseText.split(' ')
     for (const chunk of chunks) {
+      if (shouldStop()) break
       res.write(`event: delta\ndata: ${JSON.stringify({ text: chunk + ' ' })}\n\n`)
       await new Promise(resolve => setTimeout(resolve, 30))
     }
+  }
+
+  if (cancelledStreams.has(assistantMsgId)) {
+    cancelledStreams.delete(assistantMsgId)
+    res.end()
+    return
   }
 
   // Send done event

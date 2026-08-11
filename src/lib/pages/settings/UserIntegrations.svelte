@@ -23,6 +23,7 @@ SPDX-License-Identifier: Apache-2.0
   } from "../../api/integrations.js";
   import { ApiError } from "../../api/client.js";
   import { toast } from "../../components/Toaster.svelte";
+  import { openNativeMcpOAuth } from "$lib/platform/nativeMcpOAuth";
 
   type ConnectionStatus = 'connected' | 'expired' | 'error' | 'disconnected';
 
@@ -130,6 +131,18 @@ SPDX-License-Identifier: Apache-2.0
       if (response?.authorization_url) {
         sessionStorage.setItem('mcp_oauth_origin', 'user');
         sessionStorage.setItem('mcp_oauth_redirect_url', window.location.pathname + window.location.search);
+
+        const nativeResult = await openNativeMcpOAuth(response.authorization_url);
+        if (nativeResult) {
+          if (nativeResult.success) {
+            await loadData();
+          } else {
+            toast.error(nativeResult.error || $_("userIntegrations.failedToConnect", { values: { name: server.name } }));
+          }
+          connectingId = null;
+          return;
+        }
+
         window.location.href = response.authorization_url;
       } else {
         toast.error($_("userIntegrations.failedToGetAuthUrl"));
@@ -703,6 +716,7 @@ SPDX-License-Identifier: Apache-2.0
 <style>
   .integrations-container {
     padding: var(--space-lg);
+    min-height: 100%;
   }
 
   /* Summary bar */
@@ -1495,6 +1509,37 @@ SPDX-License-Identifier: Apache-2.0
     .integrations-grid {
       grid-template-columns: 1fr;
       gap: var(--space-md);
+    }
+  }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    :global(html[data-app-layout='mobile']) .integrations-container {
+      padding: var(--space-sm);
+    }
+
+    :global(html[data-app-layout='mobile']) .integrations-summary {
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+
+    :global(html[data-app-layout='mobile']) .summary-stats {
+      gap: var(--space-lg);
+    }
+
+    :global(html[data-app-layout='mobile']) .toolbar-right {
+      justify-content: flex-start;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    :global(html[data-app-layout='mobile']) .integrations-grid {
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: var(--space-sm);
+    }
+
+    :global(html[data-app-layout='mobile']) .integration-card {
+      padding: var(--space-md);
+      gap: var(--space-sm);
     }
   }
 

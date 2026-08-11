@@ -6,6 +6,10 @@ import {
   consumeNotificationsStream,
   type NotificationItem,
 } from '../../api/notificationsApi.js';
+import {
+  ensureNativeNotificationPermission,
+  showNativeNotification,
+} from '../../platform/nativeNotifications.js';
 
 export type { NotificationItem };
 
@@ -78,6 +82,12 @@ export function handleStreamNotification(n: NotificationItem): void {
   upsertPreview(n);
   if (isUnread(n) && !alreadyHad) {
     state.unreadCount += 1;
+    void showNativeNotification({
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      group: 'grengin-notifications',
+    });
   }
   state.streamToast = n;
 }
@@ -88,6 +98,8 @@ export function dismissStreamToast(): void {
 
 export function startNotificationsStream(): void {
   if (streamAbort) return;
+
+  void ensureNativeNotificationPermission();
 
   const ac = new AbortController();
   streamAbort = ac;

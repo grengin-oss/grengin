@@ -8,6 +8,7 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
+  const tauriDevHost = process.env.TAURI_DEV_HOST
 
   return {
     plugins: [svelte()],
@@ -17,6 +18,15 @@ export default defineConfig(({ mode }) => {
       }
     },
     build: {
+      assetsInlineLimit: 0,
+      cssMinify: 'esbuild',
+      emptyOutDir: true,
+      minify: 'esbuild',
+      modulePreload: {
+        polyfill: false,
+      },
+      reportCompressedSize: false,
+      sourcemap: false,
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
@@ -32,10 +42,29 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    esbuild: {
+      drop: mode === 'production' ? ['debugger'] : [],
+      legalComments: 'none',
+      pure: mode === 'production' ? ['console.debug'] : [],
+    },
     server: {
+      port: 5173,
+      strictPort: true,
+      host: tauriDevHost || false,
+      hmr: tauriDevHost
+        ? {
+            protocol: 'ws',
+            host: tauriDevHost,
+            port: 5174,
+          }
+        : undefined,
+      watch: {
+        ignored: ['**/src-tauri/**'],
+      },
       proxy: {
         '/api': {
-          target: env.VITE_API_BASE || 'http://localhost:3000',
+          // Proxy API calls to backend; default local backend runs on 8080
+          target: env.VITE_API_BASE || 'https://grengin-test-production.up.railway.app',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         },

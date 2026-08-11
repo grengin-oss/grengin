@@ -9,11 +9,16 @@ SPDX-License-Identifier: Apache-2.0
   import { tick } from 'svelte';
   import Modal from '$lib/admin/components/Modal.svelte';
   import {
-    listConversations,
     deleteConversation,
     archiveConversation,
     renameConversation,
+    prefetchConversation,
   } from '../../api/chatApi.js';
+  import {
+    getSearchScore,
+    loadSidebarChats,
+    type SidebarChat,
+  } from '$lib/features/chat/utils/sidebarChatSearch';
   import { ApiError } from '../../api/client';
   import { getLocalizedError } from '../../utils/errorLocalization';
   import { toast } from '../Toaster.svelte';
@@ -41,12 +46,15 @@ SPDX-License-Identifier: Apache-2.0
     },
   ]);
 
-  let chatHistory = $state<any[]>([]);
+  let chatHistory = $state<SidebarChat[]>([]);
+  let normalChatSnapshot = $state<SidebarChat[]>([]);
+  let normalChatSnapshotTotal = $state<number | null>(null);
   let loadingChats = $state(false);
   let loadingMoreChats = $state(false);
   let searchQuery = $state('');
   let searchFocused = $state(false);
   const CHAT_PAGE_LIMIT = 20;
+  const CHAT_SEARCH_DEBOUNCE_MS = 650;
   let chatOffset = $state(0);
   let chatHasMore = $state(true);
   let chatTotal = $state<number | null>(null);
@@ -55,6 +63,11 @@ SPDX-License-Identifier: Apache-2.0
   let renameTitle = $state('');
   let renamingChat = $state(false);
   let renameInputElement = $state<HTMLInputElement | null>(null);
+  let normalizedSearchQuery = $derived(normalizeSearchQuery(searchQuery));
+  let didRequestInitialChats = false;
+  let previousNormalizedSearchQuery = '';
+  let activeFetchController: AbortController | null = null;
+  let fetchRequestSerial = 0;
 
   function handleItemClick(itemId: string) {
     if (itemId === 'chat') {
@@ -78,10 +91,20 @@ SPDX-License-Identifier: Apache-2.0
   function selectChat(chatId: string) {
     if (initializingConversation) return;
 
+    if (selectedChatId === chatId && currentPath === '/') {
+      activeChatMenu = null;
+      onCollapseSidebar();
+      return;
+    }
+
     selectedChatId = chatId;
     navigate(`/?chatId=${chatId}`);
     activeChatMenu = null;
     onCollapseSidebar();
+  }
+
+  function warmChat(chatId: string) {
+    prefetchConversation(chatId);
   }
 
   function deleteChat(chatId: string) {
@@ -177,9 +200,42 @@ SPDX-License-Identifier: Apache-2.0
     chatToDelete = null;
   }
 
+  function normalizeSearchQuery(value: string): string {
+    return value.trim().replace(/\s+/g, ' ');
+  }
+
+  function getSearchSignature(query = normalizeSearchQuery(searchQuery)): string {
+    return query;
+  }
+
+  function isAbortError(error: unknown): boolean {
+    return error instanceof Error && error.name === 'AbortError';
+  }
+
+  function abortActiveChatFetch() {
+    fetchRequestSerial += 1;
+    activeFetchController?.abort();
+    activeFetchController = null;
+    loadingChats = false;
+    loadingMoreChats = false;
+  }
+
+  function restoreNormalChatSnapshot() {
+    chatHistory = [...normalChatSnapshot];
+    chatTotal = normalChatSnapshotTotal;
+    chatOffset = normalChatSnapshot.length;
+    chatHasMore =
+      normalChatSnapshotTotal !== null
+        ? chatOffset < normalChatSnapshotTotal
+        : normalChatSnapshot.length === CHAT_PAGE_LIMIT;
+  }
+
   function clearSearch() {
+    abortActiveChatFetch();
     searchQuery = '';
     searchFocused = false;
+    activeChatMenu = null;
+    restoreNormalChatSnapshot();
   }
 
   function archiveChat(chatId: string, title: string) {
@@ -214,64 +270,78 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   async function fetchChats({ reset = false } = {}) {
-    try {
-      const trimmedSearchQuery = searchQuery.trim();
+    const trimmedSearchQuery = normalizedSearchQuery;
+    const requestSignature = getSearchSignature(trimmedSearchQuery);
+    const requestId = fetchRequestSerial + 1;
+    const controller = new AbortController();
 
+    fetchRequestSerial = requestId;
+    activeFetchController?.abort();
+    activeFetchController = controller;
+
+    try {
       if (reset) {
-        if (chatHistory.length === 0) {
-          loadingChats = true;
-        }
+        // Keep existing chats visible while refreshing after a conversation starts.
+        loadingChats = chatHistory.length === 0 || Boolean(trimmedSearchQuery);
+        loadingMoreChats = false;
         chatOffset = 0;
         chatTotal = null;
+        if (trimmedSearchQuery) {
+          chatHistory = [];
+        }
       } else {
         loadingMoreChats = true;
       }
 
       chatHasMore = false;
       const offset = reset ? 0 : chatOffset;
-      const response = await listConversations({
+      const { chats: mappedChats, total, hasMore } = await loadSidebarChats({
+        query: trimmedSearchQuery,
         offset,
         limit: CHAT_PAGE_LIMIT,
-        search: trimmedSearchQuery,
+        signal: controller.signal,
+        untitledTitle: $_('sidebar.untitledChat'),
       });
 
-      if (searchQuery.trim() !== trimmedSearchQuery) {
+      if (
+        controller.signal.aborted ||
+        requestId !== fetchRequestSerial ||
+        getSearchSignature() !== requestSignature
+      ) {
         return;
       }
 
-      const responseChats = Array.isArray(response) ? response : response?.conversations ?? [];
-      const total = !Array.isArray(response) && typeof response?.total === 'number' ? response.total : null;
-
-      const mappedChats = responseChats.map((chat: any) => ({
-        id: chat.id,
-        title: chat.title || $_('sidebar.untitledChat'),
-        archived: chat.archived,
-        createdAt: chat.created_at,
-        lastMessageAt: chat.last_message_at,
-        totalTokens: chat.total_tokens,
-      }));
-
+      let nextChatHistory = chatHistory;
       if (reset) {
-        chatHistory = mappedChats;
+        nextChatHistory = mappedChats;
       } else if (mappedChats.length > 0) {
         const existingIds = new Set(chatHistory.map((chat) => chat.id));
-        chatHistory = [...chatHistory, ...mappedChats.filter((chat) => !existingIds.has(chat.id))];
+        nextChatHistory = [...chatHistory, ...mappedChats.filter((chat) => !existingIds.has(chat.id))];
       }
+      chatHistory = nextChatHistory;
 
       chatOffset = offset + mappedChats.length;
-      if (total !== null) {
-        chatTotal = total;
-        chatHasMore = chatOffset < total;
-      } else {
-        chatHasMore = mappedChats.length === CHAT_PAGE_LIMIT;
+      if (!trimmedSearchQuery && reset) {
+        normalChatSnapshot = mappedChats;
+        normalChatSnapshotTotal = total;
       }
+      chatTotal = total;
+      chatHasMore = hasMore;
     } catch (error) {
+      if (controller.signal.aborted || isAbortError(error)) {
+        return;
+      }
       console.error('Failed to fetch chats:', error);
     } finally {
-      loadingChats = false;
-      loadingMoreChats = false;
-      await tick();
-      ensureChatListFilled();
+      if (requestId === fetchRequestSerial) {
+        if (activeFetchController === controller) {
+          activeFetchController = null;
+        }
+        loadingChats = false;
+        loadingMoreChats = false;
+        await tick();
+        ensureChatListFilled();
+      }
     }
   }
 
@@ -282,6 +352,9 @@ SPDX-License-Identifier: Apache-2.0
 
   function ensureChatListFilled() {
     if (!chatContainerElement || !chatHasMore || loadingChats || loadingMoreChats) {
+      return;
+    }
+    if (normalizedSearchQuery) {
       return;
     }
 
@@ -346,11 +419,29 @@ SPDX-License-Identifier: Apache-2.0
   });
 
   $effect(() => {
-    searchQuery;
+    normalizedSearchQuery;
+
+    if (!normalizedSearchQuery && previousNormalizedSearchQuery) {
+      abortActiveChatFetch();
+      restoreNormalChatSnapshot();
+    }
+    previousNormalizedSearchQuery = normalizedSearchQuery;
+  });
+
+  $effect(() => {
+    normalizedSearchQuery;
+
+    let debounceMs = 80;
+    if (!didRequestInitialChats && !normalizedSearchQuery) {
+      debounceMs = 0;
+    } else if (normalizedSearchQuery) {
+      debounceMs = CHAT_SEARCH_DEBOUNCE_MS;
+    }
 
     const searchTimeout = setTimeout(() => {
+      didRequestInitialChats = true;
       fetchChats({ reset: true });
-    }, 200);
+    }, debounceMs);
 
     return () => {
       clearTimeout(searchTimeout);
@@ -439,11 +530,7 @@ SPDX-License-Identifier: Apache-2.0
           <div class="loading-spinner-small"></div>
           <span>{$_('sidebar.loadingChats')}</span>
         </div>
-      {:else if chatHistory.length === 0}
-        <div class="chat-empty">
-          <span>{$_('sidebar.noChatsYet')}</span>
-        </div>
-      {:else if chatHistory.length === 0 && searchQuery}
+      {:else if chatHistory.length === 0 && normalizedSearchQuery}
         <div class="no-results">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8" />
@@ -451,9 +538,13 @@ SPDX-License-Identifier: Apache-2.0
           </svg>
           <span>{$_('sidebar.noChatsFound')}</span>
         </div>
+      {:else if chatHistory.length === 0}
+        <div class="chat-empty">
+          <span>{$_('sidebar.noChatsYet')}</span>
+        </div>
       {:else}
         {#each chatHistory as chat (chat.id)}
-          <div class="chat-item">
+          <div class="chat-item" class:chat-item--menu-open={activeChatMenu === chat.id}>
             {#if renameChatId === chat.id}
               <div class="chat-rename-form">
                 <input
@@ -483,9 +574,30 @@ SPDX-License-Identifier: Apache-2.0
                 class="menu-item chat-item-btn"
                 class:selected={selectedChatId === chat.id}
                 onclick={() => selectChat(chat.id)}
-                title={chat.title}
+                onpointerenter={() => warmChat(chat.id)}
+                onfocus={() => warmChat(chat.id)}
+                ontouchstart={() => warmChat(chat.id)}
+                aria-current={selectedChatId === chat.id ? 'page' : undefined}
+                title={chat.searchSnippet ? `${chat.title}\n${chat.searchSnippet}` : chat.title}
               >
-                <span class="chat-item-title">{chat.title}</span>
+                <span class="chat-item-content">
+                  <span class="chat-item-title-row">
+                    <span class="chat-item-title">{chat.title}</span>
+                    {#if chat.searchMode && chat.searchSnippet}
+                      <span class="search-badge">
+                        {chat.searchMode === 'semantic'
+                          ? $_('sidebar.searchModeSemantic')
+                          : $_('sidebar.searchModeLexical')}
+                        {#if getSearchScore(chat) !== null}
+                          {getSearchScore(chat)}%
+                        {/if}
+                      </span>
+                    {/if}
+                  </span>
+                  {#if chat.searchSnippet}
+                    <span class="chat-search-snippet">{chat.searchSnippet}</span>
+                  {/if}
+                </span>
               </button>
             {/if}
             <button
@@ -605,7 +717,10 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--text-secondary);
     font-size: 0.875rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.14s ease,
+      color 0.14s ease,
+      font-weight 0.14s ease;
     text-align: left;
     border-radius: 0;
     box-shadow: none;
@@ -652,6 +767,9 @@ SPDX-License-Identifier: Apache-2.0
     overflow-y: auto;
     padding: 0 var(--space-sm);
     margin-bottom: var(--space-sm);
+    flex: 1;
+    min-height: 0;
+    contain: content;
   }
 
   .chat-list-section {
@@ -734,19 +852,76 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     align-items: center;
     justify-content: space-between;
+    contain: layout;
+    overflow: visible;
+  }
+
+  .chat-item--menu-open {
+    z-index: 20;
   }
 
   .chat-item-btn {
     flex: 1;
     min-width: 0;
     color: var(--text-secondary);
+    align-items: flex-start;
+    padding-right: 1.8rem;
+    transition:
+      background-color 0.12s ease,
+      color 0.12s ease,
+      font-weight 0.12s ease;
+  }
+
+  .chat-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .chat-item-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-width: 0;
+    width: 100%;
   }
 
   .chat-item-title {
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-right: var(--space-sm);
+  }
+
+  .search-badge {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    max-width: 6.5rem;
+    padding: 0.08rem 0.34rem;
+    border-radius: var(--radius-full);
+    background: color-mix(in oklab, var(--brand) 12%, transparent);
+    color: var(--brand);
+    font-size: 0.625rem;
+    font-weight: 650;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chat-search-snippet {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--text-tertiary);
+    font-size: 0.72rem;
+    font-weight: 400;
+    line-height: 1.35;
   }
 
   .chat-item-menu {
@@ -765,7 +940,10 @@ SPDX-License-Identifier: Apache-2.0
     border-radius: var(--radius-full);
     opacity: 0;
     pointer-events: none;
-    transition: all 0.2s ease;
+    transition:
+      opacity 0.12s ease,
+      color 0.12s ease,
+      background-color 0.12s ease;
     box-shadow: none;
     backdrop-filter: none;
     right: 0px;
@@ -918,6 +1096,101 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--text-secondary);
     font-size: 0.8125rem;
     justify-content: center;
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-list-section {
+    padding: 0 0.5rem calc(0.75rem + var(--app-safe-area-bottom, 0px));
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-list {
+    gap: 2px;
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-item-btn {
+    min-height: 46px;
+    padding: 0.58rem 2.45rem 0.58rem 0.75rem;
+    border-radius: var(--radius-md);
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-item-title {
+    font-size: 0.92rem;
+    font-weight: 520;
+    line-height: 1.25;
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-search-snippet {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  :global(html[data-app-layout='mobile']) .search-badge {
+    max-width: 5.25rem;
+    font-size: 0.6rem;
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-item-menu {
+    top: 50%;
+    right: auto;
+    inset-inline-end: 0.25rem;
+    width: 34px;
+    height: 34px;
+    color: var(--text-tertiary);
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%);
+  }
+
+  :global(html[data-app-layout='mobile']) .chat-dropdown {
+    right: auto;
+    inset-inline-end: 0.25rem;
+    min-width: 9rem;
+  }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    :global(html[data-app-layout='mobile']) .sidebar-nav {
+      padding: 0.35rem 0.5rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .sidebar-item {
+      padding: 0.45rem 0.75rem;
+      gap: 0.5rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-search-wrapper {
+      margin-top: 0.25rem;
+      padding: 0 0.75rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-search-container {
+      height: 1.75rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-section-title {
+      padding: 0.3rem 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-list-section {
+      padding: 0 0.5rem 0.35rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-item-btn {
+      min-height: 36px;
+      padding: 0.35rem 2.25rem 0.35rem 0.65rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-item-title {
+      font-size: 0.84rem;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-search-snippet {
+      display: none;
+    }
+
+    :global(html[data-app-layout='mobile']) .chat-item-menu {
+      width: 30px;
+      height: 30px;
+    }
   }
 
   /* ===== Confirmation Dialog Actions (with Modal component) ===== */

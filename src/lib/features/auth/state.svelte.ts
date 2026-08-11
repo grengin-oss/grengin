@@ -4,6 +4,7 @@
 import type { components } from '../../types/api.js';
 import { setAuthAccessors } from '../../api/client.js';
 import { logout as apiLogout } from '../../api/auth.js';
+import { clearAllScopedCache } from '../../utils/cache.js';
 
 type User = components['schemas']['User'];
 
@@ -79,6 +80,7 @@ export function setAuth(accessToken: string, refreshToken: string, user: User): 
 }
 
 export function clearAuth(): void {
+  clearAllScopedCache();
   clearStorage();
   authState.accessToken = null;
   authState.refreshToken = null;
