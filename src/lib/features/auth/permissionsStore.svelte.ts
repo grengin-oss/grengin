@@ -5,6 +5,7 @@ import type { PermissionScope } from '../../api/permissions.js';
 import { getMyPermissions } from '../../api/permissions.js';
 import { getAuthState } from './state.svelte.js';
 import { PERMISSIONS } from './permissions.js';
+import { demoView } from '../demo/demoView.svelte.js';
 
 export interface PermissionsState {
   permissions: Record<string, PermissionScope>;
@@ -173,6 +174,18 @@ function createPermissionsStore() {
     $effect(() => {
       if (!authState.isAuthenticated) {
         clear();
+        return;
+      }
+      // Demo "View as" (spec §1): source the effective permissions from the
+      // selected viewing role instead of /me/permissions. Reading
+      // `viewingPermissions` subscribes this effect, so switching roles re-gates
+      // the whole app through its existing PermissionGuard / nav checks — with
+      // no data reload and no per-screen conditions.
+      if (demoView.enabled) {
+        permissions = demoView.viewingPermissions;
+        isLoading = false;
+        error = null;
+        hasFetched = true;
         return;
       }
       if (!hasFetched) {

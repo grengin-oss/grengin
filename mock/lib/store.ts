@@ -3,9 +3,8 @@
 
 import type { components } from '../types/api.js'
 import { faker } from '@faker-js/faker'
-import chatListExample from '../examples/chat/list.response.json' with { type: 'json' }
-import chatDetailExample from '../examples/chat/detail.response.json' with { type: 'json' }
 import aiEnginesExample from '../examples/admin/ai-engines-list.response.json' with { type: 'json' }
+import { DEMO_DEPARTMENTS, DEMO_CONVERSATIONS, DEMO_MESSAGES, DEMO_CHAT_FILES, type DemoDepartment } from './demoSeed.js'
 
 // Types
 export type Conversation = components['schemas']['Conversation']
@@ -40,7 +39,7 @@ export const conversations = new Map<string, Conversation>()
 export const messages = new Map<string, Message[]>()
 export const files = new Map<string, UserFile>()
 export const aiEngines = new Map<string, AIEngineDetail>()
-export const departments = new Map<string, Department>()
+export const departments = new Map<string, DemoDepartment>()
 export const projects = new Map<string, Project>()
 
 export let userSettings: UserSettings = {
@@ -65,15 +64,11 @@ export const setUserSettings = (settings: UserSettings) => {
 
 // Seed data
 export const seedData = () => {
-  // Seed conversations
-  chatListExample.conversations.forEach((conv) => {
-    conversations.set(conv.id, conv as Conversation)
-  })
-  messages.set(chatDetailExample.id, chatDetailExample.messages as Message[])
-  chatListExample.conversations.forEach((conv) => {
-    if (!messages.has(conv.id)) {
-      messages.set(conv.id, [])
-    }
+  // Seed conversations (spec §2) — EXACTLY 2 pre-existing conversations: one that
+  // used web search, one that used image generation. Sourced from the seed module.
+  DEMO_CONVERSATIONS.forEach((conv) => {
+    conversations.set(conv.id, conv as unknown as Conversation)
+    messages.set(conv.id, (DEMO_MESSAGES[conv.id] ?? []) as unknown as Message[])
   })
 
   // Seed file data
@@ -108,6 +103,9 @@ export const seedData = () => {
     status: 'uploaded',
   })
 
+  // Seed the demo chat's generated image (spec §2) so it renders on reload.
+  DEMO_CHAT_FILES.forEach((f) => files.set(f.id, f as unknown as UserFile))
+
   // Seed AI engine data from examples
   if (aiEnginesExample && Array.isArray(aiEnginesExample)) {
     aiEnginesExample.forEach((engine) => {
@@ -115,92 +113,9 @@ export const seedData = () => {
     })
   }
 
-  // Seed department data (v1.2 hierarchical departments)
-  const now = new Date().toISOString()
-  const engineeringDept: Department = {
-    id: 'd0010000-0000-0000-0000-000000000001',
-    name: 'Engineering',
-    description: 'Product engineering and development team',
-    parent_id: null,
-    path: '/engineering',
-    depth: 0,
-    admin_ids: ['550e8400-e29b-41d4-a716-446655440001'],
-    member_count: 1,
-    total_member_count: 3,
-    child_count: 2,
-    budget_allocated: 50000,
-    budget_distributed: 20000,
-    budget_available: 30000,
-    budget_used: 15000,
-    budget_period: 'monthly',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: now,
-  }
-
-  const marketingDept: Department = {
-    id: 'd0020000-0000-0000-0000-000000000002',
-    name: 'Marketing',
-    description: 'Marketing and communications team',
-    parent_id: null,
-    path: '/marketing',
-    depth: 0,
-    admin_ids: [],
-    member_count: 1,
-    total_member_count: 1,
-    child_count: 0,
-    budget_allocated: 25000,
-    budget_distributed: 0,
-    budget_available: 25000,
-    budget_used: 8000,
-    budget_period: 'monthly',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: now,
-  }
-
-  const frontendDept: Department = {
-    id: 'd0030000-0000-0000-0000-000000000003',
-    name: 'Frontend',
-    description: 'Frontend development team',
-    parent_id: 'd0010000-0000-0000-0000-000000000001',
-    path: '/engineering/frontend',
-    depth: 1,
-    admin_ids: [],
-    member_count: 1,
-    total_member_count: 1,
-    child_count: 0,
-    budget_allocated: 10000,
-    budget_distributed: 0,
-    budget_available: 10000,
-    budget_used: 5000,
-    budget_period: 'monthly',
-    created_at: '2024-01-05T00:00:00Z',
-    updated_at: now,
-  }
-
-  const backendDept: Department = {
-    id: 'd0040000-0000-0000-0000-000000000004',
-    name: 'Backend',
-    description: 'Backend and infrastructure team',
-    parent_id: 'd0010000-0000-0000-0000-000000000001',
-    path: '/engineering/backend',
-    depth: 1,
-    admin_ids: [],
-    member_count: 1,
-    total_member_count: 1,
-    child_count: 0,
-    budget_allocated: 10000,
-    budget_distributed: 0,
-    budget_available: 10000,
-    budget_used: 7000,
-    budget_period: 'monthly',
-    created_at: '2024-01-05T00:00:00Z',
-    updated_at: now,
-  }
-
-  departments.set(engineeringDept.id, engineeringDept)
-  departments.set(marketingDept.id, marketingDept)
-  departments.set(frontendDept.id, frontendDept)
-  departments.set(backendDept.id, backendDept)
+  // Seed department data — the 8 canonical demo departments (spec §3.5), sourced
+  // from the single seed module so members/budgets/admins match users everywhere.
+  DEMO_DEPARTMENTS.forEach((dept) => departments.set(dept.id, dept))
 
   // Seed projects
   const seedProjects: Project[] = [

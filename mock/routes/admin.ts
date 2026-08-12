@@ -13,92 +13,196 @@ import {
   type DepartmentBudgetStatus,
 } from '../lib/store.js'
 import dashboardExample from '../examples/admin/dashboard.response.json' with { type: 'json' }
-import usersListExample from '../examples/admin/users-list.response.json' with { type: 'json' }
 import organizationExample from '../examples/admin/organization.response.json' with { type: 'json' }
+import {
+  DEMO_PERMISSION_CATALOG,
+  DEMO_AUDIT_LOGS,
+  AUDIT_ACTIONS,
+  DEMO_PROVIDERS,
+  promptMetricsFor,
+  type DemoUser,
+} from '../lib/demoSeed.js'
+import {
+  users as liveUsers,
+  roles as liveRoles,
+  rolePrompts as liveRolePrompts,
+  deptPrompts as liveDeptPrompts,
+  usersWithVisitor,
+  findUser,
+  usersInDepartmentLive,
+  roleUserCount,
+  departmentPromptsLive,
+  deleteUser,
+} from '../lib/demoState.js'
 
 const router = Router()
+
+// Map a canonical DemoUser to the User row shape the admin table + role expand
+// read (spec §3.6 / §3.9). Kept in one place so every user-returning endpoint is
+// identical.
+function toUserRow(u: DemoUser) {
+  return {
+    id: u.id,
+    sub: u.sub,
+    email: u.email,
+    name: u.name,
+    picture: u.picture,
+    role: u.role,
+    roles: u.roles,
+    status: u.status,
+    department_id: u.department_id,
+    department_name: u.department_name,
+    department: u.department,
+    is_super_admin: u.is_super_admin,
+    has_password: u.has_password,
+    mfa_enabled: u.mfa_enabled,
+    last_login_at: u.last_login_at,
+    created_at: u.created_at,
+    updated_at: u.updated_at,
+  }
+}
+
+// Shared user-list handler for /admin/users and /me/administered-departments/users.
+// Supports search, role_id / status / department filters, sort and limit/offset
+// (spec §3.6). The visitor's own identity is pinned at the top (spec §3.6).
+function listUsers(req: import('express').Request, res: import('express').Response) {
+  const q = req.query
+  let rows = usersWithVisitor()
+
+  const search = typeof q.search === 'string' ? q.search.toLowerCase().trim() : ''
+  if (search) rows = rows.filter((u) => u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search))
+  if (typeof q.role_id === 'string' && q.role_id) rows = rows.filter((u) => u.role_id === q.role_id)
+  if (typeof q.status === 'string' && q.status) rows = rows.filter((u) => u.status === q.status)
+  if (typeof q.department === 'string' && q.department) {
+    const d = q.department
+    rows = rows.filter((u) => u.department_id === d || u.department_name === d)
+  }
+
+  const sort = typeof q.sort === 'string' ? q.sort : 'created_at'
+  const ascending = String(q.ascending ?? (sort === 'name' || sort === 'email')) === 'true'
+  const pinned = rows[0]?.id === 'usr-visitor' ? rows[0] : null
+  const sortable = pinned ? rows.slice(1) : rows
+  sortable.sort((a, b) => {
+    let av: string | number
+    let bv: string | number
+    if (sort === 'name') { av = a.name.toLowerCase(); bv = b.name.toLowerCase() }
+    else if (sort === 'email') { av = a.email.toLowerCase(); bv = b.email.toLowerCase() }
+    else if (sort === 'updated_at') { av = new Date(a.updated_at).getTime(); bv = new Date(b.updated_at).getTime() }
+    else { av = new Date(a.created_at).getTime(); bv = new Date(b.created_at).getTime() }
+    if (av < bv) return ascending ? -1 : 1
+    if (av > bv) return ascending ? 1 : -1
+    return 0
+  })
+  const ordered = pinned ? [pinned, ...sortable] : sortable
+
+  const limit = Math.max(1, parseInt(String(q.limit ?? '20'), 10) || 20)
+  const offset = Math.max(0, parseInt(String(q.offset ?? '0'), 10) || 0)
+  res.json({
+    users: ordered.slice(offset, offset + limit).map(toUserRow),
+    total: ordered.length,
+    limit,
+    offset,
+  })
+}
 
 // Dashboard
 router.get('/admin/dashboard', requireAuth, (req, res) => {
   res.json(dashboardExample)
 })
 
-// Users
-router.get('/admin/users', requireAuth, (req, res) => {
-  // Handle sorting via query params
-  const { sort, ascending } = req.query
-  let result = { ...usersListExample }
-  
-  if (sort && ['name', 'email', 'created_at'].includes(sort as string)) {
-    const users = [...usersListExample.users]
-    const isAscending = ascending === 'true' || ascending === undefined
-    users.sort((a, b) => {
-      let aVal: string | number
-      let bVal: string | number
-      
-      if (sort === 'name') {
-        aVal = (a.name || '').toLowerCase()
-        bVal = (b.name || '').toLowerCase()
-      } else if (sort === 'email') {
-        aVal = (a.email || '').toLowerCase()
-        bVal = (b.email || '').toLowerCase()
-      } else if (sort === 'created_at') {
-        aVal = new Date(a.created_at || 0).getTime()
-        bVal = new Date(b.created_at || 0).getTime()
-      } else {
-        return 0
-      }
-      
-      if (aVal < bVal) return isAscending ? -1 : 1
-      if (aVal > bVal) return isAscending ? 1 : -1
-      return 0
-    })
-    
-    result = { ...usersListExample, users }
-  }
-  
-  res.json(result)
-})
+// Users (spec §3.6). Sourced from the canonical seed; visitor pinned at top.
+router.get('/admin/users', requireAuth, listUsers)
 
+const findSeedUser = (id: string) => findUser(id)
+// The pinned visitor row is a fixed overlay — it can't be edited/deleted.
+const isVisitor = (id: string) => id === 'usr-visitor'
+const roleNameFor = (roleId: string) => liveRoles.find((r) => r.id === roleId)?.name ?? 'User'
+const deptNameFor = (deptId: string | null | undefined) => (deptId ? departments.get(deptId)?.name ?? null : null)
+
+// Create a user — actually persisted (spec: live create). Appears immediately in
+// the table, analytics and role counts.
 router.post('/admin/users', requireAuth, (req, res) => {
-  res.status(201).json({
-    id: crypto.randomUUID(),
-    ...req.body,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  })
+  const b = req.body ?? {}
+  const role_id: string = b.role_id ?? 'role-user'
+  const department_id: string | null = b.department_id ?? null
+  const deptName = deptNameFor(department_id)
+  const now = new Date().toISOString()
+  const user: DemoUser = {
+    id: `usr-${crypto.randomUUID().slice(0, 8)}`,
+    sub: `demo|${crypto.randomUUID().slice(0, 8)}`,
+    email: b.email ?? `user${liveUsers.length + 1}@grengin.com`,
+    name: b.name ?? 'New User',
+    picture: `https://ui-avatars.com/api/?name=${encodeURIComponent(b.name ?? 'New User')}`,
+    role: role_id === 'role-super' ? 'admin' : 'user',
+    roles: [roleNameFor(role_id)],
+    role_id,
+    scope_department_id: b.scope_department_id ?? null,
+    status: b.status ?? 'active',
+    department_id,
+    department_name: deptName,
+    department: deptName ?? 'Unassigned',
+    is_super_admin: role_id === 'role-super',
+    has_password: true,
+    mfa_enabled: false,
+    last_login_at: now,
+    created_at: now,
+    updated_at: now,
+  }
+  liveUsers.push(user)
+  res.status(201).json(toUserRow(user))
 })
 
 router.get('/admin/users/:userId', requireAuth, (req, res) => {
-  const user = usersListExample.users.find(u => u.id === req.params.userId)
+  const user = findSeedUser(req.params.userId)
   if (!user) {
     return res.status(404).json({ detail: 'User not found' })
   }
-  res.json(user)
+  res.json(toUserRow(user))
 })
 
 router.put('/admin/users/:userId', requireAuth, (req, res) => {
-  const user = usersListExample.users.find(u => u.id === req.params.userId)
+  const user = liveUsers.find((u) => u.id === req.params.userId)
   if (!user) {
+    if (isVisitor(req.params.userId)) return res.status(403).json({ detail: 'The demo visitor cannot be edited' })
     return res.status(404).json({ detail: 'User not found' })
   }
-  res.json({ ...user, ...req.body, updated_at: new Date().toISOString() })
+  const b = req.body ?? {}
+  if (b.name !== undefined) { user.name = b.name; user.picture = `https://ui-avatars.com/api/?name=${encodeURIComponent(b.name)}` }
+  if (b.email !== undefined) user.email = b.email
+  if (b.status !== undefined) user.status = b.status
+  if (b.role_id !== undefined) {
+    user.role_id = b.role_id
+    user.roles = [roleNameFor(b.role_id)]
+    user.is_super_admin = b.role_id === 'role-super'
+    user.role = b.role_id === 'role-super' ? 'admin' : 'user'
+  }
+  if (b.department_id !== undefined) {
+    user.department_id = b.department_id || null
+    user.department_name = deptNameFor(user.department_id)
+    user.department = user.department_name ?? 'Unassigned'
+  }
+  user.updated_at = new Date().toISOString()
+  res.json(toUserRow(user))
 })
 
 router.delete('/admin/users/:userId', requireAuth, (req, res) => {
+  if (isVisitor(req.params.userId)) return res.status(403).json({ detail: 'The demo visitor cannot be deleted' })
+  deleteUser(req.params.userId)
   res.status(204).send()
 })
 
 router.patch('/admin/users/:userId/status', requireAuth, (req, res) => {
-  const user = usersListExample.users.find(u => u.id === req.params.userId)
+  const user = liveUsers.find((u) => u.id === req.params.userId)
   if (!user) {
     return res.status(404).json({ detail: 'User not found' })
   }
   const { status } = req.body
-  if (!status || !['active', 'inactive', 'pending'].includes(status)) {
+  if (!status || !['active', 'inactive', 'pending', 'deactivated'].includes(status)) {
     return res.status(400).json({ detail: 'Invalid status value' })
   }
-  res.json({ ...user, status, updated_at: new Date().toISOString() })
+  user.status = status
+  user.updated_at = new Date().toISOString()
+  res.json(toUserRow(user))
 })
 
 router.get('/admin/users/:userId/usage', requireAuth, (req, res) => {
@@ -114,7 +218,7 @@ function buildDepartmentTree(depts: Department[], parentId: string | null = null
   return depts
     .filter(d => d.parent_id === parentId)
     .map(dept => ({
-      ...dept,
+      ...deptView(dept),
       children: buildDepartmentTree(depts, dept.id, maxDepth, currentDepth + 1),
     }))
 }
@@ -136,6 +240,18 @@ function getDepth(parentId: string | null): number {
   return parent ? parent.depth + 1 : 0
 }
 
+// Overlay LIVE member counts + admins (from the mutable users list) onto a stored
+// department, so creating/deleting/moving users updates the org tree immediately.
+function deptView<T extends Department>(dept: T): T {
+  const members = usersInDepartmentLive(dept.id)
+  return {
+    ...dept,
+    member_count: members.length,
+    total_member_count: members.length,
+    admin_ids: members.filter((u) => u.role_id === 'role-dept').map((u) => u.id),
+  }
+}
+
 // List departments
 router.get('/admin/departments', requireAuth, (req, res) => {
   const { parent_id, include_children } = req.query
@@ -155,7 +271,7 @@ router.get('/admin/departments', requireAuth, (req, res) => {
     }
   }
 
-  res.json({ departments: result, total: result.length })
+  res.json({ departments: result.map(deptView), total: result.length })
 })
 
 // Create department
@@ -233,7 +349,7 @@ router.get('/admin/departments/:departmentId', requireAuth, (req, res) => {
   if (!dept) {
     return res.status(404).json({ detail: 'Department not found' })
   }
-  res.json(dept)
+  res.json(deptView(dept))
 })
 
 // --- "My administered departments" aliases -------------------------------
@@ -245,12 +361,10 @@ router.get('/me/administered-departments/tree', requireAuth, (_req, res) => {
   res.json({ tree: buildDepartmentTree(allDepts, null, 10) })
 })
 
-router.get('/me/administered-departments/users', requireAuth, (_req, res) => {
-  res.json(usersListExample)
-})
+router.get('/me/administered-departments/users', requireAuth, listUsers)
 
 router.get('/me/administered-departments', requireAuth, (_req, res) => {
-  const result = Array.from(departments.values())
+  const result = Array.from(departments.values()).map(deptView)
   res.json({ departments: result, total: result.length })
 })
 
@@ -496,17 +610,16 @@ router.get('/admin/departments/:departmentId/members', requireAuth, (req, res) =
 
   const { include_sub_departments } = req.query
 
-  // Filter users by department_id
-  let members = usersListExample.users.filter(u => u.department_id === req.params.departmentId)
+  // Members from the canonical seed (spec §3.5: ≥5 members per department).
+  let members = usersInDepartmentLive(req.params.departmentId).map(toUserRow)
 
   if (include_sub_departments === 'true') {
-    // Get all descendant department IDs
     const getDescendantIds = (parentId: string): string[] => {
       const children = Array.from(departments.values()).filter(d => d.parent_id === parentId)
       return children.map(c => c.id).concat(children.flatMap(c => getDescendantIds(c.id)))
     }
     const descendantIds = getDescendantIds(req.params.departmentId)
-    const subMembers = usersListExample.users.filter(u => descendantIds.includes(u.department_id))
+    const subMembers = descendantIds.flatMap((id) => usersInDepartmentLive(id).map(toUserRow))
     members = members.concat(subMembers)
   }
 
@@ -525,18 +638,13 @@ router.post('/admin/departments/:departmentId/members', requireAuth, (req, res) 
     return res.status(400).json({ detail: 'user_ids array is required' })
   }
 
-  // In a real implementation, we'd update the users' department_id
-  // For mock, just increment the member count
-  const now = new Date().toISOString()
-  const updated: Department = {
-    ...dept,
-    member_count: dept.member_count + user_ids.length,
-    total_member_count: dept.total_member_count + user_ids.length,
-    updated_at: now,
+  // Actually reassign the users to this department (live). deptView() then
+  // reflects the new member count everywhere.
+  for (const uid of user_ids) {
+    const u = liveUsers.find((x) => x.id === uid)
+    if (u) { u.department_id = dept.id; u.department_name = dept.name; u.department = dept.name; u.updated_at = new Date().toISOString() }
   }
-
-  departments.set(req.params.departmentId, updated)
-  res.json(updated)
+  res.json(deptView(departments.get(req.params.departmentId)!))
 })
 
 // Remove members from department
@@ -551,18 +659,12 @@ router.delete('/admin/departments/:departmentId/members', requireAuth, (req, res
     return res.status(400).json({ detail: 'user_ids array is required' })
   }
 
-  // In a real implementation, we'd update the users' department_id to null
-  // For mock, just decrement the member count
-  const now = new Date().toISOString()
-  const updated: Department = {
-    ...dept,
-    member_count: Math.max(0, dept.member_count - user_ids.length),
-    total_member_count: Math.max(0, dept.total_member_count - user_ids.length),
-    updated_at: now,
+  // Actually unassign the users (live) → they move to the "Unassigned" bucket.
+  for (const uid of user_ids) {
+    const u = liveUsers.find((x) => x.id === uid && x.department_id === dept.id)
+    if (u) { u.department_id = null; u.department_name = null; u.department = 'Unassigned'; u.updated_at = new Date().toISOString() }
   }
-
-  departments.set(req.params.departmentId, updated)
-  res.json(updated)
+  res.json(deptView(departments.get(req.params.departmentId)!))
 })
 
 // Organization
@@ -667,35 +769,21 @@ router.get('/admin/ai-engines/:engineKey/models', requireAuth, (req, res) => {
     return res.status(404).json({ detail: 'AI engine not found' })
   }
 
-  const modelsByEngine: Record<string, AIEngineModelsResponse['models']> = {
-    openai: [
-      { model_id: 'gpt-4o', display_name: 'GPT-4o', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
-      { model_id: 'gpt-4.1', display_name: 'GPT-4.1', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
-      { model_id: 'gpt-4.1-mini', display_name: 'GPT-4.1 Mini', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
-      { model_id: 'o3', display_name: 'O3', is_whitelisted: false, model_type: 'text_generator', capabilities: { vision: false, function_calling: true, streaming: true } },
-      { model_id: 'gpt-image-2', display_name: 'GPT Image 2', is_whitelisted: true, model_type: 'image_generator', capabilities: { vision: false, function_calling: false, streaming: false } },
-      { model_id: 'gpt-image-1', display_name: 'GPT Image 1', is_whitelisted: false, model_type: 'image_generator', capabilities: { vision: false, function_calling: false, streaming: false } },
-    ],
-    anthropic: [
-      { model_id: 'claude-sonnet-4-20250514', display_name: 'Claude Sonnet 4', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
-      { model_id: 'claude-opus-4-20250514', display_name: 'Claude Opus 4', is_whitelisted: false, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
-      { model_id: 'claude-3-haiku-20240307', display_name: 'Claude 3 Haiku', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
-    ],
-    google: [
-      { model_id: 'gemini-2.0-flash', display_name: 'Gemini 2.0 Flash', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
-      { model_id: 'gemini-1.5-pro', display_name: 'Gemini 1.5 Pro', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
-      { model_id: 'gemini-3-pro-image', display_name: 'Gemini 3 Pro Image (Nano Banana)', is_whitelisted: true, model_type: 'image_generator', capabilities: { vision: false, function_calling: false, streaming: false } },
-      { model_id: 'gemini-3.1-flash-image', display_name: 'Gemini 3.1 Flash Image', is_whitelisted: false, model_type: 'image_generator', capabilities: { vision: false, function_calling: false, streaming: false } },
-    ],
-    groq: [
-      { model_id: 'llama-3.3-70b-versatile', display_name: 'Llama 3.3 70B', is_whitelisted: false, capabilities: { vision: false, function_calling: true, streaming: true } },
-      { model_id: 'mixtral-8x7b-32768', display_name: 'Mixtral 8x7B', is_whitelisted: false, capabilities: { vision: false, function_calling: true, streaming: true } },
-    ],
-  }
+  // All models listed; only cheap/cost-effective ones whitelisted (spec §3.7),
+  // derived from the single canonical model catalog.
+  const provider = DEMO_PROVIDERS.find((p) => p.engine_key === req.params.engineKey)
+  const models: AIEngineModelsResponse['models'] = (provider?.models ?? []).map((m) => ({
+    model_id: m.model_id,
+    display_name: m.display_name,
+    is_whitelisted: m.cheap,
+    model_type: m.model_type,
+    capabilities:
+      m.model_type === 'image_generator'
+        ? { vision: false, function_calling: false, streaming: false }
+        : { vision: true, function_calling: true, streaming: true },
+  }))
 
-  res.json({
-    models: modelsByEngine[req.params.engineKey] || [],
-  })
+  res.json({ models })
 })
 
 router.put('/admin/ai-engines/:engineKey/api-key', requireAuth, (req, res) => {
@@ -947,5 +1035,351 @@ router.post('/admin/reconfigure/binaries', requireAuth, (req, res) => {
     ],
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Interactive Demo — RBAC + MCP (spec §3.3 / §3.7 / §3.8 / §3.9). Seeded data in
+// the exact response shapes the app expects.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Permission catalog + role list are imported from the canonical seed (spec §3.9).
+
+router.get('/admin/permissions', requireAuth, (_req, res) => {
+  res.json({
+    permissions: DEMO_PERMISSION_CATALOG.map((p) => ({
+      id: `perm-${p.domain}-${p.action}`,
+      domain: p.domain,
+      action: p.action,
+      is_scopeable: p.is_scopeable,
+      description_key: `admin.permissions.${p.domain}.${p.action}`,
+    })),
+  })
+})
+
+// Roles (spec §3.9) — from the canonical seed. user_count is derived from the
+// real user assignments, so every role has ≥1 user and counts match the table.
+const rolesWithCounts = () => liveRoles.map((r) => ({ ...r, user_count: roleUserCount(r.id) }))
+
+router.get('/admin/roles', requireAuth, (_req, res) => {
+  res.json({ roles: rolesWithCounts() })
+})
+
+// Create a role — persisted live (appears in RBAC immediately).
+router.post('/admin/roles', requireAuth, (req, res) => {
+  const b = req.body ?? {}
+  const role = {
+    id: `role-${crypto.randomUUID().slice(0, 8)}`,
+    name: b.name ?? 'New Role',
+    is_system: false,
+    permissions: Array.isArray(b.permissions) ? b.permissions : [],
+  }
+  liveRoles.push(role)
+  res.status(201).json({ ...role, user_count: 0 })
+})
+
+// Role prompts (spec §3.3) — from the canonical seed.
+router.get('/admin/role-prompts', requireAuth, (req, res) => {
+  let list = liveRolePrompts
+  if (typeof req.query.role_id === 'string') list = list.filter((p) => p.role_id === req.query.role_id)
+  if (req.query.is_system !== undefined) list = list.filter((p) => String(p.is_system) === String(req.query.is_system))
+  res.json(list)
+})
+
+// Department prompts (spec §3.5: ≥1 prompt per department). Bare-array shape.
+router.get('/admin/department-prompts', requireAuth, (req, res) => {
+  const deptId = typeof req.query.department_id === 'string' ? req.query.department_id : ''
+  res.json(deptId ? departmentPromptsLive(deptId) : liveDeptPrompts)
+})
+router.post('/admin/department-prompts', requireAuth, (req, res) => {
+  const record = {
+    id: `dp-${crypto.randomUUID().slice(0, 8)}`,
+    department_id: req.body?.department_id ?? '',
+    prompt_id: req.body?.prompt_id ?? '',
+    priority: req.body?.priority ?? liveDeptPrompts.length + 1,
+    created_at: new Date().toISOString(),
+  }
+  liveDeptPrompts.push(record)
+  res.status(201).json(record)
+})
+router.put('/admin/department-prompts/:id', requireAuth, (req, res) => {
+  const found = liveDeptPrompts.find((p) => p.id === req.params.id)
+  if (!found) return res.status(404).json({ detail: 'Not found' })
+  if (req.body?.priority !== undefined) found.priority = req.body.priority
+  res.json(found)
+})
+router.delete('/admin/department-prompts/:id', requireAuth, (req, res) => {
+  const idx = liveDeptPrompts.findIndex((p) => p.id === req.params.id)
+  if (idx !== -1) liveDeptPrompts.splice(idx, 1)
+  res.status(204).send()
+})
+
+// MCP connectors (spec §3.8: none need to be enabled; only Slack shown connected).
+const demoMcpServer = (over: Record<string, unknown>) => ({
+  id: over.id,
+  name: over.name,
+  description: over.description ?? null,
+  transport_type: over.transport_type ?? 'sse',
+  connection_config: {},
+  client_id: over.client_id ?? null,
+  client_secret_configured: over.client_secret_configured ?? false,
+  client_secret_preview: over.client_secret_preview ?? '',
+  url: over.url ?? null,
+  enabled: over.enabled ?? false,
+  status: over.status ?? 'disconnected',
+  status_message: over.status_message ?? null,
+  tool_count: over.tool_count ?? 0,
+  default_access: over.default_access ?? null,
+  last_connected_at: over.last_connected_at ?? null,
+  last_synced_at: over.last_synced_at ?? null,
+  created_at: '2026-04-01T09:00:00Z',
+  updated_at: '2026-07-15T09:00:00Z',
+  auth_type: over.auth_type ?? 'oauth2',
+  auth_mode: over.auth_mode ?? 'organization',
+  oauth_provider: over.oauth_provider ?? null,
+  scopes: over.scopes ?? null,
+  auth_url: null,
+  token_url: null,
+  org_connection: over.org_connection ?? null,
+  connected_users_count: over.connected_users_count ?? null,
+})
+
+const DEMO_MCP_SERVERS = [
+  demoMcpServer({
+    id: 'mcp-slack', name: 'Slack', description: 'Post and read messages, search channels.',
+    enabled: true, status: 'connected', oauth_provider: 'slack', tool_count: 12, default_access: 'allow',
+    last_connected_at: '2026-08-04T10:00:00Z', last_synced_at: '2026-08-05T06:00:00Z', connected_users_count: 18,
+    org_connection: { connected: true, connected_as: 'grengin-workspace', connected_at: '2026-06-10T09:00:00Z', token_expires_at: '2026-09-10T09:00:00Z', scopes: ['channels:read', 'chat:write'] },
+  }),
+  demoMcpServer({ id: 'mcp-github', name: 'GitHub', description: 'Issues, pull requests, and repo search.', oauth_provider: 'github' }),
+  demoMcpServer({ id: 'mcp-atlassian', name: 'Atlassian', description: 'Jira issues and Confluence pages.', oauth_provider: 'atlassian' }),
+  demoMcpServer({ id: 'mcp-gdrive', name: 'Google Drive', description: 'Search and read documents.', oauth_provider: 'google' }),
+]
+
+router.get('/admin/mcp-servers', requireAuth, (_req, res) => {
+  res.json({ servers: DEMO_MCP_SERVERS, total: DEMO_MCP_SERVERS.length })
+})
+// Create a connector — persisted live.
+router.post('/admin/mcp-servers', requireAuth, (req, res) => {
+  const server = demoMcpServer({ ...req.body, id: `mcp-${crypto.randomUUID().slice(0, 8)}` })
+  DEMO_MCP_SERVERS.push(server)
+  res.status(201).json(server)
+})
+// User-facing MCP connections (chat connector picker). Derived from the servers.
+router.get('/mcp/connections', requireAuth, (_req, res) => {
+  res.json({
+    connections: DEMO_MCP_SERVERS.map((s) => ({
+      server_id: s.id,
+      server_name: s.name,
+      description: s.description ?? '',
+      connected: s.enabled === true,
+      status: s.enabled === true ? 'connected' : 'disconnected',
+      account_email: s.enabled === true ? 'demo@grengin.com' : null,
+      connected_at: s.enabled === true ? '2026-06-10T09:00:00Z' : '',
+      expires_at: null,
+      scopes: (s.org_connection as { scopes?: string[] } | null)?.scopes ?? [],
+    })),
+  })
+})
+
+// Audit logs (spec §3.4) — imported from the canonical seed (references real
+// users, ≥50 entries, ≥5 action types, random IPs).
+
+router.get('/admin/audit-logs', requireAuth, (req, res) => {
+  const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1)
+  const limit = Math.max(1, parseInt(String(req.query.limit ?? '20'), 10) || 20)
+  let list = DEMO_AUDIT_LOGS
+  if (typeof req.query.userId === 'string' && req.query.userId) list = list.filter((l) => l.userId === req.query.userId)
+  if (typeof req.query.action === 'string' && req.query.action) list = list.filter((l) => l.action === req.query.action)
+  const startDate = typeof req.query.startDate === 'string' ? Date.parse(req.query.startDate) : NaN
+  const endDate = typeof req.query.endDate === 'string' ? Date.parse(req.query.endDate) : NaN
+  if (!Number.isNaN(startDate)) list = list.filter((l) => Date.parse(l.createdAt) >= startDate)
+  if (!Number.isNaN(endDate)) list = list.filter((l) => Date.parse(l.createdAt) <= endDate)
+  const start = (page - 1) * limit
+  res.json({ items: list.slice(start, start + limit), total: list.length, page, limit })
+})
+
+// Audit log export — CSV or JSON, generated from the same seeded logs.
+router.get('/admin/audit-logs/export', requireAuth, (req, res) => {
+  const format = String(req.query.format ?? 'csv')
+  if (format === 'json') {
+    res.setHeader('Content-Type', 'application/json')
+    res.setHeader('Content-Disposition', 'attachment; filename="audit_logs.json"')
+    return res.send(JSON.stringify(DEMO_AUDIT_LOGS, null, 2))
+  }
+  res.setHeader('Content-Type', 'text/csv')
+  res.setHeader('Content-Disposition', 'attachment; filename="audit_logs.csv"')
+  const header = 'id,timestamp,user_id,action,resource_type,resource_id,ip_address,status_code,success'
+  const rows = DEMO_AUDIT_LOGS.map((l) =>
+    [l.id, l.createdAt, l.userId, l.action, l.resourceType, l.resourceId, l.ipAddress, l.details.status_code, l.details.success].join(',')
+  )
+  res.send([header, ...rows].join('\n'))
+})
+
+router.get('/audit/actions', requireAuth, (_req, res) => {
+  res.json(AUDIT_ACTIONS)
+})
+
+// Role + role-prompt mutations — persisted live.
+router.put('/admin/roles/:id', requireAuth, (req, res) => {
+  const found = liveRoles.find((r) => r.id === req.params.id)
+  if (!found) return res.status(404).json({ detail: 'Role not found' })
+  if (found.is_system && found.name === 'Super Admin') return res.status(403).json({ detail: 'The Super Admin role cannot be edited' })
+  if (req.body?.name !== undefined) found.name = req.body.name
+  if (Array.isArray(req.body?.permissions)) found.permissions = req.body.permissions
+  res.json({ ...found, user_count: roleUserCount(found.id) })
+})
+router.delete('/admin/roles/:id', requireAuth, (req, res) => {
+  const idx = liveRoles.findIndex((r) => r.id === req.params.id)
+  if (idx === -1) return res.status(404).json({ detail: 'Role not found' })
+  if (liveRoles[idx].is_system) return res.status(403).json({ detail: 'System roles cannot be deleted' })
+  // Reassign any users on this role back to the base User role (keeps counts valid).
+  const removed = liveRoles.splice(idx, 1)[0]
+  for (const u of liveUsers) if (u.role_id === removed.id) { u.role_id = 'role-user'; u.roles = ['User'] }
+  res.status(204).send()
+})
+
+router.post('/admin/role-prompts', requireAuth, (req, res) => {
+  const now = new Date().toISOString()
+  const record = {
+    id: `rp-${crypto.randomUUID().slice(0, 8)}`,
+    name: req.body?.name ?? 'Untitled',
+    role_id: req.body?.role_id ?? 'role-user',
+    prompt_text: req.body?.prompt_text ?? '',
+    is_system: req.body?.is_system ?? false,
+    variables: Array.isArray(req.body?.variables) ? req.body.variables : [],
+    usage_count: 0,
+    average_rating: 0.9,
+    feedback_count: 0,
+    created_by: 'admin@grengin.com',
+    created_at: now,
+    updated_at: now,
+  }
+  liveRolePrompts.push(record)
+  res.status(201).json(record)
+})
+router.put('/admin/role-prompts/:id', requireAuth, (req, res) => {
+  const found = liveRolePrompts.find((p) => p.id === req.params.id)
+  if (!found) return res.status(404).json({ detail: 'Prompt not found' })
+  if (req.body?.name !== undefined) found.name = req.body.name
+  if (req.body?.prompt_text !== undefined) found.prompt_text = req.body.prompt_text
+  if (req.body?.role_id !== undefined) found.role_id = req.body.role_id
+  if (Array.isArray(req.body?.variables)) found.variables = req.body.variables
+  found.updated_at = new Date().toISOString()
+  res.json(found)
+})
+router.delete('/admin/role-prompts/:id', requireAuth, (req, res) => {
+  const idx = liveRolePrompts.findIndex((p) => p.id === req.params.id)
+  if (idx !== -1) liveRolePrompts.splice(idx, 1)
+  res.status(204).send()
+})
+
+// A user's role assignments (spec §3.9). Derived from the LIVE user; add/remove
+// actually change the user's role so RBAC counts update.
+router.get('/admin/users/:userId/roles', requireAuth, (req, res) => {
+  const user = findSeedUser(req.params.userId)
+  const role_id = user?.role_id ?? 'role-user'
+  const scope_department_id = user?.scope_department_id ?? null
+  res.json({
+    assignments: [{ id: `ra-${req.params.userId.slice(0, 8)}`, role_id, scope_department_id }],
+  })
+})
+router.post('/admin/users/:userId/roles', requireAuth, (req, res) => {
+  const user = liveUsers.find((u) => u.id === req.params.userId)
+  const role_id = req.body?.role_id ?? 'role-user'
+  const scope_department_id = req.body?.scope_department_id ?? null
+  if (user) {
+    user.role_id = role_id
+    user.roles = [liveRoles.find((r) => r.id === role_id)?.name ?? 'User']
+    user.scope_department_id = scope_department_id
+    user.is_super_admin = role_id === 'role-super'
+  }
+  res.status(201).json({ id: `ra-${crypto.randomUUID().slice(0, 8)}`, role_id, scope_department_id })
+})
+router.delete('/admin/users/:userId/roles/:assignmentId', requireAuth, (req, res) => {
+  // Removing a user's only role assignment drops them to the base User role.
+  const user = liveUsers.find((u) => u.id === req.params.userId)
+  if (user) { user.role_id = 'role-user'; user.roles = ['User']; user.scope_department_id = null; user.is_super_admin = false }
+  res.status(204).send()
+})
+
+// MCP connection actions (spec §3.8). Demo can't really connect out.
+router.post('/admin/mcp-servers/:id/test', requireAuth, (_req, res) => {
+  res.json({ success: true, message: 'Connection successful', latency_ms: 142 })
+})
+// Server access rules (McpServerAccessResponse). default_access is an enum.
+router.get('/admin/mcp-servers/:id/access', requireAuth, (req, res) => {
+  res.json({ server_id: req.params.id, default_access: 'all_users', rules: [] })
+})
+router.put('/admin/mcp-servers/:id/access/default', requireAuth, (req, res) => {
+  res.json({ server_id: req.params.id, default_access: req.body?.default_access ?? 'all_users', rules: [] })
+})
+// Per-tool access (McpToolAccess[]). A few sample tools scoped to this server.
+router.get('/admin/mcp-servers/:id/tools/access', requireAuth, (req, res) => {
+  const tools = ['post_message', 'list_channels', 'search_messages', 'upload_file']
+  res.json(
+    tools.map((name, i) => ({
+      tool_id: `${req.params.id}-tool-${i + 1}`,
+      tool_name: name,
+      server_id: req.params.id,
+      inherit_from_server: true,
+      rules: [],
+    }))
+  )
+})
+router.post('/admin/mcp-servers/:id/sync-tools', requireAuth, (_req, res) => res.status(204).send())
+router.post('/mcp/connections/:id/authorize', requireAuth, (_req, res) => {
+  // Demo can't complete real OAuth (spec §3.8). Return a valid URL so the UI
+  // opens it gracefully instead of throwing "Failed to get authorization URL" —
+  // point it at the install page (on-brand demo CTA).
+  res.json({
+    success: true,
+    authorization_url: 'https://grengin.com/deploy',
+    message: 'This is a demo — install Grengin to connect this connector.',
+  })
+})
+router.post('/admin/mcp-servers/:id/connection/disconnect', requireAuth, (_req, res) => {
+  res.json({ success: true })
+})
+// Update / delete a connector (dynamic :id) — persisted live.
+router.put('/admin/mcp-servers/:id', requireAuth, (req, res) => {
+  const idx = DEMO_MCP_SERVERS.findIndex((s) => s.id === req.params.id)
+  if (idx === -1) return res.status(404).json({ detail: 'Connector not found' })
+  DEMO_MCP_SERVERS[idx] = { ...DEMO_MCP_SERVERS[idx], ...req.body, id: req.params.id, updated_at: new Date().toISOString() }
+  res.json(DEMO_MCP_SERVERS[idx])
+})
+router.delete('/admin/mcp-servers/:id', requireAuth, (req, res) => {
+  const idx = DEMO_MCP_SERVERS.findIndex((s) => s.id === req.params.id)
+  if (idx !== -1) DEMO_MCP_SERVERS.splice(idx, 1)
+  res.status(204).send()
+})
+
+// Prompt effectiveness metrics (spec §3.3) — imported from the canonical seed.
+router.get('/admin/prompt-metrics', requireAuth, (req, res) => {
+  let list = promptMetricsFor(liveRolePrompts)
+  if (typeof req.query.prompt_id === 'string') list = list.filter((m) => m.prompt_id === req.query.prompt_id)
+  if (typeof req.query.role_id === 'string') list = list.filter((m) => m.role_id === req.query.role_id)
+  res.json(list)
+})
+
+// Org branding / settings (shape = Branding). PUT echoes (demo read-only).
+const DEMO_BRANDING = {
+  id: 'org-grengin',
+  name: 'Grengin',
+  domain: 'grengin.com',
+  allowed_domains: ['grengin.com'],
+  settings: {
+    sso_providers: ['google', 'azure'],
+    default_engine: 'openai',
+    default_model: 'gpt-5.2',
+    data_retention_days: 90,
+    require_mfa: false,
+  },
+  created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-07-20T12:00:00Z',
+}
+
+router.get('/admin/branding', requireAuth, (_req, res) => res.json(DEMO_BRANDING))
+router.put('/admin/branding', requireAuth, (req, res) =>
+  res.json({ ...DEMO_BRANDING, ...req.body, updated_at: '2026-08-05T12:00:00Z' })
+)
 
 export default router

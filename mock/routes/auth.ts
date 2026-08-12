@@ -5,6 +5,7 @@ import { Router } from 'express'
 import { faker } from '@faker-js/faker'
 import loginExample from '../examples/auth/login.response.json' with { type: 'json' }
 import { requireAuth } from '../lib/middleware.js'
+import { setVisitorIdentity } from '../lib/demoSeed.js'
 
 const router = Router()
 
@@ -28,6 +29,35 @@ router.post('/auth/login', (req, res) => {
   }
 
   return res.status(401).json({ detail: 'Invalid email or password' })
+})
+
+// Interactive Demo login (spec §2 / §3.6). No password and no bot gate: the
+// visitor optionally tells us who they are on the entry screen and we drop them
+// into the seeded org. Returns the SAME LoginResponse shape as /auth/login so
+// the app's normal setAuth() flow applies.
+router.post('/auth/demo-login', (req, res) => {
+  const rawName = typeof req.body?.name === 'string' ? req.body.name.trim() : ''
+  const rawEmail = typeof req.body?.email === 'string' ? req.body.email.trim() : ''
+
+  const name = rawName || 'Unknown'
+  const email = rawEmail || 'unknown@demo.grengin.com'
+
+  // Pin the visitor's identity into the seed so the User Management table shows
+  // them at the top (spec §3.6), consistent with the /me user below.
+  setVisitorIdentity(rawName, rawEmail)
+
+  return res.json({
+    requires_mfa: false,
+    accessToken: loginExample.accessToken,
+    refreshToken: loginExample.refreshToken,
+    user: {
+      ...loginExample.user,
+      // Pin the visitor's own identity (spec §3.6). Everything else stays seeded.
+      name,
+      email,
+      picture: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`,
+    },
+  })
 })
 
 router.post('/auth/refresh', (req, res) => {

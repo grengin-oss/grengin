@@ -163,6 +163,10 @@ router.get('/chat/:chatId', requireAuth, (req, res) => {
       role: msg.role,
       toolCalls: msg.tool_calls || [],
       toolsResults: msg.tool_results || [],
+      // Snake-case duplicates: the conversation-load mapper reads `tool_calls` /
+      // `tool_results`, so seeded web-search results render on reload (spec §2).
+      tool_calls: msg.tool_calls || [],
+      tool_results: msg.tool_results || [],
       updatedAt: msg.updated_at,
       usage: msg.usage || {
         inputTokens: 100,

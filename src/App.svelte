@@ -21,6 +21,8 @@ SPDX-License-Identifier: Apache-2.0
     stopNotificationsStream,
   } from './lib/features/notifications/index.js';
   import { NOTIFICATIONS_STREAM_TOAST_ID, toast } from '$lib/components/Toaster.svelte';
+  import { GlobalTopBar, DemoGate, DemoWelcome, demoView } from '$lib/features/demo/index.js';
+  import { PERMISSIONS } from '$lib/features/auth/permissions.js';
   import { _ } from 'svelte-i18n';
 
   let sidebarCollapsed = $state(false);
@@ -77,6 +79,12 @@ SPDX-License-Identifier: Apache-2.0
 
   function isAdminLogin(): boolean {
     return currentPath === '/admin';
+  }
+
+  // The interactive demo entry gate lives at /demo only — not at the root — so a
+  // plain visit to '/' shows the normal login, and the demo is opt-in by URL.
+  function isDemoEntry(): boolean {
+    return demoView.enabled && currentPath === '/demo';
   }
 
   function isMobile() {
@@ -136,8 +144,73 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   function handleLoginSuccess() {
-    // Auth state is already updated by setAuth
+    // Demo entry lives at /demo; there is no /demo app route, so once the demo
+    // session is authenticated move to the app root. (No-op for normal login.)
+    if (currentPath === '/demo') {
+      navigate('/', { replace: true });
+    }
   }
+
+  // Safety net for a manual visit to /demo while already signed in (no such app
+  // route) — bounce to the app root so the main area isn't blank.
+  $effect(() => {
+    if (authState.isAuthenticated && currentPath === '/demo') {
+      navigate('/', { replace: true });
+    }
+  });
+
+  // Demo exit (spec §1): tear down the session on the backend, then return to grengin.com.
+  function handleDemoExit(): boolean {
+    // logout() POSTs /auth/logout then clears local auth. Navigate only once it settles,
+    // and return false so GlobalTopBar skips its immediate navigation (which would abort
+    // the in-flight teardown request). This uses the onExit async-teardown seam by design.
+    void logout().finally(() => {
+      window.location.href = 'https://grengin.com';
+    });
+    return false;
+  }
+
+  // Toggle the demo layout offset so the fixed top bar doesn't overlap the app.
+  $effect(() => {
+    const active = demoView.enabled && authState.isAuthenticated;
+    document.body.classList.toggle('demo-active', active);
+    return () => document.body.classList.remove('demo-active');
+  });
+
+  // Is the current admin route visible to the effective permissions? Mirrors the
+  // Sidebar's per-section gating so we can detect a now-forbidden page.
+  function isAdminPathAllowed(path: string): boolean {
+    const p = permissionsStore;
+    if (path.startsWith('/admin/overview')) return p.isPermissionGlobal(PERMISSIONS.analytics.view);
+    if (path.startsWith('/admin/analytics')) return p.hasPermission(PERMISSIONS.analytics.view);
+    if (path.startsWith('/admin/prompt-effectiveness')) return p.hasPermission(PERMISSIONS.analytics.view);
+    if (path.startsWith('/admin/audit-logs')) return p.hasPermission(PERMISSIONS.auditLogs.view) || p.hasAnyPermissions();
+    if (path.startsWith('/admin/departments') || path.startsWith('/admin/organization'))
+      return p.canViewUsers() || p.hasPermission(PERMISSIONS.departments.view);
+    if (path.startsWith('/admin/ai-engines')) return p.canViewAiEngines();
+    if (path.startsWith('/admin/mcp-servers')) return p.hasPermission(PERMISSIONS.mcpServers.view);
+    if (path.startsWith('/admin/access-control')) return p.hasPermission(PERMISSIONS.roles.view);
+    if (path.startsWith('/admin/skills')) return p.hasPermission(PERMISSIONS.roles.view);
+    if (path.startsWith('/admin/prompt-library')) return p.hasPermission(PERMISSIONS.roles.view);
+    if (path.startsWith('/admin/settings')) return p.canViewSsoProviders();
+    return true; // '/admin' root + unknown paths: handled by landing redirect below
+  }
+
+  // Selection-based routing (spec §1 "View as"): when the viewing role changes,
+  // if the current admin page is no longer permitted, route to a page the role
+  // CAN see — its admin landing, or chat if it has no Control Hub access — so we
+  // never leave the visitor staring at a 403. Reads permissions, so it re-runs
+  // after the viewing role updates the store.
+  $effect(() => {
+    if (!demoView.enabled) return;
+    void demoView.roleId; // subscribe to role selection
+    if (!permissionsStore.hasFetched) return;
+    const path = currentPath;
+    if (!path.startsWith('/admin')) return;
+    if (isAdminPathAllowed(path)) return;
+    const landing = permissionsStore.getAdminLandingPath();
+    navigate(landing === '/forbidden' ? '/' : landing, { replace: true });
+  });
 
   onDestroy(() => {
     if (typeof window !== 'undefined') {
@@ -201,8 +274,16 @@ SPDX-License-Identifier: Apache-2.0
       <div class="loading-spinner"></div>
     </div>
   {:else if !authState.isAuthenticated}
-    <Login onLoginSuccess={handleLoginSuccess} />
+    {#if isDemoEntry()}
+      <DemoGate onLoginSuccess={handleLoginSuccess} />
+    {:else}
+      <Login onLoginSuccess={handleLoginSuccess} />
+    {/if}
   {:else}
+    {#if demoView.enabled}
+      <GlobalTopBar onExit={handleDemoExit} />
+      <DemoWelcome />
+    {/if}
     <Sidebar
       isCollapsed={sidebarCollapsed}
       onsidebarToggle={handleSidebarToggle}
@@ -221,7 +302,7 @@ SPDX-License-Identifier: Apache-2.0
       ></div>
     {/if}
 
-    <main class="main-content" class:collapsed={sidebarCollapsed}>
+    <main class="main-content" class:collapsed={sidebarCollapsed} class:demo-offset={demoView.enabled}>
       <MobileHeader sidebarCollapsed={sidebarCollapsed} onToggleMenu={toggleSidebarFromMain} />
 
       <div class="main-content-body">
@@ -232,6 +313,24 @@ SPDX-License-Identifier: Apache-2.0
 </Router>
 
 <style>
+  /* Demo mode: push the fixed layout below the persistent GlobalTopBar (46px). */
+  :global(body.demo-active) {
+    --demo-bar-h: 46px;
+  }
+  :global(body.demo-active .sidebar) {
+    top: var(--demo-bar-h);
+    height: calc(100vh - var(--demo-bar-h));
+    height: calc(100dvh - var(--demo-bar-h));
+  }
+  .main-content.demo-offset {
+    padding-top: var(--demo-bar-h, 0);
+  }
+  @media (max-width: 768px) {
+    .main-content.demo-offset {
+      height: calc(100dvh - var(--demo-bar-h, 0px));
+    }
+  }
+
   .callback-wrapper {
     background: var(--bg-primary);
     min-height: 100vh;
