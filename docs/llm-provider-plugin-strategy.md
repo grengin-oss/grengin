@@ -31,6 +31,10 @@ slice:
   `ProviderPlugin`/`ChatSession` contract. `chat_stream.rs` now has one typed
   request, parser, MCP-result, continuation, and title-generation path for both
   native and declarative providers.
+- Database-backed lazy registry hydration for enabled declarative providers.
+  A replica that did not process the install/enable request can compile and
+  cache the provider on its first request, while disabled and invalid records
+  continue to fail closed.
 
 This slice is suitable for review and controlled local testing. The following
 items remain before calling the plugin contract stable or publishing a public
@@ -487,6 +491,14 @@ Installation follows this order:
 In-flight requests retain their existing `Arc`. New requests use the new
 version. A failed update leaves the previous provider active and records the
 validation failure.
+
+The registry is process-local, while provider definitions and encrypted
+credentials are durable. On a registry miss, a request may load only an
+`enabled` provider from persistence, compile it through the same validated
+construction path, atomically cache it in that process, and continue. Missing,
+disabled, invalid, or undecryptable records fail closed. This lazy hydration is
+required for multi-replica deployments where an install or enable request is
+handled by only one replica; startup loading remains the eager fast path.
 
 ## Persistence and Secrets
 
