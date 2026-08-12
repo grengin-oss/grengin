@@ -27,6 +27,10 @@ slice:
   tests, ignored credential-aware live smoke tests, and local mock UI coverage.
 - Declarative provider-native web search events, citation mapping, and mixed
   provider-executed search plus Grengin-executed MCP tool streams.
+- Native OpenAI, Anthropic, Mistral, and Gemini chat adapters behind the same
+  `ProviderPlugin`/`ChatSession` contract. `chat_stream.rs` now has one typed
+  request, parser, MCP-result, continuation, and title-generation path for both
+  native and declarative providers.
 
 This slice is suitable for review and controlled local testing. The following
 items remain before calling the plugin contract stable or publishing a public
@@ -35,8 +39,10 @@ plugin catalogue:
 - ZIP package ingestion with path/size limits, icons, licenses, fixtures,
   package signatures, and provider-author documentation.
 - Versioned update history, atomic update failure records, and rollback APIs/UI.
-- Native adapters and parity fixtures for every built-in provider, followed by
-  removal of the remaining provider-name branches in application code.
+- Additional captured parity fixtures for every built-in provider, followed by
+  migration of the remaining embedding and image call sites. Built-in chat
+  already keeps its native wire protocols behind `llm-plugin` capability
+  traits while application orchestration stays provider-neutral.
 - A DNS resolver that pins validated addresses for the actual connection,
   additional timeout/cancellation coverage, property/fuzz targets, and the
   remaining matrix of malformed tool, embedding, image, and status responses.
@@ -123,7 +129,7 @@ Only then add the declarative manifest compiler.
 Start with one internal workspace crate to keep ownership clear:
 
 ```text
-service/crates/grengin-provider/
+llm-plugin/
 ├── src/
 │   ├── domain.rs       Canonical typed requests, events, results, and IDs
 │   ├── error.rs        Typed configuration, transport, and provider errors
@@ -548,7 +554,7 @@ default.
 
 ### Phase 2: Introduce Typed Core and Registry
 
-- Add the internal `grengin-provider` crate.
+- Add the root-level internal `llm-plugin` crate.
 - Add canonical requests, events, results, errors, and capability traits.
 - Wrap current provider implementations as native internal adapters.
 - Route provider lookup through `ProviderRegistry` without changing wire
@@ -560,6 +566,10 @@ default.
 - Keep tool authorization and execution in the application layer.
 - Move provider continuation state behind `ChatSession`.
 - Route title generation through the same canonical chat interface.
+- Complete this phase provider by provider with parity fixtures. Do not replace
+  native OpenAI Responses, Anthropic Messages, Mistral Conversations, or Gemini
+  streaming behaviour with a lowest-common-denominator endpoint merely to make
+  the handler generic.
 
 ### Phase 4: Unify Embeddings and Images
 
@@ -593,7 +603,7 @@ default.
 All Rust builds and tests use at most two jobs:
 
 ```bash
-cargo test -p grengin-provider -j 2
+cargo test -p llm-plugin -j 2
 cargo test --workspace --all-features -j 2
 ```
 
@@ -637,7 +647,7 @@ set -a
 source /home/anurag/work/secrets/grengin.sh
 set +a
 GRENGIN_LIVE_PROVIDER_TESTS=1 \
-  cargo test -p grengin-provider --test live_providers -j 2 -- \
+  cargo test -p llm-plugin --test live_providers -j 2 -- \
   --ignored --test-threads=1
 ```
 
