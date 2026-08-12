@@ -14,7 +14,7 @@ with this document require an explicit design change here.
 The `feat/llm-plugin` branches contain the first end-to-end implementation
 slice:
 
-- The internal `grengin-provider` crate, v1 manifest schema, bounded mapping
+- The root-level internal `llm-plugin` crate, v1 manifest schema, bounded mapping
   AST, restricted HTTP executor, SSE decoder, typed capability traits, and
   hot-swappable registry.
 - Declarative chat streaming and tool continuation, embeddings, image
@@ -25,6 +25,8 @@ slice:
   work-focused admin UI for JSON manifest installation.
 - Reference OpenAI-compatible and Anthropic manifests, deterministic HTTP/SSE
   tests, ignored credential-aware live smoke tests, and local mock UI coverage.
+- Declarative provider-native web search events, citation mapping, and mixed
+  provider-executed search plus Grengin-executed MCP tool streams.
 
 This slice is suitable for review and controlled local testing. The following
 items remain before calling the plugin contract stable or publishing a public
@@ -39,7 +41,12 @@ plugin catalogue:
   additional timeout/cancellation coverage, property/fuzz targets, and the
   remaining matrix of malformed tool, embedding, image, and status responses.
 - Production migration rehearsal and opt-in live compatibility tests. Live
-  tests are never part of the default deterministic suite.
+tests are never part of the default deterministic suite.
+
+The internal crate lives at `llm-plugin/` in `grengin-api` and its Cargo
+package is named `llm-plugin` (`llm_plugin` in Rust imports). Keeping it at the
+repository root makes the implementation and its examples discoverable without
+implying a larger nested crate hierarchy.
 
 ## Objective
 
@@ -198,6 +205,13 @@ pub enum ProviderEvent {
 
 Application handlers consume only these types. They must not inspect provider
 JSON paths or provider names.
+
+Provider-native tools follow the same boundary. The application supplies a
+typed capability request such as `web_search: true`; the provider manifest owns
+the provider-specific tool type, version, and payload. Browser-supplied generic
+configuration must not inject raw provider-native tool definitions. Providers
+that omit tool-call IDs are normalized to stable stream-local IDs before events
+reach the application lifecycle code.
 
 ## Provider Package
 
