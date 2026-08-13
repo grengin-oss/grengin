@@ -25,6 +25,10 @@ slice:
   work-focused admin UI for JSON manifest installation.
 - Reference OpenAI-compatible and Anthropic manifests, deterministic HTTP/SSE
   tests, ignored credential-aware live smoke tests, and local mock UI coverage.
+- Protocol-specific role placement in request mappings. In particular, the
+  Anthropic reference manifest extracts canonical system messages into its
+  top-level `system` content blocks and omits them from the user/assistant
+  `messages` array.
 - Declarative provider-native web search events, citation mapping, and mixed
   provider-executed search plus Grengin-executed MCP tool streams.
 - Native OpenAI, Anthropic, Mistral, and Gemini chat adapters behind the same
@@ -373,6 +377,12 @@ support only reviewed operators:
   stream tool arguments as JSON text.
 - `$base64`: encode approved binary input such as an image attachment.
 
+A named `$map` definition may deliberately omit an entry through a conditional
+mapping with no selected output. This is the bounded filtering mechanism for
+protocol differences such as providers that place system instructions outside
+their conversation-message array; provider-specific role handling must remain
+in the manifest rather than re-entering application handlers.
+
 Every operator must have a strongly typed Rust enum representation. Avoid a
 generic interpreter built from arbitrary string operations.
 
@@ -399,6 +409,22 @@ must cover:
 - Finish reasons.
 - Provider errors delivered inside an HTTP 200 SSE stream.
 - Rate-limit and quota classifications.
+
+Canonical `inputTokens` always means total billed input tokens, including any
+cache-read and cache-creation buckets. Providers differ here: OpenAI reports
+cached tokens as a subset of input tokens, while Anthropic reports regular,
+cache-read, and cache-creation input as separate buckets. A usage mapping must
+therefore be able to declare independently whether its source `inputTokens`
+already includes `cachedInputTokens` and `cacheCreationTokens`. Both declarations
+default to included for backward compatibility. The runtime normalizes excluded
+buckets into canonical input and total token counts before emitting usage; cost
+calculation operates only on those canonical counters and must never infer a
+provider from its name.
+
+Tests must cover inclusive and exclusive cache accounting, independent cache
+read/write rates, missing-rate fallback, multiple tool rounds, and overflow or
+malformed counters. Reference manifests must map every cache counter exposed by
+their provider protocol.
 
 Missing optional pointers produce no event. Missing required pointers produce
 a typed mapping error containing the plugin ID and rule ID, never credentials
@@ -469,6 +495,14 @@ Model capabilities are data, not assumptions inferred from provider names.
 They include streaming, tools, vision, PDF input, image generation, embeddings,
 dimensions, context limits, and optional pricing metadata.
 
+Pricing metadata uses USD per million tokens for regular input, output,
+cache-read input, and cache-creation input. A missing cache rate falls back to
+the regular input rate so accounting does not silently underestimate spend. A
+provider may enable protocol-native caching through its ordinary declarative
+request payload, but the matching cache rates and usage pointers must be tested
+together. Reference pricing is versioned data and must be reviewed when a
+provider changes its published rates.
+
 Admin model whitelists and department policies continue to operate on the
 canonical `(provider_id, model_id)` pair.
 
@@ -516,6 +550,10 @@ Suggested persistence model:
 Credential values remain encrypted with the existing application key. APIs
 return only configured status and a safe preview. Logs, errors, fixtures, audit
 records, and exported plugin packages must never contain decrypted secrets.
+
+Messages persist normalized cache-read and cache-creation counters alongside
+the canonical input/output totals and calculated cost. Conversation APIs expose
+those counters so billing can be audited without retaining provider payloads.
 
 ## Security Requirements
 
@@ -694,6 +732,9 @@ Required unit and integration coverage includes:
   secret redaction.
 - Every mapping operator, type mismatch, missing required path, null handling,
   array mapping, role conversion, and deterministic output.
+- Provider-specific role placement, including multiple canonical system
+  messages, exclusion from the normal message array, and preservation across
+  tool-result continuation requests.
 - SSE comments, keepalives, CRLF, multiline data, fragmented frames, fragmented
   UTF-8, blank events, completion sentinels, abrupt EOF, and oversized events.
 - HTTP 200 provider-error events and 400, 401, 403, 404, 408, 429, and 5xx
