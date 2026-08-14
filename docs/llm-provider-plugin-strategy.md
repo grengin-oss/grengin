@@ -586,7 +586,11 @@ The existing `/admin/ai-engines` API owns list, create, read, update, validate,
 connection test, enable/disable, API-key removal, and custom-engine deletion.
 Schema retrieval and manifest preflight validation may remain action endpoints
 under `/admin/ai-engines`, but there is no separate `/admin/provider-plugins`
-CRUD surface.
+CRUD surface. The surrounding HTTP request and response fields use
+`snake_case`, including the top-level `plugin_config` field. The versioned plugin
+document inside `plugin_config` retains its camelCase schema. The temporary
+camelCase API envelope remains accepted only as a deserialization alias so
+existing clients can migrate without downtime.
 
 Both development migration identities, `create_provider_plugins` and
 `add_plugin_config_to_ai_engines`, reached databases and are therefore immutable
