@@ -591,12 +591,11 @@ CRUD surface.
 Both development migration identities, `create_provider_plugins` and
 `add_plugin_config_to_ai_engines`, reached databases and are therefore immutable
 history. Keep both migration files registered so SeaORM accepts either history,
-then use a later reconciliation migration to remove the obsolete provider tables
-only when they are empty. Never repair this divergence by editing
-`seaql_migrations` directly. If either legacy table contains installation data,
-the reconciliation migration must fail without dropping anything; migrate the
-data forward explicitly rather than silently discarding encrypted key material
-or an unsupported multi-secret installation.
+then use a later reconciliation migration to remove the obsolete provider
+tables. These tables were used only by unreleased test deployments, so the
+reconciliation intentionally discards their contents; `ai_engines` is the sole
+supported provider store. Never repair this divergence by editing
+`seaql_migrations` directly.
 
 Credential values remain encrypted with the existing application key. APIs
 return only configured status and a safe preview. Logs, errors, fixtures, audit
