@@ -16,6 +16,7 @@ SPDX-License-Identifier: Apache-2.0
   import { sendMessage, getConversation, getChatMcpServers, type UploadedFile } from '../../../api/chatApi';
   import type { ProviderInfo, ModelInfo } from '../../../api/models';
   import { getModels, isImageModel, findModel } from '../../../api/models';
+  import { persistLastUsedModel, resolveDefaultModel } from '../modelPreferences';
   import type { MCPServer } from '../../../admin/types.js';
   import { getMcpServers } from '../../../api/admin/mcpServers.js';
   import { linkProjectToConversation, getProjectDetail } from '../../../api/projectsApi';
@@ -29,6 +30,8 @@ SPDX-License-Identifier: Apache-2.0
   let isTyping = $state(false);
   let error = $state<ApiError | null>(null);
   let conversationId = $state<string | null>(null);
+  // Title of the open conversation — mirrored into the browser tab title.
+  let conversationTitle = $state<string | null>(null);
   // Track if we're still loading the initial conversation
   let isLoadingConversation = $state(typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('chatId'));
   let messagesContainer = $state<HTMLDivElement | undefined>(undefined);
@@ -170,6 +173,25 @@ SPDX-License-Identifier: Apache-2.0
   // registry — never hardcoded.
   let selectedIsImageModel = $derived(isImageModel(findModel(providers, selectedModel)?.model));
 
+  // Browser-tab title. Reflects the open conversation's title ("<title> · Grengin"),
+  // falling back to the app name when no conversation is selected. Long titles are
+  // truncated so the tab label stays legible; updates reactively on rename.
+  const APP_NAME = 'Grengin';
+  const MAX_TAB_TITLE = 60;
+  $effect(() => {
+    const raw = conversationTitle?.trim();
+    if (raw) {
+      const truncated = raw.length > MAX_TAB_TITLE
+        ? raw.slice(0, MAX_TAB_TITLE - 1).trimEnd() + '…'
+        : raw;
+      document.title = `${truncated} · ${APP_NAME}`;
+    } else {
+      document.title = APP_NAME;
+    }
+    // Restore the plain app name when the chat view unmounts.
+    return () => { document.title = APP_NAME; };
+  });
+
   // Build a meaningful, accessible name/alt for a generated image from the prompt.
   function generatedImageName(prompt: string, index: number): string {
     const base = prompt.trim();
@@ -185,11 +207,33 @@ SPDX-License-Identifier: Apache-2.0
     try {
       const response = await getModels();
       providers = response.providers;
+
+      // A brand-new chat may have mounted before the registry finished loading,
+      // leaving the composer on the compile-time placeholder. Now that the real
+      // models are known, resolve its default (last used → latest available).
+      // Keyed off the URL (race-free) rather than conversationId, which is set
+      // asynchronously by loadConversationFromUrl().
+      const params = new URLSearchParams(window.location.search);
+      if (!params.get('chatId') && !params.get('model')) {
+        applyDefaultModel();
+      }
     } catch (error) {
       console.error('Failed to load models:', error);
       modelsError = $_('chat.errors.failedToLoadModels');
     } finally {
       loadingModels = false;
+    }
+  }
+
+  // Set the composer to the default model for a new chat: the last-used model
+  // if it is still offered, otherwise the latest available model. No-op until
+  // the registry has loaded (loadModels re-runs this once providers arrive).
+  function applyDefaultModel() {
+    const resolved = resolveDefaultModel(providers);
+    if (resolved) {
+      selectedProvider = resolved.provider.key;
+      selectedModel = resolved.model.key;
+      selectedModelInfo = resolved.provider;
     }
   }
 
@@ -243,6 +287,8 @@ SPDX-License-Identifier: Apache-2.0
     selectedProvider = provider.key;
     selectedModel = model.key;
     selectedModelInfo = provider;
+    // Remember the choice so future new chats default to it.
+    persistLastUsedModel(model.key, provider.key);
   }
 
   // Handle model removal
@@ -1077,6 +1123,8 @@ SPDX-License-Identifier: Apache-2.0
 
         const conversation = await getConversation(chatId);
         conversationId = chatId;
+        // Reflect the conversation's title in the browser tab.
+        conversationTitle = conversation.title || null;
 
         // Convert messages to ChatMessageType format
         messages = (conversation.messages || []).map((msg: any) => {
@@ -1188,15 +1236,24 @@ SPDX-License-Identifier: Apache-2.0
     } else {
       // No chatId in URL, clear everything
       conversationId = null;
+      conversationTitle = null;
       messages = [];
       error = null;
       isLoadingConversation = false;
       showArtifactPanel = false;
 
-      // Set model and provider from query params or defaults
-      selectedModel = urlParams.get('model') || 'gpt-5.2';
-      selectedProvider = urlParams.get('provider') || 'openai';
-      selectedModelInfo = providers.find(p => p.key === selectedProvider) || providers[0];
+      // Set model and provider from query params, or default to the last-used
+      // model (falling back to the latest available). An explicit ?model= param
+      // always wins; otherwise applyDefaultModel() picks the right default once
+      // the registry is available (loadModels re-applies it on first mount).
+      const urlModel = urlParams.get('model');
+      if (urlModel) {
+        selectedModel = urlModel;
+        selectedProvider = urlParams.get('provider') || 'openai';
+        selectedModelInfo = providers.find(p => p.key === selectedProvider) || providers[0];
+      } else {
+        applyDefaultModel();
+      }
       webSearchEnabled = urlParams.get('webSearch') === 'true';
 
       const mcpServersParam = urlParams.get('mcpServers');
@@ -1236,6 +1293,15 @@ SPDX-License-Identifier: Apache-2.0
     messageInput?.focus();
   }
 
+  // Keep the tab title fresh when the open conversation is renamed or gets its
+  // server-generated title (dispatched by the sidebar).
+  function handleConversationTitleChanged(event: Event) {
+    const detail = (event as CustomEvent<{ id?: string; title?: string }>).detail;
+    if (detail && detail.id === conversationId && typeof detail.title === 'string') {
+      conversationTitle = detail.title;
+    }
+  }
+
   onMount(() => {
     scrollToBottom(false);
     loadConversationFromUrl();
@@ -1253,6 +1319,9 @@ SPDX-License-Identifier: Apache-2.0
     // Listen for focus chat input event (from Sidebar "New Chat" button)
     window.addEventListener('focusChatInput', handleFocusChatInput);
 
+    // Keep the browser-tab title in sync with sidebar renames / auto-titles.
+    window.addEventListener('conversationTitleChanged', handleConversationTitleChanged);
+
     // Also listen for custom pushstate events
     const originalPushState = history.pushState;
     history.pushState = function(...args) {
@@ -1263,6 +1332,7 @@ SPDX-License-Identifier: Apache-2.0
     return () => {
       window.removeEventListener('popstate', handleUrlChange);
       window.removeEventListener('focusChatInput', handleFocusChatInput);
+      window.removeEventListener('conversationTitleChanged', handleConversationTitleChanged);
       history.pushState = originalPushState;
     };
   });
@@ -1540,7 +1610,9 @@ SPDX-License-Identifier: Apache-2.0
     padding: 2rem;
     gap: 1.5rem;
     width: 100%;
-    max-width: 600px;
+    /* Match the message column / active-chat input width so the composer is the
+       same size in a new (empty) chat and an existing conversation. */
+    max-width: clamp(600px, 90ch, 65vw);
   }
 
   .empty-state-input {

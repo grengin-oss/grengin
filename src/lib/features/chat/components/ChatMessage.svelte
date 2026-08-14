@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
   import type { ChatMessage, McpAuthRequest } from '../../../types/chat';
   import type { ToolResult } from '../../../types/toolCall';
   import { renderMarkdown, copyToClipboard } from '../../../utils/markdown';
+  import { providerIconSvg, providerIconUrl } from '../../../utils/providerIcon';
   import { onMount, onDestroy, tick } from 'svelte';
   import type { ProviderInfo } from '../../../api/models';
 
@@ -429,7 +430,14 @@ SPDX-License-Identifier: Apache-2.0
     <div class="message-avatar">
       <div class="model-avatar">
         {#if messageProvider?.icon}
-          <img src={getIconForTheme(messageProvider)} alt="" class="provider-icon-img" />
+          {@const avatarIcon = getIconForTheme(messageProvider)}
+          {@const avatarSvg = providerIconSvg(avatarIcon)}
+          {@const avatarUrl = providerIconUrl(avatarIcon)}
+          {#if avatarSvg}
+            <span class="provider-icon-img" aria-hidden="true">{@html avatarSvg}</span>
+          {:else if avatarUrl}
+            <img src={avatarUrl} alt="" class="provider-icon-img" />
+          {/if}
         {/if}
       </div>
     </div>
@@ -961,6 +969,10 @@ SPDX-License-Identifier: Apache-2.0
   .assistant-message :global(p) {
     margin: 0 0 var(--space-md) 0;
     line-height: 1.6;
+    /* Break long unbroken tokens (URLs, hashes) so prose wraps instead of
+       forcing the whole message to overflow horizontally. Code and tables keep
+       their own scroll containers below. */
+    overflow-wrap: anywhere;
   }
 
   .assistant-message :global(p:last-child) {
@@ -994,6 +1006,7 @@ SPDX-License-Identifier: Apache-2.0
   .assistant-message :global(li) {
     margin: var(--space-sm) 0;
     line-height: 1.6;
+    overflow-wrap: anywhere;
   }
 
   .assistant-message :global(code) {
@@ -1024,6 +1037,14 @@ SPDX-License-Identifier: Apache-2.0
     border-radius: 0;
     font-size: 0.875rem;
     line-height: 1.6;
+    /* Size the code to its content (min the full width) so the parent <pre>'s
+       overflow-x can actually scroll wide, unbroken code lines instead of
+       clipping them. Without an explicit width the inline default leaves the
+       pre unable to scroll. */
+    display: block;
+    width: max-content;
+    min-width: 100%;
+    box-shadow: none;
   }
 
   .assistant-message :global(blockquote) {
@@ -1038,6 +1059,8 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--link-color);
     text-decoration: underline;
     transition: color 0.2s ease;
+    /* Long links break to wrap rather than overflow the message column. */
+    overflow-wrap: anywhere;
   }
 
   .assistant-message :global(a:hover) {

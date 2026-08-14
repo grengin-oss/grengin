@@ -317,6 +317,23 @@ SPDX-License-Identifier: Apache-2.0
     void updateSelectedChatFromUrl();
   });
 
+  // Broadcast the selected conversation's title so the chat view can mirror it in
+  // the browser tab. Re-runs when the selection or the list changes, so renames
+  // and the server-generated title of a brand-new chat propagate automatically.
+  // Skip the placeholder title so the tab keeps the value the chat view already
+  // resolved from the conversation detail.
+  $effect(() => {
+    const id = selectedChatId;
+    if (!id) return;
+    const selected = chatHistory.find((chat) => chat.id === id);
+    const title = selected?.title;
+    if (title && title !== $_('sidebar.untitledChat')) {
+      window.dispatchEvent(
+        new CustomEvent('conversationTitleChanged', { detail: { id, title } }),
+      );
+    }
+  });
+
   $effect(() => {
     updateSelectedChatFromUrl();
 

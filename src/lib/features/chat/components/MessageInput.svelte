@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0
   import type { MCPServer } from '../../../admin/types.js';
   import { _ } from 'svelte-i18n';
   import SkillPicker from './SkillPicker.svelte';
+  import { providerIconSvg, providerIconUrl } from '../../../utils/providerIcon';
 
   interface MessageInputProps {
     onSend: (message: string, uploadedFiles?: UploadedFile[], webSearch?: boolean) => void;
@@ -116,6 +117,107 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
 
   let isUploading = $derived(uploadingFiles.size > 0);
 
+  // ===== File validation & drag-and-drop =====
+  // Max upload size per file, enforced identically for the picker and drag & drop.
+  const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
+
+  let isDraggingFiles = $state(false);
+  // dragenter/dragleave also fire when moving between child elements, so we count
+  // enters vs leaves to know when the pointer has truly left the drop zone.
+  let dragDepth = 0;
+  let fileError = $state<string | null>(null);
+
+  // Validate a file against the shared size constraint. Returns a localized error
+  // message, or null when the file is acceptable. (Types are unrestricted here,
+  // matching the file picker's accept="*/*".)
+  function validateFile(file: File): string | null {
+    if (file.size > MAX_FILE_SIZE) {
+      return $_('chat.messageInput.fileTooLarge', {
+        values: { name: file.name, max: formatFileSize(MAX_FILE_SIZE) },
+      });
+    }
+    return null;
+  }
+
+  // Shared entry point for adding files from either the picker or a drop: it
+  // validates, reports rejected files, and uploads/previews the accepted ones.
+  function addFiles(files: File[]) {
+    if (files.length === 0) return;
+
+    const accepted: File[] = [];
+    const rejected: string[] = [];
+    for (const file of files) {
+      if (validateFile(file)) rejected.push(file.name);
+      else accepted.push(file);
+    }
+
+    fileError = rejected.length > 0
+      ? $_('chat.messageInput.filesRejected', { values: { names: rejected.join(', ') } })
+      : null;
+
+    if (accepted.length === 0) return;
+
+    attachedFiles = [...attachedFiles, ...accepted];
+
+    // Generate previews and start uploading immediately (same flow as the picker).
+    for (const file of accepted) {
+      uploadFileImmediately(file);
+
+      if (isTextFile(file)) {
+        readFileContent(file).then(content => {
+          filePreviews[file.name] = content;
+        });
+      } else if (isImageFile(file)) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          if (result) {
+            imageThumbnails[file.name] = result;
+            imageThumbnails = { ...imageThumbnails };
+            attachedFiles = [...attachedFiles];
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  }
+
+  // True when the drag payload contains OS files (vs. text/element drags).
+  function dragHasFiles(e: DragEvent): boolean {
+    const types = e.dataTransfer?.types;
+    return !!types && Array.from(types).includes('Files');
+  }
+
+  function handleDragEnter(e: DragEvent) {
+    if (disabled || !dragHasFiles(e)) return;
+    e.preventDefault();
+    dragDepth++;
+    isDraggingFiles = true;
+  }
+
+  function handleDragOver(e: DragEvent) {
+    if (disabled || !dragHasFiles(e)) return;
+    // Must preventDefault on dragover for the element to be a valid drop target.
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    isDraggingFiles = true;
+  }
+
+  function handleDragLeave(_e: DragEvent) {
+    if (!isDraggingFiles) return;
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) isDraggingFiles = false;
+  }
+
+  function handleDrop(e: DragEvent) {
+    dragDepth = 0;
+    isDraggingFiles = false;
+    if (disabled || !dragHasFiles(e)) return;
+    e.preventDefault();
+    const dropped = e.dataTransfer?.files ? Array.from(e.dataTransfer.files) : [];
+    addFiles(dropped);
+  }
+
   async function uploadFileImmediately(file: File) {
     uploadingFiles.add(file.name);
     uploadingFiles = new Set(uploadingFiles);
@@ -156,6 +258,7 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
       attachedFiles = [];
       uploadedFileResults = new Map();
       failedUploads = new Set();
+      fileError = null;
       
       if (textarea) {
         textarea.style.height = 'auto';
@@ -224,31 +327,7 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   function handleFileChange(event: Event) {
     const target = event.target as HTMLInputElement;
     if (target.files) {
-      const newFiles = Array.from(target.files);
-      attachedFiles = [...attachedFiles, ...newFiles];
-
-      // Generate previews and start uploading immediately
-      for (const file of newFiles) {
-        // Start upload immediately
-        uploadFileImmediately(file);
-
-        if (isTextFile(file)) {
-          readFileContent(file).then(content => {
-            filePreviews[file.name] = content;
-          });
-        } else if (isImageFile(file)) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const result = e.target?.result as string;
-            if (result) {
-              imageThumbnails[file.name] = result;
-              imageThumbnails = { ...imageThumbnails };
-              attachedFiles = [...attachedFiles];
-            }
-          };
-          reader.readAsDataURL(file);
-        }
-      }
+      addFiles(Array.from(target.files));
     }
     showPlusMenu = false;
     target.value = '';
@@ -452,7 +531,47 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   accept="*/*"
 />
 
-<div class="input-area-wrapper">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  class="input-area-wrapper"
+  class:dragging={isDraggingFiles}
+  ondragenter={handleDragEnter}
+  ondragover={handleDragOver}
+  ondragleave={handleDragLeave}
+  ondrop={handleDrop}
+>
+  <!-- Drag & drop overlay: shown while files are dragged over the composer -->
+  {#if isDraggingFiles}
+    <div class="drop-overlay" aria-hidden="true">
+      <div class="drop-overlay-inner">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 5 17 10"></polyline>
+          <line x1="12" y1="5" x2="12" y2="15"></line>
+        </svg>
+        <span class="drop-overlay-title">{$_('chat.messageInput.dropFilesHere')}</span>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Invalid-file error (size/type validation) -->
+  {#if fileError}
+    <div class="file-error" role="alert">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span class="file-error-text">{fileError}</span>
+      <button class="file-error-dismiss" onclick={() => fileError = null} aria-label={$_('chat.errors.dismissError')}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  {/if}
+
   <!-- File Attachments Display -->
   {#if attachedFiles.length > 0}
     <div class="file-attachments">
@@ -602,8 +721,12 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
             <div class="model-icon">
               {#if selectedProvider}
                 {@const providerIcon = getIconForTheme(providers.find(p => p.key === selectedProvider))}
-                {#if providerIcon}
-                  <img src={providerIcon} alt="" class="provider-icon-img" />
+                {@const iconSvg = providerIconSvg(providerIcon)}
+                {@const iconUrl = providerIconUrl(providerIcon)}
+                {#if iconSvg}
+                  <span class="provider-icon-img" aria-hidden="true">{@html iconSvg}</span>
+                {:else if iconUrl}
+                  <img src={iconUrl} alt="" class="provider-icon-img" />
                 {:else}
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/>
@@ -677,10 +800,17 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
                 {#each providers as provider}
                   {@const grouped = splitModels(provider.models)}
                   {#if grouped.text.length > 0 || grouped.image.length > 0}
+                    {@const providerIcon = getIconForTheme(provider)}
+                    {@const iconSvg = providerIconSvg(providerIcon)}
+                    {@const iconUrl = providerIconUrl(providerIcon)}
                     <div class="provider-section">
                       <div class="provider-header">
                         <div class="provider-icon">
-                          <img src={getIconForTheme(provider)} alt="" class="provider-icon-img" />
+                          {#if iconSvg}
+                            <span class="provider-icon-img" aria-hidden="true">{@html iconSvg}</span>
+                          {:else if iconUrl}
+                            <img src={iconUrl} alt="" class="provider-icon-img" />
+                          {/if}
                         </div>
                         <span class="provider-name">{provider.name}</span>
                       </div>
@@ -919,6 +1049,81 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     width: 100%;
     max-width: 900px;
     margin: 0 auto;
+    position: relative;
+  }
+
+  /* Drag & drop overlay */
+  .drop-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--glass-radius, 16px);
+    border: 2px dashed var(--brand);
+    background: color-mix(in oklab, var(--brand) 12%, var(--bg-primary));
+    /* Let drag events pass through to the wrapper so enter/leave don't flicker. */
+    pointer-events: none;
+    animation: dropFadeIn 0.12s ease-out;
+  }
+
+  @keyframes dropFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .drop-overlay-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--brand);
+    font-weight: 600;
+    text-align: center;
+    padding: var(--space-lg);
+  }
+
+  .drop-overlay-title {
+    font-size: 0.95rem;
+  }
+
+  /* Invalid-file error banner */
+  .file-error {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md, 10px);
+    background: color-mix(in oklab, var(--error, #dc2626) 12%, var(--bg-primary));
+    border: 1px solid color-mix(in oklab, var(--error, #dc2626) 40%, transparent);
+    color: var(--error, #dc2626);
+    font-size: 0.85rem;
+  }
+
+  .file-error-text {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  .file-error-dismiss {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: var(--radius-sm, 6px);
+    opacity: 0.8;
+  }
+
+  .file-error-dismiss:hover {
+    opacity: 1;
+    background: color-mix(in oklab, var(--error, #dc2626) 18%, transparent);
   }
 
   /* ===== Main Input Container - Liquid Glass ===== */
@@ -1437,6 +1642,9 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     width: 16px;
     height: 16px;
     object-fit: contain;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .provider-models {
