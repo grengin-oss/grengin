@@ -20,9 +20,11 @@ slice:
 - Declarative chat streaming and tool continuation, embeddings, image
   generation, and model discovery integrated with the existing application
   policy, storage, and frontend SSE boundaries.
-- Encrypted plugin credentials, provider persistence and migration, permissioned
-  validation/install/test/enable/disable/delete APIs, OpenAPI coverage, and a
-  work-focused admin UI for JSON manifest installation.
+- A single provider persistence and administration model based on the existing
+  `ai_engines` table and API. Custom engines store their declarative manifest
+  and runtime options in nullable `pluginConfig`; API keys remain encrypted in
+  the existing `apiKey` column. Built-in engines use embedded manifests and a
+  null `pluginConfig`.
 - Reference OpenAI-compatible and Anthropic manifests, deterministic HTTP/SSE
   tests, ignored credential-aware live smoke tests, and local mock UI coverage.
 - Protocol-specific role placement in request mappings. In particular, the
@@ -31,14 +33,15 @@ slice:
   `messages` array.
 - Declarative provider-native web search events, citation mapping, and mixed
   provider-executed search plus Grengin-executed MCP tool streams.
-- Native OpenAI, Anthropic, Mistral, and Gemini chat adapters behind the same
-  `ProviderPlugin`/`ChatSession` contract. `chat_stream.rs` now has one typed
-  request, parser, MCP-result, continuation, and title-generation path for both
-  native and declarative providers.
+- Embedded provider-specific manifests for OpenAI, Anthropic, Mistral, and
+  Gemini behind the same `ProviderPlugin`/`ChatSession` contract. Each built-in
+  owns its native request payload, SSE mapping, web-search tools, and tool-result
+  continuation declaratively; `chat_stream.rs` has one typed provider-neutral
+  request, parser, MCP-result, continuation, and title-generation path.
 - Database-backed lazy registry hydration for enabled declarative providers.
-  A replica that did not process the install/enable request can compile and
-  cache the provider on its first request, while disabled and invalid records
-  continue to fail closed.
+  A replica that did not process an AI-engine create or update request can
+  compile and cache the provider from `ai_engines.pluginConfig` on its first
+  request, while disabled, invalid, or undecryptable records fail closed.
 
 This slice is suitable for review and controlled local testing. The following
 items remain before calling the plugin contract stable or publishing a public
@@ -47,10 +50,10 @@ plugin catalogue:
 - ZIP package ingestion with path/size limits, icons, licenses, fixtures,
   package signatures, and provider-author documentation.
 - Versioned update history, atomic update failure records, and rollback APIs/UI.
-- Additional captured parity fixtures for every built-in provider, followed by
-  migration of the remaining embedding and image call sites. Built-in chat
-  already keeps its native wire protocols behind `llm-plugin` capability
-  traits while application orchestration stays provider-neutral.
+- Additional captured parity fixtures for every built-in provider and the
+  remaining embedding and image response variants. Built-in wire protocols are
+  represented by embedded manifests behind `llm-plugin` capability traits
+  while application orchestration stays provider-neutral.
 - A DNS resolver that pins validated addresses for the actual connection,
   additional timeout/cancellation coverage, property/fuzz targets, and the
   remaining matrix of malformed tool, embedding, image, and status responses.
@@ -101,6 +104,10 @@ The first stable plugin contract has deliberately limited transport scope.
   is declared by the plugin and is not restricted to JSON-only responses.
 - Provider responses are normalized into Grengin-owned typed events and
   results before reaching application code.
+- Response rules may match both JSON values and their JSON types, and may
+  JSON-encode selected response values when a provider emits structured tool
+  arguments instead of string fragments. These are bounded mapping features,
+  not arbitrary expression evaluation.
 - Existing frontend SSE event names and payloads remain unchanged.
 
 ## Explicit Non-Goals
@@ -527,25 +534,49 @@ version. A failed update leaves the previous provider active and records the
 validation failure.
 
 The registry is process-local, while provider definitions and encrypted
-credentials are durable. On a registry miss, a request may load only an
-`enabled` provider from persistence, compile it through the same validated
-construction path, atomically cache it in that process, and continue. Missing,
-disabled, invalid, or undecryptable records fail closed. This lazy hydration is
-required for multi-replica deployments where an install or enable request is
-handled by only one replica; startup loading remains the eager fast path.
+credentials are durable in `ai_engines`. On a registry miss, a request may
+load only an enabled engine from persistence. A custom engine is compiled from
+its `pluginConfig`; a built-in engine is compiled from its embedded manifest.
+The resulting immutable provider is atomically cached in that process.
+Missing, disabled, invalid, or undecryptable records fail closed. This lazy
+hydration is required for multi-replica deployments where an AI-engine create
+or update request is handled by only one replica; startup loading remains the
+eager fast path.
 
 ## Persistence and Secrets
 
-Keep provider definitions separate from installation credentials and policy.
+Use the existing `ai_engines` row as the single persisted provider installation
+and policy record. Do not create a parallel provider-plugin CRUD resource.
 
-Suggested persistence model:
+- `engineKey`, `displayName`, `isEnabled`, model whitelist, default models,
+  validation status, and timestamps keep their existing meanings.
+- `apiKey` stores the provider's single v1 secret encrypted with the existing
+  application key. Self-hosted plugins may declare no credential. A future
+  manifest version may add a dedicated encrypted credential map if a real
+  provider requires multiple independent secrets; plaintext credentials must
+  never be placed in `pluginConfig`.
+- Nullable `pluginConfig` is a typed JSON object containing the custom provider
+  manifest plus administrator runtime settings: `configuration`, optional base
+  URL override, and explicit local/private-network allowances.
+- A null `pluginConfig` identifies an embedded built-in provider. The runtime
+  resolves its manifest by `engineKey`, while all product policy still comes
+  from the same AI-engine row.
+- The custom manifest ID must exactly equal `engineKey`. Custom engine keys may
+  not replace reserved built-in keys.
 
-- `provider_plugins`: ID, key, version, manifest JSON, digest, source, status,
-  validation error, and timestamps.
-- `provider_credentials`: plugin ID, slot ID, encrypted value, validation
-  status, validation timestamp, and timestamps.
-- Existing AI-engine configuration: enabled state, model whitelist, default
-  models, and API-key status, migrated to reference a provider plugin.
+The existing `/admin/ai-engines` API owns list, create, read, update, validate,
+connection test, enable/disable, API-key removal, and custom-engine deletion.
+Schema retrieval and manifest preflight validation may remain action endpoints
+under `/admin/ai-engines`, but there is no separate `/admin/provider-plugins`
+CRUD surface.
+
+The unreleased development migration that created `provider_plugins` and
+`provider_credentials` must be rolled back with SeaORM while it is still the
+latest migration, then replaced by the `ai_engines.pluginConfig` migration. Do
+this only where those development tables contain no provider installations. If
+that migration ever reaches an environment with real installation data, use a
+forward data migration instead and fail rather than silently discard encrypted
+key material or an unsupported multi-secret installation.
 
 Credential values remain encrypted with the existing application key. APIs
 return only configured status and a safe preview. Logs, errors, fixtures, audit
@@ -640,9 +671,10 @@ default.
 
 ### Phase 6: Administration and Distribution
 
-- Add upload, validation, configuration, connection-test, enable, disable,
-  update, rollback, and removal APIs.
-- Add the corresponding quiet, work-focused admin UI.
+- Extend the existing AI-engine create/update/read/delete actions with manifest
+  upload, preflight validation, connection test, enable/disable, and removal.
+  Do not expose a second provider-plugin CRUD API or admin concept.
+- Add the corresponding controls to the existing AI-engine admin UI.
 - Publish a provider-authoring guide, schema documentation, fixture harness,
   and reference self-hosted plugin.
 - Add package digests and optional signatures before introducing any public
