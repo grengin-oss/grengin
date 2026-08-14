@@ -131,8 +131,12 @@ export const DEMO_ROLES: DemoRole[] = [
 ]
 
 // ---------------------------------------------------------------------------
-// Departments (spec §3.5) — 8 departments, good descriptions, budgets ≥ $30 with
-// 20–60% used, 4–8 allowed models incl 1–3 image models (mandatory in Marketing).
+// Departments (spec §3.5) — a HIERARCHICAL wealth-management org: 3 top-level
+// divisions, each with 3 sub-departments (12 nodes across depth 0–1). Budgets
+// roll UP the tree — a division's allocation equals its own direct budget plus
+// everything distributed to its children — and so do member counts. Every
+// department has a good description, a budget with 20–60% used, and 4–8 allowed
+// models incl. 1–3 image models.
 // ---------------------------------------------------------------------------
 export interface AllowedModelRef {
   model: string
@@ -146,28 +150,64 @@ export interface DemoDepartment extends Department {
 const deptId = (n: number) => `d00${n}0000-0000-4000-8000-0000000000${String(n).padStart(2, '0')}`
 
 interface DeptSeed {
-  n: number
+  n: number // 1-based index → stable id + user-assignment order
+  key: string // slug used by prompt assignment + budget/member rollup
   name: string
   description: string
-  budget: number
-  usedPct: number // 0.20–0.60
+  parent: number | null // parent seed `n`, or null for a top-level division
+  budget: number // this dept's OWN (direct) budget allocation
+  usedPct: number // 0.20–0.60 of the direct budget
+  memberCount: number // DIRECT members assigned to this dept
   textCount: number // number of text models allowed
   imageCount: number // number of image models allowed (1–3)
 }
 
+// Order matters: a parent always precedes its children — the path builder, the
+// budget/member rollup and the user-assignment vector all walk this array
+// top-to-bottom. Divisions first, then their sub-departments. Direct member
+// counts sum to 50 (each division's single direct member is its Managing
+// Director, who is also that division's Department Admin).
 const DEPT_SEEDS: DeptSeed[] = [
-  { n: 1, name: 'Engineering', description: 'Builds and maintains Grengin’s core platform, APIs and infrastructure.', budget: 8000, usedPct: 0.42, textCount: 5, imageCount: 1 },
-  { n: 2, name: 'Sales', description: 'Drives revenue through outbound prospecting and inbound deal cycles.', budget: 6000, usedPct: 0.55, textCount: 4, imageCount: 1 },
-  { n: 3, name: 'Marketing', description: 'Owns brand, demand generation, content and campaign creative.', budget: 5000, usedPct: 0.48, textCount: 4, imageCount: 3 },
-  { n: 4, name: 'Finance', description: 'Manages budgets, forecasting, procurement and financial reporting.', budget: 4000, usedPct: 0.27, textCount: 4, imageCount: 1 },
-  { n: 5, name: 'Support', description: 'Resolves customer issues and keeps satisfaction and response times healthy.', budget: 4500, usedPct: 0.36, textCount: 5, imageCount: 1 },
-  { n: 6, name: 'Product', description: 'Defines product strategy, roadmap and requirements across the platform.', budget: 5500, usedPct: 0.51, textCount: 5, imageCount: 2 },
-  { n: 7, name: 'Operations', description: 'Keeps the business running: vendors, tooling, facilities and logistics.', budget: 3500, usedPct: 0.33, textCount: 4, imageCount: 1 },
-  { n: 8, name: 'Design', description: 'Crafts product and brand experiences, from research to polished UI.', budget: 3000, usedPct: 0.44, textCount: 4, imageCount: 2 },
+  // ---- Divisions (depth 0) --------------------------------------------------
+  { n: 1, key: 'private-wealth', name: 'Private Wealth', parent: null, description: 'Serves high- and ultra-high-net-worth clients across advisory, planning and onboarding.', budget: 1500, usedPct: 0.3, memberCount: 1, textCount: 5, imageCount: 2 },
+  { n: 2, key: 'investment-management', name: 'Investment Management', parent: null, description: 'Manages client capital end to end — research, portfolio construction, rebalancing and execution.', budget: 1500, usedPct: 0.3, memberCount: 1, textCount: 5, imageCount: 2 },
+  { n: 3, key: 'corporate-services', name: 'Corporate Services', parent: null, description: 'Runs the firm itself: compliance and risk oversight, technology platforms and corporate finance.', budget: 1500, usedPct: 0.3, memberCount: 1, textCount: 5, imageCount: 1 },
+
+  // ---- Private Wealth → sub-departments (depth 1) ---------------------------
+  { n: 4, key: 'private-client-advisory', name: 'Private Client Advisory', parent: 1, description: 'Relationship managers and advisors guiding HNW clients on goals, allocation and bespoke solutions.', budget: 9000, usedPct: 0.46, memberCount: 6, textCount: 5, imageCount: 2 },
+  { n: 5, key: 'financial-planning', name: 'Financial Planning', parent: 1, description: 'Builds holistic retirement, tax and estate plans tailored to each client’s objectives.', budget: 6000, usedPct: 0.38, memberCount: 5, textCount: 4, imageCount: 1 },
+  { n: 6, key: 'client-onboarding', name: 'Client Onboarding & KYC', parent: 1, description: 'Runs account opening, KYC/AML checks and suitability reviews for new client relationships.', budget: 4000, usedPct: 0.29, memberCount: 5, textCount: 4, imageCount: 1 },
+
+  // ---- Investment Management → sub-departments (depth 1) --------------------
+  { n: 7, key: 'portfolio-management', name: 'Portfolio Management', parent: 2, description: 'Constructs and rebalances discretionary portfolios across asset classes to client mandates.', budget: 9500, usedPct: 0.52, memberCount: 6, textCount: 5, imageCount: 1 },
+  { n: 8, key: 'investment-research', name: 'Investment Research', parent: 2, description: 'Produces equity, fixed-income and macro research that drives the firm’s investment views.', budget: 8000, usedPct: 0.48, memberCount: 5, textCount: 5, imageCount: 2 },
+  { n: 9, key: 'trading-execution', name: 'Trading & Execution', parent: 2, description: 'Executes trades efficiently, manages liquidity and minimises market impact and cost.', budget: 5000, usedPct: 0.35, memberCount: 5, textCount: 4, imageCount: 1 },
+
+  // ---- Corporate Services → sub-departments (depth 1) ----------------------
+  { n: 10, key: 'compliance-risk', name: 'Compliance & Risk', parent: 3, description: 'Monitors regulatory obligations, investment-risk limits and surveillance across the firm.', budget: 4500, usedPct: 0.31, memberCount: 5, textCount: 4, imageCount: 1 },
+  { n: 11, key: 'technology-data', name: 'Technology & Data', parent: 3, description: 'Builds and runs the advisory, portfolio and client-reporting platforms and data pipeline.', budget: 7000, usedPct: 0.44, memberCount: 5, textCount: 5, imageCount: 1 },
+  { n: 12, key: 'finance-operations', name: 'Finance & Operations', parent: 3, description: 'Owns the firm’s own budgeting, billing, fund accounting and back-office operations.', budget: 3500, usedPct: 0.27, memberCount: 5, textCount: 4, imageCount: 1 },
 ]
 
+const seedByN = new Map(DEPT_SEEDS.map((s) => [s.n, s]))
+const childSeeds = (n: number) => DEPT_SEEDS.filter((s) => s.parent === n)
+const slugify = (name: string) => name.toLowerCase().replace(/\s+/g, '-')
+
+// Materialised path, e.g. "/private-wealth/private-client-advisory". Mirrors the
+// admin route's generatePath so seeded + runtime-created departments look alike.
+function deptPath(seed: DeptSeed): string {
+  if (!seed.parent) return '/' + slugify(seed.name)
+  return '/' + slugify(seedByN.get(seed.parent)!.name) + '/' + slugify(seed.name)
+}
+
+// Every descendant seed `n` under a given department (depth is 2 here, but this
+// recurses so deeper trees would still roll up correctly).
+function descendantNs(n: number): number[] {
+  return childSeeds(n).flatMap((c) => [c.n, ...descendantNs(c.n)])
+}
+
 // Pick a deterministic set of allowed models for a department: `textCount` text
-// models + `imageCount` image models. Marketing always gets image models.
+// models + `imageCount` image models.
 function pickAllowedModels(seed: DeptSeed): AllowedModelRef[] {
   const texts = TEXT_MODELS.slice(0, seed.textCount)
   const images = IMAGE_MODELS.slice(0, Math.max(1, Math.min(3, seed.imageCount)))
@@ -206,25 +246,29 @@ export interface DemoUser {
   updated_at: string
 }
 
-// Member distribution across the 8 departments (≥5 each, spec §3.5). Sums to 50.
-const DEPT_MEMBER_COUNTS = [7, 7, 7, 6, 6, 6, 6, 5]
+// Direct-member distribution across the 12 departments, in DEPT_SEEDS order
+// (divisions get 1 each, leaves ≥5). Sums to 50.
+const DEPT_MEMBER_COUNTS = DEPT_SEEDS.map((s) => s.memberCount)
 // Extra users who belong to no department (spec §3.6 "Unassigned" bucket).
 const UNASSIGNED_COUNT = 3
 
 // Role assignment plan (spec §3.9). Index into the 50-user array.
 // - 2 Super Admins (org-wide)
-// - 8 Department Admins (each scoped to their own department)
-// - 2 Finance Admins (department-scoped)
+// - 12 Department Admins (one per department, incl. each division's Managing
+//   Director; each scoped to their own department)
+// - 2 Finance Admins (scoped to Finance & Operations)
 // - 2 AI Managers (custom role, org-wide)
-// - remaining 36 → User
+// - remaining 32 → User
 function buildUsers(): DemoUser[] {
-  // Build the department assignment vector first (which dept each of 50 users is in).
+  // Build the department assignment vector first (which dept each of 50 users is
+  // in), keyed by DEPT_SEEDS index and mirroring the array order.
   const deptOfUser: number[] = []
   DEPT_MEMBER_COUNTS.forEach((count, di) => {
     for (let k = 0; k < count; k++) deptOfUser.push(di)
   })
 
-  // First user in each department is that department's Department Admin.
+  // First user in each department is that department's Department Admin (this is
+  // the Managing Director for a division, the team lead for a leaf).
   const deptAdminIndex = new Map<number, number>()
   {
     const firstSeen = new Set<number>()
@@ -237,13 +281,16 @@ function buildUsers(): DemoUser[] {
   }
   const deptAdminIdxSet = new Set(deptAdminIndex.values())
 
-  // Super Admins: 1 and 40 (NOT index 0 — that is Engineering's first member and
-  // must stay its Department Admin so every department has one, spec §3.5).
-  // AI Managers: 41, 42. Finance Admins: 43, 44. None of these are the first
-  // member of a department, so they never collide with a Department Admin slot.
-  const superIdx = new Set([1, 40])
+  // Org-wide + scoped special roles are placed on indices that are NOT the first
+  // member of any department, so they never steal a Department Admin slot. With
+  // the counts above the per-department first-member indices are
+  // {0,1,2,3,9,14,19,25,30,35,40,45}; the picks below avoid all of them.
+  // Super Admins: 4, 24. AI Managers: 41, 42 (Technology & Data members).
+  // Finance Admins: 46, 47 (Finance & Operations members, scoped to that dept).
+  const superIdx = new Set([4, 24])
   const aiIdx = new Set([41, 42])
-  const finIdx = new Set([43, 44])
+  const finIdx = new Set([46, 47])
+  const financeDeptN = 12 // Finance & Operations
 
   const users: DemoUser[] = []
   for (let i = 0; i < 50; i++) {
@@ -269,7 +316,7 @@ function buildUsers(): DemoUser[] {
     } else if (finIdx.has(i)) {
       role_id = 'role-fin'
       roleName = 'Finance Admin'
-      scope = deptId(DEPT_SEEDS[3].n) // scoped to Finance (spec §3.9)
+      scope = deptId(financeDeptN) // scoped to Finance & Operations (spec §3.9)
     } else if (aiIdx.has(i)) {
       role_id = 'role-ai'
       roleName = 'AI Manager'
@@ -357,30 +404,40 @@ export function usersInDepartment(departmentId: string): DemoUser[] {
   return DEMO_USERS.filter((u) => u.department_id === departmentId)
 }
 
-// Build the 8 department records now that users exist (member counts + admins).
+// Build the 12 department records now that users exist. Member counts and
+// budgets roll UP the tree: a division reports its direct members plus every
+// descendant's, and an allocation equal to its own direct budget plus the sum
+// distributed to its children.
 export const DEMO_DEPARTMENTS: DemoDepartment[] = DEPT_SEEDS.map((seed) => {
   const id = deptId(seed.n)
-  const members = usersInDepartment(id)
-  const admins = members.filter((u) => u.role_id === 'role-dept').map((u) => u.id)
-  const used = Math.round(seed.budget * seed.usedPct)
+  const directMembers = usersInDepartment(id)
+  const admins = directMembers.filter((u) => u.role_id === 'role-dept').map((u) => u.id)
+
+  const kids = childSeeds(seed.n)
+  const totalMembers = [seed.n, ...descendantNs(seed.n)].reduce((sum, n) => sum + usersInDepartment(deptId(n)).length, 0)
+
+  const distributed = kids.reduce((sum, k) => sum + k.budget, 0)
+  const allocated = seed.budget + distributed // leaves: distributed = 0 ⇒ just their own
+  const directUsed = Math.round(seed.budget * seed.usedPct)
+
   return {
     id,
     name: seed.name,
     description: seed.description,
-    parent_id: null,
-    path: '/' + seed.name.toLowerCase().replace(/\s+/g, '-'),
-    depth: 0,
+    parent_id: seed.parent ? deptId(seed.parent) : null,
+    path: deptPath(seed),
+    depth: seed.parent ? 1 : 0,
     admin_ids: admins,
-    member_count: members.length,
-    total_member_count: members.length,
-    child_count: 0,
-    budget_allocated: seed.budget,
-    budget_distributed: 0,
-    budget_available: seed.budget - used,
-    budget_used: used,
+    member_count: directMembers.length,
+    total_member_count: totalMembers,
+    child_count: kids.length,
+    budget_allocated: allocated,
+    budget_distributed: distributed,
+    budget_available: allocated - distributed - directUsed,
+    budget_used: directUsed,
     budget_period: 'monthly',
     allowed_models: pickAllowedModels(seed),
-    action_on_exceed: seed.name === 'Marketing' ? 'block' : 'warn',
+    action_on_exceed: seed.name === 'Compliance & Risk' ? 'block' : 'warn',
     created_at: '2026-01-05T00:00:00Z',
     updated_at: daysAgo(2, 12),
   }
@@ -408,11 +465,12 @@ export interface DemoRolePrompt {
 }
 
 const PERSONA_SEEDS: Array<{ name: string; text: string; vars: string[]; usage: number; rating: number; feedback: number }> = [
-  { name: 'Marketer', text: 'You are a marketing specialist. Write compelling, on-brand copy for {campaign} targeting {audience}.', vars: ['campaign', 'audience'], usage: 1840, rating: 0.92, feedback: 420 },
-  { name: 'Sales', text: 'You are a sales assistant. Draft a persuasive outreach email for {product} to {prospect}.', vars: ['product', 'prospect'], usage: 1520, rating: 0.88, feedback: 365 },
-  { name: 'Analyst', text: 'You are a data analyst. Summarise {dataset} and surface the top three insights.', vars: ['dataset'], usage: 1210, rating: 0.9, feedback: 298 },
-  { name: 'Developer', text: 'You are a senior engineer. Review {code} for bugs and suggest improvements.', vars: ['code'], usage: 1975, rating: 0.85, feedback: 512 },
-  { name: 'Support', text: 'You are a support agent. Respond helpfully to {ticket} in a friendly, concise tone.', vars: ['ticket'], usage: 940, rating: 0.94, feedback: 233 },
+  { name: 'Wealth Advisor', text: 'You are a senior wealth advisor. Draft a clear, compliant client update on {topic} for a {client_segment} client.', vars: ['topic', 'client_segment'], usage: 1840, rating: 0.92, feedback: 420 },
+  { name: 'Research Analyst', text: 'You are an investment research analyst. Summarise the outlook for {asset} and give a rated recommendation with the key risks.', vars: ['asset'], usage: 1520, rating: 0.89, feedback: 365 },
+  { name: 'Financial Planner', text: 'You are a certified financial planner. Outline a retirement, tax and estate plan for a client with {profile}.', vars: ['profile'], usage: 1210, rating: 0.9, feedback: 298 },
+  { name: 'Portfolio Manager', text: 'You are a portfolio manager. Explain the rationale for rebalancing {portfolio} given {market_condition}.', vars: ['portfolio', 'market_condition'], usage: 1660, rating: 0.87, feedback: 402 },
+  { name: 'Compliance Officer', text: 'You are a compliance officer. Review {communication} for regulatory and suitability issues and flag any concerns.', vars: ['communication'], usage: 980, rating: 0.94, feedback: 233 },
+  { name: 'Platform Engineer', text: 'You are a senior platform engineer. Review {code} in our portfolio and client-reporting systems for bugs and improvements.', vars: ['code'], usage: 1975, rating: 0.85, feedback: 512 },
 ]
 
 export const DEMO_ROLE_PROMPTS: DemoRolePrompt[] = PERSONA_SEEDS.map((p, i) => ({
@@ -430,16 +488,23 @@ export const DEMO_ROLE_PROMPTS: DemoRolePrompt[] = PERSONA_SEEDS.map((p, i) => (
   updated_at: daysAgo(15 + i, 12),
 }))
 
-// Assign ≥1 prompt to every department (spec §3.5). Maps each dept to a persona.
+// Assign ≥1 prompt to every department (spec §3.5). Maps each dept (keyed by
+// name) to the persona(s) that fit its work. rp-1 Wealth Advisor, rp-2 Research
+// Analyst, rp-3 Financial Planner, rp-4 Portfolio Manager, rp-5 Compliance
+// Officer, rp-6 Platform Engineer.
 const DEPT_PROMPT_ASSIGNMENT: Record<string, string[]> = {
-  Engineering: ['rp-4'],
-  Sales: ['rp-2'],
-  Marketing: ['rp-1'],
-  Finance: ['rp-3'],
-  Support: ['rp-5'],
-  Product: ['rp-3', 'rp-4'],
-  Operations: ['rp-3'],
-  Design: ['rp-1'],
+  'Private Wealth': ['rp-1'],
+  'Investment Management': ['rp-4'],
+  'Corporate Services': ['rp-5'],
+  'Private Client Advisory': ['rp-1'],
+  'Financial Planning': ['rp-3'],
+  'Client Onboarding & KYC': ['rp-5'],
+  'Portfolio Management': ['rp-4'],
+  'Investment Research': ['rp-2'],
+  'Trading & Execution': ['rp-4'],
+  'Compliance & Risk': ['rp-5'],
+  'Technology & Data': ['rp-6'],
+  'Finance & Operations': ['rp-3'],
 }
 
 export interface DemoDepartmentPrompt {
@@ -684,7 +749,7 @@ export function setVisitorIdentity(name: string | null | undefined, email: strin
 export function getVisitorUser(): DemoUser {
   const name = visitorIdentity?.name ?? 'Unknown'
   const email = visitorIdentity?.email ?? 'unknown@demo.grengin.com'
-  const engineering = DEMO_DEPARTMENTS[0]
+  const homeDept = DEMO_DEPARTMENTS[0] // Private Wealth (top division)
   return {
     id: 'usr-visitor',
     sub: 'demo|visitor',
@@ -696,9 +761,9 @@ export function getVisitorUser(): DemoUser {
     role_id: 'role-super',
     scope_department_id: null,
     status: 'active',
-    department_id: engineering.id,
-    department_name: engineering.name,
-    department: engineering.name,
+    department_id: homeDept.id,
+    department_name: homeDept.name,
+    department: homeDept.name,
     is_super_admin: true,
     has_password: false,
     mfa_enabled: false,
@@ -711,7 +776,7 @@ export function getVisitorUser(): DemoUser {
 // NOTE: the visitor-pinned user table (`usersWithVisitor`) and live per-role
 // counts (`roleUserCount`) now live in demoState.ts, which owns the MUTABLE users
 // list so create/edit/delete are reflected. `getVisitorUser` above stays here as
-// it only depends on the pinned identity + the static Engineering department.
+// it only depends on the pinned identity + the static Private Wealth division.
 
 // ---------------------------------------------------------------------------
 // Chat landing (spec §2) — exactly 2 pre-existing conversations: one that used
@@ -721,20 +786,38 @@ export function getVisitorUser(): DemoUser {
 // ---------------------------------------------------------------------------
 export const WEB_SEARCH_CONV_ID = 'demo-conv-web-search-0001'
 export const IMAGE_GEN_CONV_ID = 'demo-conv-image-gen-0001'
-const DEMO_IMAGE_FILE_ID = 'file-demo-launch-banner'
+// Conversation that exercises the ENGG-399 UX fixes end-to-end: a descriptive
+// title (browser-tab title), an attached file (drag & drop upload), a set model
+// (last-used default), and wide code / table / long-URL content (scroll + wrap).
+export const ENGG399_CONV_ID = 'demo-conv-engg399-0001'
+const DEMO_IMAGE_FILE_ID = 'file-demo-q3-review-cover'
+const DEMO_DATASET_FILE_ID = 'file-demo-engg399-dataset'
 
 // Generated-image file, registered so GET /files/:id/download serves a placeholder.
 export const DEMO_CHAT_FILES = [
   {
     id: DEMO_IMAGE_FILE_ID,
-    name: 'summer-launch-hero-banner.png',
+    name: 'q3-private-client-review-cover.png',
     size: 0,
     type: 'image/png',
-    description: 'Vibrant hero banner for the summer product launch',
+    description: 'Elegant cover image for the Q3 private client portfolio review',
     url: `/files/${DEMO_IMAGE_FILE_ID}`,
     download_url: `/files/${DEMO_IMAGE_FILE_ID}/download`,
     created_at: daysAgo(2, 14, 10),
     updated_at: daysAgo(2, 14, 10),
+    user_id: 'demo|visitor',
+    status: 'uploaded',
+  },
+  {
+    id: DEMO_DATASET_FILE_ID,
+    name: 'sales-by-region-2026.csv',
+    size: 20480,
+    type: 'text/csv',
+    description: 'Quarterly sales figures by region, attached for analysis',
+    url: `/files/${DEMO_DATASET_FILE_ID}`,
+    download_url: `/files/${DEMO_DATASET_FILE_ID}/download`,
+    created_at: daysAgo(1, 9, 30),
+    updated_at: daysAgo(1, 9, 30),
     user_id: 'demo|visitor',
     status: 'uploaded',
   },
@@ -743,7 +826,7 @@ export const DEMO_CHAT_FILES = [
 export const DEMO_CONVERSATIONS = [
   {
     id: WEB_SEARCH_CONV_ID,
-    title: 'Latest EU AI Act requirements',
+    title: 'Fed rate-cut outlook for H2 2026',
     archived: false,
     archived_at: null,
     created_at: daysAgo(3, 10, 0),
@@ -751,11 +834,19 @@ export const DEMO_CONVERSATIONS = [
   },
   {
     id: IMAGE_GEN_CONV_ID,
-    title: 'Summer launch hero banner',
+    title: 'Q3 private client review cover',
     archived: false,
     archived_at: null,
     created_at: daysAgo(2, 14, 8),
     updated_at: daysAgo(2, 14, 10),
+  },
+  {
+    id: ENGG399_CONV_ID,
+    title: 'Q3 regional sales — wide report & parser refactor',
+    archived: false,
+    archived_at: null,
+    created_at: daysAgo(1, 9, 30),
+    updated_at: daysAgo(1, 9, 34),
   },
 ]
 
@@ -767,7 +858,7 @@ export const DEMO_MESSAGES: Record<string, any[]> = {
       id: 'demo-ws-msg-1',
       conversation_id: WEB_SEARCH_CONV_ID,
       role: 'user',
-      parts: { text: 'What are the newest EU AI Act requirements taking effect this year?' },
+      parts: { text: 'What’s the latest consensus on Fed rate cuts for the second half of 2026?' },
       model: null,
       tool_calls: null,
       tool_results: null,
@@ -779,17 +870,17 @@ export const DEMO_MESSAGES: Record<string, any[]> = {
       id: 'demo-ws-msg-2',
       conversation_id: WEB_SEARCH_CONV_ID,
       role: 'assistant',
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o-mini-search-preview',
       parts: {
         text:
-          'Here’s what’s new under the EU AI Act this year:\n\n' +
-          '1. **GPAI obligations** — providers of general-purpose AI models must publish training-data summaries and technical documentation.\n' +
-          '2. **Prohibited practices** — social scoring and untargeted facial-recognition scraping are now banned.\n' +
-          '3. **Transparency** — AI-generated content must be clearly labelled.\n\n' +
-          'Sources are listed below.',
+          'Here’s the current market consensus on the Fed for H2 2026:\n\n' +
+          '1. **Two more cuts priced in** — futures imply roughly 50bps of easing by year-end, taking the target range lower in two 25bps steps.\n' +
+          '2. **Data-dependent** — the path hinges on cooling core inflation and a gradually softening labour market.\n' +
+          '3. **Portfolio read-through** — supportive for duration and quality fixed income; watch rate-sensitive equity sectors.\n\n' +
+          'This is general market commentary, not personalised advice. Sources are listed below.',
       },
       tool_calls: [
-        { tool_name: 'web_search', tool_id: 'ws-call-1', kind: 'web_search', input_text: 'EU AI Act 2026 requirements', status: 'completed' },
+        { tool_name: 'web_search', tool_id: 'ws-call-1', kind: 'web_search', input_text: 'Federal Reserve rate cut expectations H2 2026', status: 'completed' },
       ],
       tool_results: [
         {
@@ -798,12 +889,12 @@ export const DEMO_MESSAGES: Record<string, any[]> = {
           kind: 'web_search',
           status: 'success',
           web_search: {
-            query: 'EU AI Act 2026 requirements',
-            queries: ['EU AI Act 2026 requirements', 'EU AI Act general-purpose AI obligations'],
+            query: 'Federal Reserve rate cut expectations H2 2026',
+            queries: ['Federal Reserve rate cut expectations H2 2026', 'FOMC dot plot 2026 projections'],
             results: [
-              { title: 'EU AI Act: implementation timeline — European Commission', url: 'https://digital-strategy.ec.europa.eu/en/policies/ai-act' },
-              { title: 'General-purpose AI models: obligations explained', url: 'https://artificialintelligenceact.eu/gpai' },
-              { title: 'Prohibited AI practices under the AI Act', url: 'https://artificialintelligenceact.eu/prohibited-practices' },
+              { title: 'FOMC calendar and statements — Federal Reserve', url: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm' },
+              { title: 'CME FedWatch Tool — market-implied rate probabilities', url: 'https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html' },
+              { title: 'Summary of Economic Projections (dot plot) explained', url: 'https://www.federalreserve.gov/monetarypolicy/fomcprojtabl.htm' },
             ],
           },
         },
@@ -818,7 +909,7 @@ export const DEMO_MESSAGES: Record<string, any[]> = {
       id: 'demo-img-msg-1',
       conversation_id: IMAGE_GEN_CONV_ID,
       role: 'user',
-      parts: { text: 'Generate a vibrant hero banner for our summer product launch.' },
+      parts: { text: 'Generate a polished, understated cover image for our Q3 private client portfolio review.' },
       model: null,
       tool_calls: null,
       tool_results: null,
@@ -830,16 +921,68 @@ export const DEMO_MESSAGES: Record<string, any[]> = {
       id: 'demo-img-msg-2',
       conversation_id: IMAGE_GEN_CONV_ID,
       role: 'assistant',
-      model: 'gemini-2.5-flash-image',
+      model: 'gemini-3.1-flash-image',
       parts: {
-        text: 'Here’s a vibrant hero banner concept for your summer launch:',
-        files: [{ id: DEMO_IMAGE_FILE_ID, name: 'summer-launch-hero-banner.png', type: 'image/png', size: 0 }],
+        text: 'Here’s an elegant cover concept for your Q3 private client review:',
+        files: [{ id: DEMO_IMAGE_FILE_ID, name: 'q3-private-client-review-cover.png', type: 'image/png', size: 0 }],
       },
       tool_calls: null,
       tool_results: null,
       usage: { input_tokens: 18, output_tokens: 0 },
       created_at: daysAgo(2, 14, 10),
       updated_at: daysAgo(2, 14, 10),
+    },
+  ],
+  // ENGG-399 showcase: this thread deliberately contains a wide code block, a
+  // wide table and a long unbroken URL (scroll/wrap fix), an attached file
+  // (drag & drop), a descriptive title (browser-tab title) and a set model
+  // (last-used default). Opening it demonstrates all four ticket points.
+  [ENGG399_CONV_ID]: [
+    {
+      id: 'demo-engg399-msg-1',
+      conversation_id: ENGG399_CONV_ID,
+      role: 'user',
+      parts: {
+        text:
+          'I attached our regional sales export. Can you summarise it as a table, ' +
+          'and show a small parser snippet for the CSV? Also link the source dashboard.',
+        files: [{ id: DEMO_DATASET_FILE_ID, name: 'sales-by-region-2026.csv', type: 'text/csv', size: 20480 }],
+      },
+      model: null,
+      tool_calls: null,
+      tool_results: null,
+      usage: null,
+      created_at: daysAgo(1, 9, 30),
+      updated_at: daysAgo(1, 9, 30),
+    },
+    {
+      id: 'demo-engg399-msg-2',
+      conversation_id: ENGG399_CONV_ID,
+      role: 'assistant',
+      model: 'claude-sonnet-4-5',
+      parts: {
+        text:
+          'Here’s the breakdown from **sales-by-region-2026.csv**.\n\n' +
+          'The full interactive dashboard lives here: ' +
+          'https://analytics.example.com/dashboards/regional-sales/2026/q3?view=by-region&compare=prev-year&currency=USD&breakdown=segment\n\n' +
+          'Parsed summary (this table is intentionally wide — it scrolls horizontally within the message):\n\n' +
+          '| Region | Q1 Revenue | Q2 Revenue | Q3 Revenue | QoQ Growth | Top Segment | Reps | Notes |\n' +
+          '| --- | --- | --- | --- | --- | --- | --- | --- |\n' +
+          '| North America | $1,204,500 | $1,318,200 | $1,442,900 | +9.5% | Enterprise | 24 | Strong renewals in Q3 |\n' +
+          '| EMEA | $902,300 | $968,750 | $1,051,400 | +8.5% | Mid-Market | 19 | FX headwind on EUR deals |\n' +
+          '| APAC | $611,900 | $702,450 | $845,600 | +20.4% | SMB | 15 | Fastest-growing region |\n' +
+          '| LATAM | $288,400 | $301,900 | $332,750 | +10.2% | SMB | 8 | New Brazil team ramping |\n\n' +
+          'And a minimal parser you can drop into a Node script:\n\n' +
+          '```javascript\n' +
+          'const parseSalesCsv = (raw) => raw.trim().split("\\n").slice(1).map((line) => { const [region, q1, q2, q3, growth, segment, reps, notes] = line.split(","); return { region, q1: Number(q1), q2: Number(q2), q3: Number(q3), growth, segment, reps: Number(reps), notes }; });\n' +
+          '```\n\n' +
+          'Want me to chart QoQ growth or export a cleaned CSV?',
+      },
+      tool_calls: null,
+      tool_results: null,
+      usage: { input_tokens: 96, output_tokens: 320 },
+      created_at: daysAgo(1, 9, 34),
+      updated_at: daysAgo(1, 9, 34),
     },
   ],
 }

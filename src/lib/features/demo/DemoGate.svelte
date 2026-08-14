@@ -22,38 +22,39 @@
   ADDITIVE COMPONENT.
 -->
 <script lang="ts">
-  import { setAuth, ApiError } from '../auth/index.js';
-  import { demoLogin } from './demoApi.js';
-  import DemoStateScreen from './DemoStateScreen.svelte';
+  import { _ } from "svelte-i18n";
+  import { setAuth, ApiError } from "../auth/index.js";
+  import { demoLogin } from "./demoApi.js";
+  import DemoStateScreen from "./DemoStateScreen.svelte";
 
   interface Props {
     onLoginSuccess?: () => void;
     /** Where the "back to site" affordance on the busy/error screens points. */
     exitHref?: string;
   }
-  let { onLoginSuccess, exitHref = 'https://grengin.com' }: Props = $props();
+  let { onLoginSuccess, exitHref = "https://grengin.com" }: Props = $props();
 
-  type Step = 'identity' | 'busy' | 'error';
-  let step = $state<Step>('identity');
+  type Step = "identity" | "busy" | "error";
+  let step = $state<Step>("identity");
 
   // Visitor identity (spec §3.6) — optional. When skipped we send nothing and the
   // backend pins the row as "Unknown".
-  let name = $state('');
-  let email = $state('');
+  let name = $state("");
+  let email = $state("");
 
   // In-flight flag for the demo-login round trip. There is no full-page
   // provisioning screen (excluded by scope); the buttons show an inline spinner.
   let submitting = $state(false);
-  let errorMessage = $state('');
+  let errorMessage = $state("");
 
   async function provision(useIdentity: boolean) {
     if (submitting) return;
     submitting = true;
-    errorMessage = '';
+    errorMessage = "";
     try {
       const response = await demoLogin(
-        useIdentity ? name.trim() : '',
-        useIdentity ? email.trim() : ''
+        useIdentity ? name.trim() : "",
+        useIdentity ? email.trim() : "",
       );
       if (response.accessToken && response.refreshToken && response.user) {
         setAuth(response.accessToken, response.refreshToken, response.user);
@@ -61,16 +62,21 @@
         return; // app takes over and this component unmounts; keep the form inert
       }
       // Malformed success — surface it as a retryable failure, not a dead end.
-      errorMessage = 'The demo session did not start correctly.';
-      step = 'error';
+      errorMessage = $_("demo.gate.malformed");
+      step = "error";
     } catch (err) {
       // Concurrency cap reached → intentional busy page rather than an error.
-      if (err instanceof ApiError && (err.status === 429 || err.status === 503)) {
-        step = 'busy';
+      if (
+        err instanceof ApiError &&
+        (err.status === 429 || err.status === 503)
+      ) {
+        step = "busy";
       } else {
         errorMessage =
-          err instanceof ApiError ? err.description : 'Could not reach the demo. Please try again.';
-        step = 'error';
+          err instanceof ApiError
+            ? err.description
+            : $_("demo.gate.unreachable");
+        step = "error";
       }
     }
     // Reached only on a non-success outcome (busy/error) — re-enable the controls.
@@ -78,7 +84,7 @@
   }
 
   function backToForm() {
-    step = 'identity';
+    step = "identity";
     submitting = false;
   }
 
@@ -88,53 +94,84 @@
   }
 </script>
 
-{#if step === 'identity'}
+{#if step === "identity"}
   <DemoStateScreen
-    eyebrow="INTERACTIVE DEMO"
-    title="Take Grengin for a spin"
-    message="Real Control Hub, real roles, seeded org data. Tell us who you are and we'll pin you to the top of the user table — or skip and browse as Unknown."
+    eyebrow={$_("demo.gate.eyebrow")}
+    title={$_("demo.gate.title")}
+    message={$_("demo.gate.message")}
   >
     {#snippet body()}
       <form onsubmit={onIdentitySubmit}>
-        <label class="field-label" for="demo-name">Name</label>
-        <input id="demo-name" class="field" bind:value={name} placeholder="Alex Morgan" autocomplete="name" disabled={submitting} />
+        <label class="field-label" for="demo-name"
+          >{$_("demo.gate.nameLabel")}</label
+        >
+        <input
+          id="demo-name"
+          class="field"
+          bind:value={name}
+          placeholder={$_("demo.gate.namePlaceholder")}
+          autocomplete="name"
+          disabled={submitting}
+        />
 
-        <label class="field-label" for="demo-email">Work email</label>
-        <input id="demo-email" class="field" type="email" bind:value={email} placeholder="alex@company.com" autocomplete="email" disabled={submitting} />
+        <label class="field-label" for="demo-email"
+          >{$_("demo.gate.emailLabel")}</label
+        >
+        <input
+          id="demo-email"
+          class="field"
+          type="email"
+          bind:value={email}
+          placeholder={$_("demo.gate.emailPlaceholder")}
+          autocomplete="email"
+          disabled={submitting}
+        />
 
         <button class="primary" type="submit" disabled={submitting}>
-          {#if submitting}<span class="btn-spinner" aria-hidden="true"></span>Starting…{:else}Start the demo{/if}
+          {#if submitting}<span class="btn-spinner" aria-hidden="true"
+            ></span>{$_("demo.gate.starting")}{:else}{$_(
+              "demo.gate.start",
+            )}{/if}
         </button>
-        <button class="ghost" type="button" disabled={submitting} onclick={() => void provision(false)}>
-          Skip — browse as Unknown
+        <button
+          class="ghost"
+          type="button"
+          disabled={submitting}
+          onclick={() => void provision(false)}
+        >
+          {$_("demo.gate.skip")}
         </button>
 
-        <p class="foot">Optional. We only use this to label your seat in the demo — nothing is stored after the session ends, in line with our privacy policy.</p>
+        <p class="foot">{$_("demo.gate.privacy")}</p>
       </form>
     {/snippet}
   </DemoStateScreen>
-{:else if step === 'busy'}
+{:else if step === "busy"}
   <DemoStateScreen
     tone="busy"
-    eyebrow="ALMOST THERE"
-    title="All demo sandboxes are busy"
-    message="We cap how many live demos run at once so each stays fast. A slot should free up in a moment — give it another try."
+    eyebrow={$_("demo.busy.eyebrow")}
+    title={$_("demo.busy.title")}
+    message={$_("demo.busy.message")}
   >
     {#snippet actions()}
-      <button class="primary" type="button" onclick={backToForm}>Try again</button>
-      <a class="ghost" href={exitHref}>Back to grengin.com</a>
+      <button class="primary" type="button" onclick={backToForm}
+        >{$_("demo.actions.tryAgain")}</button
+      >
+      <a class="ghost" href={exitHref}>{$_("demo.actions.backToSite")}</a>
     {/snippet}
   </DemoStateScreen>
 {:else}
   <DemoStateScreen
     tone="error"
-    eyebrow="COULDN'T START"
-    title="The demo didn't start"
+    eyebrow={$_("demo.error.eyebrow")}
+    title={$_("demo.error.title")}
     message={errorMessage}
   >
     {#snippet actions()}
-      <button class="primary" type="button" onclick={backToForm}>Try again</button>
-      <a class="ghost" href={exitHref}>Back to grengin.com</a>
+      <button class="primary" type="button" onclick={backToForm}
+        >{$_("demo.actions.tryAgain")}</button
+      >
+      <a class="ghost" href={exitHref}>{$_("demo.actions.backToSite")}</a>
     {/snippet}
   </DemoStateScreen>
 {/if}
@@ -175,7 +212,11 @@
     margin-top: 6px;
     border: none;
     border-radius: 16px;
-    background: linear-gradient(135deg, var(--brand-green-accent) 0%, var(--brand) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--brand-green-accent) 0%,
+      var(--brand) 100%
+    );
     color: #fff;
     font-size: 15px;
     font-weight: 700;
@@ -184,7 +225,9 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 6px 20px rgba(var(--brand-rgb), 0.3);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 6px 20px rgba(var(--brand-rgb), 0.3);
   }
   .primary:disabled {
     opacity: 0.7;
@@ -198,7 +241,6 @@
     display: block;
     width: 100%;
     height: 42px;
-    line-height: 42px;
     margin-top: 10px;
     border: none;
     background: transparent;

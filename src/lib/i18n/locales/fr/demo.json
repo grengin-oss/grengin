@@ -1,0 +1,75 @@
+{
+  "demo": {
+    "welcome": {
+      "badge": "DÉMO INTERACTIVE",
+      "title": "Bienvenue sur Grengin",
+      "body": "Vous explorez une démo en direct aux fonctionnalités limitées. Installez Grengin pour profiter de l'expérience complète.",
+      "cta": "Déployer en 5 minutes",
+      "dismiss": "J'ai compris"
+    },
+    "gate": {
+      "eyebrow": "DÉMO INTERACTIVE",
+      "title": "Essayez Grengin",
+      "message": "Un vrai Centre de contrôle, de vrais rôles, des données d'organisation préremplies. Dites-nous qui vous êtes et nous vous placerons en haut de la table des utilisateurs — ou passez et naviguez en tant qu'Inconnu.",
+      "nameLabel": "Nom",
+      "namePlaceholder": "Alex Morgan",
+      "emailLabel": "E-mail professionnel",
+      "emailPlaceholder": "alex@entreprise.com",
+      "start": "Démarrer la démo",
+      "starting": "Démarrage…",
+      "skip": "Passer — naviguer en tant qu'Inconnu",
+      "privacy": "Facultatif. Nous l'utilisons uniquement pour identifier votre place dans la démo ; rien n'est conservé après la fin de la session, conformément à notre politique de confidentialité.",
+      "malformed": "La session de démo n'a pas démarré correctement.",
+      "unreachable": "Impossible de joindre la démo. Veuillez réessayer."
+    },
+    "busy": {
+      "eyebrow": "PRESQUE PRÊT",
+      "title": "Tous les bacs à sable de démo sont occupés",
+      "message": "Nous limitons le nombre de démos actives en même temps pour que chacune reste rapide. Une place devrait se libérer d'un instant à l'autre — réessayez."
+    },
+    "error": {
+      "eyebrow": "ÉCHEC DU DÉMARRAGE",
+      "title": "La démo n'a pas démarré"
+    },
+    "actions": {
+      "tryAgain": "Réessayer",
+      "backToSite": "Retour à grengin.com"
+    },
+    "bar": {
+      "pill": "DÉMO",
+      "banner": "Il s'agit d'une démo aux fonctionnalités limitées. Installez Grengin pour profiter pleinement de l'expérience.",
+      "viewingAs": "AFFICHÉ EN TANT QUE",
+      "changeRole": "Affiché en tant que {role}. Changer de rôle d'affichage.",
+      "viewingRole": "Rôle d'affichage",
+      "deploy": "Déployer en 5 minutes",
+      "exit": "Quitter la démo"
+    },
+    "roles": {
+      "super": {
+        "label": "Super administrateur",
+        "desc": "Accès complet à toutes les parties de la plateforme."
+      },
+      "dept": {
+        "label": "Administrateur de département",
+        "desc": "Gère les membres, le budget et les connecteurs d'un département."
+      },
+      "fin": {
+        "label": "Administrateur financier",
+        "desc": "Budgets et analyses financières, rien d'autre."
+      },
+      "ai": {
+        "label": "Responsable IA",
+        "desc": "Gère uniquement les connecteurs MCP et les moteurs d'IA."
+      },
+      "user": {
+        "label": "Utilisateur",
+        "desc": "Aucun accès au Centre de contrôle — chat uniquement."
+      }
+    },
+    "tags": {
+      "system": "SYSTÈME",
+      "scoped": "LIMITÉ",
+      "custom": "PERSONNALISÉ"
+    }
+  }
+}

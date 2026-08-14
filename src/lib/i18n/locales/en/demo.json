@@ -1,0 +1,75 @@
+{
+  "demo": {
+    "welcome": {
+      "badge": "INTERACTIVE DEMO",
+      "title": "Welcome to Grengin",
+      "body": "You're exploring a live demo with limited features. Install Grengin to unlock the full experience.",
+      "cta": "Deploy in 5 minutes",
+      "dismiss": "Got it"
+    },
+    "gate": {
+      "eyebrow": "INTERACTIVE DEMO",
+      "title": "Take Grengin for a spin",
+      "message": "Real Control Hub, real roles, seeded org data. Tell us who you are and we'll pin you to the top of the user table — or skip and browse as Unknown.",
+      "nameLabel": "Name",
+      "namePlaceholder": "Alex Morgan",
+      "emailLabel": "Work email",
+      "emailPlaceholder": "alex@company.com",
+      "start": "Start the demo",
+      "starting": "Starting…",
+      "skip": "Skip — browse as Unknown",
+      "privacy": "Optional. We only use this to label your seat in the demo — nothing is stored after the session ends, in line with our privacy policy.",
+      "malformed": "The demo session did not start correctly.",
+      "unreachable": "Could not reach the demo. Please try again."
+    },
+    "busy": {
+      "eyebrow": "ALMOST THERE",
+      "title": "All demo sandboxes are busy",
+      "message": "We cap how many live demos run at once so each stays fast. A slot should free up in a moment — give it another try."
+    },
+    "error": {
+      "eyebrow": "COULDN'T START",
+      "title": "The demo didn't start"
+    },
+    "actions": {
+      "tryAgain": "Try again",
+      "backToSite": "Back to grengin.com"
+    },
+    "bar": {
+      "pill": "DEMO",
+      "banner": "This is a demo with limited features. Install Grengin to fully experience Grengin.",
+      "viewingAs": "VIEWING AS",
+      "changeRole": "Viewing as {role}. Change viewing role.",
+      "viewingRole": "Viewing role",
+      "deploy": "Deploy in 5 minutes",
+      "exit": "Exit demo"
+    },
+    "roles": {
+      "super": {
+        "label": "Super Admin",
+        "desc": "Full access to every part of the platform."
+      },
+      "dept": {
+        "label": "Department Admin",
+        "desc": "Runs one department's people, budget, and connectors."
+      },
+      "fin": {
+        "label": "Finance Admin",
+        "desc": "Budgets and financial analytics, nothing else."
+      },
+      "ai": {
+        "label": "AI Manager",
+        "desc": "Manages MCP connectors and AI engines only."
+      },
+      "user": {
+        "label": "User",
+        "desc": "No Control Hub access — chat only."
+      }
+    },
+    "tags": {
+      "system": "SYSTEM",
+      "scoped": "SCOPED",
+      "custom": "CUSTOM"
+    }
+  }
+}

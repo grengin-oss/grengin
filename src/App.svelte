@@ -141,6 +141,12 @@ SPDX-License-Identifier: Apache-2.0
 
   async function handleLogout() {
     await logout();
+    // In the demo build the real OAuth login (Google/Azure) is non-functional, so a
+    // signed-out demo visitor would hit a dead end there. Send them back to the demo
+    // entry gate (/demo) they came through instead, so they can re-enter the demo.
+    if (demoView.enabled) {
+      navigate('/demo', { replace: true });
+    }
   }
 
   function handleLoginSuccess() {

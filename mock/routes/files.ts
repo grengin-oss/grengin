@@ -64,6 +64,75 @@ router.get('/files/:fileId', requireAuth, (req, res) => {
   res.json(file)
 })
 
+// The seeded Q3 private-client review cover (see demoSeed.ts). This one file gets
+// a bespoke, on-topic cover instead of the generic gradient so the image-generation
+// demo shows a response that actually matches the prompt.
+const DEMO_Q3_COVER_FILE_ID = 'file-demo-q3-review-cover'
+
+// A polished, understated square cover for the "Q3 private client portfolio review".
+// Square (640×640) because generated images render with object-fit: cover in a square
+// box — landscape art would be cropped. Self-contained SVG (system fonts only), so it
+// renders identically inline, in the preview modal, and on download.
+function makeQ3CoverSvg(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" role="img" aria-label="Q3 Private Client Portfolio Review cover">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#0B1826"/>
+      <stop offset="1" stop-color="#14293D"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.12" r="0.9">
+      <stop offset="0" stop-color="#25415C" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#25415C" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.46" r="0.75">
+      <stop offset="0.55" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.35"/>
+    </radialGradient>
+    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C9A96A" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#C9A96A" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="640" fill="url(#bg)"/>
+  <rect width="640" height="640" fill="url(#glow)"/>
+
+  <!-- faint baseline grid -->
+  <g stroke="#FFFFFF" stroke-opacity="0.045" stroke-width="1">
+    <line x1="64" y1="240" x2="576" y2="240"/>
+    <line x1="64" y1="320" x2="576" y2="320"/>
+    <line x1="64" y1="400" x2="576" y2="400"/>
+    <line x1="64" y1="480" x2="576" y2="480"/>
+    <line x1="64" y1="560" x2="576" y2="560"/>
+  </g>
+
+  <!-- understated upward performance curve -->
+  <path d="M64 508 C 150 494 210 480 290 462 S 430 416 500 396 S 560 382 576 376 L 576 560 L 64 560 Z" fill="url(#area)"/>
+  <path d="M64 508 C 150 494 210 480 290 462 S 430 416 500 396 S 560 382 576 376" fill="none" stroke="#C9A96A" stroke-opacity="0.85" stroke-width="2.25" stroke-linecap="round"/>
+  <circle cx="576" cy="376" r="9" fill="#C9A96A" fill-opacity="0.16"/>
+  <circle cx="576" cy="376" r="3.5" fill="#D8BE86"/>
+
+  <!-- eyebrow -->
+  <text x="64" y="132" fill="#C9A96A" fill-opacity="0.92" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" letter-spacing="4.5">PRIVATE CLIENT &#183; CONFIDENTIAL</text>
+
+  <!-- title -->
+  <text x="62" y="212" fill="#EDF2F7" font-family="Georgia, 'Times New Roman', serif" font-size="62" font-weight="500" letter-spacing="0.5">Q3 Portfolio</text>
+  <text x="62" y="280" fill="#EDF2F7" font-family="Georgia, 'Times New Roman', serif" font-size="62" font-weight="500" letter-spacing="0.5">Review</text>
+
+  <!-- gold hairline rule -->
+  <line x1="64" y1="316" x2="196" y2="316" stroke="#C9A96A" stroke-width="2"/>
+
+  <!-- subtitle -->
+  <text x="64" y="352" fill="#93A4B5" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" letter-spacing="0.3">Quarterly performance &amp; positioning</text>
+
+  <!-- footer wordmark -->
+  <text x="64" y="596" fill="#6E8299" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" letter-spacing="3">GRENGIN</text>
+  <text x="576" y="596" text-anchor="end" fill="#6E8299" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" letter-spacing="2">FY2026</text>
+
+  <rect width="640" height="640" fill="url(#vignette)"/>
+</svg>`
+}
+
 // Deterministic placeholder colour from an id so each generated image looks distinct.
 function hueFromId(id: string): number {
   let h = 0
@@ -151,6 +220,12 @@ router.get('/files/:fileId/download', requireAuth, (req, res) => {
   const file = files.get(req.params.fileId)
   if (!file) {
     return res.status(404).json({ detail: 'File not found' })
+  }
+
+  if (file.id === DEMO_Q3_COVER_FILE_ID) {
+    res.setHeader('Content-Type', 'image/svg+xml')
+    res.setHeader('Cache-Control', 'no-store')
+    return res.send(makeQ3CoverSvg())
   }
 
   if ((file.type || '').startsWith('image/')) {

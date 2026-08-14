@@ -1,0 +1,75 @@
+{
+  "demo": {
+    "welcome": {
+      "badge": "DEMO INTERACTIVA",
+      "title": "Te damos la bienvenida a Grengin",
+      "body": "Estás explorando una demo en vivo con funciones limitadas. Instala Grengin para disfrutar de toda la experiencia.",
+      "cta": "Implementar en 5 minutos",
+      "dismiss": "Entendido"
+    },
+    "gate": {
+      "eyebrow": "DEMO INTERACTIVA",
+      "title": "Prueba Grengin",
+      "message": "Centro de control real, roles reales y datos de organización de ejemplo. Dinos quién eres y te fijaremos en la parte superior de la tabla de usuarios, o sáltalo y navega como Desconocido.",
+      "nameLabel": "Nombre",
+      "namePlaceholder": "Alex Morgan",
+      "emailLabel": "Correo del trabajo",
+      "emailPlaceholder": "alex@empresa.com",
+      "start": "Iniciar la demo",
+      "starting": "Iniciando…",
+      "skip": "Omitir: navegar como Desconocido",
+      "privacy": "Opcional. Solo lo usamos para etiquetar tu lugar en la demo; no se almacena nada al finalizar la sesión, conforme a nuestra política de privacidad.",
+      "malformed": "La sesión de demo no se inició correctamente.",
+      "unreachable": "No se pudo conectar con la demo. Inténtalo de nuevo."
+    },
+    "busy": {
+      "eyebrow": "CASI LISTO",
+      "title": "Todos los entornos de demo están ocupados",
+      "message": "Limitamos cuántas demos en vivo se ejecutan a la vez para que cada una sea rápida. En un momento se liberará un espacio; vuelve a intentarlo."
+    },
+    "error": {
+      "eyebrow": "NO SE PUDO INICIAR",
+      "title": "La demo no se inició"
+    },
+    "actions": {
+      "tryAgain": "Reintentar",
+      "backToSite": "Volver a grengin.com"
+    },
+    "bar": {
+      "pill": "DEMO",
+      "banner": "Esta es una demo con funciones limitadas. Instala Grengin para disfrutar de toda la experiencia.",
+      "viewingAs": "VIENDO COMO",
+      "changeRole": "Viendo como {role}. Cambiar rol de visualización.",
+      "viewingRole": "Rol de visualización",
+      "deploy": "Implementar en 5 minutos",
+      "exit": "Salir de la demo"
+    },
+    "roles": {
+      "super": {
+        "label": "Superadministrador",
+        "desc": "Acceso total a todas las áreas de la plataforma."
+      },
+      "dept": {
+        "label": "Administrador de departamento",
+        "desc": "Gestiona las personas, el presupuesto y los conectores de un departamento."
+      },
+      "fin": {
+        "label": "Administrador de finanzas",
+        "desc": "Presupuestos y análisis financieros, nada más."
+      },
+      "ai": {
+        "label": "Gestor de IA",
+        "desc": "Gestiona solo los conectores MCP y los motores de IA."
+      },
+      "user": {
+        "label": "Usuario",
+        "desc": "Sin acceso al centro de control: solo chat."
+      }
+    },
+    "tags": {
+      "system": "SISTEMA",
+      "scoped": "ACOTADO",
+      "custom": "PERSONALIZADO"
+    }
+  }
+}

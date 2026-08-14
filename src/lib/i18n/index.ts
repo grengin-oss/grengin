@@ -74,6 +74,7 @@ export const NAMESPACES = [
   'settings',
   'error',
   'projects',
+  'demo',
 ] as const;
 
 export type Namespace = (typeof NAMESPACES)[number];
@@ -129,6 +130,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'en/settings':  () => import('./locales/en/settings.json'),
   'en/error':     () => import('./locales/en/error.json'),
   'en/projects':  () => import('./locales/en/projects.json'),
+  'en/demo':      () => import('./locales/en/demo.json'),
 
   'es/common':    () => import('./locales/es/common.json'),
   'es/auth':      () => import('./locales/es/auth.json'),
@@ -140,6 +142,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'es/settings':  () => import('./locales/es/settings.json'),
   'es/error':     () => import('./locales/es/error.json'),
   'es/projects':  () => import('./locales/es/projects.json'),
+  'es/demo':      () => import('./locales/es/demo.json'),
 
   'fr/common':    () => import('./locales/fr/common.json'),
   'fr/auth':      () => import('./locales/fr/auth.json'),
@@ -151,6 +154,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'fr/settings':  () => import('./locales/fr/settings.json'),
   'fr/error':     () => import('./locales/fr/error.json'),
   'fr/projects':  () => import('./locales/fr/projects.json'),
+  'fr/demo':      () => import('./locales/fr/demo.json'),
 
   'ja/common':    () => import('./locales/ja/common.json'),
   'ja/auth':      () => import('./locales/ja/auth.json'),
@@ -162,6 +166,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'ja/settings':  () => import('./locales/ja/settings.json'),
   'ja/error':     () => import('./locales/ja/error.json'),
   'ja/projects':  () => import('./locales/ja/projects.json'),
+  'ja/demo':      () => import('./locales/ja/demo.json'),
 
   'ko/common':    () => import('./locales/ko/common.json'),
   'ko/auth':      () => import('./locales/ko/auth.json'),
@@ -173,6 +178,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'ko/settings':  () => import('./locales/ko/settings.json'),
   'ko/error':     () => import('./locales/ko/error.json'),
   'ko/projects':  () => import('./locales/ko/projects.json'),
+  'ko/demo':      () => import('./locales/ko/demo.json'),
 
   'pt/common':    () => import('./locales/pt/common.json'),
   'pt/auth':      () => import('./locales/pt/auth.json'),
@@ -184,6 +190,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'pt/settings':  () => import('./locales/pt/settings.json'),
   'pt/error':     () => import('./locales/pt/error.json'),
   'pt/projects':  () => import('./locales/pt/projects.json'),
+  'pt/demo':      () => import('./locales/pt/demo.json'),
 
   // RTL locales
   'ar/common':    () => import('./locales/ar/common.json'),
@@ -196,6 +203,7 @@ const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }
   'ar/settings':  () => import('./locales/ar/settings.json'),
   'ar/error':     () => import('./locales/ar/error.json'),
   'ar/projects':  () => import('./locales/ar/projects.json'),
+  'ar/demo':      () => import('./locales/ar/demo.json'),
 };
 
 // ---------------------------------------------------------------------------
@@ -354,6 +362,9 @@ locale.subscribe((value) => {
   if (value) applyDocumentDirection(value);
 });
 
-// Eagerly load only `common` + `error` for the initial locale (+ en fallback).
+// Eagerly load `common` + `error` for the initial locale (+ en fallback).
+// `demo` is also loaded up front: the Interactive Demo chrome (entry gate, top
+// bar, welcome toast) is mounted app-wide in the demo build, so its strings must
+// be present on the very first paint — including the pre-auth `/demo` gate.
 // The route-specific namespaces will be loaded by the router integration.
-export const i18nReady: Promise<void> = loadNamespaces(['common', 'error'], initialLocale);
+export const i18nReady: Promise<void> = loadNamespaces(['common', 'error', 'demo'], initialLocale);

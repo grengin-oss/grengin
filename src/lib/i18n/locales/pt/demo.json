@@ -1,0 +1,75 @@
+{
+  "demo": {
+    "welcome": {
+      "badge": "DEMONSTRAÇÃO INTERATIVA",
+      "title": "Boas-vindas à Grengin",
+      "body": "Você está explorando uma demonstração ao vivo com recursos limitados. Instale a Grengin para ter a experiência completa.",
+      "cta": "Implantar em 5 minutos",
+      "dismiss": "Entendi"
+    },
+    "gate": {
+      "eyebrow": "DEMONSTRAÇÃO INTERATIVA",
+      "title": "Experimente a Grengin",
+      "message": "Central de controle real, funções reais e dados de organização de exemplo. Diga-nos quem você é e fixaremos você no topo da tabela de usuários — ou pule e navegue como Desconhecido.",
+      "nameLabel": "Nome",
+      "namePlaceholder": "Alex Morgan",
+      "emailLabel": "E-mail de trabalho",
+      "emailPlaceholder": "alex@empresa.com",
+      "start": "Iniciar a demonstração",
+      "starting": "Iniciando…",
+      "skip": "Pular — navegar como Desconhecido",
+      "privacy": "Opcional. Usamos isso apenas para identificar seu lugar na demonstração; nada é armazenado após o término da sessão, de acordo com nossa política de privacidade.",
+      "malformed": "A sessão de demonstração não foi iniciada corretamente.",
+      "unreachable": "Não foi possível acessar a demonstração. Tente novamente."
+    },
+    "busy": {
+      "eyebrow": "QUASE LÁ",
+      "title": "Todos os ambientes de demonstração estão ocupados",
+      "message": "Limitamos quantas demonstrações ativas são executadas ao mesmo tempo para que cada uma permaneça rápida. Uma vaga deve ser liberada em instantes — tente novamente."
+    },
+    "error": {
+      "eyebrow": "NÃO FOI POSSÍVEL INICIAR",
+      "title": "A demonstração não foi iniciada"
+    },
+    "actions": {
+      "tryAgain": "Tentar novamente",
+      "backToSite": "Voltar para grengin.com"
+    },
+    "bar": {
+      "pill": "DEMO",
+      "banner": "Esta é uma demonstração com recursos limitados. Instale a Grengin para ter a experiência completa.",
+      "viewingAs": "VISUALIZANDO COMO",
+      "changeRole": "Visualizando como {role}. Alterar função de visualização.",
+      "viewingRole": "Função de visualização",
+      "deploy": "Implantar em 5 minutos",
+      "exit": "Sair da demonstração"
+    },
+    "roles": {
+      "super": {
+        "label": "Superadministrador",
+        "desc": "Acesso total a todas as partes da plataforma."
+      },
+      "dept": {
+        "label": "Administrador de departamento",
+        "desc": "Gerencia as pessoas, o orçamento e os conectores de um departamento."
+      },
+      "fin": {
+        "label": "Administrador financeiro",
+        "desc": "Orçamentos e análises financeiras, nada mais."
+      },
+      "ai": {
+        "label": "Gerente de IA",
+        "desc": "Gerencia apenas os conectores MCP e os motores de IA."
+      },
+      "user": {
+        "label": "Usuário",
+        "desc": "Sem acesso à central de controle — apenas chat."
+      }
+    },
+    "tags": {
+      "system": "SISTEMA",
+      "scoped": "RESTRITO",
+      "custom": "PERSONALIZADO"
+    }
+  }
+}

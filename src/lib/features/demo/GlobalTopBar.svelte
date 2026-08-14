@@ -17,13 +17,15 @@
 -->
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
   import { demoView } from './demoView.svelte.js';
   import type { DemoRole } from './demoRoles.js';
 
   interface Props {
-    /** Banner text — spec §1 wording by default (mockup differs; final wording TBC). */
+    /** Banner text override. Defaults to the localized `demo.bar.banner` string. */
     bannerText?: string;
     deployHref?: string;
+    /** Deploy CTA label override. Defaults to the localized `demo.bar.deploy` string. */
     deployLabel?: string;
     exitHref?: string;
     /** Called when the viewing role changes (view-only). */
@@ -34,9 +36,9 @@
   }
 
   let {
-    bannerText = 'This is a demo with limited features. Install Grengin to fully experience Grengin.',
+    bannerText,
     deployHref = 'https://grengin.com/deploy',
-    deployLabel = 'Deploy in 5 minutes',
+    deployLabel,
     exitHref = 'https://grengin.com',
     onRoleChange,
     onExit,
@@ -44,6 +46,18 @@
 
   const roles = $derived(demoView.roles as readonly DemoRole[]);
   const current = $derived(demoView.role);
+
+  // Localized copy. Props still win when a parent passes an explicit override.
+  const banner = $derived(bannerText ?? $_('demo.bar.banner'));
+  const deploy = $derived(deployLabel ?? $_('demo.bar.deploy'));
+
+  // Role label/description/tag come from the `demo` namespace, keyed by role id,
+  // so the switcher follows the visitor's language. Falls back to the value
+  // baked into demoRoles.ts if a key is ever missing.
+  const roleLabel = (r: DemoRole): string => $_(`demo.roles.${r.id}.label`, { default: r.label });
+  const roleDesc = (r: DemoRole): string => $_(`demo.roles.${r.id}.desc`, { default: r.desc });
+  const roleTag = (r: DemoRole): string =>
+    $_(`demo.tags.${r.tag.toLowerCase()}`, { default: r.tag });
 
   let open = $state(false);
   let activeIndex = $state(0);
@@ -137,8 +151,8 @@
 <header class="demo-bar" role="banner">
   <!-- Left: demo notice -->
   <div class="left">
-    <span class="pill">DEMO</span>
-    <span class="banner" title={bannerText}>{bannerText}</span>
+    <span class="pill">{$_('demo.bar.pill')}</span>
+    <span class="banner" title={banner}>{banner}</span>
   </div>
 
   <!-- Center: role switcher (view-only) -->
@@ -149,19 +163,19 @@
       type="button"
       aria-haspopup="listbox"
       aria-expanded={open}
-      aria-label={`Viewing as ${current?.label}. Change viewing role.`}
+      aria-label={$_('demo.bar.changeRole', { values: { role: current ? roleLabel(current) : '' } })}
       onclick={toggle}
       onkeydown={onTriggerKeydown}
     >
-      <span class="viewing">VIEWING AS</span>
-      <span class="rolename">{current?.label}</span>
+      <span class="viewing">{$_('demo.bar.viewingAs')}</span>
+      <span class="rolename">{current ? roleLabel(current) : ''}</span>
       <svg class="chev {open ? 'up' : ''}" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     </button>
 
     {#if open}
-      <ul bind:this={menuEl} class="menu" role="listbox" aria-label="Viewing role" tabindex="-1" onkeydown={onMenuKeydown}>
+      <ul bind:this={menuEl} class="menu" role="listbox" aria-label={$_('demo.bar.viewingRole')} tabindex="-1" onkeydown={onMenuKeydown}>
         {#each roles as r, i (r.id)}
           <li
             role="option"
@@ -172,10 +186,10 @@
             onclick={() => selectRole(r.id)}
           >
             <span class="opt-top">
-              <span class="opt-label">{r.label}</span>
-              <span class="tag {r.tag.toLowerCase()}">{r.tag}</span>
+              <span class="opt-label">{roleLabel(r)}</span>
+              <span class="tag {r.tag.toLowerCase()}">{roleTag(r)}</span>
             </span>
-            <span class="opt-desc">{r.desc}</span>
+            <span class="opt-desc">{roleDesc(r)}</span>
           </li>
         {/each}
       </ul>
@@ -185,12 +199,12 @@
   <!-- Right: deploy CTA + exit -->
   <div class="right">
     <a class="deploy" href={deployHref} target="_blank" rel="noopener">
-      <span class="deploy-label">{deployLabel}</span>
+      <span class="deploy-label">{deploy}</span>
       <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     </a>
-    <button class="exit" type="button" aria-label="Exit demo" title="Exit demo" onclick={handleExit}>
+    <button class="exit" type="button" aria-label={$_('demo.bar.exit')} title={$_('demo.bar.exit')} onclick={handleExit}>
       <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
       </svg>

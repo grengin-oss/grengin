@@ -16,9 +16,10 @@ import type { PermissionScope } from '../../api/permissions.js';
 function createDemoView() {
   const roles: readonly DemoRole[] = DEMO_ROLES;
 
-  // The demo ships as its own separate instance/deployment — this whole build IS
-  // the demo, so the chrome is always on. No env flag: the deployment is the gate.
-  let enabled = $state(true);
+  // Demo chrome is gated on a build-time env flag so it only lights up in the
+  // demo build (`vite --mode demo`, which loads `.env.demo` → VITE_DEMO_MODE=true)
+  // and stays completely inert in normal dev/prod builds of the real app.
+  let enabled = $state(import.meta.env.VITE_DEMO_MODE === 'true');
   let roleId = $state(roles[0]?.id ?? '');
 
   const role = $derived(roles.find((r) => r.id === roleId) ?? roles[0]);

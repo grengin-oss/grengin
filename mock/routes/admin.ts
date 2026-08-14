@@ -240,14 +240,23 @@ function getDepth(parentId: string | null): number {
   return parent ? parent.depth + 1 : 0
 }
 
+// Every descendant department id under a given department (walks the live tree).
+function descendantDeptIds(id: string): string[] {
+  const kids = Array.from(departments.values()).filter((d) => d.parent_id === id)
+  return kids.flatMap((k) => [k.id, ...descendantDeptIds(k.id)])
+}
+
 // Overlay LIVE member counts + admins (from the mutable users list) onto a stored
 // department, so creating/deleting/moving users updates the org tree immediately.
+// `member_count` is direct members; `total_member_count` rolls the subtree up so
+// a division reflects everyone in its sub-departments too.
 function deptView<T extends Department>(dept: T): T {
   const members = usersInDepartmentLive(dept.id)
+  const totalMembers = [dept.id, ...descendantDeptIds(dept.id)].reduce((sum, id) => sum + usersInDepartmentLive(id).length, 0)
   return {
     ...dept,
     member_count: members.length,
-    total_member_count: members.length,
+    total_member_count: totalMembers,
     admin_ids: members.filter((u) => u.role_id === 'role-dept').map((u) => u.id),
   }
 }
