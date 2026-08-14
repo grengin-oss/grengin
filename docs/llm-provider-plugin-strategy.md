@@ -588,13 +588,15 @@ Schema retrieval and manifest preflight validation may remain action endpoints
 under `/admin/ai-engines`, but there is no separate `/admin/provider-plugins`
 CRUD surface.
 
-The unreleased development migration that created `provider_plugins` and
-`provider_credentials` must be rolled back with SeaORM while it is still the
-latest migration, then replaced by the `ai_engines.pluginConfig` migration. Do
-this only where those development tables contain no provider installations. If
-that migration ever reaches an environment with real installation data, use a
-forward data migration instead and fail rather than silently discard encrypted
-key material or an unsupported multi-secret installation.
+Both development migration identities, `create_provider_plugins` and
+`add_plugin_config_to_ai_engines`, reached databases and are therefore immutable
+history. Keep both migration files registered so SeaORM accepts either history,
+then use a later reconciliation migration to remove the obsolete provider tables
+only when they are empty. Never repair this divergence by editing
+`seaql_migrations` directly. If either legacy table contains installation data,
+the reconciliation migration must fail without dropping anything; migrate the
+data forward explicitly rather than silently discarding encrypted key material
+or an unsupported multi-secret installation.
 
 Credential values remain encrypted with the existing application key. APIs
 return only configured status and a safe preview. Logs, errors, fixtures, audit
