@@ -42,6 +42,9 @@ slice:
   A replica that did not process an AI-engine create or update request can
   compile and cache the provider from `ai_engines.pluginConfig` on its first
   request, while disabled, invalid, or undecryptable records fail closed.
+- Basic provider release tracking through the manifest `version`, exposed as
+  `plugin_version` in AI-engine responses. All currently tested built-in and
+  reference plugins start at `1.0`.
 
 This slice is suitable for review and controlled local testing. The following
 items remain before calling the plugin contract stable or publishing a public
@@ -267,7 +270,7 @@ The following is an outline, not the final complete schema:
   "$schema": "https://grengin.com/schemas/provider-plugin-v1.json",
   "manifestVersion": "1.0",
   "id": "example-self-hosted",
-  "version": "1.0.0",
+  "version": "1.0",
   "name": "Example Self-hosted Provider",
   "baseUrl": "https://llm.example.com",
   "credentials": [
@@ -331,6 +334,17 @@ The following is an outline, not the final complete schema:
   }
 }
 ```
+
+`manifestVersion` and `version` are intentionally different. The former
+selects the Grengin manifest schema and host contract. The latter identifies a
+provider plugin release and uses the basic `MAJOR.MINOR` format. The v1 parser
+also accepts an optional numeric patch component for existing custom manifests.
+Tested reference and built-in plugins begin at `1.0`; authors increment the
+minor number for compatible payload, endpoint, model, or mapping updates and
+the major number for behaviour changes requiring administrator review. The
+current AI-engine API exposes the active release as `plugin_version`. Full
+version history, rollback, and automatic update policy remain future lifecycle
+work.
 
 The final schema must separately define provider metadata, administrator
 configuration, secrets, model catalogues, operation request mappings, body
@@ -561,6 +575,10 @@ and policy record. Do not create a parallel provider-plugin CRUD resource.
 - A null `pluginConfig` identifies an embedded built-in provider. The runtime
   resolves its manifest by `engineKey`, while all product policy still comes
   from the same AI-engine row.
+- The active provider release is read from `manifest.version`: custom releases
+  remain durable inside `pluginConfig`, while built-in releases come from their
+  embedded manifests. `plugin_version` is therefore exposed without a redundant
+  database column.
 - The custom manifest ID must exactly equal `engineKey`. Custom engine keys may
   not replace reserved built-in keys.
 
