@@ -512,9 +512,32 @@ A plugin can supply models through either:
 - An inline model catalogue in `provider.json`.
 - A configurable HTTP model-list operation with request and response mappings.
 
-Model capabilities are data, not assumptions inferred from provider names.
-They include streaming, tools, vision, PDF input, image generation, embeddings,
-dimensions, context limits, and optional pricing metadata.
+Every canonical model has an explicit `modelType`: `text_generator`,
+`text_embedder`, or `image_generator`. Model capabilities are data, not
+assumptions inferred from provider names. They include streaming, tools,
+reasoning, vision, PDF input, web search, image generation, embeddings,
+dimensions, context limits, image limits, and optional pricing metadata.
+
+The model-list response may use `modelMapping`, the same bounded declarative
+mapping language used for requests, to normalize each provider response item
+into the canonical inline-model shape. The only response root available to
+that mapping is `item`; no request, credentials, environment, or application
+state is exposed. Legacy `idPointer` and optional `namePointer` remain valid for
+simple APIs.
+
+When a plugin defines both an HTTP model-list operation and inline models, the
+HTTP response determines account-specific availability while matching inline
+entries enrich those results. Inline `name`, `modelType`, capabilities, and
+metadata override incomplete or generic provider fields. Unknown dynamic
+models remain visible with the response mapping's declared data, but they must
+not inherit capabilities that the plugin cannot justify.
+
+For Grengin's built-in providers, the public model catalog in `grengin-list`
+is the source of truth. Its text generator, text embedder, and image generator
+records are normalized into each published `plugin.json` during import. This
+keeps model IDs, capability flags, dimensions, limits, lifecycle notes, and
+pricing aligned with `meta.grengin.com` without duplicating a second manually
+maintained catalog in Rust.
 
 Pricing metadata uses USD per million tokens for regular input, output,
 cache-read input, and cache-creation input. A missing cache rate falls back to
@@ -588,9 +611,10 @@ Schema retrieval and manifest preflight validation may remain action endpoints
 under `/admin/ai-engines`, but there is no separate `/admin/provider-plugins`
 CRUD surface. The surrounding HTTP request and response fields use
 `snake_case`, including the top-level `plugin_config` field. The versioned plugin
-document inside `plugin_config` retains its camelCase schema. The temporary
-camelCase API envelope remains accepted only as a deserialization alias so
-existing clients can migrate without downtime.
+document inside `plugin_config` retains its camelCase schema. CamelCase aliases
+are not accepted for the surrounding API envelope; request schemas, responses,
+validation field names, and route parameter names remain consistently
+`snake_case`.
 
 Both development migration identities, `create_provider_plugins` and
 `add_plugin_config_to_ai_engines`, reached databases and are therefore immutable
