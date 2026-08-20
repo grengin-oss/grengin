@@ -62,7 +62,6 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
 
   let textarea: HTMLTextAreaElement;
   let fileInput: HTMLInputElement;
-  let photoInput: HTMLInputElement;
   let message = $state('');
   let attachedFiles = $state<File[]>([]);
   let uploadingFiles = $state<Set<string>>(new Set());
@@ -128,8 +127,8 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   let fileError = $state<string | null>(null);
 
   // Validate a file against the shared size constraint. Returns a localized error
-  // message, or null when the file is acceptable. (Types are unrestricted here,
-  // matching the file picker's accept="*/*".)
+  // message, or null when the file is acceptable. Types are unrestricted to match
+  // the picker (no accept attribute, so photos and any file type are allowed).
   function validateFile(file: File): string | null {
     if (file.size > MAX_FILE_SIZE) {
       return $_('chat.messageInput.fileTooLarge', {
@@ -314,11 +313,6 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
     }
   });
 
-  function handlePhotoSelect() {
-    photoInput?.click();
-    showPlusMenu = false;
-  }
-
   function handleFileSelect() {
     fileInput?.click();
     showPlusMenu = false;
@@ -367,8 +361,8 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   }
 
   function isImageFile(file: File): boolean {
-    const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff'];
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif'];
+    const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff', 'image/heic', 'image/heif', 'image/avif'];
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif', '.heic', '.heif', '.avif'];
     return imageTypes.includes(file.type) || imageExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
   }
 
@@ -513,22 +507,13 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
   });
 </script>
 
-<!-- Hidden file inputs -->
-<input
-  type="file"
-  bind:this={photoInput}
-  onchange={handleFileChange}
-  multiple
-  style="display: none"
-  accept="image/*"
-/>
+<!-- Hidden file input: no accept so mobile can reach Photo Library and Browse -->
 <input
   type="file"
   bind:this={fileInput}
   onchange={handleFileChange}
   multiple
   style="display: none"
-  accept="*/*"
 />
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -679,20 +664,11 @@ let { onSend, disabled = false, placeholder, selectedModel, selectedProvider, on
 
           {#if showPlusMenu}
             <div class="plus-menu">
-              <button class="menu-item" onclick={handlePhotoSelect}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                  <polyline points="21 15 16 10 5 21"></polyline>
-                </svg>
-                <span>{$_('chat.messageInput.addPhotos')}</span>
-              </button>
               <button class="menu-item" onclick={handleFileSelect}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                  <polyline points="14,2 14,8 20,8"></polyline>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                 </svg>
-                <span>{$_('chat.messageInput.addFiles')}</span>
+                <span>{$_('chat.messageInput.addPhotosAndFiles')}</span>
               </button>
               <button class="menu-item" onclick={(e) => { e.stopPropagation(); showPlusMenu = false; skillPickerOpen = true; }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
