@@ -103,7 +103,8 @@
       "pagination": "결과 페이지 매김",
       "topModelsCaption": "선택한 기간의 사용량 기준 상위 모델",
       "departmentTableCaption": "선택한 기간의 부서별 사용량",
-      "userTableCaption": "선택한 기간의 사용자별 사용량"
+      "userTableCaption": "선택한 기간의 사용자별 사용량",
+      "rangePicker": "기간 변경"
     },
     "filters": {
       "dateRange": "기간",
@@ -119,7 +120,8 @@
       "hour": "시간별",
       "day": "일별",
       "week": "주별",
-      "month": "월별"
+      "month": "월별",
+      "rangeFields": "기간 입력란"
     },
     "loading": "분석 로딩 중...",
     "retry": "재시도",
@@ -133,7 +135,8 @@
       "avgPerUser": "사용자당 평균 {count}",
       "totalTokens": "총 토큰",
       "totalCost": "총 비용",
-      "vsPreviousDays": "이전 {count}일 대비"
+      "vsPreviousDays": "이전 {count}일 대비",
+      "quickStats": "주요 지표"
     },
     "topModels": {
       "title": "상위 모델",
@@ -141,7 +144,8 @@
       "provider": "제공자",
       "requests": "요청",
       "tokens": "토큰",
-      "cost": "비용"
+      "cost": "비용",
+      "subtitleByCost": "비용 기준 · {range}"
     },
     "charts": {
       "title": "성능 추세",
@@ -152,7 +156,8 @@
         "tokens": "토큰",
         "latency": "지연시간",
         "date": "날짜",
-        "latencyMs": "지연시간 (ms)"
+        "latencyMs": "지연시간 (ms)",
+        "tabLabel": "멀티 지표"
       },
       "usageGrowth": {
         "title": "사용량 증가",
@@ -184,6 +189,10 @@
         "viewDataTableFor": "{chartName} 데이터 테이블 보기",
         "closeDataTable": "데이터 테이블 닫기",
         "dataTableRegion": "{chartName} 데이터 테이블"
+      },
+      "insight": {
+        "peak": "{metric}는 {day}에 {value}로 최고치를 기록해 기간 최저치의 {ratio}배였습니다.",
+        "flat": "{metric}는 기간 내내 큰 변동이 없었습니다."
       }
     },
     "errors": {

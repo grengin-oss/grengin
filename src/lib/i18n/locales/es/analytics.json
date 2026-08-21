@@ -103,7 +103,8 @@
       "pagination": "Paginación de resultados",
       "topModelsCaption": "Modelos principales por uso para el rango de fechas seleccionado",
       "departmentTableCaption": "Uso por departamento para el rango de fechas seleccionado",
-      "userTableCaption": "Uso por usuario para el rango de fechas seleccionado"
+      "userTableCaption": "Uso por usuario para el rango de fechas seleccionado",
+      "rangePicker": "Cambiar intervalo de fechas"
     },
     "filters": {
       "dateRange": "Rango de fechas",
@@ -119,7 +120,8 @@
       "hour": "Por hora",
       "day": "Diario",
       "week": "Semanal",
-      "month": "Mensual"
+      "month": "Mensual",
+      "rangeFields": "Campos de intervalo"
     },
     "loading": "Cargando analítica...",
     "retry": "Reintentar",
@@ -133,7 +135,8 @@
       "avgPerUser": "{count} promedio por usuario",
       "totalTokens": "Tokens totales",
       "totalCost": "Costo total",
-      "vsPreviousDays": "vs {count} días anteriores"
+      "vsPreviousDays": "vs {count} días anteriores",
+      "quickStats": "Estadísticas rápidas"
     },
     "topModels": {
       "title": "Modelos principales",
@@ -141,7 +144,8 @@
       "provider": "Proveedor",
       "requests": "Solicitudes",
       "tokens": "Tokens",
-      "cost": "Costo"
+      "cost": "Costo",
+      "subtitleByCost": "por coste, {range}"
     },
     "charts": {
       "title": "Tendencias de rendimiento",
@@ -152,7 +156,8 @@
         "tokens": "Tokens",
         "latency": "Latencia",
         "date": "Fecha",
-        "latencyMs": "Latencia (ms)"
+        "latencyMs": "Latencia (ms)",
+        "tabLabel": "Multimétrica"
       },
       "usageGrowth": {
         "title": "Crecimiento de uso",
@@ -184,6 +189,10 @@
         "viewDataTableFor": "Ver tabla de datos para {chartName}",
         "closeDataTable": "Cerrar tabla de datos",
         "dataTableRegion": "Tabla de datos de {chartName}"
+      },
+      "insight": {
+        "peak": "{metric} alcanzó su máximo el {day} con {value}, {ratio}× el mínimo del periodo.",
+        "flat": "{metric} se mantuvo estable durante el periodo."
       }
     },
     "errors": {

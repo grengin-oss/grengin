@@ -103,7 +103,8 @@
       "pagination": "Pagination des résultats",
       "topModelsCaption": "Principaux modèles par utilisation pour la plage de dates sélectionnée",
       "departmentTableCaption": "Utilisation par département pour la plage de dates sélectionnée",
-      "userTableCaption": "Utilisation par utilisateur pour la plage de dates sélectionnée"
+      "userTableCaption": "Utilisation par utilisateur pour la plage de dates sélectionnée",
+      "rangePicker": "Modifier la période"
     },
     "filters": {
       "dateRange": "Plage de dates",
@@ -119,7 +120,8 @@
       "hour": "Horaire",
       "day": "Quotidien",
       "week": "Hebdomadaire",
-      "month": "Mensuel"
+      "month": "Mensuel",
+      "rangeFields": "Champs de période"
     },
     "loading": "Chargement de l'analytique...",
     "retry": "Réessayer",
@@ -133,7 +135,8 @@
       "avgPerUser": "{count} moyenne par utilisateur",
       "totalTokens": "Tokens totaux",
       "totalCost": "Coût total",
-      "vsPreviousDays": "vs {count} jours précédents"
+      "vsPreviousDays": "vs {count} jours précédents",
+      "quickStats": "Statistiques rapides"
     },
     "topModels": {
       "title": "Modèles principaux",
@@ -141,7 +144,8 @@
       "provider": "Fournisseur",
       "requests": "Requêtes",
       "tokens": "Jetons",
-      "cost": "Coût"
+      "cost": "Coût",
+      "subtitleByCost": "par coût, {range}"
     },
     "charts": {
       "title": "Tendances de performance",
@@ -152,7 +156,8 @@
         "tokens": "Jetons",
         "latency": "Latence",
         "date": "Date",
-        "latencyMs": "Latence (ms)"
+        "latencyMs": "Latence (ms)",
+        "tabLabel": "Multi-métrique"
       },
       "usageGrowth": {
         "title": "Croissance de l'utilisation",
@@ -184,6 +189,10 @@
         "viewDataTableFor": "Afficher le tableau de données pour {chartName}",
         "closeDataTable": "Fermer le tableau de données",
         "dataTableRegion": "Tableau de données de {chartName}"
+      },
+      "insight": {
+        "peak": "{metric} a culminé {day} à {value}, {ratio}× le minimum de la période.",
+        "flat": "{metric} est resté stable sur la période."
       }
     },
     "errors": {

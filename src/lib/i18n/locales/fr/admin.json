@@ -32,7 +32,8 @@
       "metadata": "Métadonnées",
       "lastUpdated": "Dernière mise à jour",
       "removing": "Suppression",
-      "loading": "Chargement..."
+      "loading": "Chargement...",
+      "noRole": "Aucun rôle"
     },
     "organization": {
       "subtitle": "Gérez vos équipes, votre structure et vos utilisateurs",
@@ -54,7 +55,24 @@
       "assignSuccess": "Utilisateur assigné à l'équipe avec succès",
       "assignError": "Échec de l'assignation de l'utilisateur à l'équipe",
       "noUnassigned": "Tout le monde appartient à une équipe",
-      "loadingUnassigned": "Chargement des utilisateurs non assignés…"
+      "loadingUnassigned": "Chargement des utilisateurs non assignés…",
+      "structure": "Organigramme",
+      "kpiDepartments": "Départements",
+      "kpiTotalPeople": "Personnes au total",
+      "kpiBudgetAllocated": "Budget alloué",
+      "findDepartmentPlaceholder": "Rechercher un département...",
+      "noDepartmentsMatch": "Aucun département ne correspond à votre recherche",
+      "treeFooter": "{departments} départements sur {levels} niveaux · {people} personnes",
+      "addSubDepartment": "Ajouter un sous-département",
+      "searchUsersPlaceholder": "Rechercher par nom, e-mail ou département...",
+      "export": "Exporter",
+      "exporting": "Exportation...",
+      "exportSuccess": "Utilisateurs exportés",
+      "exportError": "Échec de l'exportation des utilisateurs",
+      "noDescription": "Aucune description",
+      "childDeptCount": "{count} sous-département",
+      "deleteDepartmentCaption": "Cette action est irréversible — les membres et les données de budget seront supprimés.",
+      "departmentActions": "Actions pour {name}"
     },
     "tabListLabels": {
       "organization": "Onglets Organisation",

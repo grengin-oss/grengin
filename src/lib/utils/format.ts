@@ -82,3 +82,11 @@ export function formatNumber(
   }
 }
 
+
+/**
+ * Format a USD amount the way the admin budget UI does everywhere ("$25.00").
+ * Kept fixed-locale on purpose: budgets are stored and quoted in USD.
+ */
+export function formatCurrency(amount: number): string {
+  return `$${(amount ?? 0).toFixed(2)}`;
+}

@@ -12,6 +12,7 @@ SPDX-License-Identifier: Apache-2.0
   import { PERMISSIONS } from "../../features/auth/permissions.js";
   import { getNotificationsState } from "../../features/notifications/index.js";
   import AlertsPopover from "../../features/notifications/AlertsPopover.svelte";
+  import SidebarSearchModal from "./SidebarSearchModal.svelte";
 
   interface Props {
     isCollapsed?: boolean;
@@ -38,6 +39,11 @@ SPDX-License-Identifier: Apache-2.0
   let showUserMenu = $state(false);
   let userMenuElement: HTMLElement;
   let userCollapsed = $state(false);
+  let showSearchModal = $state(false);
+
+  function openSearchModal() {
+    showSearchModal = true;
+  }
 
   const notifState = getNotificationsState();
   let showAlertsPopover = $state(false);
@@ -241,14 +247,72 @@ SPDX-License-Identifier: Apache-2.0
     ...(canViewSettings ? [settingsSectionItem] : []),
   ]);
 
+  let adminSectionIds = $derived(
+    adminMenuItems.filter((i) => i.type === "section-header").map((i) => i.id),
+  );
+
+  // The rail draws categories as rules, not labels: the standalone Overview item
+  // shares the first block with the first category's items, and every later
+  // category opens a new block behind a divider (the second one is the wide rule).
+  let adminRailGroups = $derived.by(() => {
+    const groups: AdminMenuItem[][] = [[]];
+    let seenSection = false;
+    for (const item of adminMenuItems) {
+      if (item.type === "section-header") {
+        if (seenSection) groups.push([]);
+        seenSection = true;
+        continue;
+      }
+      groups[groups.length - 1].push(item);
+    }
+    return groups.filter((g) => g.length > 0);
+  });
+
   function toggleSidebar() {
     isCollapsed = !isCollapsed;
     userCollapsed = isCollapsed;
     onsidebarToggle?.(isCollapsed);
   }
 
+  // Start a new chat (mirrors the chat section's "New chat" action) so the
+  // prominent button can live in the sidebar shell, above the sections.
+  function startNewChat() {
+    navigate("/");
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("focusChatInput"));
+    }, 50);
+    collapseSidebarOnMobile();
+  }
+
+  let railMenuElement = $state.raw<HTMLElement | undefined>(undefined);
+
   function toggleUserMenu() {
     showUserMenu = !showUserMenu;
+  }
+
+  function handleUserMenuNavigate() {
+    closeUserMenu();
+    collapseSidebarOnMobile();
+  }
+
+  function handleUserMenuKeydown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      closeUserMenu();
+      return;
+    }
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    event.preventDefault();
+    const scope = (event.currentTarget as HTMLElement) ?? undefined;
+    const items = Array.from(
+      scope?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [],
+    );
+    if (!items.length) return;
+    const at = items.indexOf(document.activeElement as HTMLElement);
+    const next =
+      event.key === "ArrowDown"
+        ? (at + 1) % items.length
+        : (at - 1 + items.length) % items.length;
+    items[next]?.focus();
   }
 
   function closeUserMenu() {
@@ -256,12 +320,11 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   function handleClickOutside(event: MouseEvent) {
-    if (
-      showUserMenu &&
-      userMenuElement &&
-      !userMenuElement.contains(event.target as Node)
-    ) {
-      closeUserMenu();
+    if (showUserMenu) {
+      const target = event.target as Node;
+      const inside =
+        userMenuElement?.contains(target) || railMenuElement?.contains(target);
+      if (!inside) closeUserMenu();
     }
     if (showAlertsPopover) {
       const t = event.target as Node | null;
@@ -288,25 +351,6 @@ SPDX-License-Identifier: Apache-2.0
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
     return parts[0]?.substring(0, 2).toUpperCase() || "U";
-  }
-
-  function getUserColor(): string {
-    const colors = [
-      "#667eea",
-      "#f56565",
-      "#48bb78",
-      "#ed8936",
-      "#9f7aea",
-      "#38b2ac",
-      "#ed64a6",
-      "#4299e1",
-    ];
-    if (!user?.name) return colors[0];
-    let hash = 0;
-    for (let i = 0; i < user.name.length; i++) {
-      hash = user.name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
   }
 
   function handleLogout() {
@@ -339,18 +383,182 @@ SPDX-License-Identifier: Apache-2.0
     if (e.key === "Escape" && showUserMenu) {
       closeUserMenu();
     }
+    // Cmd/Ctrl+K toggles the search palette from anywhere in the app.
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      showSearchModal = !showSearchModal;
+    }
   }}
 />
+
+{#snippet userMenuItems()}
+  <Link
+    to="/settings"
+    class="us-item"
+    onclick={handleUserMenuNavigate}
+    role="menuitem"
+    aria-label={$_("sidebar.settings")}
+    title={$_("sidebar.settings")}
+  >
+    <span class="us-item__icon" aria-hidden="true">
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+        />
+      </svg>
+    </span>
+    <span class="us-item__label">{$_("sidebar.settings")}</span>
+  </Link>
+  {#if hasAdminPermissions}
+    <span class="us-rule" aria-hidden="true"></span>
+    <Link
+      to="/admin"
+      class="us-item"
+      onclick={handleUserMenuNavigate}
+      role="menuitem"
+      aria-label={$_("sidebar.admin")}
+      title={$_("sidebar.admin")}
+    >
+      <span class="us-item__icon" aria-hidden="true">
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      </span>
+      <span class="us-item__label">{$_("sidebar.admin")}</span>
+    </Link>
+  {/if}
+  <span class="us-rule" aria-hidden="true"></span>
+  <button
+    class="us-item us-item--danger"
+    role="menuitem"
+    onclick={handleLogout}
+    aria-label={$_("sidebar.signOut")}
+    title={$_("sidebar.signOut")}
+  >
+    <span class="us-item__icon" aria-hidden="true">
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16,17 21,12 16,7" />
+        <line x1="21" y1="12" x2="9" y2="12" />
+      </svg>
+    </span>
+    <span class="us-item__label">{$_("sidebar.signOut")}</span>
+  </button>
+{/snippet}
 
 <aside
   class="sidebar"
   class:collapsed={isCollapsed}
+  class:admin={isAdminView}
   aria-label={$_("sidebar.navigation") || "Main navigation"}
 >
+  {#snippet navItem(item: AdminMenuItem)}
+    {#if item.path}
+      {@const active =
+        currentPath === item.path || currentPath.startsWith(item.path + "/")}
+      <button
+        type="button"
+        class="ch-item"
+        class:ch-item--active={active}
+        onclick={() => handleAdminMenuItemClick(item.path)}
+        title={item.label}
+        aria-current={active ? "page" : undefined}
+        aria-label={item.label}
+      >
+        {#if item.icon}
+          <span class="ch-item__icon" aria-hidden="true">{@html item.icon}</span
+          >
+        {/if}
+        <span class="ch-item__label">{item.label}</span>
+      </button>
+    {/if}
+  {/snippet}
+
+  {#snippet panelIcon()}
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <path
+        d="M10 2V14M6.66667 6L4.66667 8L6.66667 10M12.6667 2H3.33333C2.59695 2 2 2.59695 2 3.33333V12.6667C2 13.403 2.59695 14 3.33333 14H12.6667C13.403 14 14 13.403 14 12.6667V3.33333C14 2.59695 13.403 2 12.6667 2Z"
+      />
+    </svg>
+  {/snippet}
+
+  {#snippet searchIcon()}
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <path
+        d="M14 14L11.1067 11.1067M12.6666 7.33327C12.6666 10.2788 10.2788 12.6666 7.33327 12.6666C4.38775 12.6666 1.99994 10.2788 1.99994 7.33327C1.99994 4.38775 4.38775 1.99994 7.33327 1.99994C10.2788 1.99994 12.6666 4.38775 12.6666 7.33327Z"
+      />
+    </svg>
+  {/snippet}
+
+  {#snippet backChevron()}
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+    >
+      <path
+        d="M6.0004 2.4996L2.5 6L6.0004 9.5004M2.5 6H9.5008"
+        stroke="#427AC6"
+        stroke-width="2"
+        stroke-linecap="round"
+      />
+    </svg>
+  {/snippet}
+
   {#snippet alertsUi()}
     <button
       type="button"
-      class="alerts-btn burger-btn"
+      class="alerts-btn"
+      class:action-btn={!isCollapsed}
+      class:rail-btn={isCollapsed}
       class:alerts-btn-active={showAlertsPopover}
       onclick={(e) => {
         e.stopPropagation();
@@ -367,13 +575,20 @@ SPDX-License-Identifier: Apache-2.0
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        stroke-width="2"
+        stroke-width="1.5"
         stroke-linecap="round"
         stroke-linejoin="round"
         aria-hidden="true"
       >
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        <path
+          d="M7.625 11.875C7.625 9.18261 9.80761 7 12.5 7C15.1924 7 17.375 9.18261 17.375 11.875V14.4561C17.375 14.6098 17.4225 14.7598 17.511 14.8854L17.8904 15.4243C18.3569 16.0868 17.8831 17 17.0728 17H7.92722C7.11692 17 6.64306 16.0868 7.10959 15.4243L7.48902 14.8854C7.57751 14.7598 7.625 14.6098 7.625 14.4561V11.875Z"
+        />
+        <path
+          d="M10 17H15C15 18.1046 14.1046 19 13 19H12C10.8954 19 10 18.1046 10 17Z"
+        />
+        <path
+          d="M15 8V7.5C15 6.11929 13.8807 5 12.5 5C11.1193 5 10 6.11929 10 7.5V8"
+        />
       </svg>
       {#if notifState.unreadCount > 0}
         <span class="alerts-badge"
@@ -393,312 +608,339 @@ SPDX-License-Identifier: Apache-2.0
     onNavigate={goToAlertsPage}
   />
 
-  <div class="sidebar-elevated-top">
-    <div class="sidebar-header">
-      <div class="sidebar-brand">
-        {#if !isCollapsed}
-          <img src={grenginLogo} alt="Grengin" class="brand-logo" />
-          <div class="spacer"></div>
-          <div
-            class="notifications-anchor brand-row-actions"
-            bind:this={alertsAnchorChat}
-          >
-            {@render alertsUi()}
-          </div>
-          <button
-            class="burger-btn"
-            onclick={toggleSidebar}
-            aria-label={$_("sidebar.toggleSidebar")}
-            title={$_("sidebar.toggleSidebar")}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              xmlns="http://www.w3.org/2000/svg"
-              data-rtl-flip=""
-              class="icon max-md:hidden"
-              ><path
-                d="M6.83496 3.99992C6.38353 4.00411 6.01421 4.0122 5.69824 4.03801C5.31232 4.06954 5.03904 4.12266 4.82227 4.20012L4.62207 4.28606C4.18264 4.50996 3.81498 4.85035 3.55859 5.26848L3.45605 5.45207C3.33013 5.69922 3.25006 6.01354 3.20801 6.52824C3.16533 7.05065 3.16504 7.71885 3.16504 8.66301V11.3271C3.16504 12.2712 3.16533 12.9394 3.20801 13.4618C3.25006 13.9766 3.33013 14.2909 3.45605 14.538L3.55859 14.7216C3.81498 15.1397 4.18266 15.4801 4.62207 15.704L4.82227 15.79C5.03904 15.8674 5.31234 15.9205 5.69824 15.9521C6.01398 15.9779 6.383 15.986 6.83398 15.9902L6.83496 3.99992ZM18.165 11.3271C18.165 12.2493 18.1653 12.9811 18.1172 13.5702C18.0745 14.0924 17.9916 14.5472 17.8125 14.9648L17.7295 15.1415C17.394 15.8 16.8834 16.3511 16.2568 16.7353L15.9814 16.8896C15.5157 17.1268 15.0069 17.2285 14.4102 17.2773C13.821 17.3254 13.0893 17.3251 12.167 17.3251H7.83301C6.91071 17.3251 6.17898 17.3254 5.58984 17.2773C5.06757 17.2346 4.61294 17.1508 4.19531 16.9716L4.01855 16.8896C3.36014 16.5541 2.80898 16.0434 2.4248 15.4169L2.27051 15.1415C2.03328 14.6758 1.93158 14.167 1.88281 13.5702C1.83468 12.9811 1.83496 12.2493 1.83496 11.3271V8.66301C1.83496 7.74072 1.83468 7.00898 1.88281 6.41985C1.93157 5.82309 2.03329 5.31432 2.27051 4.84856L2.4248 4.57317C2.80898 3.94666 3.36012 3.436 4.01855 3.10051L4.19531 3.0175C4.61285 2.83843 5.06771 2.75548 5.58984 2.71281C6.17898 2.66468 6.91071 2.66496 7.83301 2.66496H12.167C13.0893 2.66496 13.821 2.66468 14.4102 2.71281C15.0069 2.76157 15.5157 2.86329 15.9814 3.10051L16.2568 3.25481C16.8833 3.63898 17.394 4.19012 17.7295 4.84856L17.8125 5.02531C17.9916 5.44285 18.0745 5.89771 18.1172 6.41985C18.1653 7.00898 18.165 7.74072 18.165 8.66301V11.3271ZM8.16406 15.995H12.167C13.1112 15.995 13.7794 15.9947 14.3018 15.9521C14.8164 15.91 15.1308 15.8299 15.3779 15.704L15.5615 15.6015C15.9797 15.3451 16.32 14.9774 16.5439 14.538L16.6299 14.3378C16.7074 14.121 16.7605 13.8478 16.792 13.4618C16.8347 12.9394 16.835 12.2712 16.835 11.3271V8.66301C16.835 7.71885 16.8347 7.05065 16.792 6.52824C16.7605 6.14232 16.7073 5.86904 16.6299 5.65227L16.5439 5.45207C16.32 5.01264 15.9796 4.64498 15.5615 4.3886L15.3779 4.28606C15.1308 4.16013 14.8165 4.08006 14.3018 4.03801C13.7794 3.99533 13.1112 3.99504 12.167 3.99504H8.16406C8.16407 3.99667 8.16504 3.99829 8.16504 3.99992L8.16406 15.995Z"
-              ></path></svg
-            >
-          </button>
-        {:else}
-          <div class="collapsed-logo-container">
+  <SidebarSearchModal
+    open={showSearchModal}
+    onClose={() => {
+      showSearchModal = false;
+    }}
+  />
+
+  {#if isAdminView}
+    <!-- Control Hub — Figma "control-hub-sidebar" (153:14055) -->
+    <div class="ch-body" class:ch-body--rail={isCollapsed}>
+      {#if !isCollapsed}
+        <div class="ch-logo-row">
+          <img src={grenginLogo} alt="Grengin" class="ch-logo" />
+          <span class="ch-actions">
+            <div class="notifications-anchor" bind:this={alertsAnchorChat}>
+              {@render alertsUi()}
+            </div>
             <button
-              class="logo-btn"
+              class="ch-action-btn ch-action-btn--flip"
               onclick={toggleSidebar}
               aria-label={$_("sidebar.toggleSidebar")}
               title={$_("sidebar.toggleSidebar")}
             >
-              <img src="/grengin-icon.svg" alt="Grengin" class="logo-icon" />
+              {@render panelIcon()}
             </button>
-            <button
-              class="expand-btn"
-              onclick={toggleSidebar}
-              aria-label={$_("sidebar.expandSidebar")}
-              title={$_("sidebar.expandSidebar")}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M6.83496 3.99992C6.38353 4.00411 6.01421 4.0122 5.69824 4.03801C5.31232 4.06954 5.03904 4.12266 4.82227 4.20012L4.62207 4.28606C4.18264 4.50996 3.81498 4.85035 3.55859 5.26848L3.45605 5.45207C3.33013 5.69922 3.25006 6.01354 3.20801 6.52824C3.16533 7.05065 3.16504 7.71885 3.16504 8.66301V11.3271C3.16504 12.2712 3.16533 12.9394 3.20801 13.4618C3.25006 13.9766 3.33013 14.2909 3.45605 14.538L3.55859 14.7216C3.81498 15.1397 4.18266 15.4801 4.62207 15.704L4.82227 15.79C5.03904 15.8674 5.31234 15.9205 5.69824 15.9521C6.01398 15.9779 6.383 15.986 6.83398 15.9902L6.83496 3.99992ZM18.165 11.3271C18.165 12.2493 18.1653 12.9811 18.1172 13.5702C18.0745 14.0924 17.9916 14.5472 17.8125 14.9648L17.7295 15.1415C17.394 15.8 16.8834 16.3511 16.2568 16.7353L15.9814 16.8896C15.5157 17.1268 15.0069 17.2285 14.4102 17.2773C13.821 17.3254 13.0893 17.3251 12.167 17.3251H7.83301C6.91071 17.3251 6.17898 17.3254 5.58984 17.2773C5.06757 17.2346 4.61294 17.1508 4.19531 16.9716L4.01855 16.8896C3.36014 16.5541 2.80898 16.0434 2.4248 15.4169L2.27051 15.1415C2.03328 14.6758 1.93158 14.167 1.88281 13.5702C1.83468 12.9811 1.83496 12.2493 1.83496 11.3271V8.66301C1.83496 7.74072 1.83468 7.00898 1.88281 6.41985C1.93157 5.82309 2.03329 5.31432 2.27051 4.84856L2.4248 4.57317C2.80898 3.94666 3.36012 3.436 4.01855 3.10051L4.19531 3.0175C4.61285 2.83843 5.06771 2.75548 5.58984 2.71281C6.17898 2.66468 6.91071 2.66496 7.83301 2.66496H12.167C13.0893 2.66496 13.821 2.66468 14.4102 2.71281C15.0069 2.76157 15.5157 2.86329 15.9814 3.10051L16.2568 3.25481C16.8833 3.63898 17.394 4.19012 17.7295 4.84856L17.8125 5.02531C17.9916 5.44285 18.0745 5.89771 18.1172 6.41985C18.1653 7.00898 18.165 7.74072 18.165 8.66301V11.3271ZM8.16406 15.995H12.167C13.1112 15.995 13.7794 15.9947 14.3018 15.9521C14.8164 15.91 15.1308 15.8299 15.3779 15.704L15.5615 15.6015C15.9797 15.3451 16.32 14.9774 16.5439 14.538L16.6299 14.3378C16.7074 14.121 16.7605 13.8478 16.792 13.4618C16.8347 12.9394 16.835 12.2712 16.835 11.3271V8.66301C16.835 7.71885 16.8347 7.05065 16.792 6.52824C16.7605 6.14232 16.7073 5.86904 16.6299 5.65227L16.5439 5.45207C16.32 5.01264 15.9796 4.64498 15.5615 4.3886L15.3779 4.28606C15.1308 4.16013 14.8165 4.08006 14.3018 4.03801C13.7794 3.99533 13.1112 3.99504 12.167 3.99504H8.16406C8.16407 3.99667 8.16504 3.99829 8.16504 3.99992L8.16406 15.995Z"
-                ></path>
-              </svg>
-            </button>
-          </div>
-          <div
-            class="notifications-anchor notifications-anchor-collapsed"
-            bind:this={alertsAnchorChat}
-          >
-            {@render alertsUi()}
-          </div>
-        {/if}
-      </div>
-    </div>
-  </div>
-
-  {#if isAdminView}
-    <div class="admin-sidebar-header">
-      <div class="header-top">
+          </span>
+        </div>
         <button
-          class="back-btn"
+          class="ch-module"
           onclick={() => handleAdminMenuItemClick("/")}
           title={$_("sidebar.backToChat")}
-          aria-label={$_("sidebar.backToChat")}
         >
-          <svg
-            data-rtl-flip
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12,19 5,12 12,5"></polyline>
-          </svg>
+          <span class="ch-module__back" aria-hidden="true">
+            {@render backChevron()}
+          </span>
+          <span class="ch-module__label">{$_("sidebar.adminPanel")}</span>
         </button>
-        {#if !isCollapsed}
-          <h1 class="admin-title">{$_("sidebar.adminPanel")}</h1>
-        {/if}
-      </div>
-    </div>
-  {/if}
-
-  <!-- Sidebar Navigation -->
-  {#if isAdminView}
-    <nav
-      class="sidebar-nav admin-sidebar-nav"
-      aria-label={$_("sidebar.adminNavigation") || "Admin navigation"}
-    >
-      {#each adminMenuItems as item}
-        {#if item.type === "section-header"}
-          {#if !isCollapsed}
-            <h2 class="section-header" id="nav-section-{item.id}">
-              <span>{item.label}</span>
-            </h2>
-          {:else}
-            <div class="section-divider" aria-hidden="true"></div>
-          {/if}
-        {:else if item.path}
-          <button
-            type="button"
-            class="sidebar-item"
-            class:active={currentPath === item.path ||
-              currentPath.startsWith(item.path + "/")}
-            onclick={() => handleAdminMenuItemClick(item.path)}
-            title={item.label}
-            aria-current={currentPath === item.path ||
-            currentPath.startsWith(item.path + "/")
-              ? "page"
-              : undefined}
-            aria-label={item.label}
-          >
-            {#if item.icon}
-              <span class="sidebar-icon" aria-hidden="true"
-                >{@html item.icon}</span
-              >
-            {/if}
-            <span class="sidebar-label">{item.label}</span>
-          </button>
-        {/if}
-      {/each}
-    </nav>
-    {#if !isCollapsed}
-      <div class="sidebar-divider" aria-hidden="true"></div>
-    {/if}
-  {:else}
-    {#await import("$lib/bundles/user-chunk")}
-      <div class="sidebar-chat-pending" aria-busy="true">
-        <div class="sidebar-chat-pending-spinner"></div>
-      </div>
-    {:then mod}
-      {@const SidebarChatSection = mod.SidebarChatSection}
-      {@const SidebarProjectsSection = mod.SidebarProjectsSection}
-      <SidebarProjectsSection
-        {isCollapsed}
-        {currentPath}
-        onCollapseSidebar={collapseSidebarOnMobile}
-      />
-      <SidebarChatSection
-        {isCollapsed}
-        {currentPath}
-        onCollapseSidebar={collapseSidebarOnMobile}
-      />
-    {/await}
-  {/if}
-
-  <div class="sidebar-elevated-bottom">
-    <div class="sidebar-footer">
-      <div class="user-menu-container" bind:this={userMenuElement}>
+      {:else}
+        <div class="ch-logo-btn">
+          <img src="/grengin-icon.svg" alt="Grengin" class="ch-logo-mark" />
+        </div>
+        <div class="ch-rail-spacer" aria-hidden="true"></div>
         <button
-          class="user-menu-trigger sidebar-item"
-          onclick={toggleUserMenu}
-          aria-label={$_("sidebar.userMenu")}
-          aria-expanded={showUserMenu}
-          title={$_("sidebar.userMenu")}
+          class="ch-back-sm"
+          onclick={() => handleAdminMenuItemClick("/")}
+          aria-label={$_("sidebar.backToChat")}
+          title={$_("sidebar.backToChat")}
         >
-          <div class="user-avatar">
-            <div
-              class="user-initials"
-              style="background-color: {getUserColor()};"
+          {@render backChevron()}
+        </button>
+        <button
+          class="ch-rail-btn"
+          onclick={toggleSidebar}
+          aria-label={$_("sidebar.expandSidebar")}
+          title={$_("sidebar.expandSidebar")}
+        >
+          {@render panelIcon()}
+        </button>
+        <div
+          class="notifications-anchor notifications-anchor-collapsed"
+          bind:this={alertsAnchorChat}
+        >
+          {@render alertsUi()}
+        </div>
+      {/if}
+
+      <nav
+        class="ch-nav"
+        class:ch-nav--rail={isCollapsed}
+        aria-label={$_("sidebar.adminNavigation") || "Admin navigation"}
+      >
+        {#if isCollapsed}
+          {#each adminRailGroups as group, groupIndex}
+            {#if groupIndex > 0}
+              <div class="ch-divider-wrap" aria-hidden="true">
+                <span class="ch-divider" class:ch-divider--wide={groupIndex > 1}
+                ></span>
+              </div>
+            {/if}
+            <div class="ch-group" class:ch-group--tight={groupIndex === 0}>
+              {#each group as item (item.id)}
+                {@render navItem(item)}
+              {/each}
+            </div>
+          {/each}
+        {:else}
+          {#each adminMenuItems as item (item.id)}
+            {#if item.type === "section-header"}
+              <span
+                class="ch-category"
+                class:ch-category--gap={adminSectionIds.indexOf(item.id) > 0}
+                id="nav-section-{item.id}">{item.label}</span
+              >
+            {:else}
+              {@render navItem(item)}
+            {/if}
+          {/each}
+        {/if}
+      </nav>
+      {#if isCollapsed}
+        <div class="ch-rail-grow" aria-hidden="true"></div>
+      {/if}
+    </div>
+  {:else}
+    <div class="sb-header" class:sb-header--rail={isCollapsed}>
+      {#if !isCollapsed}
+        <div class="brand-header">
+          <img src={grenginLogo} alt="Grengin" class="logo" />
+          <div class="header-actions">
+            <button
+              class="action-btn"
+              onclick={openSearchModal}
+              aria-label={$_("sidebar.searchTitle")}
+              title={$_("sidebar.searchTitle")}
             >
-              {getUserInitials()}
+              {@render searchIcon()}
+            </button>
+            <div class="notifications-anchor" bind:this={alertsAnchorChat}>
+              {@render alertsUi()}
             </div>
+            <button
+              class="action-btn action-btn--flip"
+              onclick={toggleSidebar}
+              aria-label={$_("sidebar.toggleSidebar")}
+              title={$_("sidebar.toggleSidebar")}
+            >
+              {@render panelIcon()}
+            </button>
           </div>
-          {#if !isCollapsed}
-            <div class="user-info">
-              <span class="user-name">{user?.name || $_("sidebar.user")}</span>
-            </div>
+        </div>
+        <button
+          class="new-chat"
+          onclick={startNewChat}
+          title={$_("sidebar.newChat")}
+        >
+          <span class="new-chat__left">
             <svg
-              class="dropdown-arrow"
-              class:rotated={showUserMenu}
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              stroke-width="2"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
               aria-hidden="true"
             >
-              <polyline points="6,15 12,9 18,15" />
+              <path d="M7 12H17M12 7V17" />
             </svg>
-          {/if}
+            <span class="new-chat__label">{$_("sidebar.newChat")}</span>
+          </span>
         </button>
+      {:else}
+        <div class="rail-btn rail-btn--logo">
+          <img src="/grengin-icon.svg" alt="Grengin" class="logo-mark" />
+        </div>
+        <div class="rail-spacer" aria-hidden="true"></div>
+        <button
+          class="rail-btn"
+          onclick={toggleSidebar}
+          aria-label={$_("sidebar.expandSidebar")}
+          title={$_("sidebar.expandSidebar")}
+        >
+          {@render panelIcon()}
+        </button>
+        <button
+          class="rail-btn"
+          onclick={openSearchModal}
+          aria-label={$_("sidebar.searchTitle")}
+          title={$_("sidebar.searchTitle")}
+        >
+          {@render searchIcon()}
+        </button>
+        <button
+          class="rail-btn rail-plus"
+          onclick={startNewChat}
+          aria-label={$_("sidebar.newChat")}
+          title={$_("sidebar.newChat")}
+        ></button>
+        <div
+          class="notifications-anchor notifications-anchor-collapsed"
+          bind:this={alertsAnchorChat}
+        >
+          {@render alertsUi()}
+        </div>
+        <div class="divider-wrap" aria-hidden="true">
+          <span class="divider"></span>
+        </div>
+      {/if}
+    </div>
+
+    <div class="sb-scroll" class:sb-scroll--rail={isCollapsed}>
+      <div class="sb-sections">
+        {#await import("$lib/bundles/user-chunk")}
+          <div class="sidebar-chat-pending" aria-busy="true">
+            <div class="sidebar-chat-pending-spinner"></div>
+          </div>
+        {:then mod}
+          {@const SidebarChatSection = mod.SidebarChatSection}
+          {@const SidebarProjectsSection = mod.SidebarProjectsSection}
+          <SidebarProjectsSection
+            {isCollapsed}
+            {currentPath}
+            onCollapseSidebar={collapseSidebarOnMobile}
+          />
+          <SidebarChatSection
+            {isCollapsed}
+            {currentPath}
+            onCollapseSidebar={collapseSidebarOnMobile}
+          />
+        {/await}
       </div>
     </div>
+  {/if}
+
+  <!-- user-settings-section — Figma 159:14534 (State=Default / State=Expanded).
+       The menu is part of the component and opens upward, in flow above the row. -->
+  <div
+    class="sidebar-footer"
+    class:sidebar-footer--rail={isCollapsed}
+    class:expanded={showUserMenu}
+    bind:this={userMenuElement}
+  >
+    {#if !isCollapsed}
+      <div
+        class="us-menu"
+        role="menu"
+        aria-label={$_("sidebar.userMenu") || "User menu"}
+        aria-hidden={!showUserMenu}
+        onkeydown={handleUserMenuKeydown}
+      >
+        {@render userMenuItems()}
+      </div>
+    {/if}
+
+    <button
+      class="user-row"
+      class:user-row--rail={isCollapsed}
+      onclick={toggleUserMenu}
+      aria-label={$_("sidebar.userMenu")}
+      aria-expanded={showUserMenu}
+      title={user?.name || $_("sidebar.userMenu")}
+    >
+      <span class="user-info">
+        <span class="avatar-lg">{getUserInitials()}</span>
+        {#if !isCollapsed}
+          <span class="user-text">
+            <span class="user-name">{user?.name || $_("sidebar.user")}</span>
+            {#if user?.email}
+              <span class="user-plan">{user.email}</span>
+            {/if}
+          </span>
+        {/if}
+      </span>
+      {#if !isCollapsed}
+        <span class="us-chevron" aria-hidden="true">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="6,15 12,9 18,15" />
+          </svg>
+        </span>
+      {/if}
+    </button>
   </div>
 </aside>
 
-{#if showUserMenu}
-  <div
-    class="user-menu-dropdown"
-    role="menu"
-    aria-label={$_("sidebar.userMenu") || "User menu"}
-    aria-hidden={!showUserMenu}
-    tabindex="-1"
-    onkeydown={(e) => {
-      if (e.key === "Escape") {
-        closeUserMenu();
-      }
-      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-        e.preventDefault();
-        const items = Array.from(
-          document.querySelectorAll('.user-menu-dropdown [role="menuitem"]'),
-        );
-        const focusedIndex = items.findIndex(
-          (item) => item === document.activeElement,
-        );
-        const nextIndex =
-          e.key === "ArrowDown"
-            ? (focusedIndex + 1) % items.length
-            : (focusedIndex - 1 + items.length) % items.length;
-        (items[nextIndex] as HTMLElement)?.focus();
-      }
-    }}
-  >
-    <Link
-      to="/settings"
-      class="menu-item"
-      onclick={collapseSidebarOnMobile}
-      role="menuitem"
-      aria-label={$_("sidebar.settings")}
-      title={$_("sidebar.settings")}
+<!-- The 60px rail is too narrow to hold the 272px menu and the shell clips its
+     overflow, so there the same menu is anchored beside the rail instead. -->
+{#if isCollapsed && showUserMenu}
+  <div class="us-menu us-menu--rail" bind:this={railMenuElement}>
+    <div
+      class="us-menu__inner"
+      role="menu"
+      aria-label={$_("sidebar.userMenu") || "User menu"}
+      onkeydown={handleUserMenuKeydown}
     >
-      <span class="user-menu-icon" aria-hidden="true">⚙️</span>
-      <span>{$_("sidebar.settings")}</span>
-    </Link>
-    {#if hasAdminPermissions}
-      <Link
-        to="/admin"
-        class="menu-item"
-        role="menuitem"
-        aria-label={$_("sidebar.admin")}
-        onclick={collapseSidebarOnMobile}
-      >
-        <span class="menu-item-icon" aria-hidden="true">🔒</span>
-        <span class="menu-item-label">{$_("sidebar.admin")}</span>
-      </Link>
-    {/if}
-    <button
-      class="menu-item menu-item--danger"
-      role="menuitem"
-      onclick={handleLogout}
-      aria-label={$_("sidebar.signOut")}
-      title={$_("sidebar.signOut")}
-    >
-      <svg
-        class="user-menu-icon"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        aria-hidden="true"
-      >
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-        <polyline points="16,17 21,12 16,7" />
-        <line x1="21" y1="12" x2="9" y2="12" />
-      </svg>
-      <span>{$_("sidebar.signOut")}</span>
-    </button>
+      {@render userMenuItems()}
+    </div>
   </div>
 {/if}
 
 <style>
   /* ===== Sidebar Container (Layer 1 - floats above main content) ===== */
+  /* ===== Sidebar Container =====
+     Figma "Sidebar" (153:14270): State=Expanded 272px, State=Collapsed 60px. */
   .sidebar {
     position: fixed;
     inset-inline-start: 0;
     top: 0;
-    width: 260px;
+    width: 272px;
     height: 100vh;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
     z-index: 1000;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
+    font-family: var(--gx-font);
+    background: var(--gx-surface);
+    border-inline-end: 1px solid var(--gx-line-soft);
     transition:
       width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
       transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    /* Liquid Glass Layer 1 - Primary navigation surface */
-    background: var(--bg-primary);
-    border-inline-end: 1px solid var(--glass-stroke-dark);
-    box-shadow: var(--glass-shadow-dark);
   }
 
   .sidebar.collapsed {
-    width: 72px;
+    width: 60px;
+    align-items: center;
+    gap: 4px;
+    padding: 20px 0;
+    background: var(--gx-surface-rail);
+    border: 1px solid var(--gx-line);
+    border-radius: 0 18px 18px 0;
   }
 
+  /* Control Hub uses the plain white surface and the cooler hairline */
+  .sidebar.admin {
+    border-inline-end: 1px solid var(--gx-hair);
+  }
+
+  .sidebar.admin.collapsed {
+    background: var(--gx-surface);
+    border: none;
+    border-inline-end: 1px solid var(--gx-line);
+  }
   .sidebar-chat-pending {
     flex: 1;
     display: flex;
@@ -732,281 +974,376 @@ SPDX-License-Identifier: Apache-2.0
     -ms-overflow-style: none; /* IE/Edge */
   }
 
-  /* ===== Elevated Sections (Liquid Glass Layer 2 - floats above sidebar content) ===== */
-  .sidebar-elevated-top,
-  .sidebar-elevated-bottom {
-    position: relative;
-    z-index: 2;
-
-    /* Liquid Glass Layer 2 - Subtle elevation using glass background */
-    background: var(--glass-bg-light);
+  /* ===== Header (Figma: 112px tall, 20/16/12 padding, 12px gap) ===== */
+  .sb-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-self: stretch;
+    flex-shrink: 0;
+    padding: 20px 16px 12px;
+    overflow: hidden;
   }
 
-  .sidebar-elevated-top {
-    /* Soft downward shadow with highlight edge */
-    box-shadow:
-      0 4px 16px -8px rgba(0, 0, 0, 0.15),
-      var(--glass-highlight);
+  .sb-header--rail {
+    align-self: auto;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    overflow: visible;
   }
 
-  .sidebar-elevated-bottom {
-    margin-top: auto;
-    /* Soft upward shadow with highlight edge */
-    box-shadow:
-      0 -4px 16px -8px rgba(0, 0, 0, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  /* ===== Scrollable section stack (Figma: 8/16/16 padding, 16px gap) ===== */
+  .sb-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+    align-self: stretch;
+    flex-grow: 1;
+    min-height: 0;
+    padding: 8px 16px 16px;
+    overflow-y: auto;
+    scrollbar-width: none;
   }
 
-  .sidebar-divider {
+  .sb-scroll::-webkit-scrollbar {
     display: none;
   }
 
-  /* ===== Sidebar Header ===== */
-  .sidebar-header {
-    padding: var(--space-lg) var(--space-lg);
-  }
-
-  .collapsed .sidebar-header {
-    padding: var(--space-lg) var(--space-sm);
-  }
-
-  /* ===== Admin Sidebar Header ===== */
-  .admin-sidebar-header {
-    padding: 1rem 1rem 0 1rem;
-  }
-
-  .header-top {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-  }
-
-  .back-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    padding: 0;
-    border: none;
-    background: rgba(var(--glass-tint), 0.06);
-    backdrop-filter: blur(0.75rem);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 2px 8px rgba(0, 0, 0, 0.08);
-    flex-shrink: 0;
-  }
-
-  .back-btn:hover {
-    background: rgba(var(--glass-tint), 0.12);
-    border-color: var(--link-color);
-    color: var(--link-color);
-    transform: translateY(-1px);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.15),
-      0 4px 16px rgba(0, 0, 0, 0.12);
-  }
-
-  .back-btn:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-  }
-
-  .back-btn:active {
-    transform: translateY(0);
-  }
-
-  .admin-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
-    letter-spacing: -0.02em;
-    flex: 1;
-  }
-
-  .admin-sidebar-nav {
-    flex: 1;
-  }
-
-  .sidebar-brand {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  .sb-scroll--rail {
     width: 100%;
-    gap: var(--space-md);
+    align-self: auto;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
   }
 
-  .spacer {
-    flex: 1;
-  }
-
-  .collapsed .sidebar-brand {
+  .sb-sections {
+    display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
-    align-items: center;
-    justify-content: center;
+    gap: 20px;
+    align-self: stretch;
   }
 
-  .collapsed-logo-container {
-    position: relative;
-    display: flex;
+  .sb-scroll--rail .sb-sections {
+    align-self: auto;
     align-items: center;
-    justify-content: center;
-    width: 100%;
+    gap: 4px;
   }
 
-  .expand-btn {
-    position: absolute;
+  /* ===== Control Hub (Figma "control-hub-sidebar" 153:14055) ===== */
+  .ch-body {
     display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    flex-grow: 1;
+    min-height: 0;
+    padding: 20px 16px 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .ch-body::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ch-body--rail {
+    align-self: auto;
     align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
+    gap: 4px;
     padding: 0;
-    border: none;
-    background: var(--btn-tertiary);
-    border-radius: var(--radius-full);
-    color: var(--text-secondary);
-    cursor: pointer;
-    opacity: 0;
-    transition: all 0.25s ease;
-    z-index: 10;
-    box-shadow: none;
-    backdrop-filter: none;
+    overflow: visible;
   }
 
-  .collapsed-logo-container:hover .logo-btn {
-    opacity: 0;
-  }
-
-  .collapsed-logo-container:hover .expand-btn {
-    opacity: 1;
-  }
-
-  .expand-btn:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-    opacity: 1;
-  }
-
-  .expand-btn:hover {
-    background: var(--btn-quaternary);
-    color: var(--brand);
-    transform: scale(1.05);
-  }
-
-  /* Burger button - toggle sidebar */
-  .burger-btn {
+  .ch-logo-row {
     display: flex;
+    height: 59px;
+    padding: 0 4px 28px;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border: none;
-    background: var(--btn-tertiary);
-    border-radius: var(--radius-full);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    align-self: stretch;
     flex-shrink: 0;
-    box-shadow: none;
-    backdrop-filter: none;
   }
 
-  .burger-btn:hover {
-    background: var(--btn-quaternary);
-    color: var(--brand);
-    transform: scale(1.05);
+  .ch-logo {
+    width: 108px;
+    height: 24px;
+    object-fit: contain;
+    object-position: left center;
+    flex-shrink: 0;
   }
 
-  .burger-btn:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
+  .ch-actions {
+    display: flex;
+    gap: 1px;
+    align-items: center;
   }
 
-  .burger-btn:active {
-    transform: scale(0.95);
-  }
-
-  /* Logo */
-  .logo-btn {
+  .ch-action-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    height: 44px;
-    padding: var(--space-sm);
-    border: none;
-    background: transparent;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: none;
-    backdrop-filter: none;
-  }
-
-  .logo-btn:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-  }
-
-  .logo-btn:hover {
-    background: var(--btn-tertiary);
-    transform: scale(1.02);
-  }
-
-  .logo-btn:active {
-    transform: scale(0.98);
-  }
-
-  .logo-icon {
     width: 28px;
     height: 28px;
-    object-fit: contain;
-    transition: all 0.25s ease;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--gx-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    transition: background-color 120ms ease;
   }
 
-  .logo-btn:hover .logo-icon {
-    filter: brightness(1.1);
+  .ch-action-btn:hover {
+    background: var(--gx-fill-soft);
+    color: var(--gx-muted);
+    transform: none;
+    box-shadow: none;
   }
 
-  .brand-logo {
+  .ch-action-btn:focus-visible {
+    outline: 2px solid var(--gx-nav-accent);
+    outline-offset: 2px;
+  }
+
+  .ch-action-btn--flip,
+  .ch-action-btn--flip:hover,
+  .ch-action-btn--flip:active {
+    transform: scaleX(-1);
+  }
+
+  /* module pill: back affordance + the module's own name */
+  .ch-module {
+    display: flex;
+    width: 100%;
+    height: 44px;
+    gap: 10px;
+    padding: 10px;
+    justify-content: flex-start;
+    align-items: center;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 8px;
+    background: var(--gx-module-bg);
+    cursor: pointer;
+    box-shadow: none;
+    backdrop-filter: none;
+    transition: background-color 120ms ease;
+  }
+
+  .ch-module:hover {
+    background: var(--gx-module-bg-hover);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .ch-module:focus-visible {
+    outline: 2px solid var(--gx-nav-accent);
+    outline-offset: 2px;
+  }
+
+  .ch-module__back,
+  .ch-back-sm {
+    display: flex;
+    width: 24px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 6px;
+    background: var(--gx-surface);
+    color: var(--gx-nav-accent);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    backdrop-filter: none;
+  }
+
+  .ch-module__back {
+    align-self: stretch;
+  }
+
+  .ch-back-sm {
+    height: 24px;
+    /* the global button base sets 10px/20px padding, which would collapse the
+       24px box to zero content width and swallow the chevron */
+    padding: 0;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+  }
+
+  .ch-back-sm:hover {
+    background: var(--gx-module-bg);
+    color: var(--gx-nav-accent);
+    transform: none;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+  }
+
+  .ch-back-sm:focus-visible {
+    outline: 2px solid var(--gx-nav-accent);
+    outline-offset: 2px;
+  }
+
+  .ch-module__back svg,
+  .ch-back-sm svg {
+    display: block;
+    width: 12px;
+    height: 12px;
+  }
+
+  .ch-module__label {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 20px;
+    color: var(--gx-nav-accent);
+    white-space: nowrap;
+  }
+
+  .ch-logo-btn {
+    display: flex;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ch-logo-mark {
+    width: 28px;
     height: 28px;
-    width: auto;
+    border-radius: 6px;
     object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .ch-rail-spacer {
+    height: 12px;
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+
+  .ch-rail-grow {
+    flex-grow: 1;
+    align-self: stretch;
+  }
+
+  /* ===== Brand row (Figma: 28px tall, logo 108x24, 4px action gap) ===== */
+  .brand-header {
+    display: flex;
+    height: 28px;
+    align-items: center;
+    justify-content: space-between;
+    align-self: stretch;
+  }
+
+  .logo {
+    width: 108px;
+    height: 24px;
+    object-fit: contain;
+    object-position: left center;
+    flex-shrink: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--gx-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    transition: background-color 120ms ease;
+  }
+
+  .action-btn:hover {
+    background: var(--gx-fill-soft);
+    color: var(--gx-muted);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .action-btn:active {
+    background: var(--gx-line);
+    transform: none;
+  }
+
+  .action-btn:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: 2px;
+  }
+
+  /* the panel glyph is mirrored so the caret points the way the panel moves */
+  .action-btn--flip,
+  .action-btn--flip:hover,
+  .action-btn--flip:active {
+    transform: scaleX(-1);
+  }
+
+  .logo-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .rail-btn--logo {
+    cursor: default;
+  }
+
+  .rail-spacer {
+    height: 12px;
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+
+  .divider-wrap {
+    display: flex;
+    height: 16px;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+
+  .divider {
+    width: 24px;
+    height: 1px;
+    background: var(--gx-line);
   }
 
   .notifications-anchor {
     position: relative;
+    display: flex;
     flex-shrink: 0;
   }
 
-  /* Bell sits with the sidebar toggle on the right, like the legacy header */
-  .brand-row-actions {
-    display: flex;
-    align-items: center;
-  }
-
   .notifications-anchor-collapsed {
-    display: flex;
     justify-content: center;
-    width: 100%;
   }
-
   .alerts-btn {
     position: relative;
   }
 
   .alerts-btn-active {
-    background: var(--btn-quaternary);
-    color: var(--brand);
+    background: var(--gx-fill-soft);
+    color: var(--gx-ink);
   }
 
   .alerts-bell-icon {
@@ -1017,320 +1354,551 @@ SPDX-License-Identifier: Apache-2.0
     position: absolute;
     top: -2px;
     inset-inline-end: -2px;
-    min-width: 1.125rem;
-    height: 1.125rem;
-    padding: 0 4px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
     border-radius: var(--radius-full);
-    background: var(--brand);
-    color: var(--bg-primary);
-    font-size: 0.625rem;
+    background: var(--gx-amber-dot);
+    color: #fff;
+    font-size: 9px;
     font-weight: 700;
-    line-height: 1.125rem;
+    line-height: 15px;
     text-align: center;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 0 2px var(--gx-surface);
   }
 
-  /* ===== Sidebar Navigation ===== */
-  .sidebar-nav {
-    flex: 0;
-    padding: var(--space-md) var(--space-sm);
+  .collapsed .alerts-badge {
+    box-shadow: 0 0 0 2px var(--gx-surface-rail);
   }
 
-  .sidebar-item {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
-    margin-bottom: 2px;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: start;
-    border-radius: 0;
-    box-shadow: none;
-    backdrop-filter: none;
-    text-decoration: none;
-  }
-
-  .sidebar-item:hover {
-    background: var(--btn-tertiary);
-    color: var(--text-primary);
-    font-weight: 500;
-    border-radius: var(--radius-md);
-  }
-
-  .sidebar-item:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: -2px;
-    border-radius: var(--radius-md);
-    background: var(--btn-tertiary);
-  }
-
-  .sidebar-item.active {
-    background: var(--glass-tint-primary);
-    color: var(--brand);
-    font-weight: 600;
-  }
-
-  .sidebar-item.active:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: -2px;
-  }
-
-  .sidebar-icon {
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .sidebar-label {
-    font-weight: 500;
-    white-space: nowrap;
-    transition:
-      opacity 0.2s ease,
-      width 0.2s ease;
-  }
-
-  .collapsed .sidebar-label {
-    opacity: 0;
-    width: 0;
-    overflow: hidden;
-  }
-
-  .collapsed .sidebar-item {
-    justify-content: center;
-    padding: var(--space-md);
-  }
-
-  .collapsed .sidebar-nav {
-    padding: var(--space-md) var(--space-xs);
-  }
-
-  /* ===== Sidebar Footer ===== */
-  .sidebar-footer {
-    padding: var(--space-sm) var(--space-lg);
-  }
-
-  .collapsed .sidebar-footer {
-    padding: var(--space-sm);
-  }
-
-  .user-menu-container {
-    position: relative;
-  }
-
-  .user-menu-trigger {
-    width: 100%;
-    padding: 0;
-    background: transparent;
-    border-radius: var(--radius-md);
-    justify-content: flex-start;
-    gap: var(--space-md);
-  }
-
-  .user-menu-trigger:hover {
-    background: transparent;
-  }
-
-  .user-menu-trigger:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: -2px;
-    background: var(--btn-tertiary);
-    border-radius: var(--radius-md);
-  }
-
-  .collapsed .user-menu-trigger {
-    justify-content: center;
-    padding: 0;
-  }
-
-  .user-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .user-initials {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    color: white;
-    text-transform: uppercase;
-  }
-
-  .user-info {
-    flex: 1;
+  /* ===== Control Hub navigation ===== */
+  .ch-nav {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-self: stretch;
+    gap: 2px;
+    padding-top: 12px;
+  }
+
+  .ch-nav--rail {
+    align-self: auto;
+    align-items: center;
+    gap: 4px;
+    padding-top: 0;
+    width: 100%;
+  }
+
+  .ch-category {
+    padding: 12px 8px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 14px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: var(--gx-category);
+    white-space: nowrap;
+  }
+
+  .ch-category--gap {
+    padding-top: 16px;
+  }
+
+  /* nav row: 36px tall, 8px radius, 24px icon box, 12px label */
+  .ch-item {
+    display: flex;
+    width: 100%;
+    height: 36px;
+    gap: 4px;
+    padding: 9px 10px;
+    justify-content: flex-start;
+    align-items: center;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    text-align: start;
+    box-shadow: none;
+    backdrop-filter: none;
+    transition: background-color 120ms ease;
+  }
+
+  .ch-item:hover {
+    background: var(--gx-nav-hover);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .ch-item:focus-visible {
+    outline: 2px solid var(--gx-nav-accent);
+    outline-offset: -2px;
+  }
+
+  .ch-item--active {
+    background: var(--gx-nav-active-bg);
+  }
+
+  .ch-item--active:hover {
+    background: var(--gx-nav-active-bg-hover);
+  }
+
+  .ch-item__icon {
+    display: flex;
+    width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--gx-nav-text);
+  }
+
+  .ch-item__icon :global(svg) {
+    display: block;
+    width: 18px;
+    height: 18px;
+  }
+
+  .ch-item__label {
+    flex-grow: 1;
     min-width: 0;
-  }
-
-  .collapsed .user-info {
-    display: none;
-  }
-
-  .user-name {
-    font-size: 0.875rem;
+    font-size: 12px;
     font-weight: 500;
-    color: var(--text-primary);
+    line-height: 16px;
+    color: var(--gx-nav-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
   }
 
-  .dropdown-arrow {
-    width: 16px;
-    height: 16px;
-    color: var(--text-secondary);
-    transition: transform 0.25s ease;
-    flex-shrink: 0;
+  .ch-item--active .ch-item__icon,
+  .ch-item--active .ch-item__label {
+    color: var(--gx-nav-active-fg);
   }
 
-  .collapsed .dropdown-arrow {
+  /* rail variant: icon-only 40px buttons, categories become rules */
+  .ch-nav--rail .ch-item {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .ch-nav--rail .ch-item__label {
     display: none;
   }
 
-  .dropdown-arrow.rotated {
-    transform: rotate(180deg);
-  }
-
-  /* ===== User Menu Dropdown ===== */
-  .user-menu-dropdown {
-    position: fixed;
-    bottom: 3rem;
-    inset-inline-start: var(--space-lg);
-    min-width: 200px;
-    background: color-mix(
-      in oklab,
-      var(--bg-primary) 85%,
-      var(--btn-secondary)
-    );
-    backdrop-filter: blur(calc(var(--glass-blur) * 1.5)) saturate(1.5);
-    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.5)) saturate(1.5);
-    border: 1px solid var(--glass-stroke-light);
-    border-radius: var(--radius-lg);
-    box-shadow:
-      0 0 0 1px var(--glass-edge-glow),
-      0 4px 12px rgba(0, 0, 0, 0.15),
-      0 12px 28px rgba(0, 0, 0, 0.2),
-      0 20px 48px rgba(0, 0, 0, 0.15),
-      var(--glass-highlight),
-      inset 0 0 20px rgba(255, 255, 255, 0.02);
-    padding: var(--space-sm);
-    overflow: hidden;
-    animation: slideUpFade 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 10001;
-  }
-
-  .menu-item {
+  .ch-group {
     display: flex;
+    flex-direction: column;
+    width: 40px;
+    gap: 8px;
     align-items: center;
-    gap: var(--space-md);
-    width: 100%;
-    padding: var(--space-md) var(--space-lg);
-    border: none;
-    background: transparent;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border-radius: var(--radius-md);
-    text-align: start;
+    flex-shrink: 0;
   }
 
-  .menu-item:hover {
-    background: rgba(var(--glass-tint), 0.08);
-    color: var(--text-primary);
+  .ch-group--tight {
+    gap: 4px;
   }
 
-  .menu-item:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: -2px;
-    background: rgba(var(--glass-tint), 0.12);
-  }
-
-  .menu-item--danger {
-    color: var(--color-danger, #ef4444);
-  }
-
-  .menu-item--danger:hover {
-    background: rgba(239, 68, 68, 0.1);
-  }
-
-  .menu-item--danger:focus-visible {
-    outline-color: var(--color-danger, #ef4444);
-  }
-
-  @keyframes slideUpFade {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .user-menu-icon {
-    width: 18px;
-    height: 18px;
+  .ch-divider-wrap {
     display: flex;
+    height: 16px;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+
+  .ch-divider {
+    width: 24px;
+    height: 1px;
+    background: var(--gx-line);
+  }
+
+  .ch-divider--wide {
+    width: 32px;
+    background: var(--gx-hair);
+  }
+
+  /* ===== user-settings-section (Figma 159:14534) =====
+     State=Default is the 56px profile row; State=Expanded stacks the menu
+     above it, so the footer is the component and the menu opens upward. */
+  .sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+
+  .sidebar-footer--rail {
+    width: 100%;
+    align-self: auto;
+  }
+
+  .user-row {
+    display: flex;
+    width: 100%;
+    height: 56px;
+    gap: 8px;
+    padding: 12px;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    border: 1px solid var(--gx-line);
+    border-radius: 4px 4px 0 0;
+    background: var(--gx-surface);
+    cursor: pointer;
+    box-shadow: none;
+    backdrop-filter: none;
+    transition: background-color 120ms ease;
+  }
+
+  .user-row:hover {
+    background: var(--gx-surface-rail);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .expanded .user-row {
+    border-top-width: 0;
+    border-radius: 0;
+  }
+
+  .user-row:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: -2px;
+  }
+
+  /* rail variant: the 48px hit area from State=Collapsed, no hairline */
+  .user-row--rail {
+    height: 48px;
+    padding: 0;
+    justify-content: center;
+    border: 0;
+    border-radius: 24px;
+    background: transparent;
+  }
+
+  .user-info {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  .user-row--rail .user-info {
+    flex-grow: 0;
+    justify-content: center;
+  }
+
+  .avatar-lg {
+    display: flex;
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    background: var(--gx-avatar);
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-  }
-
-  /* ===== Section Headers ===== */
-  .section-header {
-    font-size: 0.875rem;
+    font-size: 11px;
     font-weight: 700;
-    padding: var(--space-lg) var(--space-lg) var(--space-sm) var(--space-lg);
-    margin-top: var(--space-sm);
-    margin-bottom: 0;
-    color: var(--text-secondary);
+    line-height: 1;
+    color: #fff;
   }
 
-  .section-header:first-child {
-    margin-top: 0;
-    padding-top: var(--space-sm);
+  .user-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-grow: 1;
+    min-width: 0;
+    text-align: start;
   }
 
-  .section-header span {
-    font-size: 0.6875rem;
+  .user-name {
+    font-size: 13px;
     font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    line-height: 1;
+    color: var(--gx-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .section-divider {
+  .user-plan {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--gx-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ===== "New chat" (Figma: 40px, 8px radius, soft fill) ===== */
+  .new-chat {
+    display: flex;
+    height: 40px;
+    padding: 10px 12px;
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 8px;
+    background: var(--gx-module-bg);
+    cursor: pointer;
+    box-shadow: none;
+    backdrop-filter: none;
+    transition: background-color 120ms ease;
+  }
+
+  .new-chat:hover {
+    background: var(--gx-module-bg);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .new-chat:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: 2px;
+  }
+
+  .new-chat__left {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    color: var(--gx-nav-accent);
+  }
+
+  .new-chat__label {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 20px;
+    color: var(--gx-nav-accent);
+    white-space: nowrap;
+  }
+
+  /* ===== Collapsed rail icon buttons (Figma: 40px, 8px radius) ===== */
+  .rail-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--gx-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: none;
+    backdrop-filter: none;
+    transition: background-color 120ms ease;
+  }
+
+  .rail-btn:hover {
+    background: var(--gx-fill-soft);
+    color: var(--gx-muted);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .rail-btn:active {
+    background: var(--gx-line);
+    transform: none;
+  }
+
+  .rail-btn:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: 2px;
+  }
+
+  /* the rail's "new chat" is drawn as a bare plus in the design */
+  .rail-plus {
+    position: relative;
+  }
+
+  .rail-plus::before,
+  .rail-plus::after {
+    content: "";
+    position: absolute;
+    border-radius: 1px;
+    background: var(--gx-slate);
+  }
+
+  .rail-plus::before {
+    left: 13px;
+    top: 19.25px;
+    width: 14px;
+    height: 1.5px;
+  }
+
+  .rail-plus::after {
+    left: 19.25px;
+    top: 13px;
+    width: 1.5px;
+    height: 14px;
+  }
+
+  .us-chevron {
+    display: flex;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--gx-dim);
+    transition: transform 160ms ease;
+  }
+
+  .expanded .us-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* the menu: collapsed by default, grown in place when expanded */
+  .us-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-self: stretch;
+    padding: 0 8px;
+    border: 1px solid var(--gx-menu-line);
+    border-width: 0 1px;
+    border-radius: 8px 8px 0 0;
+    background: var(--gx-surface-rail);
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition:
+      max-height 160ms ease,
+      opacity 120ms ease,
+      padding 160ms ease;
+  }
+
+  .expanded .us-menu {
+    max-height: 132px;
+    opacity: 1;
+    padding: 4px 8px 12px;
+    border-width: 1px;
+  }
+
+  /* `Link` renders its <a> outside this component, so it never receives the
+     scope class — these rules are :global, kept tight under .us-menu. */
+  .us-menu :global(.us-item) {
+    display: flex;
+    height: 36px;
+    width: 100%;
+    gap: 10px;
+    padding: 8px 10px;
+    justify-content: flex-start;
+    align-items: center;
+    align-self: stretch;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: inherit;
+    text-align: start;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: none;
+    backdrop-filter: none;
+    transition: background-color 120ms ease;
+  }
+
+  .us-menu :global(.us-item:hover) {
+    background: var(--gx-fill-soft);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .us-menu :global(.us-item:focus-visible) {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: -2px;
+  }
+
+  .us-menu :global(.us-item__icon) {
+    display: flex;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--gx-fill-soft);
+    color: var(--gx-muted);
+  }
+
+  .us-menu :global(.us-item__label) {
+    flex-grow: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--gx-ink);
+  }
+
+  .us-menu :global(.us-rule) {
     height: 1px;
-    background: var(--glass-stroke-dark);
-    margin: var(--space-md) var(--space-md);
+    align-self: stretch;
+    flex-shrink: 0;
+    background: var(--gx-rule);
   }
 
-  .section-divider:first-child {
-    display: none;
+  .us-menu :global(.us-item--danger:hover) {
+    background: var(--gx-danger-soft);
+  }
+
+  .us-menu :global(.us-item--danger .us-item__icon) {
+    background: var(--gx-danger-soft);
+    color: var(--gx-danger);
+  }
+
+  .us-menu :global(.us-item--danger .us-item__label) {
+    font-weight: 600;
+    color: var(--gx-danger);
+  }
+
+  /* rail variant: same menu, anchored beside the 60px rail */
+  .us-menu--rail {
+    position: fixed;
+    inset-inline-start: 68px;
+    bottom: 16px;
+    z-index: 1001;
+    width: 232px;
+    max-height: none;
+    opacity: 1;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    overflow: visible;
+    animation: us-menu-in 140ms ease;
+  }
+
+  .us-menu__inner {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 8px 8px;
+    border: 1px solid var(--gx-menu-line);
+    border-radius: 8px;
+    background: var(--gx-surface-rail);
+    box-shadow: 0 12px 24px 0 rgba(0, 0, 0, 0.08);
+  }
+
+  @keyframes us-menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
   }
 
   /* ===== Mobile Responsiveness ===== */
@@ -1345,13 +1913,15 @@ SPDX-License-Identifier: Apache-2.0
       transition: none;
     }
 
-    .burger-btn,
-    .logo-btn,
-    .expand-btn,
-    .back-btn,
-    .sidebar-item,
-    .user-menu-trigger,
-    .menu-item {
+    .action-btn,
+    .rail-btn,
+    .new-chat,
+    .ch-action-btn,
+    .ch-back-sm,
+    .ch-module,
+    .ch-item,
+    .user-row,
+    :global(.us-item) {
       transition:
         background-color 0.15s ease,
         color 0.15s ease;
@@ -1367,10 +1937,11 @@ SPDX-License-Identifier: Apache-2.0
     .sidebar.collapsed {
       transform: translateX(-100%);
       width: 280px;
-    }
-
-    .user-menu-dropdown {
-      inset-inline-start: var(--space-md);
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      align-items: flex-start;
+      background: var(--gx-surface);
     }
 
     /* Mobile notifications live in App's mobile header */
@@ -1390,24 +1961,29 @@ SPDX-License-Identifier: Apache-2.0
       transform: translateX(-100%);
       width: 85vw;
       max-width: 320px;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      align-items: flex-start;
+      background: var(--gx-surface);
     }
   }
 
   @media (prefers-contrast: more) {
-    .sidebar-item {
+    .ch-item {
       border: 1px solid transparent;
     }
 
-    .sidebar-item:focus-visible {
-      border: 1px solid var(--brand);
+    .ch-item:focus-visible {
+      border: 1px solid var(--gx-nav-accent);
     }
 
-    .menu-item {
+    :global(.us-item) {
       border: 1px solid transparent;
     }
 
-    .menu-item:focus-visible {
-      border: 1px solid var(--brand);
+    :global(.us-item:focus-visible) {
+      border: 1px solid var(--gx-blue);
     }
   }
 </style>

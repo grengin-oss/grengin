@@ -5,9 +5,9 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import PageHeader from "../components/PageHeader.svelte";
   import AdminPanelCard from "../components/AdminPanelCard.svelte";
   import AdminTabs from "../components/AdminTabs.svelte";
+  import AnalyticsRangePicker from "../components/analytics/AnalyticsRangePicker.svelte";
   import { getAnalyticsOverview, getAnalyticsTimeseries } from "../../api/admin/analytics.js";
   import type { AnalyticsOverview, AnalyticsTimeseries } from "../types.js";
   import { toast } from "../../components/Toaster.svelte";
@@ -133,6 +133,47 @@ SPDX-License-Identifier: Apache-2.0
       startDate = getDefaultStartDate(preset);
       endDate = getDefaultEndDate();
     }
+  }
+
+  function setCustomRange(start: string, end: string) {
+    selectedPreset = 'custom';
+    if (start) startDate = start;
+    if (end) endDate = end;
+  }
+
+  /** Days covered by the current range, both ends included. */
+  const rangeDays = $derived.by(() => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 30;
+    return Math.max(1, Math.ceil(Math.abs(end.getTime() - start.getTime()) / 86400000) + 1);
+  });
+
+  /** The design has no granularity control, so the range picks the bucket. */
+  $effect(() => {
+    const next: typeof granularity =
+      rangeDays <= 2 ? 'hour' : rangeDays <= 62 ? 'day' : rangeDays <= 210 ? 'week' : 'month';
+    if (next !== granularity) granularity = next;
+  });
+
+  const PRESET_LABEL_KEYS: Record<Exclude<DatePreset, 'custom'>, string> = {
+    last7: 'analytics.filters.presets.last7Days',
+    last30: 'analytics.filters.presets.last30Days',
+    last90: 'analytics.filters.presets.last90Days',
+    thisMonth: 'analytics.filters.presets.thisMonth',
+  };
+
+  /** Caption used by the Quick Stats / Top Models headings. */
+  const rangeLabel = $derived(
+    selectedPreset === 'custom'
+      ? `${formatRangeDate(startDate)} – ${formatRangeDate(endDate)}`
+      : $_(PRESET_LABEL_KEYS[selectedPreset]),
+  );
+
+  function formatRangeDate(value: string): string {
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
 
   async function fetchAnalytics({showLoading = true}) {
@@ -322,108 +363,42 @@ SPDX-License-Identifier: Apache-2.0
 </script>
 
 <div class="analytics-page" role="region" aria-label={$_("analytics.aria.mainRegion")}>
-  <PageHeader title={$_('analytics.title')} subtitle={$_('analytics.subtitle')}>
-    <div class="filters-toolbar" class:filters-toolbar-custom={selectedPreset === 'custom'}>
-      <!-- Date Range Presets -->
-      <fieldset class="filter-section">
-        <legend class="filter-label">{$_('analytics.filters.dateRange')}</legend>
-        <div class="pill-group" role="group" aria-label={$_('analytics.aria.dateRangeGroup')}>
-          <button
-            type="button"
-            class="pill-group__item"
-            class:pill-group__item--active={selectedPreset === 'last7'}
-            aria-pressed={selectedPreset === 'last7'}
-            onclick={() => setDatePreset('last7')}
-          >
-            {$_('analytics.filters.presets.last7Days')}
-          </button>
-          <button
-            type="button"
-            class="pill-group__item"
-            class:pill-group__item--active={selectedPreset === 'last30'}
-            aria-pressed={selectedPreset === 'last30'}
-            onclick={() => setDatePreset('last30')}
-          >
-            {$_('analytics.filters.presets.last30Days')}
-          </button>
-          <button
-            type="button"
-            class="pill-group__item"
-            class:pill-group__item--active={selectedPreset === 'last90'}
-            aria-pressed={selectedPreset === 'last90'}
-            onclick={() => setDatePreset('last90')}
-          >
-            {$_('analytics.filters.presets.last90Days')}
-          </button>
-          <button
-            type="button"
-            class="pill-group__item"
-            class:pill-group__item--active={selectedPreset === 'thisMonth'}
-            aria-pressed={selectedPreset === 'thisMonth'}
-            onclick={() => setDatePreset('thisMonth')}
-          >
-            {$_('analytics.filters.presets.thisMonth')}
-          </button>
-          <button
-            type="button"
-            class="pill-group__item"
-            class:pill-group__item--active={selectedPreset === 'custom'}
-            aria-pressed={selectedPreset === 'custom'}
-            onclick={() => setDatePreset('custom')}
-          >
-            {$_('analytics.filters.presets.custom')}
-          </button>
-        </div>
-      </fieldset>
-
-      <!-- Custom Date Inputs (only shown when Custom is selected) -->
-      {#if selectedPreset === 'custom'}
-        <div class="filter-section">
-          <div class="date-inputs">
-            <label for="analytics-date-start" class="sr-only">{$_('analytics.aria.startDate')}</label>
-            <input
-              id="analytics-date-start"
-              type="date"
-              bind:value={startDate}
-              class="date-input"
-            />
-            <span class="date-separator" aria-hidden="true">{$_('analytics.filters.to')}</span>
-            <label for="analytics-date-end" class="sr-only">{$_('analytics.aria.endDate')}</label>
-            <input
-              id="analytics-date-end"
-              type="date"
-              bind:value={endDate}
-              class="date-input"
-            />
-          </div>
-        </div>
-      {/if}
+  <div class="header-block">
+    <div class="header-text">
+      <h1 class="page-title">{$_('analytics.title')}</h1>
+      <span class="page-sub">{$_('analytics.subtitle')}</span>
     </div>
-  </PageHeader>
+    <AnalyticsRangePicker
+      preset={selectedPreset}
+      {startDate}
+      {endDate}
+      onPresetChange={setDatePreset}
+      onCustomRangeChange={setCustomRange}
+    />
+  </div>
 
-  <!-- Tab Navigation -->
-  <div class="tabs-wrapper">
+  <div class="tabs-row">
     <AdminTabs
-      tabs={tabs}
-      defaultTab={defaultTab}
+      {tabs}
+      {defaultTab}
+      variant="segmented"
       tabListLabel={$_("admin.tabListLabels.analytics")}
       bind:currentTab
     />
     <button
       type="button"
-      class="refresh-button"
+      class="refresh-btn"
       onclick={handleRefresh}
       disabled={isRefreshing}
       title={$_('analytics.refresh')}
       aria-label={$_('analytics.refresh')}
       aria-busy={isRefreshing}
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class:spinning={isRefreshing}>
-        <polyline points="23 4 23 10 17 10"></polyline>
-        <polyline points="1 20 1 14 7 14"></polyline>
-        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" class:spinning={isRefreshing}>
+        <path d="M14 8a6 6 0 1 1-1.76-4.24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M14 2v3.5h-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <span class="refresh-button-text">{$_('analytics.refreshButton')}</span>
+      <span>{$_('analytics.refreshButton')}</span>
     </button>
   </div>
 
@@ -441,10 +416,9 @@ SPDX-License-Identifier: Apache-2.0
         {isLoading}
         {chartsLoading}
         comparisonPeriodLabel={comparisonPeriodLabel()}
+        {rangeLabel}
         {error}
         onRetry={() => fetchAnalytics({showLoading: true})}
-        {granularity}
-        onGranularityChange={(value) => granularity = value}
       />
     </div>
   {:else if currentTab === 'by-user'}
@@ -494,95 +468,114 @@ SPDX-License-Identifier: Apache-2.0
 </div>
 
 <style>
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* Design (usage-analytics-overview.html): 32px page padding, 28px stack. */
   .analytics-page {
-    padding: var(--space-3xl);
-    max-width: 1600px;
-    margin: 0 auto;
-    overflow-y: auto;
-    height: 100%;
-  }
-
-  /* Filters Toolbar */
-  .filters-toolbar {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
-    gap: var(--space-xl);
-    justify-content: flex-end;
-  }
-
-  .filters-toolbar-custom{
-    flex-direction: column;
-  }
-
-  .filter-section {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
-    border: none;
-    margin: 0;
-    padding: 0;
+    gap: 28px;
+    padding: 32px;
+    font-family: var(--gx-font);
+  }
+
+  .header-block {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    align-self: stretch;
+  }
+
+  .header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
     min-width: 0;
   }
 
-  .filter-section .filter-label {
-    padding: 0;
+  .page-title {
+    margin: 0;
+    font-family: var(--gx-font-display);
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 100%;
+    color: var(--gx-ink);
   }
 
-  .filter-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+  .page-sub {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-an-sub);
   }
 
-  .filter-section .pill-group__item:focus-visible {
-    outline: 2px solid var(--brand-ring);
-    outline-offset: 2px;
-  }
-
-  /* Enhanced selection state for filter buttons */
-  .filter-section .pill-group__item--active {
-    background: var(--brand);
-    color: white;
-    font-weight: 600;
-    box-shadow:
-      0 2px 8px rgba(var(--brand-rgb), 0.3),
-      0 1px 2px rgba(0, 0, 0, 0.1);
-  }
-
-  .filter-section .pill-group__item--active:hover {
-    background: color-mix(in oklab, var(--brand) 90%, white);
-    color: white;
-  }
-
-  .date-inputs {
+  .tabs-row {
     display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    align-self: stretch;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* 99x48 mint pill from the design. */
+  .refresh-btn {
+    height: 48px;
+    min-width: 99px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-an-mint);
+    box-shadow: none;
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    justify-content: center;
     align-items: center;
-    gap: var(--space-sm);
-  }
-
-  .date-input {
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--glass-stroke-dark);
-    background: var(--btn-secondary);
-    color: var(--text-primary);
-    font-size: 0.875rem;
+    flex-shrink: 0;
     font-family: inherit;
-    transition: all 0.2s ease;
+    color: var(--gx-an-mint-fg);
+    cursor: pointer;
+    transition: background-color 120ms ease;
   }
 
-  .date-input:focus {
-    outline: none;
-    border-color: var(--brand);
-    box-shadow: 0 0 0 2px var(--brand-ring);
+  .refresh-btn span {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 100%;
+    white-space: nowrap;
   }
 
-  .date-input:focus-visible {
-    outline: 2px solid var(--brand-ring);
+  .refresh-btn svg {
+    flex-shrink: 0;
+  }
+
+  .refresh-btn:hover:not(:disabled) {
+    background: var(--gx-org-brand-tint);
+    transform: none;
+  }
+
+  .refresh-btn:disabled {
+    opacity: 0.65;
+    cursor: progress;
+  }
+
+  .refresh-btn:focus-visible {
+    outline: 2px solid var(--gx-org-brand-alt);
     outline-offset: 2px;
+  }
+
+  .refresh-btn svg.spinning {
+    animation: analytics-spin 900ms linear infinite;
+  }
+
+  @keyframes analytics-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .analytics-tab-panel {
@@ -590,171 +583,49 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .analytics-tab-panel:focus-visible {
-    outline: 2px solid var(--brand-ring);
+    outline: 2px solid var(--gx-an-blue);
     outline-offset: 2px;
   }
 
-  .date-separator {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-  }
-
-  /* Tabs Wrapper */
-  .tabs-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-lg);
-  }
-
-  /* Refresh Button */
-  .refresh-button {
-    padding: 0.625rem 0.875rem;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--glass-stroke-dark);
-    background: var(--btn-secondary);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
-    min-width: 44px;
-    min-height: 44px;
-    box-shadow: 
-      0 1px 2px rgba(0, 0, 0, 0.05),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .refresh-button::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--brand);
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  .refresh-button svg {
-    position: relative;
-    z-index: 1;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .refresh-button:hover:not(:disabled) {
-    background: var(--btn-tertiary);
-    border-color: var(--brand);
-    color: var(--brand);
-    transform: translateY(-1px);
-    box-shadow: 
-      0 4px 12px rgba(0, 0, 0, 0.08),
-      0 2px 4px rgba(0, 0, 0, 0.04),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  }
-
-  .refresh-button:hover:not(:disabled)::before {
-    opacity: 0.05;
-  }
-
-  .refresh-button:focus-visible {
-    outline: 2px solid var(--brand-ring);
-    outline-offset: 2px;
-  }
-
-  .refresh-button:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: 
-      0 1px 2px rgba(0, 0, 0, 0.05),
-      inset 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .refresh-button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  .refresh-button svg.spinning {
-    animation: spin 1s linear infinite;
-  }
-
-  .refresh-button-text {
-    font-size: 0.875rem;
-    font-weight: 500;
-    white-space: nowrap;
-    position: relative;
-    z-index: 1;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  /* Tab Placeholder Content */
   .tab-placeholder {
-    margin-top: var(--space-xl);
+    margin-top: 8px;
   }
 
   .placeholder-content {
     text-align: center;
-    padding: var(--space-4xl) var(--space-2xl);
+    padding: 48px 24px;
   }
 
   .placeholder-content p {
-    font-size: 1.125rem;
+    margin: 0 0 8px;
     font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 var(--space-sm) 0;
+    font-size: 15px;
+    color: var(--gx-ink);
   }
 
   .placeholder-content .placeholder-hint {
-    font-size: 0.9375rem;
     font-weight: 400;
-    color: var(--text-secondary);
+    font-size: 13px;
+    color: var(--gx-an-sub);
   }
 
   @media (max-width: 768px) {
     .analytics-page {
-      padding: var(--space-xl);
+      padding: 20px;
     }
 
-    .filters-toolbar {
+    .header-block {
       flex-direction: column;
-      align-items: stretch;
-      gap: var(--space-lg);
+      gap: 12px;
     }
 
-    .filter-section .pill-group {
-      flex-wrap: wrap;
-    }
-
-    .date-inputs {
+    .tabs-row {
       flex-direction: column;
       align-items: stretch;
     }
 
-    .tabs-wrapper {
-      flex-direction: column;
-      gap: var(--space-md);
-    }
-
-    .refresh-button {
+    .refresh-btn {
       width: 100%;
-      justify-content: center;
-      padding: 0.75rem 1rem;
-    }
-
-    .refresh-button-text {
-      font-size: 0.9375rem;
     }
   }
 </style>

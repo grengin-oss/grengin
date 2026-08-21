@@ -32,7 +32,8 @@
       "metadata": "Metadados",
       "lastUpdated": "Última atualização",
       "removing": "Removendo",
-      "loading": "A carregar..."
+      "loading": "A carregar...",
+      "noRole": "Sem função"
     },
     "organization": {
       "subtitle": "Faça a gestão das suas equipas, estrutura e utilizadores",
@@ -54,7 +55,24 @@
       "assignSuccess": "Utilizador atribuído à equipa com sucesso",
       "assignError": "Falha ao atribuir o utilizador à equipa",
       "noUnassigned": "Todos pertencem a uma equipa",
-      "loadingUnassigned": "A carregar utilizadores não atribuídos…"
+      "loadingUnassigned": "A carregar utilizadores não atribuídos…",
+      "structure": "Estrutura",
+      "kpiDepartments": "Departamentos",
+      "kpiTotalPeople": "Total de pessoas",
+      "kpiBudgetAllocated": "Orçamento alocado",
+      "findDepartmentPlaceholder": "Localizar um departamento...",
+      "noDepartmentsMatch": "Nenhum departamento corresponde à sua busca",
+      "treeFooter": "{departments} departamentos em {levels} níveis · {people} pessoas",
+      "addSubDepartment": "Adicionar subdepartamento",
+      "searchUsersPlaceholder": "Buscar por nome, e-mail ou departamento...",
+      "export": "Exportar",
+      "exporting": "Exportando...",
+      "exportSuccess": "Usuários exportados",
+      "exportError": "Falha ao exportar usuários",
+      "noDescription": "Sem descrição",
+      "childDeptCount": "{count} subdepartamento",
+      "deleteDepartmentCaption": "Esta ação não pode ser desfeita — membros e dados de orçamento serão removidos.",
+      "departmentActions": "Ações de {name}"
     },
     "tabListLabels": {
       "organization": "Separadores da Organização",

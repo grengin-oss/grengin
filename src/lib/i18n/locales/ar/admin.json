@@ -32,7 +32,8 @@
       "metadata": "البيانات الوصفية",
       "lastUpdated": "آخر تحديث",
       "removing": "جارٍ الإزالة",
-      "loading": "جارٍ التحميل..."
+      "loading": "جارٍ التحميل...",
+      "noRole": "بلا دور"
     },
     "organization": {
       "subtitle": "إدارة فرقك وهيكلك والمستخدمين",
@@ -54,7 +55,24 @@
       "assignSuccess": "تم تعيين المستخدم إلى الفريق بنجاح",
       "assignError": "فشل تعيين المستخدم إلى الفريق",
       "noUnassigned": "الجميع ينتمي إلى فريق",
-      "loadingUnassigned": "جارٍ تحميل المستخدمين غير المعيّنين…"
+      "loadingUnassigned": "جارٍ تحميل المستخدمين غير المعيّنين…",
+      "structure": "الهيكل",
+      "kpiDepartments": "الأقسام",
+      "kpiTotalPeople": "إجمالي الأشخاص",
+      "kpiBudgetAllocated": "الميزانية المخصصة",
+      "findDepartmentPlaceholder": "ابحث عن قسم...",
+      "noDepartmentsMatch": "لا توجد أقسام تطابق بحثك",
+      "treeFooter": "{departments} أقسام على {levels} مستويات · {people} أشخاص",
+      "addSubDepartment": "إضافة قسم فرعي",
+      "searchUsersPlaceholder": "ابحث بالاسم أو البريد الإلكتروني أو القسم...",
+      "export": "تصدير",
+      "exporting": "جارٍ التصدير...",
+      "exportSuccess": "تم تصدير المستخدمين",
+      "exportError": "تعذّر تصدير المستخدمين",
+      "noDescription": "لا يوجد وصف",
+      "childDeptCount": "{count} قسم فرعي",
+      "deleteDepartmentCaption": "لا يمكن التراجع عن هذا الإجراء — سيتم حذف الأعضاء وبيانات الميزانية.",
+      "departmentActions": "إجراءات {name}"
     },
     "tabListLabels": {
       "organization": "علامات تبويب المؤسسة",

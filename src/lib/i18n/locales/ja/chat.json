@@ -3,7 +3,25 @@
     "emptyState": {
       "title": "会話を開始",
       "description": "メッセージを送信してAIアシスタントとのチャットを始めましょう！",
-      "aiDisclaimer": "AIは間違いを犯す可能性があります。回答を確認してください。"
+      "aiDisclaimer": "AIは間違いを犯す可能性があります。回答を確認してください。",
+      "greeting": "こんにちは、{name}さん",
+      "suggestions": {
+        "synthesize": {
+          "title": "データを要約",
+          "body": "議事録をチーム向けの重要な5つのポイントにまとめます。",
+          "prompt": "次の議事録をチーム向けの重要な5つのポイントにまとめてください:\n\n"
+        },
+        "brainstorm": {
+          "title": "クリエイティブな発想",
+          "body": "サステナブルファッションブランドのキャッチコピーを5つ作成します。",
+          "prompt": "サステナブルなファッションブランドのキャッチコピーを5つ作成してください。"
+        },
+        "facts": {
+          "title": "事実を確認",
+          "body": "GDPRとCCPAの主な違いを比較します。",
+          "prompt": "GDPRとCCPAの主な違いを比較してください。"
+        }
+      }
     },
     "errors": {
       "somethingWentWrong": "問題が発生しました",

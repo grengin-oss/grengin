@@ -113,29 +113,29 @@ SPDX-License-Identifier: Apache-2.0
 </script>
 
 <div class="member-management">
-  <div class="member-header">
-    <div class="header-left">
-      <h3>{$_('admin.departments.members')}</h3>
-      <label class="checkbox-label">
-        <input 
-          type="checkbox" 
-          bind:checked={includeSubDepartments}
-          onchange={loadMembers}
-        />
-        <span>{$_('admin.departments.includeSubDepartments')}</span>
-      </label>
-    </div>
-    
+  <div class="panel-header">
+    <label class="checkbox-row">
+      <input
+        type="checkbox"
+        bind:checked={includeSubDepartments}
+        onchange={loadMembers}
+      />
+      <span class="checkbox-box" aria-hidden="true">
+        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+          <path d="M1 4L3.5 6.5L9 1" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="checkbox-label">{$_('admin.departments.includeSubDepartments')}</span>
+    </label>
+
     <div class="header-actions">
       {#if canManage}
         {#if selectedMembers.size > 0}
-          <button class="btn-danger" onclick={confirmRemoveMembers}>
+          <button type="button" class="btn-destructive" onclick={confirmRemoveMembers}>
             {$_('admin.departments.removeMembers')} ({selectedMembers.size})
           </button>
         {/if}
-        <button class="btn-primary" onclick={() => {
-          showAddMember = true;
-        }}>
+        <button type="button" class="btn-primary" onclick={() => (showAddMember = true)}>
           {$_('admin.departments.addMembers')}
         </button>
       {/if}
@@ -149,14 +149,19 @@ SPDX-License-Identifier: Apache-2.0
     </div>
   {:else if members.length === 0}
     <div class="empty-state">
-      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-        <circle cx="32" cy="24" r="8" stroke="#d1d5db" stroke-width="2"/>
-        <path d="M16 48C16 39.1634 23.1634 32 32 32C40.8366 32 48 39.1634 48 48" stroke="#d1d5db" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      <h4>{$_('admin.departments.noMembers')}</h4>
-      <p>{$_('admin.departments.noMembersDescription')}</p>
+      <span class="empty-icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9.5" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+        </svg>
+      </span>
+      <div class="empty-text">
+        <span class="empty-title">{$_('admin.departments.noMembers')}</span>
+        <span class="empty-body">{$_('admin.departments.noMembersDescription')}</span>
+      </div>
       {#if canManage}
-        <button class="btn-primary" onclick={() => showAddMember = true}>
+        <button type="button" class="btn-primary" onclick={() => (showAddMember = true)}>
           {$_('admin.departments.addMembers')}
         </button>
       {/if}
@@ -228,7 +233,7 @@ SPDX-License-Identifier: Apache-2.0
           <button class="btn-secondary" onclick={() => showRemoveConfirm = false}>
             {$_('common.cancel')}
           </button>
-          <button class="btn-danger" onclick={handleRemoveMembers}>
+          <button type="button" class="btn-destructive" onclick={handleRemoveMembers}>
             {$_('admin.departments.removeMembers')}
           </button>
         </div>
@@ -238,213 +243,315 @@ SPDX-License-Identifier: Apache-2.0
 </div>
 
 <style>
+  /* app.css gives every button backdrop-filter: blur(); on the flat
+     Organization surfaces that repaints the 1px hairlines behind them
+     (the tab-row ring, the tree's branch rails), so switch it off. */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   .member-management {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    align-self: stretch;
+    width: 100%;
+    font-family: var(--gx-font);
   }
-  
-  .member-header {
+
+  .panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    align-self: stretch;
     flex-wrap: wrap;
     gap: 12px;
   }
-  
-  .header-left {
+
+  /* Custom checkbox: the native input stays for a11y, the box is the visual. */
+  .checkbox-row {
     display: flex;
+    gap: 8px;
     align-items: center;
-    gap: 20px;
-  }
-  
-  .member-header h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-  }
-  
-  .checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-    color: var(--text-primary);
-    cursor: pointer;
-  }
-  
-  .checkbox-label input[type="checkbox"] {
+    flex-shrink: 0;
     cursor: pointer;
   }
 
-  .checkbox-label input[type="checkbox"] {
-    width: auto !important;
+  .checkbox-row input[type="checkbox"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    margin: 0;
   }
-  
+
+  .checkbox-box {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1.5px var(--gx-hair);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: transparent;
+    transition:
+      background-color 120ms ease,
+      box-shadow 120ms ease;
+  }
+
+  .checkbox-row input:checked + .checkbox-box {
+    background: var(--gx-org-brand);
+    box-shadow: inset 0 0 0 1.5px var(--gx-org-brand);
+    color: #fff;
+  }
+
+  .checkbox-row input:focus-visible + .checkbox-box {
+    outline: 2px solid var(--gx-org-brand-alt);
+    outline-offset: 2px;
+  }
+
+  .checkbox-label {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
+    white-space: nowrap;
+  }
+
   .header-actions {
     display: flex;
     gap: 8px;
+    flex-shrink: 0;
   }
-  
+
   .loading-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 20px;
+    padding: 48px 20px;
     gap: 16px;
   }
-  
+
   .loading-state p {
-    color: var(--text-secondary);
-    font-size: 14px;
-  }
-  
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 20px;
-    text-align: center;
-    background: var(--btn-secondary);
-    border-radius: var(--radius-md);
-  }
-  
-  .empty-state svg {
-    margin-bottom: 20px;
-  }
-  
-  .empty-state h4 {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 8px 0;
-  }
-  
-  .empty-state p {
-    color: var(--text-secondary);
-    font-size: 14px;
-    margin: 0 0 24px 0;
-  }
-  
-  .member-table {
-    background: var(--glass-bg-dark);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-md);
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-  
-  table {
-    width: 100%;
-    min-width: 600px;
-    border-collapse: collapse;
-  }
-  
-  thead {
-    background: var(--btn-secondary);
-    border-bottom: 1px solid var(--glass-stroke-dark);
-  }
-  
-  th {
-    padding: 12px 16px;
-    text-align: left;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  
-  td {
-    padding: 12px 16px;
-    font-size: 14px;
-    color: var(--text-primary);
-    border-bottom: 1px solid var(--glass-stroke-dark);
-  }
-  
-  tbody tr:last-child td {
-    border-bottom: none;
-  }
-  
-  tbody tr:hover {
-    background: var(--btn-tertiary);
-  }
-  
-  .checkbox-col {
-    width: 40px;
-    text-align: center;
-  }
-  
-  .checkbox-col input[type="checkbox"] {
-    cursor: pointer;
-  }
-  
-  .name-col {
-    font-weight: 500;
-  }
-  
-  .email-col {
-    color: var(--text-secondary);
-  }
-  
-  .date-col {
-    color: var(--text-secondary);
+    color: var(--gx-slate-500);
     font-size: 13px;
   }
-  
+
+  .empty-state {
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 48px 24px;
+    justify-content: center;
+    align-items: center;
+    align-self: stretch;
+  }
+
+  .empty-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--gx-slate-500);
+  }
+
+  .empty-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .empty-title {
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+  }
+
+  .empty-body {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
+  }
+
+  /* Large member lists scroll inside the card instead of stretching the tab. */
+  .member-table {
+    align-self: stretch;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    max-height: 360px;
+    overflow: auto;
+  }
+
+  .member-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--gx-card);
+  }
+
+  table {
+    width: 100%;
+    min-width: 560px;
+    border-collapse: collapse;
+  }
+
+  th {
+    padding: 14px 16px;
+    text-align: start;
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 100%;
+    letter-spacing: 0.55px;
+    text-transform: uppercase;
+    color: var(--gx-slate-500);
+    box-shadow: inset 0 -1px 0 0 var(--gx-hair);
+  }
+
+  td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--gx-org-slate-800);
+    box-shadow: inset 0 -1px 0 0 var(--gx-hair);
+  }
+
+  tbody tr:last-child td {
+    box-shadow: none;
+  }
+
+  tbody tr:hover td {
+    background: var(--gx-org-table-row-hover);
+  }
+
+  .checkbox-col {
+    width: 44px;
+    text-align: center;
+  }
+
+  .checkbox-col input[type="checkbox"] {
+    width: auto;
+    cursor: pointer;
+    accent-color: var(--gx-org-brand);
+  }
+
+  .name-col {
+    font-weight: 600;
+    color: var(--gx-slate-900);
+  }
+
+  .email-col {
+    color: var(--gx-slate-500);
+  }
+
+  .date-col {
+    color: var(--gx-slate-500);
+    font-size: 12px;
+  }
+
   .btn-primary {
-    padding: 8px 16px;
-    background: var(--brand);
-    border: none;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    color: white;
+    height: 33px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-org-brand);
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    color: #fff;
+    white-space: nowrap;
     cursor: pointer;
-    transition: background 0.2s;
+    box-shadow: none;
+    transition: background-color 120ms ease;
   }
-  
+
   .btn-primary:hover {
-    background: var(--brand-hover);
+    background: var(--gx-org-brand-hover);
+    transform: none;
   }
-  
-  .btn-danger {
-    padding: 8px 16px;
-    background: var(--brand-red);
-    border: none;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    color: white;
+
+  .btn-destructive {
+    height: 33px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-org-danger);
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    color: #fff;
+    white-space: nowrap;
     cursor: pointer;
-    transition: background 0.2s;
+    box-shadow: none;
+    transition: background-color 120ms ease;
   }
-  
-  .btn-danger:hover {
-    background: color-mix(in oklab, var(--brand-red) 90%, black);
+
+  .btn-destructive:hover {
+    background: var(--gx-org-danger-hover);
+    transform: none;
   }
-  
+
   .remove-confirm {
     padding: 20px;
+    font-family: var(--gx-font);
   }
-  
+
   .remove-confirm p {
     margin: 0 0 12px 0;
-    color: var(--text-primary);
-  }
-  
-  .remove-confirm .warning {
-    color: var(--brand-red);
+    color: var(--gx-slate-900);
     font-size: 14px;
   }
-  
+
+  .remove-confirm .warning {
+    color: var(--gx-org-danger);
+    font-size: 13px;
+  }
+
   .modal-actions {
     display: flex;
     gap: 12px;
     justify-content: flex-end;
     margin-top: 24px;
+  }
+
+  .btn-secondary {
+    height: 33px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--gx-slate-500);
+    cursor: pointer;
+    transition: background-color 120ms ease;
+  }
+
+  .btn-secondary:hover {
+    background: var(--gx-org-track);
+    transform: none;
   }
 </style>

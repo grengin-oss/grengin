@@ -1,6 +1,6 @@
 {
   "sidebar": {
-    "newChat": "New Chat",
+    "newChat": "New chat",
     "skills": "Skills",
     "users": "Users",
     "adminPanel": "Control Hub",
@@ -99,6 +99,25 @@
     "saving": "Saving...",
     "viewAll": "View all",
     "showMore": "{count} more",
-    "showLess": "Show less"
+    "showLess": "Show less",
+    "recent": "Recent",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "earlier": "Earlier",
+    "searchChatsProjects": "Search chats and projects",
+    "pastWeek": "Past week",
+    "pastMonth": "Past month",
+    "pastYear": "Past year",
+    "older": "Older",
+    "noMatchesFor": "No matches for “{query}”",
+    "tryShorterWord": "Try a shorter word or a different spelling."
+  },
+  "topBar": {
+    "alerts": "Alerts",
+    "breadcrumb": "Breadcrumb",
+    "approvedModel": "Approved model",
+    "teamVisible": "Team-visible",
+    "privateToYou": "Private to you"
   }
 }

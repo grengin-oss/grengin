@@ -24,6 +24,62 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from 'svelte-i18n';
   import { ApiError } from '../../../api/client';
   import { getLocalizedError } from '../../../utils/errorLocalization';
+  import { getAuthState } from '../../auth/index.js';
+  import {
+    setChatTopBar,
+    clearChatTopBar,
+  } from '../../../components/layout/index.js';
+
+  const authState = getAuthState();
+
+  // The greeting uses the first name only, as drawn in the design.
+  let greetingName = $derived(
+    authState.user?.name?.trim().split(/\s+/)[0] || $_('sidebar.user')
+  );
+
+  // The top bar renders the conversation title and a status badge; both are
+  // facts this page already holds, so they are published rather than refetched.
+  let chatVisibility = $state<'team' | 'private' | null>(null);
+
+  $effect(() => {
+    setChatTopBar({
+      title: conversationTitle,
+      // A model is "approved" when it resolves in the permitted model list the
+      // org exposes; while that list is still loading we assert nothing.
+      approvedModel: loadingModels
+        ? null
+        : providers.length > 0
+          ? !!findModel(providers, selectedModel)
+          : null,
+      visibility: chatVisibility,
+    });
+  });
+
+  // Leave the bar with nothing to show once the chat page goes away.
+  $effect(() => {
+    return () => clearChatTopBar();
+  });
+
+  // Suggestion cards from the empty-state design. Clicking one drops its prompt
+  // into the composer instead of sending, so the user can edit before sending.
+  const SUGGESTION_ICONS = {
+    synthesize:
+      '<path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h6"/><path d="M17 14l2 2 4-4"/>',
+    brainstorm:
+      '<path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14a5 5 0 1 0-6.18 0c.55.42.91 1.06.91 1.79V16h4.36v-.21c0-.73.36-1.37.91-1.79z"/>',
+    facts:
+      '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><path d="m8.5 11 2 2 3.5-3.5"/>',
+  } as const;
+
+  let suggestionCards = $derived(
+    (['synthesize', 'brainstorm', 'facts'] as const).map((id) => ({
+      id,
+      icon: SUGGESTION_ICONS[id],
+      title: $_(`chat.emptyState.suggestions.${id}.title`),
+      body: $_(`chat.emptyState.suggestions.${id}.body`),
+      prompt: $_(`chat.emptyState.suggestions.${id}.prompt`),
+    }))
+  );
 
   let messages = $state<ChatMessageType[]>([]);
   let isLoading = $state(false);
@@ -254,6 +310,9 @@ SPDX-License-Identifier: Apache-2.0
   async function loadProjectMcpServers(projectId: string) {
     try {
       const detail = await getProjectDetail(projectId);
+      if (detail.visibility === 'team' || detail.visibility === 'private') {
+        chatVisibility = detail.visibility;
+      }
       if (detail.mcpServers && detail.mcpServers.length > 0) {
         const projectServerIds = detail.mcpServers.map(s => s.serverId);
         const merged = new Set([...selectedMcpServers, ...projectServerIds]);
@@ -1266,6 +1325,9 @@ SPDX-License-Identifier: Apache-2.0
 
       if (pendingProjectId) {
         loadProjectMcpServers(pendingProjectId);
+      } else {
+        // Not in a project workspace, so the conversation is the owner's alone.
+        chatVisibility = 'private';
       }
 
       // Check for an initial message in URL
@@ -1342,21 +1404,36 @@ SPDX-License-Identifier: Apache-2.0
   <!-- Loading state: wait until we know if there are messages -->
   <div class="chat-container chat-container--loading" role="status" aria-label={$_('chat.messageInput.loadingModels')} aria-busy="true"></div>
 {:else if messages.length === 0}
-  <!-- Empty state: centered layout with input included -->
+  <!-- Empty state — Figma "chat/empty-state" (159:15193) -->
   <div class="chat-container chat-container--empty">
-    <div class="empty-state-container">
-      <div class="empty-icon-wrapper">
-        <div class="empty-icon" aria-hidden="true">
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+    <div class="chat-scroll-area">
+      <div class="welcome-hero">
+        <div class="orb" aria-hidden="true">
+          <span class="orb__highlight"></span>
+          <svg
+            class="orb__icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
         </div>
+        <div class="greeting">
+          <h1 class="greeting__hello">
+            {$_('chat.emptyState.greeting', { values: { name: greetingName } })}
+          </h1>
+          <p class="greeting__sub">{$_('chat.emptyState.description')}</p>
+        </div>
       </div>
-      <div class="empty-content">
-        <h1>{$_('chat.emptyState.title')}</h1>
-        <p>{$_('chat.emptyState.description')}</p>
-      </div>
-      <div class="empty-state-input">
+
+      <div class="spacer-40" aria-hidden="true"></div>
+
+      <div class="input-section">
         <MessageInput
           bind:this={messageInput}
           onSend={handleSendMessage}
@@ -1382,7 +1459,38 @@ SPDX-License-Identifier: Apache-2.0
           {conversationId}
           bind:pendingSkillIds
         />
-        <p class="ai-disclaimer">{$_('chat.emptyState.aiDisclaimer')}</p>
+        <span class="disclaimer">{$_('chat.emptyState.aiDisclaimer')}</span>
+      </div>
+
+      <div class="spacer-32" aria-hidden="true"></div>
+
+      <div class="cards-row">
+        {#each suggestionCards as card (card.id)}
+          <button
+            class="sug-card"
+            type="button"
+            onclick={() => messageInput?.setMessage(card.prompt)}
+          >
+            <span class="sug-card__icon" aria-hidden="true">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                {@html card.icon}
+              </svg>
+            </span>
+            <span class="sug-card__copy">
+              <span class="sug-card__title">{card.title}</span>
+              <span class="sug-card__body">{card.body}</span>
+            </span>
+          </button>
+        {/each}
       </div>
     </div>
 
@@ -1568,7 +1676,7 @@ SPDX-License-Identifier: Apache-2.0
     flex-direction: column;
     height: 100vh;
     width: 100%;
-    background: var(--bg-primary);
+    background: var(--gx-page);
   }
 
   .chat-container--loading {
@@ -1594,30 +1702,216 @@ SPDX-License-Identifier: Apache-2.0
     gap: var(--space-sm);
   }
 
+  /* ===== Empty state (Figma "chat/empty-state" 159:15193) ===== */
   .chat-container--empty {
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
+    background: var(--gx-page);
   }
 
-  .empty-state-container {
+  .chat-scroll-area {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    text-align: center;
-    padding: 2rem;
-    gap: 1.5rem;
-    width: 100%;
-    /* Match the message column / active-chat input width so the composer is the
-       same size in a new (empty) chat and an existing conversation. */
-    max-width: clamp(600px, 90ch, 65vw);
+    flex-grow: 1;
+    align-self: stretch;
+    padding: 60px 40px 40px;
+    overflow-y: auto;
   }
 
-  .empty-state-input {
-    width: 100%;
+  .welcome-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+
+  /* 120px orb: radial brand gradient with an inner highlight and a soft drop */
+  .orb {
+    position: relative;
+    display: flex;
+    width: 120px;
+    height: 120px;
+    border-radius: 60px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: radial-gradient(
+      60px 60px at 50% 50%,
+      rgb(0, 153, 81) 0%,
+      rgb(43, 145, 107) 50%,
+      rgb(43, 145, 107) 100%
+    );
+    box-shadow:
+      inset -4px -4px 12px 0 rgba(255, 255, 255, 0.3765),
+      0 16px 40px 0 rgba(13, 148, 136, 0.251);
+  }
+
+  .orb__highlight {
+    position: absolute;
+    left: 20px;
+    top: 14px;
+    width: 36px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  .orb__icon {
+    width: 36px;
+    height: 36px;
+    opacity: 0.9;
+    color: #fff;
+  }
+
+  .greeting {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    align-self: stretch;
+  }
+
+  .greeting__hello {
+    margin: 0;
+    font-family: var(--gx-font-display);
+    font-weight: 700;
+    font-size: 36px;
+    line-height: 44px;
+    letter-spacing: normal;
+    text-align: center;
+    color: var(--gx-teal);
+    background: none;
+    -webkit-text-fill-color: currentcolor;
+  }
+
+  .greeting__sub {
+    margin: 0;
+    font-family: var(--gx-font-display);
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 28px;
+    text-align: center;
+    color: var(--gx-slate-900);
+    text-wrap: pretty;
+  }
+
+  .spacer-40 {
+    height: 40px;
+    flex-shrink: 0;
+    align-self: stretch;
+  }
+
+  .spacer-32 {
+    height: 32px;
+    flex-shrink: 0;
+    align-self: stretch;
+  }
+
+  /* composer column and cards row are both 720px wide in the design */
+  .input-section {
+    width: 720px;
     max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .disclaimer {
+    align-self: stretch;
+    font-family: var(--gx-font-display);
+    font-weight: 400;
+    font-size: 11px;
+    line-height: 14px;
+    text-align: center;
+    color: var(--gx-slate-400);
+  }
+
+  .cards-row {
+    width: 720px;
+    max-width: 100%;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex-shrink: 0;
+  }
+
+  .sug-card {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 143px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    border: none;
+    border-radius: 16px;
+    background: var(--gx-card);
+    box-shadow:
+      inset 0 0 0 1px var(--gx-hair),
+      0 4px 16px 0 rgba(15, 23, 42, 0.0235);
+    text-align: left;
+    cursor: pointer;
+    backdrop-filter: none;
+    transition:
+      box-shadow 120ms ease,
+      transform 120ms ease;
+  }
+
+  .sug-card:hover {
+    background: var(--gx-card);
+    box-shadow:
+      inset 0 0 0 1px rgb(203, 213, 225),
+      0 8px 22px 0 rgba(15, 23, 42, 0.055);
+    transform: translateY(-1px);
+  }
+
+  .sug-card:focus-visible {
+    outline: 2px solid var(--gx-teal);
+    outline-offset: 2px;
+  }
+
+  .sug-card__icon {
+    display: flex;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--gx-teal-soft);
+    color: var(--gx-teal);
+  }
+
+  .sug-card__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-self: stretch;
+  }
+
+  .sug-card__title {
+    font-family: var(--gx-font-display);
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--gx-slate-900);
+  }
+
+  .sug-card__body {
+    font-family: var(--gx-font-display);
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--gx-slate-500);
+    text-wrap: pretty;
   }
 
   .ai-disclaimer {
@@ -1638,47 +1932,6 @@ SPDX-License-Identifier: Apache-2.0
     transform: translateX(-50%);
     max-width: 500px;
     width: calc(100% - 2rem);
-  }
-
-  .empty-icon-wrapper {
-    position: relative;
-  }
-
-  .empty-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 120px;
-    height: 120px;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-    border-radius: 24px;
-    color: var(--text-secondary);
-    position: relative;
-    animation: float 3s ease-in-out infinite;
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-  }
-
-  .empty-content h1 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    background: linear-gradient(135deg, var(--text-primary) 0%, #8b5cf6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .empty-content p {
-    margin: 0;
-    font-size: 1rem;
-    color: var(--text-secondary);
-    max-width: 480px;
-    line-height: 1.6;
   }
 
   .error-banner {
@@ -1847,18 +2100,47 @@ SPDX-License-Identifier: Apache-2.0
       min-height: 0;
     }
 
-    .empty-state-container {
-      padding: 1.5rem 1rem;
-      gap: 1rem;
+    .chat-scroll-area {
+      padding: 32px 16px 24px;
+      justify-content: flex-start;
     }
 
-    .empty-icon {
-      width: 100px;
-      height: 100px;
+    .orb {
+      width: 96px;
+      height: 96px;
+      border-radius: 48px;
     }
 
-    .empty-content h1 {
-      font-size: 1.5rem;
+    .orb__icon {
+      width: 30px;
+      height: 30px;
+    }
+
+    .greeting__hello {
+      font-size: 28px;
+      line-height: 34px;
+    }
+
+    .greeting__sub {
+      font-size: 17px;
+      line-height: 24px;
+    }
+
+    .spacer-40 {
+      height: 24px;
+    }
+
+    .spacer-32 {
+      height: 24px;
+    }
+
+    .cards-row {
+      flex-direction: column;
+    }
+
+    .sug-card {
+      min-height: 0;
+      width: 100%;
     }
 
     .input-container {
@@ -1878,17 +2160,27 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   @media (max-width: 480px) {
-    .empty-icon {
+    .orb {
       width: 80px;
       height: 80px;
+      border-radius: 40px;
     }
 
-    .empty-content h1 {
-      font-size: 1.25rem;
+    .orb__highlight {
+      left: 14px;
+      top: 10px;
+      width: 26px;
+      height: 17px;
     }
 
-    .empty-content p {
-      font-size: 0.875rem;
+    .greeting__hello {
+      font-size: 24px;
+      line-height: 30px;
+    }
+
+    .greeting__sub {
+      font-size: 15px;
+      line-height: 22px;
     }
   }
 </style>

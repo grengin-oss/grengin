@@ -103,7 +103,8 @@
       "pagination": "ترقيم النتائج",
       "topModelsCaption": "أفضل النماذج حسب الاستخدام لنطاق التاريخ المحدد",
       "departmentTableCaption": "استخدام القسم لنطاق التاريخ المحدد",
-      "userTableCaption": "استخدام المستخدم لنطاق التاريخ المحدد"
+      "userTableCaption": "استخدام المستخدم لنطاق التاريخ المحدد",
+      "rangePicker": "تغيير نطاق التاريخ"
     },
     "filters": {
       "dateRange": "نطاق التاريخ",
@@ -119,7 +120,8 @@
       "hour": "ساعي",
       "day": "يومي",
       "week": "أسبوعي",
-      "month": "شهري"
+      "month": "شهري",
+      "rangeFields": "حقول الفترة"
     },
     "loading": "جارٍ تحميل التحليلات...",
     "retry": "إعادة المحاولة",
@@ -133,7 +135,8 @@
       "avgPerUser": "{count} متوسط لكل مستخدم",
       "totalTokens": "إجمالي الرموز",
       "totalCost": "إجمالي التكلفة",
-      "vsPreviousDays": "مقارنة بـ {count} أيام سابقة"
+      "vsPreviousDays": "مقارنة بـ {count} أيام سابقة",
+      "quickStats": "إحصاءات سريعة"
     },
     "topModels": {
       "title": "أفضل النماذج",
@@ -141,7 +144,8 @@
       "provider": "المزود",
       "requests": "الطلبات",
       "tokens": "الرموز",
-      "cost": "التكلفة"
+      "cost": "التكلفة",
+      "subtitleByCost": "حسب التكلفة، {range}"
     },
     "charts": {
       "title": "اتجاهات الأداء",
@@ -152,7 +156,8 @@
         "tokens": "الرموز",
         "latency": "زمن الاستجابة",
         "date": "التاريخ",
-        "latencyMs": "زمن الاستجابة (مللي ثانية)"
+        "latencyMs": "زمن الاستجابة (مللي ثانية)",
+        "tabLabel": "متعدد المقاييس"
       },
       "usageGrowth": {
         "title": "نمو الاستخدام",
@@ -184,6 +189,10 @@
         "viewDataTableFor": "عرض جدول البيانات لـ {chartName}",
         "closeDataTable": "إغلاق جدول البيانات",
         "dataTableRegion": "جدول بيانات {chartName}"
+      },
+      "insight": {
+        "peak": "بلغ {metric} ذروته {day} عند {value}، أي {ratio}× أدنى قيمة في الفترة.",
+        "flat": "ظل {metric} مستقرًا خلال الفترة."
       }
     },
     "errors": {

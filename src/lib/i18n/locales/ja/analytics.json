@@ -103,7 +103,8 @@
       "pagination": "結果のページ送り",
       "topModelsCaption": "選択した日付範囲での利用上位モデル",
       "departmentTableCaption": "選択した日付範囲での部門別利用",
-      "userTableCaption": "選択した日付範囲でのユーザー別利用"
+      "userTableCaption": "選択した日付範囲でのユーザー別利用",
+      "rangePicker": "期間を変更"
     },
     "filters": {
       "dateRange": "期間",
@@ -119,7 +120,8 @@
       "hour": "時間別",
       "day": "日別",
       "week": "週別",
-      "month": "月別"
+      "month": "月別",
+      "rangeFields": "期間フィールド"
     },
     "loading": "分析を読み込み中...",
     "retry": "再試行",
@@ -133,7 +135,8 @@
       "avgPerUser": "ユーザーあたり平均 {count}",
       "totalTokens": "総トークン数",
       "totalCost": "総コスト",
-      "vsPreviousDays": "前{count}日間比"
+      "vsPreviousDays": "前{count}日間比",
+      "quickStats": "クイック統計"
     },
     "topModels": {
       "title": "トップモデル",
@@ -141,7 +144,8 @@
       "provider": "プロバイダー",
       "requests": "リクエスト",
       "tokens": "トークン",
-      "cost": "コスト"
+      "cost": "コスト",
+      "subtitleByCost": "コスト順 · {range}"
     },
     "charts": {
       "title": "パフォーマンストレンド",
@@ -152,7 +156,8 @@
         "tokens": "トークン",
         "latency": "レイテンシ",
         "date": "日付",
-        "latencyMs": "レイテンシ (ms)"
+        "latencyMs": "レイテンシ (ms)",
+        "tabLabel": "マルチメトリック"
       },
       "usageGrowth": {
         "title": "使用量の増加",
@@ -184,6 +189,10 @@
         "viewDataTableFor": "{chartName} のデータ表を表示",
         "closeDataTable": "データ表を閉じる",
         "dataTableRegion": "{chartName} のデータ表"
+      },
+      "insight": {
+        "peak": "{metric} は{day}に {value} でピークとなり、期間の最小値の {ratio} 倍でした。",
+        "flat": "{metric} は期間中ほぼ横ばいでした。"
       }
     },
     "errors": {

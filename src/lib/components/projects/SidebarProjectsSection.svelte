@@ -65,10 +65,15 @@ SPDX-License-Identifier: Apache-2.0
   let projectToDelete = $state<Project | null>(null);
   let deleting = $state(false);
   let showAllProjects = $state(false);
+  let showProjects = $state(true);
+
+  let projectCountLabel = $derived(String(projects.length).padStart(2, '0'));
 
   const MAX_SIDEBAR_PROJECTS = 3;
   let visibleProjects = $derived(showAllProjects ? projects : projects.slice(0, MAX_SIDEBAR_PROJECTS));
   let hasMore = $derived(projects.length > MAX_SIDEBAR_PROJECTS);
+  const MAX_RAIL_PROJECTS = 4;
+  let railProjects = $derived(projects.slice(0, MAX_RAIL_PROJECTS));
   let remainingCount = $derived(projects.length - MAX_SIDEBAR_PROJECTS);
 
   const categoryEmoji: Record<ProjectCategory, string> = {
@@ -97,11 +102,6 @@ SPDX-License-Identifier: Apache-2.0
   function handleProjectClick(project: Project) {
     navigate(`/projects/${project.id}`);
     onCollapseSidebar();
-  }
-
-  function openCreateModal() {
-    editingProject = null;
-    showCreateModal = true;
   }
 
   function openEditModal(project: Project) {
@@ -166,30 +166,39 @@ SPDX-License-Identifier: Apache-2.0
 {#if !isCollapsed}
   <div class="projects-section">
     <div class="projects-header">
-      <button 
-        class="projects-title-btn" 
+      <button
+        class="projects-title-btn"
         class:active={currentPath === '/projects'}
-        onclick={goToProjectsPage} 
+        onclick={goToProjectsPage}
         title={$_('sidebar.allProjects')}
       >
+        <span class="section-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="9" width="12" height="8" rx="2"/>
+            <path d="M9 9C9 7.89543 9.89543 7 11 7H13C14.1046 7 15 7.89543 15 9H9Z"/>
+            <path d="M6 13H18"/>
+          </svg>
+        </span>
         <span class="projects-title-text">{$_('sidebar.projects')}</span>
+      </button>
+      <div class="projects-header-actions">
         {#if projects.length > 0}
-          <span class="projects-count">({projects.length})</span>
+          <span class="projects-count">{projectCountLabel}</span>
         {/if}
-      </button>
-      <button
-        class="add-project-btn"
-        onclick={openCreateModal}
-        title={$_('sidebar.newProject')}
-        aria-label={$_('sidebar.newProject')}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"/>
-          <line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-      </button>
+        <button
+          class="section-collapse-btn"
+          onclick={() => (showProjects = !showProjects)}
+          aria-expanded={showProjects}
+          aria-label={$_('sidebar.projects')}
+        >
+          <svg class="section-chevron" class:collapsed={!showProjects} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6,9 12,15 18,9"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
+    {#if showProjects}
     <div class="projects-list">
       {#if loading}
         <div class="projects-loading">
@@ -209,6 +218,14 @@ SPDX-License-Identifier: Apache-2.0
               onclick={() => handleProjectClick(project)}
               title={project.name}
             >
+              <span class="project-hash" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="4" y1="9" x2="20" y2="9"/>
+                  <line x1="4" y1="15" x2="20" y2="15"/>
+                  <line x1="10" y1="3" x2="8" y2="21"/>
+                  <line x1="16" y1="3" x2="14" y2="21"/>
+                </svg>
+              </span>
               <span class="project-name">{project.name}</span>
             </button>
             <button
@@ -262,25 +279,41 @@ SPDX-License-Identifier: Apache-2.0
         {/if}
       {/if}
     </div>
+    {/if}
   </div>
-
-  <div class="section-divider"></div>
 {:else}
   <div class="collapsed-projects">
-    <button
-      class="collapsed-project-btn"
-      onclick={openCreateModal}
-      title={$_('sidebar.newProject')}
-      aria-label={$_('sidebar.newProject')}
-    >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-        <line x1="12" y1="11" x2="12" y2="17"/>
-        <line x1="9" y1="14" x2="15" y2="14"/>
-      </svg>
-    </button>
+    {#if projects.length === 0}
+      <button
+        class="rail-btn rail-btn--folder"
+        class:active={currentPath === '/projects'}
+        onclick={goToProjectsPage}
+        title={$_('sidebar.allProjects')}
+        aria-label={$_('sidebar.allProjects')}
+      >
+        {@render folderIcon()}
+      </button>
+    {:else}
+      {#each railProjects as project (project.id)}
+        <button
+          class="rail-btn rail-btn--folder"
+          class:active={selectedProjectId === project.id}
+          onclick={() => handleProjectClick(project)}
+          title={project.name}
+          aria-label={project.name}
+        >
+          {@render folderIcon()}
+        </button>
+      {/each}
+    {/if}
   </div>
 {/if}
+
+{#snippet folderIcon()}
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+  </svg>
+{/snippet}
 
 <CreateProjectModal
   isOpen={showCreateModal}
@@ -320,94 +353,150 @@ SPDX-License-Identifier: Apache-2.0
 {/if}
 
 <style>
+  /* Figma "Section - Projects": 24px header, 4px gap to the row list */
   .projects-section {
-    padding: 0 var(--space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-self: stretch;
   }
 
   .projects-header {
     display: flex;
+    height: 24px;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-sm) var(--space-md);
-    margin-top: var(--space-sm);
+    align-self: stretch;
   }
 
   .projects-title-btn {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: var(--space-xs);
+    gap: 6px;
     background: none;
     border: none;
     padding: 0;
     cursor: pointer;
-    color: var(--text-secondary);
-    transition: color 0.2s ease;
+    color: var(--gx-dim);
+    transition: color 120ms ease;
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
 
   .projects-title-btn:hover {
-    color: var(--text-primary);
+    color: var(--gx-muted);
     transform: none;
     box-shadow: none;
   }
 
   .projects-title-btn.active {
-    color: var(--brand);
+    color: var(--gx-blue);
   }
 
-  .projects-title-text {
-    font-size: 0.6875rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+  .projects-title-btn:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: 2px;
   }
 
-  .projects-count {
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-  }
-
-  .add-project-btn {
+  .section-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    color: currentcolor;
+  }
+
+  /* section labels: 10px / 700 / 14px line, per the Figma text style */
+  .projects-title-text {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 14px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: currentcolor;
+  }
+
+  .projects-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--gx-dim);
+  }
+
+  .projects-count {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 14px;
+    letter-spacing: 0;
+    color: var(--gx-dim);
+  }
+
+  .section-collapse-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
     padding: 0;
     border: none;
     background: transparent;
-    color: var(--text-secondary);
+    color: var(--gx-dim);
     cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: all 0.2s ease;
+    border-radius: 4px;
+    transition: color 120ms ease;
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
 
-  .add-project-btn:hover {
-    background: var(--btn-tertiary);
-    color: var(--brand);
-    transform: scale(1.1);
+  .section-collapse-btn:hover {
+    color: var(--gx-muted);
+    background: transparent;
+    transform: none;
     box-shadow: none;
+  }
+
+  .section-collapse-btn:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: 1px;
+  }
+
+  .section-chevron {
+    transition: transform 140ms ease;
+  }
+
+  .section-chevron.collapsed {
+    transform: rotate(-90deg);
+  }
+
+  .project-hash {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    color: var(--gx-dim);
   }
 
   .projects-list {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
+    align-self: stretch;
   }
 
   .projects-loading,
   .projects-empty {
-    padding: var(--space-md);
+    padding: 6px 8px;
     text-align: center;
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
+    color: var(--gx-dim);
+    font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -429,46 +518,66 @@ SPDX-License-Identifier: Apache-2.0
     align-items: center;
   }
 
+  /* Figma project row: 28px tall, 6px radius, 8px gap, 6/8 padding */
   .project-item-btn {
     flex: 1;
     min-width: 0;
     display: flex;
+    height: 28px;
     align-items: center;
     justify-content: flex-start;
-    gap: var(--space-sm);
-    padding: 6px var(--space-md);
+    gap: 8px;
+    padding: 6px 8px;
     border: none;
     background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
+    color: var(--gx-muted);
+    font-size: 12px;
+    line-height: 16px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 120ms ease;
     text-align: start;
-    border-radius: var(--radius-md);
+    border-radius: 6px;
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
 
   .project-item-btn:hover {
-    background: var(--btn-tertiary);
-    color: var(--text-primary);
+    background: var(--gx-fill-soft);
+    color: var(--gx-muted);
     transform: none;
     box-shadow: none;
   }
 
+  .project-item-btn:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: -2px;
+  }
+
+  /* selected row uses the "current" treatment from the pinned rows */
   .project-item-btn.selected {
-    background: rgba(var(--brand-rgb), 0.1);
-    color: var(--brand);
-    font-weight: 600;
+    background: var(--gx-blue-soft);
+    color: var(--gx-blue);
     box-shadow: none;
   }
 
+  .project-item-btn.selected:hover {
+    background: var(--gx-blue-soft-hover);
+  }
+
+  .project-item-btn.selected .project-hash {
+    color: var(--gx-blue);
+  }
+
   .project-name {
+    flex-grow: 1;
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: 12px;
     font-weight: 500;
+    line-height: 16px;
   }
 
   .project-menu-btn {
@@ -557,18 +666,20 @@ SPDX-License-Identifier: Apache-2.0
 
   .expand-projects-btn {
     display: flex;
+    height: 28px;
     align-items: center;
-    gap: var(--space-xs);
-    padding: 6px var(--space-md);
+    gap: 8px;
+    padding: 6px 8px;
     border: none;
     background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.75rem;
+    color: var(--gx-dim);
+    font-size: 12px;
     font-weight: 500;
+    line-height: 16px;
     cursor: pointer;
     text-align: start;
-    transition: all 0.2s ease;
-    border-radius: var(--radius-sm);
+    transition: background-color 120ms ease;
+    border-radius: 6px;
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -576,10 +687,15 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .expand-projects-btn:hover {
-    background: var(--btn-tertiary);
-    color: var(--brand);
+    background: var(--gx-fill-soft);
+    color: var(--gx-muted);
     transform: none;
     box-shadow: none;
+  }
+
+  .expand-projects-btn:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: -2px;
   }
 
   .expand-chevron {
@@ -591,41 +707,58 @@ SPDX-License-Identifier: Apache-2.0
     transform: rotate(180deg);
   }
 
-  .section-divider {
-    height: 1px;
-    background: var(--glass-stroke-dark);
-    margin: var(--space-sm) var(--space-md);
-  }
-
+  /* State=Collapsed: one folder button per project in the 60px rail */
   .collapsed-projects {
     display: flex;
-    justify-content: center;
-    padding: var(--space-sm) 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
   }
 
-  .collapsed-project-btn {
+  .rail-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     border: none;
-    background: var(--btn-tertiary);
-    color: var(--text-secondary);
+    background: transparent;
+    color: var(--gx-muted);
     cursor: pointer;
-    border-radius: var(--radius-full);
-    transition: all 0.2s ease;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
 
-  .collapsed-project-btn:hover {
-    background: var(--btn-quaternary);
-    color: var(--brand);
-    transform: scale(1.05);
+  .rail-btn--folder {
+    color: var(--gx-slate);
+  }
+
+  .rail-btn:hover {
+    background: var(--gx-fill-soft);
+    color: var(--gx-slate);
+    transform: none;
     box-shadow: none;
+  }
+
+  .rail-btn:active {
+    background: var(--gx-line);
+    transform: none;
+  }
+
+  .rail-btn:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: 2px;
+  }
+
+  .rail-btn.active {
+    background: var(--gx-blue-soft);
+    color: var(--gx-blue);
   }
 
   .confirm-content p {

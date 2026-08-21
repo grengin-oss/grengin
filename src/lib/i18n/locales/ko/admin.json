@@ -32,7 +32,8 @@
       "metadata": "메타데이터",
       "lastUpdated": "마지막 업데이트",
       "removing": "제거 중",
-      "loading": "로딩 중..."
+      "loading": "로딩 중...",
+      "noRole": "역할 없음"
     },
     "organization": {
       "subtitle": "팀, 조직 구조 및 사용자를 관리하세요",
@@ -54,7 +55,24 @@
       "assignSuccess": "사용자를 팀에 배정했습니다",
       "assignError": "사용자를 팀에 배정하지 못했습니다",
       "noUnassigned": "모든 사용자가 팀에 속해 있습니다",
-      "loadingUnassigned": "미할당 사용자를 불러오는 중…"
+      "loadingUnassigned": "미할당 사용자를 불러오는 중…",
+      "structure": "조직 구조",
+      "kpiDepartments": "부서 수",
+      "kpiTotalPeople": "전체 인원",
+      "kpiBudgetAllocated": "할당된 예산",
+      "findDepartmentPlaceholder": "부서 검색...",
+      "noDepartmentsMatch": "검색과 일치하는 부서가 없습니다",
+      "treeFooter": "부서 {departments}개 · {levels}단계 · 인원 {people}명",
+      "addSubDepartment": "하위 부서 추가",
+      "searchUsersPlaceholder": "이름, 이메일 또는 부서로 검색...",
+      "export": "내보내기",
+      "exporting": "내보내는 중...",
+      "exportSuccess": "사용자를 내보냈습니다",
+      "exportError": "사용자 내보내기에 실패했습니다",
+      "noDescription": "설명 없음",
+      "childDeptCount": "하위 부서 {count}개",
+      "deleteDepartmentCaption": "이 작업은 되돌릴 수 없습니다. 구성원과 예산 데이터가 삭제됩니다.",
+      "departmentActions": "{name} 작업"
     },
     "tabListLabels": {
       "organization": "조직 탭",

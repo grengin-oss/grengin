@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
   import { onMount } from "svelte";
   import { _ } from "svelte-i18n";
   import LoadingSpinner from "./LoadingSpinner.svelte";
-  import AdminEmptyState from "./AdminEmptyState.svelte";
   import Modal from "./Modal.svelte";
   import PromptPreviewModal from "./prompt-library/PromptPreviewModal.svelte";
   import { toast } from "../../components/Toaster.svelte";
@@ -239,46 +238,38 @@ SPDX-License-Identifier: Apache-2.0
   {#if loading}
     <LoadingSpinner text={$_('admin.departmentPrompts.loading')} />
   {:else if !hasPrompts}
-    <!-- Full-width empty state when no prompts assigned -->
-    <div class="panel empty-panel">
-      <div class="panel-header">
-        <h3>{$_('admin.departmentPrompts.assignedPrompts')}</h3>
-        {#if canManage}
-          <button class="btn-primary-sm" onclick={() => assignModalOpen = true}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            {$_('admin.departmentPrompts.assignPrompt')}
-          </button>
-        {/if}
-      </div>
-
-      {#if assignedLoading}
-        <LoadingSpinner text={$_('admin.departmentPrompts.loadingAssigned')} />
-      {:else}
-        <AdminEmptyState
-          title={$_('admin.departmentPrompts.noAssignedTitle')}
-          message={$_('admin.departmentPrompts.noAssignedMessage')}
-        >
-          {#snippet icon()}
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-            </svg>
-          {/snippet}
-          {#snippet actions()}
-            {#if canManage}
-              <button class="btn-primary-sm" onclick={() => assignModalOpen = true}>
-                {$_('admin.departmentPrompts.assignPrompt')}
-              </button>
-            {/if}
-          {/snippet}
-        </AdminEmptyState>
+    <!-- Design: flush header above a bordered empty-state card -->
+    <div class="panel-header panel-header--flush">
+      <h3>{$_('admin.departmentPrompts.assignedPrompts')}</h3>
+      {#if canManage}
+        <button class="btn-primary-sm" onclick={() => assignModalOpen = true}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          {$_('admin.departmentPrompts.assignPrompt')}
+        </button>
       {/if}
     </div>
+
+    {#if assignedLoading}
+      <LoadingSpinner text={$_('admin.departmentPrompts.loadingAssigned')} />
+    {:else}
+      <div class="empty-state">
+        <span class="empty-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+        </span>
+        <div class="empty-text">
+          <span class="empty-title">{$_('admin.departmentPrompts.noAssignedTitle')}</span>
+          <span class="empty-body">{$_('admin.departmentPrompts.noAssignedMessage')}</span>
+        </div>
+      </div>
+    {/if}
   {:else}
     <!-- Single column layout when prompts exist -->
     <div class="panel assigned-panel">
@@ -467,40 +458,98 @@ SPDX-License-Identifier: Apache-2.0
 </Modal>
 
 <style>
+  /* app.css gives every button backdrop-filter: blur(); on the flat
+     Organization surfaces that repaints the 1px hairlines behind them
+     (the tab-row ring, the tree's branch rails), so switch it off. */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   .prompts-tab {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: 20px;
+    align-self: stretch;
+    width: 100%;
+    font-family: var(--gx-font);
   }
 
-  
   /* Panels */
   .panel {
-    background: var(--button-bg);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--glass-shadow-dark);
+    background: transparent;
+    border: 0;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
 
-  .empty-panel {
-    width: 100%;
+  .panel-header--flush {
+    padding: 0;
+    align-self: stretch;
+  }
+
+  .empty-state {
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 48px 24px;
+    justify-content: center;
+    align-items: center;
+    align-self: stretch;
+  }
+
+  .empty-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--gx-slate-500);
+  }
+
+  .empty-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .empty-title {
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+  }
+
+  .empty-body {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
   }
 
   .panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-lg);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 12px;
+    padding: 20px;
   }
 
   .panel-header h3 {
-    font-size: 1rem;
     font-weight: 700;
-    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
     margin: 0;
   }
 
@@ -519,6 +568,7 @@ SPDX-License-Identifier: Apache-2.0
   /* Assigned List */
   .assigned-list {
     flex: 1;
+    max-height: 420px;
     overflow-y: auto;
     padding: var(--space-sm);
   }
@@ -748,20 +798,27 @@ SPDX-License-Identifier: Apache-2.0
   .btn-primary-sm {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    padding: 8px 14px;
-    background: var(--brand);
-    border: none;
-    border-radius: var(--radius-sm);
+    height: 33px;
+    padding: 0 14px;
+    background: var(--gx-org-brand);
+    border: 0;
+    border-radius: 8px;
+    box-shadow: none;
+    font-family: inherit;
     font-size: 13px;
     font-weight: 600;
-    color: white;
+    color: #fff;
+    white-space: nowrap;
     cursor: pointer;
-    transition: background 0.2s;
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
   }
 
   .btn-primary-sm:hover {
-    background: var(--brand-hover);
+    background: var(--gx-org-brand-hover);
+    transform: none;
   }
 
   .btn-primary-sm svg {

@@ -4,24 +4,32 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
-  import { onMount, onDestroy, untrack } from 'svelte';
-  import { Router, Route, navigate } from 'svelte-routing';
-  import { Sidebar, MobileHeader } from './lib/components/layout/index.js';
-  import Toaster from './lib/components/Toaster.svelte';
-  import Login from './lib/features/auth/components/Login.svelte';
-  import AuthCallback from './lib/features/auth/components/AuthCallback.svelte';
-  import MainAreaRoutes from '$lib/bundles/MainAreaRoutes.svelte';
-  import { loadNamespacesForRoute } from '$lib/i18n/index.js';
-  import { initAuth, getAuthState, logout, permissionsStore } from './lib/features/auth/index.js';
+  import { onMount, onDestroy, untrack } from "svelte";
+  import { Router, Route, navigate } from "svelte-routing";
+  import { Sidebar, MobileHeader } from "./lib/components/layout/index.js";
+  import Toaster from "./lib/components/Toaster.svelte";
+  import Login from "./lib/features/auth/components/Login.svelte";
+  import AuthCallback from "./lib/features/auth/components/AuthCallback.svelte";
+  import MainAreaRoutes from "$lib/bundles/MainAreaRoutes.svelte";
+  import { loadNamespacesForRoute } from "$lib/i18n/index.js";
+  import {
+    initAuth,
+    getAuthState,
+    logout,
+    permissionsStore,
+  } from "./lib/features/auth/index.js";
   import {
     dismissStreamToast,
     fetchNotificationFeed,
     getNotificationsState,
     startNotificationsStream,
     stopNotificationsStream,
-  } from './lib/features/notifications/index.js';
-  import { NOTIFICATIONS_STREAM_TOAST_ID, toast } from '$lib/components/Toaster.svelte';
-  import { _ } from 'svelte-i18n';
+  } from "./lib/features/notifications/index.js";
+  import {
+    NOTIFICATIONS_STREAM_TOAST_ID,
+    toast,
+  } from "$lib/components/Toaster.svelte";
+  import { _ } from "svelte-i18n";
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
@@ -31,7 +39,7 @@ SPDX-License-Identifier: Apache-2.0
 
   $effect(() => {
     const uid = authState.user?.id;
-    if (uid == null || uid === '') return;
+    if (uid == null || uid === "") return;
     void fetchNotificationFeed();
     startNotificationsStream();
 
@@ -41,7 +49,7 @@ SPDX-License-Identifier: Apache-2.0
   });
 
   function isAdminView(): boolean {
-    return currentPath.startsWith('/admin');
+    return currentPath.startsWith("/admin");
   }
 
   // Handle stream toast
@@ -56,14 +64,14 @@ SPDX-License-Identifier: Apache-2.0
       }
 
       const description = n.body?.trim() ? n.body : undefined;
-      toast.custom(n.title, 'blank', {
+      toast.custom(n.title, "blank", {
         id: NOTIFICATIONS_STREAM_TOAST_ID,
         duration: 5000,
         description,
         streamAlert: true,
         onClick: () => {
           dismissStreamToast();
-          navigate(isAdminView() ? '/admin/alerts' : '/alerts');
+          navigate(isAdminView() ? "/admin/alerts" : "/alerts");
         },
         onDismiss: () => dismissStreamToast(),
       });
@@ -76,7 +84,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   function isAdminLogin(): boolean {
-    return currentPath === '/admin';
+    return currentPath === "/admin";
   }
 
   function isMobile() {
@@ -95,23 +103,25 @@ SPDX-License-Identifier: Apache-2.0
       currentPath = window.location.pathname;
     };
 
-    window.addEventListener('popstate', updatePath);
+    window.addEventListener("popstate", updatePath);
 
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
 
-    history.pushState = function (...args: Parameters<History['pushState']>) {
+    history.pushState = function (...args: Parameters<History["pushState"]>) {
       originalPushState.apply(this, args);
       updatePath();
     };
 
-    history.replaceState = function (...args: Parameters<History['replaceState']>) {
+    history.replaceState = function (
+      ...args: Parameters<History["replaceState"]>
+    ) {
       originalReplaceState.apply(this, args);
       updatePath();
     };
 
     return () => {
-      window.removeEventListener('popstate', updatePath);
+      window.removeEventListener("popstate", updatePath);
       history.pushState = originalPushState;
       history.replaceState = originalReplaceState;
     };
@@ -128,7 +138,7 @@ SPDX-License-Identifier: Apache-2.0
     initAuth();
     permissionsStore.init();
     sidebarCollapsed = isMobile();
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
   });
 
   async function handleLogout() {
@@ -140,8 +150,8 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   onDestroy(() => {
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('resize', handleResize);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("resize", handleResize);
     }
   });
 
@@ -149,7 +159,7 @@ SPDX-License-Identifier: Apache-2.0
   $effect(() => {
     if (
       authState.isAuthenticated &&
-      currentPath === '/admin' &&
+      currentPath === "/admin" &&
       permissionsStore.hasFetched &&
       !permissionsStore.isLoading
     ) {
@@ -172,13 +182,13 @@ SPDX-License-Identifier: Apache-2.0
   function handleMainContentClick(event: Event) {
     const target = event.target as HTMLElement;
     const isInteractiveElement =
-      target.tagName === 'BUTTON' ||
-      target.tagName === 'INPUT' ||
-      target.tagName === 'SELECT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.tagName === 'A' ||
-      target.closest('button') ||
-      target.closest('a');
+      target.tagName === "BUTTON" ||
+      target.tagName === "INPUT" ||
+      target.tagName === "SELECT" ||
+      target.tagName === "TEXTAREA" ||
+      target.tagName === "A" ||
+      target.closest("button") ||
+      target.closest("a");
 
     if (isMobile() && !sidebarCollapsed && !isInteractiveElement) {
       sidebarCollapsed = true;
@@ -195,7 +205,7 @@ SPDX-License-Identifier: Apache-2.0
     </div>
   {:else if isAdminLogin() && !authState.isAuthenticated}
     <!-- Admin login route -->
-    <Login modes={['admin']} onLoginSuccess={handleLoginSuccess} />
+    <Login modes={["admin"]} onLoginSuccess={handleLoginSuccess} />
   {:else if authState.isLoading}
     <div class="loading-screen">
       <div class="loading-spinner"></div>
@@ -215,17 +225,19 @@ SPDX-License-Identifier: Apache-2.0
         class="mobile-overlay"
         role="button"
         tabindex="-1"
-        aria-label={$_('app.closeSidebar')}
+        aria-label={$_("app.closeSidebar")}
         onclick={handleMainContentClick}
-        onkeydown={(e) => e.key === 'Escape' && handleMainContentClick(e)}
+        onkeydown={(e) => e.key === "Escape" && handleMainContentClick(e)}
       ></div>
     {/if}
 
     <main class="main-content" class:collapsed={sidebarCollapsed}>
-      <MobileHeader sidebarCollapsed={sidebarCollapsed} onToggleMenu={toggleSidebarFromMain} />
+      <MobileHeader {sidebarCollapsed} onToggleMenu={toggleSidebarFromMain} />
+
+      <!-- <TopBar user={authState.user} onlogout={handleLogout} /> -->
 
       <div class="main-content-body">
-<MainAreaRoutes />
+        <MainAreaRoutes />
       </div>
     </main>
   {/if}
@@ -261,12 +273,13 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .main-content {
-    margin-inline-start: 280px;
+    /* flush against the sidebar, matching the Figma screen frame */
+    margin-inline-start: 272px;
     min-height: 100vh;
-    background: var(--bg-primary);
+    background: var(--gx-page);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    width: calc(100vw - 280px);
-    max-width: calc(100vw - 280px);
+    width: calc(100vw - 272px);
+    max-width: calc(100vw - 272px);
     overflow-x: hidden;
     box-sizing: border-box;
     display: flex;
@@ -274,9 +287,9 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .main-content.collapsed {
-    margin-inline-start: 80px;
-    width: calc(100vw - 80px);
-    max-width: calc(100vw - 80px);
+    margin-inline-start: 60px;
+    width: calc(100vw - 60px);
+    max-width: calc(100vw - 60px);
   }
 
   .main-content-body {

@@ -99,6 +99,25 @@
     "viewAll": "Ver todo",
     "showMore": "{count} más",
     "showLess": "Ver menos",
-    "skills": "Habilidades"
+    "skills": "Habilidades",
+    "recent": "Recientes",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "thisWeek": "Esta semana",
+    "earlier": "Anteriores",
+    "searchChatsProjects": "Buscar chats y proyectos",
+    "pastWeek": "Última semana",
+    "pastMonth": "Último mes",
+    "pastYear": "Último año",
+    "older": "Más antiguo",
+    "noMatchesFor": "Sin resultados para «{query}»",
+    "tryShorterWord": "Prueba con una palabra más corta u otra ortografía."
+  },
+  "topBar": {
+    "alerts": "Alertas",
+    "breadcrumb": "Ruta de navegación",
+    "approvedModel": "Modelo aprobado",
+    "teamVisible": "Visible para el equipo",
+    "privateToYou": "Privado para ti"
   }
 }

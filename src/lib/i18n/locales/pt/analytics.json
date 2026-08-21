@@ -103,7 +103,8 @@
       "pagination": "Paginação dos resultados",
       "topModelsCaption": "Principais modelos por uso no período selecionado",
       "departmentTableCaption": "Uso por departamento no período selecionado",
-      "userTableCaption": "Uso por usuário no período selecionado"
+      "userTableCaption": "Uso por usuário no período selecionado",
+      "rangePicker": "Alterar intervalo de datas"
     },
     "filters": {
       "dateRange": "Período",
@@ -119,7 +120,8 @@
       "hour": "Por hora",
       "day": "Diário",
       "week": "Semanal",
-      "month": "Mensal"
+      "month": "Mensal",
+      "rangeFields": "Campos do intervalo"
     },
     "loading": "Carregando análise...",
     "retry": "Tentar novamente",
@@ -133,7 +135,8 @@
       "avgPerUser": "{count} média por usuário",
       "totalTokens": "Total de tokens",
       "totalCost": "Custo total",
-      "vsPreviousDays": "vs {count} dias anteriores"
+      "vsPreviousDays": "vs {count} dias anteriores",
+      "quickStats": "Estatísticas rápidas"
     },
     "topModels": {
       "title": "Principais modelos",
@@ -141,7 +144,8 @@
       "provider": "Provedor",
       "requests": "Solicitações",
       "tokens": "Tokens",
-      "cost": "Custo"
+      "cost": "Custo",
+      "subtitleByCost": "por custo, {range}"
     },
     "charts": {
       "title": "Tendências de desempenho",
@@ -152,7 +156,8 @@
         "tokens": "Tokens",
         "latency": "Latência",
         "date": "Data",
-        "latencyMs": "Latência (ms)"
+        "latencyMs": "Latência (ms)",
+        "tabLabel": "Multimétrica"
       },
       "usageGrowth": {
         "title": "Crescimento de uso",
@@ -184,6 +189,10 @@
         "viewDataTableFor": "Ver tabela de dados de {chartName}",
         "closeDataTable": "Fechar tabela de dados",
         "dataTableRegion": "Tabela de dados de {chartName}"
+      },
+      "insight": {
+        "peak": "{metric} atingiu o pico em {day} com {value}, {ratio}× o mínimo do período.",
+        "flat": "{metric} manteve-se estável no período."
       }
     },
     "errors": {

@@ -178,19 +178,15 @@ SPDX-License-Identifier: Apache-2.0
   }
 </script>
 
-<div class="section">
-  <div class="section-header">
-    <h3>{$_('admin.departments.departmentAdmins')}</h3>
+<div class="admins-panel">
+  <div class="admins-header">
+    <span class="admins-title">{$_('admin.departments.departmentAdmins')}</span>
     {#if canManage}
-      <button class="btn-add-admin" onclick={toggleAddAdminSearch}>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+      <button type="button" class="btn-primary" onclick={toggleAddAdminSearch}>
         {$_('admin.departments.addAdmin')}
       </button>
     {/if}
   </div>
-  <p class="section-description">{$_('admin.departments.departmentAdminsDescription')}</p>
   
   {#if canManage && showAddAdminSearch}
     <div class="admin-search-wrapper">
@@ -274,7 +270,12 @@ SPDX-License-Identifier: Apache-2.0
     </div>
   {:else if adminUsers.length === 0}
     <div class="admins-empty">
-      <p>{$_('admin.departments.noAdmins')}</p>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M19 8v6M22 11h-6"/>
+      </svg>
+      <span>{$_('admin.departments.noAdmins')}</span>
     </div>
   {:else}
     <div class="admins-list">
@@ -324,119 +325,152 @@ SPDX-License-Identifier: Apache-2.0
 {/if}
 
 <style>
-  .section {
-    background: var(--btn-secondary);
-    border-radius: var(--radius-md);
-    padding: 16px;
+  /* app.css gives every button backdrop-filter: blur(); on the flat
+     Organization surfaces that repaints the 1px hairlines behind them
+     (the tab-row ring, the tree's branch rails), so switch it off. */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
-  
-  .section-header {
+
+  .admins-panel {
+    align-self: stretch;
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    align-items: flex-start;
+    font-family: var(--gx-font);
+  }
+
+  .admins-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    align-self: stretch;
+    gap: 12px;
   }
-  
-  .section-header h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
+
+  .admins-title {
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
   }
-  
-  .section-description {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin: -8px 0 12px 0;
-  }
-  
-  .btn-add-admin {
-    display: flex;
+
+  .btn-primary {
+    height: 33px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-org-brand);
+    padding: 0 14px;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    background: var(--brand);
-    border: none;
-    border-radius: var(--radius-sm);
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: inherit;
+    font-weight: 600;
     font-size: 13px;
-    font-weight: 500;
-    color: white;
+    color: #fff;
+    white-space: nowrap;
     cursor: pointer;
-    transition: all 0.2s;
+    box-shadow: none;
+    transition: background-color 120ms ease;
   }
-  
-  .btn-add-admin:hover {
-    background: var(--brand-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px color-mix(in oklab, var(--brand) 30%, transparent);
+
+  .btn-primary:hover {
+    background: var(--gx-org-brand-hover);
+    transform: none;
   }
-  
+
   .admins-loading {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 40px 20px;
+    align-self: stretch;
+    padding: 32px 0;
   }
-  
+
   .admins-empty {
-    padding: 20px;
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-style: italic;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 32px 0;
+    justify-content: center;
+    align-items: center;
+    align-self: stretch;
+    color: var(--gx-slate-400);
   }
-  
+
+  .admins-empty span {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
+  }
+
   .admins-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    align-self: stretch;
   }
-  
+
   .admin-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     padding: 12px;
-    background: var(--glass-bg-dark);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--glass-stroke-dark);
+    border-radius: 8px;
+    background: var(--gx-org-track);
   }
-  
+
   .admin-info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
+    min-width: 0;
   }
-  
+
   .admin-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 100%;
+    color: var(--gx-slate-900);
   }
-  
+
   .admin-email {
     font-size: 12px;
-    color: var(--text-secondary);
+    line-height: 100%;
+    color: var(--gx-slate-500);
   }
-  
+
   .btn-remove-admin {
-    padding: 6px 12px;
+    height: 28px;
+    padding: 0 12px;
     background: transparent;
-    border: 1px solid var(--brand-red);
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--brand-red);
+    border: 0;
+    box-shadow: inset 0 0 0 1px var(--gx-org-danger-line);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gx-org-danger);
     cursor: pointer;
-    transition: all 0.2s;
     white-space: nowrap;
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
   }
-  
+
   .btn-remove-admin:hover:not(:disabled) {
-    background: var(--brand-red);
-    color: white;
+    background: var(--gx-org-danger-bg);
+    transform: none;
   }
-  
+
   .btn-remove-admin:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -444,7 +478,7 @@ SPDX-License-Identifier: Apache-2.0
   
   .admin-search-wrapper {
     position: relative;
-    margin-bottom: 20px;
+    align-self: stretch;
     animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   

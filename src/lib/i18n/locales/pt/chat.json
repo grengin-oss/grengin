@@ -3,7 +3,25 @@
     "emptyState": {
       "title": "Iniciar uma conversa",
       "description": "Envie uma mensagem para começar a conversar com o assistente de IA!",
-      "aiDisclaimer": "A IA pode cometer erros. Por favor, verifique as respostas."
+      "aiDisclaimer": "A IA pode cometer erros. Por favor, verifique as respostas.",
+      "greeting": "Olá, {name}",
+      "suggestions": {
+        "synthesize": {
+          "title": "Sintetizar dados",
+          "body": "Transforme notas de reunião em 5 pontos principais para a equipe.",
+          "prompt": "Transforme estas notas de reunião em 5 pontos principais para a equipe:\n\n"
+        },
+        "brainstorm": {
+          "title": "Brainstorm criativo",
+          "body": "Gere 5 slogans para uma nova marca de moda sustentável.",
+          "prompt": "Gere 5 slogans para uma nova marca de moda sustentável."
+        },
+        "facts": {
+          "title": "Verificar fatos",
+          "body": "Compare as principais diferenças entre o GDPR e a CCPA.",
+          "prompt": "Compare as principais diferenças entre o GDPR e a CCPA."
+        }
+      }
     },
     "errors": {
       "somethingWentWrong": "Algo deu errado",

@@ -148,150 +148,151 @@ SPDX-License-Identifier: Apache-2.0
 </script>
 
 <div class="budget-management">
-  <div class="budget-header">
-    <h3>{$_('admin.departments.budgetOverview')}</h3>
+  <div class="panel-header">
+    <span class="panel-title">{$_('admin.departments.budgetOverview')}</span>
     {#if !isEditingBudget && canEditBudget}
-      <button class="btn-secondary" onclick={startEditing}>
+      <button type="button" class="btn-secondary" onclick={startEditing}>
         {$_('admin.departments.editBudget')}
       </button>
     {/if}
   </div>
-  
+
   {#if isLoadingOverview}
-    <div class="loading-state">
+    <div class="budget-state">
       <LoadingSpinner size="md" text={$_('admin.departments.loadingBudgets')} />
     </div>
   {:else if budgetOverview}
-    <div class="budget-stats">
-        <div class="stat-row">
-          <div class="stat-item">
-            <span class="stat-label">{$_('admin.departments.budgetAllocated')}</span>
-            <span class="stat-value">{formatCurrency(budgetOverview.budget_allocated)}</span>
-            <span class="stat-period">{$_('admin.departments.budgetPer')} {$_(`admin.departments.budgetPeriods.${budgetOverview.period}`)}</span>
-          </div>
-          
-          <div class="stat-item">
-            <span class="stat-label">{$_('admin.departments.budgetUsedDirect')}</span>
-            <span class="stat-value {getUsageColorClass(usagePercent)}">
-              {formatCurrency(budgetOverview.budget_used)}
-            </span>
-            <span class="stat-period {getUsageColorClass(usagePercent)}">{usagePercent.toFixed(1)}%</span>
-          </div>
-          
-          <div class="stat-item">
-            <span class="stat-label">{$_('admin.departments.budgetUsedTotal')}</span>
-            <span class="stat-value {getUsageColorClass(usageTotalPercent)}">
-              {formatCurrency(budgetOverview.budget_used_total)}
-            </span>
-            <span class="stat-period {getUsageColorClass(usageTotalPercent)}">{usageTotalPercent.toFixed(1)}%</span>
-          </div>
-          
-          <div class="stat-item">
-            <span class="stat-label">{$_('admin.departments.budgetDistributed')}</span>
-            <span class="stat-value">{formatCurrency(budgetOverview.budget_distributed)}</span>
-            <span class="stat-period">{distributedPercent.toFixed(1)}%</span>
-          </div>
-          
-          <div class="stat-item">
-            <span class="stat-label">{$_('admin.departments.budgetAvailable')}</span>
-            <span class="stat-value success">{formatCurrency(budgetOverview.budget_available)}</span>
-            <span class="stat-period">{availablePercent.toFixed(1)}%</span>
-          </div>
-        </div>
-        
-        <div class="period-info">
-          <div class="period-row">
-            <span class="period-label">{$_('admin.departments.budgetPeriodLabel')}:</span>
-            <span class="period-date">{new Date(budgetOverview.period_start).toLocaleDateString()}</span>
-            <span class="period-separator">—</span>
-            <span class="period-date">{new Date(budgetOverview.period_end).toLocaleDateString()}</span>
-          </div>
-          {#if department.action_on_exceed}
-            <div class="period-row">
-              <span class="period-label">{$_('admin.departments.actionOnExceed')}:</span>
-              <span class="period-value" class:warn-badge={department.action_on_exceed === 'warn'} class:block-badge={department.action_on_exceed === 'block'}>
-                {department.action_on_exceed === 'warn' ? $_('admin.departments.actionOnExceedWarn') : $_('admin.departments.actionOnExceedBlock')}
-              </span>
-            </div>
-          {/if}
-        </div>
+    <div class="budget-kpis">
+      <div class="kpi-budget">
+        <span class="kpi-budget__label">{$_('admin.departments.budgetAllocated')}</span>
+        <span class="kpi-budget__value">{formatCurrency(budgetOverview.budget_allocated)}</span>
+        <span class="kpi-budget__unit">
+          {$_('admin.departments.budgetPer')} {$_(`admin.departments.budgetPeriods.${budgetOverview.period}`)}
+        </span>
       </div>
-  {:else}
-    <div class="empty-state">
-      <p>{$_('admin.departments.noBudgetData')}</p>
+      <div class="kpi-budget">
+        <span class="kpi-budget__label">{$_('admin.departments.budgetUsedDirect')}</span>
+        <span class="kpi-budget__value {getUsageColorClass(usagePercent)}">
+          {formatCurrency(budgetOverview.budget_used)}
+        </span>
+        <span class="kpi-budget__unit">{usagePercent.toFixed(1)}%</span>
+      </div>
+      <div class="kpi-budget">
+        <span class="kpi-budget__label">{$_('admin.departments.budgetUsedTotal')}</span>
+        <span class="kpi-budget__value {getUsageColorClass(usageTotalPercent)}">
+          {formatCurrency(budgetOverview.budget_used_total)}
+        </span>
+        <span class="kpi-budget__unit">{usageTotalPercent.toFixed(1)}%</span>
+      </div>
+      <div class="kpi-budget">
+        <span class="kpi-budget__label">{$_('admin.departments.budgetDistributed')}</span>
+        <span class="kpi-budget__value">{formatCurrency(budgetOverview.budget_distributed)}</span>
+        <span class="kpi-budget__unit">{distributedPercent.toFixed(1)}%</span>
+      </div>
+      <div class="kpi-budget">
+        <span class="kpi-budget__label">{$_('admin.departments.budgetAvailable')}</span>
+        <span class="kpi-budget__value positive">{formatCurrency(budgetOverview.budget_available)}</span>
+        <span class="kpi-budget__unit">{availablePercent.toFixed(1)}%</span>
+      </div>
     </div>
-  {/if}
-  
-  {#if budgetOverview}
-    <div class="budget-visualization">
-      <div class="progress-bar">
-        <div 
-          class="progress-segment used {getUsageColorClass(usagePercent)}" 
-          style="width: {Math.min(usagePercent, 100)}%"
-          title={$_('admin.departments.progressBarTooltipUsedDirect', {
-            values: {
-              amount: formatCurrency(budgetOverview.budget_used),
-              percent: usagePercent.toFixed(1),
-            },
-          })}
-        ></div>
-        <div 
-          class="progress-segment distributed" 
-          style="width: {Math.min(distributedPercent, 100 - usagePercent)}%"
-          title={$_('admin.departments.progressBarTooltipDistributed', {
-            values: { amount: formatCurrency(budgetOverview.budget_distributed) },
-          })}
-        ></div>
-      </div>
-      
-      <div class="progress-legend">
-        <div class="legend-item">
-          <span class="legend-color used {getUsageColorClass(usagePercent)}"></span>
-          <span>{$_('admin.departments.legendUsedDirect')}</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color distributed"></span>
-          <span>{$_('admin.departments.legendDistributed')}</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color available"></span>
-          <span>{$_('admin.departments.legendAvailable')}</span>
-        </div>
-      </div>
+
+    <div class="budget-meta">
+      <span class="budget-period">
+        {$_('admin.departments.budgetPeriodLabel')}:
+        {new Date(budgetOverview.period_start).toLocaleDateString()}
+        &mdash;
+        {new Date(budgetOverview.period_end).toLocaleDateString()}
+      </span>
+      {#if department.action_on_exceed}
+        <span
+          class="exceed-badge"
+          class:exceed-badge--block={department.action_on_exceed === 'block'}
+        >
+          {$_('admin.departments.actionOnExceed')}:
+          {department.action_on_exceed === 'warn'
+            ? $_('admin.departments.actionOnExceedWarn')
+            : $_('admin.departments.actionOnExceedBlock')}
+        </span>
+      {/if}
+    </div>
+
+    <div
+      class="progress-stack"
+      role="img"
+      aria-label={$_('admin.departments.progressBarTooltipUsedDirect', {
+        values: {
+          amount: formatCurrency(budgetOverview.budget_used),
+          percent: usagePercent.toFixed(1),
+        },
+      })}
+    >
+      <span
+        class="progress-stack__used"
+        style="width: {Math.min(usagePercent, 100)}%"
+        title={$_('admin.departments.progressBarTooltipUsedDirect', {
+          values: {
+            amount: formatCurrency(budgetOverview.budget_used),
+            percent: usagePercent.toFixed(1),
+          },
+        })}
+      ></span>
+      <span
+        class="progress-stack__dist"
+        style="width: {Math.max(0, Math.min(distributedPercent, 100 - usagePercent))}%"
+        title={$_('admin.departments.progressBarTooltipDistributed', {
+          values: { amount: formatCurrency(budgetOverview.budget_distributed) },
+        })}
+      ></span>
+    </div>
+
+    <div class="legend">
+      <span class="legend-item">
+        <span class="legend-dot legend-dot--used"></span>
+        <span class="legend-label">{$_('admin.departments.legendUsedDirect')}</span>
+      </span>
+      <span class="legend-item">
+        <span class="legend-dot legend-dot--dist"></span>
+        <span class="legend-label">{$_('admin.departments.legendDistributed')}</span>
+      </span>
+      <span class="legend-item">
+        <span class="legend-dot legend-dot--avail"></span>
+        <span class="legend-label">{$_('admin.departments.legendAvailable')}</span>
+      </span>
+    </div>
+  {:else}
+    <div class="budget-state">
+      <p>{$_('admin.departments.noBudgetData')}</p>
     </div>
   {/if}
 
   {#if budgetOverview && budgetOverview.sub_department_budgets.length > 0}
-    <div class="child-budgets">
-      <h4>{$_('admin.departments.childBudgets')}</h4>
-      <div class="child-budget-list">
-        {#each budgetOverview.sub_department_budgets as subDept}
-          {@const subDeptPercent = subDept.allocated > 0 ? (subDept.used / subDept.allocated) * 100 : 0}
-          <div class="child-budget-item">
-            <div class="child-info">
-              <span class="child-name">{subDept.name}</span>
-              <span class="child-budget">{formatCurrency(subDept.allocated)}</span>
-            </div>
-            <div class="child-progress">
-              <div class="mini-progress-bar">
-                <div 
-                  class="mini-progress-fill {getUsageColorClass(subDeptPercent)}"
-                  style="width: {Math.min(subDeptPercent, 100)}%"
-                ></div>
-              </div>
-              <span class="child-usage {getUsageColorClass(subDeptPercent)}">{formatCurrency(subDept.used)}</span>
-              <span class="child-percentage {getUsageColorClass(subDeptPercent)}">
-                {subDeptPercent.toFixed(1)}%
-              </span>
-            </div>
+    <div class="card-block">
+      <span class="panel-title">{$_('admin.departments.childBudgets')}</span>
+      {#each budgetOverview.sub_department_budgets as subDept (subDept.name)}
+        {@const subDeptPercent = subDept.allocated > 0 ? (subDept.used / subDept.allocated) * 100 : 0}
+        <div class="subdept-row">
+          <div class="subdept-text">
+            <span class="subdept-name">{subDept.name}</span>
+            <span class="subdept-alloc">{formatCurrency(subDept.allocated)}</span>
           </div>
-        {/each}
-      </div>
+          <div class="subdept-meter">
+            <span class="meter-track">
+              <span
+                class="meter-fill {getUsageColorClass(subDeptPercent)}"
+                style="width: {Math.min(subDeptPercent, 100)}%"
+              ></span>
+            </span>
+            <span class="subdept-value">
+              {formatCurrency(subDept.used)} &middot; {subDeptPercent.toFixed(1)}%
+            </span>
+          </div>
+        </div>
+      {/each}
     </div>
   {/if}
 
   <DepartmentAllowedModels {department} canEditModels={canEditBudget} />
-  
+
   {#if isEditingBudget}
     <Modal isOpen={isEditingBudget} onclose={cancelEditing} title={$_('admin.departments.editBudget')}>
       <div class="budget-form">
@@ -399,524 +400,426 @@ SPDX-License-Identifier: Apache-2.0
 </div>
 
 <style>
+  /* app.css gives every button backdrop-filter: blur(); on the flat
+     Organization surfaces that repaints the 1px hairlines behind them
+     (the tab-row ring, the tree's branch rails), so switch it off. */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   .budget-management {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
+    align-self: stretch;
+    width: 100%;
+    font-family: var(--gx-font);
   }
-  
-  .budget-header {
+
+  .panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    align-self: stretch;
+    gap: 12px;
   }
-  
-  .budget-header h3 {
-    font-size: 16px;
+
+  .panel-title {
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+  }
+
+  .btn-secondary {
+    height: 33px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: inherit;
     font-weight: 600;
-    color: var(--text-primary);
+    font-size: 13px;
+    color: var(--gx-slate-500);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--gx-org-track);
+    transform: none;
+  }
+
+  .budget-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    align-self: stretch;
+  }
+
+  .budget-state p {
     margin: 0;
+    font-size: 13px;
+    color: var(--gx-slate-500);
   }
-  
-  .budget-form {
-    background: var(--btn-secondary);
-    border-radius: var(--radius-md);
+
+  /* ---------------- KPI cards ---------------- */
+  .budget-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    align-self: stretch;
+  }
+
+  .kpi-budget {
+    min-height: 99px;
+    border-radius: 12px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .kpi-budget__label {
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 100%;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--gx-slate-400);
+  }
+
+  .kpi-budget__value {
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+    white-space: nowrap;
+  }
+
+  .kpi-budget__value.positive {
+    color: var(--gx-org-used);
+  }
+
+  .kpi-budget__value.warning {
+    color: var(--gx-org-warn);
+  }
+
+  .kpi-budget__value.danger {
+    color: var(--gx-org-danger);
+  }
+
+  .kpi-budget__unit {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
+    white-space: nowrap;
+  }
+
+  /* ---------------- period + progress ---------------- */
+  .budget-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-self: stretch;
+  }
+
+  .budget-period {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 100%;
+    color: var(--gx-slate-400);
+  }
+
+  .exceed-badge {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background: var(--gx-amber-soft);
+    color: var(--gx-amber);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .exceed-badge--block {
+    background: var(--gx-org-danger-bg);
+    color: var(--gx-org-danger);
+  }
+
+  .progress-stack {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 5px;
+    background: var(--gx-org-track);
+    display: flex;
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+
+  .progress-stack__used {
+    background: var(--gx-org-used);
+    flex-shrink: 0;
+  }
+
+  .progress-stack__dist {
+    background: var(--gx-org-dist);
+    flex-shrink: 0;
+  }
+
+  .legend {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    align-self: stretch;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-dot--used {
+    background: var(--gx-org-used);
+  }
+
+  .legend-dot--dist {
+    background: var(--gx-org-dist);
+  }
+
+  .legend-dot--avail {
+    background: var(--gx-hair);
+  }
+
+  .legend-label {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
+    white-space: nowrap;
+  }
+
+  /* ---------------- sub-department budgets ---------------- */
+  .card-block {
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     padding: 20px;
+    align-items: flex-start;
+    align-self: stretch;
   }
-  
+
+  .subdept-row {
+    min-height: 58px;
+    border-radius: 8px;
+    background: var(--gx-org-track);
+    display: flex;
+    padding: 12px;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    flex-wrap: wrap;
+  }
+
+  .subdept-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .subdept-name {
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+  }
+
+  .subdept-alloc {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
+  }
+
+  .subdept-meter {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .meter-track {
+    width: 120px;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: var(--gx-hair);
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  .meter-fill {
+    background: var(--gx-org-used);
+  }
+
+  .meter-fill.warning {
+    background: var(--gx-org-warn);
+  }
+
+  .meter-fill.danger {
+    background: var(--gx-org-danger);
+  }
+
+  .subdept-value {
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+    white-space: nowrap;
+  }
+
+  /* ---------------- edit budget modal ---------------- */
+  .budget-form {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: var(--gx-font);
+  }
+
   .form-row {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 16px;
-    margin-bottom: 20px;
   }
-  
-  @media (max-width: 768px) {
-    .form-row {
-      grid-template-columns: 1fr;
-    }
-  }
-  
+
   .form-group {
     display: flex;
     flex-direction: column;
-  }
-  
-  .form-group label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 6px;
-  }
-  
-  .form-group input,
-  .form-group select {
-    padding: 10px 12px;
-    border: 1px solid var(--button-border);
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    color: var(--text-primary);
-    background: var(--button-bg);
-  }
-  
-  .form-group input:focus,
-  .form-group select:focus {
-    outline: none;
-    border-color: var(--brand);
-    background: var(--btn-secondary);
-  }
-  
-  .form-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-  }
-  
-  .budget-stats {
-    background: var(--btn-secondary);
-    border-radius: var(--radius-md);
-    padding: 20px;
-  }
-  
-  .stat-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 20px;
-    margin-bottom: 16px;
-  }
-  
-  .period-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding-top: 16px;
-    border-top: 1px solid var(--glass-stroke-light);
-    font-size: 13px;
-  }
-  
-  .period-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .period-label {
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
-  
-  .period-date {
-    color: var(--text-primary);
-  }
-  
-  .period-separator {
-    color: var(--text-secondary);
-  }
-  
-  .period-value {
-    color: var(--text-primary);
-    padding: 2px 8px;
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    font-weight: 500;
-  }
-  
-  .period-value.warn-badge {
-    background: rgba(251, 191, 36, 0.15);
-    color: #f59e0b;
-  }
-  
-  .period-value.block-badge {
-    background: rgba(239, 68, 68, 0.15);
-    color: var(--brand-red);
-  }
-  
-  .loading-state {
-    background: var(--btn-secondary);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px;
-  }
-  
-  .empty-state {
-    background: var(--btn-secondary);
-    border-radius: var(--radius-md);
-    padding: 40px 20px;
-    text-align: center;
-    color: var(--text-secondary);
-  }
-  
-  .stat-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  
-  .stat-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 500;
-  }
-  
-  .stat-value {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-  
-  .stat-value.ok {
-    color: var(--brand-green);
-  }
-  
-  .stat-value.success {
-    color: var(--brand-green);
-  }
-  
-  .stat-value.warning {
-    color: #f59e0b;
-  }
-  
-  .stat-value.danger {
-    color: var(--brand-red);
-  }
-  
-  .stat-period {
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-  
-  .stat-period.ok {
-    color: var(--brand-green);
-    font-weight: 600;
-  }
-  
-  .stat-period.warning {
-    color: #f59e0b;
-    font-weight: 600;
-  }
-  
-  .stat-period.danger {
-    color: var(--brand-red);
-    font-weight: 600;
-  }
-  
-  .budget-visualization {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .progress-bar {
-    height: 32px;
-    background: var(--btn-quaternary);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    display: flex;
-  }
-  
-  .progress-segment {
-    height: 100%;
-    transition: width 0.3s ease, background 0.3s ease;
-  }
-  
-  .progress-segment.used {
-    background: linear-gradient(90deg, var(--brand), var(--brand-hover));
-  }
-  
-  .progress-segment.used.ok {
-    background: linear-gradient(90deg, #10b981, #059669);
-  }
-  
-  .progress-segment.used.warning {
-    background: linear-gradient(90deg, #f59e0b, #d97706);
-  }
-  
-  .progress-segment.used.danger {
-    background: linear-gradient(90deg, #ef4444, #dc2626);
-  }
-  
-  .progress-segment.distributed {
-    background: linear-gradient(90deg, #8b5cf6, #7c3aed);
-  }
-  
-  .progress-legend {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-  }
-  
-  .legend-item {
-    display: flex;
-    align-items: center;
     gap: 6px;
+  }
+
+  .form-group label {
     font-size: 12px;
-    color: var(--text-secondary);
-  }
-  
-  .legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-    transition: background 0.3s ease;
-  }
-  
-  .legend-color.used {
-    background: var(--brand);
-  }
-  
-  .legend-color.used.ok {
-    background: #10b981;
-  }
-  
-  .legend-color.used.warning {
-    background: #f59e0b;
-  }
-  
-  .legend-color.used.danger {
-    background: #ef4444;
-  }
-  
-  .legend-color.distributed {
-    background: #8b5cf6;
-  }
-  
-  .legend-color.available {
-    background: var(--btn-quaternary);
-  }
-  
-  .child-budgets {
-    background: var(--btn-secondary);
-    border-radius: var(--radius-md);
-    padding: 20px;
-  }
-  
-  .child-budgets h4 {
-    font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 16px 0;
+    color: var(--gx-slate-500);
   }
-  
-  .child-budget-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .child-budget-item {
-    background: var(--glass-bg-dark);
-    border-radius: var(--radius-sm);
-    padding: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-  }
-  
-  .child-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-  }
-  
-  .child-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-  
-  .child-budget {
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-  
-  .child-progress {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-    max-width: 200px;
-  }
-  
-  .mini-progress-bar {
-    flex: 1;
-    height: 8px;
-    background: var(--btn-quaternary);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  
-  .mini-progress-fill {
-    height: 100%;
-    transition: width 0.3s ease, background 0.3s ease;
-  }
-  
-  .mini-progress-fill.ok {
-    background: #10b981;
-  }
-  
-  .mini-progress-fill.warning {
-    background: #f59e0b;
-  }
-  
-  .mini-progress-fill.danger {
-    background: #ef4444;
-  }
-  
-  .child-usage {
-    font-size: 12px;
-    color: var(--text-secondary);
-    white-space: nowrap;
-  }
-  
-  .child-usage.ok {
-    color: var(--brand-green);
-    font-weight: 600;
-  }
-  
-  .child-usage.warning {
-    color: #f59e0b;
-    font-weight: 600;
-  }
-  
-  .child-usage.danger {
-    color: var(--brand-red);
-    font-weight: 600;
-  }
-  
-  .child-percentage {
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-weight: 500;
-    white-space: nowrap;
-  }
-  
-  .child-percentage.ok {
-    color: var(--brand-green);
-    font-weight: 600;
-  }
-  
-  .child-percentage.warning {
-    color: #f59e0b;
-    font-weight: 600;
-  }
-  
-  .child-percentage.danger {
-    color: var(--brand-red);
-    font-weight: 600;
-  }
-  
-  .btn-secondary {
-    padding: 8px 16px;
-    background: var(--button-bg);
-    border: 1px solid var(--button-border);
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .btn-secondary:hover:not(:disabled) {
-    background: var(--btn-secondary);
-    border-color: var(--glass-stroke-light);
-  }
-  
-  .btn-secondary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  .btn-primary {
-    padding: 8px 16px;
-    background: var(--brand);
-    border: none;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    color: white;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  
-  .btn-primary:hover:not(:disabled) {
-    background: var(--brand-hover);
-  }
-  
-  .btn-primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  .btn-primary.danger {
-    background: var(--brand-red);
-  }
-  
-  .btn-primary.danger:hover:not(:disabled) {
-    background: #dc2626;
-  }
-  
-  .save-confirmation {
-    background: var(--glass-bg-dark);
-    border: 1px solid var(--glass-stroke-light);
-    border-radius: var(--radius-md);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-  
-  .confirmation-message h4 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 8px 0;
-  }
-  
-  .confirmation-message p {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin: 0 0 16px 0;
-  }
-  
-  .confirmation-details {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px;
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid var(--glass-stroke-light);
-    border-radius: var(--radius-sm);
-  }
-  
-  .detail-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .detail-label {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
-  
-  .detail-value {
-    font-size: 14px;
-    color: var(--text-primary);
-    font-weight: 600;
-    text-transform: capitalize;
-  }
-  
+
+  .form-actions,
   .confirmation-actions {
     display: flex;
     gap: 12px;
     justify-content: flex-end;
+  }
+
+  .btn-primary {
+    height: 33px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-org-brand);
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    color: #fff;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background-color 120ms ease;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--gx-org-brand-hover);
+    transform: none;
+  }
+
+  .btn-primary:disabled,
+  .btn-secondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .btn-primary.danger {
+    background: var(--gx-org-danger);
+  }
+
+  .btn-primary.danger:hover:not(:disabled) {
+    background: var(--gx-org-danger-hover);
+  }
+
+  .save-confirmation {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .confirmation-message h4 {
+    margin: 0 0 8px 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gx-slate-900);
+  }
+
+  .confirmation-message p {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    color: var(--gx-slate-500);
+  }
+
+  .confirmation-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    border-radius: 8px;
+    background: var(--gx-org-track);
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .detail-label {
+    color: var(--gx-slate-500);
+  }
+
+  .detail-value {
+    font-weight: 600;
+    color: var(--gx-slate-900);
   }
 </style>
