@@ -15,6 +15,7 @@
       "showingCount": "{filtered} sur {total}"
     },
     "table": {
+      "user": "Utilisateur",
       "userName": "Nom d'utilisateur",
       "email": "E-mail",
       "department": "Département",
@@ -24,7 +25,9 @@
       "tokens": "Jetons",
       "cost": "Coût",
       "avgLatency": "Latence moyenne",
-      "lastActivity": "Dernière activité"
+      "lastActivity": "Dernière activité",
+      "usageCount": "Nombre d'utilisations",
+      "lastActive": "Dernière activité connue"
     },
     "emptyState": {
       "noMatch": "Aucun utilisateur trouvé correspondant à \"{query}\"",
@@ -60,7 +63,8 @@
       "errors": "Erreurs",
       "tokens": "Jetons",
       "cost": "Coût",
-      "avgLatency": "Latence moyenne"
+      "avgLatency": "Latence moyenne",
+      "usageCount": "Nombre d'utilisations"
     },
     "emptyState": {
       "noMatch": "Aucun département trouvé correspondant à \"{query}\"",
@@ -92,8 +96,11 @@
     },
     "byModel": {
       "title": "Par modèle",
-      "comingSoon": "Bientôt disponible",
-      "hint": "Les analyses par modèle seront disponibles ici."
+      "model": "Modèle",
+      "totalRequests": "Requêtes totales",
+      "avgLatency": "Latence moyenne",
+      "cost": "Coût",
+      "noData": "Aucune donnée d'utilisation des modèles pour la plage de dates sélectionnée"
     },
     "aria": {
       "mainRegion": "Analytique d'utilisation",
@@ -103,7 +110,9 @@
       "pagination": "Pagination des résultats",
       "topModelsCaption": "Principaux modèles par utilisation pour la plage de dates sélectionnée",
       "departmentTableCaption": "Utilisation par département pour la plage de dates sélectionnée",
-      "userTableCaption": "Utilisation par utilisateur pour la plage de dates sélectionnée"
+      "userTableCaption": "Utilisation par utilisateur pour la plage de dates sélectionnée",
+      "rangePicker": "Modifier la période",
+      "modelTableCaption": "Utilisation par modèle pour la plage de dates sélectionnée"
     },
     "filters": {
       "dateRange": "Plage de dates",
@@ -119,7 +128,8 @@
       "hour": "Horaire",
       "day": "Quotidien",
       "week": "Hebdomadaire",
-      "month": "Mensuel"
+      "month": "Mensuel",
+      "rangeFields": "Champs de période"
     },
     "loading": "Chargement de l'analytique...",
     "retry": "Réessayer",
@@ -133,7 +143,8 @@
       "avgPerUser": "{count} moyenne par utilisateur",
       "totalTokens": "Tokens totaux",
       "totalCost": "Coût total",
-      "vsPreviousDays": "vs {count} jours précédents"
+      "vsPreviousDays": "vs {count} jours précédents",
+      "quickStats": "Statistiques rapides"
     },
     "topModels": {
       "title": "Modèles principaux",
@@ -141,7 +152,8 @@
       "provider": "Fournisseur",
       "requests": "Requêtes",
       "tokens": "Jetons",
-      "cost": "Coût"
+      "cost": "Coût",
+      "subtitleByCost": "par coût, {range}"
     },
     "charts": {
       "title": "Tendances de performance",
@@ -152,7 +164,8 @@
         "tokens": "Jetons",
         "latency": "Latence",
         "date": "Date",
-        "latencyMs": "Latence (ms)"
+        "latencyMs": "Latence (ms)",
+        "tabLabel": "Multi-métrique"
       },
       "usageGrowth": {
         "title": "Croissance de l'utilisation",
@@ -184,6 +197,10 @@
         "viewDataTableFor": "Afficher le tableau de données pour {chartName}",
         "closeDataTable": "Fermer le tableau de données",
         "dataTableRegion": "Tableau de données de {chartName}"
+      },
+      "insight": {
+        "peak": "{metric} a culminé {day} à {value}, {ratio}× le minimum de la période.",
+        "flat": "{metric} est resté stable sur la période."
       }
     },
     "errors": {

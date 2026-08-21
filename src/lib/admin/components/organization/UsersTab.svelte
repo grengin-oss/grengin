@@ -6,7 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
   import { onMount } from "svelte";
   import { usersStore } from "../../stores/index.js";
-  import AdminTableCard from "../AdminTableCard.svelte";
   import LoadingSpinner from "../LoadingSpinner.svelte";
   import UserFormModal from "../UserFormModal.svelte";
   import DepartmentScopingModal from "../access-control/DepartmentScopingModal.svelte";
@@ -23,7 +22,6 @@ SPDX-License-Identifier: Apache-2.0
     addRoleToUser,
     getUserRoleAssignments,
     removeRoleFromUser,
-    getRoles,
     type Role,
   } from "$lib/api/admin/roles.js";
   import { getDepartment } from "$lib/api/admin/departments.js";
@@ -33,19 +31,18 @@ SPDX-License-Identifier: Apache-2.0
     showCreateModal?: boolean;
     /** Opens the shared team picker for a user. */
     onAssignTeam?: (user: User) => void;
+    /** Roles catalogue, loaded once by the Organization page (also feeds its filter). */
+    roles?: Role[];
   }
 
-  let { showCreateModal = $bindable(false), onAssignTeam }: Props = $props();
+  let {
+    showCreateModal = $bindable(false),
+    onAssignTeam,
+    roles = [],
+  }: Props = $props();
 
   let isEditModalOpen = $state(false);
   let selectedUser = $state<User | null>(null);
-  let searchQuery = $state("");
-  let filterRole = $state("");
-  let filterStatus = $state("");
-  let filterDepartment = $state("");
-  let debounceTimeout: number | null = null;
-  let filtersOpen = $state(false);
-  let roles = $state<Role[]>([]);
   let roleAssignments = $state<RoleUserAssignment[]>([]);
   let roleAssignmentsLoading = $state(false);
   let roleScopingContext = $state<{ role: Role; user: User } | null>(null);
@@ -71,7 +68,6 @@ SPDX-License-Identifier: Apache-2.0
 
   onMount(() => {
     usersStore.fetchUsers();
-    fetchRoles();
   });
 
   // Reset the form whenever the parent opens the create modal via its header button.
@@ -95,45 +91,6 @@ SPDX-License-Identifier: Apache-2.0
       usersStore.clearError();
     }
   });
-
-  function applyFilters() {
-    usersStore.setFilters({
-      search: searchQuery,
-      role_id: filterRole,
-      status: filterStatus,
-      department: filterDepartment,
-    });
-  }
-
-  function applyFiltersDebounced() {
-    if (debounceTimeout) clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
-      applyFilters();
-    }, 500); // ms
-  }
-
-  async function fetchRoles() {
-    try {
-      const res = await getRoles();
-      roles = res.roles;
-    } catch (err: any) {
-      const errorMessage = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
-      toast.error(errorMessage || $_("admin.accessControl.failedToLoadRoles"));
-    }
-  }
-
-  function clearFilters() {
-    searchQuery = "";
-    filterRole = "";
-    filterStatus = "";
-    filterDepartment = "";
-    usersStore.setFilters({
-      search: "",
-      role_id: "",
-      status: "",
-      department: "",
-    });
-  }
 
   async function openEditModal(user: User) {
     selectedUser = user;
@@ -313,161 +270,54 @@ SPDX-License-Identifier: Apache-2.0
 </script>
 
 <div class="users-tab">
-  <!-- Filters -->
-  <div class="filters-section" aria-label={$_('admin.users.filters')}>
-    <button
-      class="filter-toggle-btn"
-      class:open={filtersOpen}
-      onclick={() => (filtersOpen = !filtersOpen)}
-      aria-label={filtersOpen ? $_('admin.users.closeFilters') : $_('admin.users.openFilters')}
-      aria-expanded={filtersOpen}
-      aria-controls="filters-grid"
-    >
-      {#if filtersOpen}
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <path
-            d="M10 6l-5 5M10 6l5 5"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      {:else}
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <path
-            d="M2.5 5h15M5 10h10M7.5 15h5"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-          />
-          <circle cx="15" cy="5" r="2" fill="currentColor" />
-          <circle cx="10" cy="10" r="2" fill="currentColor" />
-          <circle cx="5" cy="15" r="2" fill="currentColor" />
-        </svg>
-        {$_('admin.users.filters')}
-      {/if}
-    </button>
-    <div class="filters-grid" class:open={filtersOpen} id="filters-grid">
-      <input
-        type="text"
-        placeholder={$_('admin.users.searchByNameOrEmail')}
-        bind:value={searchQuery}
-        oninput={applyFiltersDebounced}
-        class="filter-input"
-        aria-label={$_('admin.users.searchByNameOrEmail')}
-      />
-      <select
-        bind:value={filterRole}
-        class="filter-select"
-        onchange={applyFilters}
-        aria-label={$_('admin.common.role')}
-      >
-        <option value="">{$_('admin.common.allRoles')}</option>
-        {#each roles as role (role.id)}
-          <option value={role.id}>{role.name}</option>
-        {/each}
-      </select>
-      <select
-        bind:value={filterStatus}
-        class="filter-select"
-        onchange={applyFilters}
-        aria-label={$_('admin.common.status')}
-      >
-        <option value="">{$_('admin.common.allStatuses')}</option>
-        <option value="active">{$_('admin.common.active')}</option>
-        <option value="deactivated">{$_('admin.common.deactivated')}</option>
-      </select>
-      <button
-        type="button"
-        class="btn-secondary reset-btn"
-        onclick={clearFilters}
-        aria-label={$_('admin.users.reset')}
-      >
-        {$_('admin.users.reset')}
-      </button>
-    </div>
-  </div>
-
   {#if usersStore.isLoading}
-    <LoadingSpinner size="lg" text={$_('admin.users.loadingUsers')} />
+    <div class="table-loading">
+      <LoadingSpinner size="lg" text={$_('admin.users.loadingUsers')} />
+    </div>
   {:else}
-    <!-- Users Table -->
-    <AdminTableCard minWidth="960px">
-      <table class="admin-table users-table" aria-label={$_('admin.users.userManagement')}>
-        <thead>
-          <tr>
-            <th
-              scope="col"
-              aria-sort={usersStore.sort === 'name' ? (usersStore.ascending ? 'ascending' : 'descending') : 'none'}
+    <div class="table-container">
+      <div class="users-table" role="table" aria-label={$_('admin.users.userManagement')}>
+        <div class="table-header" role="row">
+          <span
+            class="hcell hcell--name"
+            role="columnheader"
+            aria-sort={usersStore.sort === 'name' ? (usersStore.ascending ? 'ascending' : 'descending') : 'none'}
+          >
+            <button
+              type="button"
+              class="th-sort-btn"
+              onclick={() => handleSort('name')}
+              aria-label={$_('admin.users.sortByAria', { values: { field: $_('admin.common.name') } })}
             >
-              <button
-                type="button"
-                class="th-sort-btn"
-                onclick={() => handleSort('name')}
-                aria-label={$_('admin.users.sortByAria', { values: { field: $_('admin.common.name') } })}
-              >
-                <span class="th-content">
-                  {$_('admin.common.name')}
-                  <SortIcon sort="name" currentSort={usersStore.sort} ascending={usersStore.ascending} />
-                </span>
-              </button>
-            </th>
-            <th
-              scope="col"
-              aria-sort={usersStore.sort === 'email' ? (usersStore.ascending ? 'ascending' : 'descending') : 'none'}
+              {$_('admin.common.name')}
+              <span class="th-sort-icon" class:th-sort-icon--on={usersStore.sort === 'name'}>
+                <SortIcon sort="name" currentSort={usersStore.sort} ascending={usersStore.ascending} />
+              </span>
+            </button>
+          </span>
+          <span
+            class="hcell hcell--email"
+            role="columnheader"
+            aria-sort={usersStore.sort === 'email' ? (usersStore.ascending ? 'ascending' : 'descending') : 'none'}
+          >
+            <button
+              type="button"
+              class="th-sort-btn"
+              onclick={() => handleSort('email')}
+              aria-label={$_('admin.users.sortByAria', { values: { field: $_('admin.common.email') } })}
             >
-              <button
-                type="button"
-                class="th-sort-btn"
-                onclick={() => handleSort('email')}
-                aria-label={$_('admin.users.sortByAria', { values: { field: $_('admin.common.email') } })}
-              >
-                <span class="th-content">
-                  {$_('admin.common.email')}
-                  <SortIcon sort="email" currentSort={usersStore.sort} ascending={usersStore.ascending} />
-                </span>
-              </button>
-            </th>
-            <th scope="col">{$_('admin.common.role')}</th>
-            <th scope="col">{$_('admin.common.department')}</th>
-            <th scope="col">{$_('admin.common.status')}</th>
-            <th
-              scope="col"
-              aria-sort={usersStore.sort === 'created_at' ? (usersStore.ascending ? 'ascending' : 'descending') : 'none'}
-            >
-              <button
-                type="button"
-                class="th-sort-btn"
-                onclick={() => handleSort('created_at')}
-                aria-label={$_('admin.users.sortByAria', { values: { field: $_('admin.common.created') } })}
-              >
-                <span class="th-content">
-                  {$_('admin.common.created')}
-                  <SortIcon sort="created_at" currentSort={usersStore.sort} ascending={usersStore.ascending} />
-                </span>
-              </button>
-            </th>
-            {#if canManageUsers}
-              <th scope="col">{$_('admin.common.actions')}</th>
-            {/if}
-          </tr>
-        </thead>
-        <tbody>
+              {$_('admin.common.email')}
+              <span class="th-sort-icon" class:th-sort-icon--on={usersStore.sort === 'email'}>
+                <SortIcon sort="email" currentSort={usersStore.sort} ascending={usersStore.ascending} />
+              </span>
+            </button>
+          </span>
+          <span class="hcell hcell--role" role="columnheader">{$_('admin.common.role')}</span>
+          <span class="hcell hcell--dept" role="columnheader">{$_('admin.common.department')}</span>
+          <span class="hcell hcell--status" role="columnheader">{$_('admin.common.status')}</span>
+        </div>
+
+        <div class="table-body" role="rowgroup">
           {#each usersStore.users as user (user.id)}
             <UserRow
               {user}
@@ -478,21 +328,18 @@ SPDX-License-Identifier: Apache-2.0
               {onAssignTeam}
             />
           {:else}
-            <tr>
-              <td colspan={canManageUsers ? 7 : 6} class="empty-state">
-                {$_('admin.users.noUsersFound')}
-              </td>
-            </tr>
+            <div class="empty-cell">{$_('admin.users.noUsersFound')}</div>
           {/each}
-        </tbody>
-      </table>
-    </AdminTableCard>
+        </div>
+      </div>
+    </div>
 
     <!-- Pagination -->
     {#if totalPages > 1}
       <nav class="pagination" aria-label={$_('admin.common.pagination')}>
         <button
-          class="btn"
+          type="button"
+          class="page-btn"
           onclick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 0}
           aria-label={$_('admin.common.previousPage')}
@@ -503,7 +350,8 @@ SPDX-License-Identifier: Apache-2.0
           {$_('admin.common.pageInfo', { values: { current: formatNumber(currentPage + 1), total: formatNumber(totalPages), count: formatNumber(usersStore.total) } })}
         </span>
         <button
-          class="btn"
+          type="button"
+          class="page-btn"
           onclick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage >= totalPages - 1}
           aria-label={$_('admin.common.nextPage')}
@@ -564,163 +412,184 @@ SPDX-License-Identifier: Apache-2.0
 </div>
 
 <style>
+  /* app.css gives every button backdrop-filter: blur(); on the flat
+     Organization surfaces that repaints the 1px hairlines behind them
+     (the tab-row ring, the tree's branch rails), so switch it off. */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   .users-tab {
     display: flex;
     flex-direction: column;
+    gap: 20px;
     width: 100%;
+    font-family: var(--gx-font);
   }
 
-  .filters-section {
-    padding: var(--space-xl);
-    margin: var(--space-md) 0;
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-    position: relative;
-  }
-
-  .filter-toggle-btn {
-    display: none;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-md) var(--space-lg);
-    background: var(--button-bg);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 0.9375rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-left: auto;
-  }
-
-  .filter-toggle-btn:hover {
-    background: var(--btn-secondary);
-    border-color: rgba(255, 255, 255, 0.12);
-    transform: translateY(-1px);
-  }
-
-  .filter-toggle-btn:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-  }
-
-  .filter-toggle-btn svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-  }
-
-  .filters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--space-md);
-  }
-
-  .filter-input,
-  .filter-select {
-    width: 100%;
-  }
-
-  .reset-btn {
-    max-width: 100px;
-  }
-
-  .empty-state {
-    text-align: center;
-    color: var(--text-secondary);
-    padding: var(--space-3xl) !important;
-  }
-
-  .pagination {
+  .table-loading {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-xl);
-    margin-top: var(--space-xl);
+    padding: 64px 20px;
   }
 
-  .pagination-info {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
+  /* Long user lists scroll inside the card, header pinned. */
+  .table-container {
+    overflow: auto;
+    max-height: calc(100vh - 280px);
+    border-radius: 12px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    align-self: stretch;
+  }
+
+  /* Design (247:24146): one flex row per user, 240/240/160/160 + flexible
+     status column, a full hairline ring on the header and on every row. */
+  .users-table {
+    display: flex;
+    flex-direction: column;
+    min-width: 880px;
+    align-self: stretch;
+  }
+
+  .table-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 45px;
+    display: flex;
+    padding: 16px;
+    align-items: flex-start;
+    align-self: stretch;
+    flex-shrink: 0;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+  }
+
+  .hcell {
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 100%;
+    letter-spacing: 0.55px;
+    text-transform: uppercase;
+    color: var(--gx-slate-500);
+  }
+
+  .hcell--name,
+  .hcell--email {
+    width: 240px;
+    flex-shrink: 0;
+  }
+
+  .hcell--role,
+  .hcell--dept {
+    width: 160px;
+    flex-shrink: 0;
+  }
+
+  .hcell--status {
+    flex-grow: 1;
+  }
+
+  .table-body {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
   }
 
   .th-sort-btn {
-    width: 100%;
-    text-align: left;
-    background: transparent;
-    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 0;
-    color: inherit;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
     font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
     cursor: pointer;
   }
 
   .th-sort-btn:hover {
-    background: rgba(var(--glass-tint), 0.08);
-  }
-
-  .th-sort-btn:active {
-    background: rgba(var(--glass-tint), 0.12);
+    color: var(--gx-org-slate-800);
+    background: transparent;
+    transform: none;
   }
 
   .th-sort-btn:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: -2px;
-  }
-
-  .th-content {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    justify-content: flex-start;
-  }
-
-  .pagination .btn:focus-visible {
-    outline: 2px solid var(--brand);
+    outline: 2px solid var(--gx-org-brand-alt);
     outline-offset: 2px;
   }
 
-  @media (max-width: 768px) {
-    .filters-section {
-      display: flex;
-      flex-direction: column;
-    }
+  /* The design's header is plain text, so the sort caret only shows on hover
+     (or once a column is actually the active sort). */
+  .th-sort-icon {
+    display: inline-flex;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
 
-    .filter-toggle-btn {
-      display: flex;
-      align-self: flex-end;
-    }
+  .th-sort-btn:hover .th-sort-icon,
+  .th-sort-btn:focus-visible .th-sort-icon,
+  .th-sort-icon--on {
+    opacity: 1;
+  }
 
-    .filter-toggle-btn.open {
-      padding: var(--space-md);
-      margin-bottom: var(--space-md);
-    }
+  .empty-cell {
+    padding: 48px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--gx-slate-500);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+  }
 
-    .filters-grid {
-      grid-template-columns: 1fr;
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      margin-bottom: 0;
-      padding: 2px;
-      transform: translateY(-10px);
-      transition:
-        max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+  /* ---------------- pagination ---------------- */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
 
-    .filters-grid.open {
-      max-height: 1000px;
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .pagination-info {
+    color: var(--gx-slate-500);
+    font-size: 13px;
+  }
 
-    .pagination {
-      gap: var(--space-md);
-    }
+  .page-btn {
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--gx-slate-500);
+    cursor: pointer;
+    transition: background-color 120ms ease;
+  }
+
+  .page-btn:hover:not(:disabled) {
+    background: var(--gx-org-track);
+    transform: none;
+  }
+
+  .page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .page-btn:focus-visible {
+    outline: 2px solid var(--gx-org-brand-alt);
+    outline-offset: 2px;
   }
 </style>

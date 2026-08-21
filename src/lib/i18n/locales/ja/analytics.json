@@ -15,6 +15,7 @@
       "showingCount": "{total}件中{filtered}件"
     },
     "table": {
+      "user": "ユーザー",
       "userName": "ユーザー名",
       "email": "メール",
       "department": "部門",
@@ -24,7 +25,9 @@
       "tokens": "トークン",
       "cost": "コスト",
       "avgLatency": "平均レイテンシ",
-      "lastActivity": "最終アクティビティ"
+      "lastActivity": "最終アクティビティ",
+      "usageCount": "利用回数",
+      "lastActive": "最終利用"
     },
     "emptyState": {
       "noMatch": "\"{query}\"に一致するユーザーが見つかりません",
@@ -60,7 +63,8 @@
       "errors": "エラー",
       "tokens": "トークン",
       "cost": "コスト",
-      "avgLatency": "平均待機時間"
+      "avgLatency": "平均待機時間",
+      "usageCount": "利用回数"
     },
     "emptyState": {
       "noMatch": "「{query}」に一致する部門は見つかりませんでした",
@@ -92,8 +96,11 @@
     },
     "byModel": {
       "title": "モデル別",
-      "comingSoon": "近日公開",
-      "hint": "モデル別の分析はこちらで利用できるようになります。"
+      "model": "モデル",
+      "totalRequests": "総リクエスト数",
+      "avgLatency": "平均レイテンシ",
+      "cost": "コスト",
+      "noData": "選択した日付範囲にモデル利用データがありません"
     },
     "aria": {
       "mainRegion": "使用状況分析",
@@ -103,7 +110,9 @@
       "pagination": "結果のページ送り",
       "topModelsCaption": "選択した日付範囲での利用上位モデル",
       "departmentTableCaption": "選択した日付範囲での部門別利用",
-      "userTableCaption": "選択した日付範囲でのユーザー別利用"
+      "userTableCaption": "選択した日付範囲でのユーザー別利用",
+      "rangePicker": "期間を変更",
+      "modelTableCaption": "選択した日付範囲でのモデル別利用"
     },
     "filters": {
       "dateRange": "期間",
@@ -119,7 +128,8 @@
       "hour": "時間別",
       "day": "日別",
       "week": "週別",
-      "month": "月別"
+      "month": "月別",
+      "rangeFields": "期間フィールド"
     },
     "loading": "分析を読み込み中...",
     "retry": "再試行",
@@ -133,7 +143,8 @@
       "avgPerUser": "ユーザーあたり平均 {count}",
       "totalTokens": "総トークン数",
       "totalCost": "総コスト",
-      "vsPreviousDays": "前{count}日間比"
+      "vsPreviousDays": "前{count}日間比",
+      "quickStats": "クイック統計"
     },
     "topModels": {
       "title": "トップモデル",
@@ -141,7 +152,8 @@
       "provider": "プロバイダー",
       "requests": "リクエスト",
       "tokens": "トークン",
-      "cost": "コスト"
+      "cost": "コスト",
+      "subtitleByCost": "コスト順 · {range}"
     },
     "charts": {
       "title": "パフォーマンストレンド",
@@ -152,7 +164,8 @@
         "tokens": "トークン",
         "latency": "レイテンシ",
         "date": "日付",
-        "latencyMs": "レイテンシ (ms)"
+        "latencyMs": "レイテンシ (ms)",
+        "tabLabel": "マルチメトリック"
       },
       "usageGrowth": {
         "title": "使用量の増加",
@@ -184,6 +197,10 @@
         "viewDataTableFor": "{chartName} のデータ表を表示",
         "closeDataTable": "データ表を閉じる",
         "dataTableRegion": "{chartName} のデータ表"
+      },
+      "insight": {
+        "peak": "{metric} は{day}に {value} でピークとなり、期間の最小値の {ratio} 倍でした。",
+        "flat": "{metric} は期間中ほぼ横ばいでした。"
       }
     },
     "errors": {

@@ -11,10 +11,10 @@ SPDX-License-Identifier: Apache-2.0
   import MemberManagement from "./MemberManagement.svelte";
   import DepartmentAdminsSection from "./DepartmentAdminsSection.svelte";
   import DepartmentPromptsTab from "./DepartmentPromptsTab.svelte";
-  import { formatDate } from "$lib/utils/format.js";
+  import { formatCurrency } from "$lib/utils/format.js";
   import { permissionsStore } from "$lib/features/auth/index.js";
   import { tick } from "svelte";
-  
+
   interface Props {
     department: Department | null;
     allDepartments: Department[];
@@ -22,24 +22,14 @@ SPDX-License-Identifier: Apache-2.0
     onEdit: (dept: Department) => void;
     onDelete: (dept: Department) => void;
   }
-  
+
   let { department, allDepartments, onClose, onEdit, onDelete }: Props = $props();
-  
-  let activeTab = $state<'overview' | 'members' | 'budget' | 'prompts'>('overview');
+
+  type TabId = 'overview' | 'members' | 'budget' | 'prompts';
+
+  let activeTab = $state<TabId>('overview');
   let showDeleteConfirm = $state(false);
-  
-  const parentDepartment = $derived(
-    department?.parent_id 
-      ? allDepartments.find(d => d.id === department.parent_id)
-      : null
-  );
-  
-  const childDepartments = $derived(
-    department 
-      ? allDepartments.filter(d => d.parent_id === department.id)
-      : []
-  );
-  
+
   const canViewBudget = $derived(
     department ? permissionsStore.canViewBudgetForDepartment(department.id) : false
   );
@@ -52,23 +42,38 @@ SPDX-License-Identifier: Apache-2.0
     permissionsStore.canManageDepartments()
   );
 
+  const initial = $derived((department?.name?.trim()?.[0] ?? "?").toUpperCase());
+
+  const visibleTabs = $derived<TabId[]>(
+    canViewBudget
+      ? ['overview', 'members', 'budget', 'prompts']
+      : ['overview', 'members', 'prompts']
+  );
+
   $effect(() => {
     if (activeTab === 'budget' && !canViewBudget) {
       activeTab = 'overview';
     }
   });
-  
+
+  function tabLabel(tab: TabId): string {
+    if (tab === 'members') {
+      return `${$_('admin.departments.members')} (${department?.member_count ?? 0})`;
+    }
+    return $_(`admin.departments.${tab}`);
+  }
+
   function handleEdit() {
     if (department) {
       onEdit(department);
     }
   }
-  
+
   function confirmDelete() {
     showDeleteConfirm = true;
   }
-  
-  async function handleDelete() {
+
+  function handleDelete() {
     if (department) {
       showDeleteConfirm = false;
       onDelete(department);
@@ -84,22 +89,17 @@ SPDX-License-Identifier: Apache-2.0
     return `${getTabId(tab)}-panel`;
   }
 
-  function handleTabKeydown(event: KeyboardEvent, tab: 'overview' | 'members' | 'budget' | 'prompts') {
-    const tabs: ('overview' | 'members' | 'budget' | 'prompts')[] = canViewBudget 
-      ? ['overview', 'members', 'budget', 'prompts'] 
-      : ['overview', 'members', 'prompts'];
-    
+  function handleTabKeydown(event: KeyboardEvent, tab: TabId) {
+    const tabs = visibleTabs;
     const currentIndex = tabs.indexOf(tab);
-    let newTab: 'overview' | 'members' | 'budget' | 'prompts' | null = null;
-    
+    let newTab: TabId | null = null;
+
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      const nextIndex = (currentIndex + 1) % tabs.length;
-      newTab = tabs[nextIndex];
+      newTab = tabs[(currentIndex + 1) % tabs.length];
     } else if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-      newTab = tabs[prevIndex];
+      newTab = tabs[(currentIndex - 1 + tabs.length) % tabs.length];
     } else if (event.key === 'Home') {
       event.preventDefault();
       newTab = tabs[0];
@@ -107,215 +107,122 @@ SPDX-License-Identifier: Apache-2.0
       event.preventDefault();
       newTab = tabs[tabs.length - 1];
     }
-    
+
     if (newTab && newTab !== activeTab) {
       activeTab = newTab;
+      const target = newTab;
       tick().then(() => {
-        const newTabElement = document.getElementById(getTabId(newTab!));
-        newTabElement?.focus();
+        document.getElementById(getTabId(target))?.focus();
       });
     }
   }
-  
 </script>
 
 {#if department}
   <div class="details-panel">
-    <div class="panel-header">
-      <div class="header-content">
-        <h2>{department.name}</h2>
-        <button
-          type="button"
-          class="close-btn"
-          onclick={onClose}
-          aria-label={$_('admin.common.closeModal')}
-        >
-          <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-            <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
+    <div class="detail-header">
+      <div class="detail-header__left">
+        <span class="detail-avatar" aria-hidden="true">{initial}</span>
+        <div class="detail-info">
+          <div class="detail-name-row">
+            <span class="detail-name" title={department.name}>{department.name}</span>
+            <span class="detail-live" aria-hidden="true"></span>
+          </div>
+          <span class="detail-desc">
+            {department.description || $_('admin.organization.noDescription')}
+          </span>
+          <div class="detail-facts">
+            <span class="detail-fact">
+              {$_('admin.departments.memberCount', { values: { count: department.member_count } })}
+            </span>
+            <span class="detail-fact">
+              {formatCurrency(department.budget_used)} / {formatCurrency(department.budget_allocated)}
+            </span>
+            <span class="detail-fact">
+              {$_('admin.organization.childDeptCount', { values: { count: department.child_count } })}
+            </span>
+          </div>
+        </div>
       </div>
-      
-      <div
-        class="tabs"
-        role="tablist"
-        aria-label={$_('admin.departments.details')}
-      >
-        <button
-          type="button"
-          class="tab"
-          class:active={activeTab === 'overview'}
-          role="tab"
-          id={getTabId('overview')}
-          aria-selected={activeTab === 'overview'}
-          aria-controls={getTabPanelId('overview')}
-          tabindex="0"
-          onclick={() => (activeTab = 'overview')}
-          onkeydown={(e) => handleTabKeydown(e, 'overview')}
-        >
-          {$_('admin.departments.overview')}
-        </button>
-        <button
-          type="button"
-          class="tab"
-          class:active={activeTab === 'members'}
-          role="tab"
-          id={getTabId('members')}
-          aria-selected={activeTab === 'members'}
-          aria-controls={getTabPanelId('members')}
-          tabindex="0"
-          onclick={() => (activeTab = 'members')}
-          onkeydown={(e) => handleTabKeydown(e, 'members')}
-        >
-          {$_('admin.departments.members')} ({department.member_count})
-        </button>
-        {#if canViewBudget}
-          <button
-            type="button"
-            class="tab"
-            class:active={activeTab === 'budget'}
-            role="tab"
-            id={getTabId('budget')}
-            aria-selected={activeTab === 'budget'}
-            aria-controls={getTabPanelId('budget')}
-            tabindex="0"
-            onclick={() => (activeTab = 'budget')}
-            onkeydown={(e) => handleTabKeydown(e, 'budget')}
-          >
-            {$_('admin.departments.budget')}
+      <div class="detail-actions">
+        {#if canManageDepartments}
+          <button type="button" class="btn-secondary" onclick={handleEdit}>
+            {$_('common.edit')}
           </button>
         {/if}
         <button
           type="button"
-          class="tab"
-          class:active={activeTab === 'prompts'}
-          role="tab"
-          id={getTabId('prompts')}
-          aria-selected={activeTab === 'prompts'}
-          aria-controls={getTabPanelId('prompts')}
-          tabindex="0"
-          onclick={() => (activeTab = 'prompts')}
-          onkeydown={(e) => handleTabKeydown(e, 'prompts')}
+          class="detail-close"
+          onclick={onClose}
+          aria-label={$_('admin.common.closeModal')}
         >
-          {$_('admin.departments.prompts')}
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
         </button>
       </div>
     </div>
-    
-    <div class="panel-content">
+
+    <div class="inner-tabs" role="tablist" aria-label={$_('admin.departments.details')}>
+      {#each visibleTabs as tab (tab)}
+        <button
+          type="button"
+          class="inner-tab"
+          role="tab"
+          id={getTabId(tab)}
+          aria-selected={activeTab === tab}
+          aria-controls={getTabPanelId(tab)}
+          tabindex={activeTab === tab ? 0 : -1}
+          onclick={() => (activeTab = tab)}
+          onkeydown={(e) => handleTabKeydown(e, tab)}
+        >
+          {tabLabel(tab)}
+          <span class="inner-tab__rule" aria-hidden="true"></span>
+        </button>
+      {/each}
+    </div>
+
+    <div class="tab-content">
       {#if activeTab === 'overview'}
         <div
-          class="overview-tab"
+          class="tab-panel"
           role="tabpanel"
           id={getTabPanelId('overview')}
           aria-labelledby={getTabId('overview')}
           tabindex="0"
         >
-          <div class="section">
-            <div class="section-header">
-              <h3>{$_('admin.departments.details')}</h3>
-              {#if canManageDepartments}
-                <button type="button" class="btn-secondary" onclick={handleEdit}>
-                  {$_('common.edit')}
-                </button>
-              {/if}
-            </div>
-            
-            <div class="field-group">
-              <p class="field-label">{$_('admin.departments.name')}</p>
-              <div class="field-value">{department.name}</div>
-            </div>
-            
-            <div class="field-group">
-              <p class="field-label">{$_('admin.departments.description')}</p>
-              <div class="field-value">{department.description || 'No description'}</div>
-            </div>
-            
-            <div class="field-group">
-              <p class="field-label">{$_('admin.departments.parentDepartment')}</p>
-              <div class="field-value">
-                {parentDepartment?.name || 'None (Root Department)'}
-              </div>
-            </div>
-            
-            <div class="field-group">
-              <p class="field-label">{$_('admin.departments.path')}</p>
-              <div class="field-value path">{department.name}</div>
-            </div>
-            
-            <div class="field-group">
-              <p class="field-label">{$_('admin.departments.depth')}</p>
-              <div class="field-value">Level {department.depth}</div>
-            </div>
-          </div>
-          
           <DepartmentAdminsSection {department} canManage={canManageDepartments} />
-          
-          <div class="section">
-            <h3>{$_('admin.departments.statistics')}</h3>
-            
-            <div class="stats-grid">
-              <div class="stat-card">
-                <div class="stat-label">{$_('admin.departments.directMembers')}</div>
-                <div class="stat-value">{department.member_count}</div>
-              </div>
-              
-              <div class="stat-card">
-                <div class="stat-label">{$_('admin.departments.totalMembers')}</div>
-                <div class="stat-value">{department.total_member_count}</div>
-              </div>
-              
-              <div class="stat-card">
-                <div class="stat-label">{$_('admin.departments.childCount')}</div>
-                <div class="stat-value">{department.child_count}</div>
-              </div>
+
+          <div class="stats-row">
+            <div class="stat">
+              <span class="stat__value">{department.member_count}</span>
+              <span class="stat__label">{$_('admin.departments.directMembers')}</span>
+            </div>
+            <div class="stat">
+              <span class="stat__value">{department.total_member_count}</span>
+              <span class="stat__label">{$_('admin.departments.totalMembers')}</span>
+            </div>
+            <div class="stat">
+              <span class="stat__value">{department.child_count}</span>
+              <span class="stat__label">{$_('admin.departments.childCount')}</span>
             </div>
           </div>
-          
-          <div class="section">
-            <h3>{$_('admin.departments.childDepartments')}</h3>
-            {#if childDepartments.length > 0}
-              <div class="child-list">
-                {#each childDepartments as child}
-                  <div class="child-item">
-                    <span class="child-name">{child.name}</span>
-                    <span class="child-members">{child.total_member_count} members</span>
-                  </div>
-                {/each}
-              </div>
-            {:else}
-              <p>{$_('admin.departments.noChildDepartments')}</p>
-            {/if}
-          </div>
-          
-          <div class="section">
-            <h3>{$_('admin.common.metadata')}</h3>
-            
-            <div class="field-group">
-              <p class="field-label">{$_('admin.common.created')}</p>
-              <div class="field-value">{formatDate(department.created_at)}</div>
-            </div>
-            
-            <div class="field-group">
-              <p class="field-label">{$_('admin.common.lastUpdated')}</p>
-              <div class="field-value">{formatDate(department.updated_at)}</div>
-            </div>
-          </div>
-          
+
           {#if canManageDepartments}
-            <div class="section danger-zone">
-              <h3>{$_('admin.departments.deleteDepartment')}</h3>
-              <button type="button" class="btn-danger" onclick={confirmDelete}>
+            <div class="danger-zone">
+              <div class="danger-text">
+                <span class="danger-title">{$_('admin.departments.deleteDepartment')}</span>
+                <span class="danger-body">{$_('admin.organization.deleteDepartmentCaption')}</span>
+              </div>
+              <button type="button" class="btn-destructive" onclick={confirmDelete}>
                 {$_('admin.departments.deleteDepartment')}
               </button>
             </div>
           {/if}
         </div>
-      {/if}
-      
-      {#if activeTab === 'members'}
+      {:else if activeTab === 'members'}
         <div
-          class="members-tab"
+          class="tab-panel"
           role="tabpanel"
           id={getTabPanelId('members')}
           aria-labelledby={getTabId('members')}
@@ -323,29 +230,25 @@ SPDX-License-Identifier: Apache-2.0
         >
           <MemberManagement {department} canManage={canManageDepartments} />
         </div>
-      {/if}
-      
-      {#if activeTab === 'budget' && canViewBudget}
+      {:else if activeTab === 'budget' && canViewBudget}
         <div
-          class="budget-tab"
+          class="tab-panel"
           role="tabpanel"
           id={getTabPanelId('budget')}
           aria-labelledby={getTabId('budget')}
           tabindex="0"
         >
-          <BudgetManagement {department} canEditBudget={canEditBudget}/>
+          <BudgetManagement {department} {canEditBudget} />
         </div>
-      {/if}
-      
-      {#if activeTab === 'prompts'}
+      {:else if activeTab === 'prompts'}
         <div
-          class="prompts-tab"
+          class="tab-panel"
           role="tabpanel"
           id={getTabPanelId('prompts')}
           aria-labelledby={getTabId('prompts')}
           tabindex="0"
         >
-          <DepartmentPromptsTab department={department} canManage={canManageDepartments} />
+          <DepartmentPromptsTab {department} canManage={canManageDepartments} />
         </div>
       {/if}
     </div>
@@ -353,7 +256,7 @@ SPDX-License-Identifier: Apache-2.0
 {/if}
 
 {#if showDeleteConfirm}
-  <Modal 
+  <Modal
     isOpen={showDeleteConfirm}
     onclose={() => showDeleteConfirm = false}
     title={$_('admin.departments.deleteConfirmTitle')}
@@ -361,12 +264,12 @@ SPDX-License-Identifier: Apache-2.0
     <div class="delete-confirm">
       <p>{$_('admin.departments.deleteConfirmMessage')}</p>
       <p class="warning">{$_('admin.departments.deleteConfirmWarning')}</p>
-      
+
       <div class="modal-actions">
         <button type="button" class="btn-secondary" onclick={() => showDeleteConfirm = false}>
           {$_('common.cancel')}
         </button>
-        <button type="button" class="btn-danger" onclick={handleDelete}>
+        <button type="button" class="btn-destructive" onclick={handleDelete}>
           {$_('common.delete')}
         </button>
       </div>
@@ -375,258 +278,381 @@ SPDX-License-Identifier: Apache-2.0
 {/if}
 
 <style>
+  /* app.css gives every button backdrop-filter: blur(); on the flat
+     Organization surfaces that repaints the 1px hairlines behind them
+     (the tab-row ring, the tree's branch rails), so switch it off. */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   .details-panel {
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: var(--glass-bg-dark);
-    border-left: 1px solid var(--glass-stroke-dark);
+    min-height: 0;
+    font-family: var(--gx-font);
   }
-  
-  .panel-header {
-    border-bottom: 1px solid var(--glass-stroke-dark);
-    padding: 20px;
-  }
-  
-  .header-content {
+
+  /* ---------------- header ---------------- */
+  .detail-header {
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
     display: flex;
+    padding: 20px;
+    gap: 16px;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    align-self: stretch;
+    flex-shrink: 0;
   }
-  
-  .header-content h2 {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
+
+  .detail-header__left {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    min-width: 0;
   }
-  
-  .close-btn {
-    background: none;
-    border: none;
-    padding: 4px;
-    cursor: pointer;
-    color: var(--text-secondary);
-    transition: color 0.2s;
+
+  .detail-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--gx-org-brand-tint);
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-  
-  .close-btn:hover {
-    color: var(--text-primary);
-  }
-  
-  .tabs {
-    display: flex;
-    gap: 4px;
-  }
-  
-  .tab {
-    padding: 8px 16px;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    transition: all 0.2s;
-  }
-  
-  .tab:hover {
-    color: var(--text-primary);
+    flex-shrink: 0;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 100%;
+    color: var(--gx-org-brand);
   }
 
-  .tab:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-    color: var(--text-primary);
-  }
-  
-  .tab.active {
-    color: var(--brand);
-    border-bottom-color: var(--brand);
-  }
-  
-  .panel-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-  }
-  
-  .overview-tab {
+  .detail-info {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 4px;
+    min-width: 0;
   }
-  
-  .section {
-    background: var(--btn-secondary);
-    border-radius: var(--radius-md);
-    padding: 16px;
-  }
-  
-  .section h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 16px 0;
-  }
-  
-  .section-header {
+
+  .detail-name-row {
     display: flex;
-    justify-content: space-between;
+    gap: 6px;
     align-items: center;
-    margin-bottom: 16px;
+    min-width: 0;
   }
-  
-  .section-header h3 {
-    margin: 0;
+
+  .detail-name {
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  
-  .field-group {
-    margin-bottom: 12px;
+
+  .detail-live {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gx-org-brand);
+    flex-shrink: 0;
   }
-  
-  .field-group:last-child {
-    margin-bottom: 0;
-  }
-  
-  .field-group .field-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-bottom: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  
-  .field-value {
-    font-size: 14px;
-    color: var(--text-primary);
-  }
-  
-  .field-value.path {
-    font-family: monospace;
+
+  .detail-desc {
+    font-weight: 400;
     font-size: 13px;
-    color: var(--text-secondary);
+    line-height: 100%;
+    color: var(--gx-slate-500);
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+
+  .detail-facts {
+    display: flex;
     gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
   }
-  
-  .stat-card {
-    background: var(--glass-bg-dark);
-    border-radius: var(--radius-sm);
-    padding: 12px;
+
+  .detail-fact {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
+    white-space: nowrap;
+  }
+
+  .detail-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .btn-secondary {
+    height: 33px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--gx-slate-500);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+  }
+
+  .btn-secondary:hover {
+    background: var(--gx-org-track);
+    transform: none;
+  }
+
+  .detail-close {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-org-track);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--gx-slate-500);
+    cursor: pointer;
+    box-shadow: none;
+    transition: background-color 120ms ease;
+  }
+
+  .detail-close:hover {
+    background: var(--gx-org-track-hover);
+    transform: none;
+  }
+
+  /* ---------------- inner tabs ---------------- */
+  .inner-tabs {
+    height: 50px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    gap: 24px;
+    padding: 0 20px;
+    align-self: stretch;
+    flex-shrink: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .inner-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .inner-tab {
+    height: 50px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 0 10px;
+    align-items: center;
+    justify-content: flex-start;
+    flex-grow: 1;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 120ms ease;
+  }
+
+  .inner-tab:hover {
+    color: var(--gx-org-slate-800);
+    background: transparent;
+    transform: none;
+  }
+
+  .inner-tab__rule {
+    height: 2px;
+    border-radius: 1px;
+    background: transparent;
+    align-self: stretch;
+    margin-top: auto;
+  }
+
+  .inner-tab[aria-selected="true"] {
+    color: var(--gx-org-brand);
+  }
+
+  .inner-tab[aria-selected="true"] .inner-tab__rule {
+    background: var(--gx-org-brand);
+  }
+
+  .inner-tab:focus-visible {
+    outline: 2px solid var(--gx-org-brand-alt);
+    outline-offset: -2px;
+  }
+
+  /* ---------------- panels ---------------- */
+  .tab-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    align-items: flex-start;
+    align-self: stretch;
+    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .tab-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+    align-self: stretch;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+
+  .stat {
+    border-radius: 12px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px;
+    align-items: center;
+  }
+
+  .stat__value {
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+  }
+
+  .stat__label {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
     text-align: center;
   }
-  
-  .stat-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 4px;
-  }
-  
-  .stat-value {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-  
-  .child-list {
+
+  .danger-zone {
+    border-radius: 12px;
+    background: var(--gx-org-danger-bg);
+    box-shadow: inset 0 0 0 1px var(--gx-org-danger-line);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 16px;
+    padding: 20px;
+    align-items: flex-start;
+    align-self: stretch;
+    flex-shrink: 0;
   }
-  
-  .child-item {
+
+  .danger-text {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .danger-title {
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-org-danger);
+  }
+
+  .danger-body {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
+  }
+
+  .btn-destructive {
+    height: 33px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-org-danger);
+    padding: 0 14px;
+    display: inline-flex;
     align-items: center;
-    padding: 8px 12px;
-    background: var(--glass-bg-dark);
-    border-radius: var(--radius-sm);
-  }
-  
-  .child-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-  
-  .child-members {
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-  
-  .danger-zone {
-    background: var(--danger-surface);
-    border: 1px solid color-mix(in oklab, var(--brand-red) 30%, transparent);
-  }
-  
-  .btn-secondary {
-    padding: 8px 16px;
-    background: var(--button-bg);
-    border: 1px solid var(--button-border);
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    color: #fff;
+    white-space: nowrap;
     cursor: pointer;
-    transition: all 0.2s;
+    box-shadow: none;
+    transition: background-color 120ms ease;
   }
-  
-  .btn-secondary:hover {
-    background: var(--btn-secondary);
-    border-color: var(--glass-stroke-light);
+
+  .btn-destructive:hover {
+    background: var(--gx-org-danger-hover);
+    transform: none;
   }
-  
-  .btn-danger {
-    padding: 8px 16px;
-    background: var(--brand-red);
-    border: none;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    color: white;
-    cursor: pointer;
-    transition: background 0.2s;
+
+  .danger-zone .btn-destructive {
+    width: 161px;
   }
-  
-  .btn-danger:hover {
-    background: color-mix(in oklab, var(--brand-red) 90%, black);
-  }
-  
+
   .delete-confirm {
     padding: 20px;
+    font-family: var(--gx-font);
   }
-  
+
   .delete-confirm p {
     margin: 0 0 12px 0;
-    color: var(--text-primary);
-  }
-  
-  .delete-confirm .warning {
-    color: var(--brand-red);
+    color: var(--gx-slate-900);
     font-size: 14px;
   }
-  
+
+  .delete-confirm .warning {
+    color: var(--gx-org-danger);
+    font-size: 13px;
+  }
+
   .modal-actions {
     display: flex;
     gap: 12px;
     justify-content: flex-end;
     margin-top: 24px;
   }
-  
-  .members-tab,
-  .budget-tab {
-    min-height: 200px;
+
+  @media (max-width: 1024px) {
+    .detail-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .detail-actions {
+      align-self: flex-end;
+    }
   }
 </style>

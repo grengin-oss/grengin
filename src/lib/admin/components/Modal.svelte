@@ -16,6 +16,11 @@ SPDX-License-Identifier: Apache-2.0
     descriptionId?: string;
     /** When true (default), restores focus to the previously focused element on close (WCAG focus management). */
     restoreFocusOnClose?: boolean;
+    /**
+     * "default" is the app-wide dark dialog; "organization" is the light
+     * 424px card the Organization design uses (organization.html .edit-modal).
+     */
+    variant?: "default" | "organization";
   }
 
   let {
@@ -25,6 +30,7 @@ SPDX-License-Identifier: Apache-2.0
     children,
     descriptionId,
     restoreFocusOnClose = true,
+    variant = "default",
   }: Props = $props();
 
   let modalContainer = $state<HTMLDivElement | null>(null);
@@ -225,6 +231,7 @@ SPDX-License-Identifier: Apache-2.0
     <div
       bind:this={modalBackdrop}
       class="modal-backdrop"
+      class:modal-backdrop--org={variant === "organization"}
       data-modal-id={modalId}
       onclick={handleBackdropClick}
       onkeydown={(e) => e.key === "Enter" && handleBackdropClick(e as any)}
@@ -234,7 +241,7 @@ SPDX-License-Identifier: Apache-2.0
       aria-describedby={descriptionId}
       tabindex="0"
     >
-      <div class="modal-content">
+      <div class="modal-content" class:modal-content--org={variant === "organization"}>
         <div class="modal-header">
           <h2 id={titleId} class="modal-title">{title}</h2>
           <button
@@ -379,6 +386,60 @@ SPDX-License-Identifier: Apache-2.0
     min-height: 0;
   }
 
+  /* ---------------- Organization variant (design: .edit-modal) ---------------- */
+  .modal-backdrop--org {
+    background: rgba(15, 23, 42, 0.32);
+    backdrop-filter: none;
+    padding: 24px;
+  }
+
+  .modal-content--org {
+    width: 424px;
+    max-width: 100%;
+    border: 0;
+    border-radius: 16px;
+    background: var(--gx-card);
+    box-shadow:
+      inset 0 0 0 1px var(--gx-hair),
+      0 4px 16px 0 rgba(0, 0, 0, 0.0314);
+    font-family: var(--gx-font);
+  }
+
+  .modal-content--org .modal-header {
+    padding: 24px 24px 0;
+    border-bottom: 0;
+  }
+
+  .modal-content--org .modal-title {
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+  }
+
+  .modal-content--org .modal-close {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--gx-org-track);
+    color: var(--gx-slate-500);
+    flex-shrink: 0;
+  }
+
+  .modal-content--org .modal-close:hover {
+    background: var(--gx-hair);
+    color: var(--gx-slate-500);
+  }
+
+  .modal-content--org .modal-close svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .modal-content--org .modal-body {
+    padding: 24px;
+  }
+
   @media (max-width: 768px) {
     .modal-content {
       max-width: 100%;
@@ -388,6 +449,11 @@ SPDX-License-Identifier: Apache-2.0
 
     .modal-backdrop {
       padding: 0;
+    }
+
+    .modal-content--org {
+      max-height: 100vh;
+      border-radius: 16px;
     }
   }
 </style>

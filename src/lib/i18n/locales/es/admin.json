@@ -32,7 +32,8 @@
       "metadata": "Metadatos",
       "lastUpdated": "Última actualización",
       "removing": "Eliminando",
-      "loading": "Cargando..."
+      "loading": "Cargando...",
+      "noRole": "Sin rol"
     },
     "organization": {
       "subtitle": "Gestiona tus equipos, estructura y usuarios",
@@ -54,7 +55,24 @@
       "assignSuccess": "Usuario asignado al equipo correctamente",
       "assignError": "No se pudo asignar el usuario al equipo",
       "noUnassigned": "Todos pertenecen a un equipo",
-      "loadingUnassigned": "Cargando usuarios sin asignar…"
+      "loadingUnassigned": "Cargando usuarios sin asignar…",
+      "structure": "Estructura",
+      "kpiDepartments": "Departamentos",
+      "kpiTotalPeople": "Personas totales",
+      "kpiBudgetAllocated": "Presupuesto asignado",
+      "findDepartmentPlaceholder": "Buscar un departamento...",
+      "noDepartmentsMatch": "Ningún departamento coincide con tu búsqueda",
+      "treeFooter": "{departments} departamentos en {levels} niveles · {people} personas",
+      "addSubDepartment": "Añadir subdepartamento",
+      "searchUsersPlaceholder": "Buscar por nombre, correo o departamento...",
+      "export": "Exportar",
+      "exporting": "Exportando...",
+      "exportSuccess": "Usuarios exportados",
+      "exportError": "No se pudieron exportar los usuarios",
+      "noDescription": "Sin descripción",
+      "childDeptCount": "{count} subdepartamento",
+      "deleteDepartmentCaption": "Esta acción no se puede deshacer: se eliminarán los miembros y los datos de presupuesto.",
+      "departmentActions": "Acciones para {name}"
     },
     "tabListLabels": {
       "organization": "Pestañas de Organización",

@@ -86,7 +86,8 @@
       "metadata": "Metadata",
       "lastUpdated": "Last Updated",
       "removing": "Removing",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "noRole": "No role"
     },
     "organization": {
       "subtitle": "Manage your teams, structure and users",
@@ -108,7 +109,24 @@
       "assignSuccess": "User assigned to team successfully",
       "assignError": "Failed to assign user to team",
       "noUnassigned": "Everyone belongs to a team",
-      "loadingUnassigned": "Loading unassigned users…"
+      "loadingUnassigned": "Loading unassigned users…",
+      "structure": "Structure",
+      "kpiDepartments": "Departments",
+      "kpiTotalPeople": "Total People",
+      "kpiBudgetAllocated": "Budget Allocated",
+      "findDepartmentPlaceholder": "Find a department...",
+      "noDepartmentsMatch": "No departments match your search",
+      "treeFooter": "{departments} departments across {levels} levels · {people} people",
+      "addSubDepartment": "Add sub-department",
+      "searchUsersPlaceholder": "Search by name, email, or department...",
+      "export": "Export",
+      "exporting": "Exporting...",
+      "exportSuccess": "Users exported",
+      "exportError": "Failed to export users",
+      "noDescription": "No description",
+      "childDeptCount": "{count} child dept",
+      "deleteDepartmentCaption": "This action can't be undone — members and budget data will be removed.",
+      "departmentActions": "Actions for {name}"
     },
     "tabListLabels": {
       "organization": "Organization tabs",

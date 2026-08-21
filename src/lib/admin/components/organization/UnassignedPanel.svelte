@@ -89,17 +89,28 @@ SPDX-License-Identifier: Apache-2.0
 </div>
 
 <style>
+  /* app.css gives every button backdrop-filter: blur(); on the flat
+     Organization surfaces that repaints the 1px hairlines behind them
+     (the tab-row ring, the tree's branch rails), so switch it off. */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   .unassigned-panel {
     display: flex;
     flex-direction: column;
     padding: 20px;
+    gap: 16px;
+    height: 100%;
+    min-height: 0;
+    font-family: var(--gx-font);
   }
 
   .panel-header {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 4px;
   }
 
   .header-content {
@@ -111,53 +122,56 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .panel-header h2 {
-    font-size: 1.125rem;
     font-weight: 700;
-    color: var(--text-primary);
+    font-size: 18px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
     margin: 0;
   }
 
   .count-badge {
     display: inline-flex;
     align-items: center;
-    padding: 2px 10px;
-    border-radius: var(--radius-full);
-    background: var(--glass-tint-primary);
-    color: var(--brand);
-    font-size: 0.75rem;
+    height: 23px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background: var(--gx-org-brand-tint);
+    color: var(--gx-org-brand);
+    font-size: 12px;
     font-weight: 600;
   }
 
   .close-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-org-track);
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
+    color: var(--gx-slate-500);
     cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: all 0.2s ease;
+    box-shadow: none;
     flex-shrink: 0;
+    transition: background-color 120ms ease;
   }
 
   .close-btn:hover {
-    background: rgba(var(--glass-tint), 0.08);
-    color: var(--text-primary);
+    background: var(--gx-org-track-hover);
+    transform: none;
   }
 
   .close-btn:focus-visible {
-    outline: 2px solid var(--brand);
+    outline: 2px solid var(--gx-org-brand-alt);
     outline-offset: 2px;
   }
 
   .panel-caption {
-    margin: 0 0 16px 0;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
+    margin: -8px 0 0 0;
+    color: var(--gx-slate-500);
+    font-size: 13px;
   }
 
   .panel-state {
@@ -167,11 +181,15 @@ SPDX-License-Identifier: Apache-2.0
     justify-content: center;
     gap: 12px;
     padding: 40px 20px;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    color: var(--gx-slate-500);
+    font-size: 13px;
     text-align: center;
   }
 
+  /* The panel has the detail column's fixed height, so a long list scrolls
+     here rather than pushing the page. */
   .user-list {
     list-style: none;
     margin: 0;
@@ -179,52 +197,56 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     flex-direction: column;
     gap: 8px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
   }
 
   .user-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 12px;
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-md);
-    background: rgba(var(--glass-tint), 0.03);
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--gx-org-track);
   }
 
   .user-avatar {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--glass-tint-primary);
-    color: var(--brand);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    text-transform: uppercase;
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    background: var(--gx-org-brand);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
     flex-shrink: 0;
   }
 
   .user-info {
     display: flex;
     flex-direction: column;
+    gap: 4px;
     min-width: 0;
     flex: 1;
   }
 
   .user-name {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 100%;
+    color: var(--gx-slate-900);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .user-email {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -237,27 +259,36 @@ SPDX-License-Identifier: Apache-2.0
   .assign-btn {
     display: inline-flex;
     align-items: center;
-    padding: 6px 14px;
-    border: 1px solid var(--brand);
-    border-radius: var(--radius-full);
+    height: 28px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 6px;
     background: transparent;
-    color: var(--brand);
-    font-size: 0.8125rem;
+    outline: 1px dashed var(--gx-hair);
+    outline-offset: -1px;
+    box-shadow: none;
+    font-family: inherit;
+    color: var(--gx-slate-500);
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
-    transition: all 0.2s ease;
+    transition:
+      outline-color 120ms ease,
+      color 120ms ease;
   }
 
   .assign-btn:hover {
-    background: var(--brand);
-    color: var(--bg-primary);
+    outline-color: var(--gx-org-brand-alt);
+    color: var(--gx-org-brand-alt);
+    background: transparent;
+    transform: none;
   }
 
   .assign-btn:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
+    outline: 2px solid var(--gx-org-brand-alt);
+    outline-offset: 1px;
   }
 
   @media (max-width: 640px) {

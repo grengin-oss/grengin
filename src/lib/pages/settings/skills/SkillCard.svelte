@@ -25,16 +25,37 @@ SPDX-License-Identifier: Apache-2.0
 
 <article class="skill-card" class:skill-card--inactive={!skill.is_active}>
   <div class="skill-card__top">
-    <div class="skill-card__avatar" class:skill-card__avatar--builtin={skill.is_builtin}>
+    <div
+      class="skill-card__avatar"
+      class:skill-card__avatar--builtin={skill.is_builtin}
+    >
       {#if skill.avatar}
         {skill.avatar}
       {:else if isArtifacts}
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <rect x="3" y="3" width="18" height="18" rx="2"></rect>
           <path d="M3 9h18M9 21V9"></path>
         </svg>
       {:else}
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <path d="M12 2l2.4 5.5L20 8l-4 4 1 6-5-3-5 3 1-6-4-4 5.6-.5z"></path>
         </svg>
       {/if}
@@ -52,7 +73,9 @@ SPDX-License-Identifier: Apache-2.0
       class:switch--on={skill.is_active}
       role="switch"
       aria-checked={skill.is_active}
-      aria-label={$_("userSkills.card.toggleAria", { values: { name: skill.name } })}
+      aria-label={$_("userSkills.card.toggleAria", {
+        values: { name: skill.name },
+      })}
       disabled={toggling}
       onclick={() => ontoggle?.(skill, !skill.is_active)}
     >
@@ -66,40 +89,76 @@ SPDX-License-Identifier: Apache-2.0
 
   <div class="skill-card__badges">
     {#if skill.is_builtin}
-      <span class="badge badge--builtin">{$_("userSkills.badges.builtin")}</span>
+      <span class="badge badge--builtin">{$_("userSkills.badges.builtin")}</span
+      >
     {/if}
     {#if isArtifacts}
-      <span class="badge badge--artifacts">{$_("userSkills.badges.artifacts")}</span>
+      <span class="badge badge--artifacts"
+        >{$_("userSkills.badges.artifacts")}</span
+      >
     {/if}
     {#if skill.instructions}
       <span class="badge">{$_("userSkills.badges.instructions")}</span>
     {/if}
     {#if knowledgeCount > 0}
       <span class="badge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+          ></path><path d="M14 2v6h6"></path>
         </svg>
         {$_("userSkills.badges.files", { values: { count: knowledgeCount } })}
       </span>
     {/if}
     {#if skill.tools_config?.web_search}
       <span class="badge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"
+          ></path>
         </svg>
         {$_("userSkills.badges.webSearch")}
       </span>
     {/if}
     {#if toolCount > 0}
-      <span class="badge">{$_("userSkills.badges.tools", { values: { count: toolCount } })}</span>
+      <span class="badge"
+        >{$_("userSkills.badges.tools", { values: { count: toolCount } })}</span
+      >
     {/if}
   </div>
 
   <div class="skill-card__actions">
     {#if skill.is_builtin}
       <span class="skill-card__locked">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="4" y="11" width="16" height="10" rx="2"></rect><path
+            d="M8 11V7a4 4 0 0 1 8 0v4"
+          ></path>
         </svg>
         {$_("userSkills.card.managedByPlatform")}
       </span>
@@ -107,7 +166,10 @@ SPDX-License-Identifier: Apache-2.0
       <button class="link-btn" onclick={() => onedit?.(skill)}>
         {$_("userSkills.card.edit")}
       </button>
-      <button class="link-btn link-btn--danger" onclick={() => ondelete?.(skill)}>
+      <button
+        class="link-btn link-btn--danger"
+        onclick={() => ondelete?.(skill)}
+      >
         {$_("userSkills.card.delete")}
       </button>
     {/if}
@@ -121,9 +183,12 @@ SPDX-License-Identifier: Apache-2.0
     gap: var(--space-md);
     padding: var(--space-lg);
     background: rgba(var(--glass-tint), 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--gx-category);
     border-radius: var(--radius-lg);
-    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   .skill-card:hover {

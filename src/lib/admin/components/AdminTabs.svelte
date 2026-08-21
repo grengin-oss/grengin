@@ -18,6 +18,11 @@ SPDX-License-Identifier: Apache-2.0
     currentTab?: string;
     tabListLabel?: string;
     onTabChange?: (tab: string) => void;
+    /**
+     * "default" keeps the app-wide underline tabs; "segmented" is the
+     * pill-in-a-track switcher the Organization design uses.
+     */
+    variant?: "default" | "segmented";
   }
 
 let {
@@ -26,6 +31,7 @@ let {
   currentTab = $bindable(),
   tabListLabel = "Tabs",
   onTabChange,
+  variant = "default",
 }: AdminTabsProps & { currentTab: string } = $props();
 
 let availableTabIds = $derived(tabs.map((tab: TabConfig) => tab.id));
@@ -164,7 +170,7 @@ function handleKeydown(event: KeyboardEvent, tab: string, index: number): void {
   });
 </script>
 
-<div class="tabs" role="tablist" aria-label={tabListLabel}>
+<div class="tabs" class:tabs--segmented={variant === "segmented"} role="tablist" aria-label={tabListLabel}>
 {#each tabs as tab, index (tab.id)}
     <button
       class="tab"
@@ -188,9 +194,66 @@ function handleKeydown(event: KeyboardEvent, tab: string, index: number): void {
 </div>
 
 <style>
+  /* app.css gives every button backdrop-filter: blur(); on the flat
+     Organization surfaces that repaints the 1px hairlines behind them
+     (the tab-row ring, the tree's branch rails), so switch it off. */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   /* Keep tab list visible in column flex layouts (e.g. admin pages with height: 100%) */
   .tabs {
     flex-shrink: 0;
+  }
+
+  /* Segmented switcher (Organization design): pills inside a track. Overrides
+     the global .tabs/.tab underline treatment from app.css. */
+  .tabs--segmented {
+    height: 36px;
+    padding: 4px;
+    gap: 4px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-org-track);
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    margin: 0;
+  }
+
+  .tabs--segmented .tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    padding: 6px 16px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    font-family: var(--gx-font);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 100%;
+    color: var(--gx-slate-500);
+    white-space: nowrap;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .tabs--segmented .tab:hover:not(.tab--active) {
+    background: transparent;
+    color: var(--gx-org-slate-800);
+    transform: none;
+  }
+
+  .tabs--segmented .tab--active,
+  .tabs--segmented .tab[aria-selected="true"] {
+    background: var(--gx-card);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.0314);
+    color: var(--gx-slate-900);
   }
 
   @media (max-width: 768px) {
@@ -204,12 +267,22 @@ function handleKeydown(event: KeyboardEvent, tab: string, index: number): void {
     .tab {
       white-space: nowrap;
     }
+
+    /* The segmented track hugs its pills instead of stretching. */
+    .tabs--segmented {
+      width: auto;
+    }
   }
 
   @media (max-width: 480px) {
     .tab {
       padding: var(--space-sm) var(--space-md);
       font-size: 0.875rem;
+    }
+
+    .tabs--segmented .tab {
+      padding: 6px 14px;
+      font-size: 13px;
     }
   }
 </style>

@@ -15,6 +15,7 @@
       "showingCount": "{filtered} of {total}"
     },
     "table": {
+      "user": "User",
       "userName": "User Name",
       "email": "Email",
       "department": "Department",
@@ -24,7 +25,9 @@
       "tokens": "Tokens",
       "cost": "Cost",
       "avgLatency": "Avg Latency",
-      "lastActivity": "Last Activity"
+      "lastActivity": "Last Activity",
+      "usageCount": "Usage Count",
+      "lastActive": "Last Active"
     },
     "emptyState": {
       "noMatch": "No users found matching \"{query}\"",
@@ -60,7 +63,8 @@
       "errors": "Errors",
       "tokens": "Tokens",
       "cost": "Cost",
-      "avgLatency": "Avg Latency"
+      "avgLatency": "Avg Latency",
+      "usageCount": "Usage Count"
     },
     "emptyState": {
       "noMatch": "No departments found matching \"{query}\"",
@@ -80,7 +84,7 @@
     "subtitle": "Monitor system performance and usage metrics",
     "tabs": {
       "overview": "Overview",
-      "byUser": "By User",
+      "byUser": "By Users",
       "byDepartment": "By Department",
       "byModel": "By Model"
     },
@@ -92,8 +96,11 @@
     },
     "byModel": {
       "title": "By Model",
-      "comingSoon": "Coming soon",
-      "hint": "Model analytics will be available here."
+      "model": "Model",
+      "totalRequests": "Total Requests",
+      "avgLatency": "Avg Latency",
+      "cost": "Cost",
+      "noData": "No model usage data available for the selected date range"
     },
     "aria": {
       "mainRegion": "Usage analytics",
@@ -103,7 +110,9 @@
       "pagination": "Results pagination",
       "topModelsCaption": "Top models by usage for the selected date range",
       "departmentTableCaption": "Department usage for the selected date range",
-      "userTableCaption": "User usage for the selected date range"
+      "userTableCaption": "User usage for the selected date range",
+      "rangePicker": "Change date range",
+      "modelTableCaption": "Model usage for the selected date range"
     },
     "filters": {
       "dateRange": "Date Range",
@@ -119,7 +128,8 @@
       "hour": "Hourly",
       "day": "Daily",
       "week": "Weekly",
-      "month": "Monthly"
+      "month": "Monthly",
+      "rangeFields": "Range Fields"
     },
     "loading": "Loading analytics...",
     "retry": "Retry",
@@ -133,7 +143,8 @@
       "avgPerUser": "{count} avg per user",
       "totalTokens": "Total Tokens",
       "totalCost": "Total Cost",
-      "vsPreviousDays": "vs prior {count} days"
+      "vsPreviousDays": "vs prior {count} days",
+      "quickStats": "Quick Stats"
     },
     "topModels": {
       "title": "Top Models",
@@ -141,7 +152,8 @@
       "provider": "Provider",
       "requests": "Requests",
       "tokens": "Tokens",
-      "cost": "Cost"
+      "cost": "Cost",
+      "subtitleByCost": "by cost, {range}"
     },
     "charts": {
       "title": "Performance Trends",
@@ -152,7 +164,8 @@
         "tokens": "Tokens",
         "latency": "Latency",
         "date": "Date",
-        "latencyMs": "Latency (ms)"
+        "latencyMs": "Latency (ms)",
+        "tabLabel": "Multi-Metric"
       },
       "usageGrowth": {
         "title": "Usage Growth",
@@ -184,6 +197,10 @@
         "viewDataTableFor": "View data table for {chartName}",
         "closeDataTable": "Close data table",
         "dataTableRegion": "{chartName} data table"
+      },
+      "insight": {
+        "peak": "{metric} peaked {day} at {value}, {ratio}× the period’s low.",
+        "flat": "{metric} held steady across the period."
       }
     },
     "errors": {

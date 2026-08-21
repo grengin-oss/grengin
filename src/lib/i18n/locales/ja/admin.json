@@ -32,7 +32,8 @@
       "metadata": "メタデータ",
       "lastUpdated": "最終更新日",
       "removing": "削除中",
-      "loading": "読み込み中..."
+      "loading": "読み込み中...",
+      "noRole": "ロールなし"
     },
     "organization": {
       "subtitle": "チーム、組織構造、ユーザーを管理します",
@@ -54,7 +55,24 @@
       "assignSuccess": "ユーザーをチームに割り当てました",
       "assignError": "ユーザーのチームへの割り当てに失敗しました",
       "noUnassigned": "全員がチームに所属しています",
-      "loadingUnassigned": "未割り当てユーザーを読み込み中…"
+      "loadingUnassigned": "未割り当てユーザーを読み込み中…",
+      "structure": "構成",
+      "kpiDepartments": "部門数",
+      "kpiTotalPeople": "総人数",
+      "kpiBudgetAllocated": "割り当て予算",
+      "findDepartmentPlaceholder": "部門を検索...",
+      "noDepartmentsMatch": "検索条件に一致する部門はありません",
+      "treeFooter": "{departments} 部門 / {levels} 階層 · {people} 人",
+      "addSubDepartment": "サブ部門を追加",
+      "searchUsersPlaceholder": "名前、メール、部門で検索...",
+      "export": "エクスポート",
+      "exporting": "エクスポート中...",
+      "exportSuccess": "ユーザーをエクスポートしました",
+      "exportError": "ユーザーのエクスポートに失敗しました",
+      "noDescription": "説明なし",
+      "childDeptCount": "子部門 {count} 件",
+      "deleteDepartmentCaption": "この操作は取り消せません。メンバーと予算データが削除されます。",
+      "departmentActions": "{name} の操作"
     },
     "tabListLabels": {
       "organization": "組織タブ",

@@ -35,6 +35,8 @@ function createUsersStore() {
   let error = $state<any | null>(null);
   let unassignedUsers = $state<User[]>([]);
   let isUnassignedLoading = $state(false);
+  /** Unfiltered population size, captured by the unassigned scan below. */
+  let peopleTotal = $state(0);
   let filters = $state<UsersFilters>({
     search: '',
     role_id: '',
@@ -104,6 +106,9 @@ function createUsersStore() {
       const useScopedEndpoint = permissionsStore.hasScopedUsersView();
       const data = useScopedEndpoint ? await getScopedUsers(params) : await getUsers(params);
       unassignedUsers = data.users.filter((user) => !user.department_id);
+      // Same request already carries the unfiltered head-count the Teams KPIs
+      // need, so read it here instead of issuing a second list call.
+      peopleTotal = data.total;
     } catch (err: any) {
       error = err;
     } finally {
@@ -123,10 +128,30 @@ function createUsersStore() {
     get ascending() { return ascending; },
     get unassignedUsers() { return unassignedUsers; },
     get unassignedCount() { return unassignedUsers.length; },
+    get peopleTotal() { return peopleTotal; },
     get isUnassignedLoading() { return isUnassignedLoading; },
 
     fetchUsers,
     fetchUnassignedUsers,
+
+    /**
+     * Loads every user matching the *current* filters (not just the visible
+     * page) so the Users tab can export them. Bounded by the same cap as the
+     * unassigned scan.
+     */
+    async fetchAllFiltered(): Promise<User[]> {
+      const params: GetUsersParams = { limit: UNASSIGNED_FETCH_LIMIT, offset: 0 };
+      if (filters.search) params.search = filters.search;
+      if (filters.role_id) params.role_id = filters.role_id;
+      if (filters.status) params.status = filters.status;
+      if (filters.department) params.department = filters.department;
+      params.sort = sort ?? 'created_at';
+      params.ascending = sort ? ascending : false;
+
+      const useScopedEndpoint = permissionsStore.hasScopedUsersView();
+      const data = useScopedEndpoint ? await getScopedUsers(params) : await getUsers(params);
+      return data.users;
+    },
 
     /** Assigns a user to a department (team). */
     async assignDepartment(userId: string, departmentId: string) {
@@ -214,6 +239,7 @@ function createUsersStore() {
       error = null;
       unassignedUsers = [];
       isUnassignedLoading = false;
+      peopleTotal = 0;
       filters = {
         search: '',
         role_id: '',

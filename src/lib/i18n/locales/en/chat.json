@@ -13,7 +13,25 @@
     "emptyState": {
       "title": "Start a conversation",
       "description": "Send a message to begin chatting with the AI assistant!",
-      "aiDisclaimer": "AI can make mistakes. Please double-check responses."
+      "aiDisclaimer": "AI can make mistakes. Please double-check responses.",
+      "greeting": "Hello, {name}",
+      "suggestions": {
+        "synthesize": {
+          "title": "Synthesize Data",
+          "body": "Turn any meeting notes into 5 key bullet points for the team.",
+          "prompt": "Turn these meeting notes into 5 key bullet points for the team:\n\n"
+        },
+        "brainstorm": {
+          "title": "Creative Brainstorm",
+          "body": "Generate 5 taglines for a new sustainable fashion brand.",
+          "prompt": "Generate 5 taglines for a new sustainable fashion brand."
+        },
+        "facts": {
+          "title": "Check Facts",
+          "body": "Compare key differences between GDPR and CCPA.",
+          "prompt": "Compare the key differences between GDPR and CCPA."
+        }
+      }
     },
     "errors": {
       "somethingWentWrong": "Something went wrong",

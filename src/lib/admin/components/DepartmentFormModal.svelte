@@ -16,9 +16,19 @@ SPDX-License-Identifier: Apache-2.0
     department?: Department | null;
     allDepartments: Department[];
     mode: 'create' | 'edit';
+    /** Preselects the parent when creating from a branch's "Add sub-department". */
+    presetParentId?: string | null;
   }
   
-  let { isOpen, onClose, onSubmit, department = null, allDepartments, mode }: Props = $props();
+  let {
+    isOpen,
+    onClose,
+    onSubmit,
+    department = null,
+    allDepartments,
+    mode,
+    presetParentId = null,
+  }: Props = $props();
   
   let formData = $state({
     name: '',
@@ -45,7 +55,7 @@ SPDX-License-Identifier: Apache-2.0
         formData = {
           name: '',
           description: '',
-          parent_id: null,
+          parent_id: presetParentId,
           admin_ids: [],
         };
       }
@@ -102,9 +112,11 @@ SPDX-License-Identifier: Apache-2.0
 <Modal 
   {isOpen}
   onclose={onClose}
+  variant="organization"
   title={mode === 'create' ? $_('admin.departments.createDepartment') : $_('admin.departments.editDepartment')}
 >
   <form class="department-form" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+    <div class="form-fields">
     <div class="form-group">
       <label for="name">
         {$_('admin.common.name')} <span class="required">*</span>
@@ -127,13 +139,13 @@ SPDX-License-Identifier: Apache-2.0
       <label for="description">
         {$_('admin.departments.description')}
       </label>
-      <textarea
+      <input
         id="description"
+        type="text"
         bind:value={formData.description}
         placeholder={$_('admin.departments.descriptionPlaceholder')}
-        rows="3"
         disabled={isSubmitting}
-      ></textarea>
+      />
     </div>
     
     <div class="form-group">
@@ -150,9 +162,9 @@ SPDX-License-Identifier: Apache-2.0
           <option value={parent.id}>{parent.name}</option>
         {/each}
       </select>
-      <span class="help-text">{$_('admin.departments.parentDepartmentHelp')}</span>
     </div>
-    
+    </div>
+
     <div class="form-actions">
       <button 
         type="button" 
@@ -174,120 +186,157 @@ SPDX-License-Identifier: Apache-2.0
 </Modal>
 
 <style>
+  /* app.css gives every button backdrop-filter: blur(); on the flat
+     Organization surfaces that repaints the 1px hairlines behind them
+     (the tab-row ring, the tree's branch rails), so switch it off. */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* Organization design (organization.html .edit-modal): 424px card, 24px
+     rhythm, 37px fields. The Modal shell paints the card itself. */
   .department-form {
-    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 0;
+    font-family: var(--gx-font);
   }
-  
+
+  .form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-self: stretch;
+  }
+
   .form-group {
-    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-self: stretch;
+    margin: 0;
   }
-  
+
   .form-group label {
-    display: block;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
   }
-  
+
   .required {
-    color: #ef4444;
+    color: var(--gx-org-danger);
   }
-  
+
   .form-group input,
-  .form-group textarea,
   .form-group select {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--button-border);
-    border-radius: var(--radius-sm);
+    height: 37px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    padding: 10px 14px;
+    font-family: inherit;
+    font-weight: 400;
     font-size: 14px;
-    color: var(--text-primary);
-    background: var(--button-bg);
-    transition: border-color 0.2s;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+    transition: box-shadow 120ms ease;
   }
-  
+
+  .form-group input::placeholder {
+    color: var(--gx-slate-400);
+  }
+
+  .form-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-inline-end: 36px;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='7' viewBox='0 0 14 7' fill='none'%3E%3Cpath d='M1 1l6 5 6-5' stroke='%230f172a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+
+  :global([dir="rtl"]) .form-group select {
+    background-position: left 14px center;
+  }
+
   .form-group input:focus,
-  .form-group textarea:focus,
   .form-group select:focus {
     outline: none;
-    border-color: var(--brand);
-    background: var(--btn-secondary);
+    box-shadow: inset 0 0 0 1px var(--gx-org-brand-alt);
   }
-  
+
   .form-group input.error {
-    border-color: var(--brand-red);
+    box-shadow: inset 0 0 0 1px var(--gx-org-danger);
   }
-  
+
   .form-group input:disabled,
-  .form-group textarea:disabled,
   .form-group select:disabled {
-    background-color: var(--btn-quaternary);
-    cursor: not-allowed;
     opacity: 0.6;
+    cursor: not-allowed;
   }
-  
+
   .error-message {
-    display: block;
-    margin-top: 4px;
     font-size: 12px;
-    color: var(--brand-red);
+    line-height: 130%;
+    color: var(--gx-org-danger);
   }
-  
-  .help-text {
-    display: block;
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-  
+
   .form-actions {
     display: flex;
     gap: 12px;
     justify-content: flex-end;
-    margin-top: 24px;
-    padding-top: 20px;
-    border-top: 1px solid var(--glass-stroke-dark);
+    align-self: stretch;
   }
-  
-  .btn-secondary {
-    padding: 10px 20px;
-    background: var(--button-bg);
-    border: 1px solid var(--button-border);
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .btn-secondary:hover:not(:disabled) {
-    background: var(--btn-secondary);
-    border-color: var(--glass-stroke-light);
-  }
-  
-  .btn-secondary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
+
+  .btn-secondary,
   .btn-primary {
-    padding: 10px 20px;
-    background: var(--brand);
-    border: none;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    color: white;
+    height: 35px;
+    border: 0;
+    border-radius: 8px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
     cursor: pointer;
-    transition: background 0.2s;
+    box-shadow: none;
+    transition: background-color 120ms ease;
   }
-  
+
+  .btn-secondary {
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    color: var(--gx-slate-500);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--gx-org-track);
+    transform: none;
+  }
+
+  .btn-primary {
+    background: var(--gx-org-brand);
+    color: #fff;
+  }
+
   .btn-primary:hover:not(:disabled) {
-    background: var(--brand-hover);
+    background: var(--gx-org-brand-hover);
+    transform: none;
   }
-  
+
+  .btn-secondary:disabled,
   .btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;

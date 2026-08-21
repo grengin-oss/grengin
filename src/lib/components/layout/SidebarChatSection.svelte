@@ -33,14 +33,6 @@ SPDX-License-Identifier: Apache-2.0
   let chatToDelete = $state<string | null>(null);
   let deletingChat = $state(false);
 
-  let menuItems = $derived([
-    {
-      id: 'chat',
-      label: $_('sidebar.newChat'),
-      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>',
-    },
-  ]);
-
   let chatHistory = $state<any[]>([]);
   let loadingChats = $state(false);
   let loadingMoreChats = $state(false);
@@ -55,19 +47,54 @@ SPDX-License-Identifier: Apache-2.0
   let renameTitle = $state('');
   let renamingChat = $state(false);
   let renameInputElement = $state<HTMLInputElement | null>(null);
+  let searchOpen = $state(false);
+  let searchInputElement = $state<HTMLInputElement | null>(null);
 
-  function handleItemClick(itemId: string) {
-    if (itemId === 'chat') {
-      selectedChatId = null;
-      navigate('/');
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('focusChatInput'));
-      }, 50);
+  // Group the flat chat list into time buckets (Today / Yesterday / This Week /
+  // Earlier) to match the "Recent" section in the design. Chats arrive newest
+  // first from the API, so within each bucket the order is preserved.
+  function startOfToday(): number {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  }
 
-      onCollapseSidebar();
-      return;
+  let chatGroups = $derived.by(() => {
+    const todayStart = startOfToday();
+    const yesterdayStart = todayStart - 86_400_000;
+    const weekStart = todayStart - 6 * 86_400_000;
+
+    const buckets: Record<string, any[]> = {
+      today: [],
+      yesterday: [],
+      week: [],
+      earlier: [],
+    };
+
+    for (const chat of chatHistory) {
+      const raw = chat.lastMessageAt || chat.createdAt;
+      const t = raw ? new Date(raw).getTime() : 0;
+      if (Number.isNaN(t) || t === 0) buckets.earlier.push(chat);
+      else if (t >= todayStart) buckets.today.push(chat);
+      else if (t >= yesterdayStart) buckets.yesterday.push(chat);
+      else if (t >= weekStart) buckets.week.push(chat);
+      else buckets.earlier.push(chat);
     }
 
+    const labels: Record<string, string> = {
+      today: $_('sidebar.today'),
+      yesterday: $_('sidebar.yesterday'),
+      week: $_('sidebar.thisWeek'),
+      earlier: $_('sidebar.earlier'),
+    };
+
+    return (['today', 'yesterday', 'week', 'earlier'] as const)
+      .filter((key) => buckets[key].length > 0)
+      .map((key) => ({ key, label: labels[key], chats: buckets[key] }));
+  });
+
+  function goToRecent() {
+    navigate('/');
     onCollapseSidebar();
   }
 
@@ -180,6 +207,7 @@ SPDX-License-Identifier: Apache-2.0
   function clearSearch() {
     searchQuery = '';
     searchFocused = false;
+    searchOpen = false;
   }
 
   function archiveChat(chatId: string, title: string) {
@@ -300,6 +328,15 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
+  // The design draws one scrollbar for the whole section stack, so paging is
+  // driven by the sidebar's scroll container rather than a nested list box.
+  $effect(() => {
+    const scroller = chatContainerElement?.closest('.sb-scroll') as HTMLElement | null;
+    if (!scroller) return;
+    scroller.addEventListener('scroll', handleChatListScroll);
+    return () => scroller.removeEventListener('scroll', handleChatListScroll);
+  });
+
   function handleWindowClick() {
     if (activeChatMenu) {
       activeChatMenu = null;
@@ -373,197 +410,223 @@ SPDX-License-Identifier: Apache-2.0
       clearTimeout(searchTimeout);
     };
   });
+
+  // The search box is revealed on demand from the sidebar header's search
+  // button, which broadcasts this event.
+  $effect(() => {
+    const handleFocusSearch = async () => {
+      searchOpen = true;
+      await tick();
+      searchInputElement?.focus();
+    };
+    window.addEventListener('focusChatSearch', handleFocusSearch);
+    return () => {
+      window.removeEventListener('focusChatSearch', handleFocusSearch);
+    };
+  });
 </script>
 
 <svelte:window onclick={handleWindowClick} />
 
-<nav class="sidebar-nav">
-  {#each menuItems as item}
-    <button class="sidebar-item" onclick={() => handleItemClick(item.id)} aria-label={item.label} title={item.label}>
-      <span class="sidebar-icon" aria-hidden="true">{@html item.icon}</span>
-      <span class="sidebar-label">{item.label}</span>
+{#if isCollapsed}
+  <div class="collapsed-recent">
+    <button
+      class="rail-btn"
+      class:active={currentPath === '/'}
+      onclick={goToRecent}
+      title={$_('sidebar.recent')}
+      aria-label={$_('sidebar.recent')}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12,6 12,12 16,14" />
+      </svg>
     </button>
-  {/each}
-
-  {#if !isCollapsed}
-    <div class="chat-search-wrapper" class:expanded={searchQuery.length > 0 || searchFocused}>
-      <div class="chat-search-container">
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          class="search-icon"
-          aria-hidden="true"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.35-4.35" />
-        </svg>
-        <input
-          type="text"
-          placeholder={$_('sidebar.searchPlaceholder')}
-          bind:value={searchQuery}
-          class="chat-search-input"
-          aria-label={$_('sidebar.searchTitle')}
-          title={$_('sidebar.searchTitle')}
-          onkeydown={(event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-              clearSearch();
-            }
-          }}
-          onfocus={() => (searchFocused = true)}
-          onblur={() => (searchFocused = false)}
-        />
-        {#if searchQuery}
-          <button
-            class="clear-search-btn"
-            onclick={clearSearch}
-            aria-label={$_('sidebar.clearSearch')}
-            title={$_('sidebar.clearSearch')}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        {/if}
-      </div>
-    </div>
-  {/if}
-</nav>
-
-{#if !isCollapsed}
-  <div class="sidebar-divider"></div>
-{/if}
-
-{#if !isCollapsed}
-  <div class="chat-section-title">
-    <span>
-      {$_('sidebar.chats')}
-      {#if chatTotal}
-        ({chatTotal})
-      {/if}
-    </span>
   </div>
-{/if}
+{:else}
+  <!-- Figma "Section - Recent": header + day groups in one section stack -->
+  <div class="recent-section">
+    <div class="recent-header">
+      <span class="section-icon" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5.99997 2.99973V5.99997L8.00013 7.00005M11.0004 5.99997C11.0004 8.76162 8.76162 11.0004 5.99997 11.0004C3.23833 11.0004 0.999573 8.76162 0.999573 5.99997C0.999573 3.23833 3.23833 0.999573 5.99997 0.999573C8.76162 0.999573 11.0004 3.23833 11.0004 5.99997Z" />
+        </svg>
+      </span>
+      <span class="recent-title">{$_('sidebar.recent')}</span>
+    </div>
 
-{#if !isCollapsed}
-  <div class="chat-list-section" bind:this={chatContainerElement} onscroll={handleChatListScroll}>
-    <div class="chat-list">
-      {#if loadingChats}
-        <div class="chat-loading">
-          <div class="loading-spinner-small"></div>
-          <span>{$_('sidebar.loadingChats')}</span>
-        </div>
-      {:else if chatHistory.length === 0}
-        <div class="chat-empty">
-          <span>{$_('sidebar.noChatsYet')}</span>
-        </div>
-      {:else if chatHistory.length === 0 && searchQuery}
-        <div class="no-results">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    {#if searchOpen || searchQuery}
+      <div class="chat-search-wrapper" class:expanded={searchQuery.length > 0 || searchFocused}>
+        <div class="chat-search-container">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="search-icon"
+            aria-hidden="true"
+          >
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.35-4.35" />
           </svg>
-          <span>{$_('sidebar.noChatsFound')}</span>
-        </div>
-      {:else}
-        {#each chatHistory as chat (chat.id)}
-          <div class="chat-item">
-            {#if renameChatId === chat.id}
-              <div class="chat-rename-form">
-                <input
-                  class="chat-rename-input"
-                  type="text"
-                  bind:value={renameTitle}
-                  bind:this={renameInputElement}
-                  aria-label={$_('sidebar.renamePlaceholder')}
-                  placeholder={$_('sidebar.renamePlaceholder')}
-                  disabled={renamingChat}
-                  onkeydown={(event: KeyboardEvent) => {
-                    if (event.key === 'Escape') {
-                      cancelRename();
-                    } else if (event.key === 'Enter') {
-                      confirmRenameChat();
-                    }
-                  }}
-                  onblur={() => {
-                    if (!renamingChat) {
-                      cancelRename();
-                    }
-                  }}
-                />
-              </div>
-            {:else}
-              <button
-                class="menu-item chat-item-btn"
-                class:selected={selectedChatId === chat.id}
-                onclick={() => selectChat(chat.id)}
-                title={chat.title}
-              >
-                <span class="chat-item-title">{chat.title}</span>
-              </button>
-            {/if}
+          <input
+            type="text"
+            placeholder={$_('sidebar.searchPlaceholder')}
+            bind:value={searchQuery}
+            bind:this={searchInputElement}
+            class="chat-search-input"
+            aria-label={$_('sidebar.searchTitle')}
+            title={$_('sidebar.searchTitle')}
+            onkeydown={(event: KeyboardEvent) => {
+              if (event.key === 'Escape') {
+                clearSearch();
+              }
+            }}
+            onfocus={() => (searchFocused = true)}
+            onblur={() => {
+              searchFocused = false;
+              if (!searchQuery) searchOpen = false;
+            }}
+          />
+          {#if searchQuery}
             <button
-              class="chat-item-menu"
-              onclick={(e) => {
-                e.stopPropagation();
-                if (renameChatId === chat.id) return;
-                toggleChatMenu(chat.id);
-              }}
-              title={$_('sidebar.chatOptions')}
-              aria-label={$_('sidebar.chatOptions')}
-              aria-expanded={activeChatMenu === chat.id}
-              disabled={renameChatId === chat.id}
+              class="clear-search-btn"
+              onclick={clearSearch}
+              aria-label={$_('sidebar.clearSearch')}
+              title={$_('sidebar.clearSearch')}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="1"></circle>
-                <circle cx="12" cy="5" r="1"></circle>
-                <circle cx="12" cy="19" r="1"></circle>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
-            {#if activeChatMenu === chat.id && renameChatId !== chat.id}
-              <div
-                class="chat-dropdown"
-                onclick={(e) => e.stopPropagation()}
-                onkeydown={(e) => e.stopPropagation()}
-                role="menu"
-                tabindex="-1"
-              >
-                <button class="menu-item" onclick={() => openRenameDialog(chat)} aria-label={$_('sidebar.rename')} title={$_('sidebar.rename')}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M4 17.25V21h3.75L17.81 10.94l-3.75-3.75L4 17.25z"></path>
-                    <path
-                      d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"
-                    ></path>
-                  </svg>
-                  {$_('sidebar.rename')}
-                </button>
-                <button class="menu-item menu-item--danger" onclick={() => deleteChat(chat.id)} aria-label={$_('sidebar.delete')} title={$_('sidebar.delete')}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <polyline points="3,6 5,6 21,6"></polyline>
-                    <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-                  </svg>
-                  {$_('sidebar.delete')}
-                </button>
-                <button class="menu-item" onclick={() => archiveChat(chat.id, chat.title)} aria-label={$_('sidebar.archive')} title={$_('sidebar.archive')}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                  </svg>
-                  {$_('sidebar.archive')}
-                </button>
-              </div>
-            {/if}
-          </div>
-        {/each}
-        {#if loadingMoreChats && chatHistory.length > 0}
-          <div class="chat-loading chat-loading-more">
+          {/if}
+        </div>
+      </div>
+    {/if}
+    <div class="chat-list-section" bind:this={chatContainerElement}>
+      <div class="chat-list">
+        {#if loadingChats}
+          <div class="chat-loading">
             <div class="loading-spinner-small"></div>
             <span>{$_('sidebar.loadingChats')}</span>
           </div>
+        {:else if chatHistory.length === 0 && searchQuery}
+          <div class="no-results">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            <span>{$_('sidebar.noChatsFound')}</span>
+          </div>
+        {:else if chatHistory.length === 0}
+          <div class="chat-empty">
+            <span>{$_('sidebar.noChatsYet')}</span>
+          </div>
+        {:else}
+          {#each chatGroups as group (group.key)}
+            <div class="chat-time-group">
+              <p class="chat-time-label">{group.label}</p>
+              {#each group.chats as chat (chat.id)}
+                <div class="chat-item">
+                  {#if renameChatId === chat.id}
+                    <div class="chat-rename-form">
+                      <input
+                        class="chat-rename-input"
+                        type="text"
+                        bind:value={renameTitle}
+                        bind:this={renameInputElement}
+                        aria-label={$_('sidebar.renamePlaceholder')}
+                        placeholder={$_('sidebar.renamePlaceholder')}
+                        disabled={renamingChat}
+                        onkeydown={(event: KeyboardEvent) => {
+                          if (event.key === 'Escape') {
+                            cancelRename();
+                          } else if (event.key === 'Enter') {
+                            confirmRenameChat();
+                          }
+                        }}
+                        onblur={() => {
+                          if (!renamingChat) {
+                            cancelRename();
+                          }
+                        }}
+                      />
+                    </div>
+                  {:else}
+                    <button
+                      class="menu-item chat-item-btn"
+                      class:selected={selectedChatId === chat.id}
+                      onclick={() => selectChat(chat.id)}
+                      title={chat.title}
+                    >
+                      <span class="chat-status-dot" aria-hidden="true"></span>
+                      <span class="chat-item-title">{chat.title}</span>
+                    </button>
+                  {/if}
+                  <button
+                    class="chat-item-menu"
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      if (renameChatId === chat.id) return;
+                      toggleChatMenu(chat.id);
+                    }}
+                    title={$_('sidebar.chatOptions')}
+                    aria-label={$_('sidebar.chatOptions')}
+                    aria-expanded={activeChatMenu === chat.id}
+                    disabled={renameChatId === chat.id}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"></circle>
+                      <circle cx="12" cy="5" r="1"></circle>
+                      <circle cx="12" cy="19" r="1"></circle>
+                    </svg>
+                  </button>
+                  {#if activeChatMenu === chat.id && renameChatId !== chat.id}
+                    <div
+                      class="chat-dropdown"
+                      onclick={(e) => e.stopPropagation()}
+                      onkeydown={(e) => e.stopPropagation()}
+                      role="menu"
+                      tabindex="-1"
+                    >
+                      <button class="menu-item" onclick={() => openRenameDialog(chat)} aria-label={$_('sidebar.rename')} title={$_('sidebar.rename')}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                          <path d="M4 17.25V21h3.75L17.81 10.94l-3.75-3.75L4 17.25z"></path>
+                          <path
+                            d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"
+                          ></path>
+                        </svg>
+                        {$_('sidebar.rename')}
+                      </button>
+                      <button class="menu-item menu-item--danger" onclick={() => deleteChat(chat.id)} aria-label={$_('sidebar.delete')} title={$_('sidebar.delete')}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                          <polyline points="3,6 5,6 21,6"></polyline>
+                          <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                        </svg>
+                        {$_('sidebar.delete')}
+                      </button>
+                      <button class="menu-item" onclick={() => archiveChat(chat.id, chat.title)} aria-label={$_('sidebar.archive')} title={$_('sidebar.archive')}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        {$_('sidebar.archive')}
+                      </button>
+                    </div>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          {/each}
+          {#if loadingMoreChats && chatHistory.length > 0}
+            <div class="chat-loading chat-loading-more">
+              <div class="loading-spinner-small"></div>
+              <span>{$_('sidebar.loadingChats')}</span>
+            </div>
+          {/if}
         {/if}
-      {/if}
+      </div>
     </div>
   </div>
 {/if}
@@ -599,122 +662,128 @@ SPDX-License-Identifier: Apache-2.0
 {/if}
 
 <style>
-  /* Mirror sidebar nav item styles (scoped to this component; collapsed via parent aside) */
-  .sidebar-nav {
-    flex: 0;
-    padding: var(--space-md) var(--space-sm);
+  /* ===== Collapsed rail (Recent) ===== */
+  .collapsed-recent {
+    display: flex;
+    justify-content: center;
   }
 
-  :global(aside.sidebar.collapsed) .sidebar-nav {
-    padding: var(--space-md) var(--space-xs);
-  }
-
-  .sidebar-item {
-    width: 100%;
+  .rail-btn {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
-    margin-bottom: 2px;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
     border: none;
     background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
+    color: var(--gx-slate);
     cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
-    border-radius: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
     box-shadow: none;
     backdrop-filter: none;
   }
 
-  .sidebar-item:hover {
-    background: var(--btn-tertiary);
-    color: var(--text-primary);
-    font-weight: 500;
-    border-radius: var(--radius-md);
+  .rail-btn:hover {
+    background: var(--gx-fill-soft);
+    color: var(--gx-slate);
+    transform: none;
+    box-shadow: none;
   }
 
-  .sidebar-icon {
-    width: 20px;
-    height: 20px;
+  .rail-btn:active {
+    background: var(--gx-line);
+    transform: none;
+  }
+
+  .rail-btn.active {
+    background: var(--gx-blue-soft);
+    color: var(--gx-blue);
+  }
+
+  .rail-btn:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: 2px;
+  }
+
+  /* ===== Recent section (Figma: 24px header, 4px gap to the list) ===== */
+  .recent-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-self: stretch;
+  }
+
+  .recent-header {
+    display: flex;
+    height: 24px;
+    align-items: center;
+    gap: 2px;
+    align-self: stretch;
+    color: var(--gx-dim);
+  }
+
+  .section-icon {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    color: currentcolor;
+  }
+
+  .recent-title {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 14px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: currentcolor;
+  }
+
+  /* ===== Day groups (TODAY / YESTERDAY / THIS WEEK / EARLIER) ===== */
+  .chat-time-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-self: stretch;
+  }
+
+  .chat-time-label {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 14px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: var(--gx-dim);
+    padding: 6px 8px 2px;
+    margin: 0;
+  }
+
+  .chat-status-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--gx-green-dot);
     flex-shrink: 0;
   }
 
-  .sidebar-label {
-    font-weight: 500;
-    white-space: nowrap;
-    transition:
-      opacity 0.2s ease,
-      width 0.2s ease;
-  }
-
-  :global(aside.sidebar.collapsed) .sidebar-label {
-    opacity: 0;
-    width: 0;
-    overflow: hidden;
-  }
-
-  :global(aside.sidebar.collapsed) .sidebar-item {
-    justify-content: center;
-    padding: var(--space-md);
-  }
-
-  /* ===== Chat List Section ===== */
+  /* ===== Chat list ===== */
+  /* The sidebar's .sb-scroll owns the scrollbar, so this box just stacks. */
   .chat-list-section {
-    overflow-y: auto;
-    padding: 0 var(--space-sm);
-    margin-bottom: var(--space-sm);
-  }
-
-  .chat-list-section {
-    scrollbar-width: thin; /* Firefox */
-    scrollbar-color: transparent transparent; /* Firefox - hidden by default */
-  }
-
-  .chat-list-section:hover {
-    scrollbar-color: var(--glass-stroke-light) transparent; /* Firefox - show on hover */
-  }
-
-  .chat-list-section::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .chat-list-section::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .chat-list-section::-webkit-scrollbar-thumb {
-    background: transparent;
-    border-radius: 2px;
-    transition: background 0.2s ease;
-  }
-
-  .chat-list-section:hover::-webkit-scrollbar-thumb {
-    background: var(--glass-stroke-light);
-  }
-
-  .chat-section-title {
-    padding: var(--space-sm) var(--space-md);
-    margin-top: var(--space-sm);
-  }
-
-  .chat-section-title span {
-    font-size: 0.6875rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    align-self: stretch;
   }
 
   .chat-list {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
+    align-self: stretch;
   }
 
   .chat-rename-form {
@@ -753,17 +822,61 @@ SPDX-License-Identifier: Apache-2.0
     justify-content: space-between;
   }
 
+  /* Figma chat row: 28px tall, 6px radius, 8px gap, 6/8 padding */
   .chat-item-btn {
     flex: 1;
     min-width: 0;
-    color: var(--text-secondary);
+    display: flex;
+    height: 28px;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border: none;
+    background: transparent;
+    color: var(--gx-muted);
+    font-size: 12px;
+    line-height: 16px;
+    cursor: pointer;
+    text-align: start;
+    border-radius: 6px;
+    transition: background-color 120ms ease;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .chat-item-btn:hover {
+    background: var(--gx-fill-soft);
+    color: var(--gx-muted);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .chat-item-btn:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: -2px;
+  }
+
+  /* the current chat: soft fill + stronger label, as drawn in the design */
+  .chat-item-btn.selected {
+    background: var(--gx-fill-soft);
+    color: var(--gx-ink);
+  }
+
+  .chat-item-btn.selected .chat-item-title {
+    font-weight: 600;
+    color: var(--gx-ink);
   }
 
   .chat-item-title {
+    flex-grow: 1;
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-right: var(--space-sm);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    padding-inline-end: 18px;
   }
 
   .chat-item-menu {
@@ -816,10 +929,11 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .chat-empty {
-    padding: var(--space-xl) var(--space-md);
+    padding: 12px 8px;
     text-align: center;
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
+    color: var(--gx-dim);
+    font-size: 12px;
+    line-height: 16px;
   }
 
   /* ===== Inline Search ===== */
@@ -907,9 +1021,8 @@ SPDX-License-Identifier: Apache-2.0
     flex-direction: column;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-xl) var(--space-md);
-    color: var(--text-secondary);
-    opacity: 0.7;
+    padding: 16px 8px;
+    color: var(--gx-dim);
     text-align: center;
   }
 
@@ -930,10 +1043,10 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-xl) var(--space-md);
+    padding: 16px 8px;
     text-align: center;
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
+    color: var(--gx-dim);
+    font-size: 12px;
     justify-content: center;
   }
 

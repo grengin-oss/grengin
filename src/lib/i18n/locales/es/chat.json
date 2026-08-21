@@ -3,7 +3,25 @@
     "emptyState": {
       "title": "Iniciar una conversación",
       "description": "¡Envía un mensaje para comenzar a chatear con el asistente de IA!",
-      "aiDisclaimer": "La IA puede cometer errores. Por favor, verifica las respuestas."
+      "aiDisclaimer": "La IA puede cometer errores. Por favor, verifica las respuestas.",
+      "greeting": "Hola, {name}",
+      "suggestions": {
+        "synthesize": {
+          "title": "Sintetizar datos",
+          "body": "Convierte cualquier nota de reunión en 5 puntos clave para el equipo.",
+          "prompt": "Convierte estas notas de reunión en 5 puntos clave para el equipo:\n\n"
+        },
+        "brainstorm": {
+          "title": "Lluvia de ideas creativa",
+          "body": "Genera 5 eslóganes para una nueva marca de moda sostenible.",
+          "prompt": "Genera 5 eslóganes para una nueva marca de moda sostenible."
+        },
+        "facts": {
+          "title": "Verificar datos",
+          "body": "Compara las diferencias clave entre el RGPD y la CCPA.",
+          "prompt": "Compara las diferencias clave entre el RGPD y la CCPA."
+        }
+      }
     },
     "errors": {
       "somethingWentWrong": "Algo salió mal",

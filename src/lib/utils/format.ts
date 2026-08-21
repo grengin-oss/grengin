@@ -82,3 +82,67 @@ export function formatNumber(
   }
 }
 
+
+/**
+ * Format a USD amount the way the admin budget UI does everywhere ("$25.00").
+ * Kept fixed-locale on purpose: budgets are stored and quoted in USD.
+ */
+export function formatCurrency(amount: number): string {
+  return `$${(amount ?? 0).toFixed(2)}`;
+}
+
+/**
+ * "Last active" style timestamp, as drawn in usage-analytics-overview.html:
+ * "Today, 2:14 PM" for today, "Yesterday", "4 days ago" inside a week, and a
+ * plain date beyond that. Wording comes from Intl.RelativeTimeFormat, so no
+ * i18n keys are needed.
+ */
+export function formatRelativeDay(
+  date: Date | string | null | undefined,
+  fallback: string = 'Never'
+): string {
+  if (!date || (typeof date === 'string' && !date.trim())) {
+    return fallback;
+  }
+
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isEpochOrInvalid(dateObj)) {
+    return fallback;
+  }
+
+  const currentLocale = getCurrentLocale();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfDay = new Date(dateObj);
+  startOfDay.setHours(0, 0, 0, 0);
+  const dayDelta = Math.round((startOfDay.getTime() - startOfToday.getTime()) / 86400000);
+
+  if (dayDelta > 0 || dayDelta < -6) {
+    return formatDate(
+      dateObj,
+      { year: 'numeric', month: 'short', day: 'numeric' },
+      fallback
+    );
+  }
+
+  let relative: string;
+  try {
+    relative = new Intl.RelativeTimeFormat(currentLocale, { numeric: 'auto' }).format(
+      dayDelta,
+      'day'
+    );
+  } catch {
+    relative = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' }).format(
+      dayDelta,
+      'day'
+    );
+  }
+  relative = relative.charAt(0).toLocaleUpperCase(currentLocale) + relative.slice(1);
+
+  if (dayDelta !== 0) {
+    return relative;
+  }
+
+  const time = formatDate(dateObj, { hour: 'numeric', minute: '2-digit' }, fallback);
+  return `${relative}, ${time}`;
+}

@@ -243,6 +243,8 @@ export interface TopModel {
   total_cost: number;
   total_requests: number;
   total_tokens: number;
+  /** Optional: only sent by backends that aggregate per-model latency. */
+  average_latency?: number;
 }
 
 export interface AnalyticsOverview {

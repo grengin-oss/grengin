@@ -5,20 +5,15 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { tick } from "svelte";
-  import AdminPanelCard from "../AdminPanelCard.svelte";
   import LoadingSpinner from "../LoadingSpinner.svelte";
   import ChartDataTableModal from "./ChartDataTableModal.svelte";
-  import type { AnalyticsOverview, AnalyticsTimeseries, TimeseriesDataPoint } from "../../types.js";
-  import type { default as VegaEmbed } from "vega-embed";
-  import { _ } from 'svelte-i18n';
-
-  let embedPromise: Promise<typeof VegaEmbed> | null = null;
-  function loadEmbed() {
-    if (!embedPromise) {
-      embedPromise = import("vega-embed").then((m) => m.default);
-    }
-    return embedPromise;
-  }
+  import AnalyticsTrendChart from "./AnalyticsTrendChart.svelte";
+  import type {
+    AnalyticsOverview,
+    AnalyticsTimeseries,
+    TimeseriesDataPoint,
+  } from "../../types.js";
+  import { _ } from "svelte-i18n";
 
   interface Props {
     overviewData: AnalyticsOverview | null;
@@ -26,16 +21,31 @@ SPDX-License-Identifier: Apache-2.0
     isLoading: boolean;
     chartsLoading: boolean;
     comparisonPeriodLabel: string;
+    /** Selected range, e.g. "Last 30 days" — the section captions in the design. */
+    rangeLabel: string;
     error: string | null;
     onRetry: () => void;
-    granularity: 'hour' | 'day' | 'week' | 'month';
-    onGranularityChange: (value: 'hour' | 'day' | 'week' | 'month') => void;
   }
 
-  let { overviewData, timeseriesData, isLoading, chartsLoading, comparisonPeriodLabel, error, onRetry, granularity, onGranularityChange }: Props = $props();
-  let chartsGridEl = $state<HTMLDivElement | null>(null);
-  let resizeRerenderTimer: ReturnType<typeof setTimeout> | null = null;
-  let activeDataTable = $state<string | null>(null);
+  let {
+    overviewData,
+    timeseriesData,
+    isLoading,
+    chartsLoading,
+    comparisonPeriodLabel,
+    rangeLabel,
+    error,
+    onRetry,
+  }: Props = $props();
+
+  type ChartId =
+    | "multi-metric"
+    | "usage-growth"
+    | "api-reliability"
+    | "cost-trend";
+
+  let activeChart = $state<ChartId>("multi-metric");
+  let isDataTableOpen = $state(false);
 
   interface TableColumn {
     id: string;
@@ -43,1183 +53,1219 @@ SPDX-License-Identifier: Apache-2.0
     value: (row: TimeseriesDataPoint) => string | number;
   }
 
-  interface ActiveTableConfig {
-    title: string;
-    caption: string;
-    columns: TableColumn[];
-  }
+  const points = $derived(timeseriesData?.data ?? []);
+  const hasPoints = $derived(points.length > 0);
+  const lowercaseRange = $derived(rangeLabel.toLocaleLowerCase());
 
   function formatNumber(num: number): string {
     if (num >= 1000000) {
       const val = num / 1000000;
-      return (val % 1 === 0 ? val.toString() : val.toFixed(1)) + 'M';
+      return (val % 1 === 0 ? val.toString() : val.toFixed(1)) + "M";
     } else if (num >= 1000) {
       const val = num / 1000;
-      return (val % 1 === 0 ? val.toString() : val.toFixed(1)) + 'K';
+      return (val % 1 === 0 ? val.toString() : val.toFixed(1)) + "K";
     }
     return Math.round(num).toString();
   }
 
   function formatCurrency(num: number): string {
-    return '$' + num.toFixed(2);
+    return "$" + num.toFixed(2);
+  }
+
+  /** Cost axis/tooltip: cents by default, three decimals for sub-cent values. */
+  function formatCurrencyPrecise(num: number): string {
+    return "$" + num.toFixed(num > 0 && num < 0.01 ? 3 : 2);
   }
 
   function formatPercentage(num: number): string {
-    const sign = num >= 0 ? '+' : '';
-    return sign + (num * 100).toFixed(1) + '%';
+    const sign = num >= 0 ? "+" : "";
+    return sign + (num * 100).toFixed(1) + "%";
   }
 
-  function toggleDataTable(chartId: string) {
-    if (activeDataTable === chartId) {
-      closeDataTable();
-    } else {
-      activeDataTable = chartId;
+  function formatMs(num: number): string {
+    return Math.round(num) + "ms";
+  }
+
+  /** Granularity decides whether a tick reads as a day or an hour. */
+  function tickLabel(timestamp: string): string {
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) return timestamp;
+    if (timeseriesData?.granularity === "hour") {
+      return date.toLocaleTimeString(undefined, { hour: "numeric" });
     }
+    if (timeseriesData?.granularity === "month") {
+      return date.toLocaleDateString(undefined, {
+        month: "short",
+        year: "2-digit",
+      });
+    }
+    return date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "2-digit",
+    });
+  }
+
+  function fullLabel(timestamp: string): string {
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) return timestamp;
+    return timeseriesData?.granularity === "hour"
+      ? date.toLocaleString(undefined, {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+        })
+      : date.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+  }
+
+  const tickLabels = $derived(
+    points.map((point) => tickLabel(point.timestamp)),
+  );
+  const fullLabels = $derived(
+    points.map((point) => fullLabel(point.timestamp)),
+  );
+
+  interface ChartConfig {
+    id: ChartId;
+    tabLabel: string;
+    title: string;
+    subtitle: string;
+    series: {
+      key: string;
+      label: string;
+      color: string;
+      values: number[];
+      axis?: "left" | "right";
+      tooltipOnly?: boolean;
+      format?: (value: number) => string;
+    }[];
+    columns: TableColumn[];
+    /** Series the insight sentence talks about. */
+    insightKey: string;
+  }
+
+  const CHART_CONFIGS = $derived<ChartConfig[]>([
+    {
+      id: "multi-metric",
+      tabLabel: $_("analytics.charts.multiMetric.tabLabel"),
+      title: $_("analytics.charts.multiMetric.title"),
+      subtitle: $_("analytics.charts.multiMetric.subtitle"),
+      series: [
+        {
+          key: "requests",
+          label: $_("analytics.charts.multiMetric.requests"),
+          color: "var(--gx-an-line)",
+          values: points.map((point) => point.total_requests),
+          format: formatNumber,
+        },
+        {
+          key: "tokens",
+          label: $_("analytics.charts.multiMetric.tokens"),
+          color: "var(--gx-an-green)",
+          values: points.map((point) => point.total_tokens),
+          tooltipOnly: true,
+          format: formatNumber,
+        },
+        {
+          key: "latency",
+          label: $_("analytics.charts.multiMetric.latency"),
+          color: "var(--gx-an-red)",
+          values: points.map((point) => point.average_latency),
+          tooltipOnly: true,
+          format: formatMs,
+        },
+      ],
+      columns: [
+        {
+          id: "date",
+          label: $_("analytics.charts.multiMetric.date"),
+          value: (row) => fullLabel(row.timestamp),
+        },
+        {
+          id: "requests",
+          label: $_("analytics.charts.multiMetric.requests"),
+          value: (row) => formatNumber(row.total_requests),
+        },
+        {
+          id: "tokens",
+          label: $_("analytics.charts.multiMetric.tokens"),
+          value: (row) => formatNumber(row.total_tokens),
+        },
+        {
+          id: "latency",
+          label: $_("analytics.charts.multiMetric.latencyMs"),
+          value: (row) => row.average_latency.toFixed(2),
+        },
+      ],
+      insightKey: "requests",
+    },
+    {
+      id: "usage-growth",
+      tabLabel: $_("analytics.charts.usageGrowth.title"),
+      title: $_("analytics.charts.usageGrowth.title"),
+      subtitle: $_("analytics.charts.usageGrowth.subtitle"),
+      series: [
+        {
+          key: "requests",
+          label: $_("analytics.charts.usageGrowth.requests"),
+          color: "var(--gx-an-line)",
+          values: points.map((point) => point.total_requests),
+          format: formatNumber,
+        },
+        {
+          key: "tokens",
+          label: $_("analytics.charts.usageGrowth.tokens"),
+          color: "var(--gx-an-green)",
+          values: points.map((point) => point.total_tokens),
+          axis: "right",
+          format: formatNumber,
+        },
+      ],
+      columns: [
+        {
+          id: "date",
+          label: $_("analytics.charts.multiMetric.date"),
+          value: (row) => fullLabel(row.timestamp),
+        },
+        {
+          id: "requests",
+          label: $_("analytics.charts.usageGrowth.requests"),
+          value: (row) => formatNumber(row.total_requests),
+        },
+        {
+          id: "tokens",
+          label: $_("analytics.charts.usageGrowth.tokens"),
+          value: (row) => formatNumber(row.total_tokens),
+        },
+      ],
+      insightKey: "tokens",
+    },
+    {
+      id: "api-reliability",
+      tabLabel: $_("analytics.charts.apiReliability.title"),
+      title: $_("analytics.charts.apiReliability.title"),
+      subtitle: $_("analytics.charts.apiReliability.subtitle"),
+      series: [
+        {
+          key: "success",
+          label: $_("analytics.charts.apiReliability.success"),
+          color: "var(--gx-an-green)",
+          values: points.map((point) => point.success_count),
+          format: formatNumber,
+        },
+        {
+          key: "errors",
+          label: $_("analytics.charts.apiReliability.errors"),
+          color: "var(--gx-an-red)",
+          values: points.map((point) => point.error_count),
+          format: formatNumber,
+        },
+      ],
+      columns: [
+        {
+          id: "date",
+          label: $_("analytics.charts.multiMetric.date"),
+          value: (row) => fullLabel(row.timestamp),
+        },
+        {
+          id: "success",
+          label: $_("analytics.charts.apiReliability.success"),
+          value: (row) => formatNumber(row.success_count),
+        },
+        {
+          id: "errors",
+          label: $_("analytics.charts.apiReliability.errors"),
+          value: (row) => formatNumber(row.error_count),
+        },
+      ],
+      insightKey: "success",
+    },
+    {
+      id: "cost-trend",
+      tabLabel: $_("analytics.charts.costTrend.title"),
+      title: $_("analytics.charts.costTrend.title"),
+      subtitle: $_("analytics.charts.costTrend.subtitle"),
+      series: [
+        {
+          key: "cost",
+          label: $_("analytics.charts.costTrend.totalCost"),
+          color: "var(--gx-an-line)",
+          values: points.map((point) => point.total_cost),
+          format: formatCurrencyPrecise,
+        },
+      ],
+      columns: [
+        {
+          id: "date",
+          label: $_("analytics.charts.multiMetric.date"),
+          value: (row) => fullLabel(row.timestamp),
+        },
+        {
+          id: "cost",
+          label: $_("analytics.charts.costTrend.totalCost"),
+          value: (row) => formatCurrency(row.total_cost),
+        },
+      ],
+      insightKey: "cost",
+    },
+  ]);
+
+  const chart = $derived(
+    CHART_CONFIGS.find((config) => config.id === activeChart) ??
+      CHART_CONFIGS[0],
+  );
+
+  /** The design's insight strip: peak point of the chart's headline series. */
+  const insight = $derived.by(() => {
+    const series =
+      chart.series.find((item) => item.key === chart.insightKey) ??
+      chart.series[0];
+    if (!series || series.values.length < 2) return "";
+    const format = series.format ?? formatNumber;
+    let peakIndex = 0;
+    let peak = series.values[0];
+    let low = series.values[0];
+    series.values.forEach((value, index) => {
+      if (value > peak) {
+        peak = value;
+        peakIndex = index;
+      }
+      if (value < low) low = value;
+    });
+    if (peak <= 0 || peak === low) {
+      return $_("analytics.charts.insight.flat", {
+        values: { metric: series.label },
+      });
+    }
+    const peakDate = new Date(points[peakIndex]?.timestamp ?? "");
+    const day = Number.isNaN(peakDate.getTime())
+      ? (fullLabels[peakIndex] ?? "")
+      : timeseriesData?.granularity === "hour"
+        ? (fullLabels[peakIndex] ?? "")
+        : peakDate.toLocaleDateString(undefined, { weekday: "long" });
+    const ratio = low > 0 ? (peak / low).toFixed(1) : format(peak);
+    return $_("analytics.charts.insight.peak", {
+      values: { metric: series.label, day, value: format(peak), ratio },
+    });
+  });
+
+  const PROVIDER_COLORS: Record<string, string> = {
+    openai: "var(--gx-org-kpi-icon-fg)",
+    anthropic: "var(--gx-an-violet)",
+    google: "var(--gx-an-amber)",
+    azure: "var(--gx-an-blue)",
+    mistral: "var(--gx-an-rose)",
+  };
+
+  function providerColor(provider: string): string {
+    return (
+      PROVIDER_COLORS[provider?.toLowerCase?.() ?? ""] ?? "var(--gx-an-axis)"
+    );
+  }
+
+  function growthBadgeClass(rate: number): string {
+    return rate < 0
+      ? "stat-badge stat-badge--down"
+      : "stat-badge stat-badge--up";
   }
 
   function closeDataTable() {
-    const previousChartId = activeDataTable;
-    activeDataTable = null;
+    isDataTableOpen = false;
     tick().then(() => {
-      // Find the view data table button for the chart that was open
-      const chartCard = document.getElementById(previousChartId!)?.closest('.chart-card');
-      const button = chartCard?.querySelector('.view-data-table-btn') as HTMLElement;
-      button?.focus();
+      (document.querySelector(".view-data-btn") as HTMLElement | null)?.focus();
     });
   }
 
   function handleGlobalKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape' && activeDataTable) {
+    if (event.key === "Escape" && isDataTableOpen) {
       event.preventDefault();
       closeDataTable();
     }
   }
-
-  function formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  }
-
-  function getActiveTableConfig(): ActiveTableConfig | null {
-    if (!activeDataTable) return null;
-
-    if (activeDataTable === "multi-metric-chart") {
-      return {
-        title: $_("analytics.charts.multiMetric.title"),
-        caption: `${$_("analytics.charts.multiMetric.title")} data`,
-        columns: [
-          { id: "date", label: $_("analytics.charts.multiMetric.date"), value: (row) => formatDate(row.timestamp) },
-          { id: "requests", label: $_("analytics.charts.multiMetric.requests"), value: (row) => formatNumber(row.total_requests) },
-          { id: "tokens", label: $_("analytics.charts.multiMetric.tokens"), value: (row) => formatNumber(row.total_tokens) },
-          { id: "latency", label: $_("analytics.charts.multiMetric.latencyMs"), value: (row) => row.average_latency.toFixed(2) }
-        ]
-      };
-    }
-
-    if (activeDataTable === "requests-tokens-chart") {
-      return {
-        title: $_("analytics.charts.usageGrowth.title"),
-        caption: `${$_("analytics.charts.usageGrowth.title")} data`,
-        columns: [
-          { id: "date", label: $_("analytics.charts.multiMetric.date"), value: (row) => formatDate(row.timestamp) },
-          { id: "requests", label: $_("analytics.charts.usageGrowth.requests"), value: (row) => formatNumber(row.total_requests) },
-          { id: "tokens", label: $_("analytics.charts.usageGrowth.tokens"), value: (row) => formatNumber(row.total_tokens) }
-        ]
-      };
-    }
-
-    if (activeDataTable === "success-error-chart") {
-      return {
-        title: $_("analytics.charts.apiReliability.title"),
-        caption: `${$_("analytics.charts.apiReliability.title")} data`,
-        columns: [
-          { id: "date", label: $_("analytics.charts.multiMetric.date"), value: (row) => formatDate(row.timestamp) },
-          { id: "success", label: $_("analytics.charts.apiReliability.success"), value: (row) => formatNumber(row.success_count) },
-          { id: "errors", label: $_("analytics.charts.apiReliability.errors"), value: (row) => formatNumber(row.error_count) }
-        ]
-      };
-    }
-
-    if (activeDataTable === "cost-trend-chart") {
-      return {
-        title: $_("analytics.charts.costTrend.title"),
-        caption: `${$_("analytics.charts.costTrend.title")} data`,
-        columns: [
-          { id: "date", label: $_("analytics.charts.multiMetric.date"), value: (row) => formatDate(row.timestamp) },
-          { id: "cost", label: $_("analytics.charts.costTrend.totalCost"), value: (row) => formatCurrency(row.total_cost) }
-        ]
-      };
-    }
-
-    return null;
-  }
-
-  function renderCharts() {
-    if (!timeseriesData || !timeseriesData.data || timeseriesData.data.length === 0) return;
-
-    setTimeout(() => renderMultiMetricChart(), 50);
-    setTimeout(() => renderRequestsTokensChart(), 100);
-    setTimeout(() => renderSuccessErrorChart(), 150);
-    setTimeout(() => renderCostTrendChart(), 200);
-  }
-
-  function scheduleChartsRerender() {
-    if (chartsLoading || !timeseriesData || !timeseriesData.data || timeseriesData.data.length === 0) return;
-    if (resizeRerenderTimer) clearTimeout(resizeRerenderTimer);
-
-    // Debounce resize-driven renders to prevent thrashing while dragging window size.
-    resizeRerenderTimer = setTimeout(() => {
-      tick().then(() => renderCharts());
-    }, 120);
-  }
-
-  function getChartConfig() {
-    const styles = getComputedStyle(document.documentElement);
-    const textPrimary = styles.getPropertyValue('--text-primary').trim() || '#111827';
-    const textSecondary = styles.getPropertyValue('--text-secondary').trim() || '#6b7280';
-    const gridStroke = styles.getPropertyValue('--glass-stroke-dark').trim() || 'rgba(148, 163, 184, 0.24)';
-
-    return {
-      background: 'transparent',
-      view: { stroke: null },
-      axis: {
-        domainColor: gridStroke,
-        tickColor: gridStroke,
-        gridColor: gridStroke,
-        labelColor: textSecondary,
-        titleColor: textPrimary,
-        labelFontSize: 11,
-        titleFontSize: 12
-      },
-      legend: {
-        labelColor: textSecondary,
-        titleColor: textPrimary
-      }
-    };
-  }
-
-  function renderMultiMetricChart() {
-    const el = document.getElementById('multi-metric-chart');
-    if (!timeseriesData || !el) return;
-
-    const spec: any = {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      width: 'container',
-      height: 280,
-      data: { values: timeseriesData.data },
-      layer: [
-        {
-          mark: { type: 'line', strokeWidth: 3, interpolate: 'monotone' },
-          encoding: {
-            x: {
-              field: 'timestamp',
-              type: 'temporal',
-              title: $_('analytics.charts.multiMetric.date')
-            },
-            y: {
-              field: 'total_requests',
-              type: 'quantitative',
-              title: $_('analytics.charts.multiMetric.requests')
-            },
-            color: { value: '#4079c5' }
-          }
-        },
-        {
-          mark: { type: 'point', filled: true, size: 100 },
-          encoding: {
-            x: { field: 'timestamp', type: 'temporal' },
-            y: { field: 'total_requests', type: 'quantitative' },
-            color: { value: '#4079c5' },
-            tooltip: [
-              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
-              { field: 'total_requests', type: 'quantitative', title: $_('analytics.charts.multiMetric.requests'), format: ',.0f' },
-              { field: 'total_tokens', type: 'quantitative', title: $_('analytics.charts.multiMetric.tokens'), format: ',.0f' },
-              { field: 'average_latency', type: 'quantitative', title: $_('analytics.charts.multiMetric.latencyMs'), format: '.2f' }
-            ]
-          }
-        }
-      ],
-      config: getChartConfig()
-    };
-
-    loadEmbed().then((embed) => embed(el, spec, { actions: false, renderer: 'svg' })).catch(console.error);
-  }
-
-  function renderRequestsTokensChart() {
-    const el = document.getElementById('requests-tokens-chart');
-    if (!timeseriesData || !el) return;
-
-    const spec: any = {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      width: 'container',
-      height: 280,
-      data: { values: timeseriesData.data },
-      layer: [
-        {
-          mark: { type: 'bar', opacity: 0.8, cornerRadiusEnd: 4 },
-          encoding: {
-            x: {
-              field: 'timestamp',
-              type: 'temporal',
-              title: $_('analytics.charts.multiMetric.date')
-            },
-            y: {
-              field: 'total_requests',
-              type: 'quantitative',
-              scale: { zero: true },
-              title: $_('analytics.charts.usageGrowth.requests')
-            },
-            color: { value: '#4079c5' },
-            tooltip: [
-              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
-              { field: 'total_requests', type: 'quantitative', title: $_('analytics.charts.usageGrowth.requests'), format: ',.0f' },
-              { field: 'total_tokens', type: 'quantitative', title: $_('analytics.charts.usageGrowth.tokens'), format: ',.0f' }
-            ]
-          }
-        },
-        {
-          mark: { type: 'line', strokeWidth: 3, interpolate: 'monotone' },
-          encoding: {
-            x: { field: 'timestamp', type: 'temporal' },
-            y: {
-              field: 'total_tokens',
-              type: 'quantitative',
-              title: $_('analytics.charts.usageGrowth.tokens')
-            },
-            color: { value: '#2d906b' },
-            tooltip: [
-              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
-              { field: 'total_requests', type: 'quantitative', title: $_('analytics.charts.usageGrowth.requests'), format: ',.0f' },
-              { field: 'total_tokens', type: 'quantitative', title: $_('analytics.charts.usageGrowth.tokens'), format: ',.0f' }
-            ]
-          }
-        },
-        {
-          mark: { type: 'point', filled: true, size: 100 },
-          encoding: {
-            x: { field: 'timestamp', type: 'temporal' },
-            y: { field: 'total_tokens', type: 'quantitative' },
-            color: { value: '#2d906b' },
-            tooltip: [
-              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
-              { field: 'total_requests', type: 'quantitative', title: $_('analytics.charts.usageGrowth.requests'), format: ',.0f' },
-              { field: 'total_tokens', type: 'quantitative', title: $_('analytics.charts.usageGrowth.tokens'), format: ',.0f' }
-            ]
-          }
-        }
-      ],
-      config: getChartConfig()
-    };
-
-    loadEmbed().then((embed) => embed(el, spec, { actions: false, renderer: 'svg' })).catch(console.error);
-  }
-
-  function renderSuccessErrorChart() {
-    const el = document.getElementById('success-error-chart');
-    if (!timeseriesData || !el) return;
-
-    const spec: any = {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      width: 'container',
-      height: 280,
-      data: { values: timeseriesData.data },
-      mark: { type: 'bar', cornerRadiusEnd: 4 },
-      encoding: {
-        x: {
-          field: 'timestamp',
-          type: 'temporal',
-          title: $_('analytics.charts.multiMetric.date')
-        },
-        y: {
-          field: 'value',
-          type: 'quantitative',
-          title: $_('analytics.charts.apiReliability.count')
-        },
-        color: {
-          field: 'type',
-          type: 'nominal',
-          scale: {
-            domain: ['Success', 'Errors'],
-            range: ['#00C853', '#DF000C']
-          },
-          legend: null
-        },
-        tooltip: [
-          { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
-          { field: 'type', type: 'nominal', title: $_('analytics.charts.apiReliability.type') },
-          { field: 'value', type: 'quantitative', title: $_('analytics.charts.apiReliability.count'), format: ',.0f' }
-        ]
-      },
-      transform: [
-        { fold: ['success_count', 'error_count'], as: ['type', 'value'] },
-        { calculate: "datum.type === 'success_count' ? 'Success' : 'Errors'", as: 'type' }
-      ],
-      config: getChartConfig()
-    };
-
-    loadEmbed().then((embed) => embed(el, spec, { actions: false, renderer: 'svg' })).catch(console.error);
-  }
-
-  function renderCostTrendChart() {
-    const el = document.getElementById('cost-trend-chart');
-    if (!timeseriesData || !el) return;
-
-    const spec: any = {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      width: 'container',
-      height: 280,
-      data: { values: timeseriesData.data },
-      layer: [
-        {
-          mark: { type: 'area', opacity: 0.3, line: true, interpolate: 'monotone' },
-          encoding: {
-            x: {
-              field: 'timestamp',
-              type: 'temporal',
-              title: $_('analytics.charts.multiMetric.date')
-            },
-            y: {
-              field: 'total_cost',
-              type: 'quantitative',
-              scale: { zero: true },
-              title: $_('analytics.charts.costTrend.totalCost')
-            },
-            color: { value: '#2d906b' }
-          }
-        },
-        {
-          mark: { type: 'line', strokeWidth: 3, interpolate: 'monotone' },
-          encoding: {
-            x: { field: 'timestamp', type: 'temporal' },
-            y: { field: 'total_cost', type: 'quantitative' },
-            color: { value: '#2d906b' }
-          }
-        },
-        {
-          mark: { type: 'point', filled: true, size: 100 },
-          encoding: {
-            x: { field: 'timestamp', type: 'temporal' },
-            y: { field: 'total_cost', type: 'quantitative' },
-            color: { value: '#2d906b' },
-            tooltip: [
-              { field: 'timestamp', type: 'temporal', title: $_('analytics.charts.multiMetric.date'), format: '%b %d, %Y' },
-              { field: 'total_cost', type: 'quantitative', title: $_('analytics.charts.costTrend.totalCost'), format: '$,.2f' }
-            ]
-          }
-        }
-      ],
-      config: getChartConfig()
-    };
-
-    loadEmbed().then((embed) => embed(el, spec, { actions: false, renderer: 'svg' })).catch(console.error);
-  }
-
-  // Re-render charts when data changes and not loading
-  $effect(() => {
-    if (!chartsLoading && timeseriesData && timeseriesData.data && timeseriesData.data.length > 0) {
-      tick().then(() => renderCharts());
-    }
-  });
-
-  // Keep Vega charts in sync with card width changes.
-  $effect(() => {
-    if (!chartsGridEl || chartsLoading || !timeseriesData || !timeseriesData.data || timeseriesData.data.length === 0) {
-      return;
-    }
-
-    const observer = new ResizeObserver(() => {
-      scheduleChartsRerender();
-    });
-
-    observer.observe(chartsGridEl);
-
-    return () => {
-      observer.disconnect();
-      if (resizeRerenderTimer) {
-        clearTimeout(resizeRerenderTimer);
-        resizeRerenderTimer = null;
-      }
-    };
-  });
 </script>
 
 <svelte:window onkeydown={handleGlobalKeydown} />
 
 {#if isLoading}
-  <div class="loading-container" role="status" aria-live="polite" aria-busy="true">
+  <div
+    class="loading-container"
+    role="status"
+    aria-live="polite"
+    aria-busy="true"
+  >
     <LoadingSpinner />
   </div>
 {:else if error}
-  <AdminPanelCard>
-    <div class="error-state" role="alert">
-      <p class="error-message">{error}</p>
-      <button type="button" class="btn-primary" onclick={onRetry}>{$_('analytics.retry')}</button>
-    </div>
-  </AdminPanelCard>
+  <div class="error-state" role="alert">
+    <p class="error-message">{error}</p>
+    <button type="button" class="retry-btn" onclick={onRetry}
+      >{$_("analytics.retry")}</button
+    >
+  </div>
 {:else if overviewData}
   <div class="analytics-content">
-    <section class="overview-section">
-      <h2 class="section-title">{$_('analytics.overview.title')}</h2>
+    <!-- ===================== Quick Stats ===================== -->
+    <section class="section" aria-label={$_("analytics.overview.quickStats")}>
+      <div class="section-head">
+        <h2 class="section-title">{$_("analytics.overview.quickStats")}</h2>
+        <span class="section-sub">{rangeLabel}</span>
+      </div>
 
-      <div class="metrics-grid">
-        <AdminPanelCard class="metric-card">
-          <div class="metric-content">
-            <div class="metric-header">
-              <span class="metric-label">{$_('analytics.overview.totalUsers')}</span>
-              {#if overviewData.request_growth_rate !== 0}
-                <div class="metric-growth-wrapper">
-                  <span class="metric-growth" class:positive={overviewData.request_growth_rate > 0} class:negative={overviewData.request_growth_rate < 0}>
-                    {formatPercentage(overviewData.request_growth_rate)}
-                  </span>
-                  <span class="metric-growth-period">{comparisonPeriodLabel}</span>
-                </div>
-              {/if}
-            </div>
-            <div class="metric-value">{formatNumber(overviewData.total_users)}</div>
-            <div class="metric-subtext">{$_('analytics.overview.activeUsers', { values: { count: formatNumber(overviewData.active_users) } })}</div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <span class="stat-card__bar" style="background: var(--gx-an-green)"
+          ></span>
+          <div class="stat-card__head">
+            <span class="stat-title">{$_("analytics.overview.totalUsers")}</span
+            >
           </div>
-        </AdminPanelCard>
+          <span class="stat-value"
+            >{formatNumber(overviewData.total_users)}</span
+          >
+          <div class="stat-desc">
+            <span class="stat-desc-dot" style="background: var(--gx-an-green)"
+            ></span>
+            <span class="stat-desc-text" style="color: var(--gx-an-green)">
+              {$_("analytics.overview.activeUsers", {
+                values: { count: formatNumber(overviewData.active_users) },
+              })}
+            </span>
+          </div>
+        </div>
 
-        <AdminPanelCard class="metric-card">
-          <div class="metric-content">
-            <div class="metric-header">
-              <span class="metric-label">{$_('analytics.overview.totalRequests')}</span>
-              {#if overviewData.request_growth_rate !== 0}
-                <div class="metric-growth-wrapper">
-                  <span class="metric-growth" class:positive={overviewData.request_growth_rate > 0} class:negative={overviewData.request_growth_rate < 0}>
-                    {formatPercentage(overviewData.request_growth_rate)}
-                  </span>
-                  <span class="metric-growth-period">{comparisonPeriodLabel}</span>
-                </div>
-              {/if}
-            </div>
-            <div class="metric-value">{formatNumber(overviewData.total_requests)}</div>
-            <div class="metric-subtext">{$_('analytics.overview.avgPerUser', { values: { count: overviewData.average_requests_per_user.toFixed(1) } })}</div>
+        <div class="stat-card">
+          <span class="stat-card__bar" style="background: var(--gx-an-bar-blue)"
+          ></span>
+          <div class="stat-card__head">
+            <span class="stat-title"
+              >{$_("analytics.overview.totalRequests")}</span
+            >
+            {#if overviewData.request_growth_rate !== 0}
+              <span
+                class={growthBadgeClass(overviewData.request_growth_rate)}
+                title={comparisonPeriodLabel}
+              >
+                {formatPercentage(overviewData.request_growth_rate)}
+              </span>
+            {/if}
           </div>
-        </AdminPanelCard>
+          <span class="stat-value"
+            >{formatNumber(overviewData.total_requests)}</span
+          >
+          <span class="stat-desc-muted">{rangeLabel}</span>
+        </div>
 
-        <AdminPanelCard class="metric-card">
-          <div class="metric-content">
-            <div class="metric-header">
-              <span class="metric-label">{$_('analytics.overview.totalTokens')}</span>
-              {#if overviewData.token_growth_rate !== 0}
-                <div class="metric-growth-wrapper">
-                  <span class="metric-growth" class:positive={overviewData.token_growth_rate > 0} class:negative={overviewData.token_growth_rate < 0}>
-                    {formatPercentage(overviewData.token_growth_rate)}
-                  </span>
-                  <span class="metric-growth-period">{comparisonPeriodLabel}</span>
-                </div>
-              {/if}
-            </div>
-            <div class="metric-value">{formatNumber(overviewData.total_tokens)}</div>
+        <div class="stat-card">
+          <span class="stat-card__bar" style="background: var(--gx-an-bar-blue)"
+          ></span>
+          <div class="stat-card__head">
+            <span class="stat-title"
+              >{$_("analytics.overview.totalTokens")}</span
+            >
+            {#if overviewData.token_growth_rate !== 0}
+              <span
+                class={growthBadgeClass(overviewData.token_growth_rate)}
+                title={comparisonPeriodLabel}
+              >
+                {formatPercentage(overviewData.token_growth_rate)}
+              </span>
+            {/if}
           </div>
-        </AdminPanelCard>
+          <span class="stat-value"
+            >{formatNumber(overviewData.total_tokens)}</span
+          >
+          <span class="stat-desc-muted">{rangeLabel}</span>
+        </div>
 
-        <AdminPanelCard class="metric-card">
-          <div class="metric-content">
-            <div class="metric-header">
-              <span class="metric-label">{$_('analytics.overview.totalCost')}</span>
-              {#if overviewData.cost_growth_rate !== 0}
-                <div class="metric-growth-wrapper">
-                  <span class="metric-growth" class:positive={overviewData.cost_growth_rate > 0} class:negative={overviewData.cost_growth_rate < 0}>
-                    {formatPercentage(overviewData.cost_growth_rate)}
-                  </span>
-                  <span class="metric-growth-period">{comparisonPeriodLabel}</span>
-                </div>
-              {/if}
-            </div>
-            <div class="metric-value">{formatCurrency(overviewData.total_cost)}</div>
+        <div class="stat-card">
+          <span class="stat-card__bar" style="background: var(--gx-an-bar-blue)"
+          ></span>
+          <div class="stat-card__head">
+            <span class="stat-title">{$_("analytics.overview.totalCost")}</span>
+            {#if overviewData.cost_growth_rate !== 0}
+              <span
+                class={growthBadgeClass(overviewData.cost_growth_rate)}
+                title={comparisonPeriodLabel}
+              >
+                {formatPercentage(overviewData.cost_growth_rate)}
+              </span>
+            {/if}
           </div>
-        </AdminPanelCard>
+          <span class="stat-value"
+            >{formatCurrency(overviewData.total_cost)}</span
+          >
+          <span class="stat-desc-muted">{rangeLabel}</span>
+        </div>
       </div>
     </section>
 
-    {#if overviewData.top_models && overviewData.top_models.length > 0}
-      <section class="top-models-section">
-        <h2 class="section-title">{$_('analytics.topModels.title')}</h2>
-        <AdminPanelCard padded={false}>
-          <div class="table-container">
-            <table class="models-table">
-              <caption class="sr-only">{$_('analytics.aria.topModelsCaption')}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">{$_('analytics.topModels.model')}</th>
-                  <th scope="col">{$_('analytics.topModels.provider')}</th>
-                  <th scope="col">{$_('analytics.topModels.requests')}</th>
-                  <th scope="col">{$_('analytics.topModels.tokens')}</th>
-                  <th scope="col">{$_('analytics.topModels.cost')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {#each overviewData.top_models as model}
-                  <tr>
-                    <td class="model-name">{model.model_name}</td>
-                    <td class="provider-name">{model.model_provider}</td>
-                    <td>{formatNumber(model.total_requests)}</td>
-                    <td>{formatNumber(model.total_tokens)}</td>
-                    <td>{formatCurrency(model.total_cost)}</td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
-        </AdminPanelCard>
-      </section>
-    {/if}
-
-    <section class="charts-section">
-      <div class="section-header">
-        <h2 class="section-title">{$_('analytics.charts.title')}</h2>
-        <div class="aggregation-control" role="group" aria-labelledby="charts-aggregation-label">
-          <span class="aggregation-label" id="charts-aggregation-label">{$_('analytics.filters.aggregated')}</span>
-          <div class="pill-group pill-group--compact">
-            <button
-              type="button"
-              class="pill-group__item"
-              class:pill-group__item--active={granularity === 'hour'}
-              aria-pressed={granularity === 'hour'}
-              onclick={() => onGranularityChange('hour')}
-            >
-              {$_('analytics.filters.hour')}
-            </button>
-            <button
-              type="button"
-              class="pill-group__item"
-              class:pill-group__item--active={granularity === 'day'}
-              aria-pressed={granularity === 'day'}
-              onclick={() => onGranularityChange('day')}
-            >
-              {$_('analytics.filters.day')}
-            </button>
-            <button
-              type="button"
-              class="pill-group__item"
-              class:pill-group__item--active={granularity === 'week'}
-              aria-pressed={granularity === 'week'}
-              onclick={() => onGranularityChange('week')}
-            >
-              {$_('analytics.filters.week')}
-            </button>
-            <button
-              type="button"
-              class="pill-group__item"
-              class:pill-group__item--active={granularity === 'month'}
-              aria-pressed={granularity === 'month'}
-              onclick={() => onGranularityChange('month')}
-            >
-              {$_('analytics.filters.month')}
-            </button>
-          </div>
-        </div>
+    <!-- ===================== trends card ===================== -->
+    <div class="chart-card">
+      <div
+        class="chart-tabs"
+        role="tablist"
+        aria-label={$_("analytics.charts.title")}
+      >
+        {#each CHART_CONFIGS as config (config.id)}
+          <button
+            type="button"
+            class="chart-tab"
+            class:chart-tab--active={activeChart === config.id}
+            class:chart-tab--inactive={activeChart !== config.id}
+            role="tab"
+            aria-selected={activeChart === config.id}
+            onclick={() => (activeChart = config.id)}
+          >
+            {#if config.id === "multi-metric"}
+              <svg
+                width="14"
+                height="13"
+                viewBox="0 0 14 13"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M1 9.5L4.5 5.5L7 7.5L13 1.5"
+                  stroke="currentColor"
+                  stroke-width="1.3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            {:else if config.id === "usage-growth"}
+              <svg
+                width="14"
+                height="13"
+                viewBox="0 0 14 13"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M2.25 11.5V7M7 11.5V2.5M11.75 11.5V5"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            {:else if config.id === "api-reliability"}
+              <svg
+                width="11"
+                height="13"
+                viewBox="0 0 11 13"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5.5 1L10 2.6v4.1c0 2.6-1.8 4.4-4.5 5.3C2.8 11.1 1 9.3 1 6.7V2.6L5.5 1Z"
+                  stroke="currentColor"
+                  stroke-width="1"
+                />
+                <path
+                  d="M3.6 6.5l1.5 1.5 2.4-2.8"
+                  stroke="currentColor"
+                  stroke-width="1"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            {:else}
+              <svg
+                width="9"
+                height="13"
+                viewBox="0 0 9 13"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4.5 1v11"
+                  stroke="currentColor"
+                  stroke-width="1"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M7 3.4C6.3 2.6 5.5 2.2 4.4 2.2 3 2.2 2 2.9 2 4.1c0 1.3 1.2 1.7 2.6 2 1.5.3 2.6.8 2.6 2.1 0 1.3-1.1 2-2.6 2-1.2 0-2.1-.4-2.8-1.3"
+                  stroke="currentColor"
+                  stroke-width="1"
+                  stroke-linecap="round"
+                />
+              </svg>
+            {/if}
+            {config.tabLabel}
+          </button>
+        {/each}
       </div>
 
-      {#if !timeseriesData || !timeseriesData.data || timeseriesData.data.length === 0}
-        <div class="empty-state">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3" aria-hidden="true">
-            <path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>
+      <div class="chart-title-row">
+        <div class="chart-title-group">
+          <h3 class="chart-title">{chart.title}</h3>
+          <span class="chart-subtitle">{chart.subtitle}</span>
+        </div>
+        <button
+          type="button"
+          class="view-data-btn"
+          onclick={() => (isDataTableOpen = true)}
+          disabled={!hasPoints}
+          aria-label={$_("analytics.charts.accessibility.viewDataTableFor", {
+            values: { chartName: chart.title },
+          })}
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 14 14"
+            fill="none"
+            aria-hidden="true"
+          >
+            <rect
+              x="1.75"
+              y="1.75"
+              width="10.5"
+              height="10.5"
+              rx="2"
+              stroke="currentColor"
+              stroke-width="1.3"
+            />
+            <path
+              d="M1.75 5.5h10.5M5.5 5.5v6.75"
+              stroke="currentColor"
+              stroke-width="1.3"
+            />
           </svg>
-          <p class="empty-state-text">{$_('analytics.charts.emptyState.title')}</p>
-          <p class="empty-state-hint">{$_('analytics.charts.emptyState.hint')}</p>
+          <span>{$_("analytics.charts.accessibility.viewDataTable")}</span>
+        </button>
+      </div>
+
+      {#if chartsLoading}
+        <div class="chart-loading"><LoadingSpinner /></div>
+      {:else if !hasPoints}
+        <div class="empty-state">
+          <p class="empty-state-text">
+            {$_("analytics.charts.emptyState.title")}
+          </p>
+          <p class="empty-state-hint">
+            {$_("analytics.charts.emptyState.hint")}
+          </p>
         </div>
       {:else}
-      <div class="charts-grid" bind:this={chartsGridEl}>
-        <div class="chart-card">
-          <div class="chart-header">
-            <div class="chart-header-main">
-              <div class="chart-icon" aria-hidden="true" style="background: rgba(64, 121, 197, 0.1);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4079c5" stroke-width="2">
-                  <path d="M3 3v18h18"/><path d="M7 12l3-3 3 3 5-5"/>
-                </svg>
-              </div>
-              <div>
-                <h3 class="chart-title">{$_('analytics.charts.multiMetric.title')}</h3>
-                <p class="chart-subtitle">{$_('analytics.charts.multiMetric.subtitle')}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="view-data-table-btn"
-              onclick={() => toggleDataTable('multi-metric-chart')}
-              aria-label={$_('analytics.charts.accessibility.viewDataTableFor', { values: { chartName: $_('analytics.charts.multiMetric.title') } })}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <line x1="3" y1="9" x2="21" y2="9"/>
-                <line x1="9" y1="21" x2="9" y2="9"/>
-              </svg>
-              {$_('analytics.charts.accessibility.viewDataTable')}
-            </button>
-          </div>
-          {#if chartsLoading}
-            <div class="chart-loading"><LoadingSpinner /></div>
-          {:else}
-            <p class="sr-only" id="chart-summary-multi-metric">
-              {$_('analytics.charts.multiMetric.title')}. {$_('analytics.charts.multiMetric.subtitle')}. {$_('analytics.charts.accessibility.dataPoints', { values: { count: timeseriesData.data.length } })}.
-            </p>
-            <div class="chart-legend" aria-hidden="true">
-              <span class="legend-item"><span class="legend-dot" style="background: #4079c5;"></span>{$_('analytics.charts.multiMetric.requests')}</span>
-              <span class="legend-item"><span class="legend-dot" style="background: #2d906b;"></span>{$_('analytics.charts.multiMetric.tokens')}</span>
-              <span class="legend-item"><span class="legend-dot" style="background: #DF000C;"></span>{$_('analytics.charts.multiMetric.latency')}</span>
-            </div>
-            <div 
-              id="multi-metric-chart" 
-              class="chart-container" 
-              role="img" 
-              aria-labelledby="chart-summary-multi-metric"
-            ></div>
-          {/if}
+        <div class="legend">
+          {#each chart.series.filter((item) => !item.tooltipOnly) as item (item.key)}
+            <span class="legend-item">
+              <span class="legend-dot" style="background: {item.color}"></span>
+              <span>{item.label}</span>
+            </span>
+          {/each}
         </div>
 
-        <div class="chart-card">
-          <div class="chart-header">
-            <div class="chart-header-main">
-              <div class="chart-icon" aria-hidden="true" style="background: rgba(45, 144, 107, 0.1);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2d906b" stroke-width="2">
-                  <path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="14" y="5" width="3" height="12"/>
-                </svg>
-              </div>
-              <div>
-                <h3 class="chart-title">{$_('analytics.charts.usageGrowth.title')}</h3>
-                <p class="chart-subtitle">{$_('analytics.charts.usageGrowth.subtitle')}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="view-data-table-btn"
-              onclick={() => toggleDataTable('requests-tokens-chart')}
-              aria-label={$_('analytics.charts.accessibility.viewDataTableFor', { values: { chartName: $_('analytics.charts.usageGrowth.title') } })}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <line x1="3" y1="9" x2="21" y2="9"/>
-                <line x1="9" y1="21" x2="9" y2="9"/>
-              </svg>
-              {$_('analytics.charts.accessibility.viewDataTable')}
-            </button>
-          </div>
-          {#if chartsLoading}
-            <div class="chart-loading"><LoadingSpinner /></div>
-          {:else}
-            <p class="sr-only" id="chart-summary-usage-growth">
-              {$_('analytics.charts.usageGrowth.title')}. {$_('analytics.charts.usageGrowth.subtitle')}. {$_('analytics.charts.accessibility.dataPoints', { values: { count: timeseriesData.data.length } })}.
-            </p>
-            <div class="chart-legend" aria-hidden="true">
-              <span class="legend-item"><span class="legend-dot" style="background: #4079c5;"></span>{$_('analytics.charts.usageGrowth.requests')}</span>
-              <span class="legend-item"><span class="legend-dot" style="background: #2d906b;"></span>{$_('analytics.charts.usageGrowth.tokens')}</span>
-            </div>
-            <div 
-              id="requests-tokens-chart" 
-              class="chart-container" 
-              role="img" 
-              aria-labelledby="chart-summary-usage-growth"
-            ></div>
-          {/if}
-        </div>
+        <p class="sr-only">
+          {chart.title}. {chart.subtitle}.
+          {$_("analytics.charts.accessibility.dataPoints", {
+            values: { count: points.length },
+          })}.
+        </p>
 
-        <div class="chart-card">
-          <div class="chart-header">
-            <div class="chart-header-main">
-              <div class="chart-icon" aria-hidden="true" style="background: rgba(0, 200, 83, 0.1);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="2">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                </svg>
-              </div>
-              <div>
-                <h3 class="chart-title">{$_('analytics.charts.apiReliability.title')}</h3>
-                <p class="chart-subtitle">{$_('analytics.charts.apiReliability.subtitle')}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="view-data-table-btn"
-              onclick={() => toggleDataTable('success-error-chart')}
-              aria-label={$_('analytics.charts.accessibility.viewDataTableFor', { values: { chartName: $_('analytics.charts.apiReliability.title') } })}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <line x1="3" y1="9" x2="21" y2="9"/>
-                <line x1="9" y1="21" x2="9" y2="9"/>
-              </svg>
-              {$_('analytics.charts.accessibility.viewDataTable')}
-            </button>
-          </div>
-          {#if chartsLoading}
-            <div class="chart-loading"><LoadingSpinner /></div>
-          {:else}
-            <p class="sr-only" id="chart-summary-api-reliability">
-              {$_('analytics.charts.apiReliability.title')}. {$_('analytics.charts.apiReliability.subtitle')}. {$_('analytics.charts.accessibility.dataPoints', { values: { count: timeseriesData.data.length } })}.
-            </p>
-            <div class="chart-legend" aria-hidden="true">
-              <span class="legend-item"><span class="legend-dot" style="background: #00C853;"></span>{$_('analytics.charts.apiReliability.success')}</span>
-              <span class="legend-item"><span class="legend-dot" style="background: #DF000C;"></span>{$_('analytics.charts.apiReliability.errors')}</span>
-            </div>
-            <div 
-              id="success-error-chart" 
-              class="chart-container" 
-              role="img" 
-              aria-labelledby="chart-summary-api-reliability"
-            ></div>
-          {/if}
-        </div>
+        <AnalyticsTrendChart
+          series={chart.series}
+          labels={tickLabels}
+          tooltipLabels={fullLabels}
+          axisLabel={$_("analytics.charts.multiMetric.date")}
+        />
 
-        <div class="chart-card">
-          <div class="chart-header">
-            <div class="chart-header-main">
-              <div class="chart-icon" aria-hidden="true" style="background: rgba(45, 144, 107, 0.1);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2d906b" stroke-width="2">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
-              </div>
-              <div>
-                <h3 class="chart-title">{$_('analytics.charts.costTrend.title')}</h3>
-                <p class="chart-subtitle">{$_('analytics.charts.costTrend.subtitle')}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="view-data-table-btn"
-              onclick={() => toggleDataTable('cost-trend-chart')}
-              aria-label={$_('analytics.charts.accessibility.viewDataTableFor', { values: { chartName: $_('analytics.charts.costTrend.title') } })}
+        {#if insight}
+          <div class="insight-bar">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <line x1="3" y1="9" x2="21" y2="9"/>
-                <line x1="9" y1="21" x2="9" y2="9"/>
-              </svg>
-              {$_('analytics.charts.accessibility.viewDataTable')}
-            </button>
+              <circle
+                cx="7"
+                cy="7"
+                r="5.25"
+                stroke="currentColor"
+                stroke-width="1.3"
+              />
+              <path
+                d="M7 4.2v.6M7 6.4v3.4"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span>{insight}</span>
           </div>
-          {#if chartsLoading}
-            <div class="chart-loading"><LoadingSpinner /></div>
-          {:else}
-            <p class="sr-only" id="chart-summary-cost-trend">
-              {$_('analytics.charts.costTrend.title')}. {$_('analytics.charts.costTrend.subtitle')}. {$_('analytics.charts.accessibility.dataPoints', { values: { count: timeseriesData.data.length } })}.
-            </p>
-            <div 
-              id="cost-trend-chart" 
-              class="chart-container" 
-              role="img" 
-              aria-labelledby="chart-summary-cost-trend"
-            ></div>
-          {/if}
-        </div>
-      </div>
-
-      {#if timeseriesData && activeDataTable}
-        {@const activeTableConfig = getActiveTableConfig()}
-        {#if activeTableConfig}
-          <ChartDataTableModal
-            title={activeTableConfig.title}
-            caption={activeTableConfig.caption}
-            rows={timeseriesData.data}
-            columns={activeTableConfig.columns}
-            onClose={closeDataTable}
-          />
         {/if}
       {/if}
-      {/if}
-    </section>
+    </div>
+
+    <!-- ===================== Top Models ===================== -->
+    {#if overviewData.top_models && overviewData.top_models.length > 0}
+      <section class="section" aria-label={$_("analytics.topModels.title")}>
+        <div class="section-head">
+          <h2 class="section-title">{$_("analytics.topModels.title")}</h2>
+          <span class="section-sub">
+            {$_("analytics.topModels.subtitleByCost", {
+              values: { range: lowercaseRange },
+            })}
+          </span>
+        </div>
+
+        <div
+          class="table-container"
+          role="table"
+          aria-label={$_("analytics.aria.topModelsCaption")}
+        >
+          <div class="table-header" role="row">
+            <span role="columnheader">{$_("analytics.topModels.model")}</span>
+            <span role="columnheader">{$_("analytics.topModels.provider")}</span
+            >
+            <span role="columnheader">{$_("analytics.topModels.requests")}</span
+            >
+            <span role="columnheader">{$_("analytics.topModels.tokens")}</span>
+            <span role="columnheader">{$_("analytics.topModels.cost")}</span>
+          </div>
+          {#each overviewData.top_models as model (model.model_name + model.model_provider)}
+            <div class="model-row" role="row">
+              <div role="cell">
+                <span class="model-name">{model.model_name}</span>
+              </div>
+              <div role="cell">
+                <span
+                  class="provider-dot"
+                  style="background: {providerColor(model.model_provider)}"
+                ></span>
+                <span class="provider-name">{model.model_provider}</span>
+              </div>
+              <div role="cell">
+                <span class="table-value"
+                  >{formatNumber(model.total_requests)}</span
+                >
+              </div>
+              <div role="cell">
+                <span class="table-value"
+                  >{formatNumber(model.total_tokens)}</span
+                >
+              </div>
+              <div role="cell">
+                <span class="table-value--cost"
+                  >{formatCurrency(model.total_cost)}</span
+                >
+              </div>
+            </div>
+          {/each}
+        </div>
+      </section>
+    {/if}
   </div>
 {/if}
 
+{#if isDataTableOpen && hasPoints}
+  <ChartDataTableModal
+    title={chart.title}
+    caption={`${chart.title} data`}
+    rows={points}
+    columns={chart.columns}
+    onClose={closeDataTable}
+  />
+{/if}
+
 <style>
-  .loading-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 400px;
-  }
-
-  .error-state {
-    text-align: center;
-    padding: var(--space-3xl);
-  }
-
-  .error-message {
-    color: var(--brand-red);
-    margin-bottom: var(--space-xl);
-    font-size: 1rem;
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .analytics-content {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3xl);
+    gap: 28px;
+    font-family: var(--gx-font);
   }
 
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--space-xl);
-    flex-wrap: wrap;
-    gap: var(--space-md);
-  }
-
-  .section-header .section-title {
-    margin-bottom: 0;
-  }
-
-  .section-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
-    letter-spacing: -0.02em;
-    margin-bottom: var(--space-md);
-  }
-
-  /* Aggregation control inline with title */
-  .aggregation-control {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-  }
-
-  .aggregation-label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-  }
-
-  .pill-group--compact {
-    padding: 0.125rem;
-  }
-
-  .pill-group--compact .pill-group__item {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.8125rem;
-  }
-
-  .aggregation-control .pill-group__item:focus-visible {
-    outline: 2px solid var(--brand-ring);
-    outline-offset: 2px;
-  }
-
-  /* Enhanced active state for aggregation buttons */
-  .aggregation-control .pill-group__item--active {
-    background: var(--brand);
-    color: white;
-    font-weight: 600;
-    box-shadow:
-      0 2px 8px rgba(var(--brand-rgb), 0.3),
-      0 1px 2px rgba(0, 0, 0, 0.1);
-  }
-
-  .aggregation-control .pill-group__item--active:hover {
-    background: color-mix(in oklab, var(--brand) 90%, white);
-    color: white;
-  }
-
-  .metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 0fr));
-    gap: var(--space-xl);
-  }
-
-  :global(.metric-card) {
-    transition: transform 0.2s ease;
-  }
-
-  .metric-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .metric-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .metric-label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
-
-  .metric-growth {
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-full);
-  }
-
-  .metric-growth.positive {
-    color: var(--brand-green);
-    background: color-mix(in oklab, var(--brand-green) 15%, transparent);
-  }
-
-  .metric-growth.negative {
-    color: var(--brand-red);
-    background: color-mix(in oklab, var(--brand-red) 15%, transparent);
-  }
-
-  .metric-growth-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-  }
-
-  .metric-growth-period {
-    font-size: 0.625rem;
-    color: var(--text-tertiary);
-    font-weight: 400;
-  }
-
-  .metric-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-  }
-
-  .metric-subtext {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-  }
-
-  .table-container {
-    overflow-x: auto;
-  }
-
-  .models-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .models-table thead {
-    background: var(--btn-secondary);
-    border-bottom: 1px solid var(--glass-stroke-dark);
-  }
-
-  .models-table th {
-    padding: var(--space-lg);
-    text-align: left;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .models-table td {
-    padding: var(--space-lg);
-    border-bottom: 1px solid var(--glass-stroke-dark);
-    font-size: 0.9375rem;
-    color: var(--text-primary);
-  }
-
-  .models-table tbody tr {
-    transition: background 0.2s ease;
-  }
-
-  .models-table tbody tr:hover {
-    background: var(--btn-tertiary);
-  }
-
-  .model-name {
-    font-weight: 600;
-    color: var(--brand);
-  }
-
-  .provider-name {
-    color: var(--text-secondary);
-  }
-
-  .charts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
-    gap: var(--space-2xl);
-    min-height: 800px; /* Prevent layout shift during chart re-renders */
-  }
-
-  .chart-card {
-    background: var(--button-bg);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-lg);
-    padding: var(--space-2xl);
-    box-shadow: var(--glass-shadow-dark);
-    transition: all 0.3s ease;
-    min-height: 420px; /* Prevent layout shift during loading/re-render */
-    min-width: 0;
-    overflow: hidden;
-  }
-
-  .chart-card:hover {
-    box-shadow: var(--glass-shadow-emphasis);
-    transform: translateY(-2px);
-    border-color: var(--glass-stroke-light);
-  }
-
-  .chart-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: var(--space-2xl);
-  }
-
-  .chart-header-main {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    min-width: 0;
-  }
-
-  .chart-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-md);
+  .loading-container,
+  .chart-loading {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 64px 20px;
+  }
+
+  .error-state {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    padding: 48px 24px;
+    border-radius: 16px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-an-ring);
+  }
+
+  .error-message {
+    margin: 0;
+    font-size: 13px;
+    color: var(--gx-an-sub);
+  }
+
+  .retry-btn {
+    height: 33px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-org-brand);
+    box-shadow: none;
+    padding: 0 14px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  /* ---------------- section shell ---------------- */
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .section-title {
+    margin: 0;
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 100%;
+    color: var(--gx-ink);
+  }
+
+  .section-sub {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-an-sub);
+  }
+
+  /* ---------------- quick stats ---------------- */
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .stat-card {
+    position: relative;
+    flex: 1 1 200px;
+    min-height: 124px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-an-ring);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .stat-card__bar {
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    width: 100%;
+    height: 3px;
+  }
+
+  .stat-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stat-title {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-an-sub);
+    white-space: nowrap;
+  }
+
+  .stat-badge {
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-weight: 700;
+    font-size: 10px;
+    line-height: 1.4;
+    white-space: nowrap;
     flex-shrink: 0;
   }
 
-  .chart-title {
-    font-size: 1rem;
+  .stat-badge--down {
+    background: var(--gx-an-badge-down-bg);
+    color: var(--gx-an-badge-down-fg);
+  }
+
+  .stat-badge--up {
+    background: var(--gx-an-badge-up-bg);
+    color: var(--gx-an-badge-up-fg);
+  }
+
+  .stat-value {
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 100%;
+    color: var(--gx-ink);
+  }
+
+  .stat-desc {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .stat-desc-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .stat-desc-text {
     font-weight: 600;
-    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 100%;
+  }
+
+  .stat-desc-muted {
+    font-weight: 400;
+    font-size: 11px;
+    line-height: 100%;
+    color: var(--gx-slate-400);
+  }
+
+  /* ---------------- trends card ---------------- */
+  .chart-card {
+    border-radius: 16px;
+    background: var(--gx-card);
+    box-shadow: var(--gx-an-card-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+  }
+
+  .chart-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .chart-tab {
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    display: flex;
+    gap: 8px;
+    padding: 6px 12px;
+    align-items: center;
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 100%;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .chart-tab svg {
+    flex-shrink: 0;
+  }
+
+  .chart-tab--inactive {
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-an-chip-ring);
+    color: var(--gx-an-chip-fg);
+  }
+
+  .chart-tab--inactive:hover {
+    background: var(--gx-an-blue-tint-soft);
+    color: var(--gx-an-blue);
+    transform: none;
+  }
+
+  .chart-tab--active {
+    background: var(--gx-an-blue-tint);
+    box-shadow: none;
+    padding-inline-start: 6px;
+    color: var(--gx-an-blue);
+  }
+
+  .chart-tab--active:hover {
+    background: var(--gx-an-blue-tint);
+    transform: none;
+  }
+
+  .chart-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .chart-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .chart-title {
     margin: 0;
-    line-height: 1.3;
+    font-family: var(--gx-font-display);
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 100%;
+    color: var(--gx-an-strong);
   }
 
   .chart-subtitle {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-    margin: 0.25rem 0 0 0;
     font-weight: 400;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-an-sub);
   }
 
-  .chart-legend {
+  .view-data-btn {
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-an-chip-ring);
     display: flex;
-    gap: var(--space-lg);
-    margin-bottom: var(--space-md);
+    gap: 4px;
+    padding: 6px 12px;
+    align-items: center;
+    flex-shrink: 0;
+    font-family: inherit;
+    color: var(--gx-an-chip-fg);
+    cursor: pointer;
+    transition: background-color 120ms ease;
+  }
+
+  .view-data-btn span {
+    font-weight: 500;
+    font-size: 10px;
+    line-height: 100%;
+    white-space: nowrap;
+  }
+
+  .view-data-btn:hover:not(:disabled) {
+    background: var(--gx-an-blue-tint-soft);
+    color: var(--gx-an-blue);
+    transform: none;
+  }
+
+  .view-data-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    align-items: center;
     flex-wrap: wrap;
   }
 
   .legend-item {
     display: flex;
+    gap: 8px;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
   }
 
   .legend-dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    display: inline-block;
-  }
-
-  .chart-container {
-    min-height: 280px;
-    width: 100%;
-    position: relative;
-    min-width: 0;
-    overflow: hidden;
-    border-radius: var(--radius-md);
-  }
-
-  .view-data-table-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-sm);
-    margin-top: 0;
-    padding: var(--space-sm) var(--space-md);
-    background: var(--btn-secondary);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-md);
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .view-data-table-btn:hover {
-    background: var(--btn-tertiary);
-    color: var(--text-primary);
-    border-color: var(--brand);
-  }
-
-  .view-data-table-btn:focus-visible {
-    outline: 2px solid var(--brand-ring);
-    outline-offset: 2px;
-  }
-
-  .view-data-table-btn svg {
     flex-shrink: 0;
   }
 
-  :global(.chart-container .vega-embed) {
-    width: 100%;
-    max-width: 100%;
+  .legend-item span {
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 100%;
+    color: var(--gx-an-strong);
   }
 
-  :global(.chart-container .vega-embed > *) {
-    max-width: 100%;
-  }
-
-  :global(.chart-container svg) {
-    display: block;
-    max-width: 100%;
-  }
-
-  .chart-loading {
-    min-height: 280px;
+  .insight-bar {
+    min-height: 32px;
+    border-radius: 8px;
+    background: var(--gx-an-insight-bg);
     display: flex;
+    gap: 4px;
+    padding: 10px 16px;
     align-items: center;
-    justify-content: center;
+  }
+
+  .insight-bar svg {
+    flex-shrink: 0;
+    color: var(--gx-an-chip-fg);
+  }
+
+  .insight-bar span {
+    font-weight: 400;
+    font-size: 10px;
+    line-height: 1.4;
+    color: var(--gx-an-insight-fg);
   }
 
   .empty-state {
     display: flex;
     flex-direction: column;
+    gap: 6px;
     align-items: center;
-    justify-content: center;
-    padding: var(--space-4xl) var(--space-2xl);
-    text-align: center;
-    background: var(--button-bg);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-lg);
-    margin-top: var(--space-xl);
-  }
-
-  .empty-state svg {
-    margin-bottom: var(--space-xl);
-    color: var(--text-secondary);
+    padding: 48px 24px;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px var(--gx-an-ring);
   }
 
   .empty-state-text {
-    font-size: 1.125rem;
+    margin: 0;
     font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: var(--space-sm);
+    font-size: 13px;
+    color: var(--gx-an-strong);
   }
 
   .empty-state-hint {
-    font-size: 0.9375rem;
-    color: var(--text-secondary);
     margin: 0;
+    font-size: 12px;
+    color: var(--gx-an-sub);
   }
 
-  @media (max-width: 1200px) {
-    .charts-grid {
-      grid-template-columns: 1fr;
-    }
+  /* ---------------- top models ---------------- */
+  .table-container {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px var(--gx-an-table-ring);
   }
 
-  @media (max-width: 768px) {
-    .metrics-grid {
-      grid-template-columns: 1fr;
+  .table-header {
+    min-height: 41px;
+    background: var(--gx-an-thead-bg);
+    border: 1px solid var(--gx-an-ring);
+    display: flex;
+    padding: 12px 16px;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .table-header span {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    font-size: 11px;
+    line-height: 100%;
+    text-transform: uppercase;
+    color: var(--gx-an-sub);
+  }
+
+  .model-row {
+    min-height: 41px;
+    background: var(--gx-card);
+    border: 1px solid var(--gx-an-ring);
+    border-top: none;
+    display: flex;
+    padding: 12px 16px;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .model-row > div {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .model-name {
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .provider-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .provider-name {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .table-value {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-ink);
+  }
+
+  .table-value--cost {
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-ink);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .chart-tab:focus-visible,
+  .view-data-btn:focus-visible,
+  .retry-btn:focus-visible {
+    outline: 2px solid var(--gx-an-blue);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 900px) {
+    .stat-card {
+      flex-basis: 45%;
     }
 
-    .metric-value {
-      font-size: 1.5rem;
+    .table-header,
+    .model-row {
+      font-size: 12px;
     }
   }
 </style>

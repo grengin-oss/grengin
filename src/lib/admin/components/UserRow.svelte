@@ -6,8 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
     import type { User } from "../types.js";
     import { _ } from "svelte-i18n";
-    import { formatDate } from "../../utils/format.js";
-    import RolesBadgeList from "./RolesBadgeList.svelte";
 
     interface Props {
         user: User;
@@ -21,319 +19,430 @@ SPDX-License-Identifier: Apache-2.0
 
     let { user, toggleUserStatus, openEditModal, currentUserId, canManageUsers, onAssignTeam }: Props = $props();
     let isPendingStatusUpdate = $state(false);
-    
+
     // Check if this is the current user's own row
     const isSelfUser: boolean = $derived((currentUserId && user.id === currentUserId) || false);
 
-    // Local checkbox state - synced with user.status
-    let checkboxChecked = $state(user.status === "active");
+    const isActive = $derived(user.status === "active");
+
+    const initials = $derived.by(() => {
+        const source = user.name?.trim() || user.email || "";
+        const parts = source.split(/\s+/).filter(Boolean);
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+        return source.substring(0, 2).toUpperCase() || "?";
+    });
+
+    const roleLabels = $derived(user.roles ?? []);
+    /** The design shows the first role plus a "+N" counter inside one badge. */
+    const primaryRole = $derived(roleLabels[0] ?? "");
+    const extraRoleCount = $derived(Math.max(0, roleLabels.length - 1));
+    const roleTitle = $derived(roleLabels.join(", "));
+
+    /** Super admins and your own row keep the static dot — they can't be toggled. */
+    const canToggleStatus = $derived(canManageUsers && !user.is_super_admin && !isSelfUser);
 
     const statusToggleTooltip = $derived(
-        isSelfUser
-            ? $_('admin.users.cannotToggleOwnStatus')
-            : user.status === "active"
-                ? $_('admin.users.disableUserTooltip')
-                : $_('admin.users.enableUserTooltip')
+        isActive
+            ? $_('admin.users.disableUserTooltip')
+            : $_('admin.users.enableUserTooltip')
     );
-
-    // Sync checkboxChecked when user.status changes (after successful refetch)
-    $effect(() => {
-        if (!isPendingStatusUpdate) {
-            checkboxChecked = user.status === "active";
-        }
-    });
 
     async function handleToggleUserStatus() {
         // Prevent self-lockout
-        if (isSelfUser) {
-            return;
-        }
+        if (isSelfUser || user.is_super_admin) return;
 
         isPendingStatusUpdate = true;
-
-        // Store original state BEFORE any changes
-        const originalChecked = checkboxChecked;
-        
-        // Optimistically update checkbox immediately (matches visual state)
-        checkboxChecked = !originalChecked;
-        
         try {
             await toggleUserStatus(user);
-            // On success, user.status will be updated via refetch,
-            // and $effect will sync checkboxChecked automatically
-        } catch (err) {
-            // On error, revert checkbox to original state
-            checkboxChecked = originalChecked;
         } finally {
             isPendingStatusUpdate = false;
         }
     }
 </script>
 
-<tr class:pending={isPendingStatusUpdate}>
-    <td>{user.name || "-"}</td>
-    <td>{user.email}</td>
-    <td>
-        <RolesBadgeList roles={user.roles}/>
-    </td>
-    <td>
+<div class="user-row" class:pending={isPendingStatusUpdate} role="row">
+    <div class="user-cell user-cell--name" role="cell">
+        <span class="user-avatar" aria-hidden="true">{initials}</span>
+        <span class="user-name" title={user.name || user.email}>{user.name || "-"}</span>
+    </div>
+
+    <span class="user-cell user-cell--email" role="cell" title={user.email}>{user.email}</span>
+
+    <div class="user-cell user-cell--role" role="cell">
+        {#if roleLabels.length === 0}
+            <span class="role-badge role-badge--none">{$_('admin.common.noRole')}</span>
+        {:else if canManageUsers}
+            <button
+                type="button"
+                class="role-badge"
+                onclick={() => openEditModal(user)}
+                title={$_('admin.users.editUserTitle')}
+            >
+                <span>{primaryRole}</span>
+                {#if extraRoleCount > 0}
+                    <span class="role-badge__extra">+{extraRoleCount}</span>
+                {/if}
+            </button>
+        {:else}
+            <span class="role-badge" title={roleTitle}>
+                <span>{primaryRole}</span>
+                {#if extraRoleCount > 0}
+                    <span class="role-badge__extra">+{extraRoleCount}</span>
+                {/if}
+            </span>
+        {/if}
+    </div>
+
+    <div class="user-cell user-cell--dept" role="cell">
         {#if canManageUsers && onAssignTeam}
             {#if user.department}
-                <span class="department-cell">
-                    <span class="department-name">{user.department}</span>
-                    <button
-                        type="button"
-                        class="department-edit-btn"
-                        onclick={() => onAssignTeam?.(user)}
-                        title={$_('admin.organization.changeTeamTooltip')}
-                        aria-label={$_('admin.organization.changeTeamTooltip')}
-                    >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M12 20h9"/>
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-                        </svg>
-                    </button>
-                </span>
+                <button
+                    type="button"
+                    class="dept-chip"
+                    onclick={() => onAssignTeam?.(user)}
+                    title={$_('admin.organization.changeTeamTooltip')}
+                >
+                    <span class="dept-chip__name">{user.department}</span>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                        <path d="M6.5 1.5L8.5 3.5L3.5 8.5H1.5V6.5L6.5 1.5Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+                    </svg>
+                </button>
             {:else}
                 <button
                     type="button"
-                    class="department-assign-pill"
+                    class="assign-chip"
                     onclick={() => onAssignTeam?.(user)}
                     title={$_('admin.organization.assignToATeamTooltip')}
-                    aria-label={$_('admin.organization.assignToATeamTooltip')}
                 >
-                    {$_('admin.organization.assign')}
+                    + {$_('admin.organization.assign')}
                 </button>
             {/if}
+        {:else if user.department}
+            <span class="dept-chip dept-chip--static">
+                <span class="dept-chip__name">{user.department}</span>
+            </span>
         {:else}
-            {user.department || "-"}
+            <span class="dept-plain">-</span>
         {/if}
-    </td>
-    <td>
-        {#if !user.is_super_admin}
-            {#if canManageUsers}
-                <label 
-                    class="status-switch" 
-                    class:disabled={isSelfUser}
-                    title={statusToggleTooltip}
-                >
-                    <input
-                        type="checkbox"
-                        checked={checkboxChecked}
-                        onchange={handleToggleUserStatus}
-                        disabled={isSelfUser}
-                        aria-label={$_('admin.users.toggleUserStatus') || `Toggle ${user.name} status`}
-                    />
-                    <span class="status-slider" aria-hidden="true"></span>
-                    <span class="status-label">
-                        {user.status === "active" ? $_('admin.common.active') : $_('admin.common.deactivated')}
-                    </span>
-                </label>
-            {:else}
-                <span class="status-label">
-                    {user.status === "active" ? $_('admin.common.active') : $_('admin.common.deactivated')}
-                </span>
-            {/if}
+    </div>
+
+    <div class="user-cell user-cell--status" role="cell">
+        {#if canToggleStatus}
+            <button
+                type="button"
+                class="status-toggle"
+                class:status-toggle--off={!isActive}
+                onclick={handleToggleUserStatus}
+                disabled={isPendingStatusUpdate}
+                aria-pressed={isActive}
+                title={statusToggleTooltip}
+                aria-label={statusToggleTooltip}
+            >
+                <span class="status-toggle__thumb"></span>
+            </button>
         {:else}
-            <span class="status-badge active">{$_('admin.common.active')}</span>
+            <span class="status-dot" class:status-dot--off={!isActive} aria-hidden="true"></span>
         {/if}
-    </td>
-    <td>{user.created_at ? formatDate(user.created_at) : "-"}</td>
-    {#if canManageUsers}
-        <td>
-            <div class="actions">
-                <button
-                    class="action-btn edit"
-                    onclick={() => openEditModal(user)}
-                    title={$_('admin.users.editUserTitle')}
-                    aria-label={$_('admin.users.editUserTitle') || `Edit ${user.name}`}
-                >
-                    ✏️
-                </button>
-            </div>
-        </td>
-    {/if}
-</tr>
+        <span class="status-label" class:status-label--off={!isActive}>
+            {isActive ? $_('admin.common.active') : $_('admin.common.deactivated')}
+        </span>
+    </div>
+</div>
 
 <style>
+  /* app.css gives every button backdrop-filter: blur(); on the flat
+     Organization surfaces that repaints the 1px hairlines behind them
+     (the row rings, the tab-row ring), so switch it off. */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+    /* Design 247:24146: 64px row, 16px padding, full hairline ring. */
+    .user-row {
+        height: 64px;
+        display: flex;
+        padding: 16px;
+        align-items: center;
+        align-self: stretch;
+        flex-shrink: 0;
+        box-shadow: inset 0 0 0 1px var(--gx-hair);
+        font-family: var(--gx-font);
+        transition: background-color 120ms ease;
+    }
+
+    .user-row:hover {
+        background: var(--gx-org-table-row-hover);
+    }
+
     .pending {
-        opacity: 0.3;
+        opacity: 0.4;
         pointer-events: none;
     }
 
-    .status-badge {
-        display: inline-block;
-        padding: var(--space-xs) var(--space-sm);
-        border-radius: var(--radius-sm);
-        font-size: 0.8125rem;
-        font-weight: 600;
-        text-transform: none;
-    }
-
-    .status-badge.active {
-        background: rgba(var(--brand-green-rgb), 0.15);
-        color: var(--brand-green);
-    }
-
-    /* Department cell */
-    .department-cell {
-        display: inline-flex;
+    .user-cell--name {
+        width: 240px;
+        flex-shrink: 0;
+        display: flex;
+        gap: 12px;
         align-items: center;
-        gap: var(--space-sm);
+        min-width: 0;
     }
 
-    .department-name {
-        color: var(--text-primary);
-    }
-
-    .department-edit-btn {
-        display: inline-flex;
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 16px;
+        background: var(--gx-org-brand);
+        display: flex;
         align-items: center;
         justify-content: center;
-        width: 24px;
-        height: 24px;
-        padding: 0;
-        border: none;
-        background: transparent;
-        color: var(--text-secondary);
-        cursor: pointer;
-        border-radius: var(--radius-sm);
-        transition: all 0.2s ease;
         flex-shrink: 0;
+        font-weight: 700;
+        font-size: 12px;
+        line-height: 100%;
+        color: #fff;
     }
 
-    .department-edit-btn:hover {
-        background: rgba(var(--glass-tint), 0.08);
-        color: var(--brand);
+    .user-name {
+        font-weight: 600;
+        font-size: 14px;
+        line-height: 100%;
+        color: var(--gx-slate-900);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .department-edit-btn:focus-visible {
-        outline: 2px solid var(--brand);
-        outline-offset: 2px;
+    .user-cell--email {
+        width: 240px;
+        flex-shrink: 0;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 100%;
+        color: var(--gx-slate-500);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .department-assign-pill {
+    .user-cell--role,
+    .user-cell--dept {
+        width: 160px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        min-width: 0;
+    }
+
+    .user-cell--status {
+        flex-grow: 1;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        min-width: 0;
+    }
+
+    .role-badge {
         display: inline-flex;
         align-items: center;
-        padding: var(--space-xs) var(--space-md);
-        border: 1px dashed color-mix(in oklab, var(--brand) 60%, transparent);
-        border-radius: var(--radius-full);
-        background: color-mix(in oklab, var(--brand) 8%, transparent);
-        color: var(--brand);
-        font-size: 0.8125rem;
+        gap: 4px;
+        height: 23px;
+        border: 0;
+        border-radius: 6px;
+        background: var(--gx-org-primary-tint);
+        box-shadow: none;
+        padding: 4px 10px;
+        font-family: var(--gx-font);
         font-weight: 600;
+        font-size: 12px;
+        line-height: 100%;
+        color: var(--gx-org-primary-500);
+        white-space: nowrap;
+        max-width: 100%;
+        overflow: hidden;
+        transition: filter 120ms ease;
+    }
+
+    button.role-badge {
         cursor: pointer;
-        transition: all 0.2s ease;
     }
 
-    .department-assign-pill:hover {
-        background: color-mix(in oklab, var(--brand) 16%, transparent);
-        border-style: solid;
+    button.role-badge:hover {
+        background: var(--gx-org-primary-tint);
+        filter: brightness(0.97);
+        transform: none;
     }
 
-    .department-assign-pill:focus-visible {
-        outline: 2px solid var(--brand);
-        outline-offset: 2px;
+    .role-badge > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .actions {
-        display: flex;
-        gap: var(--space-sm);
-    }
-
-    .action-btn {
-        padding: var(--space-xs) var(--space-sm);
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        border-radius: var(--radius-sm);
-        transition: all 0.2s ease;
-        font-size: 1rem;
-    }
-
-    .action-btn:hover {
-        background: rgba(var(--glass-tint), 0.08);
-        transform: scale(1.1);
-    }
-
-    .action-btn:focus-visible {
-        outline: 2px solid var(--brand);
-        outline-offset: 2px;
-    }
-
-    /* Status Switch */
-    .status-switch {
-        display: flex;
-        align-items: center;
-        gap: var(--space-md);
-        cursor: pointer;
-        position: relative;
-    }
-
-    .status-switch.disabled {
-        cursor: not-allowed;
-        opacity: 0.5;
-    }
-
-    .status-switch input[type="checkbox"] {
-        position: absolute;
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .status-switch input[type="checkbox"]:focus-visible {
-        outline: 2px solid var(--brand);
-        outline-offset: 2px;
-    }
-
-    .status-switch input[type="checkbox"]:disabled {
-        cursor: not-allowed;
-    }
-
-    .status-slider {
-        position: relative;
-        display: inline-block;
-        width: 44px;
-        height: 24px;
-        background: rgba(143, 143, 143, 0.2);
-        border-radius: 24px;
-        transition: all 0.3s ease;
+    .role-badge__extra {
+        color: var(--gx-slate-500);
         flex-shrink: 0;
     }
 
-    .status-switch input:focus-visible ~ .status-slider {
-        outline: 2px solid var(--brand);
-        outline-offset: 2px;
-        border-radius: 24px;
+    .role-badge--none {
+        background: var(--gx-org-track);
+        color: var(--gx-slate-400);
     }
 
-    .status-slider::before {
-        content: "";
-        position: absolute;
-        height: 18px;
-        width: 18px;
-        left: 3px;
-        top: 3px;
-        background: var(--brand-red);
+    /* Assigned team: white chip with a hairline ring and a small edit glyph. */
+    .dept-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 23px;
+        border: 0;
+        border-radius: 6px;
+        background: var(--gx-card);
+        box-shadow: inset 0 0 0 1px var(--gx-hair);
+        padding: 4px 10px;
+        font-family: var(--gx-font);
+        font-weight: 500;
+        font-size: 12px;
+        line-height: 100%;
+        color: var(--gx-slate-900);
+        white-space: nowrap;
+        max-width: 100%;
+        overflow: hidden;
+        cursor: pointer;
+        transition: background-color 120ms ease;
+    }
+
+    .dept-chip__name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dept-chip svg {
+        flex-shrink: 0;
+        color: var(--gx-slate-500);
+    }
+
+    .dept-chip:hover {
+        background: var(--gx-org-track);
+        transform: none;
+    }
+
+    .dept-chip--static {
+        cursor: default;
+    }
+
+    .assign-chip {
+        display: inline-flex;
+        align-items: center;
+        height: 23px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        box-shadow: none;
+        outline: 1px dashed var(--gx-hair);
+        outline-offset: -1px;
+        padding: 4px 10px;
+        font-family: var(--gx-font);
+        font-weight: 500;
+        font-size: 12px;
+        line-height: 100%;
+        color: var(--gx-slate-400);
+        white-space: nowrap;
+        cursor: pointer;
+        transition:
+            outline-color 120ms ease,
+            color 120ms ease;
+    }
+
+    .assign-chip:hover {
+        outline-color: var(--gx-org-brand-alt);
+        color: var(--gx-org-brand-alt);
+        background: transparent;
+        transform: none;
+    }
+
+    .dept-chip:focus-visible,
+    .assign-chip:focus-visible,
+    button.role-badge:focus-visible,
+    .status-toggle:focus-visible {
+        outline: 2px solid var(--gx-org-brand-alt);
+        outline-offset: 1px;
+    }
+
+    .dept-plain {
+        font-size: 13px;
+        color: var(--gx-slate-500);
+    }
+
+    /* 36x20 pill with a 16px thumb — on = brand fill, thumb right. */
+    .status-toggle {
+        width: 36px;
+        height: 20px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--gx-org-primary-500);
+        box-shadow: none;
+        display: flex;
+        padding: 2px;
+        justify-content: flex-end;
+        align-items: center;
+        flex-shrink: 0;
+        cursor: pointer;
+        transition:
+            background-color 120ms ease,
+            justify-content 120ms ease;
+    }
+
+    .status-toggle:hover:not(:disabled) {
+        background: var(--gx-org-primary-500-hover);
+        transform: none;
+    }
+
+    .status-toggle--off {
+        justify-content: flex-start;
+        background: var(--gx-org-toggle-off);
+    }
+
+    .status-toggle--off:hover:not(:disabled) {
+        background: var(--gx-slate-400);
+    }
+
+    .status-toggle:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .status-toggle__thumb {
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        background: #fff;
+        flex-shrink: 0;
     }
 
-    .status-switch input:checked + .status-slider::before {
-        background: var(--brand-green);
-        transform: translateX(20px);
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--gx-org-primary-500);
+        flex-shrink: 0;
+    }
+
+    .status-dot--off {
+        background: var(--gx-slate-400);
     }
 
     .status-label {
-        font-size: 0.8125rem;
         font-weight: 600;
-        color: var(--text-secondary);
-        min-width: 90px;
+        font-size: 14px;
+        line-height: 100%;
+        color: var(--gx-org-primary-500);
+        white-space: nowrap;
     }
 
-    .status-switch:hover .status-slider {
-        opacity: 0.9;
+    .status-label--off {
+        color: var(--gx-slate-400);
     }
 </style>

@@ -38,10 +38,17 @@ SPDX-License-Identifier: Apache-2.0
     ProjectArtifact,
   } from "../../types/project";
   import { toast } from "../Toaster.svelte";
+  import { setCrumbLeaf } from "../layout/index.js";
 
   let { id } = $props<{ id: string }>();
 
   let project = $state<Project | null>(null);
+
+  // The top bar shows this project's name as the last breadcrumb.
+  $effect(() => {
+    setCrumbLeaf(project?.name ?? null);
+    return () => setCrumbLeaf(null);
+  });
   let sources = $state<ProjectSource[]>([]);
   let chats = $state<ProjectChat[]>([]);
   let loading = $state(true);

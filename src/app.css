@@ -3,11 +3,12 @@
    always matches the page palette — no JS race, no Windows quirks. */
 @import 'highlight.js/styles/github-dark.css' screen and (prefers-color-scheme: dark);
 @import 'highlight.js/styles/github.css' screen and (prefers-color-scheme: light);
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap');
 
 /* ===== Root tokens ===== */
 :root {
   /* Typography & rendering - system fonts */
-  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 500;
   font-synthesis: none;
@@ -19,14 +20,20 @@
 
   /* ---------- Grengin Brand Palette ---------- */
   /* Primary brand color - Grengin blue */
-  --brand:            #4079c5;   /* Grengin primary blue */
+  --brand: #4079c5;
+  /* Grengin primary blue */
   /* Secondary / accent colors from Grengin brand */
-  --brand-green-accent: #2d906b;   /* Grengin accent green */
-  --brand-teal:       #3a81a7;   /* Grengin tertiary accent */
-  --brand-cyan:       #338889;   /* Grengin additional accent */
+  --brand-green-accent: #2d906b;
+  /* Grengin accent green */
+  --brand-teal: #3a81a7;
+  /* Grengin tertiary accent */
+  --brand-cyan: #338889;
+  /* Grengin additional accent */
   /* Status colors */
-  --brand-green:      #00C853;   /* Success green */
-  --brand-red:        #DF000C;   /* Danger red */
+  --brand-green: #00C853;
+  /* Success green */
+  --brand-red: #DF000C;
+  /* Danger red */
 
   /* RGB values for glass effects */
   --brand-rgb: 64 121 197;
@@ -37,9 +44,9 @@
   --brand-red-rgb: 223 0 12;
 
   /* Derived interactive colors */
-  --brand-hover:      color-mix(in oklab, var(--brand) 88%, white);
-  --brand-active:     color-mix(in oklab, var(--brand) 88%, black);
-  --brand-ring:       color-mix(in oklab, var(--brand) 48%, white);
+  --brand-hover: color-mix(in oklab, var(--brand) 88%, white);
+  --brand-active: color-mix(in oklab, var(--brand) 88%, black);
+  --brand-ring: color-mix(in oklab, var(--brand) 48%, white);
 
   /* ---------- Apple-inspired Liquid Glass Properties ---------- */
   --glass-blur: 1.5rem;
@@ -49,6 +56,7 @@
 
   /* Border radius system - Apple-like soft corners */
   --glass-radius: 1rem;
+  --radius-xs: 0.5rem;
   --radius-sm: 0.625rem;
   --radius-md: 1rem;
   --radius-lg: 1.25rem;
@@ -111,8 +119,8 @@
 
   /* Status surfaces */
   --success-surface: color-mix(in oklab, var(--brand-green) 15%, #0d0d10);
-  --info-surface:    color-mix(in oklab, var(--brand-blue) 15%, #0d0d10);
-  --danger-surface:  color-mix(in oklab, var(--brand-red) 15%, #0d0d10);
+  --info-surface: color-mix(in oklab, var(--brand-blue) 15%, #0d0d10);
+  --danger-surface: color-mix(in oklab, var(--brand-red) 15%, #0d0d10);
 
   /* App base colors */
   color: var(--text-primary);
@@ -143,8 +151,8 @@
     --btn-quaternary: #e5e7eb;
 
     --success-surface: color-mix(in oklab, var(--brand-green) 10%, #fff);
-    --info-surface:    color-mix(in oklab, var(--brand-blue) 10%, #fff);
-    --danger-surface:  color-mix(in oklab, var(--brand-red) 10%, #fff);
+    --info-surface: color-mix(in oklab, var(--brand-blue) 10%, #fff);
+    --danger-surface: color-mix(in oklab, var(--brand-red) 10%, #fff);
 
     --glass-bg-light: rgba(255, 255, 255, 0.85);
     --glass-bg-dark: rgba(255, 255, 255, 0.85);
@@ -168,6 +176,296 @@
     --glass-stroke-dark: rgba(255, 255, 255, 0.06);
     --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.12);
     --glass-edge-glow: 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+  }
+}
+
+/* ---------- Grengin design-system tokens (Figma: Sidebar 153:14270,
+   chat/empty-state 159:15193). Light values are canonical — they are the
+   values transcribed from the design file; the dark scheme remaps them
+   below so the same rules work in both schemes. ---------- */
+:root {
+  /* type */
+  --gx-font: Inter, system-ui, -apple-system, sans-serif;
+  --gx-font-display: Montserrat, Inter, system-ui, sans-serif;
+
+  /* neutrals / text */
+  --gx-ink: rgb(22, 36, 31);
+  --gx-muted: rgb(76, 92, 86);
+  --gx-dim: rgb(138, 150, 143);
+  --gx-line: rgb(225, 230, 226);
+  --gx-line-soft: rgb(250, 250, 250);
+  --gx-surface: rgb(255, 255, 255);
+  --gx-surface-rail: rgb(250, 251, 250);
+  --gx-fill-soft: rgb(240, 242, 241);
+  --gx-fill-strong: var(--gx-line);
+
+  /* accents */
+  --gx-blue: rgb(59, 125, 216);
+  --gx-blue-soft: rgb(239, 246, 255);
+  --gx-blue-soft-hover: rgb(230, 240, 254);
+  --gx-amber: rgb(184, 134, 43);
+  --gx-amber-soft: rgb(251, 241, 222);
+  --gx-amber-dot: rgb(199, 154, 46);
+  --gx-green-dot: rgb(46, 158, 108);
+  --gx-avatar: rgb(46, 107, 79);
+  --gx-slate: rgb(107, 127, 154);
+
+  /* control-hub navigation */
+  --gx-nav-text: rgb(74, 97, 129);
+  --gx-nav-hover: rgb(247, 249, 248);
+  --gx-nav-accent: rgb(64, 121, 197);
+  --gx-nav-active-bg: rgb(227, 251, 242);
+  --gx-nav-active-bg-hover: rgb(217, 247, 235);
+  --gx-nav-active-fg: rgb(45, 144, 107);
+  --gx-category: rgb(148, 163, 184);
+  --gx-module-bg: rgba(239, 244, 252, 1);
+  --gx-module-bg-hover: rgb(230, 240, 254);
+
+  /* search popup */
+  --gx-scrim: rgba(15, 23, 42, 0.14);
+  --gx-row-hover: rgb(244, 246, 245);
+  --gx-scroll-track: rgba(235, 237, 242, 0.5);
+  --gx-scroll-thumb: rgb(191, 199, 209);
+
+  /* user-settings menu */
+  --gx-menu-line: rgb(139, 139, 139);
+  --gx-rule: rgb(242, 243, 245);
+  /* the top bar's rule/hover tint is a cooler slate than the sidebar menu's */
+  --gx-rule-cool: rgb(241, 245, 249);
+  --gx-danger: rgb(239, 68, 68);
+  --gx-danger-soft: rgb(254, 242, 242);
+
+  /* chat surface (empty state) */
+  --gx-page: rgb(248, 250, 252);
+  --gx-card: rgb(255, 255, 255);
+  --gx-hair: rgb(226, 232, 240);
+  --gx-hair-strong: rgb(209, 213, 219);
+  --gx-slate-400: rgb(148, 163, 184);
+  --gx-slate-500: rgb(100, 116, 139);
+  --gx-slate-700: rgb(55, 65, 81);
+  --gx-slate-900: rgb(15, 23, 42);
+  --gx-teal: rgb(13, 148, 136);
+  --gx-teal-soft: rgb(204, 251, 241);
+  --gx-send: rgb(37, 117, 87);
+  --gx-send-hover: rgb(31, 100, 74);
+  --gx-hover-soft: rgb(241, 245, 249);
+  --gx-ok-bg: rgb(240, 253, 249);
+  --gx-ok-line: rgb(187, 247, 208);
+  --gx-ok-text: rgb(21, 128, 61);
+  --gx-ok-dot: rgb(34, 197, 94);
+
+  /* organization / control-hub content pages (Figma: Organization 241:23324
+     Teams view + 247:24146 Users view) */
+  --gx-org-brand: rgb(0, 108, 82);
+  --gx-org-brand-hover: rgb(0, 92, 70);
+  --gx-org-brand-alt: rgb(43, 145, 107);
+  --gx-org-brand-alt-hover: rgb(37, 128, 94);
+  --gx-org-brand-tint: rgb(230, 244, 240);
+  --gx-org-sel: rgb(235, 245, 240);
+  --gx-org-sel-hover: rgb(228, 241, 235);
+  --gx-org-ink: rgb(14, 24, 40);
+  --gx-org-slate-800: rgb(30, 41, 59);
+  --gx-org-slate-350: rgb(156, 163, 176);
+  --gx-org-hair-soft: rgb(230, 231, 235);
+  --gx-org-track: rgb(241, 245, 249);
+  --gx-org-track-hover: rgb(232, 238, 245);
+  --gx-org-row-hover: rgb(247, 249, 248);
+  --gx-org-table-row-hover: rgb(250, 251, 252);
+  --gx-org-field-bg: rgb(250, 250, 250);
+  /* Primary-500 (#427AC6) — status switches and role badges. */
+  --gx-org-primary-500: rgb(66, 122, 198);
+  --gx-org-primary-500-hover: rgb(54, 107, 179);
+  --gx-org-primary-100: rgb(220, 229, 244);
+  --gx-org-primary-tint: rgb(238, 245, 255);
+  --gx-org-blue-tint: rgb(224, 235, 255);
+  --gx-org-blue-fg: rgb(51, 89, 178);
+  --gx-org-used: rgb(16, 185, 129);
+  --gx-org-dist: rgb(64, 121, 197);
+  --gx-org-warn: rgb(217, 119, 6);
+  --gx-org-danger: rgb(220, 38, 38);
+  --gx-org-danger-hover: rgb(197, 32, 32);
+  --gx-org-danger-bg: rgb(254, 242, 242);
+  --gx-org-danger-line: rgb(254, 226, 226);
+  --gx-org-thumb: rgb(203, 213, 225);
+  --gx-org-tree-line: rgb(226, 232, 240);
+  --gx-org-toggle-off: rgb(203, 213, 225);
+  --gx-org-kpi-icon-bg: rgb(239, 244, 252);
+  --gx-org-kpi-icon-fg: rgb(66, 122, 198);
+  --gx-org-card-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.0196);
+
+  /* ---- Usage Analytics (usage-analytics-overview.html) ---- */
+  --gx-an-sub: rgb(107, 114, 129);
+  --gx-an-ring: rgb(230, 231, 235);
+  --gx-an-card-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.0392);
+  --gx-an-drop-shadow: 0 10px 24px 0 rgba(0, 0, 0, 0.0392);
+  --gx-an-blue: rgb(37, 99, 235);
+  --gx-an-blue-label: rgb(45, 95, 164);
+  --gx-an-blue-label-strong: rgb(27, 60, 101);
+  --gx-an-blue-tint: rgb(235, 242, 255);
+  --gx-an-blue-tint-soft: rgb(239, 246, 255);
+  --gx-an-line: rgb(60, 122, 255);
+  --gx-an-dot: rgb(59, 130, 246);
+  --gx-an-grid: rgb(229, 231, 235);
+  --gx-an-axis: rgb(107, 114, 128);
+  --gx-an-chip-ring: rgb(229, 231, 235);
+  --gx-an-chip-fg: rgb(75, 85, 99);
+  --gx-an-mint: rgb(222, 240, 233);
+  --gx-an-mint-fg: rgb(37, 117, 87);
+  --gx-an-green: rgb(16, 185, 129);
+  --gx-an-red: rgb(239, 68, 68);
+  --gx-an-bar-blue: rgb(95, 141, 206);
+  --gx-an-badge-down-bg: rgb(254, 226, 226);
+  --gx-an-badge-down-fg: rgb(239, 68, 68);
+  --gx-an-badge-up-bg: rgb(220, 252, 231);
+  --gx-an-badge-up-fg: rgb(22, 163, 74);
+  --gx-an-insight-bg: rgb(243, 244, 246);
+  --gx-an-insight-fg: rgb(31, 41, 55);
+  --gx-an-thead-bg: rgb(239, 244, 252);
+  --gx-an-table-ring: rgb(242, 243, 245);
+  --gx-an-input-bg: rgb(250, 250, 250);
+  --gx-an-strong: rgb(31, 41, 55);
+  --gx-an-amber: rgb(217, 119, 6);
+  --gx-an-violet: rgb(124, 58, 237);
+  --gx-an-rose: rgb(219, 39, 119);
+  --gx-an-field-bg: rgb(249, 250, 251);
+  --gx-an-avatar-bg: rgb(226, 232, 240);
+  --gx-an-avatar-fg: rgb(76, 92, 86);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --gx-ink: #f3f5f4;
+    --gx-muted: #b3bdb8;
+    --gx-dim: #7c8a84;
+    --gx-line: rgba(255, 255, 255, 0.1);
+    --gx-line-soft: rgba(255, 255, 255, 0.06);
+    --gx-surface: #12141a;
+    --gx-surface-rail: #0f1115;
+    --gx-fill-soft: rgba(255, 255, 255, 0.06);
+    --gx-fill-strong: rgba(255, 255, 255, 0.12);
+
+    --gx-blue: #7fb0f0;
+    --gx-blue-soft: rgba(59, 125, 216, 0.18);
+    --gx-blue-soft-hover: rgba(59, 125, 216, 0.26);
+    --gx-amber: #e0b566;
+    --gx-amber-soft: rgba(199, 154, 46, 0.2);
+    --gx-amber-dot: rgb(199, 154, 46);
+    --gx-green-dot: rgb(46, 158, 108);
+    --gx-avatar: rgb(46, 107, 79);
+    --gx-slate: #93a3b8;
+
+    --gx-nav-text: #aebdd2;
+    --gx-nav-hover: rgba(255, 255, 255, 0.06);
+    --gx-nav-accent: #7fb0f0;
+    --gx-nav-active-bg: rgba(45, 144, 107, 0.22);
+    --gx-nav-active-bg-hover: rgba(45, 144, 107, 0.3);
+    --gx-nav-active-fg: #5fd3a3;
+    --gx-category: #7c8a99;
+    --gx-module-bg: rgba(64, 121, 197, 0.18);
+    --gx-module-bg-hover: rgba(64, 121, 197, 0.26);
+
+    --gx-scrim: rgba(0, 0, 0, 0.5);
+    --gx-row-hover: rgba(255, 255, 255, 0.06);
+    --gx-scroll-track: rgba(255, 255, 255, 0.06);
+    --gx-scroll-thumb: rgba(255, 255, 255, 0.22);
+
+    --gx-menu-line: rgba(255, 255, 255, 0.24);
+    --gx-rule: rgba(255, 255, 255, 0.08);
+    --gx-rule-cool: rgba(255, 255, 255, 0.08);
+    --gx-danger: #f87171;
+    --gx-danger-soft: rgba(239, 68, 68, 0.16);
+
+    --gx-page: #0d0f13;
+    --gx-card: #14161c;
+    --gx-hair: rgba(255, 255, 255, 0.1);
+    --gx-hair-strong: rgba(255, 255, 255, 0.18);
+    --gx-slate-400: #8d9aab;
+    --gx-slate-500: #a3aebd;
+    --gx-slate-700: #d3d9e1;
+    --gx-slate-900: #f1f4f8;
+    --gx-teal: #3fd0bd;
+    --gx-teal-soft: rgba(13, 148, 136, 0.22);
+    --gx-send: rgb(37, 117, 87);
+    --gx-send-hover: rgb(46, 138, 104);
+    --gx-hover-soft: rgba(255, 255, 255, 0.06);
+    --gx-ok-bg: rgba(34, 197, 94, 0.12);
+    --gx-ok-line: rgba(34, 197, 94, 0.32);
+    --gx-ok-text: #6ee7a4;
+    --gx-ok-dot: rgb(34, 197, 94);
+
+    --gx-org-brand: #4fbf95;
+    --gx-org-brand-hover: #66cba6;
+    --gx-org-brand-alt: #4fbf95;
+    --gx-org-brand-alt-hover: #66cba6;
+    --gx-org-brand-tint: rgba(45, 144, 107, 0.22);
+    --gx-org-sel: rgba(45, 144, 107, 0.18);
+    --gx-org-sel-hover: rgba(45, 144, 107, 0.26);
+    --gx-org-ink: #f1f4f8;
+    --gx-org-slate-800: #d3d9e1;
+    --gx-org-slate-350: #8d9aab;
+    --gx-org-hair-soft: rgba(255, 255, 255, 0.1);
+    --gx-org-track: rgba(255, 255, 255, 0.06);
+    --gx-org-track-hover: rgba(255, 255, 255, 0.1);
+    --gx-org-row-hover: rgba(255, 255, 255, 0.06);
+    --gx-org-table-row-hover: rgba(255, 255, 255, 0.04);
+
+    /* ---- Usage Analytics ---- */
+    --gx-an-sub: #a8b1ad;
+    --gx-an-ring: rgba(255, 255, 255, 0.09);
+    --gx-an-card-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.45);
+    --gx-an-drop-shadow: 0 10px 24px 0 rgba(0, 0, 0, 0.5);
+    --gx-an-blue: #7ba7ec;
+    --gx-an-blue-label: #9dbdf0;
+    --gx-an-blue-label-strong: #c3d8f7;
+    --gx-an-blue-tint: rgba(66, 122, 198, 0.22);
+    --gx-an-blue-tint-soft: rgba(66, 122, 198, 0.16);
+    --gx-an-line: #6f9dfb;
+    --gx-an-dot: #7ba7ec;
+    --gx-an-grid: rgba(255, 255, 255, 0.08);
+    --gx-an-axis: #8f9a95;
+    --gx-an-chip-ring: rgba(255, 255, 255, 0.12);
+    --gx-an-chip-fg: #c2cac6;
+    --gx-an-mint: rgba(45, 144, 107, 0.24);
+    --gx-an-mint-fg: #7fd3b0;
+    --gx-an-green: #34d399;
+    --gx-an-red: #f87171;
+    --gx-an-bar-blue: #6f9dfb;
+    --gx-an-badge-down-bg: rgba(239, 68, 68, 0.18);
+    --gx-an-badge-down-fg: #f8a3a3;
+    --gx-an-badge-up-bg: rgba(22, 163, 74, 0.2);
+    --gx-an-badge-up-fg: #7fe0a4;
+    --gx-an-insight-bg: rgba(255, 255, 255, 0.05);
+    --gx-an-insight-fg: #dfe4e2;
+    --gx-an-thead-bg: rgba(255, 255, 255, 0.04);
+    --gx-an-table-ring: rgba(255, 255, 255, 0.08);
+    --gx-an-input-bg: rgba(255, 255, 255, 0.05);
+    --gx-an-strong: #eef1f0;
+    --gx-an-amber: #f0b357;
+    --gx-an-violet: #b494f5;
+    --gx-an-rose: #f090c0;
+    --gx-an-field-bg: rgba(255, 255, 255, 0.04);
+    --gx-an-avatar-bg: rgba(255, 255, 255, 0.09);
+    --gx-an-avatar-fg: #c2cac6;
+    --gx-org-field-bg: rgba(255, 255, 255, 0.04);
+    --gx-org-primary-500: rgb(112, 155, 218);
+    --gx-org-primary-500-hover: rgb(134, 172, 227);
+    --gx-org-primary-100: rgba(112, 155, 218, 0.32);
+    --gx-org-primary-tint: rgba(66, 122, 198, 0.22);
+    --gx-org-blue-tint: rgba(64, 121, 197, 0.22);
+    --gx-org-blue-fg: #9dbdf0;
+    --gx-org-used: #34d399;
+    --gx-org-dist: #7fb0f0;
+    --gx-org-warn: #f0b46a;
+    --gx-org-danger: #f87171;
+    --gx-org-danger-hover: #fca5a5;
+    --gx-org-danger-bg: rgba(239, 68, 68, 0.12);
+    --gx-org-danger-line: rgba(239, 68, 68, 0.28);
+    --gx-org-thumb: rgba(255, 255, 255, 0.22);
+    --gx-org-tree-line: rgba(255, 255, 255, 0.14);
+    --gx-org-toggle-off: rgba(255, 255, 255, 0.28);
+    --gx-org-kpi-icon-bg: rgba(66, 122, 198, 0.22);
+    --gx-org-kpi-icon-fg: #9dbdf0;
+    --gx-org-card-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -222,7 +520,11 @@ a {
   text-decoration: none;
   transition: color 0.2s ease;
 }
-a:hover { color: var(--link-hover); }
+
+a:hover {
+  color: var(--link-hover);
+}
+
 a:focus-visible {
   outline: 2px solid var(--brand-ring);
   outline-offset: 2px;
@@ -291,7 +593,8 @@ a:focus-visible {
 }
 
 /* ===== Button System ===== */
-button, .btn {
+button,
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -315,7 +618,8 @@ button, .btn {
   box-shadow: var(--glass-edge-glow), var(--glass-shadow-light);
 }
 
-button:hover, .btn:hover {
+button:hover,
+.btn:hover {
   background: color-mix(in oklab, var(--glass-bg-dark) 70%, var(--btn-secondary));
   transform: translateY(-1px);
   box-shadow:
@@ -323,12 +627,14 @@ button:hover, .btn:hover {
     0 0.625rem 1.75rem rgba(0, 0, 0, 0.12);
 }
 
-button:active, .btn:active {
+button:active,
+.btn:active {
   transform: translateY(0);
   box-shadow: var(--glass-edge-glow), var(--glass-shadow-light);
 }
 
-button:disabled, .btn:disabled {
+button:disabled,
+.btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
@@ -336,7 +642,8 @@ button:disabled, .btn:disabled {
   box-shadow: none;
 }
 
-button:focus-visible, .btn:focus-visible {
+button:focus-visible,
+.btn:focus-visible {
   outline: 2px solid var(--brand-ring);
   outline-offset: 2px;
 }
@@ -774,7 +1081,9 @@ button:focus-visible, .btn:focus-visible {
 }
 
 /* ===== Form Components ===== */
-input, textarea, select {
+input,
+textarea,
+select {
   width: 100%;
   padding: 0.875rem 1.125rem;
   border-radius: var(--glass-radius);
@@ -790,7 +1099,9 @@ input, textarea, select {
   box-shadow: var(--glass-edge-glow), inset 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
-input:focus, textarea:focus, select:focus {
+input:focus,
+textarea:focus,
+select:focus {
   outline: none;
   background: color-mix(in oklab, var(--glass-bg-dark) 50%, var(--btn-secondary));
   backdrop-filter: blur(0.875rem);
@@ -801,13 +1112,19 @@ input:focus, textarea:focus, select:focus {
     var(--glass-edge-glow);
 }
 
-input::placeholder, textarea::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: var(--text-secondary);
   opacity: 0.7;
 }
 
 /* ===== Typography ===== */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-weight: 700;
   line-height: 1.2;
@@ -815,12 +1132,35 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
 
-h1 { font-size: 2.5rem; font-weight: 800; }
-h2 { font-size: 2rem; font-weight: 700; }
-h3 { font-size: 1.5rem; font-weight: 600; }
-h4 { font-size: 1.25rem; font-weight: 600; }
-h5 { font-size: 1rem; font-weight: 500; }
-h6 { font-size: 0.875rem; font-weight: 500; }
+h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+h5 {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+h6 {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
 
 /* ===== Code Elements ===== */
 code {
@@ -861,7 +1201,8 @@ pre {
     background: color-mix(in oklab, var(--glass-bg-dark) 92%, white);
   }
 
-  button, a {
+  button,
+  a {
     touch-action: manipulation;
   }
 }
@@ -1040,6 +1381,7 @@ html[dir="rtl"] [data-numeric] {
  * Brand wordmarks are typically asymmetric and should not be mirrored. */
 html[dir="rtl"] .brand-logo,
 html[dir="rtl"] .logo-icon,
+html[dir="rtl"] .logo-mark,
 html[dir="rtl"] .mobile-header-logo {
   transform: none;
 }

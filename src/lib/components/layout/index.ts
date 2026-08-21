@@ -3,3 +3,10 @@
 
 export { default as Sidebar } from './Sidebar.svelte';
 export { default as MobileHeader } from './MobileHeader.svelte';
+export { default as TopBar } from './TopBar.svelte';
+export {
+  topBarState,
+  setChatTopBar,
+  clearChatTopBar,
+  setCrumbLeaf,
+} from './topBarState.svelte.js';

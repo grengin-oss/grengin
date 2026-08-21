@@ -261,11 +261,25 @@ SPDX-License-Identifier: Apache-2.0
 {/if}
 
 <style>
-  .section {
-    background: var(--btn-secondary);
-    border-radius: var(--radius-md);
-    padding: 16px;
+  /* app.css gives every button backdrop-filter: blur(); on the flat
+     Organization surfaces that repaints the 1px hairlines behind them
+     (the tab-row ring, the tree's branch rails), so switch it off. */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
+
+  .section {
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-self: stretch;
+    font-family: var(--gx-font);
+  }
+
   .section-header,
   .form-actions {
     display: flex;
@@ -276,16 +290,18 @@ SPDX-License-Identifier: Apache-2.0
 
   .section-header h3 {
     margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
   }
 
   .section-description,
   .models-summary {
-    color: var(--text-secondary);
+    color: var(--gx-slate-500);
     font-size: 13px;
-    line-height: 1.5;
+    font-weight: 400;
+    line-height: 100%;
     margin: 0;
   }
 
@@ -471,6 +487,28 @@ SPDX-License-Identifier: Apache-2.0
     background: var(--button-bg);
     color: var(--text-primary);
     border: 1px solid var(--button-border);
+  }
+
+  /* Card header action follows the Organization design's secondary button. */
+  .section-header .btn-secondary {
+    height: 33px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gx-slate-500);
+    transition: background-color 120ms ease;
+  }
+
+  .section-header .btn-secondary:hover {
+    background: var(--gx-org-track);
+    transform: none;
   }
 
   .btn-primary {

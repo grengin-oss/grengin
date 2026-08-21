@@ -101,6 +101,25 @@
     "viewAll": "عرض الكل",
     "showMore": "{count} المزيد",
     "showLess": "عرض أقل",
-    "skills": "المهارات"
+    "skills": "المهارات",
+    "recent": "الأخيرة",
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "thisWeek": "هذا الأسبوع",
+    "earlier": "سابقًا",
+    "searchChatsProjects": "ابحث في المحادثات والمشاريع",
+    "pastWeek": "الأسبوع الماضي",
+    "pastMonth": "الشهر الماضي",
+    "pastYear": "العام الماضي",
+    "older": "أقدم",
+    "noMatchesFor": "لا توجد نتائج لـ «{query}»",
+    "tryShorterWord": "جرّب كلمة أقصر أو تهجئة مختلفة."
+  },
+  "topBar": {
+    "alerts": "التنبيهات",
+    "breadcrumb": "مسار التنقل",
+    "approvedModel": "طراز معتمد",
+    "teamVisible": "مرئي للفريق",
+    "privateToYou": "خاص بك"
   }
 }
