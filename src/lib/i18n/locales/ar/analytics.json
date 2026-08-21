@@ -15,6 +15,7 @@
       "showingCount": "{filtered} من {total}"
     },
     "table": {
+      "user": "المستخدم",
       "userName": "اسم المستخدم",
       "email": "البريد الإلكتروني",
       "department": "القسم",
@@ -24,7 +25,9 @@
       "tokens": "الرموز",
       "cost": "التكلفة",
       "avgLatency": "متوسط زمن الاستجابة",
-      "lastActivity": "آخر نشاط"
+      "lastActivity": "آخر نشاط",
+      "usageCount": "عدد الاستخدامات",
+      "lastActive": "آخر نشاط له"
     },
     "emptyState": {
       "noMatch": "لم يتم العثور على مستخدمين مطابقين لـ \"{query}\"",
@@ -60,7 +63,8 @@
       "errors": "أخطاء",
       "tokens": "الرموز",
       "cost": "التكلفة",
-      "avgLatency": "متوسط زمن الاستجابة"
+      "avgLatency": "متوسط زمن الاستجابة",
+      "usageCount": "عدد الاستخدامات"
     },
     "emptyState": {
       "noMatch": "لم يتم العثور على أقسام مطابقة لـ \"{query}\"",
@@ -92,8 +96,11 @@
     },
     "byModel": {
       "title": "حسب النموذج",
-      "comingSoon": "قريباً",
-      "hint": "ستكون تحليلات النموذج متاحة هنا."
+      "model": "النموذج",
+      "totalRequests": "إجمالي الطلبات",
+      "avgLatency": "متوسط زمن الاستجابة",
+      "cost": "التكلفة",
+      "noData": "لا تتوفر بيانات استخدام النماذج لنطاق التاريخ المحدد"
     },
     "aria": {
       "mainRegion": "تحليلات الاستخدام",
@@ -104,7 +111,8 @@
       "topModelsCaption": "أفضل النماذج حسب الاستخدام لنطاق التاريخ المحدد",
       "departmentTableCaption": "استخدام القسم لنطاق التاريخ المحدد",
       "userTableCaption": "استخدام المستخدم لنطاق التاريخ المحدد",
-      "rangePicker": "تغيير نطاق التاريخ"
+      "rangePicker": "تغيير نطاق التاريخ",
+      "modelTableCaption": "استخدام النماذج لنطاق التاريخ المحدد"
     },
     "filters": {
       "dateRange": "نطاق التاريخ",

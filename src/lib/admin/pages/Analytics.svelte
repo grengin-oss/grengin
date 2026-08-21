@@ -5,7 +5,6 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import AdminPanelCard from "../components/AdminPanelCard.svelte";
   import AdminTabs from "../components/AdminTabs.svelte";
   import AnalyticsRangePicker from "../components/analytics/AnalyticsRangePicker.svelte";
   import { getAnalyticsOverview, getAnalyticsTimeseries } from "../../api/admin/analytics.js";
@@ -16,6 +15,7 @@ SPDX-License-Identifier: Apache-2.0
   import AnalyticsOverviewTab from "../components/analytics/AnalyticsOverviewTab.svelte";
   import UserAnalyticsTab from "../components/analytics/UserAnalyticsTab.svelte";
   import DepartmentAnalyticsTab from "../components/analytics/DepartmentAnalyticsTab.svelte";
+  import ModelAnalyticsTab from "../components/analytics/ModelAnalyticsTab.svelte";
   import { permissionsStore } from "../../features/auth/index.js";
 
   // Tab state
@@ -62,18 +62,24 @@ SPDX-License-Identifier: Apache-2.0
       $_("analytics.tabs.byDepartment"),
       $_("analytics.tabsAria.byDepartment"),
     ),
-    makeTab(
-      "by-model",
-      $_("analytics.tabs.byModel"),
-      $_("analytics.tabsAria.byModel"),
-    ),
+    // By Model reads /admin/analytics/overview's top_models, so it needs the
+    // same global permission the Overview tab does.
+    ...(canViewOverview
+      ? [
+          makeTab(
+            "by-model",
+            $_("analytics.tabs.byModel"),
+            $_("analytics.tabsAria.byModel"),
+          ),
+        ]
+      : []),
   ]);
 
   let prevTab = $state<string | null>(null);
 
   // Redirect to by-user tab if user does not have overview permission
   $effect(() => {
-    if (!canViewOverview && currentTab === "overview") {
+    if (!canViewOverview && (currentTab === "overview" || currentTab === "by-model")) {
       currentTab = "by-user";
     }
   });
@@ -242,7 +248,7 @@ SPDX-License-Identifier: Apache-2.0
 
     isRefreshing = true;
 
-    if (currentTab === 'overview') {
+    if (currentTab === 'overview' || currentTab === 'by-model') {
       await fetchAnalytics({showLoading: false});
     } else if (currentTab === 'by-user' && userAnalyticsRefresh) {
       await userAnalyticsRefresh();
@@ -259,7 +265,7 @@ SPDX-License-Identifier: Apache-2.0
     if (isRefreshing) return;
 
     try {
-      if (currentTab === 'overview') {
+      if (currentTab === 'overview' || currentTab === 'by-model') {
         await fetchAnalytics({showLoading: false});
       } else if (currentTab === 'by-user') {
         // Silent refresh for user analytics
@@ -313,7 +319,7 @@ SPDX-License-Identifier: Apache-2.0
   let prevGranularity = $state<typeof granularity | undefined>(undefined);
 
   $effect(() => {
-    if (currentTab !== 'overview') return;
+    if (currentTab !== 'overview' && currentTab !== 'by-model') return;
     if (!startDate || !endDate) return;
 
     const dateChanged = startDate !== prevStartDate || endDate !== prevEndDate;
@@ -394,7 +400,7 @@ SPDX-License-Identifier: Apache-2.0
       aria-label={$_('analytics.refresh')}
       aria-busy={isRefreshing}
     >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" class:spinning={isRefreshing}>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" class:spinning={isRefreshing}>
         <path d="M14 8a6 6 0 1 1-1.76-4.24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         <path d="M14 2v3.5h-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
@@ -446,23 +452,25 @@ SPDX-License-Identifier: Apache-2.0
       <DepartmentAnalyticsTab
         {startDate}
         {endDate}
+        {rangeLabel}
         onRefresh={(callback) => departmentAnalyticsRefresh = callback}
       />
     </div>
-  {:else if currentTab === 'by-model'}
+  {:else if currentTab === 'by-model' && canViewOverview}
     <div
       id="by-model-panel"
-      class="analytics-tab-panel tab-placeholder"
+      class="analytics-tab-panel"
       role="tabpanel"
       aria-labelledby="tab-by-model"
       tabindex="-1"
     >
-      <AdminPanelCard>
-        <div class="placeholder-content">
-          <p>{$_('analytics.byModel.title')} — {$_('analytics.byModel.comingSoon')}</p>
-          <p class="placeholder-hint">{$_('analytics.byModel.hint')}</p>
-        </div>
-      </AdminPanelCard>
+      <ModelAnalyticsTab
+        {overviewData}
+        {isLoading}
+        {rangeLabel}
+        {error}
+        onRetry={() => fetchAnalytics({showLoading: true})}
+      />
     </div>
   {/if}
 </div>
@@ -522,30 +530,31 @@ SPDX-License-Identifier: Apache-2.0
     flex-wrap: wrap;
   }
 
-  /* 99x48 mint pill from the design. */
+  /* Outlined chip, hug x hug (97x32 at the design's metrics): white fill,
+     Primary-100 hairline drawn inside, Primary-500 label. */
   .refresh-btn {
-    height: 48px;
-    min-width: 99px;
-    border: 0;
+    border: 1px solid var(--gx-org-primary-100);
     border-radius: 8px;
-    background: var(--gx-an-mint);
+    background: var(--gx-card);
     box-shadow: none;
     display: flex;
-    gap: 8px;
-    padding: 12px;
+    gap: 6px;
+    padding: 8px 14px;
     justify-content: center;
     align-items: center;
     flex-shrink: 0;
     font-family: inherit;
-    color: var(--gx-an-mint-fg);
+    color: var(--gx-org-primary-500);
     cursor: pointer;
-    transition: background-color 120ms ease;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease;
   }
 
   .refresh-btn span {
     font-weight: 500;
-    font-size: 14px;
-    line-height: 100%;
+    font-size: 13px;
+    line-height: 14px;
     white-space: nowrap;
   }
 
@@ -554,7 +563,8 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .refresh-btn:hover:not(:disabled) {
-    background: var(--gx-org-brand-tint);
+    background: var(--gx-org-primary-tint);
+    border-color: var(--gx-org-primary-500);
     transform: none;
   }
 
@@ -585,28 +595,6 @@ SPDX-License-Identifier: Apache-2.0
   .analytics-tab-panel:focus-visible {
     outline: 2px solid var(--gx-an-blue);
     outline-offset: 2px;
-  }
-
-  .tab-placeholder {
-    margin-top: 8px;
-  }
-
-  .placeholder-content {
-    text-align: center;
-    padding: 48px 24px;
-  }
-
-  .placeholder-content p {
-    margin: 0 0 8px;
-    font-weight: 600;
-    font-size: 15px;
-    color: var(--gx-ink);
-  }
-
-  .placeholder-content .placeholder-hint {
-    font-weight: 400;
-    font-size: 13px;
-    color: var(--gx-an-sub);
   }
 
   @media (max-width: 768px) {

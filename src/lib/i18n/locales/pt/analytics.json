@@ -15,6 +15,7 @@
       "showingCount": "{filtered} de {total}"
     },
     "table": {
+      "user": "Usuário",
       "userName": "Nome do usuário",
       "email": "E-mail",
       "department": "Departamento",
@@ -24,7 +25,9 @@
       "tokens": "Tokens",
       "cost": "Custo",
       "avgLatency": "Latência média",
-      "lastActivity": "Última atividade"
+      "lastActivity": "Última atividade",
+      "usageCount": "Contagem de uso",
+      "lastActive": "Atividade recente"
     },
     "emptyState": {
       "noMatch": "Nenhum usuário encontrado correspondente a \"{query}\"",
@@ -60,7 +63,8 @@
       "errors": "Erros",
       "tokens": "Tokens",
       "cost": "Custo",
-      "avgLatency": "Latência média"
+      "avgLatency": "Latência média",
+      "usageCount": "Contagem de uso"
     },
     "emptyState": {
       "noMatch": "Nenhum departamento encontrado correspondente a \"{query}\"",
@@ -92,8 +96,11 @@
     },
     "byModel": {
       "title": "Por Modelo",
-      "comingSoon": "Em breve",
-      "hint": "A análise por modelo estará disponível aqui."
+      "model": "Modelo",
+      "totalRequests": "Solicitações totais",
+      "avgLatency": "Latência média",
+      "cost": "Custo",
+      "noData": "Nenhum dado de uso de modelos no período selecionado"
     },
     "aria": {
       "mainRegion": "Análise de uso",
@@ -104,7 +111,8 @@
       "topModelsCaption": "Principais modelos por uso no período selecionado",
       "departmentTableCaption": "Uso por departamento no período selecionado",
       "userTableCaption": "Uso por usuário no período selecionado",
-      "rangePicker": "Alterar intervalo de datas"
+      "rangePicker": "Alterar intervalo de datas",
+      "modelTableCaption": "Uso por modelo no período selecionado"
     },
     "filters": {
       "dateRange": "Período",

@@ -4,14 +4,16 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import AdminPanelCard from '../AdminPanelCard.svelte';
+  import { onMount } from "svelte";
   import LoadingSpinner from "../LoadingSpinner.svelte";
-  import { getUserAnalytics, type GetUserAnalyticsParams } from '$lib/api/admin/analytics.js';
-  import type { UserAnalyticsItem } from '../../types.js';
+  import {
+    getUserAnalytics,
+    type GetUserAnalyticsParams,
+  } from "$lib/api/admin/analytics.js";
+  import type { UserAnalyticsItem } from "../../types.js";
   import { toast } from "$lib/components/Toaster.svelte";
-  import { _ } from 'svelte-i18n';
-  import { formatDate } from '$lib/utils/format.js';
+  import { _ } from "svelte-i18n";
+  import { formatRelativeDay } from "$lib/utils/format.js";
 
   interface Props {
     startDate: string;
@@ -28,27 +30,30 @@ SPDX-License-Identifier: Apache-2.0
   let pageSize = $state(20);
   let totalPages = $state(0);
 
-  // Sorting & filtering
-  let sortBy = $state<
-    | 'name'
-    | 'email'
-    | 'totalRequests'
-    | 'totalTokens'
-    | 'totalCost'
-    | 'averageLatency'
-    | 'lastActivity'
-    | null
-  >('totalRequests');
-  let sortOrder = $state<'asc' | 'desc'>('desc');
-  let searchQuery = $state('');
-  let pendingDate : {startDate: string, endDate: string} | null = null;
+  /** Every column the API can sort on (its sort_by values). */
+  type SortColumn =
+    | "name"
+    | "email"
+    | "totalRequests"
+    | "totalTokens"
+    | "totalCost"
+    | "averageLatency"
+    | "lastActivity";
+
+  let sortBy = $state<SortColumn | null>("totalRequests");
+  let sortOrder = $state<"asc" | "desc">("desc");
+  let searchQuery = $state("");
+  let pendingDate: { startDate: string; endDate: string } | null = null;
   let isInitialLoadCompleted = $state(false);
   let latestRequestId = 0;
 
-  async function fetchUserAnalytics(newStartDate: string = startDate, newEndDate: string = endDate) {    
+  async function fetchUserAnalytics(
+    newStartDate: string = startDate,
+    newEndDate: string = endDate,
+  ) {
     const requestId = ++latestRequestId;
     isLoading = true;
-    pendingDate = {startDate: newStartDate, endDate: newEndDate};
+    pendingDate = { startDate: newStartDate, endDate: newEndDate };
 
     try {
       const params: GetUserAnalyticsParams = {
@@ -58,7 +63,7 @@ SPDX-License-Identifier: Apache-2.0
         limit: pageSize,
         sort_by: sortBy ?? undefined,
         order: sortBy ? sortOrder : undefined,
-        search: searchQuery.trim() || undefined
+        search: searchQuery.trim() || undefined,
       };
 
       const response = await getUserAnalytics(params);
@@ -70,8 +75,8 @@ SPDX-License-Identifier: Apache-2.0
     } catch (err: any) {
       if (requestId !== latestRequestId) return;
       const errorMessage = err?.message || err?.error;
-      toast.error(errorMessage || $_('userAnalytics.errors.fetchFailed'));
-      console.error('User analytics fetch error:', err);
+      toast.error(errorMessage || $_("userAnalytics.errors.fetchFailed"));
+      console.error("User analytics fetch error:", err);
     } finally {
       if (requestId !== latestRequestId) return;
       isLoading = false;
@@ -80,15 +85,15 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
-  function handleSort(column: typeof sortBy) {
+  function handleSort(column: SortColumn) {
     if (sortBy !== column) {
       sortBy = column;
-      sortOrder = 'desc';
-    } else if (sortOrder === 'desc') {
-      sortOrder = 'asc';
+      sortOrder = "desc";
+    } else if (sortOrder === "desc") {
+      sortOrder = "asc";
     } else {
       sortBy = null;
-      sortOrder = 'desc';
+      sortOrder = "desc";
     }
     currentPage = 0;
     fetchUserAnalytics();
@@ -108,54 +113,66 @@ SPDX-License-Identifier: Apache-2.0
 
   function clearSearch() {
     if (!searchQuery) return;
-    searchQuery = '';
+    searchQuery = "";
     currentPage = 0;
     fetchUserAnalytics();
   }
 
   function formatNumber(num: number): string {
-    return new Intl.NumberFormat('en-US').format(num);
+    return new Intl.NumberFormat("en-US").format(num);
   }
 
   function formatCurrency(num: number): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(num);
+    return "$" + (num ?? 0).toFixed(2);
   }
 
-  function formatLatency(ms: number): string {
-    return `${ms.toFixed(2)}ms`;
+  /** Same wording as the By Model tab: ms under a second, seconds above it. */
+  function formatLatency(ms: number | null | undefined): string {
+    if (ms === null || ms === undefined || Number.isNaN(ms) || ms <= 0) return "—";
+    return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`;
   }
 
-  function formatDateTime(dateString: string | null | undefined): string {
-    return formatDate(dateString, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }, $_('common.never'));
+  /** Tokens read as 84.2K / 1.2M, matching Top Models on the Overview tab. */
+  function formatCompact(num: number): string {
+    if (num >= 1000000) {
+      const val = num / 1000000;
+      return (val % 1 === 0 ? val.toString() : val.toFixed(1)) + "M";
+    }
+    if (num >= 1000) {
+      const val = num / 1000;
+      return (val % 1 === 0 ? val.toString() : val.toFixed(1)) + "K";
+    }
+    return Math.round(num).toString();
   }
 
-  function ariaSortFor(column: Exclude<typeof sortBy, null>): 'ascending' | 'descending' | 'none' {
-    if (sortBy !== column) return 'none';
-    return sortOrder === 'asc' ? 'ascending' : 'descending';
+  /** Two-letter monogram for the design's 24px avatar. */
+  function initials(user: UserAnalyticsItem): string {
+    const source = (user.user_name || user.user_email || "").trim();
+    if (!source) return "?";
+    const words = source.split(/[\s._@-]+/).filter(Boolean);
+    if (words.length === 0) return source.slice(0, 2).toLocaleUpperCase();
+    if (words.length === 1) return words[0].slice(0, 2).toLocaleUpperCase();
+    return (words[0][0] + words[1][0]).toLocaleUpperCase();
+  }
+
+  function ariaSortFor(
+    column: SortColumn,
+  ): "ascending" | "descending" | "none" {
+    if (sortBy !== column) return "none";
+    return sortOrder === "asc" ? "ascending" : "descending";
   }
 
   // Fetch data on mount and when date range changes
   onMount(() => {
     fetchUserAnalytics();
-    
+
     // Register refresh callback with parent
     if (onRefresh) {
       onRefresh(async () => {
-        if(isLoading) {
+        if (isLoading) {
           return;
         }
-        
+
         await fetchUserAnalytics();
       });
     }
@@ -167,11 +184,15 @@ SPDX-License-Identifier: Apache-2.0
       return;
     }
 
-    if(pendingDate && pendingDate.startDate === startDate && pendingDate.endDate === endDate) {
+    if (
+      pendingDate &&
+      pendingDate.startDate === startDate &&
+      pendingDate.endDate === endDate
+    ) {
       return;
     }
 
-    pendingDate = {startDate, endDate};
+    pendingDate = { startDate, endDate };
 
     const pendingDateUpdateTimer = setTimeout(() => {
       currentPage = 0;
@@ -187,7 +208,11 @@ SPDX-License-Identifier: Apache-2.0
 
   // Auto-search when search query changes (with 300ms debounce)
   $effect(() => {
-    if (!isInitialLoadCompleted || searchQuery === null || searchQuery === undefined) {
+    if (
+      !isInitialLoadCompleted ||
+      searchQuery === null ||
+      searchQuery === undefined
+    ) {
       return;
     }
 
@@ -202,664 +227,869 @@ SPDX-License-Identifier: Apache-2.0
   });
 </script>
 
+{#snippet sortCaret(column: SortColumn)}
+  <span
+    class="sort-caret"
+    class:sort-caret--active={sortBy === column}
+    aria-hidden="true"
+  >
+    <svg width="8" height="5" viewBox="0 0 8 5" fill="none">
+      {#if sortBy === column && sortOrder === "asc"}
+        <path
+          d="M1 4l3-3 3 3"
+          stroke="currentColor"
+          stroke-width="1.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      {:else}
+        <path
+          d="M1 1l3 3 3-3"
+          stroke="currentColor"
+          stroke-width="1.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      {/if}
+    </svg>
+  </span>
+{/snippet}
+
 <div class="user-analytics-tab">
   {#if isLoading && users.length === 0}
-    <div class="loading-container" role="status" aria-live="polite" aria-busy="true">
+    <div
+      class="loading-container"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
       <LoadingSpinner />
     </div>
   {:else}
     <div class="analytics-content">
-      <!-- Filters Section -->
-      <AdminPanelCard>
-        <div class="filters-section">
-          <div class="filters-row">
-            <div class="filter-group">
-              <label for="user-analytics-search">{$_('userAnalytics.filters.search')}</label>
-              <div class="search-input-wrap">
-                <input
-                  id="user-analytics-search"
-                  type="search"
-                  bind:value={searchQuery}
-                  placeholder={$_('userAnalytics.filters.searchPlaceholder')}
-                  class="search-input"
-                  autocomplete="off"
-                />
-                {#if searchQuery}
-                  <button
-                    type="button"
-                    class="search-clear-btn"
-                    onclick={clearSearch}
-                    aria-label={$_('common.clear')}
-                    title={$_('common.clear')}
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      aria-hidden="true"
-                      class="search-clear-icon"
-                    >
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                {/if}
-              </div>
-            </div>
+      <!-- ============== search / per page control card ============== -->
+      <div class="control-header-card">
+        <div class="control-header-row">
+          <label class="control-header-title" for="user-analytics-search">
+            {$_("userAnalytics.filters.search")}
+          </label>
+          <label
+            class="control-header-perpage-label"
+            for="user-analytics-page-size"
+          >
+            {$_("userAnalytics.filters.perPage")}
+          </label>
+        </div>
 
-            <div class="filter-group">
-              <label for="user-analytics-page-size">{$_('userAnalytics.filters.perPage')}</label>
-              <select
-                id="user-analytics-page-size"
-                bind:value={pageSize}
-                onchange={handlePageSizeChange}
-                class="select-input"
+        <div class="control-inputs-row">
+          <div class="search-input-wrapper">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle
+                cx="6"
+                cy="6"
+                r="4.5"
+                stroke="currentColor"
+                stroke-width="1.2"
+                fill="none"
+              />
+              <line
+                x1="9.3"
+                y1="9.3"
+                x2="13"
+                y2="13"
+                stroke="currentColor"
+                stroke-width="1.2"
+              />
+            </svg>
+            <input
+              id="user-analytics-search"
+              type="search"
+              class="search-input"
+              bind:value={searchQuery}
+              placeholder={$_("userAnalytics.filters.searchPlaceholder")}
+              autocomplete="off"
+            />
+            {#if searchQuery}
+              <button
+                type="button"
+                class="search-clear-btn"
+                onclick={clearSearch}
+                aria-label={$_("common.clear")}
+                title={$_("common.clear")}
               >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <line
+                    x1="2"
+                    y1="2"
+                    x2="10"
+                    y2="10"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                  />
+                  <line
+                    x1="10"
+                    y1="2"
+                    x2="2"
+                    y2="10"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </button>
+            {/if}
           </div>
 
-          <div class="stats-row">
-            <div class="stat-item">
-              <span class="stat-label">{$_('userAnalytics.stats.totalUsers')}:</span>
-              <span class="stat-value">{formatNumber(total)}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">{$_('userAnalytics.stats.showing')}:</span>
-              <span class="stat-value">{$_('userAnalytics.stats.showingCount', { values: { filtered: users.length, total } })}</span>
-            </div>
-          </div>
-        </div>
-      </AdminPanelCard>
-
-      <!-- Table Section -->
-      <AdminPanelCard padded={false}>
-        <div class="table-container">
-          <table class="analytics-table">
-            <caption class="sr-only">{$_('analytics.aria.userTableCaption')}</caption>
-            <thead>
-              <tr>
-                <th scope="col" class="sortable" aria-sort={ariaSortFor('name')}>
-                  <button type="button" class="sort-header-btn" onclick={() => handleSort('name')}>
-                    <span class="th-content">
-                      {$_('userAnalytics.table.userName')}
-                      <span class="sort-icon" class:sort-icon-active={sortBy === 'name'} aria-hidden="true">
-                        {#if sortBy === 'name'}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 320 512" class="sort-svg">
-                            {#if sortOrder === 'asc'}
-                              <path fill="currentColor" d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41"/>
-                            {:else}
-                              <path fill="currentColor" d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41"/>
-                            {/if}
-                          </svg>
-                        {:else}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 1024 1408" class="sort-svg sort-svg-unsorted">
-                            <path fill="currentColor" d="M1024 896q0 26-19 45l-448 448q-19 19-45 19t-45-19L19 941Q0 922 0 896t19-45t45-19h896q26 0 45 19t19 45m0-384q0 26-19 45t-45 19H64q-26 0-45-19T0 512t19-45L467 19q19-19 45-19t45 19l448 448q19 19 19 45"/>
-                          </svg>
-                        {/if}
-                      </span>
-                    </span>
-                  </button>
-                </th>
-                <th scope="col" class="sortable" aria-sort={ariaSortFor('email')}>
-                  <button type="button" class="sort-header-btn" onclick={() => handleSort('email')}>
-                    <span class="th-content">
-                      {$_('userAnalytics.table.email')}
-                      <span class="sort-icon" class:sort-icon-active={sortBy === 'email'} aria-hidden="true">
-                        {#if sortBy === 'email'}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 320 512" class="sort-svg">
-                            {#if sortOrder === 'asc'}
-                              <path fill="currentColor" d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41"/>
-                            {:else}
-                              <path fill="currentColor" d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41"/>
-                            {/if}
-                          </svg>
-                        {:else}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 1024 1408" class="sort-svg sort-svg-unsorted">
-                            <path fill="currentColor" d="M1024 896q0 26-19 45l-448 448q-19 19-45 19t-45-19L19 941Q0 922 0 896t19-45t45-19h896q26 0 45 19t19 45m0-384q0 26-19 45t-45 19H64q-26 0-45-19T0 512t19-45L467 19q19-19 45-19t45 19l448 448q19 19 19 45"/>
-                          </svg>
-                        {/if}
-                      </span>
-                    </span>
-                  </button>
-                </th>
-                <th scope="col">{$_('userAnalytics.table.department')}</th>
-                <th scope="col" class="sortable numeric" aria-sort={ariaSortFor('totalRequests')}>
-                  <button type="button" class="sort-header-btn" onclick={() => handleSort('totalRequests')}>
-                    <span class="th-content">
-                      {$_('userAnalytics.table.requests')}
-                      <span class="sort-icon" class:sort-icon-active={sortBy === 'totalRequests'} aria-hidden="true">
-                        {#if sortBy === 'totalRequests'}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 320 512" class="sort-svg">
-                            {#if sortOrder === 'asc'}
-                              <path fill="currentColor" d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41"/>
-                            {:else}
-                              <path fill="currentColor" d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41"/>
-                            {/if}
-                          </svg>
-                        {:else}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 1024 1408" class="sort-svg sort-svg-unsorted">
-                            <path fill="currentColor" d="M1024 896q0 26-19 45l-448 448q-19 19-45 19t-45-19L19 941Q0 922 0 896t19-45t45-19h896q26 0 45 19t19 45m0-384q0 26-19 45t-45 19H64q-26 0-45-19T0 512t19-45L467 19q19-19 45-19t45 19l448 448q19 19 19 45"/>
-                          </svg>
-                        {/if}
-                      </span>
-                    </span>
-                  </button>
-                </th>
-                <th scope="col" class="numeric">{$_('userAnalytics.table.success')}</th>
-                <th scope="col" class="numeric">{$_('userAnalytics.table.errors')}</th>
-                <th scope="col" class="sortable numeric" aria-sort={ariaSortFor('totalTokens')}>
-                  <button type="button" class="sort-header-btn" onclick={() => handleSort('totalTokens')}>
-                    <span class="th-content">
-                      {$_('userAnalytics.table.tokens')}
-                      <span class="sort-icon" class:sort-icon-active={sortBy === 'totalTokens'} aria-hidden="true">
-                        {#if sortBy === 'totalTokens'}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 320 512" class="sort-svg">
-                            {#if sortOrder === 'asc'}
-                              <path fill="currentColor" d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41"/>
-                            {:else}
-                              <path fill="currentColor" d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41"/>
-                            {/if}
-                          </svg>
-                        {:else}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 1024 1408" class="sort-svg sort-svg-unsorted">
-                            <path fill="currentColor" d="M1024 896q0 26-19 45l-448 448q-19 19-45 19t-45-19L19 941Q0 922 0 896t19-45t45-19h896q26 0 45 19t19 45m0-384q0 26-19 45t-45 19H64q-26 0-45-19T0 512t19-45L467 19q19-19 45-19t45 19l448 448q19 19 19 45"/>
-                          </svg>
-                        {/if}
-                      </span>
-                    </span>
-                  </button>
-                </th>
-                <th scope="col" class="sortable numeric" aria-sort={ariaSortFor('totalCost')}>
-                  <button type="button" class="sort-header-btn" onclick={() => handleSort('totalCost')}>
-                    <span class="th-content">
-                      {$_('userAnalytics.table.cost')}
-                      <span class="sort-icon" class:sort-icon-active={sortBy === 'totalCost'} aria-hidden="true">
-                        {#if sortBy === 'totalCost'}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 320 512" class="sort-svg">
-                            {#if sortOrder === 'asc'}
-                              <path fill="currentColor" d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41"/>
-                            {:else}
-                              <path fill="currentColor" d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41"/>
-                            {/if}
-                          </svg>
-                        {:else}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 1024 1408" class="sort-svg sort-svg-unsorted">
-                            <path fill="currentColor" d="M1024 896q0 26-19 45l-448 448q-19 19-45 19t-45-19L19 941Q0 922 0 896t19-45t45-19h896q26 0 45 19t19 45m0-384q0 26-19 45t-45 19H64q-26 0-45-19T0 512t19-45L467 19q19-19 45-19t45 19l448 448q19 19 19 45"/>
-                          </svg>
-                        {/if}
-                      </span>
-                    </span>
-                  </button>
-                </th>
-                <th scope="col" class="sortable numeric" aria-sort={ariaSortFor('averageLatency')}>
-                  <button type="button" class="sort-header-btn" onclick={() => handleSort('averageLatency')}>
-                    <span class="th-content">
-                      {$_('userAnalytics.table.avgLatency')}
-                      <span class="sort-icon" class:sort-icon-active={sortBy === 'averageLatency'} aria-hidden="true">
-                        {#if sortBy === 'averageLatency'}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 320 512" class="sort-svg">
-                            {#if sortOrder === 'asc'}
-                              <path fill="currentColor" d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41"/>
-                            {:else}
-                              <path fill="currentColor" d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41"/>
-                            {/if}
-                          </svg>
-                        {:else}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 1024 1408" class="sort-svg sort-svg-unsorted">
-                            <path fill="currentColor" d="M1024 896q0 26-19 45l-448 448q-19 19-45 19t-45-19L19 941Q0 922 0 896t19-45t45-19h896q26 0 45 19t19 45m0-384q0 26-19 45t-45 19H64q-26 0-45-19T0 512t19-45L467 19q19-19 45-19t45 19l448 448q19 19 19 45"/>
-                          </svg>
-                        {/if}
-                      </span>
-                    </span>
-                  </button>
-                </th>
-                <th scope="col" class="sortable" aria-sort={ariaSortFor('lastActivity')}>
-                  <button type="button" class="sort-header-btn" onclick={() => handleSort('lastActivity')}>
-                    <span class="th-content">
-                      {$_('userAnalytics.table.lastActivity')}
-                      <span class="sort-icon" class:sort-icon-active={sortBy === 'lastActivity'} aria-hidden="true">
-                        {#if sortBy === 'lastActivity'}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 320 512" class="sort-svg">
-                            {#if sortOrder === 'asc'}
-                              <path fill="currentColor" d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41"/>
-                            {:else}
-                              <path fill="currentColor" d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41"/>
-                            {/if}
-                          </svg>
-                        {:else}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 1024 1408" class="sort-svg sort-svg-unsorted">
-                            <path fill="currentColor" d="M1024 896q0 26-19 45l-448 448q-19 19-45 19t-45-19L19 941Q0 922 0 896t19-45t45-19h896q26 0 45 19t19 45m0-384q0 26-19 45t-45 19H64q-26 0-45-19T0 512t19-45L467 19q19-19 45-19t45 19l448 448q19 19 19 45"/>
-                          </svg>
-                        {/if}
-                      </span>
-                    </span>
-                  </button>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {#if users.length === 0}
-                <tr>
-                  <td colspan="10" class="empty-state">
-                    {#if searchQuery}
-                      {$_('userAnalytics.emptyState.noMatch', { values: { query: searchQuery } })}
-                    {:else}
-                      {$_('userAnalytics.emptyState.noData')}
-                    {/if}
-                  </td>
-                </tr>
-              {:else}
-                {#each users as user (user.user_id)}
-                  <tr>
-                    <td class="user-name">{user.user_name}</td>
-                    <td class="user-email">{user.user_email}</td>
-                    <td>{user.department || '-'}</td>
-                    <td class="numeric">{formatNumber(user.total_requests)}</td>
-                    <td class="numeric success">{formatNumber(user.success_count)}</td>
-                    <td class="numeric error">{formatNumber(user.error_count)}</td>
-                    <td class="numeric">{formatNumber(user.total_tokens)}</td>
-                    <td class="numeric cost">{formatCurrency(user.total_cost)}</td>
-                    <td class="numeric">{formatLatency(user.average_latency)}</td>
-                    <td class="date">{formatDateTime(user.last_activity)}</td>
-                  </tr>
-                {/each}
-              {/if}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination -->
-        {#if totalPages > 1}
-          <nav class="pagination" aria-label={$_('analytics.aria.pagination')}>
-            <button
-              type="button"
-              class="pagination-btn"
-              disabled={currentPage === 0}
-              onclick={() => handlePageChange(currentPage - 1)}
+          <div class="per-page-select">
+            <select
+              id="user-analytics-page-size"
+              bind:value={pageSize}
+              onchange={handlePageSizeChange}
             >
-              {$_('userAnalytics.pagination.previous')}
-            </button>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <svg
+              width="8"
+              height="4"
+              viewBox="0 0 8 4"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M1 1l3 2 3-2"
+                stroke="currentColor"
+                stroke-width="1"
+                fill="none"
+              />
+            </svg>
+          </div>
+        </div>
 
-            <span class="pagination-info" aria-live="polite">
-              {$_('userAnalytics.pagination.pageInfo', { values: { current: currentPage + 1, total: totalPages } })}
+        <div class="control-header-divider"></div>
+
+        <div class="control-summary-line">
+          <span>
+            {$_("userAnalytics.stats.totalUsers")}:
+            <strong>{formatNumber(total)}</strong>
+          </span>
+          <span>
+            {$_("userAnalytics.stats.showing")}:
+            <strong
+              >{$_("userAnalytics.stats.showingCount", {
+                values: { filtered: users.length, total },
+              })}</strong
+            >
+          </span>
+        </div>
+      </div>
+
+      <!-- ============== users table ============== -->
+      <div class="table-scroll">
+        <div
+          class="table-container"
+          role="table"
+          aria-label={$_("analytics.aria.userTableCaption")}
+        >
+          <div class="table-header" role="row">
+            <span role="columnheader" aria-sort={ariaSortFor("name")}>
+              <button
+                type="button"
+                class="sort-btn"
+                onclick={() => handleSort("name")}
+              >
+                {$_("userAnalytics.table.userName")}
+                {@render sortCaret("name")}
+              </button>
             </span>
-
-            <button
-              type="button"
-              class="pagination-btn"
-              disabled={currentPage >= totalPages - 1}
-              onclick={() => handlePageChange(currentPage + 1)}
+            <span role="columnheader" aria-sort={ariaSortFor("email")}>
+              <button
+                type="button"
+                class="sort-btn"
+                onclick={() => handleSort("email")}
+              >
+                {$_("userAnalytics.table.email")}
+                {@render sortCaret("email")}
+              </button>
+            </span>
+            <span role="columnheader">{$_("userAnalytics.table.department")}</span>
+            <span
+              class="num"
+              role="columnheader"
+              aria-sort={ariaSortFor("totalRequests")}
             >
-              {$_('userAnalytics.pagination.next')}
-            </button>
-          </nav>
-        {/if}
-      </AdminPanelCard>
+              <button
+                type="button"
+                class="sort-btn sort-btn--num"
+                onclick={() => handleSort("totalRequests")}
+              >
+                {$_("userAnalytics.table.requests")}
+                {@render sortCaret("totalRequests")}
+              </button>
+            </span>
+            <span class="num" role="columnheader"
+              >{$_("userAnalytics.table.success")}</span
+            >
+            <span class="num" role="columnheader"
+              >{$_("userAnalytics.table.errors")}</span
+            >
+            <span
+              class="num"
+              role="columnheader"
+              aria-sort={ariaSortFor("totalTokens")}
+            >
+              <button
+                type="button"
+                class="sort-btn sort-btn--num"
+                onclick={() => handleSort("totalTokens")}
+              >
+                {$_("userAnalytics.table.tokens")}
+                {@render sortCaret("totalTokens")}
+              </button>
+            </span>
+            <span
+              class="num"
+              role="columnheader"
+              aria-sort={ariaSortFor("totalCost")}
+            >
+              <button
+                type="button"
+                class="sort-btn sort-btn--num"
+                onclick={() => handleSort("totalCost")}
+              >
+                {$_("userAnalytics.table.cost")}
+                {@render sortCaret("totalCost")}
+              </button>
+            </span>
+            <span
+              class="num"
+              role="columnheader"
+              aria-sort={ariaSortFor("averageLatency")}
+            >
+              <button
+                type="button"
+                class="sort-btn sort-btn--num"
+                onclick={() => handleSort("averageLatency")}
+              >
+                {$_("userAnalytics.table.avgLatency")}
+                {@render sortCaret("averageLatency")}
+              </button>
+            </span>
+            <span role="columnheader" aria-sort={ariaSortFor("lastActivity")}>
+              <button
+                type="button"
+                class="sort-btn"
+                onclick={() => handleSort("lastActivity")}
+              >
+                {$_("userAnalytics.table.lastActive")}
+                {@render sortCaret("lastActivity")}
+              </button>
+            </span>
+          </div>
+
+          {#if users.length === 0}
+            <div class="empty-row" role="row">
+              <span role="cell">
+                {#if searchQuery}
+                  {$_("userAnalytics.emptyState.noMatch", {
+                    values: { query: searchQuery },
+                  })}
+                {:else}
+                  {$_("userAnalytics.emptyState.noData")}
+                {/if}
+              </span>
+            </div>
+          {:else}
+            {#each users as user (user.user_id)}
+              <div class="user-row" role="row">
+                <div role="cell">
+                  <span class="user-avatar" aria-hidden="true"
+                    >{initials(user)}</span
+                  >
+                  <span class="user-name" title={user.user_name || user.user_email}>
+                    {user.user_name || user.user_email}
+                  </span>
+                </div>
+                <div role="cell">
+                  <span class="table-value" title={user.user_email}
+                    >{user.user_email}</span
+                  >
+                </div>
+                <div role="cell">
+                  <span class="table-value--muted" title={user.department || "-"}
+                    >{user.department || "-"}</span
+                  >
+                </div>
+                <div class="num" role="cell">
+                  <span class="table-value"
+                    >{formatNumber(user.total_requests)}</span
+                  >
+                </div>
+                <div class="num" role="cell">
+                  <span class="table-value--success"
+                    >{formatNumber(user.success_count)}</span
+                  >
+                </div>
+                <div class="num" role="cell">
+                  <span
+                    class="table-value"
+                    class:table-value--error={user.error_count > 0}
+                    >{formatNumber(user.error_count)}</span
+                  >
+                </div>
+                <div class="num" role="cell">
+                  <span class="table-value"
+                    >{formatCompact(user.total_tokens)}</span
+                  >
+                </div>
+                <div class="num" role="cell">
+                  <span class="table-value--cost"
+                    >{formatCurrency(user.total_cost)}</span
+                  >
+                </div>
+                <div class="num" role="cell">
+                  <span class="table-value"
+                    >{formatLatency(user.average_latency)}</span
+                  >
+                </div>
+                <div role="cell">
+                  <span class="table-value"
+                    >{formatRelativeDay(
+                      user.last_activity,
+                      $_("common.never"),
+                    )}</span
+                  >
+                </div>
+              </div>
+            {/each}
+          {/if}
+        </div>
+      </div>
+
+      <!-- Pagination is not drawn in the design, so it only appears when needed. -->
+      {#if totalPages > 1}
+        <nav class="pagination" aria-label={$_("analytics.aria.pagination")}>
+          <button
+            type="button"
+            class="pagination-btn"
+            disabled={currentPage === 0}
+            onclick={() => handlePageChange(currentPage - 1)}
+          >
+            {$_("userAnalytics.pagination.previous")}
+          </button>
+
+          <span class="pagination-info" aria-live="polite">
+            {$_("userAnalytics.pagination.pageInfo", {
+              values: { current: currentPage + 1, total: totalPages },
+            })}
+          </span>
+
+          <button
+            type="button"
+            class="pagination-btn"
+            disabled={currentPage >= totalPages - 1}
+            onclick={() => handlePageChange(currentPage + 1)}
+          >
+            {$_("userAnalytics.pagination.next")}
+          </button>
+        </nav>
+      {/if}
     </div>
   {/if}
 </div>
 
 <style>
-  .user-analytics-tab {
-    margin-top: var(--space-lg);
+  /* app.css's global button rule blurs what sits behind it, which erases the
+     hairlines this design draws under its buttons. */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
-  .loading-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 400px;
+  .user-analytics-tab {
+    font-family: var(--gx-font);
   }
 
   .analytics-content {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xl);
+    gap: 28px;
   }
 
-  .filters-section {
+  .loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 20px;
+  }
+
+  /* ---------------- search / per page card ---------------- */
+  .control-header-card {
+    border-radius: 16px;
+    border: 1px solid #e6e7eb;
+    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.02);
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: 14px;
+    padding: 20px;
   }
 
-  .filters-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: var(--space-lg);
-  }
-
-  .filter-group {
+  .control-header-row {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
   }
 
-  .filter-group label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-secondary);
+  .control-header-title {
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 100%;
+    color: var(--gx-ink);
   }
 
-  .search-input-wrap {
-    position: relative;
+  .control-header-perpage-label {
+    width: 80px;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 100%;
+    text-align: end;
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
   }
 
-  .search-input,
-  .select-input {
-    padding: 0.625rem 0.875rem;
-    background: var(--btn-secondary);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 0.9375rem;
-    transition: all 0.2s ease;
+  .control-inputs-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
   }
 
-  .search-input:focus,
-  .select-input:focus {
+  .search-input-wrapper {
+    flex-grow: 1;
+    min-width: 0;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--gx-an-field-bg);
+    box-shadow: inset 0 0 0 1px var(--gx-an-ring);
+    display: flex;
+    gap: 8px;
+    padding: 0 16px;
+    align-items: center;
+  }
+
+  .search-input-wrapper svg {
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
+  }
+
+  /* app.css gives every input a glass background, inner shadow, blur and a 2px
+     focus ring — all of which double up inside this design's own field. */
+  .search-input {
+    flex-grow: 1;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 0;
+    font-family: inherit;
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--gx-ink);
+  }
+
+  .search-input::placeholder {
+    color: var(--gx-an-sub);
+  }
+
+  .search-input:focus {
     outline: none;
-    border-color: var(--brand);
-    background: var(--btn-tertiary);
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
-  .search-input:focus-visible,
-  .select-input:focus-visible {
-    outline: 2px solid var(--brand-ring);
-    outline-offset: 2px;
+  .search-input-wrapper:focus-within {
+    box-shadow: inset 0 0 0 1.5px var(--gx-an-blue);
   }
 
-  .search-input-wrap .search-input {
-    padding-right: 2.5rem;
-  }
-
+  /* The native search affordances duplicate the design's own clear button. */
   .search-input::-webkit-search-cancel-button,
   .search-input::-webkit-search-decoration {
-    -webkit-appearance: none;
     appearance: none;
-  }
-
-  .search-input::-ms-clear,
-  .search-input::-ms-reveal {
     display: none;
-    width: 0;
-    height: 0;
   }
 
   .search-clear-btn {
-    position: absolute;
-    top: 50%;
-    right: 0.5rem;
-    transform: translateY(-50%);
-    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    box-shadow: none;
+    padding: 0;
+    display: flex;
     align-items: center;
     justify-content: center;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-secondary);
+    color: var(--gx-an-sub);
     cursor: pointer;
-    transition: all 0.2s ease;
-    padding: 0.25rem;
-    box-shadow: 0 0 0 1px var(--glass-stroke-dark);
+    flex-shrink: 0;
   }
 
   .search-clear-btn:hover {
-    color: var(--text-primary);
-    background: rgba(var(--glass-tint), 0.08);
+    background: var(--gx-rule);
+    color: var(--gx-ink);
+    transform: none;
   }
 
-  .search-clear-btn:focus-visible {
-    outline: 2px solid var(--brand-ring);
-    outline-offset: 2px;
-  }
-
-  .search-clear-icon {
-    width: 1rem;
-    height: 1rem;
-    display: block;
-  }
-
-  .stats-row {
-    display: flex;
-    gap: var(--space-2xl);
-    padding-top: var(--space-md);
-    border-top: 1px solid var(--glass-stroke-dark);
-  }
-
-  .stat-item {
+  .per-page-select {
+    position: relative;
+    width: 80px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--gx-an-field-bg);
+    box-shadow: inset 0 0 0 1px var(--gx-an-ring);
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    flex-shrink: 0;
+    color: var(--gx-an-sub);
   }
 
-  .stat-label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+  .per-page-select select,
+  .per-page-select select:focus {
+    appearance: none;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 0 26px 0 16px;
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--gx-ink);
+    cursor: pointer;
   }
 
-  .stat-value {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--text-primary);
+  .per-page-select select:focus-visible {
+    outline: 2px solid var(--gx-an-blue);
+    outline-offset: 1px;
+  }
+
+  .per-page-select > svg {
+    position: absolute;
+    inset-inline-end: 12px;
+    pointer-events: none;
+  }
+
+  .control-header-divider {
+    height: 1px;
+    background: var(--gx-an-ring);
+  }
+
+  .control-summary-line {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .control-summary-line span {
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-an-sub);
+    white-space: nowrap;
+  }
+
+  /* Only the figure is bold; the label beside it stays regular. */
+  .control-summary-line strong {
+    font-weight: 700;
+    color: var(--gx-ink);
+  }
+
+  /* ---------------- table ---------------- */
+  /* Ten columns don't fit 1176px, so the table scrolls sideways inside its
+     rounded shell instead of crushing the name and email columns. */
+  .table-scroll {
+    border-radius: 12px;
+    overflow-x: auto;
+    box-shadow: inset 0 0 0 1px var(--gx-an-table-ring);
   }
 
   .table-container {
-    overflow-x: auto;
+    min-width: 1120px;
+    border-radius: 12px;
+    overflow: hidden;
   }
 
-  .analytics-table {
-    width: 100%;
-    border-collapse: collapse;
+  /* Header and rows share one track list so the columns line up. */
+  .table-header,
+  .user-row {
+    display: grid;
+    grid-template-columns:
+      minmax(150px, 1.3fr)
+      minmax(160px, 1.5fr)
+      minmax(110px, 1.1fr)
+      86px
+      78px
+      68px
+      86px
+      78px
+      96px
+      minmax(112px, 1fr);
+    gap: 12px;
+    padding: 12px 16px;
+    align-items: center;
   }
 
-  .analytics-table thead {
-    border-bottom: 1px solid var(--glass-stroke-dark);
+  .table-header {
+    min-height: 41px;
+    background: var(--gx-an-thead-bg);
+    border: 1px solid var(--gx-an-ring);
   }
 
-  .analytics-table th:not(.sortable) {
-    padding: var(--space-md) var(--space-md);
-  }
-
-  .analytics-table th {
-    text-align: left;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--text-secondary);
+  .table-header > span {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 100%;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    white-space: nowrap;
-    vertical-align: middle;
+    color: var(--gx-an-sub);
   }
 
-  .analytics-table th.numeric {
-    text-align: right;
-  }
-
-  .sort-header-btn {
-    display: inline-flex;
-    align-items: center;
-    width: 100%;
-    margin: 0;
-    padding: var(--space-md) var(--space-md);
-    border: none;
-    background: transparent;
-    font: inherit;
-    color: inherit;
-    text-transform: inherit;
-    letter-spacing: inherit;
-    cursor: pointer;
-    text-align: left;
-    transition: color 0.15s ease;
-  }
-
-  .analytics-table th.numeric .sort-header-btn {
+  /* Counts, cost and latency read right-aligned, as in the design. */
+  .table-header > span.num,
+  .table-header > span.num .sort-btn {
     justify-content: flex-end;
-    text-align: right;
+    text-align: end;
   }
 
-  .th-content {
-    display: inline-flex;
+  .user-row > div.num {
+    justify-content: flex-end;
+  }
+
+  .sort-btn {
+    border: 0;
+    background: none;
+    box-shadow: none;
+    padding: 0;
+    display: flex;
+    gap: 4px;
     align-items: center;
-    gap: var(--space-xs);
+    justify-content: flex-start;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 100%;
+    text-transform: uppercase;
+    color: var(--gx-an-sub);
+    cursor: pointer;
   }
 
-  .sort-header-btn:hover {
-    color: var(--text-primary);
+  .sort-btn:hover {
+    color: var(--gx-ink);
+    transform: none;
   }
 
-  .sort-header-btn:hover .sort-icon:not(.sort-icon-active) {
-    opacity: 0.8;
-    color: var(--brand);
-  }
-
-  .sort-header-btn:focus-visible {
-    outline: 2px solid var(--brand-ring);
+  .sort-btn:focus-visible {
+    outline: 2px solid var(--gx-an-blue);
     outline-offset: 2px;
-    border-radius: var(--radius-sm);
   }
 
-  .sort-icon {
-    display: inline-flex;
+  /* The design's header is plain text, so the caret only shows on hover or
+     while that column is the active sort. */
+  .sort-caret {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    transition: all 0.15s ease;
-    color: var(--text-secondary);
-    opacity: 0.5;
+    opacity: 0;
+    transition: opacity 120ms ease;
   }
 
-  .sort-icon-active {
+  .sort-btn:hover .sort-caret,
+  .sort-caret--active {
     opacity: 1;
-    color: color-mix(in oklab, var(--brand) 85%, black);
   }
 
-  .sort-svg {
-    display: block;
+  .sort-caret--active {
+    color: var(--gx-an-blue);
   }
 
-  .sort-svg-unsorted {
-    width: 12px;
-    height: 12px;
+  .user-row {
+    min-height: 41px;
+    background: var(--gx-card);
+    border: 1px solid var(--gx-an-ring);
+    border-top: none;
   }
 
-  .analytics-table tbody tr {
-    border-bottom: 1px solid var(--glass-stroke-dark);
-    transition: background-color 0.2s ease;
+  .user-row > div {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  .analytics-table tbody tr:hover {
-    background: var(--btn-tertiary);
-  }
-
-  .analytics-table td {
-    padding: var(--space-md);
-    font-size: 0.9375rem;
-    color: var(--text-primary);
-  }
-
-  .analytics-table td.numeric {
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .analytics-table td.user-name {
-    font-weight: 600;
-  }
-
-  .analytics-table td.user-email {
-    color: var(--text-secondary);
-  }
-
-  .analytics-table td.success {
-    color: var(--brand-green);
-  }
-
-  .analytics-table td.error {
-    color: var(--brand-red);
-  }
-
-  .analytics-table td.cost {
-    font-weight: 600;
-    color: var(--brand);
-  }
-
-  .analytics-table td.date {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-  }
-
-  .analytics-table td.empty-state {
-    text-align: center;
-    padding: var(--space-3xl);
-    color: var(--text-secondary);
-    font-style: italic;
-  }
-
-  .pagination {
+  .user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    background: var(--gx-an-avatar-bg);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-lg);
-    padding: var(--space-xl);
-    border-top: 1px solid var(--glass-stroke-dark);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gx-an-avatar-fg);
+    flex-shrink: 0;
+  }
+
+  .user-name {
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .table-value {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .table-value--muted {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-an-sub);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .table-value--success {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-an-badge-up-fg);
+  }
+
+  .table-value--error {
+    color: var(--gx-an-red);
+  }
+
+  .table-value--cost {
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-an-badge-up-fg);
+  }
+
+  .empty-row {
+    min-height: 41px;
+    background: var(--gx-card);
+    border: 1px solid var(--gx-an-ring);
+    border-top: none;
+    display: flex;
+    padding: 20px 16px;
+    align-items: center;
+    justify-content: center;
+    position: sticky;
+    inset-inline-start: 0;
+  }
+
+  .empty-row span {
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--gx-an-sub);
+    text-align: center;
+  }
+
+  /* ---------------- pagination ---------------- */
+  .pagination {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: flex-end;
   }
 
   .pagination-btn {
-    padding: 0.5rem 1rem;
-    background: var(--btn-secondary);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 0.875rem;
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-an-chip-ring);
+    padding: 0 12px;
+    font-family: inherit;
     font-weight: 500;
+    font-size: 12px;
+    color: var(--gx-an-chip-fg);
     cursor: pointer;
-    transition: all 0.2s ease;
   }
 
   .pagination-btn:hover:not(:disabled) {
-    background: var(--btn-tertiary);
-    border-color: var(--brand);
-  }
-
-  .pagination-btn:focus-visible {
-    outline: 2px solid var(--brand-ring);
-    outline-offset: 2px;
+    background: var(--gx-an-blue-tint);
+    color: var(--gx-an-blue);
+    transform: none;
   }
 
   .pagination-btn:disabled {
-    opacity: 0.4;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 
   .pagination-info {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    min-width: 120px;
-    text-align: center;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--gx-an-sub);
   }
 
   @media (max-width: 768px) {
-    .filters-row {
-      grid-template-columns: 1fr;
-    }
-
-    .stats-row {
+    .control-inputs-row {
       flex-direction: column;
-      gap: var(--space-md);
+      align-items: stretch;
     }
 
-    .table-container {
-      overflow-x: scroll;
+    .per-page-select {
+      width: 100%;
     }
 
-    .analytics-table {
-      min-width: 1200px;
+    .control-header-perpage-label {
+      text-align: start;
+    }
+
+    .table-header,
+    .user-row {
+      font-size: 12px;
     }
   }
 </style>

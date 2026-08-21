@@ -275,6 +275,7 @@
   /* Primary-500 (#427AC6) — status switches and role badges. */
   --gx-org-primary-500: rgb(66, 122, 198);
   --gx-org-primary-500-hover: rgb(54, 107, 179);
+  --gx-org-primary-100: rgb(220, 229, 244);
   --gx-org-primary-tint: rgb(238, 245, 255);
   --gx-org-blue-tint: rgb(224, 235, 255);
   --gx-org-blue-fg: rgb(51, 89, 178);
@@ -326,6 +327,9 @@
   --gx-an-amber: rgb(217, 119, 6);
   --gx-an-violet: rgb(124, 58, 237);
   --gx-an-rose: rgb(219, 39, 119);
+  --gx-an-field-bg: rgb(249, 250, 251);
+  --gx-an-avatar-bg: rgb(226, 232, 240);
+  --gx-an-avatar-fg: rgb(76, 92, 86);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -439,9 +443,13 @@
     --gx-an-amber: #f0b357;
     --gx-an-violet: #b494f5;
     --gx-an-rose: #f090c0;
+    --gx-an-field-bg: rgba(255, 255, 255, 0.04);
+    --gx-an-avatar-bg: rgba(255, 255, 255, 0.09);
+    --gx-an-avatar-fg: #c2cac6;
     --gx-org-field-bg: rgba(255, 255, 255, 0.04);
     --gx-org-primary-500: rgb(112, 155, 218);
     --gx-org-primary-500-hover: rgb(134, 172, 227);
+    --gx-org-primary-100: rgba(112, 155, 218, 0.32);
     --gx-org-primary-tint: rgba(66, 122, 198, 0.22);
     --gx-org-blue-tint: rgba(64, 121, 197, 0.22);
     --gx-org-blue-fg: #9dbdf0;

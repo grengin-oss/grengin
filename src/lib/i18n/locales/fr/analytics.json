@@ -15,6 +15,7 @@
       "showingCount": "{filtered} sur {total}"
     },
     "table": {
+      "user": "Utilisateur",
       "userName": "Nom d'utilisateur",
       "email": "E-mail",
       "department": "Département",
@@ -24,7 +25,9 @@
       "tokens": "Jetons",
       "cost": "Coût",
       "avgLatency": "Latence moyenne",
-      "lastActivity": "Dernière activité"
+      "lastActivity": "Dernière activité",
+      "usageCount": "Nombre d'utilisations",
+      "lastActive": "Dernière activité connue"
     },
     "emptyState": {
       "noMatch": "Aucun utilisateur trouvé correspondant à \"{query}\"",
@@ -60,7 +63,8 @@
       "errors": "Erreurs",
       "tokens": "Jetons",
       "cost": "Coût",
-      "avgLatency": "Latence moyenne"
+      "avgLatency": "Latence moyenne",
+      "usageCount": "Nombre d'utilisations"
     },
     "emptyState": {
       "noMatch": "Aucun département trouvé correspondant à \"{query}\"",
@@ -92,8 +96,11 @@
     },
     "byModel": {
       "title": "Par modèle",
-      "comingSoon": "Bientôt disponible",
-      "hint": "Les analyses par modèle seront disponibles ici."
+      "model": "Modèle",
+      "totalRequests": "Requêtes totales",
+      "avgLatency": "Latence moyenne",
+      "cost": "Coût",
+      "noData": "Aucune donnée d'utilisation des modèles pour la plage de dates sélectionnée"
     },
     "aria": {
       "mainRegion": "Analytique d'utilisation",
@@ -104,7 +111,8 @@
       "topModelsCaption": "Principaux modèles par utilisation pour la plage de dates sélectionnée",
       "departmentTableCaption": "Utilisation par département pour la plage de dates sélectionnée",
       "userTableCaption": "Utilisation par utilisateur pour la plage de dates sélectionnée",
-      "rangePicker": "Modifier la période"
+      "rangePicker": "Modifier la période",
+      "modelTableCaption": "Utilisation par modèle pour la plage de dates sélectionnée"
     },
     "filters": {
       "dateRange": "Plage de dates",

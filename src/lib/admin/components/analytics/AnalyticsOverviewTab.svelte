@@ -1173,7 +1173,7 @@ SPDX-License-Identifier: Apache-2.0
     flex: 1;
     min-width: 0;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 11px;
     line-height: 100%;
     text-transform: uppercase;
     color: var(--gx-an-sub);

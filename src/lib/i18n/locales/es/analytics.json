@@ -15,6 +15,7 @@
       "showingCount": "{filtered} de {total}"
     },
     "table": {
+      "user": "Usuario",
       "userName": "Nombre de usuario",
       "email": "Correo electrónico",
       "department": "Departamento",
@@ -24,7 +25,9 @@
       "tokens": "Tokens",
       "cost": "Costo",
       "avgLatency": "Latencia promedio",
-      "lastActivity": "Última actividad"
+      "lastActivity": "Última actividad",
+      "usageCount": "Cantidad de uso",
+      "lastActive": "Actividad reciente"
     },
     "emptyState": {
       "noMatch": "No se encontraron usuarios que coincidan con \"{query}\"",
@@ -60,7 +63,8 @@
       "errors": "Errores",
       "tokens": "Tokens",
       "cost": "Costo",
-      "avgLatency": "Latencia promedio"
+      "avgLatency": "Latencia promedio",
+      "usageCount": "Cantidad de uso"
     },
     "emptyState": {
       "noMatch": "No se encontraron departamentos que coincidan con \"{query}\"",
@@ -92,8 +96,11 @@
     },
     "byModel": {
       "title": "Por Modelo",
-      "comingSoon": "Próximamente",
-      "hint": "La analítica por modelo estará disponible aquí."
+      "model": "Modelo",
+      "totalRequests": "Solicitudes totales",
+      "avgLatency": "Latencia promedio",
+      "cost": "Costo",
+      "noData": "No hay datos de uso de modelos para el rango de fechas seleccionado"
     },
     "aria": {
       "mainRegion": "Analítica de uso",
@@ -104,7 +111,8 @@
       "topModelsCaption": "Modelos principales por uso para el rango de fechas seleccionado",
       "departmentTableCaption": "Uso por departamento para el rango de fechas seleccionado",
       "userTableCaption": "Uso por usuario para el rango de fechas seleccionado",
-      "rangePicker": "Cambiar intervalo de fechas"
+      "rangePicker": "Cambiar intervalo de fechas",
+      "modelTableCaption": "Uso por modelo para el rango de fechas seleccionado"
     },
     "filters": {
       "dateRange": "Rango de fechas",
