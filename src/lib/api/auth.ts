@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { components } from '../types/api.js';
+import { normalizeAuthProviders } from '../authProviders.js';
+import type { AuthProviderSummary } from '../authProviders.js';
 import { API_BASE, ApiError, request, parseErrorDetail } from './client.js';
 
 type User = components['schemas']['User'];
@@ -17,6 +19,19 @@ export interface LoginResponse {
 interface AuthInitResponse {
   auth_url: string;
   state: string;
+}
+
+export async function listAuthProviders(): Promise<AuthProviderSummary[]> {
+  const response = await fetch(`${API_BASE}/auth/providers`, {
+    headers: { 'Accept': 'application/json' },
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new ApiError(response.status, parseErrorDetail(body));
+  }
+
+  return normalizeAuthProviders(await response.json());
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {

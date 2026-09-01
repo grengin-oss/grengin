@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
+  import { providerIconSources } from '../../../authProviders.js';
 
-  type OAuthProvider = 'google' | 'azure' | 'keycloak';
   type ButtonSize = 'small' | 'medium' | 'large';
 
   interface Props {
-    provider: OAuthProvider;
+    provider: string;
+    name?: string;
     redirectUri?: string;
     size?: ButtonSize;
     disabled?: boolean;
@@ -25,6 +26,7 @@ SPDX-License-Identifier: Apache-2.0
 
   let {
     provider,
+    name,
     redirectUri,
     size = 'medium',
     disabled = false,
@@ -40,12 +42,15 @@ SPDX-License-Identifier: Apache-2.0
   );
 
   let isLoading = $state(false);
+  let iconFailed = $state(false);
 
-  // Capitalize provider name
-  const providerName = $derived(provider.charAt(0).toUpperCase() + provider.slice(1));
-  
-  // Icon path
-  const iconPath = $derived(`/${provider}.svg`);
+  const providerName = $derived(name?.trim() || provider.charAt(0).toUpperCase() + provider.slice(1));
+  const icons = $derived(providerIconSources(provider));
+
+  $effect(() => {
+    provider;
+    iconFailed = false;
+  });
 
   async function handleClick() {
     if (isLoading || disabled) return;
@@ -84,7 +89,14 @@ SPDX-License-Identifier: Apache-2.0
     <span class="spinner" aria-hidden="true"></span>
     <span>{$_('auth.connectingTo', { values: { provider: providerName } })}</span>
   {:else}
-    <img src={iconPath} alt="{providerName} logo" class="icon" aria-hidden="true" />
+    {#if iconFailed}
+      <span class="provider-initial" aria-hidden="true">{providerName.charAt(0).toUpperCase()}</span>
+    {:else}
+      <picture class="icon" aria-hidden="true">
+        <source media="(prefers-color-scheme: dark)" srcset={icons.dark} />
+        <img src={icons.light} alt="" onerror={() => iconFailed = true} />
+      </picture>
+    {/if}
     <span>{$_('auth.signInWith', { values: { provider: providerName } })}</span>
   {/if}
 </button>
@@ -149,11 +161,24 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   /* Icon styling */
-  .icon {
+  .icon,
+  .icon img {
     display: block;
     width: 24px;
     height: 24px;
     flex-shrink: 0;
+  }
+
+  .provider-initial {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 700;
   }
 
   /* Spinner */

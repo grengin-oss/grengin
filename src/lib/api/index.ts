@@ -5,8 +5,9 @@
 export { ApiError, request, setAuthAccessors } from './client.js';
 
 // Auth API
-export { login, logout, initiateOAuth, getCurrentUser } from './auth.js';
+export { login, logout, initiateOAuth, getCurrentUser, listAuthProviders } from './auth.js';
 export type { LoginResponse } from './auth.js';
+export type { AuthProviderSummary } from '../authProviders.js';
 
 // Admin API
 export * from './admin/AiEngines.js';

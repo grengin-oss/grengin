@@ -16,7 +16,8 @@ export type { AuthState } from './state.svelte.js';
 export { permissionsStore } from './permissionsStore.svelte.js';
 
 // Auth API functions (re-exported for convenience)
-export { login, initiateOAuth, handleOAuthCallback, getCurrentUser } from '../../api/auth.js';
+export { login, initiateOAuth, handleOAuthCallback, getCurrentUser, listAuthProviders } from '../../api/auth.js';
 export type { LoginResponse } from '../../api/auth.js';
+export type { AuthProviderSummary } from '../../authProviders.js';
 export { ApiError } from '../../api/client.js';
 export { default as OAuthButton } from './components/OAuthButton.svelte';

@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
   import { API_BASE } from '../../../api/client.js';
+  import { providerFromCallbackPath } from '../../../authProviders.js';
 
   // UI State
   type CallbackStatus = 'processing' | 'success' | 'error';
@@ -29,14 +30,6 @@ SPDX-License-Identifier: Apache-2.0
   async function trySSOProxyFallback(): Promise<boolean> {
     const queryParams = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-
-    // Debug: log every param in the URL so we can see what the SSO proxy sent
-    console.debug('[AuthCallback] SSO proxy fallback — URL params:', {
-      search: window.location.search,
-      hash: window.location.hash,
-      query: Object.fromEntries(queryParams.entries()),
-      hash_params: Object.fromEntries(hashParams.entries()),
-    });
 
     // Check all common token param names (query string first, then hash fragment)
     const accessToken =
@@ -91,7 +84,7 @@ SPDX-License-Identifier: Apache-2.0
     const assertion = params.get('assertion') || hashParams.get('assertion');
 
     // 3. Retrieve provider from session storage
-    const provider = sessionStorage.getItem('oauth_provider');
+    const provider = sessionStorage.getItem('oauth_provider') || providerFromCallbackPath(window.location.pathname);
     if (!provider) {
       const message = $_('error.auth.oauth_provider_not_found');
       throw new ApiError(400, message);
@@ -132,8 +125,11 @@ SPDX-License-Identifier: Apache-2.0
   /**
    * Clean up session storage
    */
-  function cleanupSessionStorage(): void {
+  function cleanupSessionStorage(authenticated: boolean): void {
     sessionStorage.removeItem('oauth_provider');
+    if (authenticated) {
+      sessionStorage.removeItem('oauth_auto_redirect_provider');
+    }
   }
 
   /**
@@ -176,11 +172,13 @@ SPDX-License-Identifier: Apache-2.0
   onMount(async () => {
     try {
       await processOAuthCallback();
-      cleanupSessionStorage();
+      cleanupSessionStorage(true);
       status = 'success';
       redirectAfterSuccess();
     } catch (err: unknown) {
-      cleanupSessionStorage();
+      // Keep the auto-redirect marker after a failed callback so returning to
+      // the login page does not immediately repeat the failed provider flow.
+      cleanupSessionStorage(false);
       // Convert all errors to ApiError for consistent handling
       const apiError = err instanceof ApiError 
         ? err 

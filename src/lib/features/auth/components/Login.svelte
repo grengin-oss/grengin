@@ -5,28 +5,40 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { login, ApiError } from '../index.js';
-  import { setAuth } from '../index.js';
+  import { login, ApiError, initiateOAuth, listAuthProviders, setAuth } from '../index.js';
+  import type { AuthProviderSummary } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { getLocalizedError } from '../../../utils/errorLocalization';
+  import { enabledAuthProviders } from '../../../authProviders.js';
   import OAuthButton from './OAuthButton.svelte';
   import { _ } from 'svelte-i18n';
   import { loadNamespaces } from '$lib/i18n/index.js';
 
-  // TODO: This should come from the server (API update)
-  type AuthMode = 'google' | 'azure' | 'keycloak' | 'admin';
-
   interface Props {
-    modes?: AuthMode[];
+    modes?: string[];
     onLoginSuccess?: () => void;
   }
 
-  let { modes = ['google', 'azure'], onLoginSuccess }: Props = $props();
+  let { modes, onLoginSuccess }: Props = $props();
 
-  // Determine if OAuth providers are enabled
-  const hasOAuthProviders = $derived(modes.some(m => ['google', 'azure', 'keycloak'].includes(m)));
-  const hasAdminLogin = $derived(modes.includes('admin'));
-  const oauthProviders = $derived(modes.filter(m => ['google', 'azure', 'keycloak'].includes(m)) as ('google' | 'azure' | 'keycloak')[]);
+  let discoveredProviders = $state<AuthProviderSummary[]>([]);
+  let providersLoading = $state(true);
+
+  const hasAdminLogin = $derived(modes?.includes('admin') ?? false);
+  const oauthProviders = $derived(
+    modes === undefined
+      ? enabledAuthProviders(discoveredProviders)
+      : modes
+          .filter((mode) => mode !== 'admin')
+          .map((provider) => ({
+            provider,
+            name: provider.charAt(0).toUpperCase() + provider.slice(1),
+            login_path: `/auth/${provider}`,
+            is_enabled: true,
+            auto_redirect: false,
+          })),
+  );
+  const hasOAuthProviders = $derived(oauthProviders.length > 0);
 
   let email = $state('');
   let password = $state('');
@@ -71,9 +83,41 @@ SPDX-License-Identifier: Apache-2.0
     onLoginSuccess?.();
   }
 
+  async function loadConfiguredProviders(): Promise<void> {
+    providersLoading = true;
+    try {
+      discoveredProviders = await listAuthProviders();
+      const enabledProviders = enabledAuthProviders(discoveredProviders);
+      const autoRedirectProviders = enabledProviders.filter((provider) => provider.auto_redirect);
+
+      if (autoRedirectProviders.length === 1) {
+        const provider = autoRedirectProviders[0];
+        const attemptedProvider = sessionStorage.getItem('oauth_auto_redirect_provider');
+        if (attemptedProvider !== provider.provider) {
+          sessionStorage.setItem('oauth_auto_redirect_provider', provider.provider);
+          isOAuthLoading = true;
+          await initiateOAuth(
+            provider.provider,
+            `${window.location.origin}/auth/${provider.provider}/callback`,
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load configured authentication providers:', err);
+      discoveredProviders = [];
+    } finally {
+      providersLoading = false;
+    }
+  }
+
   onMount(() => {
     // Ensure auth namespace is loaded for translations
     loadNamespaces(['auth']);
+    if (modes === undefined) {
+      void loadConfiguredProviders();
+    } else {
+      providersLoading = false;
+    }
   });
 </script>
 
@@ -152,12 +196,17 @@ SPDX-License-Identifier: Apache-2.0
         </div>
       {/if}
 
-      {#if hasOAuthProviders}
+      {#if providersLoading}
+        <div class="oauth-loading" aria-busy="true" aria-live="polite">
+          <span class="provider-spinner" aria-hidden="true"></span>
+        </div>
+      {:else if hasOAuthProviders}
         <section class="oauth-section" aria-label={$_('auth.socialLogin') || 'Social login'}>
           <div class="oauth-buttons">
-            {#each oauthProviders as provider}
+            {#each oauthProviders as provider (provider.provider)}
               <OAuthButton 
-                {provider}
+                provider={provider.provider}
+                name={provider.name}
                 size="medium"
                 disabled={isOAuthLoading}
                 onStart={handleOAuthStart}
@@ -169,7 +218,7 @@ SPDX-License-Identifier: Apache-2.0
         </section>
       {/if}
 
-      {#if !hasOAuthProviders && !hasAdminLogin}
+      {#if !providersLoading && !hasOAuthProviders && !hasAdminLogin}
         <div class="no-auth-section" role="alert">
           <div class="no-auth-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -429,6 +478,21 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .oauth-loading {
+    display: grid;
+    place-items: center;
+    min-height: 3rem;
+  }
+
+  .provider-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(102, 126, 234, 0.2);
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
   }
 
   .no-auth-section {

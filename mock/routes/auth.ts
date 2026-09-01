@@ -8,7 +8,17 @@ import { requireAuth } from '../lib/middleware.js'
 
 const router = Router()
 
-const SUPPORTED_PROVIDERS = ['google', 'azure', 'keycloak']
+const SUPPORTED_PROVIDERS = ['google', 'azure', 'auth0', 'github', 'keycloak']
+
+router.get('/auth/providers', (_req, res) => {
+  res.json([
+    { provider: 'auth0', name: 'Auth0', login_path: '/auth/auth0', is_enabled: true, auto_redirect: false },
+    { provider: 'azure', name: 'Microsoft Entra ID', login_path: '/auth/azure', is_enabled: true, auto_redirect: false },
+    { provider: 'github', name: 'GitHub', login_path: '/auth/github', is_enabled: true, auto_redirect: false },
+    { provider: 'google', name: 'Google', login_path: '/auth/google', is_enabled: true, auto_redirect: false },
+    { provider: 'keycloak', name: 'Keycloak', login_path: '/auth/keycloak', is_enabled: false, auto_redirect: false },
+  ])
+})
 
 router.post('/auth/login', (req, res) => {
   const { email, password } = req.body
