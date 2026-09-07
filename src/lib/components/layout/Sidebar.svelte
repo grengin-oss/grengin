@@ -427,8 +427,8 @@ SPDX-License-Identifier: Apache-2.0
         class="us-item"
         onclick={handleUserMenuNavigate}
         role="menuitem"
-        aria-label={$_("sidebar.chat")}
-        title={$_("sidebar.chat")}
+        aria-label={$_("sidebar.backToChat")}
+        title={$_("sidebar.backToChat")}
       >
         <span class="us-item__icon" aria-hidden="true">
           <svg
@@ -446,7 +446,7 @@ SPDX-License-Identifier: Apache-2.0
             />
           </svg>
         </span>
-        <span class="us-item__label">{$_("sidebar.chat")}</span>
+        <span class="us-item__label">{$_("sidebar.backToChat")}</span>
       </Link>
     {:else}
       <Link
@@ -649,7 +649,9 @@ SPDX-License-Identifier: Apache-2.0
     <div class="ch-body" class:ch-body--rail={isCollapsed}>
       {#if !isCollapsed}
         <div class="ch-logo-row">
-          <img src={grenginLogo} alt="Grengin" class="ch-logo" />
+          <Link to="/" class="ch-logo-link" onclick={collapseSidebarOnMobile}>
+            <img src={grenginLogo} alt="Grengin" class="ch-logo" />
+          </Link>
           <span class="ch-actions">
             <div class="notifications-anchor" bind:this={alertsAnchorChat}>
               {@render alertsUi()}
@@ -664,6 +666,9 @@ SPDX-License-Identifier: Apache-2.0
             </button>
           </span>
         </div>
+        <span class="ch-category" id="nav-section-control-hub"
+          >{$_("sidebar.sectionControlHub")}</span
+        >
         <button
           class="ch-module"
           onclick={() => handleAdminMenuItemClick("/")}
@@ -672,12 +677,12 @@ SPDX-License-Identifier: Apache-2.0
           <span class="ch-module__back" aria-hidden="true">
             {@render backChevron()}
           </span>
-          <span class="ch-module__label">{$_("sidebar.adminPanel")}</span>
+          <span class="ch-module__label">{$_("sidebar.backToChat")}</span>
         </button>
       {:else}
-        <div class="ch-logo-btn">
+        <Link to="/" class="ch-logo-btn" onclick={collapseSidebarOnMobile}>
           <img src="/grengin-icon.svg" alt="Grengin" class="ch-logo-mark" />
-        </div>
+        </Link>
         <div class="ch-rail-spacer" aria-hidden="true"></div>
         <button
           class="ch-back-sm"
@@ -744,7 +749,9 @@ SPDX-License-Identifier: Apache-2.0
     <div class="sb-header" class:sb-header--rail={isCollapsed}>
       {#if !isCollapsed}
         <div class="brand-header">
-          <img src={grenginLogo} alt="Grengin" class="logo" />
+          <Link to="/" class="logo-link" onclick={startNewChat}>
+            <img src={grenginLogo} alt="Grengin" class="logo" />
+          </Link>
           <div class="header-actions">
             <button
               class="action-btn"
@@ -790,9 +797,9 @@ SPDX-License-Identifier: Apache-2.0
           </span>
         </button>
       {:else}
-        <div class="rail-btn rail-btn--logo">
+        <Link to="/" class="rail-logo-link" onclick={startNewChat}>
           <img src="/grengin-icon.svg" alt="Grengin" class="logo-mark" />
-        </div>
+        </Link>
         <div class="rail-spacer" aria-hidden="true"></div>
         <button
           class="rail-btn rail-btn--flip"
@@ -1087,12 +1094,38 @@ SPDX-License-Identifier: Apache-2.0
 
   .ch-logo-row {
     display: flex;
-    height: 59px;
-    padding: 0 4px 28px;
+    height: 28px;
+    padding: 0 4px;
     justify-content: space-between;
     align-items: center;
     align-self: stretch;
     flex-shrink: 0;
+  }
+
+  /* `Link` renders its <a> outside this component, so it never receives the
+     scope class — these rules are :global, kept tight under .ch-logo-row. */
+  .ch-logo-row :global(.ch-logo-link) {
+    display: flex;
+    align-items: center;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    padding: 0;
+    text-decoration: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .ch-logo-row :global(.ch-logo-link:hover) {
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .ch-logo-row :global(.ch-logo-link:focus-visible) {
+    outline: 2px solid var(--gx-nav-accent);
+    outline-offset: 2px;
   }
 
   .ch-logo {
@@ -1239,7 +1272,9 @@ SPDX-License-Identifier: Apache-2.0
     white-space: nowrap;
   }
 
-  .ch-logo-btn {
+  /* `Link` renders its <a> outside this component, so it never receives the
+     scope class — these rules are :global, kept tight under .ch-body. */
+  .ch-body :global(.ch-logo-btn) {
     display: flex;
     width: 40px;
     height: 40px;
@@ -1247,6 +1282,24 @@ SPDX-License-Identifier: Apache-2.0
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    padding: 0;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .ch-body :global(.ch-logo-btn:hover) {
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .ch-body :global(.ch-logo-btn:focus-visible) {
+    outline: 2px solid var(--gx-nav-accent);
+    outline-offset: 2px;
   }
 
   .ch-logo-mark {
@@ -1275,6 +1328,32 @@ SPDX-License-Identifier: Apache-2.0
     align-items: center;
     justify-content: space-between;
     align-self: stretch;
+  }
+
+  /* `Link` renders its <a> outside this component, so it never receives the
+     scope class — these rules are :global, kept tight under .brand-header. */
+  .brand-header :global(.logo-link) {
+    display: flex;
+    align-items: center;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    padding: 0;
+    text-decoration: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .brand-header :global(.logo-link:hover) {
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .brand-header :global(.logo-link:focus-visible) {
+    outline: 2px solid var(--gx-nav-accent);
+    outline-offset: 2px;
   }
 
   .logo {
@@ -1342,9 +1421,6 @@ SPDX-License-Identifier: Apache-2.0
     flex-shrink: 0;
   }
 
-  .rail-btn--logo {
-    cursor: default;
-  }
 
   .rail-spacer {
     height: 12px;
@@ -1754,6 +1830,46 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .rail-btn:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: 2px;
+  }
+
+  /* `Link` renders its <a> outside this component, so it never receives the
+     scope class — these rules are :global, kept tight under .sb-header.
+     Mirrors .rail-btn since the collapsed logo can't share that scoped class. */
+  .sb-header :global(.rail-logo-link) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--gx-muted);
+    text-decoration: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: none;
+    backdrop-filter: none;
+    transition: background-color 120ms ease;
+  }
+
+  .sb-header :global(.rail-logo-link:hover) {
+    background: var(--gx-fill-soft);
+    color: var(--gx-muted);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .sb-header :global(.rail-logo-link:active) {
+    background: var(--gx-line);
+    transform: none;
+  }
+
+  .sb-header :global(.rail-logo-link:focus-visible) {
     outline: 2px solid var(--gx-blue);
     outline-offset: 2px;
   }
