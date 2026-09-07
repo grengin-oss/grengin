@@ -24,6 +24,11 @@ SPDX-License-Identifier: Apache-2.0
   import { aiEnginesStore } from "../stores/index.js";
   import { permissionsStore } from "../../features/auth/index.js";
   import { PERMISSIONS } from "../../features/auth/permissions.js";
+  import { setPageTitle } from "../../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("aiEngines.title"));
+  });
 
   const store = aiEnginesStore;
   const canManageEngines = $derived(permissionsStore.canManageAiEngines());

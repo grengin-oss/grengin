@@ -25,6 +25,11 @@ SPDX-License-Identifier: Apache-2.0
   } from "../../api/admin/rolePrompts.js";
   import { getDepartments } from "../../api/admin/departments.js";
   import type { Department } from "../types.js";
+  import { setPageTitle } from "../../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("sidebar.promptEffectiveness"));
+  });
 
   // State
   let metrics = $state<PromptMetric[]>([]);

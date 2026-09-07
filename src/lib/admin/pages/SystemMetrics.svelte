@@ -20,6 +20,11 @@ SPDX-License-Identifier: Apache-2.0
   import { ApiError } from "../../api/client.js";
   import { permissionsStore } from "../../features/auth/index.js";
   import { _ } from "svelte-i18n";
+  import { setPageTitle } from "../../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("systemMetrics.title"));
+  });
 
   // ---- Tabs ----
   type SystemTab = "metrics" | "maintenance";

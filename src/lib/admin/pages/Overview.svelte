@@ -19,6 +19,11 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from "svelte-i18n";
   import { Link } from "svelte-routing";
   import { getAuthState } from "../../features/auth/index.js";
+  import { setPageTitle } from "../../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("sidebar.adminPanel"));
+  });
 
   let isLoading = $state(true);
   let overviewData = $state<AnalyticsOverview | null>(null);

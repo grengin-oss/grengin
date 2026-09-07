@@ -36,6 +36,7 @@ SPDX-License-Identifier: Apache-2.0
   } from "../modelPreferences";
   import type { MCPServer } from "../../../admin/types.js";
   import { getMcpServers } from "../../../api/admin/mcpServers.js";
+  import { setPageTitle } from "../../../utils/pageTitle";
   import {
     linkProjectToConversation,
     getProjectDetail,
@@ -262,26 +263,11 @@ SPDX-License-Identifier: Apache-2.0
     isImageModel(findModel(providers, selectedModel)?.model),
   );
 
-  // Browser-tab title. Reflects the open conversation's title ("<title> · Grengin"),
-  // falling back to the app name when no conversation is selected. Long titles are
-  // truncated so the tab label stays legible; updates reactively on rename.
-  const APP_NAME = "Grengin";
-  const MAX_TAB_TITLE = 60;
+  // Browser-tab title. Reflects the open conversation's title, falling back to
+  // the app name when no conversation is selected. Updates reactively on rename.
   $effect(() => {
-    const raw = conversationTitle?.trim();
-    if (raw) {
-      const truncated =
-        raw.length > MAX_TAB_TITLE
-          ? raw.slice(0, MAX_TAB_TITLE - 1).trimEnd() + "…"
-          : raw;
-      document.title = `${truncated} · ${APP_NAME}`;
-    } else {
-      document.title = APP_NAME;
-    }
-    // Restore the plain app name when the chat view unmounts.
-    return () => {
-      document.title = APP_NAME;
-    };
+    setPageTitle(conversationTitle);
+    return () => setPageTitle(null);
   });
 
   // Build a meaningful, accessible name/alt for a generated image from the prompt.

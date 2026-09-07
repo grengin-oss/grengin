@@ -15,6 +15,11 @@ SPDX-License-Identifier: Apache-2.0
   import { toast } from '../../components/Toaster.svelte';
   import LoadingSpinner from '../../admin/components/LoadingSpinner.svelte';
   import { getNotificationsState, markNotificationReadLocal } from './index.js';
+  import { setPageTitle } from '../../utils/pageTitle';
+
+  $effect(() => {
+    setPageTitle($_('alerts.title'));
+  });
 
   const PAGE_SIZE = 20;
   const AUTO_READ_VISIBLE_MS = 3000;

@@ -11,6 +11,11 @@ SPDX-License-Identifier: Apache-2.0
   import UserPromptSettings from "./settings/UserPromptSettings.svelte";
   import UserSkills from "./settings/UserSkills.svelte";
   import { loadNamespaces } from "$lib/i18n/index.js";
+  import { setPageTitle } from "../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("userSettings.title"));
+  });
 
   type TabId = "skills" | "integrations" | "promptSettings";
 

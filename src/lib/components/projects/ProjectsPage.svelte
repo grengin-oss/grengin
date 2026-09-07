@@ -11,6 +11,11 @@ SPDX-License-Identifier: Apache-2.0
   import { toast } from '../Toaster.svelte';
   import CreateProjectModal from './CreateProjectModal.svelte';
   import Modal from '$lib/admin/components/Modal.svelte';
+  import { setPageTitle } from '../../utils/pageTitle';
+
+  $effect(() => {
+    setPageTitle($_('sidebar.projects'));
+  });
 
   let projects = $state<Project[]>([]);
   let loading = $state(true);

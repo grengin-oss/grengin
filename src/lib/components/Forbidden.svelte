@@ -5,6 +5,11 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { _ } from "svelte-i18n";
+  import { setPageTitle } from "../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("errors.forbidden.title"));
+  });
 </script>
 
 <section class="forbidden">

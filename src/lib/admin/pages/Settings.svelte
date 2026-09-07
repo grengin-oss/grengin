@@ -8,6 +8,11 @@ SPDX-License-Identifier: Apache-2.0
   import PageHeader from "../components/PageHeader.svelte";
   import AdminTabs from "../components/AdminTabs.svelte";
   import OAuthProviders from "./advanced/OAuthProviders.svelte";
+  import { setPageTitle } from "../../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("admin.settings.title"));
+  });
 
   // Tab configuration
   type TabId = "oauth";
