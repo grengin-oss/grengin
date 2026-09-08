@@ -9,7 +9,7 @@ SPDX-License-Identifier: Apache-2.0
   import type { AuthProviderSummary } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { getLocalizedError } from '../../../utils/errorLocalization';
-  import { enabledAuthProviders } from '../../../authProviders.js';
+  import { enabledAuthProviders, frontendOAuthRedirectUri } from '../../../authProviders.js';
   import OAuthButton from './OAuthButton.svelte';
   import { _ } from 'svelte-i18n';
   import { loadNamespaces } from '$lib/i18n/index.js';
@@ -98,7 +98,7 @@ SPDX-License-Identifier: Apache-2.0
           isOAuthLoading = true;
           await initiateOAuth(
             provider.provider,
-            `${window.location.origin}/auth/${provider.provider}/callback`,
+            frontendOAuthRedirectUri(provider.provider, window.location.origin),
           );
         }
       }

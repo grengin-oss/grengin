@@ -4,7 +4,9 @@
 import assert from 'node:assert/strict';
 import {
   enabledAuthProviders,
+  frontendOAuthRedirectUri,
   normalizeAuthProviders,
+  parseOAuthTokenHandoff,
   providerFromCallbackPath,
   providerIconSources,
 } from '../src/lib/authProviders.js';
@@ -24,6 +26,23 @@ assert.equal(providerFromCallbackPath('/auth/keycloak-eu/callback'), 'keycloak-e
 assert.equal(providerFromCallbackPath('/auth/../callback'), null);
 assert.equal(providerFromCallbackPath('/auth/%E0%A4%A/callback'), null);
 assert.equal(providerFromCallbackPath('/auth/auth0/callback/extra'), null);
+assert.equal(frontendOAuthRedirectUri('apple', 'https://chat.example.com'), undefined);
+assert.equal(
+  frontendOAuthRedirectUri('keycloak', 'https://chat.example.com/'),
+  'https://chat.example.com/auth/keycloak/callback',
+);
+assert.deepEqual(
+  parseOAuthTokenHandoff(
+    'https://chat.example.com/auth/apple/callback?keep=yes#access_token=access%20value&refresh_token=refresh%20value',
+  ),
+  {
+    accessToken: 'access value',
+    refreshToken: 'refresh value',
+    cleanPath: '/auth/apple/callback?keep=yes',
+  },
+);
+assert.equal(parseOAuthTokenHandoff('not-a-url'), null);
+assert.equal(parseOAuthTokenHandoff('https://chat.example.com/auth/apple/callback'), null);
 assert.equal(providerIconSources('github').light, '/github.svg');
 assert.equal(
   providerIconSources('auth0').dark,

@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
   import { toast } from '../../../components/Toaster.svelte';
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
-  import { providerIconSources } from '../../../authProviders.js';
+  import { frontendOAuthRedirectUri, providerIconSources } from '../../../authProviders.js';
 
   type ButtonSize = 'small' | 'medium' | 'large';
 
@@ -35,10 +35,12 @@ SPDX-License-Identifier: Apache-2.0
     onError,
   }: Props = $props();
 
-  // Always send redirect_uri so the backend knows where to redirect after OAuth
-  // Use provider-specific callback path to match Azure/OAuth provider configuration
+  // Apple posts its callback to the API. Omitting redirect_uri makes the backend use the
+  // registered API callback; other providers continue returning to this frontend route.
   const effectiveRedirectUri = $derived(
-    redirectUri ?? window.location.origin + `/auth/${provider}/callback`
+    provider === 'apple'
+      ? undefined
+      : redirectUri ?? frontendOAuthRedirectUri(provider, window.location.origin)
   );
 
   let isLoading = $state(false);

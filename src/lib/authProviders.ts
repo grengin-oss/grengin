@@ -14,6 +14,12 @@ export interface ProviderIconSources {
   dark: string;
 }
 
+export interface OAuthTokenHandoff {
+  accessToken: string;
+  refreshToken: string;
+  cleanPath: string;
+}
+
 const PROVIDER_SLUG = /^[a-z][a-z0-9-]{0,62}$/;
 const LOCAL_ICONS = new Set(['azure', 'github', 'google']);
 
@@ -67,6 +73,39 @@ export function providerFromCallbackPath(pathname: string): string | null {
     return null;
   }
   return PROVIDER_SLUG.test(provider) ? provider : null;
+}
+
+export function frontendOAuthRedirectUri(provider: string, frontendOrigin: string): string | undefined {
+  if (provider === 'apple') return undefined;
+  return `${frontendOrigin.replace(/\/+$/, '')}/auth/${provider}/callback`;
+}
+
+export function parseOAuthTokenHandoff(value: string): OAuthTokenHandoff | null {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+  const accessToken =
+    url.searchParams.get('access_token') ?? hash.get('access_token') ??
+    url.searchParams.get('token') ?? hash.get('token') ??
+    url.searchParams.get('id_token') ?? hash.get('id_token');
+  if (!accessToken) return null;
+
+  const refreshToken =
+    url.searchParams.get('refresh_token') ?? hash.get('refresh_token') ?? '';
+  for (const key of ['access_token', 'refresh_token', 'token', 'id_token']) {
+    url.searchParams.delete(key);
+  }
+  url.hash = '';
+
+  return {
+    accessToken,
+    refreshToken,
+    cleanPath: `${url.pathname}${url.search}`,
+  };
 }
 
 export function providerIconSources(provider: string): ProviderIconSources {

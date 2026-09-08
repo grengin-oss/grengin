@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
   import { API_BASE } from '../../../api/client.js';
-  import { providerFromCallbackPath } from '../../../authProviders.js';
+  import { parseOAuthTokenHandoff, providerFromCallbackPath } from '../../../authProviders.js';
 
   // UI State
   type CallbackStatus = 'processing' | 'success' | 'error';
@@ -21,36 +21,31 @@ SPDX-License-Identifier: Apache-2.0
   const REDIRECT_DELAY_SUCCESS = 300; // ms
   const REDIRECT_DELAY_ERROR = 3000; // ms
 
-  /**
-   * Try SSO proxy fallback — frontend only.
-   * When sso.grengin.com completes auth server-side, the callback URL may have
-   * no standard code/state. Check all URL locations for a token the proxy may
-   * have passed directly (access_token, token, id_token — in query or hash).
-   */
+  /** Complete a trusted API/proxy token handoff and scrub credentials from the address bar. */
   async function trySSOProxyFallback(): Promise<boolean> {
-    const queryParams = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const handoff = parseOAuthTokenHandoff(window.location.href);
+    if (!handoff) return false;
 
-    // Check all common token param names (query string first, then hash fragment)
-    const accessToken =
-      queryParams.get('access_token') ?? hashParams.get('access_token') ??
-      queryParams.get('token')        ?? hashParams.get('token')        ??
-      queryParams.get('id_token')     ?? hashParams.get('id_token');
-
-    if (!accessToken) return false;
+    // Fragments are not sent in HTTP requests, but clear all URL-carried credentials before
+    // fetching the profile so they do not remain in browser history or screenshots.
+    window.history.replaceState(
+      window.history.state,
+      document.title,
+      handoff.cleanPath,
+    );
 
     try {
       // SSO proxy passed a token directly — validate it and fetch user profile
       const response = await fetch(`${API_BASE}/me`, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${handoff.accessToken}`,
           'Accept': 'application/json',
         },
       });
       if (response.ok) {
         const user = await response.json();
         if (user?.id) {
-          setAuth(accessToken, '', user);
+          setAuth(handoff.accessToken, handoff.refreshToken, user);
           return true;
         }
       }
