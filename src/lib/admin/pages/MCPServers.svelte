@@ -29,6 +29,11 @@ SPDX-License-Identifier: Apache-2.0
     testMcpConnection,
     updateMcpServer,
   } from "../../api/admin/mcpServers.js";
+  import { setPageTitle } from "../../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("sidebar.connectors"));
+  });
 
   let servers = $state<MCPServer[]>([]);
   let isLoading = $state(false);

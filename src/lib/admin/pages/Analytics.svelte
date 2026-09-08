@@ -17,6 +17,11 @@ SPDX-License-Identifier: Apache-2.0
   import DepartmentAnalyticsTab from "../components/analytics/DepartmentAnalyticsTab.svelte";
   import ModelAnalyticsTab from "../components/analytics/ModelAnalyticsTab.svelte";
   import { permissionsStore } from "../../features/auth/index.js";
+  import { setPageTitle } from "../../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("analytics.title"));
+  });
 
   // Tab state
   type AnalyticsTab = "overview" | "by-user" | "by-department" | "by-model";

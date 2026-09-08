@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
   import { permissionsStore } from "$lib/features/auth/index.js";
   import { PERMISSIONS } from "$lib/features/auth/permissions.js";
   import { getRoles, type Role } from "$lib/api/admin/roles.js";
+  import { setPageTitle } from "../../utils/pageTitle";
 
   /**
    * Feature flag — hides the Unassigned node in the Teams tab. Default on.
@@ -46,6 +47,10 @@ SPDX-License-Identifier: Apache-2.0
 
   const defaultTab = $derived<TabId>(canViewDepartments ? "teams" : "users");
   let currentTab = $state<TabId>("teams");
+
+  $effect(() => {
+    setPageTitle($_('admin.departments.organization'));
+  });
 
   // Keep currentTab pointing at a tab the admin can actually see. This covers
   // the single-permission cases (e.g. departments-only or users-only), where

@@ -39,6 +39,7 @@ SPDX-License-Identifier: Apache-2.0
   } from "../../types/project";
   import { toast } from "../Toaster.svelte";
   import { setCrumbLeaf } from "../layout/index.js";
+  import { setPageTitle } from "../../utils/pageTitle";
 
   let { id } = $props<{ id: string }>();
 
@@ -48,6 +49,11 @@ SPDX-License-Identifier: Apache-2.0
   $effect(() => {
     setCrumbLeaf(project?.name ?? null);
     return () => setCrumbLeaf(null);
+  });
+
+  $effect(() => {
+    setPageTitle(project?.name ?? $_("sidebar.projects"));
+    return () => setPageTitle(null);
   });
   let sources = $state<ProjectSource[]>([]);
   let chats = $state<ProjectChat[]>([]);

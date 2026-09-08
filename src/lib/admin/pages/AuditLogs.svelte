@@ -16,6 +16,11 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from "svelte-i18n";
   import { formatDate, formatNumber } from "../../utils/format.js";
   import { exportAuditLogs } from "../../api/admin/auditLogs.js";
+  import { setPageTitle } from "../../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("admin.auditLogs.title"));
+  });
 
   let filtersOpen = $state(false);
   let searchQuery = $state("");

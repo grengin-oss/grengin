@@ -26,6 +26,11 @@ SPDX-License-Identifier: Apache-2.0
     type CreateRolePromptPayload,
   } from "../../api/admin/rolePrompts.js";
   import { getRoles, type Role } from "../../api/admin/roles.js";
+  import { setPageTitle } from "../../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("admin.promptLibrary.title"));
+  });
 
   // State
   let prompts = $state<RolePrompt[]>([]);

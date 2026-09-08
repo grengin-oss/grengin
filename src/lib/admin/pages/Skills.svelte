@@ -18,6 +18,11 @@ SPDX-License-Identifier: Apache-2.0
   import { ApiError } from "../../api/client.js";
   import { toast } from "../../components/Toaster.svelte";
   import { loadNamespaces } from "$lib/i18n/index.js";
+  import { setPageTitle } from "../../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("adminSkills.title"));
+  });
 
   let loading = $state(true);
   let skills = $state<SkillResponse[]>([]);

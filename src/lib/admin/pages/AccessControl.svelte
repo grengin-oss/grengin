@@ -18,6 +18,11 @@ SPDX-License-Identifier: Apache-2.0
   import { getLocalizedError } from "../../utils/errorLocalization.js";
   import { toast } from "../../components/Toaster.svelte";
   import { permissionsStore } from "../../features/auth/index.js";
+  import { setPageTitle } from "../../utils/pageTitle";
+
+  $effect(() => {
+    setPageTitle($_("admin.accessControl.title"));
+  });
 
   // The design lifts "Add New Roles" out of the tab body and into the page
   // header, so the gate that used to live on RolesTab's own button has to be
