@@ -67,7 +67,8 @@
       "modalTitle": "{name} — ツール",
       "loading": "ツールを読み込み中...",
       "empty": "このサーバーで利用可能なツールはありません。"
-    }
+    },
+    "searchPlaceholder": "連携を絞り込む..."
   },
   "userPromptSettings": {
     "loading": "プロンプト設定を読み込み中...",
@@ -84,7 +85,8 @@
       "title": "利用可能な変数",
       "empty": "利用可能な変数はありません",
       "insertHint": "変数をクリックしてエディターに挿入",
-      "copied": "変数が挿入されました"
+      "copied": "変数が挿入されました",
+      "label": "変数:"
     },
     "editor": {
       "title": "カスタムプロンプトエディター",
@@ -93,7 +95,10 @@
       "preview": "プレビュー",
       "edit": "編集",
       "previewTitle": "プロンプトプレビュー",
-      "previewEmpty": "プレビューする内容がありません。上でカスタムプロンプトの作成を始めてください。"
+      "previewEmpty": "プレビューする内容がありません。上でカスタムプロンプトの作成を始めてください。",
+      "description": "すべてのセッションでシステムプロンプトに挿入される基本指示を設定します。波かっこを使って特定の変数を参照できます。",
+      "hint": "カスタム指示はご自身のワークスペースのセッションにのみ適用されます。",
+      "charCountMax": "{count} / {max} 文字"
     },
     "actions": {
       "save": "プロンプトを保存",
@@ -122,7 +127,9 @@
       "submitting": "送信中...",
       "submitted": "フィードバックありがとうございます！",
       "failedToSubmit": "フィードバックの送信に失敗しました",
-      "ratingRequired": "送信前に評価を選択してください"
+      "ratingRequired": "送信前に評価を選択してください",
+      "accurate": "適切",
+      "needsTuning": "調整が必要"
     }
   },
   "userSkills": {

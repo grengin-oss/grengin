@@ -26,7 +26,8 @@
       "title": "Variáveis Disponíveis",
       "empty": "Nenhuma variável disponível",
       "insertHint": "Clique numa variável para inseri-la no editor",
-      "copied": "Variável inserida"
+      "copied": "Variável inserida",
+      "label": "Variáveis:"
     },
     "editor": {
       "title": "Editor de Prompt Personalizado",
@@ -35,7 +36,10 @@
       "preview": "Pré-visualização",
       "edit": "Editar",
       "previewTitle": "Pré-visualização do Prompt",
-      "previewEmpty": "Nada para pré-visualizar. Comece a escrever o seu prompt personalizado acima."
+      "previewEmpty": "Nada para pré-visualizar. Comece a escrever o seu prompt personalizado acima.",
+      "description": "Configure as instruções base injetadas no prompt do sistema em cada sessão. Você pode referenciar variáveis específicas usando chaves.",
+      "hint": "As instruções personalizadas se aplicam apenas às sessões do seu espaço de trabalho.",
+      "charCountMax": "{count} / {max} caracteres"
     },
     "actions": {
       "save": "Guardar Prompt",
@@ -64,7 +68,9 @@
       "submitting": "A enviar...",
       "submitted": "Obrigado pelo seu feedback!",
       "failedToSubmit": "Falha ao enviar feedback",
-      "ratingRequired": "Por favor selecione uma avaliação antes de enviar"
+      "ratingRequired": "Por favor selecione uma avaliação antes de enviar",
+      "accurate": "Preciso",
+      "needsTuning": "Precisa de ajustes"
     }
   },
   "userIntegrations": {
@@ -123,7 +129,8 @@
       "modalTitle": "{name} — Ferramentas",
       "loading": "Carregando ferramentas...",
       "empty": "Nenhuma ferramenta disponível para este servidor."
-    }
+    },
+    "searchPlaceholder": "Filtrar integrações..."
   },
   "userSkills": {
     "loading": "Carregando habilidades…",

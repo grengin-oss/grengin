@@ -913,7 +913,8 @@
         "members": "Membres",
         "promptsUsed": "Instructions Utilisées",
         "totalUsage": "Utilisation Totale",
-        "adoptionRate": "Taux d'Adoption"
+        "adoptionRate": "Taux d'Adoption",
+        "prompt": "Instruction"
       },
       "abTest": {
         "title": "Comparaison de Test A/B",
@@ -923,11 +924,44 @@
         "selectPrompt": "Sélectionnez une instruction...",
         "selectBoth": "Sélectionnez les deux variantes pour comparer",
         "leadsBy": "en tête de",
-        "tied": "Les deux variantes sont à égalité"
+        "tied": "Les deux variantes sont à égalité",
+        "emptyTitle": "Sélectionnez deux instructions à comparer",
+        "emptyMessage": "Choisissez les variantes ci-dessus pour voir les métriques d'utilisation et de note côte à côte."
       },
       "toast": {
         "failedToLoad": "Échec du chargement des métriques d'instructions"
-      }
+      },
+      "groupPrompts": "Instructions",
+      "groupRoles": "Rôles",
+      "countPrompts": "{count} instructions",
+      "countRoles": "{count} rôles",
+      "countDepartments": "{count} départements",
+      "layout": "Disposition",
+      "viewGrid": "Grille",
+      "viewList": "Liste",
+      "sortBy": "Trier par",
+      "sortMostUsed": "Les plus utilisées",
+      "sortHighestRated": "Les mieux notées",
+      "sortMostFeedback": "Le plus de retours",
+      "searchPrompts": "Rechercher des instructions…",
+      "searchRoles": "Rechercher des rôles…",
+      "searchDepartments": "Rechercher des départements…",
+      "showingPrompts": "Affichage de {shown} sur {total} instructions",
+      "showingRoles": "Affichage de {shown} sur {total} rôles",
+      "showingDepartments": "Affichage de {shown} sur {total} départements",
+      "footerPrompts": "{count} instructions · {usage} requêtes au total",
+      "footerRoles": "{count} rôles · {usage} requêtes au total",
+      "footerDepartments": "{count} départements · {usage} requêtes au total",
+      "prev": "Précédent",
+      "next": "Suivant",
+      "noDataBadge": "Aucune donnée",
+      "bannerNoFeedback": "Aucun retour positif ou négatif n'a encore été envoyé pour cette période — l'utilisation continue d'être suivie.",
+      "bannerFeedback": "{count} retours collectés — {rate} positifs sur {prompts} instructions.",
+      "bannerZeroAdoption": "Information : {departments} affiche un taux d'adoption de 0 % car aucun membre n'y est actuellement affecté pour mesurer l'utilisation.",
+      "leastEffectiveEmptyMessage": "Les notes apparaîtront ici dès que les instructions recevront des retours négatifs.",
+      "mostEffectiveEmptyMessage": "Les notes apparaîtront ici dès que les instructions recevront des retours positifs.",
+      "noResults": "Aucun résultat correspondant",
+      "noResultsMessage": "Essayez un autre terme de recherche ou effacez les filtres ci-dessus."
     },
     "departmentPrompts": {
       "title": "Instructions du Département",

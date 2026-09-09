@@ -186,6 +186,23 @@
         "subtitle": "Gastos totais ao longo do tempo",
         "totalCost": "Custo total"
       },
+      "dataTable": {
+        "caption": "Dados de {chartName}",
+        "subtitleDays": "Visualização em tabela · {count} dias exibidos",
+        "subtitleHours": "Visualização em tabela · {count} horas exibidas",
+        "subtitleMonths": "Visualização em tabela · {count} meses exibidos",
+        "peak": "Pico",
+        "exportCsv": "Exportar CSV",
+        "close": "Fechar",
+        "stats": {
+          "total": "Total de {metric}",
+          "avgTokensPerRequest": "Tokens médios / solicitação",
+          "avgLatency": "Latência média",
+          "successRate": "Taxa de sucesso",
+          "avgCost": "Custo médio",
+          "peakCost": "Custo máximo"
+        }
+      },
       "emptyState": {
         "title": "Nenhum dado de série temporal disponível para o intervalo de datas selecionado",
         "hint": "Tente selecionar um intervalo de datas diferente ou volte mais tarde"

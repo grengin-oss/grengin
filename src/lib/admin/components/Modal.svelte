@@ -29,7 +29,11 @@ SPDX-License-Identifier: Apache-2.0
      * the action bar;
      * "prompts" is the 580px card from prompts.html (.pr-modal) — a 6px
      * gradient rule, a tile-and-subtitle header, and a plain footer whose
-     * actions sit right.
+     * actions sit right;
+     * "chart-data" is the 680px card from usage-analytics-overview.html
+     * (.vdt) — the same gradient rule, a badge-and-subtitle header, and a
+     * tinted footer that splits a caption on the left from actions on the
+     * right.
      */
     variant?:
       | "default"
@@ -38,7 +42,8 @@ SPDX-License-Identifier: Apache-2.0
       | "ai-engines"
       | "ai-connect"
       | "mcp-servers"
-      | "prompts";
+      | "prompts"
+      | "chart-data";
     /** Pinned footer bar, outside the scrolling body (access-control design). */
     footer?: any;
     /** Second line under the title (ai-engines design: ".cfg-subtitle"). */
@@ -267,6 +272,7 @@ SPDX-License-Identifier: Apache-2.0
         variant === "ai-connect"}
       class:modal-backdrop--mcp={variant === "mcp-servers"}
       class:modal-backdrop--pr={variant === "prompts"}
+      class:modal-backdrop--vdt={variant === "chart-data"}
       data-modal-id={modalId}
       onclick={handleBackdropClick}
       onkeydown={(e) => e.key === "Enter" && handleBackdropClick(e as any)}
@@ -284,6 +290,7 @@ SPDX-License-Identifier: Apache-2.0
         class:modal-content--cnx={variant === "ai-connect"}
         class:modal-content--mcp={variant === "mcp-servers"}
         class:modal-content--pr={variant === "prompts"}
+        class:modal-content--vdt={variant === "chart-data"}
       >
         <div class="modal-header">
           <div class="modal-header-left">
@@ -843,6 +850,126 @@ SPDX-License-Identifier: Apache-2.0
     align-items: center;
     background: var(--gx-card);
     border-top: 1px solid var(--gx-hair);
+    flex-shrink: 0;
+  }
+
+  /* ===== "chart-data" variant (usage-analytics-overview.html .vdt) =====
+     680px card, the same 6px gradient rule as prompts, a 38px icon badge
+     beside a title-and-subtitle heading, and a tinted footer that splits a
+     caption on the left from the actions on the right. Selectors are doubled
+     for the same reason as the variants above — the base .modal-content rules
+     come later in this sheet. */
+  .modal-backdrop.modal-backdrop--vdt {
+    background: var(--gx-ac-modal-scrim);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .modal-content.modal-content--vdt {
+    position: relative;
+    width: 680px;
+    max-width: calc(100vw - 32px);
+    max-height: 90vh;
+    overflow: hidden;
+    border: none;
+    border-radius: 20px;
+    background: var(--gx-card);
+    box-shadow: var(--gx-vdt-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--gx-font);
+  }
+
+  .modal-content.modal-content--vdt .modal-header {
+    position: relative;
+    min-height: 94px;
+    padding: 24px;
+    border: none;
+    border-bottom: 1px solid var(--gx-vdt-row-hair);
+    flex-shrink: 0;
+  }
+
+  .modal-content.modal-content--vdt .modal-header::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 6px;
+    background: linear-gradient(
+      90deg,
+      rgb(74, 125, 212) 0%,
+      rgb(46, 168, 117) 100%
+    );
+  }
+
+  .modal-content.modal-content--vdt .modal-header-left,
+  .modal-content.modal-content--vdt .modal-header-left:has(.modal-subtitle) {
+    gap: 14px;
+  }
+
+  .modal-content.modal-content--vdt .modal-heading {
+    gap: 2px;
+  }
+
+  .modal-content.modal-content--vdt .modal-title {
+    font-family: var(--gx-font);
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 28px;
+    color: var(--gx-slate-900);
+  }
+
+  .modal-content.modal-content--vdt .modal-subtitle {
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 16px;
+    color: var(--gx-an-sub);
+  }
+
+  .modal-content.modal-content--vdt .modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-an-chip-ring);
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
+  }
+
+  .modal-content.modal-content--vdt .modal-close:hover {
+    background: var(--gx-vdt-surface);
+    color: var(--gx-an-sub);
+  }
+
+  .modal-content.modal-content--vdt .modal-close svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .modal-content.modal-content--vdt .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+    align-items: stretch;
+    align-self: stretch;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0;
+  }
+
+  .modal-content.modal-content--vdt .modal-footer {
+    min-height: 85px;
+    display: flex;
+    gap: 12px;
+    padding: 24px;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--gx-vdt-surface);
+    border-top: 1px solid var(--gx-vdt-row-hair);
     flex-shrink: 0;
   }
 

@@ -913,7 +913,8 @@
         "members": "メンバー",
         "promptsUsed": "使用プロンプト",
         "totalUsage": "合計使用回数",
-        "adoptionRate": "採用率"
+        "adoptionRate": "採用率",
+        "prompt": "プロンプト"
       },
       "abTest": {
         "title": "A/Bテスト比較",
@@ -923,11 +924,44 @@
         "selectPrompt": "プロンプトを選択...",
         "selectBoth": "比較するには両方のバリアントを選択してください",
         "leadsBy": "リード",
-        "tied": "両バリアント同点"
+        "tied": "両バリアント同点",
+        "emptyTitle": "比較するプロンプトを 2 件選択してください",
+        "emptyMessage": "上のバリアントを選ぶと、利用状況と評価の指標を並べて確認できます。"
       },
       "toast": {
         "failedToLoad": "プロンプト指標の読み込みに失敗しました"
-      }
+      },
+      "groupPrompts": "プロンプト",
+      "groupRoles": "ロール",
+      "countPrompts": "{count} 件のプロンプト",
+      "countRoles": "{count} 件のロール",
+      "countDepartments": "{count} 件の部門",
+      "layout": "レイアウト",
+      "viewGrid": "グリッド",
+      "viewList": "リスト",
+      "sortBy": "並べ替え",
+      "sortMostUsed": "利用数順",
+      "sortHighestRated": "評価の高い順",
+      "sortMostFeedback": "フィードバック数順",
+      "searchPrompts": "プロンプトを検索…",
+      "searchRoles": "ロールを検索…",
+      "searchDepartments": "部門を検索…",
+      "showingPrompts": "{total} 件中 {shown} 件のプロンプトを表示",
+      "showingRoles": "{total} 件中 {shown} 件のロールを表示",
+      "showingDepartments": "{total} 件中 {shown} 件の部門を表示",
+      "footerPrompts": "プロンプト {count} 件 · 合計 {usage} リクエスト",
+      "footerRoles": "ロール {count} 件 · 合計 {usage} リクエスト",
+      "footerDepartments": "部門 {count} 件 · 合計 {usage} リクエスト",
+      "prev": "前へ",
+      "next": "次へ",
+      "noDataBadge": "データなし",
+      "bannerNoFeedback": "この期間には高評価・低評価のフィードバックがまだ送信されていません — 利用状況の記録は継続中です。",
+      "bannerFeedback": "{count} 件のフィードバックを収集 — プロンプト {prompts} 件全体で肯定率 {rate}。",
+      "bannerZeroAdoption": "お知らせ: {departments} は現在利用状況を計測できるメンバーが割り当てられていないため、採用率が 0% です。",
+      "leastEffectiveEmptyMessage": "プロンプトが低評価のフィードバックを受け始めると、ここに評価が表示されます。",
+      "mostEffectiveEmptyMessage": "プロンプトが高評価のフィードバックを受け始めると、ここに評価が表示されます。",
+      "noResults": "一致する結果はありません",
+      "noResultsMessage": "別の検索語を試すか、上のフィルターをクリアしてください。"
     },
     "departmentPrompts": {
       "title": "部門プロンプト",

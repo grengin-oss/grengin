@@ -12,7 +12,12 @@ SPDX-License-Identifier: Apache-2.0
   import SkillEditor from "./skills/SkillEditor.svelte";
   import SkillImportModal from "./skills/SkillImportModal.svelte";
   import SkillAddMenu from "./skills/SkillAddMenu.svelte";
-  import { listMySkills, listSkills, deleteMySkill, updateMySkill } from "../../api/skills.js";
+  import {
+    listMySkills,
+    listSkills,
+    deleteMySkill,
+    updateMySkill,
+  } from "../../api/skills.js";
   import type { SkillResponse } from "../../types/skill.js";
   import { ApiError } from "../../api/client.js";
   import { toast } from "../../components/Toaster.svelte";
@@ -54,7 +59,8 @@ SPDX-License-Identifier: Apache-2.0
         if (filter === "mine" && s.is_builtin) return false;
         if (filter === "builtin" && !s.is_builtin) return false;
         if (q) {
-          const hay = `${s.name} ${s.description ?? ""} ${s.identifier}`.toLowerCase();
+          const hay =
+            `${s.name} ${s.description ?? ""} ${s.identifier}`.toLowerCase();
           if (!hay.includes(q)) return false;
         }
         return true;
@@ -66,6 +72,20 @@ SPDX-License-Identifier: Apache-2.0
       });
   });
 
+  // The design splits the grid into a "Built-in" and a "My Skills" section,
+  // each with its own count badge.
+  const visibleBuiltin = $derived(visibleSkills.filter((s) => s.is_builtin));
+  const visibleMine = $derived(visibleSkills.filter((s) => !s.is_builtin));
+
+  const searching = $derived(search.trim().length > 0);
+  const showBuiltinSection = $derived(
+    filter !== "mine" && visibleBuiltin.length > 0,
+  );
+  const showMineSection = $derived(filter !== "builtin");
+  // Only offer the two "get started" placeholders when nothing is filtered out —
+  // with an active search an empty section means "no matches", not "none yet".
+  const showPlaceholders = $derived(visibleMine.length === 0 && !searching);
+
   const FILTERS: { id: Filter; label: string }[] = $derived([
     { id: "all", label: $_("userSkills.filters.all") },
     { id: "mine", label: $_("userSkills.filters.mine") },
@@ -76,8 +96,18 @@ SPDX-License-Identifier: Apache-2.0
     loading = true;
     try {
       const [mine, catalog] = await Promise.all([
-        listMySkills().catch(() => ({ skills: [], total: 0, limit: 0, offset: 0 })),
-        listSkills().catch(() => ({ skills: [], total: 0, limit: 0, offset: 0 })),
+        listMySkills().catch(() => ({
+          skills: [],
+          total: 0,
+          limit: 0,
+          offset: 0,
+        })),
+        listSkills().catch(() => ({
+          skills: [],
+          total: 0,
+          limit: 0,
+          offset: 0,
+        })),
       ]);
       mySkills = mine.skills ?? [];
       catalogSkills = catalog.skills ?? [];
@@ -167,15 +197,20 @@ SPDX-License-Identifier: Apache-2.0
   onMount(loadSkills);
 </script>
 
-<div class="skills-page">
-  <!-- Toolbar -->
+<div class="skills-panel">
+  <!-- ".toolbar" -->
   <div class="toolbar">
-    <div class="toolbar__left">
-      <div class="segmented" role="tablist">
+    <div class="left-controls">
+      <!-- ".filter-segment" -->
+      <div
+        class="filter-segment"
+        role="tablist"
+        aria-label={$_("userSkills.filters.all")}
+      >
         {#each FILTERS as f (f.id)}
           <button
-            class="segment"
-            class:segment--active={filter === f.id}
+            class="seg-btn"
+            type="button"
             role="tab"
             aria-selected={filter === f.id}
             onclick={() => (filter = f.id)}
@@ -185,15 +220,29 @@ SPDX-License-Identifier: Apache-2.0
         {/each}
       </div>
 
-      <div class="search">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path>
+      <!-- ".search-input" -->
+      <div class="search-input">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+        >
+          <circle
+            cx="7"
+            cy="7"
+            r="5"
+            stroke="currentColor"
+            stroke-width="1.3"
+          />
+          <path d="m13 13-2.3-2.3" stroke="currentColor" stroke-width="1.3" />
         </svg>
         <input
-          class="search__input"
           type="text"
           bind:value={search}
           placeholder={$_("userSkills.searchPlaceholder")}
+          aria-label={$_("userSkills.searchPlaceholder")}
         />
       </div>
     </div>
@@ -201,50 +250,138 @@ SPDX-License-Identifier: Apache-2.0
     <SkillAddMenu onwrite={openWrite} onimport={openImport} />
   </div>
 
-  <!-- Built-in highlight banner -->
-  {#if !loading && builtinCount > 0 && filter !== "mine"}
-    <div class="banner">
-      <div class="banner__icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M9 21V9"></path>
-        </svg>
-      </div>
-      <div class="banner__text">
-        <strong>{$_("userSkills.banner.title")}</strong>
-        <span>{$_("userSkills.banner.body")}</span>
-      </div>
-    </div>
-  {/if}
-
-  <!-- Grid -->
   {#if loading}
     <LoadingSpinner size="md" text={$_("userSkills.loading")} />
-  {:else if visibleSkills.length === 0}
-    <div class="empty">
-      <div class="empty__glyph">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2l2.4 5.5L20 8l-4 4 1 6-5-3-5 3 1-6-4-4 5.6-.5z"></path>
-        </svg>
-      </div>
-      <h3 class="empty__title">{$_("userSkills.empty.title")}</h3>
-      <p class="empty__body">{$_("userSkills.empty.body")}</p>
-      <div class="empty__actions">
-        <button class="btn btn--primary" onclick={openWrite}>{$_("userSkills.addMenu.writeTitle")}</button>
-        <button class="btn btn--ghost" onclick={openImport}>{$_("userSkills.addMenu.importTitle")}</button>
-      </div>
-    </div>
   {:else}
-    <div class="grid">
-      {#each visibleSkills as skill (skill.id)}
-        <SkillCard
-          {skill}
-          toggling={togglingId === skill.id}
-          onedit={openEdit}
-          ondelete={(s) => (deleteTarget = s)}
-          ontoggle={handleToggle}
-        />
-      {/each}
-    </div>
+    <!-- ".settings-section" — Built-in -->
+    {#if showBuiltinSection}
+      <section class="settings-section">
+        <div class="section-title-row">
+          <span class="section-title">{$_("userSkills.filters.builtin")}</span>
+          <span class="count-badge">{visibleBuiltin.length}</span>
+        </div>
+
+        <!-- ".builtin-banner" -->
+        <div class="builtin-banner">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              cx="9"
+              cy="9"
+              r="7.2"
+              stroke="currentColor"
+              stroke-width="1.3"
+            />
+            <path
+              d="M9 8.1v3.9M9 5.6v.01"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linecap="round"
+            />
+          </svg>
+          <div class="builtin-banner-text">
+            <span class="builtin-banner-title"
+              >{$_("userSkills.banner.title")}</span
+            >
+            <span class="builtin-banner-desc"
+              >{$_("userSkills.banner.body")}</span
+            >
+          </div>
+        </div>
+
+        <div class="skill-grid">
+          {#each visibleBuiltin as skill (skill.id)}
+            <SkillCard
+              {skill}
+              toggling={togglingId === skill.id}
+              onedit={openEdit}
+              ondelete={(s) => (deleteTarget = s)}
+              ontoggle={handleToggle}
+            />
+          {/each}
+        </div>
+      </section>
+    {/if}
+
+    <!-- ".settings-section" — My Skills -->
+    {#if showMineSection}
+      <section class="settings-section">
+        <div class="section-title-row">
+          <span class="section-title">{$_("userSkills.filters.mine")}</span>
+          <span class="count-badge">{visibleMine.length}</span>
+        </div>
+
+        {#if visibleMine.length > 0}
+          <div class="skill-grid">
+            {#each visibleMine as skill (skill.id)}
+              <SkillCard
+                {skill}
+                toggling={togglingId === skill.id}
+                onedit={openEdit}
+                ondelete={(s) => (deleteTarget = s)}
+                ontoggle={handleToggle}
+              />
+            {/each}
+          </div>
+        {:else if showPlaceholders}
+          <!-- ".placeholder-grid" — the two entry points for a first skill. -->
+          <div class="placeholder-grid">
+            <button class="placeholder-card" type="button" onclick={openWrite}>
+              <span class="placeholder-icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M8 1.75v12.5M1.75 8h12.5"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                  />
+                </svg>
+              </span>
+              <span class="placeholder-title"
+                >{$_("userSkills.addMenu.writeTitle")}</span
+              >
+              <span class="placeholder-desc"
+                >{$_("userSkills.addMenu.writeDesc")}</span
+              >
+            </button>
+            <button class="placeholder-card" type="button" onclick={openImport}>
+              <span class="placeholder-icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M8 1.75v9M4.5 7.25 8 10.75l3.5-3.5M2.25 12.75h11.5"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span class="placeholder-title"
+                >{$_("userSkills.addMenu.importTitle")}</span
+              >
+              <span class="placeholder-desc"
+                >{$_("userSkills.addMenu.importDesc")}</span
+              >
+            </button>
+          </div>
+        {:else}
+          <p class="empty-hint">{$_("userSkills.empty.body")}</p>
+        {/if}
+      </section>
+    {/if}
+
+    {#if !showBuiltinSection && !showMineSection}
+      <p class="empty-hint">
+        {builtinCount === 0
+          ? $_("userSkills.empty.title")
+          : $_("userSkills.empty.body")}
+      </p>
+    {/if}
   {/if}
 </div>
 
@@ -271,13 +408,23 @@ SPDX-License-Identifier: Apache-2.0
 >
   <div class="delete-body">
     <p class="delete-message">
-      {$_("userSkills.delete.message", { values: { name: deleteTarget?.name ?? "" } })}
+      {$_("userSkills.delete.message", {
+        values: { name: deleteTarget?.name ?? "" },
+      })}
     </p>
     <div class="delete-actions">
-      <button class="btn btn--ghost" onclick={() => (deleteTarget = null)} disabled={deleting}>
+      <button
+        class="btn btn--ghost"
+        onclick={() => (deleteTarget = null)}
+        disabled={deleting}
+      >
         {$_("userSkills.delete.cancel")}
       </button>
-      <button class="btn btn--danger" onclick={confirmDelete} disabled={deleting}>
+      <button
+        class="btn btn--danger"
+        onclick={confirmDelete}
+        disabled={deleting}
+      >
         {#if deleting}
           <span class="btn-spinner"></span>
           {$_("userSkills.delete.deleting")}
@@ -290,191 +437,318 @@ SPDX-License-Identifier: Apache-2.0
 </Modal>
 
 <style>
-  .skills-page {
-    padding: var(--space-lg);
+  /* ===== user-settings.html, Skills panel. Colours come from the --us-* block
+     UserSettings.svelte declares on ".us-page"; this file only lays out. ===== */
+
+  /* app.css paints every bare control as a glass pill; every control here is
+     flat. The reset stays scoped to this component so its own class rules keep
+     out-ranking it. */
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--us-cta);
+    outline-offset: 2px;
+  }
+
+  input {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    font-family: var(--gx-font);
+    color: inherit;
+    transition: none;
+  }
+
+  input:focus {
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .skills-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    align-self: stretch;
+  }
+
+  /* ---------------- ".toolbar" ---------------- */
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    align-self: stretch;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  .left-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  /* ---------------- ".filter-segment" ---------------- */
+  .filter-segment {
+    border-radius: 8px;
+    background: var(--us-track);
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    flex-shrink: 0;
+  }
+
+  .seg-btn {
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--us-body);
+    white-space: nowrap;
+    transition:
+      background-color 120ms ease,
+      box-shadow 120ms ease,
+      color 120ms ease;
+  }
+
+  .seg-btn[aria-selected="true"] {
+    background: var(--us-surface);
+    box-shadow: var(--us-card-shadow);
+    color: var(--us-tab-active);
+  }
+
+  /* ---------------- ".search-input" ---------------- */
+  .search-input {
+    width: 240px;
+    height: 37px;
+    border-radius: 8px;
+    background: var(--us-surface);
+    box-shadow: inset 0 0 0 1px var(--us-border);
+    display: flex;
+    gap: 8px;
+    padding: 0 14px;
+    align-items: center;
+  }
+
+  .search-input:focus-within {
+    box-shadow: inset 0 0 0 1px var(--us-cta);
+  }
+
+  .search-input svg {
+    display: block;
+    color: var(--us-muted);
+    flex-shrink: 0;
+  }
+
+  .search-input input {
+    font-size: 14px;
+    line-height: 1.2;
+    flex-grow: 1;
+    min-width: 0;
+    color: var(--us-title);
+  }
+
+  .search-input input::placeholder {
+    color: var(--us-muted);
+    opacity: 1;
+  }
+
+  /* ---------------- ".settings-section" ---------------- */
+  .settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-self: stretch;
+  }
+
+  .section-title-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--us-title);
+  }
+
+  .count-badge {
+    border-radius: 10px;
+    background: var(--us-track);
+    padding: 2px 6px;
+    font-family: var(--us-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--us-body);
+  }
+
+  /* ---------------- ".builtin-banner" ---------------- */
+  .builtin-banner {
+    /* "border-radius: 0 8px 8px 0" + a 3px accent edge, logical so the edge
+       moves to the right under dir="rtl". */
+    border-radius: 8px;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+    background: var(--us-ok-tint);
+    border-inline-start: 3px solid var(--us-ok);
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .builtin-banner svg {
+    display: block;
+    color: var(--us-ok);
+    flex-shrink: 0;
+  }
+
+  .builtin-banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .builtin-banner-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--us-ok);
+  }
+
+  .builtin-banner-desc {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--us-body);
+  }
+
+  /* ---------------- ".skill-card" grid ---------------- */
+  /* Cards are 450px in the mockup; they wrap once the panel is wider. */
+  .skill-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-self: stretch;
+  }
+
+  /* ---------------- ".placeholder-grid" ---------------- */
+  .placeholder-grid {
+    display: flex;
+    gap: 20px;
+    align-self: stretch;
+    flex-wrap: wrap;
+  }
+
+  .placeholder-card {
+    flex: 1 1 280px;
+    border-radius: 12px;
+    background: var(--us-field-bg);
+    outline: 1.5px dashed var(--us-border);
+    outline-offset: -1.5px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 24px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: normal;
+    transition:
+      background-color 120ms ease,
+      outline-color 120ms ease;
+  }
+
+  .placeholder-card:hover {
+    background: var(--us-hover);
+    outline-color: var(--us-cta);
+  }
+
+  .placeholder-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    background: var(--us-tint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--us-accent);
+    flex-shrink: 0;
+  }
+
+  .placeholder-icon svg {
+    display: block;
+  }
+
+  .placeholder-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--us-title);
+  }
+
+  .placeholder-desc {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--us-muted);
+  }
+
+  .empty-hint {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--us-muted);
+    max-width: 630px;
+  }
+
+  /* ---------------- delete dialog (app dialog styling) ---------------- */
+  .delete-body {
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
   }
 
-  .toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-    flex-wrap: wrap;
-  }
-
-  .toolbar__left {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    flex-wrap: wrap;
-  }
-
-  .segmented {
-    display: inline-flex;
-    gap: var(--space-2xs);
-    padding: var(--space-2xs);
-    background: rgba(var(--glass-tint), 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-md);
-  }
-
-  .segment {
-    padding: var(--space-xs) var(--space-md);
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-
-  .segment:hover:not(.segment--active) {
-    color: var(--text-primary);
-  }
-
-  .segment--active {
-    background: rgba(var(--glass-tint), 0.12);
-    color: var(--text-primary);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .search {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    height: 40px;
-    padding: 0 var(--space-md);
-    background: rgba(var(--glass-tint), 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-md);
-    color: var(--text-secondary);
-    min-width: 220px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .search:focus-within {
-    border-color: rgba(99, 102, 241, 0.5);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-  }
-
-  .search svg { flex-shrink: 0; opacity: 0.7; }
-
-  /* Neutralize global input chrome so it blends into the .search pill. */
-  .search__input {
-    flex: 1;
-    min-width: 0;
-    width: auto;
-    padding: 0;
-    background: none;
-    border: none;
-    border-radius: 0;
-    outline: none;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-  }
-  .search__input:focus {
-    background: none;
-    box-shadow: none;
-  }
-
-  .search__input::placeholder {
-    color: var(--text-secondary);
-    opacity: 0.6;
-  }
-
-  .banner {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
-    background: linear-gradient(
-      120deg,
-      rgba(139, 92, 246, 0.1),
-      rgba(99, 102, 241, 0.06)
-    );
-    border: 1px solid rgba(139, 92, 246, 0.22);
-    border-radius: var(--radius-lg);
-  }
-
-  .banner__icon {
-    flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-md);
-    background: rgba(139, 92, 246, 0.16);
-    color: #c4b5fd;
-  }
-
-  .banner__text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-  }
-
-  .banner__text strong {
-    color: var(--text-primary);
-    font-size: 0.875rem;
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--space-md);
-  }
-
-  .empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: var(--space-sm);
-    padding: var(--space-3xl) var(--space-lg);
-  }
-
-  .empty__glyph {
-    width: 72px;
-    height: 72px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-lg);
-    background: rgba(var(--glass-tint), 0.05);
-    color: var(--text-secondary);
-    margin-bottom: var(--space-sm);
-  }
-
-  .empty__title {
+  .delete-message {
     margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .empty__body {
-    margin: 0 0 var(--space-md);
-    font-size: 0.875rem;
     color: var(--text-secondary);
-    max-width: 420px;
+    line-height: 1.6;
   }
 
-  .empty__actions {
+  .delete-actions {
     display: flex;
+    justify-content: flex-end;
     gap: var(--space-sm);
-    flex-wrap: wrap;
-    justify-content: center;
   }
 
   .btn {
@@ -492,17 +766,8 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .btn:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
-  }
-
-  .btn--primary {
-    background: var(--brand, #4079c5);
-    color: #fff;
-  }
-
-  .btn--primary:hover:not(:disabled) {
-    filter: brightness(1.1);
   }
 
   .btn--ghost {
@@ -528,54 +793,28 @@ SPDX-License-Identifier: Apache-2.0
 
   .btn-spinner {
     display: inline-block;
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: currentColor;
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
     border-radius: 50%;
-    animation: spin 0.6s linear infinite;
+    animation: btn-spin 0.7s linear infinite;
+    margin-inline-end: var(--space-xs);
   }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+  @keyframes btn-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
-  .delete-body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xl);
-  }
-
-  .delete-message {
-    margin: 0;
-    font-size: 0.9375rem;
-    line-height: 1.6;
-    color: var(--text-secondary);
-  }
-
-  .delete-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-md);
-  }
-
-  @media (max-width: 768px) {
+  @media (max-width: 640px) {
     .toolbar {
-      flex-direction: column;
       align-items: stretch;
     }
 
-    .toolbar__left {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .search {
-      min-width: 0;
-    }
-
-    .grid {
-      grid-template-columns: 1fr;
+    .search-input {
+      width: 100%;
     }
   }
 </style>

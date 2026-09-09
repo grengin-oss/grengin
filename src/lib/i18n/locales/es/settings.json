@@ -67,7 +67,8 @@
       "modalTitle": "{name} — Herramientas",
       "loading": "Cargando herramientas...",
       "empty": "No hay herramientas disponibles para este servidor."
-    }
+    },
+    "searchPlaceholder": "Filtrar integraciones..."
   },
   "userPromptSettings": {
     "loading": "Cargando configuración de indicaciones...",
@@ -84,7 +85,8 @@
       "title": "Variables Disponibles",
       "empty": "No hay variables disponibles",
       "insertHint": "Haga clic en una variable para insertarla en el editor",
-      "copied": "Variable insertada"
+      "copied": "Variable insertada",
+      "label": "Variables:"
     },
     "editor": {
       "title": "Editor de Indicación Personalizada",
@@ -93,7 +95,10 @@
       "preview": "Vista Previa",
       "edit": "Editar",
       "previewTitle": "Vista Previa de Indicación",
-      "previewEmpty": "Nada que previsualizar. Comience a escribir su indicación personalizada arriba."
+      "previewEmpty": "Nada que previsualizar. Comience a escribir su indicación personalizada arriba.",
+      "description": "Configura las instrucciones base que se inyectan en el prompt del sistema en cada sesión. Puedes referenciar variables concretas usando llaves.",
+      "hint": "Las instrucciones personalizadas solo se aplican a las sesiones de tu espacio de trabajo.",
+      "charCountMax": "{count} / {max} caracteres"
     },
     "actions": {
       "save": "Guardar Indicación",
@@ -122,7 +127,9 @@
       "submitting": "Enviando...",
       "submitted": "¡Gracias por sus comentarios!",
       "failedToSubmit": "Error al enviar comentarios",
-      "ratingRequired": "Seleccione una calificación antes de enviar"
+      "ratingRequired": "Seleccione una calificación antes de enviar",
+      "accurate": "Preciso",
+      "needsTuning": "Necesita ajustes"
     }
   },
   "userSkills": {

@@ -23,153 +23,144 @@ SPDX-License-Identifier: Apache-2.0
   const isArtifacts = $derived(isArtifactsSkill(skill));
 </script>
 
+<!-- ".skill-card" — user-settings.html -->
 <article class="skill-card" class:skill-card--inactive={!skill.is_active}>
-  <div class="skill-card__top">
-    <div
-      class="skill-card__avatar"
-      class:skill-card__avatar--builtin={skill.is_builtin}
-    >
-      {#if skill.avatar}
-        {skill.avatar}
-      {:else if isArtifacts}
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-          <path d="M3 9h18M9 21V9"></path>
-        </svg>
-      {:else}
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M12 2l2.4 5.5L20 8l-4 4 1 6-5-3-5 3 1-6-4-4 5.6-.5z"></path>
-        </svg>
+  <div class="skill-card-top">
+    <div class="skill-card-header">
+      <div class="skill-icon-block">
+        <span class="emoji-circle" aria-hidden="true">
+          {#if skill.avatar}
+            {skill.avatar}
+          {:else if isArtifacts}
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+              <path d="M3 9h18M9 21V9"></path>
+            </svg>
+          {:else}
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 2l2.4 5.5L20 8l-4 4 1 6-5-3-5 3 1-6-4-4 5.6-.5z"></path>
+            </svg>
+          {/if}
+        </span>
+        <div class="skill-title-group">
+          <span class="skill-name" title={skill.name}>{skill.name}</span>
+          <span class="skill-slug">{skill.identifier}</span>
+        </div>
+      </div>
+
+      <!-- ".toggle-pill" — the activation switch -->
+      <button
+        type="button"
+        class="toggle-pill"
+        class:toggle-pill--off={!skill.is_active}
+        role="switch"
+        aria-checked={skill.is_active}
+        aria-label={$_("userSkills.card.toggleAria", {
+          values: { name: skill.name },
+        })}
+        disabled={toggling}
+        onclick={() => ontoggle?.(skill, !skill.is_active)}
+      >
+        <span class="toggle-knob"></span>
+      </button>
+    </div>
+
+    <span class="skill-desc">
+      {skill.description || $_("userSkills.card.noDescription")}
+    </span>
+
+    <div class="skill-tags">
+      {#if skill.is_builtin}
+        <span class="skill-tag skill-tag--builtin">{$_("userSkills.badges.builtin")}</span>
+      {/if}
+      {#if isArtifacts}
+        <span class="skill-tag skill-tag--builtin">{$_("userSkills.badges.artifacts")}</span>
+      {/if}
+      {#if skill.instructions}
+        <span class="skill-tag">{$_("userSkills.badges.instructions")}</span>
+      {/if}
+      {#if knowledgeCount > 0}
+        <span class="skill-tag">
+          {$_("userSkills.badges.files", { values: { count: knowledgeCount } })}
+        </span>
+      {/if}
+      {#if skill.tools_config?.web_search}
+        <span class="skill-tag">{$_("userSkills.badges.webSearch")}</span>
+      {/if}
+      {#if toolCount > 0}
+        <span class="skill-tag">
+          {$_("userSkills.badges.tools", { values: { count: toolCount } })}
+        </span>
       {/if}
     </div>
-
-    <div class="skill-card__heading">
-      <h3 class="skill-card__name">{skill.name}</h3>
-      <code class="skill-card__id">{skill.identifier}</code>
-    </div>
-
-    <!-- Activation switch -->
-    <button
-      type="button"
-      class="switch"
-      class:switch--on={skill.is_active}
-      role="switch"
-      aria-checked={skill.is_active}
-      aria-label={$_("userSkills.card.toggleAria", {
-        values: { name: skill.name },
-      })}
-      disabled={toggling}
-      onclick={() => ontoggle?.(skill, !skill.is_active)}
-    >
-      <span class="switch__thumb"></span>
-    </button>
   </div>
 
-  <p class="skill-card__desc">
-    {skill.description || $_("userSkills.card.noDescription")}
-  </p>
-
-  <div class="skill-card__badges">
+  <!-- ".skill-card-footer" -->
+  <div class="skill-card-footer">
     {#if skill.is_builtin}
-      <span class="badge badge--builtin">{$_("userSkills.badges.builtin")}</span
-      >
-    {/if}
-    {#if isArtifacts}
-      <span class="badge badge--artifacts"
-        >{$_("userSkills.badges.artifacts")}</span
-      >
-    {/if}
-    {#if skill.instructions}
-      <span class="badge">{$_("userSkills.badges.instructions")}</span>
-    {/if}
-    {#if knowledgeCount > 0}
-      <span class="badge">
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <rect
+          x="2.75"
+          y="6.1"
+          width="8.5"
+          height="6.15"
+          rx="1"
           stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-          ></path><path d="M14 2v6h6"></path>
-        </svg>
-        {$_("userSkills.badges.files", { values: { count: knowledgeCount } })}
-      </span>
-    {/if}
-    {#if skill.tools_config?.web_search}
-      <span class="badge">
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
+          stroke-width="1.1"
           fill="none"
+        />
+        <path
+          d="M4.65 6.1V4.15a2.35 2.35 0 0 1 4.7 0V6.1"
           stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"
-          ></path>
-        </svg>
-        {$_("userSkills.badges.webSearch")}
-      </span>
-    {/if}
-    {#if toolCount > 0}
-      <span class="badge"
-        >{$_("userSkills.badges.tools", { values: { count: toolCount } })}</span
-      >
-    {/if}
-  </div>
-
-  <div class="skill-card__actions">
-    {#if skill.is_builtin}
-      <span class="skill-card__locked">
-        <svg
-          width="13"
-          height="13"
-          viewBox="0 0 24 24"
+          stroke-width="1.1"
           fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <rect x="4" y="11" width="16" height="10" rx="2"></rect><path
-            d="M8 11V7a4 4 0 0 1 8 0v4"
-          ></path>
-        </svg>
-        {$_("userSkills.card.managedByPlatform")}
-      </span>
+        />
+      </svg>
+      <span>{$_("userSkills.card.managedByPlatform")}</span>
     {:else}
-      <button class="link-btn" onclick={() => onedit?.(skill)}>
+      <button class="footer-btn" type="button" onclick={() => onedit?.(skill)}>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+          <path
+            d="M8.5 1.5 11 4 4 11H1.5V8.5z"
+            stroke="currentColor"
+            stroke-width="1.1"
+            fill="none"
+            stroke-linejoin="round"
+          />
+        </svg>
         {$_("userSkills.card.edit")}
       </button>
       <button
-        class="link-btn link-btn--danger"
+        class="footer-btn footer-btn--danger"
+        type="button"
         onclick={() => ondelete?.(skill)}
       >
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+          <path
+            d="M2.5 3.5h8M5 3.5V2h3v1.5M3.5 3.5 4 11h5l.5-7.5"
+            stroke="currentColor"
+            stroke-width="1.1"
+            fill="none"
+          />
+        </svg>
         {$_("userSkills.card.delete")}
       </button>
     {/if}
@@ -177,212 +168,241 @@ SPDX-License-Identifier: Apache-2.0
 </article>
 
 <style>
-  .skill-card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-    padding: var(--space-lg);
-    background: rgba(var(--glass-tint), 0.04);
-    border: 1px solid var(--gx-category);
-    border-radius: var(--radius-lg);
-    transition:
-      border-color 0.2s ease,
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
+  /* ===== ".skill-card" from user-settings.html. Colours come from the --us-*
+     block UserSettings.svelte declares on ".us-page". ===== */
+
+  /* app.css paints every bare <button> as a glass pill; the two controls here
+     are flat. Scoped to this component so its class rules out-rank the reset. */
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
-  .skill-card:hover {
-    border-color: rgba(255, 255, 255, 0.16);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  button:focus-visible {
+    outline: 2px solid var(--us-cta);
+    outline-offset: 2px;
+  }
+
+  .skill-card {
+    /* 450px in the mockup; shrinks rather than overflowing a narrow panel. */
+    width: 450px;
+    max-width: 100%;
+    border-radius: 12px;
+    background: var(--us-surface);
+    box-shadow:
+      inset 0 0 0 1px var(--us-border),
+      var(--us-card-shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .skill-card--inactive {
     opacity: 0.62;
   }
 
-  .skill-card__top {
+  .skill-card-top {
     display: flex;
-    align-items: flex-start;
-    gap: var(--space-md);
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    flex-grow: 1;
   }
 
-  .skill-card__avatar {
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
+  .skill-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .skill-icon-block {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .emoji-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    background: var(--us-mint);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.35rem;
+    font-size: 18px;
     line-height: 1;
-    border-radius: var(--radius-md);
-    background: rgba(99, 102, 241, 0.14);
-    color: #a5b4fc;
-    border: 1px solid rgba(99, 102, 241, 0.22);
+    color: var(--us-mint-fg);
+    flex-shrink: 0;
   }
 
-  .skill-card__avatar--builtin {
-    background: rgba(16, 185, 129, 0.14);
-    color: #6ee7b7;
-    border-color: rgba(16, 185, 129, 0.22);
+  .emoji-circle svg {
+    display: block;
   }
 
-  .skill-card__heading {
-    flex: 1;
-    min-width: 0;
+  .skill-title-group {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
   }
 
-  .skill-card__name {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text-primary);
+  .skill-name {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--us-title);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .skill-card__id {
-    align-self: flex-start;
-    width: fit-content;
-    max-width: 100%;
+  .skill-slug {
+    font-family: var(--us-mono);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.3;
+    color: var(--us-muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.7rem;
-    font-family: "SF Mono", "Fira Code", monospace;
-    color: var(--text-secondary);
-    /* Override the global `code` chrome (bg / shadow / large padding) */
-    background: rgba(var(--glass-tint), 0.06);
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    padding: 1px 6px;
-    border-radius: 5px;
   }
 
-  .skill-card__desc {
-    margin: 0;
-    font-size: 0.8125rem;
-    line-height: 1.55;
-    color: var(--text-secondary);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    min-height: 2.5em;
-  }
-
-  .skill-card__badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2xs);
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px var(--space-sm);
-    border-radius: var(--radius-full);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--text-secondary);
-    background: rgba(var(--glass-tint), 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .badge--builtin {
-    color: #6ee7b7;
-    background: rgba(16, 185, 129, 0.14);
-    border-color: rgba(16, 185, 129, 0.24);
-  }
-
-  .badge--artifacts {
-    color: #c4b5fd;
-    background: rgba(139, 92, 246, 0.16);
-    border-color: rgba(139, 92, 246, 0.28);
-  }
-
-  .skill-card__actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    margin-top: auto;
-    padding-top: var(--space-xs);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  .skill-card__locked {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2xs);
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    opacity: 0.8;
-  }
-
-  .link-btn {
-    padding: 0;
-    background: none;
-    border: none;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--brand, #4079c5);
-    cursor: pointer;
-    transition: opacity 0.15s ease;
-  }
-
-  .link-btn:hover {
-    opacity: 0.75;
-  }
-
-  .link-btn--danger {
-    color: #f87171;
-  }
-
-  /* Switch */
-  .switch {
-    flex-shrink: 0;
-    position: relative;
-    width: 38px;
+  /* ---------------- ".toggle-pill" ---------------- */
+  .toggle-pill {
+    width: 40px;
     height: 22px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-full);
-    background: rgba(255, 255, 255, 0.16);
-    cursor: pointer;
-    transition: background 0.2s ease;
+    border-radius: 11px;
+    background: var(--us-cta);
+    display: flex;
+    padding: 2px;
+    justify-content: flex-end;
+    align-items: center;
+    flex-shrink: 0;
+    transition:
+      background-color 140ms ease,
+      justify-content 140ms ease;
   }
 
-  .switch--on {
-    background: var(--brand, #4079c5);
+  .toggle-pill--off {
+    background: var(--gx-org-toggle-off);
+    justify-content: flex-start;
   }
 
-  .switch:disabled {
-    opacity: 0.5;
+  .toggle-pill:disabled {
+    opacity: 0.6;
     cursor: not-allowed;
   }
 
-  .switch__thumb {
-    position: absolute;
-    top: 2px;
-    left: 2px;
+  .toggle-knob {
     width: 18px;
     height: 18px;
     border-radius: 50%;
     background: #fff;
-    transition: transform 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--us-card-shadow);
   }
 
-  .switch--on .switch__thumb {
-    transform: translateX(16px);
+  .skill-desc {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--us-body);
+  }
+
+  /* ---------------- ".builtin-tag" ---------------- */
+  .skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .skill-tag {
+    border-radius: 6px;
+    background: var(--us-track);
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: var(--us-body);
+    text-transform: uppercase;
+    width: fit-content;
+  }
+
+  .skill-tag--builtin {
+    background: var(--us-mint);
+    color: var(--us-mint-fg);
+  }
+
+  /* ---------------- ".skill-card-footer" ---------------- */
+  .skill-card-footer {
+    background: var(--us-field-bg);
+    border-top: 1px solid var(--us-border);
+    display: flex;
+    gap: 6px;
+    padding: 12px 20px;
+    align-items: center;
+  }
+
+  .skill-card-footer > svg {
+    display: block;
+    color: var(--us-muted);
+    flex-shrink: 0;
+  }
+
+  .skill-card-footer > span {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--us-muted);
+  }
+
+  .footer-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--us-accent);
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .footer-btn:hover {
+    background: var(--us-tint);
+  }
+
+  .footer-btn svg {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .footer-btn--danger {
+    color: var(--us-danger);
+  }
+
+  .footer-btn--danger:hover {
+    background: var(--us-danger-bg);
   }
 </style>

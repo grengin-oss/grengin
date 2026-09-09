@@ -75,6 +75,8 @@ const ALLOWED_IDENTICAL_VALUES = new Set([
   "chat.example.com",
   // Unavoidable cognate: "Architecture" is identical in EN + FR.
   "Architecture",
+  // Unavoidable cognate: "Variables" is identical in EN + ES.
+  "Variables:",
 ]);
 
 /** Check whether a value is expected to be identical across all locales. */

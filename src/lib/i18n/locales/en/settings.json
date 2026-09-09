@@ -164,7 +164,8 @@
       "title": "Available Variables",
       "empty": "No variables available",
       "insertHint": "Click a variable to insert it into the editor",
-      "copied": "Variable inserted"
+      "copied": "Variable inserted",
+      "label": "Variables:"
     },
     "editor": {
       "title": "Custom Prompt Editor",
@@ -173,7 +174,10 @@
       "preview": "Preview",
       "edit": "Edit",
       "previewTitle": "Prompt Preview",
-      "previewEmpty": "Nothing to preview. Start writing your custom prompt above."
+      "previewEmpty": "Nothing to preview. Start writing your custom prompt above.",
+      "description": "Configure the baseline instructions injected into the system prompt for every session. You can reference specific variables using brackets.",
+      "hint": "Custom instructions only apply to your workspace sessions.",
+      "charCountMax": "{count} / {max} characters"
     },
     "actions": {
       "save": "Save Prompt",
@@ -202,7 +206,9 @@
       "submitting": "Submitting...",
       "submitted": "Thank you for your feedback!",
       "failedToSubmit": "Failed to submit feedback",
-      "ratingRequired": "Please select a rating before submitting"
+      "ratingRequired": "Please select a rating before submitting",
+      "accurate": "Accurate",
+      "needsTuning": "Needs Tuning"
     }
   },
   "userIntegrations": {
@@ -261,6 +267,7 @@
       "modalTitle": "{name} — Tools",
       "loading": "Loading tools...",
       "empty": "No tools available for this server."
-    }
+    },
+    "searchPlaceholder": "Filter integrations..."
   }
 }

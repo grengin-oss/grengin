@@ -861,8 +861,7 @@ SPDX-License-Identifier: Apache-2.0
 
   .table-header {
     min-height: 41px;
-    background: var(--gx-an-input-bg);
-    border: 1px solid var(--gx-an-ring);
+    background: var(--gx-module-bg);
     display: flex;
     padding: 12px 16px;
     align-items: center;

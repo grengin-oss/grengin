@@ -913,7 +913,8 @@
         "members": "Miembros",
         "promptsUsed": "Indicaciones Usadas",
         "totalUsage": "Uso Total",
-        "adoptionRate": "Tasa de Adopción"
+        "adoptionRate": "Tasa de Adopción",
+        "prompt": "Indicación"
       },
       "abTest": {
         "title": "Comparación de Prueba A/B",
@@ -923,11 +924,44 @@
         "selectPrompt": "Seleccione una indicación...",
         "selectBoth": "Seleccione ambas variantes para comparar",
         "leadsBy": "lidera por",
-        "tied": "Ambas variantes están empatadas"
+        "tied": "Ambas variantes están empatadas",
+        "emptyTitle": "Selecciona dos indicaciones para comparar",
+        "emptyMessage": "Elige las variantes arriba para ver las métricas de uso y valoración en paralelo."
       },
       "toast": {
         "failedToLoad": "Error al cargar métricas de indicaciones"
-      }
+      },
+      "groupPrompts": "Indicaciones",
+      "groupRoles": "Funciones",
+      "countPrompts": "{count} indicaciones",
+      "countRoles": "{count} funciones",
+      "countDepartments": "{count} departamentos",
+      "layout": "Diseño",
+      "viewGrid": "Cuadrícula",
+      "viewList": "Lista",
+      "sortBy": "Ordenar por",
+      "sortMostUsed": "Más usadas",
+      "sortHighestRated": "Mejor valoradas",
+      "sortMostFeedback": "Más comentarios",
+      "searchPrompts": "Buscar indicaciones…",
+      "searchRoles": "Buscar roles…",
+      "searchDepartments": "Buscar departamentos…",
+      "showingPrompts": "Mostrando {shown} de {total} indicaciones",
+      "showingRoles": "Mostrando {shown} de {total} roles",
+      "showingDepartments": "Mostrando {shown} de {total} departamentos",
+      "footerPrompts": "{count} indicaciones · {usage} solicitudes en total",
+      "footerRoles": "{count} roles · {usage} solicitudes en total",
+      "footerDepartments": "{count} departamentos · {usage} solicitudes en total",
+      "prev": "Anterior",
+      "next": "Siguiente",
+      "noDataBadge": "Sin datos",
+      "bannerNoFeedback": "Aún no se han enviado comentarios positivos o negativos en este periodo: el uso se sigue registrando.",
+      "bannerFeedback": "{count} comentarios recopilados: {rate} positivos en {prompts} indicaciones.",
+      "bannerZeroAdoption": "Información: {departments} tiene una tasa de adopción del 0% porque actualmente no hay miembros asignados para medir el uso.",
+      "leastEffectiveEmptyMessage": "Las valoraciones aparecerán aquí cuando las indicaciones empiecen a recibir comentarios negativos.",
+      "mostEffectiveEmptyMessage": "Las valoraciones aparecerán aquí cuando las indicaciones empiecen a recibir comentarios positivos.",
+      "noResults": "Sin resultados coincidentes",
+      "noResultsMessage": "Prueba otro término de búsqueda o borra los filtros de arriba."
     },
     "departmentPrompts": {
       "title": "Indicaciones del Departamento",

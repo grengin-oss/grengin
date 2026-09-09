@@ -913,7 +913,8 @@
         "members": "멤버",
         "promptsUsed": "사용된 프롬프트",
         "totalUsage": "총 사용 횟수",
-        "adoptionRate": "채택률"
+        "adoptionRate": "채택률",
+        "prompt": "프롬프트"
       },
       "abTest": {
         "title": "A/B 테스트 비교",
@@ -923,11 +924,44 @@
         "selectPrompt": "프롬프트 선택...",
         "selectBoth": "비교하려면 두 변형을 모두 선택하세요",
         "leadsBy": "앞서는 차이",
-        "tied": "두 변형이 동점입니다"
+        "tied": "두 변형이 동점입니다",
+        "emptyTitle": "비교할 프롬프트 2개를 선택하세요",
+        "emptyMessage": "위에서 변형을 선택하면 사용량과 평가 지표를 나란히 비교할 수 있습니다."
       },
       "toast": {
         "failedToLoad": "프롬프트 지표 로딩 실패"
-      }
+      },
+      "groupPrompts": "프롬프트",
+      "groupRoles": "역할",
+      "countPrompts": "프롬프트 {count}개",
+      "countRoles": "역할 {count}개",
+      "countDepartments": "부서 {count}개",
+      "layout": "레이아웃",
+      "viewGrid": "그리드",
+      "viewList": "목록",
+      "sortBy": "정렬 기준",
+      "sortMostUsed": "사용량순",
+      "sortHighestRated": "평가순",
+      "sortMostFeedback": "피드백순",
+      "searchPrompts": "프롬프트 검색…",
+      "searchRoles": "역할 검색…",
+      "searchDepartments": "부서 검색…",
+      "showingPrompts": "프롬프트 {total}개 중 {shown}개 표시",
+      "showingRoles": "역할 {total}개 중 {shown}개 표시",
+      "showingDepartments": "부서 {total}개 중 {shown}개 표시",
+      "footerPrompts": "프롬프트 {count}개 · 총 {usage}건 요청",
+      "footerRoles": "역할 {count}개 · 총 {usage}건 요청",
+      "footerDepartments": "부서 {count}개 · 총 {usage}건 요청",
+      "prev": "이전",
+      "next": "다음",
+      "noDataBadge": "데이터 없음",
+      "bannerNoFeedback": "이 기간에는 아직 좋아요/싫어요 피드백이 제출되지 않았습니다 — 사용량은 계속 집계되고 있습니다.",
+      "bannerFeedback": "피드백 {count}건 수집 — 프롬프트 {prompts}개 전체 긍정 비율 {rate}.",
+      "bannerZeroAdoption": "안내: {departments}에는 현재 사용량을 집계할 배정 구성원이 없어 채택률이 0%입니다.",
+      "leastEffectiveEmptyMessage": "프롬프트가 부정적 피드백을 받기 시작하면 여기에 평가가 표시됩니다.",
+      "mostEffectiveEmptyMessage": "프롬프트가 긍정적 피드백을 받기 시작하면 여기에 평가가 표시됩니다.",
+      "noResults": "일치하는 결과 없음",
+      "noResultsMessage": "다른 검색어를 사용하거나 위의 필터를 지우세요."
     },
     "departmentPrompts": {
       "title": "부서 프롬프트",
