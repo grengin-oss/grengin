@@ -107,6 +107,18 @@ SPDX-License-Identifier: Apache-2.0
     servers.filter((server) => server.status === "connected").length,
   );
 
+  /**
+   * The Connect pill shows on connectable rows only, but its slot is reserved
+   * on every row of a table that has one — otherwise the wider action cell
+   * would eat into the name column and knock that row's columns out of line.
+   */
+  const hasConnectableServer = $derived(
+    filteredServers.some(
+      (server) =>
+        server.status === "disconnected" && hasOauthConnectionConfig(server),
+    ),
+  );
+
   /** ".server-count" — "3 servers · 2 connected". */
   const countLabel = $derived(
     $_(
@@ -1119,7 +1131,7 @@ SPDX-License-Identifier: Apache-2.0
       </div>
     {:else if viewMode === "list"}
       <!-- ===== ".list-card" ===== -->
-      <div class="list-card">
+      <div class="list-card" class:list-card--connectable={hasConnectableServer}>
         <div class="list-head">
           <span class="col-name">{$_("admin.mcpServers.columns.name")}</span>
           <span class="col-transport">{$_("admin.mcpServers.columns.transport")}</span>
@@ -1937,12 +1949,31 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-an-sub);
   }
 
+  /* Five 28px icon buttons and their four 6px gaps. Fixed, not growing: a
+     growing cell would be as wide as its own row's content, so the header and
+     any row carrying a Connect pill would sit on different column edges. */
   .col-actions {
-    flex-grow: 1;
+    flex: 0 0 164px;
     display: flex;
     gap: 6px;
     justify-content: flex-end;
     align-items: center;
+  }
+
+  /* Room for the pill on every row of a table where some server can connect. */
+  .list-card--connectable .col-actions {
+    flex-basis: 280px;
+  }
+
+  /* A longer translation of "Connect" narrows the pill rather than the row. */
+  .col-actions .connect-pill {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .col-actions .connect-pill span {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .list-head .col-actions {
@@ -2968,9 +2999,10 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   /* ---------------- narrow viewports ---------------- */
-  @media (max-width: 1100px) {
-    /* The seven-column row cannot hold its widths below this, so each row
-       becomes a stack: name and description, then the metadata, then actions. */
+  @media (max-width: 1280px) {
+    /* The seven-column row cannot hold its widths below this — the name column
+       is the only elastic one and it collapses — so each row becomes a stack:
+       name and description, then the metadata, then actions. */
     .list-head {
       display: none;
     }
@@ -2992,7 +3024,8 @@ SPDX-License-Identifier: Apache-2.0
       width: auto;
     }
 
-    .col-actions {
+    .col-actions,
+    .list-card--connectable .col-actions {
       flex-basis: 100%;
       justify-content: flex-start;
     }
