@@ -3638,7 +3638,7 @@ SPDX-License-Identifier: Apache-2.0
     justify-content: center;
     border-radius: 8px;
     background: var(--gx-tx-file-icon-bg);
-    color: var(--gx-tx-file-icon-fg);
+    color: var(--gx-danger);
     flex-shrink: 0;
   }
 
@@ -3666,7 +3666,7 @@ SPDX-License-Identifier: Apache-2.0
     font-family: var(--gx-font);
     font-size: 11px;
     line-height: 14px;
-    color: var(--gx-tx-file-size);
+    color: var(--gx-org-slate-350);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -3698,7 +3698,7 @@ SPDX-License-Identifier: Apache-2.0
     height: 20px;
     border-radius: 10px;
     background: transparent;
-    color: var(--gx-tx-file-size);
+    color: var(--gx-org-slate-350);
   }
 
   .pending-attachment__remove--inline:hover {

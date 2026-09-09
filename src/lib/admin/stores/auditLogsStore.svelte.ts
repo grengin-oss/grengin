@@ -103,6 +103,13 @@ function createAuditLogsStore() {
       return fetchLogs();
     },
 
+    /** ".rows-select" in the table footer. */
+    async setLimit(newLimit: number) {
+      limit = newLimit;
+      page = 1;
+      return fetchLogs();
+    },
+
     getFilterParams(): GetAuditLogsParams {
       const params: GetAuditLogsParams = {};
       if (filters.userId) params.userId = filters.userId;

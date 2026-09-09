@@ -146,3 +146,58 @@ export function formatRelativeDay(
   const time = formatDate(dateObj, { hour: 'numeric', minute: '2-digit' }, fallback);
   return `${relative}, ${time}`;
 }
+
+/**
+ * Short "time ago" stamp for a row that is already dated by its group header,
+ * as drawn under every timestamp in audit-logs.html ("12 min ago",
+ * "2 hours ago"). Wording comes from Intl.RelativeTimeFormat, so no i18n keys
+ * are needed.
+ */
+export function formatRelativeTime(
+  date: Date | string | null | undefined,
+  fallback: string = ''
+): string {
+  if (!date || (typeof date === 'string' && !date.trim())) {
+    return fallback;
+  }
+
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isEpochOrInvalid(dateObj)) {
+    return fallback;
+  }
+
+  const seconds = Math.round((dateObj.getTime() - Date.now()) / 1000);
+  const magnitude = Math.abs(seconds);
+
+  // Largest unit that still yields a whole number the reader can hold onto.
+  const units: [Intl.RelativeTimeFormatUnit, number][] = [
+    ['year', 31536000],
+    ['month', 2592000],
+    ['day', 86400],
+    ['hour', 3600],
+    ['minute', 60],
+  ];
+
+  let unit: Intl.RelativeTimeFormatUnit = 'second';
+  let value = seconds;
+  for (const [candidate, size] of units) {
+    if (magnitude >= size) {
+      unit = candidate;
+      value = Math.round(seconds / size);
+      break;
+    }
+  }
+
+  const currentLocale = getCurrentLocale();
+  try {
+    return new Intl.RelativeTimeFormat(currentLocale, {
+      numeric: 'auto',
+      style: 'short',
+    }).format(value, unit);
+  } catch {
+    return new Intl.RelativeTimeFormat(undefined, {
+      numeric: 'auto',
+      style: 'short',
+    }).format(value, unit);
+  }
+}

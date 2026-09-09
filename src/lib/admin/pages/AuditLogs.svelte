@@ -6,23 +6,27 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
   import { onMount } from "svelte";
   import { auditLogsStore } from "../stores/index.js";
-  import AdminTableCard from "../components/AdminTableCard.svelte";
-  import PageHeader from "../components/PageHeader.svelte";
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
   import AdminEmptyState from "../components/AdminEmptyState.svelte";
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
   import { _ } from "svelte-i18n";
-  import { formatDate, formatNumber } from "../../utils/format.js";
+  import {
+    formatDate,
+    formatNumber,
+    formatRelativeTime,
+  } from "../../utils/format.js";
   import { exportAuditLogs } from "../../api/admin/auditLogs.js";
   import { setPageTitle } from "../../utils/pageTitle";
 
   $effect(() => {
     setPageTitle($_("admin.auditLogs.title"));
   });
+  import type { AuditLog } from "../types.js";
 
-  let filtersOpen = $state(false);
+  const ROWS_PER_PAGE_OPTIONS = [20, 50, 100];
+
   let searchQuery = $state("");
   let filterAction = $state("");
   let filterStartDate = $state("");
@@ -30,15 +34,19 @@ SPDX-License-Identifier: Apache-2.0
   let debounceTimeout: number | null = null;
   let isExporting = $state(false);
   let expandedRowId = $state<string | null>(null);
-  let detailTabs = $state<Record<string, 'json' | 'visualized'>>({});
-  let activeDetailTab = $state<Record<string, 'json' | 'visualized'>>({});
+  let activeDetailTab = $state<Record<string, "json" | "visualized">>({});
   let expandedDetails = $state<Record<string, boolean>>({});
-
-
+  /** Which ".copyable-box" last confirmed a copy, so it can flash a check. */
+  let copiedKey = $state<string | null>(null);
+  let copiedTimeout: number | null = null;
 
   onMount(() => {
     auditLogsStore.fetchLogs();
     auditLogsStore.fetchActionTypes();
+    return () => {
+      if (debounceTimeout) clearTimeout(debounceTimeout);
+      if (copiedTimeout) clearTimeout(copiedTimeout);
+    };
   });
 
   // Handle errors with toast
@@ -58,7 +66,11 @@ SPDX-License-Identifier: Apache-2.0
     if (auditLogsStore.actionTypesError) {
       const errorMessage =
         auditLogsStore.actionTypesError instanceof ApiError
-          ? getLocalizedError(auditLogsStore.actionTypesError, "description", $_)
+          ? getLocalizedError(
+              auditLogsStore.actionTypesError,
+              "description",
+              $_,
+            )
           : auditLogsStore.actionTypesError.message;
       toast.error(errorMessage || $_("admin.auditLogs.failedToLoad"));
       auditLogsStore.clearActionTypesError();
@@ -94,14 +106,67 @@ SPDX-License-Identifier: Apache-2.0
     });
   }
 
+  function refresh() {
+    auditLogsStore.fetchLogs();
+    auditLogsStore.fetchActionTypes();
+  }
+
   function handlePageChange(page: number) {
     auditLogsStore.setPage(page);
   }
 
+  function handleLimitChange(event: Event) {
+    const value = Number((event.currentTarget as HTMLSelectElement).value);
+    if (Number.isFinite(value) && value > 0) auditLogsStore.setLimit(value);
+  }
+
   function toggleRowDetails(id: string) {
     expandedRowId = expandedRowId === id ? null : id;
-    if (expandedRowId === id) {
-      initializeDetailTabs(id);
+    if (expandedRowId === id && !activeDetailTab[id]) {
+      activeDetailTab[id] = "visualized";
+    }
+  }
+
+  /** The design draws the user id as a link; here it narrows the view to them. */
+  function filterByUser(userId: string) {
+    if (!userId) return;
+    searchQuery = userId;
+    if (debounceTimeout) clearTimeout(debounceTimeout);
+    applyFilters();
+  }
+
+  /** Falls back to execCommand where the async clipboard is unavailable. */
+  async function writeClipboard(value: string): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      // Ignore and try the legacy path below.
+    }
+
+    try {
+      const scratch = document.createElement("textarea");
+      scratch.value = value;
+      scratch.setAttribute("readonly", "");
+      scratch.style.position = "fixed";
+      scratch.style.opacity = "0";
+      document.body.appendChild(scratch);
+      scratch.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(scratch);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async function copyValue(key: string, value: string) {
+    if (await writeClipboard(value)) {
+      copiedKey = key;
+      if (copiedTimeout) clearTimeout(copiedTimeout);
+      copiedTimeout = setTimeout(() => (copiedKey = null), 1500);
+    } else {
+      toast.error($_("admin.auditLogs.copyFailed"));
     }
   }
 
@@ -131,26 +196,25 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
-  function getLocalizedAction(action: string, translate: (key: string, options?: { values?: Record<string, string> }) => string = $_): string {
-    if (!action) return '';
-    
+  function getLocalizedAction(
+    action: string,
+    translate: (
+      key: string,
+      options?: { values?: Record<string, string> },
+    ) => string = $_,
+  ): string {
+    if (!action) return "";
+
     const key = `admin.auditLogs.actions.${action}`;
-    
+
     // Get translated text with parameter substitution (same pattern as getLocalizedError)
     const translated = translate(key, { values: {} });
-    
+
     // If translation returns the key itself (not found), return the original action
     return translated === key ? action : translated;
   }
 
-  function initializeDetailTabs(logId: string) {
-    if (!detailTabs[logId]) {
-      detailTabs[logId] = 'visualized';
-      activeDetailTab[logId] = 'visualized';
-    }
-  }
-
-  function setDetailTab(logId: string, tab: 'json' | 'visualized') {
+  function setDetailTab(logId: string, tab: "json" | "visualized") {
     activeDetailTab[logId] = tab;
   }
 
@@ -160,210 +224,368 @@ SPDX-License-Identifier: Apache-2.0
 
   function formatKey(key: string): string {
     return key
-      .replace(/([A-Z])/g, ' $1')
+      .replace(/([A-Z])/g, " $1")
       .replace(/^./, (str) => str.toUpperCase())
-      .replace(/_/g, ' ')
+      .replace(/_/g, " ")
       .trim();
   }
 
-  function getDataType(value: any): string {
-    if (Array.isArray(value)) return 'array';
-    if (value === null) return 'null';
-    return typeof value;
-  }
-
-  function renderDetailValue(value: any): string {
-    if (value === null) return 'null';
-    if (Array.isArray(value)) return `[${value.length} items]`;
-    if (typeof value === 'object') return `${Object.keys(value).length} properties`;
-    if (typeof value === 'string') {
-      return value.length > 100 ? `${value.substring(0, 100)}...` : value;
-    }
-    return String(value);
-  }
-
+  /**
+   * ".action-badge" — the design draws two treatments, a blue one and a violet
+   * one. Destructive events keep the third, red, treatment the old table had:
+   * a deletion is the one row an auditor must be able to spot at a glance.
+   */
   function getActionBadgeClass(action: string): string {
-    if (action.includes("created") || action.includes("assigned")) return "badge-create";
-    if (action.includes("deleted") || action.includes("removed") || action.includes("disconnected") || action.includes("redacted"))
-      return "badge-delete";
-    if (action.includes("updated") || action.includes("status") || action.includes("moved") || action.includes("synced") || action.includes("rotated"))
-      return "badge-update";
-    if (action === "login" || action.includes("authorized")) return "badge-assign";
-    if (action.includes("sent") || action.includes("uploaded") || action.includes("submitted"))
-      return "badge-info";
-    return "badge-default";
+    if (
+      action.includes("deleted") ||
+      action.includes("removed") ||
+      action.includes("disconnected") ||
+      action.includes("redacted")
+    ) {
+      return "action-badge--red";
+    }
+    return action.startsWith("admin_")
+      ? "action-badge--purple"
+      : "action-badge--blue";
+  }
+
+  /** Conversation traffic gets the design's bubble glyph, records its page glyph. */
+  function isMessageAction(action: string): boolean {
+    return (
+      action.includes("message") ||
+      action.includes("conversation") ||
+      action.includes("prompt")
+    );
+  }
+
+  /** Short form the design prints in the table; the full value sits in the drawer. */
+  function shortId(value: string | null | undefined): string {
+    return value ? value.slice(0, 8) : "—";
+  }
+
+  function startOfDay(value: Date): number {
+    const day = new Date(value);
+    day.setHours(0, 0, 0, 0);
+    return day.getTime();
+  }
+
+  /** "TODAY · AUG 18, 2026" — relative word only for today and yesterday. */
+  function dayLabel(iso: string): string {
+    const date = new Date(iso);
+    const stamp = formatDate(
+      date,
+      { year: "numeric", month: "short", day: "numeric" },
+      "—",
+    );
+    const delta = Math.round(
+      (startOfDay(date) - startOfDay(new Date())) / 86400000,
+    );
+    if (delta === 0) return `${$_("admin.auditLogs.today")} · ${stamp}`;
+    if (delta === -1) return `${$_("admin.auditLogs.yesterday")} · ${stamp}`;
+    return stamp;
+  }
+
+  /** ".day-group-header" — one band per calendar day, in the order served. */
+  const dayGroups = $derived.by(() => {
+    const groups: { key: number; label: string; logs: AuditLog[] }[] = [];
+    for (const log of auditLogsStore.items) {
+      const key = startOfDay(new Date(log.createdAt));
+      const last = groups[groups.length - 1];
+      if (last && last.key === key) last.logs.push(log);
+      else groups.push({ key, label: dayLabel(log.createdAt), logs: [log] });
+    }
+    return groups;
+  });
+
+  /** The design prints an email under the user id; audit payloads carry one. */
+  function detailEmail(log: AuditLog): string | null {
+    const details = log.details as Record<string, any> | null;
+    if (!details || typeof details !== "object") return null;
+    const candidate =
+      details.email ?? details.after?.email ?? details.before?.email;
+    return typeof candidate === "string" && candidate ? candidate : null;
   }
 
   const currentPage = $derived(auditLogsStore.page);
   const totalPages = $derived(
-    Math.ceil(auditLogsStore.total / auditLogsStore.limit),
+    Math.max(1, Math.ceil(auditLogsStore.total / auditLogsStore.limit)),
   );
 </script>
 
-<div class="audit-logs-container">
-  <PageHeader
-    title={$_("admin.auditLogs.title")}
-    subtitle={$_("admin.auditLogs.subtitle")}
+{#snippet copyableBox(key: string, value: string)}
+  <button
+    type="button"
+    class="copyable-box"
+    onclick={() => copyValue(key, value)}
+    title={value}
+    aria-label={$_("admin.auditLogs.copyValue", { values: { value } })}
   >
-    {#snippet children()}
-      <div class="export-buttons">
-        <button
-          type="button"
-          class="btn-export"
-          onclick={() => handleExport("csv")}
-          disabled={isExporting || auditLogsStore.items.length === 0}
-          aria-label={$_("admin.auditLogs.exportCsv")}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          {$_("admin.auditLogs.exportCsv")}
-        </button>
-        <button
-          type="button"
-          class="btn-export"
-          onclick={() => handleExport("json")}
-          disabled={isExporting || auditLogsStore.items.length === 0}
-          aria-label={$_("admin.auditLogs.exportJson")}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          {$_("admin.auditLogs.exportJson")}
-        </button>
-      </div>
-    {/snippet}
-  </PageHeader>
-
-  <!-- Filters -->
-  <div class="filters-section" aria-label={$_("admin.auditLogs.filters")}>
-    <button
-      class="filter-toggle-btn"
-      class:open={filtersOpen}
-      onclick={() => (filtersOpen = !filtersOpen)}
-      aria-label={filtersOpen
-        ? $_("admin.auditLogs.closeFilters")
-        : $_("admin.auditLogs.openFilters")}
-      aria-expanded={filtersOpen}
-      aria-controls="filters-grid"
-    >
-      {#if filtersOpen}
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <path
-            d="M10 6l-5 5M10 6l5 5"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      {:else}
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <path
-            d="M2.5 5h15M5 10h10M7.5 15h5"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-          />
-          <circle cx="15" cy="5" r="2" fill="currentColor" />
-          <circle cx="10" cy="10" r="2" fill="currentColor" />
-          <circle cx="5" cy="15" r="2" fill="currentColor" />
-        </svg>
-        {$_("admin.auditLogs.filters")}
-      {/if}
-    </button>
-    <div class="filters-grid" class:open={filtersOpen} id="filters-grid">
-      <div class="filter-group">
-        <label for="user-search" class="filter-label">{$_("admin.auditLogs.searchByUserId")}</label>
-        <input
-          id="user-search"
-          type="text"
-          placeholder={$_("admin.auditLogs.searchByUserId")}
-          bind:value={searchQuery}
-          oninput={applyFiltersDebounced}
-          class="filter-input"
-          aria-label={$_("admin.auditLogs.searchByUserId")}
+    <span>{value}</span>
+    {#if copiedKey === key}
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M2.5 6.3 5 8.8l4.5-5.6"
+          stroke="currentColor"
+          stroke-width="1.3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         />
-      </div>
-      <div class="filter-group">
-        <label for="action-filter" class="filter-label">{$_("admin.auditLogs.filterByAction")}</label>
-        <select
-          id="action-filter"
-          bind:value={filterAction}
-          class="filter-select"
-          onchange={applyFilters}
-          aria-label={$_("admin.auditLogs.filterByAction")}
+      </svg>
+    {:else}
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        aria-hidden="true"
+      >
+        <circle
+          cx="9.5"
+          cy="2.5"
+          r="1.5"
+          stroke="currentColor"
+          stroke-width="1"
+        />
+        <circle
+          cx="2.5"
+          cy="6"
+          r="1.5"
+          stroke="currentColor"
+          stroke-width="1"
+        />
+        <circle
+          cx="9.5"
+          cy="9.5"
+          r="1.5"
+          stroke="currentColor"
+          stroke-width="1"
+        />
+        <path
+          d="M3.9 5.3 8.1 3.2M3.9 6.7l4.2 2.1"
+          stroke="currentColor"
+          stroke-width="1"
+        />
+      </svg>
+    {/if}
+  </button>
+{/snippet}
+
+<div class="audit-logs-container">
+  <!-- ".page-header" -->
+  <div class="page-header">
+    <div class="header-text">
+      <span class="page-title">{$_("admin.auditLogs.title")}</span>
+      <span class="page-sub">{$_("admin.auditLogs.subtitle")}</span>
+    </div>
+    <div class="header-actions">
+      <button
+        type="button"
+        class="refresh-btn"
+        onclick={() => handleExport("csv")}
+        disabled={isExporting || auditLogsStore.items.length === 0}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          aria-hidden="true"
         >
-          <option value="">{$_("admin.auditLogs.allActions")}</option>
-          {#each auditLogsStore.actionTypes as action}
-            <option value={action}>{getLocalizedAction(action)}</option>
-          {/each}
-        </select>
-      </div>
-      <div class="date-filter-group">
-        <div class="date-input-wrapper">
-          <label for="start-date" class="filter-label">{$_("admin.auditLogs.startDate")}</label>
+          <path
+            d="M7 1.6v7.2M4.2 6l2.8 2.8L9.8 6M2 10v1.4a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V10"
+            stroke="currentColor"
+            stroke-width="1.3"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span>{$_("admin.auditLogs.exportCsv")}</span>
+      </button>
+      <button
+        type="button"
+        class="refresh-btn"
+        onclick={() => handleExport("json")}
+        disabled={isExporting || auditLogsStore.items.length === 0}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M7 1.6v7.2M4.2 6l2.8 2.8L9.8 6M2 10v1.4a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V10"
+            stroke="currentColor"
+            stroke-width="1.3"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span>{$_("admin.auditLogs.exportJson")}</span>
+      </button>
+      <button
+        type="button"
+        class="refresh-btn"
+        onclick={refresh}
+        disabled={auditLogsStore.isLoading}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M12.3 7A5.3 5.3 0 0 1 2.9 9.6M1.7 7A5.3 5.3 0 0 1 11.1 4.4M1.7 1.7v3h3M12.3 12.3v-3h-3"
+            stroke="currentColor"
+            stroke-width="1.3"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span>{$_("admin.auditLogs.refresh")}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ".filter-card" -->
+  <div class="filter-card">
+    <div class="filter-grid">
+      <div class="filter-col">
+        <label class="filter-label" for="audit-search"
+          >{$_("admin.auditLogs.searchEvent")}</label
+        >
+        <div class="filter-input">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              cx="7"
+              cy="7"
+              r="5.25"
+              stroke="currentColor"
+              stroke-width="1.3"
+            />
+            <path
+              d="m11 11 3 3"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linecap="round"
+            />
+          </svg>
           <input
-            id="start-date"
+            id="audit-search"
+            type="text"
+            placeholder={$_("admin.auditLogs.searchPlaceholder")}
+            bind:value={searchQuery}
+            oninput={applyFiltersDebounced}
+          />
+        </div>
+      </div>
+      <div class="filter-col">
+        <label class="filter-label" for="audit-action"
+          >{$_("admin.auditLogs.columns.action")}</label
+        >
+        <div class="filter-select">
+          <select
+            id="audit-action"
+            bind:value={filterAction}
+            onchange={applyFilters}
+          >
+            <option value="">{$_("admin.auditLogs.allActions")}</option>
+            {#each auditLogsStore.actionTypes as action (action)}
+              <option value={action}>{getLocalizedAction(action)}</option>
+            {/each}
+          </select>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M4 6l3 3 3-3"
+              stroke="currentColor"
+              stroke-width="1.3"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+      </div>
+      <div class="filter-col">
+        <label class="filter-label" for="audit-start"
+          >{$_("admin.auditLogs.startDate")}</label
+        >
+        <div class="filter-select">
+          <input
+            id="audit-start"
             type="date"
             bind:value={filterStartDate}
             onchange={applyFilters}
-            class="filter-input date-input"
-            aria-label={$_("admin.auditLogs.startDate")}
-          />
-        </div>
-        <span class="date-separator">to</span>
-        <div class="date-input-wrapper">
-          <label for="end-date" class="filter-label">{$_("admin.auditLogs.endDate")}</label>
-          <input
-            id="end-date"
-            type="date"
-            bind:value={filterEndDate}
-            onchange={applyFilters}
-            class="filter-input date-input"
-            aria-label={$_("admin.auditLogs.endDate")}
           />
         </div>
       </div>
-          </div>
+      <div class="filter-col">
+        <label class="filter-label" for="audit-end"
+          >{$_("admin.auditLogs.endDate")}</label
+        >
+        <div class="filter-select">
+          <input
+            id="audit-end"
+            type="date"
+            bind:value={filterEndDate}
+            onchange={applyFilters}
+          />
+        </div>
+      </div>
+      <button type="button" class="filter-clear" onclick={clearFilters}>
+        <span>{$_("admin.auditLogs.clearAll")}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ".meta-row" -->
+  <div class="meta-row">
+    <span class="meta-count" role="status" aria-live="polite">
+      {$_("admin.auditLogs.eventsMatched", {
+        values: { count: formatNumber(auditLogsStore.total) },
+      })}
+    </span>
+    <div class="sort-status">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M2 4h10M2 7h6M2 10h3"
+          stroke="currentColor"
+          stroke-width="1.3"
+          stroke-linecap="round"
+        />
+      </svg>
+      <span>{$_("admin.auditLogs.sortedNewestFirst")}</span>
+    </div>
   </div>
 
   {#if auditLogsStore.isLoading}
@@ -384,7 +606,9 @@ SPDX-License-Identifier: Apache-2.0
           stroke-linecap="round"
           stroke-linejoin="round"
         >
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <path
+            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+          />
           <polyline points="14 2 14 8 20 8" />
           <line x1="16" y1="13" x2="8" y2="13" />
           <line x1="16" y1="17" x2="8" y2="17" />
@@ -393,280 +617,469 @@ SPDX-License-Identifier: Apache-2.0
       {/snippet}
     </AdminEmptyState>
   {:else}
-    <!-- Audit Logs Table -->
-    <AdminTableCard minWidth="960px">
-      <table
-        class="admin-table audit-logs-table"
-        aria-label={$_("admin.auditLogs.title")}
-      >
-        <thead>
-          <tr>
-            <th scope="col">{$_("admin.auditLogs.columns.timestamp")}</th>
-            <th scope="col">{$_("admin.auditLogs.columns.userId")}</th>
-            <th scope="col">{$_("admin.auditLogs.columns.action")}</th>
-            <th scope="col">{$_("admin.auditLogs.columns.resourceType")}</th>
-            <th scope="col">{$_("admin.auditLogs.columns.resourceId")}</th>
-            <th scope="col">{$_("admin.auditLogs.columns.ipAddress")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each auditLogsStore.items as log (log.id)}
-            <tr
-              class="log-row"
-              class:expanded={expandedRowId === log.id}
-              onclick={() => toggleRowDetails(log.id)}
-              role="button"
-              tabindex="0"
-              onkeydown={(e) => {
-                if (e.key === "Enter" || e.key === " ") toggleRowDetails(log.id);
-              }}
+    <!-- ".logs-card" -->
+    <div class="logs-card">
+      {#each dayGroups as group, groupIndex (group.key)}
+        <div class="day-group-header">
+          <div class="day-title">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
             >
-              <td>
-                <span class="timestamp">
-                  {formatDate(log.createdAt, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
+              <rect
+                x="1.5"
+                y="2.5"
+                width="11"
+                height="10"
+                rx="1.3"
+                stroke="currentColor"
+                stroke-width="1.1"
+              />
+              <path
+                d="M1.5 5.5h11M4.5 1v2M9.5 1v2"
+                stroke="currentColor"
+                stroke-width="1.1"
+              />
+            </svg>
+            <span>{group.label}</span>
+          </div>
+          <div class="event-count-badge">
+            <span>
+              {$_("admin.auditLogs.eventCount", {
+                values: { count: formatNumber(group.logs.length) },
+              })}
+            </span>
+          </div>
+        </div>
+
+        {#if groupIndex === 0}
+          <div class="col-headers" aria-hidden="true">
+            <span class="col-spacer"></span>
+            <span class="col-timestamp-h"
+              >{$_("admin.auditLogs.columns.timestamp")}</span
+            >
+            <span class="col-user-h"
+              >{$_("admin.auditLogs.columns.userId")}</span
+            >
+            <span class="col-action-h"
+              >{$_("admin.auditLogs.columns.action")}</span
+            >
+            <span class="col-resource-h"
+              >{$_("admin.auditLogs.columns.resourceType")}</span
+            >
+            <span class="col-resourceid-h"
+              >{$_("admin.auditLogs.columns.resourceId")}</span
+            >
+            <span class="col-ip-h"
+              >{$_("admin.auditLogs.columns.ipAddress")}</span
+            >
+          </div>
+        {/if}
+
+        {#each group.logs as log (log.id)}
+          <div
+            class="audit-row"
+            class:audit-row--expanded={expandedRowId === log.id}
+            role="button"
+            tabindex="0"
+            aria-expanded={expandedRowId === log.id}
+            aria-label={expandedRowId === log.id
+              ? $_("admin.auditLogs.hideDetails")
+              : $_("admin.auditLogs.showDetails")}
+            onclick={() => toggleRowDetails(log.id)}
+            onkeydown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                toggleRowDetails(log.id);
+              }
+            }}
+          >
+            <span class="chevron-btn" aria-hidden="true">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path
+                  d="M2 3.75 5 6.25l3-2.5"
+                  stroke="currentColor"
+                  stroke-width="1.3"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <div class="col-timestamp">
+              <span class="ts-time">
+                {formatDate(
+                  log.createdAt,
+                  {
                     hour: "2-digit",
                     minute: "2-digit",
                     second: "2-digit",
-                  })}
-                </span>
-              </td>
-              <td>
-                <span class="user-id" title={log.userId || "—"}>
-                  {log.userId ? log.userId.slice(0, 8) + "…" : "—"}
-                </span>
-              </td>
-              <td>
-                <span class="action-badge {getActionBadgeClass(log.action)}" title={log.action}>
-                  {getLocalizedAction(log.action)}
-                </span>
-              </td>
-              <td>
-                <span class="resource-type">{log.resourceType}</span>
-              </td>
-              <td>
-                <span class="resource-id" title={log.resourceId}>
-                  {log.resourceId ? log.resourceId.slice(0, 8) + "…" : "—"}
-                </span>
-              </td>
-              <td>
-                <span class="ip-address">{log.ipAddress || "—"}</span>
-              </td>
-            </tr>
-            {#if expandedRowId === log.id}
-              <tr class="expanded-row">
-                <td colspan="6">
-                  <div class="expanded-details">
-                    <div class="detail-grid">
-                      <div class="detail-item">
-                        <span class="detail-label"
-                          >{$_("admin.auditLogs.columns.userId")}</span
-                        >
-                        <span class="detail-value mono">{log.userId}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label"
-                          >{$_("admin.auditLogs.columns.action")}</span
-                        >
-                        <span class="detail-value">{log.action}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label"
-                          >{$_("admin.auditLogs.columns.resourceType")}</span
-                        >
-                        <span class="detail-value">{log.resourceType}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label"
-                          >{$_("admin.auditLogs.columns.resourceId")}</span
-                        >
-                        <span class="detail-value mono"
-                          >{log.resourceId || "—"}</span
-                        >
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label"
-                          >{$_("admin.auditLogs.columns.ipAddress")}</span
-                        >
-                        <span class="detail-value mono"
-                          >{log.ipAddress || "—"}</span
-                        >
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label"
-                          >{$_("admin.auditLogs.columns.userAgent")}</span
-                        >
-                        <span class="detail-value mono"
-                          >{log.userAgent || "—"}</span
-                        >
-                      </div>
-                      <div class="detail-item full-width">
-                        <span class="detail-label"
-                          >{$_("admin.auditLogs.columns.details")}</span
-                        >
-                        <div class="detail-tabs">
-                          <div class="tab-content-wrapper">
-                            {#if activeDetailTab[log.id] === 'visualized'}
-                              <div class="visualized-details">
-                                {#if log.details && typeof log.details === 'object'}
-                                  <div class="property-inspector">
-                                    {#each Object.entries(log.details) as [key, value]}
-                                      <div class="property-row">
-                                        <div class="property-key">{formatKey(key)}</div>
-                                        <div class="property-value">
-                                          {#if typeof value === 'string'}
-                                            <span class="value-string">"{value}"</span>
-                                          {:else if typeof value === 'number'}
-                                            <span class="value-number">{value}</span>
-                                          {:else if typeof value === 'boolean'}
-                                            <span class="value-boolean">{value ? 'true' : 'false'}</span>
-                                          {:else if Array.isArray(value)}
-                                            <div class="value-array">
-                                              <div class="array-summary">Array[{value.length}]</div>
-                                              {#if value.length > 0}
-                                                <div class="array-items">
-                                                  {#each (expandedDetails[log.id] ? value : value.slice(0, 3)) as item}
-                                                    <div class="array-item">
-                                                      {#if typeof item === 'string'}
-                                                        "{item}"
-                                                      {:else if typeof item === 'object' && item !== null}
-                                                        Object({Object.keys(item).length} props)
-                                                      {:else}
-                                                        {item}
-                                                      {/if}
-                                                    </div>
-                                                  {/each}
-                                                  {#if value.length > 3 && !expandedDetails[log.id]}
-                                                    <button class="array-more-btn" onclick={() => toggleExpandedDetails(log.id)}>
-                                                      +{value.length - 3} more...
-                                                    </button>
-                                                  {:else if value.length > 3 && expandedDetails[log.id]}
-                                                    <button class="array-more-btn" onclick={() => toggleExpandedDetails(log.id)}>
-                                                      Show less
-                                                    </button>
-                                                  {/if}
-                                                </div>
-                                              {/if}
-                                            </div>
-                                          {:else if typeof value === 'object' && value !== null}
-                                            {@const objectEntries = Object.entries(value)}
-                                            <div class="value-object">
-                                              <div class="object-summary">Object({Object.keys(value).length} props)</div>
-                                              <div class="object-props">
-                                                {#each (expandedDetails[log.id] ? objectEntries : objectEntries.slice(0, 3)) as [objKey, objValue]}
-                                                  <div class="object-prop">
-                                                    <span class="object-prop-key">{objKey}:</span>
-                                                    <span class="object-prop-value">
-                                                      {#if typeof objValue === 'string'}
-                                                        "{objValue}"
-                                                      {:else if Array.isArray(objValue)}
-                                                        Array[{objValue.length}]
-                                                      {:else if typeof objValue === 'object' && objValue !== null}
-                                                        Object({Object.keys(objValue).length} props)
-                                                      {:else}
-                                                        {objValue}
-                                                      {/if}
-                                                    </span>
-                                                  </div>
-                                                {/each}
-                                                {#if objectEntries.length > 3 && !expandedDetails[log.id]}
-                                                  <button class="object-more-btn" onclick={() => toggleExpandedDetails(log.id)}>
-                                                    +{objectEntries.length - 3} more...
-                                                  </button>
-                                                {:else if objectEntries.length > 3 && expandedDetails[log.id]}
-                                                  <button class="object-more-btn" onclick={() => toggleExpandedDetails(log.id)}>
-                                                    Show less
-                                                  </button>
-                                                {/if}
-                                              </div>
-                                            </div>
-                                          {:else}
-                                            <span class="value-null">{value}</span>
-                                          {/if}
-                                        </div>
-                                      </div>
-                                    {/each}
-                                  </div>
-                                {:else}
-                                  <div class="no-details">
-                                    <div class="no-details-text">
-                                      {log.details || "No details available"}
+                  },
+                  "—",
+                )}
+              </span>
+              <span class="ts-rel">{formatRelativeTime(log.createdAt)}</span>
+            </div>
+            <div class="col-user">
+              <button
+                type="button"
+                class="user-link"
+                title={log.userId || "—"}
+                aria-label={$_("admin.auditLogs.filterByUser", {
+                  values: { user: log.userId || "—" },
+                })}
+                disabled={!log.userId}
+                onclick={(e) => {
+                  e.stopPropagation();
+                  filterByUser(log.userId);
+                }}
+              >
+                {shortId(log.userId)}
+              </button>
+            </div>
+            <div class="col-action">
+              <span
+                class="action-badge {getActionBadgeClass(log.action)}"
+                title={log.action}
+              >
+                {#if isMessageAction(log.action)}
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M1.5 2h9v6H4l-2.5 2.5z"
+                      stroke="currentColor"
+                      stroke-width="1"
+                      fill="none"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                {:else}
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M3 1.5h4l2 2v7h-6z"
+                      stroke="currentColor"
+                      stroke-width="1"
+                      fill="none"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                {/if}
+                <span>{getLocalizedAction(log.action)}</span>
+              </span>
+            </div>
+            <div class="col-resource">{log.resourceType || "—"}</div>
+            <div class="col-resourceid" title={log.resourceId || "—"}>
+              {shortId(log.resourceId)}
+            </div>
+            <div class="col-ip">{log.ipAddress || "—"}</div>
+          </div>
+
+          {#if expandedRowId === log.id}
+            <!-- ".expanded-details" -->
+            <div class="expanded-details">
+              <span class="expanded-title"
+                >{$_("admin.auditLogs.payloadTitle")}</span
+              >
+              <div class="details-grid">
+                <div class="detail-col">
+                  <span class="detail-col-label"
+                    >{$_("admin.auditLogs.fullUserIdentity")}</span
+                  >
+                  {@render copyableBox(`${log.id}:user`, log.userId || "—")}
+                  {#if detailEmail(log)}
+                    <span class="detail-col-sub">
+                      {$_("admin.auditLogs.emailLine", {
+                        values: { email: detailEmail(log) ?? "" },
+                      })}
+                    </span>
+                  {/if}
+                </div>
+                <div class="detail-col">
+                  <span class="detail-col-label"
+                    >{$_("admin.auditLogs.fullResourceUuid")}</span
+                  >
+                  {@render copyableBox(
+                    `${log.id}:resource`,
+                    log.resourceId || "—",
+                  )}
+                  <span class="detail-col-sub">
+                    {$_("admin.auditLogs.typeLine", {
+                      values: { type: log.resourceType || "—" },
+                    })}
+                  </span>
+                </div>
+                <div class="detail-col">
+                  <span class="detail-col-label"
+                    >{$_("admin.auditLogs.networkOrigin")}</span
+                  >
+                  {@render copyableBox(`${log.id}:ip`, log.ipAddress || "—")}
+                  <span class="detail-col-sub"
+                    >{$_("admin.auditLogs.secureSession")}</span
+                  >
+                </div>
+                <div class="detail-col">
+                  <span class="detail-col-label"
+                    >{$_("admin.auditLogs.columns.userAgent")}</span
+                  >
+                  {@render copyableBox(`${log.id}:agent`, log.userAgent || "—")}
+                  <span class="detail-col-sub">
+                    {$_("admin.auditLogs.typeLine", {
+                      values: { type: log.action },
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              <!-- The payload itself, in the same two views the table always had. -->
+              <div class="payload-block">
+                <div class="payload-head">
+                  <span class="detail-col-label"
+                    >{$_("admin.auditLogs.columns.details")}</span
+                  >
+                  <div class="payload-tabs">
+                    <button
+                      type="button"
+                      class="payload-tab"
+                      class:active={activeDetailTab[log.id] !== "json"}
+                      onclick={() => setDetailTab(log.id, "visualized")}
+                      aria-pressed={activeDetailTab[log.id] !== "json"}
+                      title={$_("admin.auditLogs.visualizedView")}
+                      aria-label={$_("admin.auditLogs.visualizedView")}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        aria-hidden="true"
+                      >
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="payload-tab"
+                      class:active={activeDetailTab[log.id] === "json"}
+                      onclick={() => setDetailTab(log.id, "json")}
+                      aria-pressed={activeDetailTab[log.id] === "json"}
+                      title={$_("admin.auditLogs.jsonView")}
+                      aria-label={$_("admin.auditLogs.jsonView")}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                        />
+                        <polyline points="14 2 14 8 20 8" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {#if activeDetailTab[log.id] === "json"}
+                  <pre class="payload-json">{JSON.stringify(
+                      log.details,
+                      null,
+                      2,
+                    ) ?? "—"}</pre>
+                {:else if log.details && typeof log.details === "object"}
+                  <div class="property-inspector">
+                    {#each Object.entries(log.details) as [key, value] (key)}
+                      <div class="property-row">
+                        <div class="property-key">{formatKey(key)}</div>
+                        <div class="property-value">
+                          {#if typeof value === "string"}
+                            <span class="value-string">"{value}"</span>
+                          {:else if typeof value === "number"}
+                            <span class="value-number">{value}</span>
+                          {:else if typeof value === "boolean"}
+                            <span class="value-boolean"
+                              >{value ? "true" : "false"}</span
+                            >
+                          {:else if Array.isArray(value)}
+                            <div class="value-array">
+                              <div class="array-summary">
+                                {$_("admin.auditLogs.arraySummary", {
+                                  values: { count: String(value.length) },
+                                })}
+                              </div>
+                              {#if value.length > 0}
+                                <div class="array-items">
+                                  {#each expandedDetails[log.id] ? value : value.slice(0, 3) as item}
+                                    <div class="array-item">
+                                      {#if typeof item === "string"}
+                                        "{item}"
+                                      {:else if typeof item === "object" && item !== null}
+                                        {$_("admin.auditLogs.objectSummary", {
+                                          values: {
+                                            count: String(
+                                              Object.keys(item).length,
+                                            ),
+                                          },
+                                        })}
+                                      {:else}
+                                        {item}
+                                      {/if}
                                     </div>
+                                  {/each}
+                                  {#if value.length > 3}
+                                    <button
+                                      type="button"
+                                      class="array-more-btn"
+                                      onclick={() =>
+                                        toggleExpandedDetails(log.id)}
+                                    >
+                                      {expandedDetails[log.id]
+                                        ? $_("admin.auditLogs.showLess")
+                                        : $_("admin.auditLogs.showMore", {
+                                            values: {
+                                              count: String(value.length - 3),
+                                            },
+                                          })}
+                                    </button>
+                                  {/if}
+                                </div>
+                              {/if}
+                            </div>
+                          {:else if typeof value === "object" && value !== null}
+                            {@const objectEntries = Object.entries(value)}
+                            <div class="value-object">
+                              <div class="object-summary">
+                                {$_("admin.auditLogs.objectSummary", {
+                                  values: {
+                                    count: String(objectEntries.length),
+                                  },
+                                })}
+                              </div>
+                              <div class="object-props">
+                                {#each expandedDetails[log.id] ? objectEntries : objectEntries.slice(0, 3) as [objKey, objValue]}
+                                  <div class="object-prop">
+                                    <span class="object-prop-key"
+                                      >{objKey}:</span
+                                    >
+                                    <span class="object-prop-value">
+                                      {#if typeof objValue === "string"}
+                                        "{objValue}"
+                                      {:else if Array.isArray(objValue)}
+                                        {$_("admin.auditLogs.arraySummary", {
+                                          values: {
+                                            count: String(objValue.length),
+                                          },
+                                        })}
+                                      {:else if typeof objValue === "object" && objValue !== null}
+                                        {$_("admin.auditLogs.objectSummary", {
+                                          values: {
+                                            count: String(
+                                              Object.keys(objValue).length,
+                                            ),
+                                          },
+                                        })}
+                                      {:else}
+                                        {objValue}
+                                      {/if}
+                                    </span>
                                   </div>
+                                {/each}
+                                {#if objectEntries.length > 3}
+                                  <button
+                                    type="button"
+                                    class="object-more-btn"
+                                    onclick={() =>
+                                      toggleExpandedDetails(log.id)}
+                                  >
+                                    {expandedDetails[log.id]
+                                      ? $_("admin.auditLogs.showLess")
+                                      : $_("admin.auditLogs.showMore", {
+                                          values: {
+                                            count: String(
+                                              objectEntries.length - 3,
+                                            ),
+                                          },
+                                        })}
+                                  </button>
                                 {/if}
                               </div>
-                            {:else if activeDetailTab[log.id] === 'json'}
-                              <div class="json-details">
-                                <pre class="detail-value detail-json">{JSON.stringify(log.details, null, 2) || "-"}</pre>
-                              </div>
-                            {/if}
-                          </div>
-                          <div class="tab-headers-right">
-                            <button
-                              class="tab-header-small"
-                              class:active={activeDetailTab[log.id] === 'visualized'}
-                              onclick={() => setDetailTab(log.id, 'visualized')}
-                              aria-label="Visualized view"
-                              aria-pressed={activeDetailTab[log.id] === 'visualized'}
-                              title="Visualized view"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="7" height="7"/>
-                                <rect x="14" y="3" width="7" height="7"/>
-                                <rect x="14" y="14" width="7" height="7"/>
-                                <rect x="3" y="14" width="7" height="7"/>
-                              </svg>
-                            </button>
-                            <button
-                              class="tab-header-small"
-                              class:active={activeDetailTab[log.id] === 'json'}
-                              onclick={() => setDetailTab(log.id, 'json')}
-                              aria-label="JSON view"
-                              aria-pressed={activeDetailTab[log.id] === 'json'}
-                              title="JSON view"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                              </svg>
-                            </button>
-                          </div>
+                            </div>
+                          {:else}
+                            <span class="value-null">{value}</span>
+                          {/if}
                         </div>
                       </div>
-                    </div>
+                    {/each}
                   </div>
-                </td>
-              </tr>
-            {/if}
-          {:else}
-            <tr>
-              <td colspan="6" class="empty-state">
-                {$_("admin.auditLogs.noLogsFound")}
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </AdminTableCard>
+                {:else}
+                  <div class="no-details">
+                    {$_("admin.auditLogs.noDetails")}
+                  </div>
+                {/if}
+              </div>
+            </div>
+          {/if}
+        {/each}
+      {/each}
+    </div>
 
-    <!-- Pagination -->
-    {#if totalPages > 1}
-      <nav
-        class="pagination"
-        aria-label={$_("admin.common.pagination")}
-      >
-        <button
-          class="btn"
-          onclick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage <= 1}
-          aria-label={$_("admin.common.previousPage")}
-        >
-          {$_("admin.common.previous")}
-        </button>
-        <span class="pagination-info" role="status" aria-live="polite">
-          {$_("admin.common.pageInfo", {
+    <!-- ".table-footer" -->
+    <div class="table-footer">
+      <div class="rows-per-page">
+        <label for="audit-rows">{$_("admin.auditLogs.rowsPerPage")}</label>
+        <div class="rows-select">
+          <select
+            id="audit-rows"
+            value={auditLogsStore.limit}
+            onchange={handleLimitChange}
+          >
+            {#each ROWS_PER_PAGE_OPTIONS as option (option)}
+              <option value={option}>{option}</option>
+            {/each}
+          </select>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M3 5l3 3 3-3"
+              stroke="currentColor"
+              stroke-width="1.2"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+      </div>
+      <nav class="pagination" aria-label={$_("admin.common.pagination")}>
+        <span role="status" aria-live="polite">
+          {$_("admin.auditLogs.pageInfo", {
             values: {
               current: formatNumber(currentPage),
               total: formatNumber(totalPages),
@@ -674,647 +1087,1080 @@ SPDX-License-Identifier: Apache-2.0
             },
           })}
         </span>
-        <button
-          class="btn"
-          onclick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage >= totalPages}
-          aria-label={$_("admin.common.nextPage")}
-        >
-          {$_("admin.common.next")}
-        </button>
+        <div class="pag-buttons">
+          <button
+            type="button"
+            class="pag-btn"
+            onclick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage <= 1}
+            aria-label={$_("admin.common.previousPage")}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M9 3.5 5.5 7 9 10.5"
+                stroke="currentColor"
+                stroke-width="1.3"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="pag-btn pag-btn--next"
+            onclick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            aria-label={$_("admin.common.nextPage")}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M5 3.5 8.5 7 5 10.5"
+                stroke="currentColor"
+                stroke-width="1.3"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
       </nav>
-    {/if}
+    </div>
   {/if}
 </div>
 
 <style>
-  .audit-logs-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
-    background: var(--bg-primary);
-    padding: var(--space-3xl);
-    overflow-y: auto;
-  }
+  /* ===== audit-logs.html, transcribed. Design values that no --gx-* token
+     already carried live in app.css as --gx-al-*. ===== */
 
-  /* Export Buttons */
-  .export-buttons {
-    display: flex;
-    gap: var(--space-sm);
-  }
-
-  .btn-export {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: var(--space-sm) var(--space-md);
-    background: var(--button-bg);
-    border: 1px solid var(--button-border);
-    border-radius: var(--radius-sm);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    cursor: pointer;
+  /* app.css paints every bare <button>/<input>/<select> as a glass pill. Every
+     control below is flat, so strip that once here and let each rule paint its
+     own skin. */
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
     white-space: nowrap;
-    transition: all 0.15s;
+    cursor: pointer;
+    transition: none;
   }
 
-  .btn-export:hover:not(:disabled) {
-    color: var(--brand);
-    border-color: var(--brand);
+  button:hover {
+    transform: none;
+    box-shadow: none;
+    background: none;
   }
 
-  .btn-export:disabled {
+  button:active {
+    transform: none;
+    box-shadow: none;
+  }
+
+  button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
-  .btn-export svg {
+  input,
+  select {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    font-family: var(--gx-font);
+    line-height: 100%;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  input:focus,
+  select:focus {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  /* ".main" */
+  .audit-logs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    height: 100%;
+    width: 100%;
+    background: var(--gx-page);
+    padding: 32px;
+    overflow-y: auto;
+    font-family: var(--gx-font);
+  }
+
+  /* ---------------- ".page-header" ---------------- */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    align-self: stretch;
     flex-shrink: 0;
   }
 
-  /* Filters */
-  .filters-section {
-    padding: var(--space-xl);
-    margin: var(--space-md) 0;
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-    position: relative;
+  .header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
   }
 
-  .filter-toggle-btn {
-    display: none;
+  .page-title {
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 100%;
+    color: var(--gx-org-ink);
+  }
+
+  .page-sub {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-an-sub);
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
     align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-md) var(--space-lg);
-    background: var(--button-bg);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 0.9375rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-left: auto;
+    flex-shrink: 0;
   }
 
-  .filter-toggle-btn:hover {
-    background: var(--btn-secondary);
-    border-color: rgba(255, 255, 255, 0.12);
-    transform: translateY(-1px);
+  .refresh-btn {
+    height: 32px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-org-primary-100);
+    display: flex;
+    gap: 6px;
+    padding: 8px 14px;
+    align-items: center;
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
   }
 
-  .filter-toggle-btn:focus-visible {
-    outline: 2px solid var(--brand);
+  .refresh-btn:hover:not(:disabled) {
+    background: var(--gx-ring-soft);
+  }
+
+  .refresh-btn:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
     outline-offset: 2px;
   }
 
-  .filter-toggle-btn svg {
-    width: 20px;
-    height: 20px;
+  .refresh-btn svg {
+    display: block;
+    color: var(--gx-org-primary-500);
+  }
+
+  .refresh-btn span {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--gx-org-primary-500);
+    white-space: nowrap;
+  }
+
+  /* ---------------- ".filter-card" ---------------- */
+  .filter-card {
+    border-radius: 16px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-org-hair-soft);
+    display: flex;
+    padding: 20px;
+    align-self: stretch;
     flex-shrink: 0;
   }
 
-  .filters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--space-lg);
-    align-items: start;
+  .filter-grid {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    align-self: stretch;
+    width: 100%;
   }
 
-  .filter-group {
+  .filter-col {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: 6px;
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .filter-label {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: var(--gx-an-sub);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 2px;
   }
 
   .filter-input,
   .filter-select {
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    background: var(--button-bg);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    transition: all 0.15s ease;
-  }
-
-  .filter-input:focus,
-  .filter-select:focus {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-    border-color: var(--brand);
-  }
-
-  .filter-input::placeholder {
-    color: var(--text-secondary);
-    opacity: 0.6;
-  }
-
-  .date-filter-group {
+    height: 40px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px var(--gx-cx-pill-ring);
     display: flex;
-    align-items: end;
-    gap: var(--space-sm);
-    grid-column: span 1;
+    gap: 8px;
+    padding: 0 12px;
+    align-items: center;
   }
 
-  .date-input-wrapper {
-    flex: 1;
+  .filter-input:focus-within,
+  .filter-select:focus-within {
+    box-shadow: inset 0 0 0 1px var(--gx-org-primary-500);
+  }
+
+  .filter-input input {
+    flex-grow: 1;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
+    font-family: var(--gx-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--gx-card-title-ink);
+    cursor: text;
   }
 
-  .date-input {
-    width: 100%;
+  .filter-input input::placeholder {
+    color: var(--gx-org-slate-350);
+    font-family: var(--gx-mono, ui-monospace, "SF Mono", Menlo, monospace);
   }
 
-  .date-separator {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    font-weight: 500;
-    padding-bottom: var(--space-sm);
+  .filter-input svg {
+    display: block;
+    color: var(--gx-org-slate-350);
     flex-shrink: 0;
   }
 
-  
-  /* Table Styles */
-  .log-row {
+  .filter-select {
+    justify-content: space-between;
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--gx-card-title-ink);
+  }
+
+  .filter-select svg {
+    display: block;
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+
+  .filter-select select,
+  .filter-select input {
+    flex-grow: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--gx-card-title-ink);
+  }
+
+  /* A date field paints its own indicator; the design's chevron stands in. */
+  .filter-select input[type="date"]::-webkit-calendar-picker-indicator {
+    margin: 0;
+    opacity: 0.55;
     cursor: pointer;
   }
 
-  .log-row:hover {
-    background: rgba(var(--glass-tint), 0.05) !important;
+  .filter-clear {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    flex-shrink: 0;
   }
 
-  .log-row.expanded {
-    background: rgba(var(--glass-tint), 0.04);
-  }
-
-  .timestamp {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-  }
-
-  .user-id {
-    font-family: var(--font-mono, monospace);
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-  }
-
-  .action-badge {
-    display: inline-flex;
-    padding: 2px 8px;
-    border-radius: var(--radius-full);
-    font-size: 0.75rem;
+  .filter-clear span {
     font-weight: 600;
+    font-size: 13px;
+    color: var(--gx-org-primary-500);
     white-space: nowrap;
   }
 
-  .badge-create {
-    background: color-mix(in oklab, var(--brand-green) 15%, var(--button-bg));
-    color: var(--brand-green);
+  .filter-clear:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
+    border-radius: 6px;
   }
 
-  .badge-delete {
-    background: color-mix(in oklab, var(--brand-red) 15%, var(--button-bg));
-    color: var(--brand-red);
+  /* ---------------- ".meta-row" ---------------- */
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    padding: 0 4px;
+    flex-shrink: 0;
   }
 
-  .badge-update {
-    background: color-mix(in oklab, #f59e0b 15%, var(--button-bg));
-    color: #f59e0b;
+  .meta-count {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--gx-an-sub);
   }
 
-  .badge-assign {
-    background: color-mix(in oklab, var(--brand) 15%, var(--button-bg));
-    color: var(--brand);
+  .sort-status {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    color: var(--gx-an-sub);
   }
 
-  .badge-info {
-    background: color-mix(in oklab, #6366f1 15%, var(--button-bg));
-    color: #6366f1;
-  }
-
-  .badge-default {
-    background: rgba(var(--glass-tint), 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    color: var(--text-secondary);
-  }
-
-  .resource-type {
-    font-size: 0.8125rem;
-    color: var(--text-primary);
-    text-transform: capitalize;
-  }
-
-  .resource-id {
-    font-family: var(--font-mono, monospace);
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-  }
-
-  .ip-address {
-    font-family: var(--font-mono, monospace);
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-  }
-
-  .details-preview {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .sort-status svg {
     display: block;
   }
 
-  /* Expanded Row */
-  .expanded-row td {
-    padding: 0 !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  .sort-status span {
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--gx-an-sub);
+    white-space: nowrap;
   }
 
-  .expanded-details {
-    padding: var(--space-lg) var(--space-xl);
-    background: rgba(var(--glass-tint), 0.02);
-  }
-
-  .detail-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--space-md);
-  }
-
-  .detail-item {
+  /* ---------------- ".logs-card" ---------------- */
+  .logs-card {
+    border-radius: 16px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-org-hair-soft);
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    align-self: stretch;
+    overflow: hidden;
+    flex-shrink: 0;
   }
 
-  .detail-item.full-width {
-    grid-column: 1 / -1;
+  .day-group-header {
+    height: 40px;
+    border-bottom: 1px solid var(--gx-org-hair-soft);
+    display: flex;
+    padding: 12px 24px;
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    flex-shrink: 0;
   }
 
-  .detail-label {
-    font-size: 0.6875rem;
-    font-weight: 600;
+  .day-title {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .day-title svg {
+    display: block;
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
+  }
+
+  .day-title span {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: var(--gx-card-title-ink);
+    white-space: nowrap;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-secondary);
   }
 
-  .detail-value {
-    font-size: 0.8125rem;
-    color: var(--text-primary);
-    word-break: break-all;
+  .event-count-badge {
+    border-radius: 99px;
+    background: var(--gx-org-hair-soft);
+    padding: 2px 8px;
+    flex-shrink: 0;
   }
 
-  .detail-value.mono {
-    font-family: var(--font-mono, monospace);
+  .event-count-badge span {
+    font-weight: 700;
+    font-size: 10px;
+    color: var(--gx-card-title-ink);
+    white-space: nowrap;
   }
 
-  .detail-json {
-    background: rgba(var(--glass-tint), 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-sm);
-    padding: var(--space-sm) var(--space-md);
-    font-size: 0.75rem;
-    white-space: pre-wrap;
-    word-break: break-all;
-    max-height: 200px;
-    overflow-y: auto;
-    margin: 0;
+  .col-headers {
+    height: 40px;
+    border-bottom: 1px solid var(--gx-org-hair-soft);
+    display: flex;
+    gap: 12px;
+    padding: 12px 24px;
+    align-items: center;
+    align-self: stretch;
+    flex-shrink: 0;
   }
 
-  .empty-state {
-    text-align: center;
-    color: var(--text-secondary);
-    padding: var(--space-3xl) !important;
+  .col-headers span {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: var(--gx-an-sub);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
   }
 
-  /* Pagination */
-  .pagination {
+  .col-spacer {
+    width: 16px;
+    flex-shrink: 0;
+  }
+
+  .col-timestamp-h {
+    width: 130px;
+    flex-shrink: 0;
+  }
+
+  .col-user-h {
+    width: 100px;
+    flex-shrink: 0;
+  }
+
+  .col-action-h {
+    width: 180px;
+    flex-shrink: 0;
+  }
+
+  .col-resource-h {
+    width: 140px;
+    flex-shrink: 0;
+  }
+
+  .col-resourceid-h {
+    width: 140px;
+    flex-shrink: 0;
+  }
+
+  .col-ip-h {
+    flex-grow: 1;
+  }
+
+  /* ---------------- ".audit-row" ---------------- */
+  .audit-row {
+    height: 59px;
+    border-bottom: 1px solid var(--gx-org-hair-soft);
+    display: flex;
+    gap: 12px;
+    padding: 14px 24px;
+    align-items: center;
+    align-self: stretch;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+  }
+
+  /* The card's own edge closes the table, whether a row or its open drawer
+     happens to sit last. */
+  .logs-card > :last-child {
+    border-bottom: 0;
+  }
+
+  .audit-row--expanded {
+    background: var(--gx-ring-soft);
+  }
+
+  .audit-row:not(.audit-row--expanded):hover {
+    background: var(--gx-page);
+  }
+
+  .audit-row:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: -2px;
+  }
+
+  .chevron-btn {
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-xl);
-    margin-top: var(--space-xl);
+    flex-shrink: 0;
+    color: var(--gx-org-slate-350);
+    transition: transform 120ms ease;
   }
 
-  .pagination-info {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
+  .chevron-btn svg {
+    display: block;
   }
 
-  .pagination .btn:focus-visible {
-    outline: 2px solid var(--brand);
+  .audit-row--expanded .chevron-btn {
+    color: var(--gx-org-primary-500);
+    transform: rotate(180deg);
+  }
+
+  .col-timestamp {
+    width: 130px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .ts-time {
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--gx-card-title-ink);
+    white-space: nowrap;
+  }
+
+  .ts-rel {
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--gx-org-slate-350);
+    white-space: nowrap;
+  }
+
+  .col-user {
+    width: 100px;
+    flex-shrink: 0;
+  }
+
+  .user-link {
+    font-family: var(--gx-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--gx-org-primary-500);
+    text-decoration: underline;
+    white-space: nowrap;
+  }
+
+  .user-link:hover:not(:disabled) {
+    color: var(--gx-ac-cta-hover);
+  }
+
+  .user-link:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .col-action {
+    width: 180px;
+    flex-shrink: 0;
+    min-width: 0;
+  }
+
+  .action-badge {
+    max-width: 100%;
+    border-radius: 6px;
+    display: inline-flex;
+    gap: 6px;
+    padding: 4px 10px;
+    padding-inline-start: 8px;
+    align-items: center;
+  }
+
+  .action-badge svg {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .action-badge span {
+    font-weight: 600;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .action-badge--blue {
+    background: var(--gx-ring-soft);
+    color: var(--gx-org-primary-500);
+  }
+
+  .action-badge--purple {
+    background: var(--gx-al-violet-bg);
+    color: var(--gx-cx-img-accent);
+  }
+
+  .action-badge--red {
+    background: var(--gx-org-danger-bg);
+    color: var(--gx-org-danger);
+  }
+
+  .col-resource {
+    width: 140px;
+    flex-shrink: 0;
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--gx-card-title-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .col-resourceid,
+  .col-ip {
+    font-family: var(--gx-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--gx-card-title-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .col-resourceid {
+    width: 140px;
+    flex-shrink: 0;
+  }
+
+  .col-ip {
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  /* ---------------- ".expanded-details" ---------------- */
+  .expanded-details {
+    background: var(--gx-ring-soft);
+    border-bottom: 1px solid var(--gx-org-hair-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    /* Logical so the drawer's indent mirrors under dir="rtl". */
+    padding: 20px 24px 24px;
+    padding-inline-start: 52px;
+    align-self: stretch;
+  }
+
+  .expanded-title {
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--gx-an-blue-label-strong);
+    text-transform: uppercase;
+  }
+
+  .details-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    align-self: stretch;
+  }
+
+  .detail-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1 1 200px;
+    min-width: 0;
+  }
+
+  .detail-col-label {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.2px;
+    color: var(--gx-an-sub);
+    text-transform: uppercase;
+  }
+
+  .copyable-box {
+    height: 28px;
+    width: 100%;
+    border-radius: 6px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-org-primary-100);
+    display: flex;
+    gap: 8px;
+    padding: 6px 10px;
+    align-items: center;
+    transition: background-color 120ms ease;
+  }
+
+  .copyable-box:hover {
+    background: var(--gx-hover-soft);
+  }
+
+  .copyable-box:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
     outline-offset: 2px;
   }
 
-  @media (max-width: 768px) {
-    .filters-section {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .filter-toggle-btn {
-      display: flex;
-      align-self: flex-end;
-    }
-
-    .filter-toggle-btn.open {
-      padding: var(--space-md);
-      margin-bottom: var(--space-md);
-    }
-
-    .filters-grid {
-      grid-template-columns: 1fr;
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      margin-bottom: 0;
-      padding: 2px;
-      transform: translateY(-10px);
-      transition:
-        max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .filters-grid.open {
-      max-height: 1000px;
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .date-filter-group {
-      flex-direction: column;
-      gap: var(--space-sm);
-    }
-
-    .date-separator {
-      display: none;
-    }
-
-    .pagination {
-      gap: var(--space-md);
-    }
-
-    .export-buttons {
-      flex-wrap: wrap;
-    }
-
-    .audit-logs-container {
-      padding: var(--space-lg);
-    }
-  }
-
-  /* Detail Tabs */
-  .detail-tabs {
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-sm);
+  .copyable-box span {
+    flex-grow: 1;
+    min-width: 0;
+    font-family: var(--gx-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--gx-an-blue-label-strong);
+    white-space: nowrap;
     overflow: hidden;
-    display: flex;
+    text-overflow: ellipsis;
+    text-align: start;
   }
 
-  .tab-content-wrapper {
-    flex: 1;
-    padding: var(--space-md);
-    min-height: 60px;
+  .copyable-box svg {
+    display: block;
+    color: var(--gx-org-primary-500);
+    flex-shrink: 0;
   }
 
-  .tab-headers-right {
+  .detail-col-sub {
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--gx-an-sub);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* The payload viewer, dressed in the drawer's own idiom. */
+  .payload-block {
     display: flex;
     flex-direction: column;
-    background: rgba(var(--glass-tint), 0.04);
-    border-left: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 4px;
-    gap: 2px;
-    width: 36px;
+    gap: 8px;
+    align-self: stretch;
+    min-width: 0;
   }
 
-  .tab-header-small {
+  .payload-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .payload-tabs {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .payload-tab {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-org-primary-100);
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
+    color: var(--gx-an-sub);
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .payload-tab:hover {
+    background: var(--gx-hover-soft);
+  }
+
+  .payload-tab.active {
+    background: var(--gx-org-primary-500);
+    color: #fff;
+    box-shadow: none;
+  }
+
+  .payload-tab:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
+  }
+
+  .payload-tab svg {
+    display: block;
+  }
+
+  .payload-json {
+    margin: 0;
+    max-height: 320px;
+    overflow: auto;
+    border-radius: 6px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-org-primary-100);
+    padding: 10px 12px;
+    font-family: var(--gx-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--gx-an-blue-label-strong);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .property-inspector {
+    display: flex;
+    flex-direction: column;
+    border-radius: 6px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-org-primary-100);
+    overflow: hidden;
+  }
+
+  .property-row {
+    display: flex;
+    gap: 12px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--gx-ring-soft);
+    align-items: flex-start;
+  }
+
+  .property-row:last-child {
+    border-bottom: 0;
+  }
+
+  .property-key {
+    width: 160px;
+    flex-shrink: 0;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--gx-an-sub);
+  }
+
+  .property-value {
+    flex-grow: 1;
+    min-width: 0;
+    font-family: var(--gx-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--gx-card-title-ink);
+    word-break: break-word;
+  }
+
+  .value-string {
+    color: var(--gx-org-brand-alt);
+  }
+
+  .value-number {
+    color: var(--gx-cx-img-accent);
+  }
+
+  .value-boolean {
+    color: var(--gx-org-primary-500);
+  }
+
+  .value-null {
+    color: var(--gx-org-slate-350);
+  }
+
+  .array-summary,
+  .object-summary {
+    font-weight: 600;
+    color: var(--gx-an-sub);
+  }
+
+  .array-items,
+  .object-props {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 4px;
+  }
+
+  .object-prop-key {
+    color: var(--gx-an-sub);
+  }
+
+  .array-more-btn,
+  .object-more-btn {
+    align-self: flex-start;
+    padding-top: 2px;
+    font-family: var(--gx-font);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gx-org-primary-500);
+  }
+
+  .array-more-btn:hover,
+  .object-more-btn:hover {
+    color: var(--gx-ac-cta-hover);
+  }
+
+  .no-details {
+    border-radius: 6px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-org-primary-100);
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--gx-an-sub);
+  }
+
+  /* ---------------- ".table-footer" ---------------- */
+  .table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    align-self: stretch;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .rows-per-page {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .rows-per-page label {
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--gx-an-sub);
+    white-space: nowrap;
+  }
+
+  .rows-select {
     height: 28px;
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    border-radius: var(--radius-sm);
-    padding: 0;
-    margin: 0 auto;
+    border-radius: 6px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-cx-pill-ring);
+    display: flex;
+    gap: 6px;
+    padding: 6px 8px;
+    padding-inline-start: 10px;
+    align-items: center;
   }
 
-  .tab-header-small:hover {
-    color: var(--text-primary);
-    background: rgba(var(--glass-tint), 0.08);
+  .rows-select:focus-within {
+    box-shadow: inset 0 0 0 1px var(--gx-org-primary-500);
   }
 
-  .tab-header-small.active {
-    color: var(--brand);
-    background: rgba(var(--brand), 0.1);
+  .rows-select select {
+    width: auto;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--gx-card-title-ink);
   }
 
-  .tab-header-small:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 1px;
+  .rows-select svg {
+    display: block;
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
+    pointer-events: none;
   }
 
-  .tab-header-small svg {
-    width: 12px;
-    height: 12px;
+  .pagination {
+    display: flex;
+    gap: 16px;
+    align-items: center;
   }
 
-  .visualized-details {
-    .property-inspector {
-      display: flex;
+  .pagination span {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--gx-an-sub);
+    white-space: nowrap;
+  }
+
+  .pag-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .pag-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-org-hair-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
+  }
+
+  .pag-btn:hover:not(:disabled) {
+    background: var(--gx-page);
+  }
+
+  .pag-btn:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
+  }
+
+  .pag-btn:disabled {
+    pointer-events: none;
+  }
+
+  .pag-btn svg {
+    display: block;
+    color: var(--gx-org-slate-350);
+  }
+
+  .pag-btn--next {
+    box-shadow: inset 0 0 0 1px var(--gx-cx-pill-ring);
+  }
+
+  .pag-btn--next svg {
+    color: var(--gx-card-title-ink);
+  }
+
+  /* ---------------- narrow viewports ----------------
+     The design is drawn at 1440px; below the table's natural width the card
+     scrolls sideways rather than crushing its columns. */
+  @media (max-width: 1100px) {
+    .audit-logs-container {
+      padding: 20px;
+    }
+
+    .filter-grid {
+      flex-wrap: wrap;
+    }
+
+    .filter-col {
+      flex: 1 1 200px;
+    }
+
+    .logs-card {
+      overflow-x: auto;
+    }
+
+    .day-group-header,
+    .col-headers,
+    .audit-row,
+    .expanded-details {
+      min-width: 960px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .page-header {
       flex-direction: column;
-      gap: 1px;
-      background: rgba(255, 255, 255, 0.04);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
+      align-items: stretch;
     }
 
-    .property-row {
-      display: flex;
-      background: rgba(var(--glass-tint), 0.02);
-      transition: background-color 0.15s ease;
+    .header-actions {
+      flex-wrap: wrap;
     }
 
-    .property-row:hover {
-      background: rgba(var(--glass-tint), 0.04);
+    .table-footer {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
     }
 
-    .property-row:nth-child(even) {
-      background: rgba(var(--glass-tint), 0.01);
-    }
-
-    .property-row:nth-child(even):hover {
-      background: rgba(var(--glass-tint), 0.03);
-    }
-
-    .property-key {
-      flex: 0 0 200px;
-      padding: 12px 16px;
-      font-size: 0.8125rem;
-      font-weight: 500;
-      color: var(--text-secondary);
-      border-right: 1px solid rgba(255, 255, 255, 0.04);
-      background: rgba(var(--glass-tint), 0.03);
-    }
-
-    .property-value {
-      flex: 1;
-      padding: 12px 16px;
-      font-size: 0.8125rem;
-      color: var(--text-primary);
-      font-family: var(--font-mono, monospace);
-      line-height: 1.4;
-    }
-
-    .value-string {
-      color: #10b981;
-    }
-
-    .value-number {
-      color: #3b82f6;
-    }
-
-    .value-boolean {
-      color: #8b5cf6;
-      font-weight: 600;
-    }
-
-    .value-null {
-      color: #6b7280;
-      font-style: italic;
-    }
-
-    .value-array {
-      .array-summary {
-        color: #f59e0b;
-        font-weight: 500;
-        margin-bottom: 4px;
-      }
-
-      .array-items {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        margin-left: 16px;
-        font-size: 0.75rem;
-      }
-
-      .array-item {
-        color: var(--text-secondary);
-      }
-
-      .array-more-btn {
-        background: none;
-        border: none;
-        color: var(--brand);
-        font-size: 0.75rem;
-        cursor: pointer;
-        padding: 2px 0;
-        margin-left: 16px;
-        font-style: italic;
-        opacity: 0.8;
-        transition: opacity 0.15s ease;
-      }
-
-      .array-more-btn:hover {
-        opacity: 1;
-        text-decoration: underline;
-      }
-    }
-
-    .value-object {
-      .object-summary {
-        color: #f59e0b;
-        font-weight: 500;
-        margin-bottom: 4px;
-      }
-
-      .object-props {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        margin-left: 16px;
-        font-size: 0.75rem;
-      }
-
-      .object-prop {
-        color: var(--text-secondary);
-      }
-
-      .object-prop-key {
-        color: #6b7280;
-      }
-
-      .object-prop-value {
-        color: var(--text-primary);
-      }
-
-      .object-more-btn {
-        background: none;
-        border: none;
-        color: var(--brand);
-        font-size: 0.75rem;
-        cursor: pointer;
-        padding: 2px 0;
-        margin-left: 16px;
-        font-style: italic;
-        opacity: 0.8;
-        transition: opacity 0.15s ease;
-      }
-
-      .object-more-btn:hover {
-        opacity: 1;
-        text-decoration: underline;
-      }
-    }
-
-    .no-details {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: var(--space-3xl);
-      color: var(--text-secondary);
-      text-align: center;
-    }
-
-    .no-details-text {
-      font-size: 0.875rem;
-      opacity: 0.7;
-    }
-  }
-
-  .json-details {
-    .detail-json {
-      margin: 0;
-      max-height: 300px;
-      overflow-y: auto;
+    .pagination {
+      justify-content: space-between;
     }
   }
 </style>

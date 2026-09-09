@@ -21,11 +21,24 @@ SPDX-License-Identifier: Apache-2.0
     scope?: SkillScope;
     /** Existing skills in the same catalog — used to detect name collisions. */
     existingSkills?: SkillResponse[];
+    /**
+     * "default" is the app-wide dark dialog the user Settings page uses;
+     * "skills" is the light card from skills.html (.sk-modal), which the admin
+     * Skills page opens. Same markup and behaviour — only the skin differs.
+     */
+    variant?: "default" | "skills";
     onclose?: () => void;
     onimported?: (skill: SkillResponse) => void;
   }
 
-  let { open, scope = "user", existingSkills = [], onclose, onimported }: Props = $props();
+  let {
+    open,
+    scope = "user",
+    existingSkills = [],
+    variant = "default",
+    onclose,
+    onimported,
+  }: Props = $props();
 
   const isAdmin = $derived(scope === "admin");
   const ACCEPT = ".md,.zip";
@@ -160,9 +173,21 @@ SPDX-License-Identifier: Apache-2.0
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="backdrop" onclick={() => onclose?.()} onkeydown={handleBackdropKey} role="presentation"></div>
+  <div
+    class="backdrop"
+    class:backdrop--sk={variant === "skills"}
+    onclick={() => onclose?.()}
+    onkeydown={handleBackdropKey}
+    role="presentation"
+  ></div>
 
-  <div class="modal" role="dialog" aria-modal="true" aria-label={$_("userSkills.import.title")}>
+  <div
+    class="modal"
+    class:modal--sk={variant === "skills"}
+    role="dialog"
+    aria-modal="true"
+    aria-label={$_("userSkills.import.title")}
+  >
     <header class="modal__header">
       <div>
         <h2 class="modal__title">{$_("userSkills.import.title")}</h2>
@@ -282,6 +307,241 @@ SPDX-License-Identifier: Apache-2.0
 {/if}
 
 <style>
+  /* ===== "skills" variant (skills.html .sk-modal, import flavour) =====
+     Same light 540px card as the create dialog, with the design's dropzone and
+     info note. Behaviour — file validation, name collision, the Replace / Skip
+     prompt — is shared with the default dialog. Selectors are doubled up so
+     they outrank the base rules below. */
+  .backdrop.backdrop--sk {
+    background: var(--gx-ac-modal-scrim);
+    backdrop-filter: none;
+  }
+
+  .modal.modal--sk {
+    width: min(540px, calc(100vw - 32px));
+    max-height: 90vh;
+    overflow: hidden;
+    border: none;
+    border-radius: 18px;
+    background: var(--gx-card);
+    box-shadow: var(--gx-sk-m-shadow);
+    font-family: var(--gx-font);
+  }
+
+  .modal.modal--sk::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 6px;
+    background: linear-gradient(
+      90deg,
+      rgb(74, 125, 212) 0%,
+      rgb(46, 168, 117) 100%
+    );
+    z-index: 1;
+  }
+
+  .modal.modal--sk .modal__header {
+    position: relative;
+    min-height: 81px;
+    padding: 20px 22px;
+    border: none;
+    box-shadow: inset 0 0 0 1px var(--gx-sk-m-border);
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .modal.modal--sk .modal__title {
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--gx-ae-ink);
+  }
+
+  .modal.modal--sk .modal__subtitle {
+    margin-top: 4px;
+    font-size: 12.5px;
+    color: var(--gx-sk-m-body);
+  }
+
+  .modal.modal--sk .icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
+  }
+
+  .modal.modal--sk .icon-btn:hover {
+    background: var(--gx-hover-soft);
+    color: var(--gx-ae-ink);
+  }
+
+  .modal.modal--sk .modal__body {
+    padding: 22px;
+    gap: 13px;
+  }
+
+  .modal.modal--sk .modal__footer {
+    min-height: 70px;
+    padding: 16px 22px;
+    gap: 10px;
+    border-top: 1px solid var(--gx-sk-m-border);
+  }
+
+  /* ".sk-dropzone" */
+  .modal.modal--sk .dropzone {
+    min-height: 221px;
+    border: none;
+    border-radius: 14px;
+    background: var(--gx-ae-chip);
+    outline: 1.5px dashed var(--gx-sk-m-drop-ring);
+    outline-offset: -1.5px;
+    gap: 16px;
+    padding: 44px 20px;
+    transition:
+      background-color 120ms ease,
+      outline-color 120ms ease;
+  }
+
+  .modal.modal--sk .dropzone:hover,
+  .modal.modal--sk .dropzone--active {
+    background: var(--gx-sk-m-info-bg);
+    outline-color: var(--gx-ae-blue);
+  }
+
+  .modal.modal--sk .dropzone--error {
+    outline-color: var(--gx-ae-bad);
+  }
+
+  .modal.modal--sk .dropzone__glyph {
+    width: 44px;
+    height: 44px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--gx-sk-m-drop-icon-bg);
+    color: var(--gx-ae-blue);
+    opacity: 1;
+    box-sizing: border-box;
+  }
+
+  .modal.modal--sk .dropzone__title {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--gx-ae-ink);
+  }
+
+  .modal.modal--sk .dropzone__hint {
+    font-size: 11.5px;
+    color: var(--gx-sk-m-body);
+  }
+
+  .modal.modal--sk .file-chip {
+    border: none;
+    border-radius: 10px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1.5px var(--gx-sk-m-border);
+  }
+
+  .modal.modal--sk .file-chip__icon {
+    background: var(--gx-sk-m-drop-icon-bg);
+    color: var(--gx-ae-blue);
+  }
+
+  .modal.modal--sk .file-chip__name {
+    color: var(--gx-ae-blue);
+  }
+
+  .modal.modal--sk .file-chip__size {
+    color: var(--gx-sk-m-body);
+  }
+
+  .modal.modal--sk .file-chip__remove {
+    color: var(--gx-sk-m-body);
+  }
+
+  .modal.modal--sk .file-chip__remove:hover {
+    background: var(--gx-sk-chip);
+    color: var(--gx-ae-ink);
+  }
+
+  .modal.modal--sk .derived-name {
+    color: var(--gx-sk-m-body);
+  }
+
+  .modal.modal--sk .derived-name code {
+    background: var(--gx-sk-m-seg-bg);
+    box-shadow: none;
+    color: var(--gx-sk-m-mono);
+  }
+
+  /* ".sk-info-note" */
+  .modal.modal--sk .import-note {
+    border-radius: 11px;
+    background: var(--gx-sk-m-info-bg);
+    box-shadow: inset 0 0 0 1px var(--gx-sk-m-info-ring);
+    padding: 12px 13px;
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--gx-sk-m-mono);
+  }
+
+  .modal.modal--sk .field__error {
+    font-size: 11.5px;
+    color: var(--gx-ae-bad);
+  }
+
+  .modal.modal--sk .conflict__icon {
+    background: var(--gx-sk-built-bg);
+    color: var(--gx-ae-bad);
+  }
+
+  .modal.modal--sk .conflict__title {
+    color: var(--gx-ae-ink);
+  }
+
+  .modal.modal--sk .conflict__message {
+    color: var(--gx-sk-m-body);
+  }
+
+  .modal.modal--sk .btn {
+    height: 38px;
+    border-radius: 9px;
+    padding: 0 16px;
+    font-weight: 600;
+    font-size: 12.5px;
+  }
+
+  .modal.modal--sk .btn--ghost {
+    border: none;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-sk-m-border);
+    color: var(--gx-sk-m-mono);
+  }
+
+  .modal.modal--sk .btn--ghost:hover:not(:disabled) {
+    background: var(--gx-hover-soft);
+    color: var(--gx-ae-ink);
+  }
+
+  .modal.modal--sk .btn--primary {
+    background: var(--gx-ae-blue);
+    color: #fff;
+  }
+
+  .modal.modal--sk .btn--primary:hover:not(:disabled) {
+    background: var(--gx-ae-blue-hover);
+    filter: none;
+  }
+
+  .modal.modal--sk .btn--primary:disabled {
+    opacity: 1;
+    background: var(--gx-sk-m-border);
+    color: var(--gx-sk-m-body);
+  }
+
   .backdrop {
     position: fixed;
     inset: 0;
@@ -429,6 +689,9 @@ SPDX-License-Identifier: Apache-2.0
 
   .file-chip__remove {
     flex-shrink: 0;
+    /* Reset app.css's bare-<button> padding — see .icon-btn. */
+    padding: 0;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -553,6 +816,11 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .icon-btn {
+    /* See SkillEditor: reset app.css's bare-<button> padding so the glyph is
+       not squeezed to zero width. */
+    padding: 0;
+    flex-shrink: 0;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;

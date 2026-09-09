@@ -511,7 +511,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .kpi-budget__value.positive {
-    color: var(--gx-org-used);
+    color: var(--gx-an-green);
   }
 
   .kpi-budget__value.warning {
@@ -574,12 +574,12 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .progress-stack__used {
-    background: var(--gx-org-used);
+    background: var(--gx-an-green);
     flex-shrink: 0;
   }
 
   .progress-stack__dist {
-    background: var(--gx-org-dist);
+    background: var(--gx-nav-accent);
     flex-shrink: 0;
   }
 
@@ -605,11 +605,11 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .legend-dot--used {
-    background: var(--gx-org-used);
+    background: var(--gx-an-green);
   }
 
   .legend-dot--dist {
-    background: var(--gx-org-dist);
+    background: var(--gx-nav-accent);
   }
 
   .legend-dot--avail {
@@ -688,7 +688,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .meter-fill {
-    background: var(--gx-org-used);
+    background: var(--gx-an-green);
   }
 
   .meter-fill.warning {

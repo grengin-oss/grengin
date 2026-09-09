@@ -174,7 +174,7 @@ SPDX-License-Identifier: Apache-2.0
         {
           key: "latency",
           label: $_("analytics.charts.multiMetric.latency"),
-          color: "var(--gx-an-red)",
+          color: "var(--gx-danger)",
           values: points.map((point) => point.average_latency),
           tooltipOnly: true,
           format: formatMs,
@@ -263,7 +263,7 @@ SPDX-License-Identifier: Apache-2.0
         {
           key: "errors",
           label: $_("analytics.charts.apiReliability.errors"),
-          color: "var(--gx-an-red)",
+          color: "var(--gx-danger)",
           values: points.map((point) => point.error_count),
           kind: "bar",
           format: formatNumber,
@@ -1168,12 +1168,12 @@ SPDX-License-Identifier: Apache-2.0
   .table-container {
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: inset 0 0 0 1px var(--gx-an-table-ring);
+    box-shadow: inset 0 0 0 1px var(--gx-rule);
   }
 
   .table-header {
     min-height: 41px;
-    background: var(--gx-an-thead-bg);
+    background: var(--gx-ring-soft);
     border: 1px solid var(--gx-an-ring);
     display: flex;
     padding: 12px 16px;

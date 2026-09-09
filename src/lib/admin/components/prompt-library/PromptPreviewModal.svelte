@@ -13,9 +13,11 @@ SPDX-License-Identifier: Apache-2.0
     isOpen: boolean;
     onClose: () => void;
     prompt: RolePrompt | null;
+    /** Resolved name for the prompt's role, shown beside the type pill. */
+    roleName?: string;
   }
 
-  let { isOpen = $bindable(), onClose, prompt }: Props = $props();
+  let { isOpen = $bindable(), onClose, prompt, roleName }: Props = $props();
 
   let sampleValues = $state<Record<string, string>>({});
   let copiedRendered = $state(false);
@@ -54,34 +56,55 @@ SPDX-License-Identifier: Apache-2.0
   }
 </script>
 
-<Modal bind:isOpen onclose={() => { isOpen = false; onClose(); }} title={$_('admin.promptLibrary.previewPrompt')}>
-  {#if prompt}
-    <div class="preview-container">
-      <div class="preview-meta">
-        <div class="meta-row">
-          <span class="meta-label">{$_('admin.promptLibrary.preview.name')}</span>
-          <span class="meta-value">{prompt.name}</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-label">{$_('admin.promptLibrary.preview.type')}</span>
-          <span class="pill--xs {prompt.is_system ? 'system-pill' : 'user-pill'}">
-            {prompt.is_system ? $_('admin.promptLibrary.systemType') : $_('admin.promptLibrary.userType')}
-          </span>
-        </div>
-      </div>
+<!-- The dialog wears prompts.html's ".pr-modal" skin, like the create form. -->
+<Modal
+  bind:isOpen
+  onclose={() => { isOpen = false; onClose(); }}
+  title={$_('admin.promptLibrary.previewPrompt')}
+  subtitle={prompt?.name}
+  variant="prompts"
+>
+  {#snippet headerIcon()}
+    <span class="pr-header-icon" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M1.5 10S4.5 4 10 4s8.5 6 8.5 6-3 6-8.5 6-8.5-6-8.5-6z" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round" />
+        <circle cx="10" cy="10" r="2.3" stroke="currentColor" stroke-width="1.3" />
+      </svg>
+    </span>
+  {/snippet}
 
-      {#if prompt.variables.length > 0}
-        <div class="sample-section">
-          <h4>{$_('admin.promptLibrary.preview.sampleValues')}</h4>
-          <p class="sample-hint">
-            {$_('admin.promptLibrary.preview.sampleHint')}
-          </p>
-          <div class="sample-inputs">
-            {#each prompt.variables as variable}
-              <div class="sample-field">
-                <label for="sample-{variable}">
-                  <code>{`{{${variable}}}`}</code>
-                </label>
+  {#if prompt}
+    <!-- ".pr-field" — what this prompt is. -->
+    <div class="pr-field">
+      <div class="pr-label-row">
+        <span class="pr-label">{$_('admin.promptLibrary.preview.name')}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-value">{prompt.name}</span>
+        <span class="badge-pill badge-role">
+          {roleName || $_('admin.promptLibrary.unknown')}
+        </span>
+        <span class="badge-pill badge-type">
+          {prompt.is_system
+            ? $_('admin.promptLibrary.systemType')
+            : $_('admin.promptLibrary.userType')}
+        </span>
+      </div>
+    </div>
+
+    {#if prompt.variables.length > 0}
+      <div class="pr-field">
+        <div class="pr-label-row">
+          <span class="pr-label">{$_('admin.promptLibrary.preview.sampleValues')}</span>
+        </div>
+        <span class="pr-hint">{$_('admin.promptLibrary.preview.sampleHint')}</span>
+        <div class="sample-inputs">
+          {#each prompt.variables as variable (variable)}
+            <div class="sample-field">
+              <label class="sample-label" for="sample-{variable}">
+                {`{{${variable}}}`}
+              </label>
+              <div class="pr-input">
                 <input
                   id="sample-{variable}"
                   type="text"
@@ -89,234 +112,261 @@ SPDX-License-Identifier: Apache-2.0
                   placeholder={$_('admin.promptLibrary.preview.samplePlaceholder')}
                 />
               </div>
-            {/each}
-          </div>
-        </div>
-      {/if}
-
-      <div class="rendered-section">
-        <div class="rendered-header">
-          <h4>{$_('admin.promptLibrary.preview.renderedOutput')}</h4>
-          <button
-            class="copy-button"
-            onclick={handleCopyRendered}
-            title={$_('chat.message.copy')}
-          >
-            {#if copiedRendered}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"></polyline>
-                <polyline points="16 4 17 4 21 4"></polyline>
-                <line x1="21" y1="12" x2="21" y2="20"></line>
-                <line x1="17" y1="20" x2="21" y2="20"></line>
-                <line x1="16" y1="16" x2="21" y2="16"></line>
-              </svg>
-              <span>Copied!</span>
-            {:else}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-              <span>Copy</span>
-            {/if}
-          </button>
-        </div>
-        <div class="rendered-text">
-          {renderedPrompt()}
+            </div>
+          {/each}
         </div>
       </div>
+    {/if}
+
+    <div class="pr-field">
+      <div class="pr-prompt-label-row">
+        <div class="pr-label-row">
+          <span class="pr-label">{$_('admin.promptLibrary.preview.renderedOutput')}</span>
+        </div>
+        <button
+          class="copy-button"
+          type="button"
+          onclick={handleCopyRendered}
+          title={$_('admin.promptLibrary.preview.copy')}
+        >
+          {#if copiedRendered}
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M2.5 7.5 5.5 10.5 11.5 4" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round" />
+            </svg>
+            <span>{$_('admin.promptLibrary.preview.copied')}</span>
+          {:else}
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <rect x="3" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.1" />
+              <path d="M5.5 3V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-1" stroke="currentColor" stroke-width="1.1" fill="none" />
+            </svg>
+            <span>{$_('admin.promptLibrary.preview.copy')}</span>
+          {/if}
+        </button>
+      </div>
+      <div class="rendered-text">{renderedPrompt()}</div>
     </div>
   {/if}
 </Modal>
 
 <style>
-  .preview-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+  /* app.css paints every bare control as a glass pill; each rule below paints
+     its own flat skin instead. */
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
-  .preview-meta {
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  input {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    font-family: var(--gx-font);
+  }
+
+  input:focus {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .pr-header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--gx-org-kpi-icon-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gx-tools-badge);
+    flex-shrink: 0;
+  }
+
+  .pr-field {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 14px 16px;
-    background: var(--surface-subtle);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--surface-border);
+    gap: 8px;
+    align-self: stretch;
+  }
+
+  .pr-label-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .pr-label {
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+  }
+
+  .pr-prompt-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .pr-hint {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--gx-slate-500);
+  }
+
+  .pr-input {
+    height: 41px;
+    border-radius: 10px;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    background: var(--gx-card);
+    box-sizing: border-box;
+    transition: box-shadow 120ms ease;
+  }
+
+  .pr-input:focus-within {
+    box-shadow: inset 0 0 0 1.5px var(--gx-tx-chip-icon-fg);
+  }
+
+  .pr-input input {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+  }
+
+  .pr-input input::placeholder {
+    color: var(--gx-slate-500);
+    opacity: 1;
   }
 
   .meta-row {
     display: flex;
+    gap: 8px;
     align-items: center;
-    gap: 12px;
-  }
-
-  .meta-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    min-width: 60px;
+    flex-wrap: wrap;
   }
 
   .meta-value {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-
-  .system-pill,
-  .user-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-radius: var(--radius-full);
-    font-size: 11px;
     font-weight: 600;
+    font-size: 15px;
+    line-height: 100%;
+    color: var(--gx-an-strong);
   }
 
-  .system-pill {
-    background: color-mix(in oklab, var(--brand) 15%, var(--button-bg));
-    color: var(--brand);
-    border: 1px solid color-mix(in oklab, var(--brand) 25%, transparent);
-  }
-
-  .user-pill {
-    background: color-mix(in oklab, var(--brand-green) 15%, var(--button-bg));
-    color: var(--brand-green);
-    border: 1px solid color-mix(in oklab, var(--brand-green) 25%, transparent);
-  }
-
-  .sample-section {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .sample-section h4 {
-    font-size: 14px;
+  .badge-pill {
+    border-radius: 999px;
+    padding: 4px 10px;
     font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-  }
-
-  .sample-hint {
     font-size: 12px;
-    color: var(--text-secondary);
-    margin: 0;
+    line-height: 100%;
+    display: inline-flex;
+    white-space: nowrap;
+  }
+
+  .badge-role {
+    background: var(--gx-an-insight-bg);
+    color: var(--gx-an-chip-fg);
+  }
+
+  .badge-type {
+    background: var(--gx-blue-soft);
+    color: var(--gx-ac-system-fg);
   }
 
   .sample-inputs {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    align-self: stretch;
   }
 
   .sample-field {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
   }
 
-  .sample-field label {
-    font-size: 12px;
+  .sample-label {
+    font-family: var(--gx-mono, ui-monospace, "SF Mono", Menlo, monospace);
     font-weight: 500;
-    color: var(--text-secondary);
-  }
-
-  .sample-field label code {
     font-size: 12px;
-    padding: 1px 4px;
-    background: color-mix(in oklab, var(--brand) 10%, var(--button-bg));
-    border-radius: 4px;
-    color: var(--brand);
-  }
-
-  .sample-field input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid var(--button-border);
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    color: var(--text-primary);
-    background: var(--button-bg);
-    transition: border-color 0.2s;
-  }
-
-  .sample-field input:focus {
-    outline: none;
-    border-color: var(--brand);
-    background: var(--btn-secondary);
-  }
-
-  .rendered-section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .rendered-section h4 {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-  }
-
-  .rendered-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .rendered-header h4 {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
+    line-height: 100%;
+    color: var(--gx-tx-chip-icon-fg);
   }
 
   .copy-button {
+    height: 30px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px var(--gx-ac-slate-300);
+    padding: 0 12px;
     display: flex;
+    gap: 6px;
     align-items: center;
-    gap: var(--space-xs);
-    padding: 6px 10px;
-    background: var(--button-bg);
-    border: 1px solid var(--button-border);
-    border-radius: var(--radius-sm);
-    color: var(--text-secondary);
+    font-weight: 600;
     font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    line-height: 100%;
+    color: var(--gx-ac-slate-600);
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
   }
 
   .copy-button:hover {
-    background: var(--btn-secondary);
-    border-color: var(--brand);
-    color: var(--brand);
-    transform: translateY(-1px);
+    background: var(--gx-page);
   }
 
-  .copy-button:active {
-    transform: translateY(0);
+  .copy-button:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
   }
 
   .copy-button svg {
+    display: block;
     flex-shrink: 0;
   }
 
+  /* The rendered prompt reads as code, like ".pr-textarea" in the form. */
   .rendered-text {
+    border-radius: 10px;
+    background: var(--gx-org-table-row-hover);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
     padding: 16px;
-    background: var(--surface-card);
-    border: 1px solid var(--surface-border);
-    border-radius: var(--radius-md);
-    font-size: 14px;
-    line-height: 1.7;
-    color: var(--text-primary);
+    font-family: var(--gx-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--gx-an-strong);
     white-space: pre-wrap;
-    word-break: break-word;
-    max-height: 300px;
-    overflow-y: auto;
+    overflow-wrap: break-word;
+    align-self: stretch;
   }
 </style>

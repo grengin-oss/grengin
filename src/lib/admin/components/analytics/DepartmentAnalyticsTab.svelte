@@ -562,7 +562,7 @@ SPDX-License-Identifier: Apache-2.0
   .table-container {
     border-radius: 12px;
     overflow-x: auto;
-    box-shadow: inset 0 0 0 1px var(--gx-an-table-ring);
+    box-shadow: inset 0 0 0 1px var(--gx-rule);
   }
 
   /* Header and rows share one track list so the columns line up. */
@@ -586,7 +586,7 @@ SPDX-License-Identifier: Apache-2.0
 
   .table-header {
     min-height: 41px;
-    background: var(--gx-an-thead-bg);
+    background: var(--gx-ring-soft);
     border: 1px solid var(--gx-an-ring);
   }
 
@@ -697,7 +697,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .table-value--error {
-    color: var(--gx-an-red);
+    color: var(--gx-danger);
   }
 
   .table-value--cost {

@@ -1539,7 +1539,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .ch-item:hover {
-    background: var(--gx-nav-hover);
+    background: var(--gx-org-row-hover);
     transform: none;
     box-shadow: none;
   }

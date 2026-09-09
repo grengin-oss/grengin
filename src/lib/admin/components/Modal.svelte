@@ -23,14 +23,22 @@ SPDX-License-Identifier: Apache-2.0
      * gradient rule across the header and a pinned footer bar;
      * "ai-engines" and "ai-connect" are the two dialogs from ai-engines.html
      * (.cfg-modal, 560px, and .cnx-modal, 680px) — same gradient rule, but a
-     * tinted footer whose actions sit right.
+     * tinted footer whose actions sit right;
+     * "mcp-servers" is the 560px card from mcp-servers.html (.add-modal), whose
+     * footer slot is unpadded so the page can stack its own error banner above
+     * the action bar;
+     * "prompts" is the 580px card from prompts.html (.pr-modal) — a 6px
+     * gradient rule, a tile-and-subtitle header, and a plain footer whose
+     * actions sit right.
      */
     variant?:
       | "default"
       | "organization"
       | "access-control"
       | "ai-engines"
-      | "ai-connect";
+      | "ai-connect"
+      | "mcp-servers"
+      | "prompts";
     /** Pinned footer bar, outside the scrolling body (access-control design). */
     footer?: any;
     /** Second line under the title (ai-engines design: ".cfg-subtitle"). */
@@ -257,6 +265,8 @@ SPDX-License-Identifier: Apache-2.0
       class:modal-backdrop--ac={variant === "access-control"}
       class:modal-backdrop--ae={variant === "ai-engines" ||
         variant === "ai-connect"}
+      class:modal-backdrop--mcp={variant === "mcp-servers"}
+      class:modal-backdrop--pr={variant === "prompts"}
       data-modal-id={modalId}
       onclick={handleBackdropClick}
       onkeydown={(e) => e.key === "Enter" && handleBackdropClick(e as any)}
@@ -272,6 +282,8 @@ SPDX-License-Identifier: Apache-2.0
         class:modal-content--ac={variant === "access-control"}
         class:modal-content--ae={variant === "ai-engines"}
         class:modal-content--cnx={variant === "ai-connect"}
+        class:modal-content--mcp={variant === "mcp-servers"}
+        class:modal-content--pr={variant === "prompts"}
       >
         <div class="modal-header">
           <div class="modal-header-left">
@@ -604,6 +616,234 @@ SPDX-License-Identifier: Apache-2.0
     padding: 20px;
     background: var(--gx-surface-rail);
     border-top: 1px solid var(--gx-line);
+  }
+
+  /* ===== "mcp-servers" variant (mcp-servers.html .add-modal) =====
+     560px card, a 6px gradient rule across the top, and a footer slot the page
+     fills itself: the design stacks a full-bleed error banner directly on the
+     action bar, so this variant hands over an unpadded, unruled footer rather
+     than painting one. Selectors are doubled for the same reason as the
+     variants above — the base .modal-content rules come later in this sheet. */
+  .modal-backdrop.modal-backdrop--mcp {
+    background: var(--gx-ac-modal-scrim);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .modal-content.modal-content--mcp {
+    position: relative;
+    width: 560px;
+    max-width: calc(100vw - 32px);
+    max-height: 90vh;
+    overflow: hidden;
+    border: none;
+    border-radius: 20px;
+    background: var(--gx-card);
+    box-shadow: var(--gx-mcp-modal-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--gx-font);
+  }
+
+  .modal-content.modal-content--mcp .modal-header {
+    position: relative;
+    min-height: 85px;
+    padding: 20px 24px;
+    border: none;
+    box-shadow: inset 0 0 0 1px var(--gx-mcp-m-hair);
+    flex-shrink: 0;
+  }
+
+  .modal-content.modal-content--mcp .modal-header::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 6px;
+    background: linear-gradient(
+      90deg,
+      rgb(74, 125, 212) 0%,
+      rgb(46, 168, 117) 100%
+    );
+  }
+
+  .modal-content.modal-content--mcp .modal-title {
+    font-family: var(--gx-font);
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 100%;
+    color: var(--gx-mcp-m-ink);
+  }
+
+  .modal-content.modal-content--mcp .modal-subtitle {
+    color: var(--gx-mcp-dim);
+  }
+
+  /* The design keeps the brand tile 12px from the heading even with a subtitle,
+     where the shared rule opens the gap to 16px. */
+  .modal-content.modal-content--mcp .modal-header-left:has(.modal-subtitle) {
+    gap: 12px;
+  }
+
+  .modal-content.modal-content--mcp .modal-heading {
+    gap: 4px;
+  }
+
+  .modal-content.modal-content--mcp .modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
+  }
+
+  .modal-content.modal-content--mcp .modal-close:hover {
+    background: var(--gx-mcp-m-hair);
+    color: var(--gx-an-sub);
+  }
+
+  .modal-content.modal-content--mcp .modal-close svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Sections own their own rules and vertical rhythm, so the body only sets the
+     gutters and the scroll. */
+  .modal-content.modal-content--mcp .modal-body {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 24px 20px;
+    align-items: stretch;
+    align-self: stretch;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0;
+  }
+
+  .modal-content.modal-content--mcp .modal-footer {
+    display: block;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    flex-shrink: 0;
+  }
+
+  /* ===== "prompts" variant (prompts.html .pr-modal) =====
+     580px card, the same 6px gradient rule as mcp-servers, a 40px brand tile
+     beside a title-and-subtitle heading, and a plain white footer whose actions
+     sit right. Selectors are doubled for the same reason as the variants above
+     — the base .modal-content rules come later in this sheet. */
+  .modal-backdrop.modal-backdrop--pr {
+    background: var(--gx-ac-modal-scrim);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .modal-content.modal-content--pr {
+    position: relative;
+    width: 580px;
+    max-width: calc(100vw - 32px);
+    max-height: 90vh;
+    overflow: hidden;
+    border: none;
+    border-radius: 20px;
+    background: var(--gx-card);
+    box-shadow: var(--gx-pr-modal-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--gx-font);
+  }
+
+  .modal-content.modal-content--pr .modal-header {
+    position: relative;
+    min-height: 90px;
+    padding: 24px;
+    border: none;
+    border-bottom: 1px solid var(--gx-hair);
+    flex-shrink: 0;
+  }
+
+  .modal-content.modal-content--pr .modal-header::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 6px;
+    background: linear-gradient(
+      90deg,
+      rgb(74, 125, 212) 0%,
+      rgb(46, 168, 117) 100%
+    );
+  }
+
+  .modal-content.modal-content--pr .modal-title {
+    font-family: var(--gx-font);
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+  }
+
+  .modal-content.modal-content--pr .modal-subtitle {
+    font-size: 13px;
+    color: var(--gx-slate-500);
+  }
+
+  .modal-content.modal-content--pr .modal-heading {
+    gap: 4px;
+  }
+
+  .modal-content.modal-content--pr .modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-an-chip-ring);
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
+  }
+
+  .modal-content.modal-content--pr .modal-close:hover {
+    background: var(--gx-an-insight-bg);
+    color: var(--gx-an-sub);
+  }
+
+  .modal-content.modal-content--pr .modal-close svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .modal-content.modal-content--pr .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+    align-items: stretch;
+    align-self: stretch;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0;
+  }
+
+  .modal-content.modal-content--pr .modal-footer {
+    min-height: 79px;
+    display: flex;
+    gap: 12px;
+    padding: 20px;
+    justify-content: flex-end;
+    align-items: center;
+    background: var(--gx-card);
+    border-top: 1px solid var(--gx-hair);
+    flex-shrink: 0;
   }
 
   .modal-backdrop {
