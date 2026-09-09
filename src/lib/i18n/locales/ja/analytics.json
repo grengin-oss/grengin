@@ -186,6 +186,23 @@
         "subtitle": "時間経過に伴う総支出",
         "totalCost": "総コスト"
       },
+      "dataTable": {
+        "caption": "{chartName} のデータ",
+        "subtitleDays": "データ表ビュー · {count} 日分を表示",
+        "subtitleHours": "データ表ビュー · {count} 時間分を表示",
+        "subtitleMonths": "データ表ビュー · {count} か月分を表示",
+        "peak": "ピーク",
+        "exportCsv": "CSV をエクスポート",
+        "close": "閉じる",
+        "stats": {
+          "total": "{metric} 合計",
+          "avgTokensPerRequest": "平均トークン / リクエスト",
+          "avgLatency": "平均レイテンシ",
+          "successRate": "成功率",
+          "avgCost": "平均コスト",
+          "peakCost": "最大コスト"
+        }
+      },
       "emptyState": {
         "title": "選択した日付範囲の時系列データがありません",
         "hint": "別の日付範囲を選択するか、後でもう一度お試しください"

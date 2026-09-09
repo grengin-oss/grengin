@@ -51,11 +51,39 @@ SPDX-License-Identifier: Apache-2.0
     id: string;
     label: string;
     value: (row: TimeseriesDataPoint) => string | number;
+    /** Magnitude behind the cell — the data table bars and peak row read it. */
+    numeric?: (row: TimeseriesDataPoint) => number;
+    /** Bar colour in the data table: the series colour the chart draws. */
+    color?: string;
+  }
+
+  interface SummaryStat {
+    label: string;
+    value: string;
   }
 
   const points = $derived(timeseriesData?.data ?? []);
   const hasPoints = $derived(points.length > 0);
   const lowercaseRange = $derived(rangeLabel.toLocaleLowerCase());
+
+  function sum(values: number[]): number {
+    return values.reduce((total, value) => total + value, 0);
+  }
+
+  /** The aggregates behind the data table's summary strip. */
+  const totals = $derived({
+    requests: sum(points.map((point) => point.total_requests)),
+    tokens: sum(points.map((point) => point.total_tokens)),
+    cost: sum(points.map((point) => point.total_cost)),
+    success: sum(points.map((point) => point.success_count)),
+    errors: sum(points.map((point) => point.error_count)),
+    avgLatency: points.length
+      ? sum(points.map((point) => point.average_latency)) / points.length
+      : 0,
+    peakCost: points.length
+      ? Math.max(...points.map((point) => point.total_cost))
+      : 0,
+  });
 
   function formatNumber(num: number): string {
     if (num >= 1000000) {
@@ -128,6 +156,25 @@ SPDX-License-Identifier: Apache-2.0
     points.map((point) => fullLabel(point.timestamp)),
   );
 
+  /** "Data table view · 30 days shown" — the unit follows the granularity. */
+  const dataTableSubtitle = $derived(
+    $_(
+      timeseriesData?.granularity === "hour"
+        ? "analytics.charts.dataTable.subtitleHours"
+        : timeseriesData?.granularity === "month"
+          ? "analytics.charts.dataTable.subtitleMonths"
+          : "analytics.charts.dataTable.subtitleDays",
+      { values: { count: points.length } },
+    ),
+  );
+
+  /** The period the rows cover, e.g. "Aug 14, 2026 – Aug 20, 2026". */
+  const dataTableRange = $derived(
+    fullLabels.length > 1
+      ? `${fullLabels[0]} – ${fullLabels[fullLabels.length - 1]}`
+      : (fullLabels[0] ?? ""),
+  );
+
   interface ChartConfig {
     id: ChartId;
     tabLabel: string;
@@ -145,6 +192,10 @@ SPDX-License-Identifier: Apache-2.0
       format?: (value: number) => string;
     }[];
     columns: TableColumn[];
+    /** The data table's summary strip. */
+    stats: SummaryStat[];
+    /** Column whose maximum marks the data table's "Peak" row. */
+    peakColumnId: string;
     /** Series the insight sentence talks about. */
     insightKey: string;
   }
@@ -190,18 +241,43 @@ SPDX-License-Identifier: Apache-2.0
           id: "requests",
           label: $_("analytics.charts.multiMetric.requests"),
           value: (row) => formatNumber(row.total_requests),
+          numeric: (row) => row.total_requests,
+          color: "var(--gx-an-line)",
         },
         {
           id: "tokens",
           label: $_("analytics.charts.multiMetric.tokens"),
           value: (row) => formatNumber(row.total_tokens),
+          numeric: (row) => row.total_tokens,
+          color: "var(--gx-an-area)",
         },
         {
           id: "latency",
           label: $_("analytics.charts.multiMetric.latencyMs"),
           value: (row) => row.average_latency.toFixed(2),
+          numeric: (row) => row.average_latency,
+          color: "var(--gx-danger)",
         },
       ],
+      stats: [
+        {
+          label: $_("analytics.charts.dataTable.stats.total", {
+            values: { metric: $_("analytics.charts.multiMetric.requests") },
+          }),
+          value: formatNumber(totals.requests),
+        },
+        {
+          label: $_("analytics.charts.dataTable.stats.total", {
+            values: { metric: $_("analytics.charts.multiMetric.tokens") },
+          }),
+          value: formatNumber(totals.tokens),
+        },
+        {
+          label: $_("analytics.charts.dataTable.stats.avgLatency"),
+          value: formatMs(totals.avgLatency),
+        },
+      ],
+      peakColumnId: "requests",
       insightKey: "requests",
     },
     {
@@ -237,13 +313,38 @@ SPDX-License-Identifier: Apache-2.0
           id: "requests",
           label: $_("analytics.charts.usageGrowth.requests"),
           value: (row) => formatNumber(row.total_requests),
+          numeric: (row) => row.total_requests,
+          color: "var(--gx-an-bar-blue)",
         },
         {
           id: "tokens",
           label: $_("analytics.charts.usageGrowth.tokens"),
           value: (row) => formatNumber(row.total_tokens),
+          numeric: (row) => row.total_tokens,
+          color: "var(--gx-an-area)",
         },
       ],
+      stats: [
+        {
+          label: $_("analytics.charts.dataTable.stats.total", {
+            values: { metric: $_("analytics.charts.usageGrowth.requests") },
+          }),
+          value: formatNumber(totals.requests),
+        },
+        {
+          label: $_("analytics.charts.dataTable.stats.total", {
+            values: { metric: $_("analytics.charts.usageGrowth.tokens") },
+          }),
+          value: formatNumber(totals.tokens),
+        },
+        {
+          label: $_("analytics.charts.dataTable.stats.avgTokensPerRequest"),
+          value: formatNumber(
+            totals.requests > 0 ? totals.tokens / totals.requests : 0,
+          ),
+        },
+      ],
+      peakColumnId: "tokens",
       insightKey: "tokens",
     },
     {
@@ -279,13 +380,42 @@ SPDX-License-Identifier: Apache-2.0
           id: "success",
           label: $_("analytics.charts.apiReliability.success"),
           value: (row) => formatNumber(row.success_count),
+          numeric: (row) => row.success_count,
+          color: "var(--gx-an-success)",
         },
         {
           id: "errors",
           label: $_("analytics.charts.apiReliability.errors"),
           value: (row) => formatNumber(row.error_count),
+          numeric: (row) => row.error_count,
+          color: "var(--gx-danger)",
         },
       ],
+      stats: [
+        {
+          label: $_("analytics.charts.dataTable.stats.total", {
+            values: { metric: $_("analytics.charts.apiReliability.success") },
+          }),
+          value: formatNumber(totals.success),
+        },
+        {
+          label: $_("analytics.charts.dataTable.stats.total", {
+            values: { metric: $_("analytics.charts.apiReliability.errors") },
+          }),
+          value: formatNumber(totals.errors),
+        },
+        {
+          label: $_("analytics.charts.dataTable.stats.successRate"),
+          value:
+            totals.success + totals.errors > 0
+              ? (
+                  (totals.success / (totals.success + totals.errors)) *
+                  100
+                ).toFixed(1) + "%"
+              : "—",
+        },
+      ],
+      peakColumnId: "success",
       insightKey: "success",
     },
     {
@@ -312,9 +442,29 @@ SPDX-License-Identifier: Apache-2.0
         {
           id: "cost",
           label: $_("analytics.charts.costTrend.totalCost"),
-          value: (row) => formatCurrency(row.total_cost),
+          value: (row) => formatCurrencyPrecise(row.total_cost),
+          numeric: (row) => row.total_cost,
+          color: "var(--gx-an-area)",
         },
       ],
+      stats: [
+        {
+          // The column already reads "Total Cost", so it needs no second "Total".
+          label: $_("analytics.charts.costTrend.totalCost"),
+          value: formatCurrency(totals.cost),
+        },
+        {
+          label: $_("analytics.charts.dataTable.stats.avgCost"),
+          value: formatCurrencyPrecise(
+            points.length > 0 ? totals.cost / points.length : 0,
+          ),
+        },
+        {
+          label: $_("analytics.charts.dataTable.stats.peakCost"),
+          value: formatCurrencyPrecise(totals.peakCost),
+        },
+      ],
+      peakColumnId: "cost",
       insightKey: "cost",
     },
   ]);
@@ -772,9 +922,15 @@ SPDX-License-Identifier: Apache-2.0
 {#if isDataTableOpen && hasPoints}
   <ChartDataTableModal
     title={chart.title}
-    caption={`${chart.title} data`}
+    subtitle={dataTableSubtitle}
+    caption={$_("analytics.charts.dataTable.caption", {
+      values: { chartName: chart.title },
+    })}
     rows={points}
     columns={chart.columns}
+    stats={chart.stats}
+    peakColumnId={chart.peakColumnId}
+    rangeCaption={dataTableRange}
     onClose={closeDataTable}
   />
 {/if}

@@ -560,6 +560,24 @@
      --gx-org-danger (the destructive badge) / --gx-hover-soft. Only the violet
      badge's fill is a shade no token carried. */
   --gx-al-violet-bg: rgb(243, 238, 254);
+
+  /* ===== Chart data-table dialog (usage-analytics-overview.html .vdt) =====
+     The 680px dialog every "View Data Table" button opens. It reuses
+     --gx-card / --gx-hair / --gx-slate-900 / --gx-an-sub / --gx-an-chip-ring /
+     --gx-an-insight-bg (the bar track) / --gx-an-bar-blue + --gx-an-area (the
+     bars) / --gx-hair-strong (the Export button ring) / --gx-mcp-dim (the stat
+     labels) / --gx-org-track. New here: the dialog shadow, the tinted
+     stat-and-footer surface, the amber peak row and the primary Close. */
+  --gx-vdt-shadow: 0 16px 48px -4px rgba(0, 0, 0, 0.251);
+  --gx-vdt-surface: rgb(248, 248, 249);
+  --gx-vdt-icon-bg: rgb(235, 241, 250);
+  --gx-vdt-row-hair: rgb(243, 244, 246);
+  --gx-vdt-peak-bg: rgb(255, 248, 235);
+  --gx-vdt-peak-ring: rgb(253, 230, 210);
+  --gx-vdt-peak-badge-ring: rgb(252, 227, 204);
+  --gx-vdt-peak-fg: rgb(138, 90, 14);
+  --gx-vdt-cta: rgb(59, 103, 189);
+  --gx-vdt-cta-hover: rgb(48, 89, 168);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -816,6 +834,16 @@
     --gx-pr-modal-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.55);
     --gx-pr-danger-ring: rgba(239, 68, 68, 0.38);
     --gx-al-violet-bg: rgba(110, 79, 201, 0.24);
+    --gx-vdt-shadow: 0 16px 48px -4px rgba(0, 0, 0, 0.6);
+    --gx-vdt-surface: rgba(255, 255, 255, 0.04);
+    --gx-vdt-icon-bg: rgba(66, 122, 198, 0.22);
+    --gx-vdt-row-hair: rgba(255, 255, 255, 0.08);
+    --gx-vdt-peak-bg: rgba(217, 119, 6, 0.14);
+    --gx-vdt-peak-ring: rgba(217, 119, 6, 0.32);
+    --gx-vdt-peak-badge-ring: rgba(217, 119, 6, 0.42);
+    --gx-vdt-peak-fg: #f0b46a;
+    --gx-vdt-cta: rgb(90, 133, 208);
+    --gx-vdt-cta-hover: rgb(112, 155, 218);
     --gx-org-field-bg: rgba(255, 255, 255, 0.04);
     --gx-org-primary-500: rgb(112, 155, 218);
     --gx-org-primary-500-hover: rgb(134, 172, 227);

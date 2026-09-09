@@ -186,6 +186,23 @@
         "subtitle": "Total spending over time",
         "totalCost": "Total Cost"
       },
+      "dataTable": {
+        "caption": "{chartName} data",
+        "subtitleDays": "Data table view · {count} days shown",
+        "subtitleHours": "Data table view · {count} hours shown",
+        "subtitleMonths": "Data table view · {count} months shown",
+        "peak": "Peak",
+        "exportCsv": "Export CSV",
+        "close": "Close",
+        "stats": {
+          "total": "Total {metric}",
+          "avgTokensPerRequest": "Avg tokens / request",
+          "avgLatency": "Avg latency",
+          "successRate": "Success rate",
+          "avgCost": "Avg cost",
+          "peakCost": "Peak cost"
+        }
+      },
       "emptyState": {
         "title": "No timeseries data available for the selected date range",
         "hint": "Try selecting a different date range or check back later"

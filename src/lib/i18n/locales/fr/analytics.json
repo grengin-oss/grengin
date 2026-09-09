@@ -186,6 +186,23 @@
         "subtitle": "Dépenses totales au fil du temps",
         "totalCost": "Coût total"
       },
+      "dataTable": {
+        "caption": "Données de {chartName}",
+        "subtitleDays": "Vue tableau de données · {count} jours affichés",
+        "subtitleHours": "Vue tableau de données · {count} heures affichées",
+        "subtitleMonths": "Vue tableau de données · {count} mois affichés",
+        "peak": "Pic",
+        "exportCsv": "Exporter en CSV",
+        "close": "Fermer",
+        "stats": {
+          "total": "{metric} au total",
+          "avgTokensPerRequest": "Jetons moyens / requête",
+          "avgLatency": "Latence moyenne",
+          "successRate": "Taux de réussite",
+          "avgCost": "Coût moyen",
+          "peakCost": "Coût maximal"
+        }
+      },
       "emptyState": {
         "title": "Aucune donnée de série temporelle disponible pour la plage de dates sélectionnée",
         "hint": "Essayez de sélectionner une plage de dates différente ou revenez plus tard"

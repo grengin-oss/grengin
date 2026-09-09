@@ -186,6 +186,23 @@
         "subtitle": "إجمالي الإنفاق بمرور الوقت",
         "totalCost": "إجمالي التكلفة"
       },
+      "dataTable": {
+        "caption": "بيانات {chartName}",
+        "subtitleDays": "عرض جدول البيانات · {count} يوم معروض",
+        "subtitleHours": "عرض جدول البيانات · {count} ساعة معروضة",
+        "subtitleMonths": "عرض جدول البيانات · {count} شهر معروض",
+        "peak": "الذروة",
+        "exportCsv": "تصدير CSV",
+        "close": "إغلاق",
+        "stats": {
+          "total": "إجمالي {metric}",
+          "avgTokensPerRequest": "متوسط الرموز / الطلب",
+          "avgLatency": "متوسط زمن الاستجابة",
+          "successRate": "معدل النجاح",
+          "avgCost": "متوسط التكلفة",
+          "peakCost": "ذروة التكلفة"
+        }
+      },
       "emptyState": {
         "title": "لا توجد بيانات السلسلة الزمنية متاحة لنطاق التاريخ المحدد",
         "hint": "جرب تحديد نطاق تاريخ مختلف أو راجع لاحقًا"
