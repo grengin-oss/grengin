@@ -651,7 +651,7 @@ SPDX-License-Identifier: Apache-2.0
     font-size: 13px;
     font-weight: 500;
     line-height: 1.4;
-    color: var(--us-body);
+    color: var(--us-ok);
   }
 
   /* ---------------- ".skill-card" grid ---------------- */
