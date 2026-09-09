@@ -1806,7 +1806,7 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--gx-tx-file-icon-fg);
+    color: var(--gx-danger);
     flex-shrink: 0;
   }
 
@@ -1832,7 +1832,7 @@ SPDX-License-Identifier: Apache-2.0
     font-family: var(--gx-font);
     font-size: 11px;
     line-height: 14px;
-    color: var(--gx-tx-file-size);
+    color: var(--gx-org-slate-350);
   }
 
   .att-file__dl {
@@ -1840,7 +1840,7 @@ SPDX-License-Identifier: Apache-2.0
     padding: 0;
     border: none;
     background: none;
-    color: var(--gx-tx-file-size);
+    color: var(--gx-org-slate-350);
     display: flex;
     align-items: center;
     flex-shrink: 0;

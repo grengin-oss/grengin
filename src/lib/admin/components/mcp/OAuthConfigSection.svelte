@@ -18,6 +18,12 @@ SPDX-License-Identifier: Apache-2.0
     tokenUrl: string;
     showClientSecret: boolean;
     disabled?: boolean;
+    /**
+     * The mcp-servers design puts the Auth Type choice in the dialog's own
+     * "Connection" section, so the page owns that control and this section
+     * renders only the OAuth detail that hangs off it.
+     */
+    hideAuthType?: boolean;
     errors?: Record<string, string>;
     onAuthTypeChange: (value: McpAuthType) => void;
     onAuthModeChange: (value: McpAuthMode) => void;
@@ -41,6 +47,7 @@ SPDX-License-Identifier: Apache-2.0
     tokenUrl,
     showClientSecret,
     disabled = false,
+    hideAuthType = false,
     errors = {},
     onAuthTypeChange,
     onAuthModeChange,
@@ -109,23 +116,25 @@ SPDX-License-Identifier: Apache-2.0
 </script>
 
 <div class="oauth-config-section">
-  <div class="section-header">
-    <h4 class="section-title">{$_('admin.mcpOAuth.authentication')}</h4>
-  </div>
+  {#if !hideAuthType}
+    <div class="section-header">
+      <h4 class="section-title">{$_('admin.mcpOAuth.authentication')}</h4>
+    </div>
 
-  <div class="form-group">
-    <label for="auth-type">{$_('admin.mcpOAuth.authType')}</label>
-    <select
-      id="auth-type"
-      value={authType}
-      onchange={handleAuthTypeSelect}
-      {disabled}
-    >
-      <option value="none">{$_('admin.mcpOAuth.authTypes.none')}</option>
-      <option value="api_key">{$_('admin.mcpOAuth.authTypes.apiKey')}</option>
-      <option value="oauth2">{$_('admin.mcpOAuth.authTypes.oauth2')}</option>
-    </select>
-  </div>
+    <div class="form-group">
+      <label for="auth-type">{$_('admin.mcpOAuth.authType')}</label>
+      <select
+        id="auth-type"
+        value={authType}
+        onchange={handleAuthTypeSelect}
+        {disabled}
+      >
+        <option value="none">{$_('admin.mcpOAuth.authTypes.none')}</option>
+        <option value="api_key">{$_('admin.mcpOAuth.authTypes.apiKey')}</option>
+        <option value="oauth2">{$_('admin.mcpOAuth.authTypes.oauth2')}</option>
+      </select>
+    </div>
+  {/if}
 
   {#if isOAuth}
     <div class="oauth-fields" class:oauth-fields--disabled={disabled}>
@@ -289,78 +298,151 @@ SPDX-License-Identifier: Apache-2.0
 </div>
 
 <style>
+  /* ===== mcp-servers.html, transcribed =====
+     This section renders inside the Add/Edit MCP Server dialog, so every
+     control repeats that design's field vocabulary: a 13px/700 label over a
+     9px-radius box carrying a 1.5px inset ring that turns blue on focus. */
+
+  /* app.css paints bare <input>/<select>/<button> as a glass pill. Strip that
+     once here so each rule below paints its own flat skin. */
+  input,
+  select {
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    font-family: var(--gx-font);
+  }
+
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    transition: none;
+  }
+
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
+  }
+
   .oauth-config-section {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: 14px;
+    align-self: stretch;
+    font-family: var(--gx-font);
   }
 
   .section-header {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 8px;
   }
 
   .section-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary);
     margin: 0;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--gx-mcp-m-section);
   }
 
+  /* ".add-field" */
   .form-group {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: 6px;
   }
 
+  /* ".add-label" */
   .form-group label,
   .section-label {
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-mcp-m-label);
   }
 
+  /* ".add-input" */
   .form-group input,
   .form-group select {
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(var(--glass-tint), 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    transition: border-color 0.2s ease;
+    padding: 10px 13px;
+    border-radius: 9px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1.5px var(--gx-mcp-m-ring);
+    color: var(--gx-mcp-m-ink);
+    font-weight: 400;
+    font-size: 14px;
+    transition: box-shadow 120ms ease;
+  }
+
+  .form-group select {
+    appearance: none;
+    cursor: pointer;
+    /* Room for the chevron the background image paints on the trailing edge. */
+    padding-inline-end: 34px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='m3 4.5 3 3 3-3' stroke='%236B7281' stroke-width='1.2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 13px center;
+  }
+
+  :global([dir="rtl"]) .form-group select {
+    background-position: left 13px center;
   }
 
   .form-group input:focus,
   .form-group select:focus {
-    outline: none;
-    border-color: var(--brand);
+    box-shadow: inset 0 0 0 1.5px var(--gx-tx-chip-icon-fg);
+  }
+
+  .form-group input::placeholder {
+    color: var(--gx-mcp-m-placeholder);
+    opacity: 1;
   }
 
   .form-group input.error,
   .form-group select.error {
-    border-color: var(--brand-red);
+    box-shadow: inset 0 0 0 1.5px var(--gx-mcp-deny);
   }
 
   .error-text {
-    font-size: 0.75rem;
-    color: var(--brand-red);
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--gx-mcp-deny);
   }
 
+  /* ".seg-help" */
   .form-hint {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--gx-mcp-m-placeholder);
   }
 
+  /* The OAuth detail sits in a tinted well so it reads as one block hanging off
+     the Auth Type choice above it. */
   .oauth-fields {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
-    padding: var(--space-lg);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-lg);
-    background: rgba(var(--glass-tint), 0.02);
+    gap: 14px;
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--gx-mcp-code-bg);
+    box-shadow: inset 0 0 0 1px var(--gx-mcp-m-hair);
   }
 
   .oauth-fields--disabled {
@@ -371,19 +453,21 @@ SPDX-License-Identifier: Apache-2.0
   .auth-mode-options {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-md);
+    gap: 10px;
   }
 
   .auth-mode-option {
     display: flex;
     align-items: flex-start;
-    gap: var(--space-sm);
-    padding: var(--space-md);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-md);
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1.5px var(--gx-mcp-m-ring);
     cursor: pointer;
-    transition: all 0.2s ease;
-    background: transparent;
+    transition:
+      box-shadow 120ms ease,
+      background-color 120ms ease;
   }
 
   .auth-mode-option input[type="radio"] {
@@ -391,30 +475,29 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .auth-mode-option:hover {
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(var(--glass-tint), 0.04);
+    background: var(--gx-an-field-bg);
   }
 
   .auth-mode-option--active {
-    border-color: var(--brand);
-    background: rgba(var(--brand-rgb), 0.06);
+    background: var(--gx-ae-callout-bg);
+    box-shadow: inset 0 0 0 1.5px var(--gx-tx-chip-icon-fg);
   }
 
   .auth-mode-radio {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 1.5px solid var(--gx-mcp-m-cancel-ring);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     margin-top: 2px;
-    transition: border-color 0.2s ease;
+    transition: border-color 120ms ease;
   }
 
   .auth-mode-option--active .auth-mode-radio {
-    border-color: var(--brand);
+    border-color: var(--gx-tx-chip-icon-fg);
   }
 
   .radio-dot {
@@ -422,91 +505,102 @@ SPDX-License-Identifier: Apache-2.0
     height: 8px;
     border-radius: 50%;
     background: transparent;
-    transition: background 0.2s ease;
+    transition: background 120ms ease;
   }
 
   .auth-mode-option--active .radio-dot {
-    background: var(--brand);
+    background: var(--gx-tx-chip-icon-fg);
   }
 
   .auth-mode-content {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
+    min-width: 0;
   }
 
   .auth-mode-label {
-    font-size: 0.8125rem;
     font-weight: 600;
-    color: var(--text-primary);
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-mcp-m-label);
   }
 
   .auth-mode-desc {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
+    font-weight: 400;
+    font-size: 11px;
     line-height: 1.4;
+    color: var(--gx-mcp-dim);
   }
 
+  /* The reveal button is welded to the trailing edge of the secret field, so the
+     two share one ring: the input drops its own on that side. */
   .client-secret-row {
     display: flex;
-    gap: 0;
     align-items: stretch;
+    border-radius: 9px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1.5px var(--gx-mcp-m-ring);
+    transition: box-shadow 120ms ease;
+  }
+
+  .client-secret-row:focus-within {
+    box-shadow: inset 0 0 0 1.5px var(--gx-tx-chip-icon-fg);
+  }
+
+  .client-secret-row:has(input.error) {
+    box-shadow: inset 0 0 0 1.5px var(--gx-mcp-deny);
   }
 
   .client-secret-row input {
     flex: 1;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(var(--glass-tint), 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-right: none;
-    color: var(--text-primary);
-    font-size: 0.875rem;
+    min-width: 0;
+    padding: 10px 13px;
+    border-radius: 9px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--gx-mcp-m-ink);
+    font-weight: 400;
+    font-size: 14px;
   }
 
-  .client-secret-row input:focus {
-    outline: none;
-    border-color: var(--brand);
-  }
-
+  .client-secret-row input:focus,
   .client-secret-row input.error {
-    border-color: var(--brand-red);
+    box-shadow: none;
   }
 
   .secret-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 var(--space-sm);
-    background: rgba(var(--glass-tint), 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-left: none;
-    border-top-right-radius: var(--radius-md);
-    border-bottom-right-radius: var(--radius-md);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: color 0.2s ease;
+    width: 40px;
+    flex-shrink: 0;
+    color: var(--gx-an-sub);
+    transition: color 120ms ease;
   }
 
   .secret-toggle:hover {
-    color: var(--text-primary);
+    color: var(--gx-mcp-m-ink);
+  }
+
+  .secret-toggle svg {
+    display: block;
   }
 
   .advanced-section {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
-    padding-top: var(--space-md);
-    border-top: 1px dashed rgba(255, 255, 255, 0.06);
+    gap: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--gx-mcp-m-ring);
   }
 
   .advanced-label {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-tertiary);
+    letter-spacing: 0.5px;
+    color: var(--gx-mcp-m-section);
   }
 
   @media (max-width: 600px) {

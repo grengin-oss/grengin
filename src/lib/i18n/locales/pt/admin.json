@@ -303,6 +303,7 @@
       },
       "oauthProviders": {
         "title": "Fornecedores OAuth",
+        "pageTitle": "Autorização",
         "subtitle": "Configure as integrações OAuth para a sua organização.",
         "common": {
           "enabled": "Ativado",
@@ -322,6 +323,8 @@
           "loadError": "Não foi possível carregar os fornecedores SSO",
           "loadProviderError": "Não foi possível carregar o fornecedor",
           "noDomains": "Sem domínios",
+          "domainBannerOne": "{name} não restringe o início de sessão por domínio de e-mail, pelo que qualquer utilizador com uma conta válida pode aderir. Edite o fornecedor para limitar o acesso a domínios específicos da empresa.",
+          "domainBannerAll": "{names} não restringem o início de sessão por domínio de e-mail, pelo que qualquer utilizador com uma conta válida pode aderir. Edite um fornecedor para limitar o acesso a domínios específicos da empresa.",
           "loadingProvider": "A carregar fornecedor..."
         },
         "table": {
@@ -372,7 +375,8 @@
           "providerLogoAlt": "Logótipo de {name}",
           "hideClientSecret": "Ocultar segredo do cliente",
           "showClientSecret": "Mostrar segredo do cliente",
-          "removeDomain": "Remover domínio {domain}"
+          "removeDomain": "Remover domínio {domain}",
+          "moreDomains": "Mais {count} domínios: {domains}"
         },
         "selfProvisioning": {
           "label": "Autoprovisionamento",
@@ -586,6 +590,44 @@
         "apiKey": "Chave API",
         "oauthOrg": "OAuth (org.)",
         "oauthUser": "OAuth (utilizador)"
+      },
+      "searchPlaceholder": "Pesquisar servidores…",
+      "viewModeLabel": "Modo de exibição",
+      "viewGrid": "Grade",
+      "viewList": "Lista",
+      "countOne": "{total} servidor · {connected} conectado",
+      "countOther": "{total} servidores · {connected} conectados",
+      "noResultsTitle": "Nenhum servidor corresponde à sua pesquisa",
+      "noResultsMessage": "Tente outro nome ou limpe a pesquisa para ver todos os servidores.",
+      "clearSearch": "Limpar pesquisa",
+      "retry": "Tentar novamente",
+      "testingNow": "testando…",
+      "testedAgo": "testado {time}",
+      "optional": "(opcional)",
+      "sectionBasic": "Informações básicas",
+      "sectionConnection": "Conexão",
+      "sectionAccess": "Acesso",
+      "advancedConnectionConfig": "Avançado — Configuração de conexão",
+      "formatJson": "Formatar JSON",
+      "defaultAccessHelp": "Se os departamentos podem usar este servidor por padrão antes de definir o escopo.",
+      "addModalSubtitle": "Conecte um novo servidor de ferramentas para o modelo usar",
+      "editModalSubtitle": "Atualize a conexão e o acesso deste servidor",
+      "deleteSubtitle": "Isso remove o servidor e suas ferramentas para todos",
+      "access": {
+        "allow": "Permitir",
+        "deny": "Negar"
+      },
+      "relative": {
+        "justNow": "agora mesmo",
+        "minutes": "há {count} min",
+        "hours": "há {count} h",
+        "days": "há {count} d"
+      },
+      "scope": {
+        "unscoped": "Ainda não vinculado a nenhum departamento",
+        "defaultAccess": "Acesso padrão: {value}",
+        "usersConnected": "{count} usuários conectados",
+        "syncedAgo": "sincronizado {time}"
       }
     },
     "mcpOAuth": {
@@ -787,7 +829,15 @@
         "creating": "Criando...",
         "saving": "Salvando...",
         "createButton": "Criar Instrução",
-        "saveButton": "Salvar Alterações"
+        "saveButton": "Salvar Alterações",
+        "createSubtitle": "Defina uma instrução reutilizável baseada em funções para sua organização",
+        "editSubtitle": "Atualize esta instrução reutilizável baseada em funções",
+        "insertHint": "Adicione uma variável abaixo para inseri-la aqui",
+        "cursorHint": "Clique em uma variável acima para inseri-la no cursor",
+        "noVariables": "Nenhuma variável adicionada ainda.",
+        "variablesRef": "As variáveis podem ser referenciadas como {{variable_name}}",
+        "insertVariable": "Inserir variável",
+        "removeVariable": "Remover variável"
       },
       "preview": {
         "name": "Nome",
@@ -795,7 +845,9 @@
         "sampleValues": "Valores de Exemplo das Variáveis",
         "sampleHint": "Insira valores de exemplo abaixo para visualizar como a instrução será renderizada",
         "samplePlaceholder": "Insira valor de exemplo...",
-        "renderedOutput": "Resultado Renderizado"
+        "renderedOutput": "Resultado Renderizado",
+        "copy": "Copiar",
+        "copied": "Copiado"
       },
       "delete": {
         "confirmMessage": "Tem certeza de que deseja excluir",
@@ -812,7 +864,19 @@
       },
       "unknown": "Desconhecido",
       "none": "Nenhum",
-      "viewEffectiveness": "Ver métricas de eficácia"
+      "viewEffectiveness": "Ver métricas de eficácia",
+      "searchLabel": "Pesquisar",
+      "viewModeLabel": "Modo de exibição",
+      "viewGrid": "Grade",
+      "viewList": "Lista",
+      "countOne": "{count} instrução",
+      "countOther": "{count} instruções",
+      "footerCount": "{shown} de {total} instruções",
+      "rowsPerPage": "Linhas por página:",
+      "noResults": "Nenhuma instrução corresponde à sua pesquisa.",
+      "usesOne": "{count} uso",
+      "usesOther": "{count} usos",
+      "updatedOn": "Atualizado em {date}"
     },
     "departmentPrompts": {
       "title": "Prompts de Departamento",
@@ -878,6 +942,36 @@
       "exportJson": "Exportar JSON",
       "exportSuccess": "Exportação concluída",
       "exportFailed": "Falha na exportação",
+      "refresh": "Atualizar",
+      "searchEvent": "Pesquisar evento",
+      "searchPlaceholder": "ex.: 6bc782b8…",
+      "clearAll": "Limpar tudo",
+      "eventsMatched": "{count} eventos correspondentes",
+      "sortedNewestFirst": "Ordenado do mais recente",
+      "today": "Hoje",
+      "yesterday": "Ontem",
+      "eventCount": "{count} eventos",
+      "showDetails": "Mostrar detalhes do evento",
+      "hideDetails": "Ocultar detalhes do evento",
+      "filterByUser": "Filtrar pelo usuário {user}",
+      "copyValue": "Copiar {value}",
+      "copyFailed": "Não foi possível copiar para a área de transferência",
+      "payloadTitle": "Detalhes do conteúdo do evento",
+      "fullUserIdentity": "Identidade completa do usuário",
+      "fullResourceUuid": "UUID completo do recurso",
+      "networkOrigin": "Origem da rede",
+      "secureSession": "Sessão SSL segura",
+      "emailLine": "e-mail: {email}",
+      "typeLine": "tipo: {type}",
+      "visualizedView": "Visualização gráfica",
+      "jsonView": "Visualização JSON",
+      "noDetails": "Nenhum detalhe disponível",
+      "arraySummary": "Lista[{count}]",
+      "objectSummary": "Objeto({count} propriedades)",
+      "showMore": "+{count} mais…",
+      "showLess": "Mostrar menos",
+      "rowsPerPage": "Linhas por página",
+      "pageInfo": "Página {current} de {total} · {count} no total",
       "columns": {
         "timestamp": "Data e hora",
         "userId": "ID do usuário",
@@ -1307,6 +1401,7 @@
       "connectedLabel": "Motores conectados",
       "whitelistedLabel": "Modelos permitidos",
       "mostUsedLabel": "Mais usado esta semana — {count} req.",
+      "noUsageValue": "Sem dados",
       "noUsageLabel": "Nenhum uso registrado esta semana"
     },
     "card": {
@@ -1471,7 +1566,8 @@
       "message": "Tem certeza de que deseja excluir \"{name}\"? Isso afeta todos que têm acesso e não pode ser desfeito.",
       "cancel": "Cancelar",
       "confirm": "Excluir",
-      "deleting": "Excluindo…"
+      "deleting": "Excluindo…",
+      "subtitle": "Isso remove a habilidade para todos que têm acesso a ela"
     },
     "messages": {
       "loadFailed": "Falha ao carregar as habilidades",
@@ -1482,6 +1578,43 @@
       "deleted": "Habilidade excluída",
       "deleteFailed": "Falha ao excluir a habilidade",
       "builtinReadOnly": "As habilidades integradas não podem ser alteradas"
+    },
+    "import": "Importar",
+    "addNew": "Adicionar novas habilidades",
+    "noResults": "Nenhuma habilidade corresponde à sua pesquisa.",
+    "stats": {
+      "total": "Total de habilidades",
+      "enabled": "Ativadas",
+      "builtin": "Integradas",
+      "custom": "Personalizadas"
+    },
+    "filters": {
+      "label": "Filtrar habilidades",
+      "all": "Todas",
+      "builtin": "Integradas",
+      "custom": "Personalizadas",
+      "enabled": "Ativadas"
+    },
+    "sections": {
+      "builtinTitle": "Habilidades integradas",
+      "builtinNote": "Fornecidas pela plataforma",
+      "customTitle": "Habilidades personalizadas",
+      "customNote": "Criadas pela sua organização"
+    },
+    "addCard": {
+      "title": "Criar uma habilidade personalizada",
+      "body": "Dê à sua equipe instruções que o modelo possa seguir em tarefas recorrentes."
+    },
+    "tags": {
+      "builtin": "Integrada",
+      "custom": "Personalizada"
+    },
+    "card": {
+      "noDescription": "Nenhuma descrição fornecida.",
+      "managedByPlatform": "Gerenciada pela plataforma",
+      "edit": "Editar",
+      "delete": "Excluir",
+      "toggleAria": "Alternar {name}"
     }
   }
 }

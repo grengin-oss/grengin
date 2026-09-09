@@ -1146,7 +1146,7 @@ SPDX-License-Identifier: Apache-2.0
   }
   .avatar-round[data-tint="2"] {
     background: var(--gx-ac-custom-bg);
-    color: var(--gx-ac-custom-fg);
+    color: var(--gx-ok-text);
   }
   .avatar-round[data-tint="3"] {
     background: var(--gx-ac-card-avatar-bg);
@@ -1170,7 +1170,7 @@ SPDX-License-Identifier: Apache-2.0
 
   .badge--custom {
     background: var(--gx-ac-custom-bg);
-    color: var(--gx-ac-custom-fg);
+    color: var(--gx-ok-text);
   }
 
   .badge--system {

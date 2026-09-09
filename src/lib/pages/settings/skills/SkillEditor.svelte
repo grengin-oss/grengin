@@ -27,11 +27,24 @@ SPDX-License-Identifier: Apache-2.0
     skill?: SkillResponse | null;
     /** "user" → /me/skills; "admin" → /admin/skills (adds identifier + department). */
     scope?: SkillScope;
+    /**
+     * "default" is the app-wide dark dialog the user Settings page uses;
+     * "skills" is the light card from skills.html (.sk-modal), which the admin
+     * Skills page opens. Same markup and behaviour — only the skin differs.
+     */
+    variant?: "default" | "skills";
     onclose?: () => void;
     onsaved?: (skill: SkillResponse) => void;
   }
 
-  let { open, skill = null, scope = "user", onclose, onsaved }: Props = $props();
+  let {
+    open,
+    skill = null,
+    scope = "user",
+    variant = "default",
+    onclose,
+    onsaved,
+  }: Props = $props();
 
   const AVATAR_CHOICES = ["✨", "🎨", "🔍", "📊", "🧪", "🧠", "⚡", "📝", "🛠️", "🌐", "🤖", "📚"];
 
@@ -230,9 +243,21 @@ SPDX-License-Identifier: Apache-2.0
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="backdrop" onclick={() => onclose?.()} onkeydown={handleBackdropKey} role="presentation"></div>
+  <div
+    class="backdrop"
+    class:backdrop--sk={variant === "skills"}
+    onclick={() => onclose?.()}
+    onkeydown={handleBackdropKey}
+    role="presentation"
+  ></div>
 
-  <div class="panel" role="dialog" aria-modal="true" aria-label={$_("userSkills.editor.title")}>
+  <div
+    class="panel"
+    class:panel--sk={variant === "skills"}
+    role="dialog"
+    aria-modal="true"
+    aria-label={$_("userSkills.editor.title")}
+  >
     <header class="panel__header">
       <div>
         <h2 class="panel__title">
@@ -487,6 +512,313 @@ SPDX-License-Identifier: Apache-2.0
 {/if}
 
 <style>
+  /* ===== "skills" variant (skills.html .sk-modal) =====
+     A light 540px card with a gradient rule across the top, opened by the admin
+     Skills page. Only the skin changes — every field, validation rule and
+     action below is shared with the default dialog. Selectors are doubled up
+     (.panel.panel--sk ...) so they outrank the base rules that follow. */
+  .backdrop.backdrop--sk {
+    background: var(--gx-ac-modal-scrim);
+    backdrop-filter: none;
+  }
+
+  .panel.panel--sk {
+    width: min(540px, calc(100vw - 32px));
+    max-height: 90vh;
+    overflow: hidden;
+    border: none;
+    border-radius: 18px;
+    background: var(--gx-card);
+    box-shadow: var(--gx-sk-m-shadow);
+    font-family: var(--gx-font);
+  }
+
+  .panel.panel--sk::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 6px;
+    background: linear-gradient(
+      90deg,
+      rgb(74, 125, 212) 0%,
+      rgb(46, 168, 117) 100%
+    );
+    z-index: 1;
+  }
+
+  .panel.panel--sk .panel__header {
+    position: relative;
+    min-height: 81px;
+    padding: 20px 22px;
+    border: none;
+    box-shadow: inset 0 0 0 1px var(--gx-sk-m-border);
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .panel.panel--sk .panel__title {
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--gx-ae-ink);
+  }
+
+  .panel.panel--sk .panel__subtitle {
+    margin-top: 4px;
+    font-size: 12.5px;
+    color: var(--gx-sk-m-body);
+  }
+
+  .panel.panel--sk .icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
+  }
+
+  .panel.panel--sk .icon-btn:hover {
+    background: var(--gx-hover-soft);
+    color: var(--gx-ae-ink);
+  }
+
+  .panel.panel--sk .panel__body {
+    padding: 22px;
+    gap: 20px;
+  }
+
+  .panel.panel--sk .panel__footer {
+    min-height: 70px;
+    padding: 16px 22px;
+    gap: 10px;
+    border-top: 1px solid var(--gx-sk-m-border);
+  }
+
+  .panel.panel--sk .field {
+    gap: 8px;
+  }
+
+  .panel.panel--sk .field__label {
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--gx-ae-ink);
+  }
+
+  .panel.panel--sk .field__hint {
+    font-size: 11.5px;
+    color: var(--gx-sk-m-body);
+  }
+
+  .panel.panel--sk .field__error,
+  .panel.panel--sk .req {
+    color: var(--gx-ae-bad);
+  }
+
+  .panel.panel--sk .field__error {
+    font-size: 11.5px;
+  }
+
+  .panel.panel--sk .input {
+    min-height: 40px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 10px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1.5px var(--gx-sk-m-border);
+    color: var(--gx-ae-ink);
+    font-size: 13px;
+    transition: box-shadow 120ms ease;
+  }
+
+  .panel.panel--sk .input:focus {
+    border: none;
+    box-shadow: inset 0 0 0 1.5px var(--gx-ae-blue);
+  }
+
+  .panel.panel--sk .input--error,
+  .panel.panel--sk .input--error:focus {
+    border: none !important;
+    box-shadow: inset 0 0 0 1.5px var(--gx-ae-bad) !important;
+  }
+
+  .panel.panel--sk .input::placeholder {
+    color: var(--gx-sk-m-placeholder);
+    opacity: 1;
+  }
+
+  .panel.panel--sk .select {
+    color: var(--gx-ae-ink);
+  }
+
+  .panel.panel--sk .select option {
+    background: var(--gx-card);
+    color: var(--gx-ae-ink);
+  }
+
+  .panel.panel--sk .textarea {
+    min-height: 170px;
+    border-radius: 12px;
+    background: var(--gx-ae-chip);
+    padding: 14px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--gx-sk-m-mono);
+  }
+
+  /* ".sk-seg" — the Code / Preview switch above the instructions box. */
+  .panel.panel--sk .view-toggle {
+    border-radius: 8px;
+    background: var(--gx-sk-m-seg-bg);
+    gap: 4px;
+    padding: 3px;
+    border: none;
+  }
+
+  .panel.panel--sk .view-toggle__btn {
+    height: 24px;
+    border-radius: 6px;
+    padding: 4px 10px;
+    background: none;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--gx-sk-m-mono);
+  }
+
+  .panel.panel--sk .view-toggle__btn--active {
+    background: var(--gx-ae-blue);
+    color: #fff;
+  }
+
+  .panel.panel--sk .md-preview {
+    min-height: 170px;
+    border: none;
+    border-radius: 12px;
+    background: var(--gx-ae-chip);
+    box-shadow: inset 0 0 0 1.5px var(--gx-sk-m-border);
+    padding: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--gx-ae-ink);
+  }
+
+  .panel.panel--sk .md-preview--empty {
+    color: var(--gx-sk-m-placeholder);
+  }
+
+  .panel.panel--sk .muted {
+    color: var(--gx-sk-m-body);
+  }
+
+  /* Edit-only controls: the avatar picker, the web-search switch and the tool
+     grants. skills.html does not draw them, so they inherit the dialog's own
+     field vocabulary rather than inventing a third look. */
+  .panel.panel--sk .avatar-option {
+    border: none;
+    border-radius: 10px;
+    background: var(--gx-ae-chip);
+    box-shadow: inset 0 0 0 1.5px var(--gx-sk-m-border);
+  }
+
+  .panel.panel--sk .avatar-option:hover {
+    background: var(--gx-sk-chip);
+  }
+
+  .panel.panel--sk .avatar-option--active {
+    background: var(--gx-blue-soft);
+    box-shadow: inset 0 0 0 1.5px var(--gx-ae-blue);
+  }
+
+  .panel.panel--sk .toggle-row {
+    border: none;
+    border-radius: 12px;
+    background: var(--gx-ae-chip);
+    box-shadow: inset 0 0 0 1px var(--gx-sk-m-border);
+  }
+
+  .panel.panel--sk .switch {
+    background: var(--gx-sk-border);
+  }
+
+  .panel.panel--sk .switch--on {
+    background: var(--gx-ac-link);
+  }
+
+  .panel.panel--sk .server-option {
+    border: none;
+    border-radius: 10px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1.5px var(--gx-sk-m-border);
+  }
+
+  .panel.panel--sk .server-option:hover {
+    background: var(--gx-ae-chip);
+  }
+
+  .panel.panel--sk .server-option--active {
+    background: var(--gx-blue-soft);
+    box-shadow: inset 0 0 0 1.5px var(--gx-ae-blue);
+  }
+
+  .panel.panel--sk .server-check {
+    border: 1.5px solid var(--gx-sk-m-drop-ring);
+    background: transparent;
+  }
+
+  .panel.panel--sk .server-check--on {
+    border-color: var(--gx-ae-blue);
+    background: var(--gx-ae-blue);
+    color: #fff;
+  }
+
+  .panel.panel--sk .server-name {
+    color: var(--gx-ae-ink);
+  }
+
+  .panel.panel--sk .server-desc,
+  .panel.panel--sk .server-count {
+    color: var(--gx-sk-m-body);
+  }
+
+  .panel.panel--sk .btn {
+    height: 38px;
+    border-radius: 9px;
+    padding: 0 16px;
+    font-weight: 600;
+    font-size: 12.5px;
+  }
+
+  .panel.panel--sk .btn--ghost {
+    border: none;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-sk-m-border);
+    color: var(--gx-sk-m-mono);
+  }
+
+  .panel.panel--sk .btn--ghost:hover:not(:disabled) {
+    background: var(--gx-hover-soft);
+    color: var(--gx-ae-ink);
+  }
+
+  .panel.panel--sk .btn--primary {
+    background: var(--gx-ae-blue);
+    color: #fff;
+  }
+
+  .panel.panel--sk .btn--primary:hover:not(:disabled) {
+    background: var(--gx-ae-blue-hover);
+    filter: none;
+  }
+
+  /* The design paints the disabled primary as a flat grey chip rather than
+     dimming the blue one. */
+  .panel.panel--sk .btn--primary:disabled {
+    opacity: 1;
+    background: var(--gx-sk-m-border);
+    color: var(--gx-sk-m-body);
+  }
+
   .backdrop {
     position: fixed;
     inset: 0;
@@ -733,6 +1065,9 @@ SPDX-License-Identifier: Apache-2.0
   .avatar-option {
     width: 40px;
     height: 40px;
+    /* Reset app.css's bare-<button> padding — see .icon-btn. */
+    padding: 0;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -932,6 +1267,12 @@ SPDX-License-Identifier: Apache-2.0
     justify-content: center;
     width: 32px;
     height: 32px;
+    /* app.css gives every bare <button> 10px/20px of padding; without this
+       reset the padding alone is wider than the button and the glyph inside
+       collapses to zero width. */
+    padding: 0;
+    flex-shrink: 0;
+    box-sizing: border-box;
     border: none;
     border-radius: var(--radius-md);
     background: transparent;

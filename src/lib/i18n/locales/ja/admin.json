@@ -303,6 +303,7 @@
       },
       "oauthProviders": {
         "title": "OAuthプロバイダー",
+        "pageTitle": "認可",
         "subtitle": "組織向けのOAuth連携を設定します。",
         "common": {
           "enabled": "有効",
@@ -322,6 +323,8 @@
           "loadError": "SSOプロバイダーを読み込めませんでした",
           "loadProviderError": "プロバイダーを読み込めませんでした",
           "noDomains": "ドメインなし",
+          "domainBannerOne": "{name} はメールドメインによるサインインの制限を行っていないため、有効なアカウントを持つユーザーであれば誰でも参加できます。プロバイダーを編集して、特定の会社ドメインにアクセスを制限してください。",
+          "domainBannerAll": "{names} はメールドメインによるサインインの制限を行っていないため、有効なアカウントを持つユーザーであれば誰でも参加できます。プロバイダーを編集して、特定の会社ドメインにアクセスを制限してください。",
           "loadingProvider": "プロバイダーを読み込み中..."
         },
         "table": {
@@ -372,7 +375,8 @@
           "providerLogoAlt": "{name}のロゴ",
           "hideClientSecret": "クライアントシークレットを非表示",
           "showClientSecret": "クライアントシークレットを表示",
-          "removeDomain": "ドメイン {domain} を削除"
+          "removeDomain": "ドメイン {domain} を削除",
+          "moreDomains": "他 {count} 件のドメイン: {domains}"
         },
         "selfProvisioning": {
           "label": "自動プロビジョニング",
@@ -586,6 +590,44 @@
         "apiKey": "APIキー",
         "oauthOrg": "OAuth（組織）",
         "oauthUser": "OAuth（ユーザー）"
+      },
+      "searchPlaceholder": "サーバーを検索…",
+      "viewModeLabel": "表示モード",
+      "viewGrid": "グリッド",
+      "viewList": "リスト",
+      "countOne": "{total} 件のサーバー · {connected} 件接続済み",
+      "countOther": "{total} 件のサーバー · {connected} 件接続済み",
+      "noResultsTitle": "検索に一致するサーバーがありません",
+      "noResultsMessage": "別の名前で検索するか、検索条件をクリアしてすべてのサーバーを表示してください。",
+      "clearSearch": "検索をクリア",
+      "retry": "再試行",
+      "testingNow": "テスト中…",
+      "testedAgo": "{time}にテスト",
+      "optional": "(任意)",
+      "sectionBasic": "基本情報",
+      "sectionConnection": "接続",
+      "sectionAccess": "アクセス",
+      "advancedConnectionConfig": "詳細 — 接続設定",
+      "formatJson": "JSON を整形",
+      "defaultAccessHelp": "スコープを設定する前に、部門がこのサーバーを既定で利用できるかどうかを指定します。",
+      "addModalSubtitle": "モデルが使用する新しいツールサーバーを接続します",
+      "editModalSubtitle": "このサーバーの接続とアクセスを更新します",
+      "deleteSubtitle": "サーバーとそのツールが全員から削除されます",
+      "access": {
+        "allow": "許可",
+        "deny": "拒否"
+      },
+      "relative": {
+        "justNow": "たった今",
+        "minutes": "{count} 分前",
+        "hours": "{count} 時間前",
+        "days": "{count} 日前"
+      },
+      "scope": {
+        "unscoped": "まだ部門にスコープ設定されていません",
+        "defaultAccess": "既定のアクセス: {value}",
+        "usersConnected": "{count} 人のユーザーが接続済み",
+        "syncedAgo": "{time}に同期"
       }
     },
     "mcpOAuth": {
@@ -787,7 +829,15 @@
         "creating": "作成中...",
         "saving": "保存中...",
         "createButton": "プロンプトを作成",
-        "saveButton": "変更を保存"
+        "saveButton": "変更を保存",
+        "createSubtitle": "組織で再利用できるロールベースのプロンプトを定義します",
+        "editSubtitle": "この再利用可能なロールベースのプロンプトを更新します",
+        "insertHint": "下で変数を追加すると、ここに挿入できます",
+        "cursorHint": "上の変数チップをクリックすると、カーソル位置に挿入されます",
+        "noVariables": "まだ変数が追加されていません。",
+        "variablesRef": "変数は {{variable_name}} として参照できます",
+        "insertVariable": "変数を挿入",
+        "removeVariable": "変数を削除"
       },
       "preview": {
         "name": "名前",
@@ -795,7 +845,9 @@
         "sampleValues": "サンプル変数値",
         "sampleHint": "以下にサンプル値を入力して、プロンプトのレンダリング結果をプレビューします",
         "samplePlaceholder": "サンプル値を入力...",
-        "renderedOutput": "レンダリング結果"
+        "renderedOutput": "レンダリング結果",
+        "copy": "コピー",
+        "copied": "コピーしました"
       },
       "delete": {
         "confirmMessage": "削除してもよろしいですか",
@@ -812,7 +864,19 @@
       },
       "unknown": "不明",
       "none": "なし",
-      "viewEffectiveness": "効果指標を表示"
+      "viewEffectiveness": "効果指標を表示",
+      "searchLabel": "検索",
+      "viewModeLabel": "表示モード",
+      "viewGrid": "グリッド",
+      "viewList": "リスト",
+      "countOne": "{count} 件のプロンプト",
+      "countOther": "{count} 件のプロンプト",
+      "footerCount": "{total} 件中 {shown} 件のプロンプト",
+      "rowsPerPage": "1ページあたりの行数:",
+      "noResults": "検索条件に一致するプロンプトはありません。",
+      "usesOne": "{count} 回使用",
+      "usesOther": "{count} 回使用",
+      "updatedOn": "{date} に更新"
     },
     "promptEffectiveness": {
       "title": "プロンプト効果分析",
@@ -929,6 +993,36 @@
       "exportJson": "JSONエクスポート",
       "exportSuccess": "オーディットログが正常にエクスポートされました",
       "exportFailed": "オーディットログのエクスポートに失敗しました",
+      "refresh": "更新",
+      "searchEvent": "イベントを検索",
+      "searchPlaceholder": "例: 6bc782b8…",
+      "clearAll": "すべてクリア",
+      "eventsMatched": "{count} 件のイベントが一致",
+      "sortedNewestFirst": "新しい順に並べ替え",
+      "today": "今日",
+      "yesterday": "昨日",
+      "eventCount": "{count} 件のイベント",
+      "showDetails": "イベントの詳細を表示",
+      "hideDetails": "イベントの詳細を非表示",
+      "filterByUser": "ユーザー {user} で絞り込む",
+      "copyValue": "{value} をコピー",
+      "copyFailed": "クリップボードにコピーできませんでした",
+      "payloadTitle": "ログイベントのペイロード詳細",
+      "fullUserIdentity": "ユーザーの完全な識別子",
+      "fullResourceUuid": "リソースの完全な UUID",
+      "networkOrigin": "ネットワーク送信元",
+      "secureSession": "セキュアな SSL セッション",
+      "emailLine": "メール: {email}",
+      "typeLine": "種類: {type}",
+      "visualizedView": "ビジュアル表示",
+      "jsonView": "JSON 表示",
+      "noDetails": "詳細はありません",
+      "arraySummary": "配列[{count}]",
+      "objectSummary": "オブジェクト({count} プロパティ)",
+      "showMore": "他 {count} 件…",
+      "showLess": "折りたたむ",
+      "rowsPerPage": "1 ページあたりの行数",
+      "pageInfo": "{total} ページ中 {current} ページ · 合計 {count} 件",
       "columns": {
         "timestamp": "タイムスタンプ",
         "userId": "ユーザーID",
@@ -1307,6 +1401,7 @@
       "connectedLabel": "接続済みエンジン",
       "whitelistedLabel": "許可済みモデル",
       "mostUsedLabel": "今週の最多利用 — {count} リクエスト",
+      "noUsageValue": "データなし",
       "noUsageLabel": "今週の利用実績はありません"
     },
     "card": {
@@ -1471,7 +1566,8 @@
       "message": "「{name}」を削除してもよろしいですか？利用可能なすべての対象に影響し、取り消せません。",
       "cancel": "キャンセル",
       "confirm": "削除",
-      "deleting": "削除中…"
+      "deleting": "削除中…",
+      "subtitle": "このスキルは利用できるすべてのユーザーから削除されます"
     },
     "messages": {
       "loadFailed": "スキルの読み込みに失敗しました",
@@ -1482,6 +1578,43 @@
       "deleted": "スキルを削除しました",
       "deleteFailed": "スキルの削除に失敗しました",
       "builtinReadOnly": "組み込みスキルは変更できません"
+    },
+    "import": "インポート",
+    "addNew": "スキルを追加",
+    "noResults": "検索に一致するスキルがありません。",
+    "stats": {
+      "total": "スキル総数",
+      "enabled": "有効",
+      "builtin": "組み込み",
+      "custom": "カスタム"
+    },
+    "filters": {
+      "label": "スキルを絞り込む",
+      "all": "すべて",
+      "builtin": "組み込み",
+      "custom": "カスタム",
+      "enabled": "有効"
+    },
+    "sections": {
+      "builtinTitle": "組み込みスキル",
+      "builtinNote": "プラットフォーム提供",
+      "customTitle": "カスタムスキル",
+      "customNote": "組織が作成"
+    },
+    "addCard": {
+      "title": "カスタムスキルを作成",
+      "body": "繰り返し行う作業のために、モデルが従える指示をチームに用意します。"
+    },
+    "tags": {
+      "builtin": "組み込み",
+      "custom": "カスタム"
+    },
+    "card": {
+      "noDescription": "説明はありません。",
+      "managedByPlatform": "プラットフォームが管理",
+      "edit": "編集",
+      "delete": "削除",
+      "toggleAria": "{name} を切り替え"
     }
   }
 }

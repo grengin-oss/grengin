@@ -303,6 +303,7 @@
       },
       "oauthProviders": {
         "title": "مزودو OAuth",
+        "pageTitle": "التفويض",
         "subtitle": "تكوين تكاملات OAuth لمؤسستك.",
         "common": {
           "enabled": "مفعّل",
@@ -322,6 +323,8 @@
           "loadError": "تعذر تحميل مزودي SSO",
           "loadProviderError": "تعذر تحميل المزود",
           "noDomains": "لا توجد نطاقات",
+          "domainBannerOne": "لا يقيّد {name} تسجيل الدخول حسب نطاق البريد الإلكتروني، لذا يمكن لأي مستخدم لديه حساب صالح الانضمام. عدّل المزوّد لتقييد الوصول على نطاقات محددة للشركة.",
+          "domainBannerAll": "لا تقيّد {names} تسجيل الدخول حسب نطاق البريد الإلكتروني، لذا يمكن لأي مستخدم لديه حساب صالح الانضمام. عدّل أحد المزوّدين لتقييد الوصول على نطاقات محددة للشركة.",
           "loadingProvider": "جارٍ تحميل المزود..."
         },
         "table": {
@@ -372,7 +375,8 @@
           "providerLogoAlt": "شعار {name}",
           "hideClientSecret": "إخفاء سر العميل",
           "showClientSecret": "إظهار سر العميل",
-          "removeDomain": "إزالة النطاق {domain}"
+          "removeDomain": "إزالة النطاق {domain}",
+          "moreDomains": "{count} نطاقات إضافية: {domains}"
         },
         "selfProvisioning": {
           "label": "التوفير التلقائي",
@@ -586,6 +590,44 @@
         "apiKey": "مفتاح API",
         "oauthOrg": "OAuth (مؤسسة)",
         "oauthUser": "OAuth (مستخدم)"
+      },
+      "searchPlaceholder": "البحث عن الخوادم…",
+      "viewModeLabel": "وضع العرض",
+      "viewGrid": "شبكة",
+      "viewList": "قائمة",
+      "countOne": "{total} خادم · {connected} متصل",
+      "countOther": "{total} خوادم · {connected} متصل",
+      "noResultsTitle": "لا توجد خوادم تطابق بحثك",
+      "noResultsMessage": "جرّب اسمًا آخر أو امسح البحث لعرض جميع الخوادم.",
+      "clearSearch": "مسح البحث",
+      "retry": "إعادة المحاولة",
+      "testingNow": "جارٍ الاختبار…",
+      "testedAgo": "تم الاختبار {time}",
+      "optional": "(اختياري)",
+      "sectionBasic": "المعلومات الأساسية",
+      "sectionConnection": "الاتصال",
+      "sectionAccess": "الوصول",
+      "advancedConnectionConfig": "متقدم — إعدادات الاتصال",
+      "formatJson": "تنسيق JSON",
+      "defaultAccessHelp": "ما إذا كان بإمكان الأقسام استخدام هذا الخادم افتراضيًا قبل تحديد النطاق.",
+      "addModalSubtitle": "اربط خادم أدوات جديدًا ليستخدمه النموذج",
+      "editModalSubtitle": "حدّث اتصال هذا الخادم وصلاحيات الوصول إليه",
+      "deleteSubtitle": "سيؤدي هذا إلى إزالة الخادم وأدواته للجميع",
+      "access": {
+        "allow": "السماح",
+        "deny": "الرفض"
+      },
+      "relative": {
+        "justNow": "الآن",
+        "minutes": "قبل {count} دقيقة",
+        "hours": "قبل {count} ساعة",
+        "days": "قبل {count} يوم"
+      },
+      "scope": {
+        "unscoped": "لم يُحدَّد نطاقه لأي قسم بعد",
+        "defaultAccess": "الوصول الافتراضي: {value}",
+        "usersConnected": "{count} مستخدمين متصلين",
+        "syncedAgo": "تمت المزامنة {time}"
       }
     },
     "mcpOAuth": {
@@ -787,7 +829,15 @@
         "creating": "جارٍ الإنشاء...",
         "saving": "جارٍ الحفظ...",
         "createButton": "إنشاء المطالبة",
-        "saveButton": "حفظ التغييرات"
+        "saveButton": "حفظ التغييرات",
+        "createSubtitle": "حدد مطالبة قابلة لإعادة الاستخدام ومستندة إلى الأدوار لمؤسستك",
+        "editSubtitle": "تحديث هذه المطالبة القابلة لإعادة الاستخدام والمستندة إلى الأدوار",
+        "insertHint": "أضف متغيرًا أدناه لإدراجه هنا",
+        "cursorHint": "انقر على شريحة متغير أعلاه لإدراجها عند المؤشر",
+        "noVariables": "لم تُضف أي متغيرات بعد.",
+        "variablesRef": "يمكن الرجوع إلى المتغيرات كـ {{variable_name}}",
+        "insertVariable": "إدراج متغير",
+        "removeVariable": "إزالة المتغير"
       },
       "preview": {
         "name": "الاسم",
@@ -795,7 +845,9 @@
         "sampleValues": "قيم المتغيرات النموذجية",
         "sampleHint": "أدخل قيمًا نموذجية أدناه لمعاينة كيف سيتم عرض المطالبة",
         "samplePlaceholder": "إدخال قيمة نموذجية...",
-        "renderedOutput": "المخرجات المعروضة"
+        "renderedOutput": "المخرجات المعروضة",
+        "copy": "نسخ",
+        "copied": "تم النسخ"
       },
       "delete": {
         "confirmMessage": "هل أنت متأكد من أنك تريد حذف",
@@ -812,7 +864,19 @@
       },
       "unknown": "غير معروف",
       "none": "لا شيء",
-      "viewEffectiveness": "عرض مقاييس الفعالية"
+      "viewEffectiveness": "عرض مقاييس الفعالية",
+      "searchLabel": "البحث",
+      "viewModeLabel": "طريقة العرض",
+      "viewGrid": "شبكة",
+      "viewList": "قائمة",
+      "countOne": "مطالبة واحدة",
+      "countOther": "{count} مطالبة",
+      "footerCount": "{shown} من {total} مطالبة",
+      "rowsPerPage": "الصفوف في الصفحة:",
+      "noResults": "لا توجد مطالبات تطابق بحثك.",
+      "usesOne": "استخدام واحد",
+      "usesOther": "{count} استخدام",
+      "updatedOn": "تم التحديث {date}"
     },
     "departmentPrompts": {
       "title": "مطالبات القسم",
@@ -929,6 +993,36 @@
       "exportJson": "تصدير JSON",
       "exportSuccess": "تم تصدير سجلات التدقيق بنجاح",
       "exportFailed": "تعذر تصدير سجلات التدقيق",
+      "refresh": "تحديث",
+      "searchEvent": "البحث عن حدث",
+      "searchPlaceholder": "مثال: 6bc782b8…",
+      "clearAll": "مسح الكل",
+      "eventsMatched": "{count} حدثًا مطابقًا",
+      "sortedNewestFirst": "مرتّب من الأحدث إلى الأقدم",
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "eventCount": "{count} حدثًا",
+      "showDetails": "عرض تفاصيل الحدث",
+      "hideDetails": "إخفاء تفاصيل الحدث",
+      "filterByUser": "التصفية حسب المستخدم {user}",
+      "copyValue": "نسخ {value}",
+      "copyFailed": "تعذّر النسخ إلى الحافظة",
+      "payloadTitle": "تفاصيل حمولة سجل الحدث",
+      "fullUserIdentity": "هوية المستخدم الكاملة",
+      "fullResourceUuid": "المعرّف الكامل للمورد",
+      "networkOrigin": "مصدر الشبكة",
+      "secureSession": "جلسة SSL آمنة",
+      "emailLine": "البريد الإلكتروني: {email}",
+      "typeLine": "النوع: {type}",
+      "visualizedView": "عرض مرئي",
+      "jsonView": "عرض JSON",
+      "noDetails": "لا توجد تفاصيل متاحة",
+      "arraySummary": "مصفوفة[{count}]",
+      "objectSummary": "كائن({count} خصائص)",
+      "showMore": "+{count} أخرى…",
+      "showLess": "عرض أقل",
+      "rowsPerPage": "الصفوف لكل صفحة",
+      "pageInfo": "الصفحة {current} من {total} · {count} إجمالاً",
       "columns": {
         "timestamp": "الطابع الزمني",
         "userId": "معرف المستخدم",
@@ -1307,6 +1401,7 @@
       "connectedLabel": "المحركات المتصلة",
       "whitelistedLabel": "النماذج المسموح بها",
       "mostUsedLabel": "الأكثر استخدامًا هذا الأسبوع — {count} طلب",
+      "noUsageValue": "لا توجد بيانات",
       "noUsageLabel": "لا يوجد استخدام مسجل هذا الأسبوع"
     },
     "card": {
@@ -1471,7 +1566,8 @@
       "message": "هل أنت متأكد أنك تريد حذف «{name}»؟ سيؤثر ذلك على كل من له حق الوصول ولا يمكن التراجع عنه.",
       "cancel": "إلغاء",
       "confirm": "حذف",
-      "deleting": "جارٍ الحذف…"
+      "deleting": "جارٍ الحذف…",
+      "subtitle": "سيؤدي هذا إلى إزالة المهارة لكل من يمكنه استخدامها"
     },
     "messages": {
       "loadFailed": "فشل تحميل المهارات",
@@ -1482,6 +1578,43 @@
       "deleted": "تم حذف المهارة",
       "deleteFailed": "فشل حذف المهارة",
       "builtinReadOnly": "لا يمكن تغيير المهارات المدمجة"
+    },
+    "import": "استيراد",
+    "addNew": "إضافة مهارات جديدة",
+    "noResults": "لا توجد مهارات تطابق بحثك.",
+    "stats": {
+      "total": "إجمالي المهارات",
+      "enabled": "مُفعَّلة",
+      "builtin": "مدمجة",
+      "custom": "مخصصة"
+    },
+    "filters": {
+      "label": "تصفية المهارات",
+      "all": "الكل",
+      "builtin": "مدمجة",
+      "custom": "مخصصة",
+      "enabled": "مُفعَّلة"
+    },
+    "sections": {
+      "builtinTitle": "المهارات المدمجة",
+      "builtinNote": "مقدَّمة من المنصة",
+      "customTitle": "المهارات المخصصة",
+      "customNote": "أنشأتها مؤسستك"
+    },
+    "addCard": {
+      "title": "إنشاء مهارة مخصصة",
+      "body": "امنح فريقك تعليمات يمكن للنموذج اتباعها في المهام المتكررة."
+    },
+    "tags": {
+      "builtin": "مدمجة",
+      "custom": "مخصصة"
+    },
+    "card": {
+      "noDescription": "لا يوجد وصف.",
+      "managedByPlatform": "تديرها المنصة",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "toggleAria": "تبديل {name}"
     }
   }
 }

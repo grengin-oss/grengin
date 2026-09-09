@@ -40,7 +40,8 @@
       "message": "Are you sure you want to delete \"{name}\"? This affects everyone it's available to and cannot be undone.",
       "cancel": "Cancel",
       "confirm": "Delete",
-      "deleting": "Deleting…"
+      "deleting": "Deleting…",
+      "subtitle": "This removes the skill for everyone it is available to"
     },
     "messages": {
       "loadFailed": "Failed to load skills",
@@ -51,6 +52,43 @@
       "deleted": "Skill deleted",
       "deleteFailed": "Failed to delete skill",
       "builtinReadOnly": "Built-in skills can't be changed"
+    },
+    "import": "Import",
+    "addNew": "Add New Skills",
+    "noResults": "No skills match your search.",
+    "stats": {
+      "total": "Total skills",
+      "enabled": "Enabled",
+      "builtin": "Built-in",
+      "custom": "Custom"
+    },
+    "filters": {
+      "label": "Filter skills",
+      "all": "All",
+      "builtin": "Built-in",
+      "custom": "Custom",
+      "enabled": "Enabled"
+    },
+    "sections": {
+      "builtinTitle": "Built-in Skills",
+      "builtinNote": "Provided by the platform",
+      "customTitle": "Custom Skills",
+      "customNote": "Created by your organization"
+    },
+    "addCard": {
+      "title": "Create a custom skill",
+      "body": "Give your team instructions the model can follow for recurring tasks."
+    },
+    "tags": {
+      "builtin": "Built-in",
+      "custom": "Custom"
+    },
+    "card": {
+      "noDescription": "No description provided.",
+      "managedByPlatform": "Managed by platform",
+      "edit": "Edit",
+      "delete": "Delete",
+      "toggleAria": "Toggle {name}"
     }
   },
   "admin": {
@@ -357,6 +395,7 @@
       },
       "oauthProviders": {
         "title": "OAuth Providers",
+        "pageTitle": "Authorisation",
         "subtitle": "Configure OAuth integrations for your organization.",
         "common": {
           "enabled": "Enabled",
@@ -376,6 +415,8 @@
           "loadError": "Unable to load SSO providers",
           "loadProviderError": "Unable to load provider",
           "noDomains": "No domains",
+          "domainBannerOne": "{name} does not restrict sign-in by email domain, so any user with a valid account can join. Edit the provider to limit access to specific company domains.",
+          "domainBannerAll": "{names} do not restrict sign-in by email domain, so any user with a valid account can join. Edit a provider to limit access to specific company domains.",
           "loadingProvider": "Loading provider..."
         },
         "table": {
@@ -426,7 +467,8 @@
           "providerLogoAlt": "{name} logo",
           "hideClientSecret": "Hide client secret",
           "showClientSecret": "Show client secret",
-          "removeDomain": "Remove domain {domain}"
+          "removeDomain": "Remove domain {domain}",
+          "moreDomains": "{count} more domains: {domains}"
         },
         "selfProvisioning": {
           "label": "Auto-provisioning",
@@ -640,6 +682,44 @@
         "apiKey": "API Key",
         "oauthOrg": "OAuth (Org)",
         "oauthUser": "OAuth (User)"
+      },
+      "searchPlaceholder": "Search servers…",
+      "viewModeLabel": "View mode",
+      "viewGrid": "Grid",
+      "viewList": "List",
+      "countOne": "{total} server · {connected} connected",
+      "countOther": "{total} servers · {connected} connected",
+      "noResultsTitle": "No servers match your search",
+      "noResultsMessage": "Try a different name, or clear the search to see every server.",
+      "clearSearch": "Clear search",
+      "retry": "Retry",
+      "testingNow": "testing…",
+      "testedAgo": "tested {time}",
+      "optional": "(optional)",
+      "sectionBasic": "Basic Info",
+      "sectionConnection": "Connection",
+      "sectionAccess": "Access",
+      "advancedConnectionConfig": "Advanced — Connection Config",
+      "formatJson": "Format JSON",
+      "defaultAccessHelp": "Whether departments can use this server by default before scoping is set.",
+      "addModalSubtitle": "Connect a new tool server for the model to use",
+      "editModalSubtitle": "Update this server's connection and access",
+      "deleteSubtitle": "This removes the server and its tools for everyone",
+      "access": {
+        "allow": "Allow",
+        "deny": "Deny"
+      },
+      "relative": {
+        "justNow": "just now",
+        "minutes": "{count}m ago",
+        "hours": "{count}h ago",
+        "days": "{count}d ago"
+      },
+      "scope": {
+        "unscoped": "Not scoped to any department yet",
+        "defaultAccess": "Default access: {value}",
+        "usersConnected": "{count} users connected",
+        "syncedAgo": "synced {time}"
       }
     },
     "mcpOAuth": {
@@ -841,7 +921,15 @@
         "creating": "Creating...",
         "saving": "Saving...",
         "createButton": "Create Prompt",
-        "saveButton": "Save Changes"
+        "saveButton": "Save Changes",
+        "createSubtitle": "Define a reusable, role-based prompt for your organization",
+        "editSubtitle": "Update this reusable, role-based prompt",
+        "insertHint": "Add a variable below to insert it here",
+        "cursorHint": "Click a variable chip above to insert it at your cursor",
+        "noVariables": "No variables added yet.",
+        "variablesRef": "Variables can be referenced as {{variable_name}}",
+        "insertVariable": "Insert variable",
+        "removeVariable": "Remove variable"
       },
       "preview": {
         "name": "Name",
@@ -849,7 +937,9 @@
         "sampleValues": "Sample Variable Values",
         "sampleHint": "Enter sample values below to preview how the prompt will render",
         "samplePlaceholder": "Enter sample value...",
-        "renderedOutput": "Rendered Output"
+        "renderedOutput": "Rendered Output",
+        "copy": "Copy",
+        "copied": "Copied"
       },
       "delete": {
         "confirmMessage": "Are you sure you want to delete",
@@ -866,7 +956,19 @@
       },
       "unknown": "Unknown",
       "none": "None",
-      "viewEffectiveness": "View effectiveness metrics"
+      "viewEffectiveness": "View effectiveness metrics",
+      "searchLabel": "Search",
+      "viewModeLabel": "View mode",
+      "viewGrid": "Grid",
+      "viewList": "List",
+      "countOne": "{count} prompt",
+      "countOther": "{count} prompts",
+      "footerCount": "{shown} of {total} prompts",
+      "rowsPerPage": "Rows per page:",
+      "noResults": "No prompts match your search.",
+      "usesOne": "{count} use",
+      "usesOther": "{count} uses",
+      "updatedOn": "Updated {date}"
     },
     "departmentPrompts": {
       "title": "Department Prompts",
@@ -983,6 +1085,36 @@
       "exportJson": "Export JSON",
       "exportSuccess": "Audit logs exported successfully",
       "exportFailed": "Failed to export audit logs",
+      "refresh": "Refresh",
+      "searchEvent": "Search Event",
+      "searchPlaceholder": "e.g. 6bc782b8…",
+      "clearAll": "Clear all",
+      "eventsMatched": "{count} events matched",
+      "sortedNewestFirst": "Sorted by newest first",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "eventCount": "{count} events",
+      "showDetails": "Show event details",
+      "hideDetails": "Hide event details",
+      "filterByUser": "Filter by user {user}",
+      "copyValue": "Copy {value}",
+      "copyFailed": "Could not copy to clipboard",
+      "payloadTitle": "Log Event Payload Details",
+      "fullUserIdentity": "Full User Identity",
+      "fullResourceUuid": "Full Resource UUID",
+      "networkOrigin": "Network Origin",
+      "secureSession": "Secure SSL Session",
+      "emailLine": "email: {email}",
+      "typeLine": "type: {type}",
+      "visualizedView": "Visualized view",
+      "jsonView": "JSON view",
+      "noDetails": "No details available",
+      "arraySummary": "Array[{count}]",
+      "objectSummary": "Object({count} props)",
+      "showMore": "+{count} more…",
+      "showLess": "Show less",
+      "rowsPerPage": "Rows per page",
+      "pageInfo": "Page {current} of {total} · {count} total",
       "columns": {
         "timestamp": "Timestamp",
         "userId": "User ID",
@@ -1361,6 +1493,7 @@
       "connectedLabel": "Engines connected",
       "whitelistedLabel": "Models whitelisted",
       "mostUsedLabel": "Most used this week — {count} req",
+      "noUsageValue": "No data",
       "noUsageLabel": "No usage recorded this week"
     },
     "card": {

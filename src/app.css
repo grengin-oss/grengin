@@ -212,7 +212,7 @@
 
   /* control-hub navigation */
   --gx-nav-text: rgb(74, 97, 129);
-  --gx-nav-hover: rgb(247, 249, 248);
+  /* Also the Distributed segment on the organization budget bars. */
   --gx-nav-accent: rgb(64, 121, 197);
   --gx-nav-active-bg: rgb(227, 251, 242);
   --gx-nav-active-bg-hover: rgb(217, 247, 235);
@@ -229,9 +229,11 @@
 
   /* user-settings menu */
   --gx-menu-line: rgb(139, 139, 139);
+  /* Also the analytics table ring. */
   --gx-rule: rgb(242, 243, 245);
   /* the top bar's rule/hover tint is a cooler slate than the sidebar menu's */
   --gx-rule-cool: rgb(241, 245, 249);
+  /* App-wide error red: analytics deltas and the transcript file glyph too. */
   --gx-danger: rgb(239, 68, 68);
   --gx-danger-soft: rgb(254, 242, 242);
 
@@ -251,6 +253,7 @@
   /* suggestion-card title ink, a hair lighter than --gx-slate-900 */
   --gx-card-title-ink: rgb(28, 41, 56);
   /* faint blue-tinted card ring (suggestion cards, round 2) */
+  /* Also the analytics table head fill. */
   --gx-ring-soft: rgb(239, 244, 252);
   /* composer "Tools" chip's selected-count badge */
   --gx-tools-badge: rgb(74, 125, 212);
@@ -261,6 +264,7 @@
   --gx-hover-soft: rgb(241, 245, 249);
   --gx-ok-bg: rgb(240, 253, 249);
   --gx-ok-line: rgb(187, 247, 208);
+  /* Also the "Custom role" badge ink on Access Control. */
   --gx-ok-text: rgb(21, 128, 61);
   --gx-ok-dot: rgb(34, 197, 94);
 
@@ -277,10 +281,12 @@
   --gx-org-sel-hover: rgb(228, 241, 235);
   --gx-org-ink: rgb(14, 24, 40);
   --gx-org-slate-800: rgb(30, 41, 59);
+  /* Also the attachment file-size ink in the transcript. */
   --gx-org-slate-350: rgb(156, 163, 176);
   --gx-org-hair-soft: rgb(230, 231, 235);
   --gx-org-track: rgb(239, 244, 252);
   --gx-org-track-hover: rgb(232, 238, 245);
+  /* Row hover across the org tables and the sidebar nav. */
   --gx-org-row-hover: rgb(247, 249, 248);
   --gx-org-table-row-hover: rgb(250, 251, 252);
   --gx-org-field-bg: rgb(250, 250, 250);
@@ -291,8 +297,6 @@
   --gx-org-primary-tint: rgb(238, 245, 255);
   --gx-org-blue-tint: rgb(224, 235, 255);
   --gx-org-blue-fg: rgb(51, 89, 178);
-  --gx-org-used: rgb(16, 185, 129);
-  --gx-org-dist: rgb(64, 121, 197);
   --gx-org-warn: rgb(217, 119, 6);
   --gx-org-danger: rgb(220, 38, 38);
   --gx-org-danger-hover: rgb(197, 32, 32);
@@ -323,13 +327,13 @@
   --gx-an-chip-fg: rgb(75, 85, 99);
   --gx-an-mint: rgb(222, 240, 233);
   --gx-an-mint-fg: rgb(37, 117, 87);
+  /* Also the Used segment on the organization budget bars. */
   --gx-an-green: rgb(16, 185, 129);
   /* The design uses three distinct greens: --gx-an-green for the Total Users
      stat card, this teal for the Usage Growth / Cost Trend areas, and
      --gx-an-success for the API Reliability Success bars. */
   --gx-an-area: rgb(34, 139, 119);
   --gx-an-success: rgb(34, 197, 136);
-  --gx-an-red: rgb(239, 68, 68);
   --gx-an-bar-blue: rgb(95, 141, 206);
   --gx-an-badge-down-bg: rgb(254, 226, 226);
   --gx-an-badge-down-fg: rgb(239, 68, 68);
@@ -337,13 +341,12 @@
   --gx-an-badge-up-fg: rgb(22, 163, 74);
   --gx-an-insight-bg: rgb(243, 244, 246);
   --gx-an-insight-fg: rgb(31, 41, 55);
-  --gx-an-thead-bg: rgb(239, 244, 252);
-  --gx-an-table-ring: rgb(242, 243, 245);
   --gx-an-input-bg: rgb(250, 250, 250);
   --gx-an-strong: rgb(31, 41, 55);
   --gx-an-amber: rgb(217, 119, 6);
   --gx-an-violet: rgb(124, 58, 237);
   --gx-an-rose: rgb(219, 39, 119);
+  /* Neutral field fill: analytics inputs and the MCP card scope block. */
   --gx-an-field-bg: rgb(249, 250, 251);
 
   /* ---- Control Hub Overview (control-hub-overview.html) ---- */
@@ -400,8 +403,6 @@
   --gx-tx-att-vid-from: rgb(28, 41, 56);
   --gx-tx-att-vid-to: rgb(107, 114, 129);
   --gx-tx-file-icon-bg: rgb(253, 236, 236);
-  --gx-tx-file-icon-fg: rgb(239, 68, 68);
-  --gx-tx-file-size: rgb(156, 163, 176);
 
   /* ===== Access Control (access-control.html) =====
      Only the values that no existing --gx-* token already carries; everything
@@ -417,9 +418,9 @@
   --gx-ac-link-soft: rgb(95, 141, 206);
   --gx-ac-green-bg: rgb(222, 240, 233);
   --gx-ac-custom-bg: rgb(240, 253, 244);
-  --gx-ac-custom-fg: rgb(21, 128, 61);
   --gx-ac-system-fg: rgb(29, 78, 216);
   --gx-ac-dept-bg: rgb(236, 253, 245);
+  /* Also the "Built-in" tag ink on the Skills page. */
   --gx-ac-dept-fg: rgb(4, 120, 87);
   --gx-ac-card-avatar-bg: rgb(220, 229, 244);
   --gx-ac-card-avatar-fg: rgb(17, 41, 70);
@@ -459,6 +460,106 @@
   --gx-ae-card-shadow: 0 4px 12px 0 rgba(26, 29, 26, 0.0196);
   --gx-ae-modal-shadow: 0 16px 48px 0 rgba(9, 11, 14, 0.149);
   --gx-ae-connect-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.1686);
+
+  /* ===== MCP Servers (mcp-servers.html) =====
+     Again only the values no existing --gx-* token already carries. The page
+     otherwise reuses --gx-page / --gx-card / --gx-hair / --gx-ring-soft /
+     --gx-hover-soft / --gx-org-ink / --gx-an-sub / --gx-org-slate-350 /
+     --gx-org-primary-500 / --gx-ac-cta-hover / --gx-org-brand-alt /
+     --gx-org-hair-soft / --gx-ae-callout-bg / --gx-tx-chip-icon-fg. */
+  --gx-mcp-title: rgb(17, 41, 70);
+  --gx-mcp-dim: rgb(124, 129, 143);
+  --gx-mcp-red: rgb(185, 58, 62);
+  /* Card edges: the idle blue-grey hairline, and the 4px green rail the design
+     runs down a connected card. */
+  --gx-mcp-edge: rgb(220, 229, 244);
+  --gx-mcp-edge-ok: rgb(182, 222, 202);
+  --gx-mcp-icon-hover: rgb(224, 232, 247);
+  --gx-mcp-scope-fg: rgb(75, 85, 99);
+  /* Skeleton shimmer runs between these two greys. */
+  --gx-mcp-skel-a: rgb(238, 239, 241);
+  --gx-mcp-skel-b: rgb(246, 247, 248);
+  /* Failed-test card and the modal's submit banner. */
+  --gx-mcp-ink: rgb(26, 29, 35);
+  --gx-mcp-err-bg: rgb(253, 236, 236);
+  --gx-mcp-err-ring: rgb(246, 210, 211);
+  --gx-mcp-err-fg: rgb(138, 44, 47);
+  --gx-mcp-err-strong: rgb(150, 32, 36);
+  /* Add/Edit dialog. */
+  --gx-mcp-m-ink: rgb(28, 31, 43);
+  --gx-mcp-m-label: rgb(42, 47, 58);
+  --gx-mcp-m-section: rgb(90, 96, 112);
+  --gx-mcp-m-hair: rgb(241, 242, 244);
+  --gx-mcp-m-ring: rgb(228, 229, 233);
+  --gx-mcp-m-placeholder: rgb(162, 167, 176);
+  /* Neutral grey outline: the Cancel ring and the empty-state dashes. */
+  --gx-mcp-m-cancel-ring: rgb(204, 208, 214);
+  --gx-mcp-m-cancel-fg: rgb(66, 72, 86);
+  --gx-mcp-allow: rgb(23, 115, 78);
+  --gx-mcp-deny: rgb(194, 68, 68);
+  --gx-mcp-code-bg: rgb(248, 248, 249);
+  --gx-mcp-card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.0392);
+  --gx-mcp-panel-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.0314);
+  --gx-mcp-modal-shadow: 0 24px 60px 0 rgba(19, 22, 30, 0.25);
+
+  /* ===== Skills (skills.html) =====
+     Again only the values no existing --gx-* token already carries. The page
+     otherwise reuses --gx-page / --gx-card / --gx-ring-soft / --gx-org-ink /
+     --gx-org-primary-500 / --gx-ac-cta-hover / --gx-ac-link /
+     --gx-ac-system-fg / --gx-blue-soft / --gx-mcp-scope-fg / --gx-ae-ink /
+     --gx-ae-chip / --gx-ae-blue / --gx-ae-bad. The page runs a zinc ramp of
+     its own, cooler than the slate the other admin pages use. */
+  --gx-sk-ink: rgb(24, 24, 27);
+  --gx-sk-desc: rgb(82, 82, 91);
+  --gx-sk-muted: rgb(113, 113, 122);
+  --gx-sk-border: rgb(228, 228, 231);
+  --gx-sk-chip: rgb(244, 244, 245);
+  /* Built-in skills carry a green identity; custom ones the page blue. */
+  --gx-sk-built-bg: rgb(236, 253, 245);
+  --gx-sk-built-fg: rgb(5, 150, 105);
+  --gx-sk-lock: rgb(161, 161, 170);
+  --gx-sk-add-hover: rgb(228, 238, 255);
+  --gx-sk-add-icon-bg: rgb(219, 234, 254);
+  /* Create / Import dialogs. */
+  --gx-sk-m-border: rgb(222, 225, 230);
+  --gx-sk-m-body: rgb(134, 140, 153);
+  --gx-sk-m-placeholder: rgb(166, 171, 182);
+  --gx-sk-m-mono: rgb(78, 85, 97);
+  --gx-sk-m-seg-bg: rgb(238, 240, 243);
+  --gx-sk-m-info-bg: rgb(238, 242, 252);
+  --gx-sk-m-info-ring: rgb(185, 201, 241);
+  --gx-sk-m-drop-ring: rgb(199, 203, 211);
+  --gx-sk-m-drop-icon-bg: rgb(220, 228, 248);
+  --gx-sk-m-shadow: 0 20px 60px 0 rgba(0, 0, 0, 0.22);
+
+  /* ===== Prompts (prompts.html) =====
+     The page is built entirely from tokens that already exist: --gx-page /
+     --gx-card / --gx-hair / --gx-ring-soft / --gx-org-ink / --gx-an-sub /
+     --gx-an-chip-ring (the card hairline) / --gx-an-strong (row titles) /
+     --gx-an-field-bg / --gx-an-insight-bg / --gx-an-chip-fg (the role pill) /
+     --gx-blue-soft + --gx-ac-system-fg (the type pill) / --gx-tx-chip-icon-fg
+     (variable chips and the usage glyph) / --gx-org-slate-350 /
+     --gx-org-primary-500 / --gx-ac-cta-hover / --gx-slate-900 / --gx-slate-500
+     / --gx-slate-400 / --gx-ac-slate-300 / --gx-ac-slate-600 / --gx-danger /
+     --gx-sk-m-seg-bg. Only the dialog's drop shadow is new. */
+  --gx-pr-modal-shadow: 0 16px 40px -4px rgba(15, 43, 92, 0.1098);
+  /* The row's delete action is tinted at rest: --gx-org-danger-bg fill,
+     this ring, --gx-org-danger glyph. */
+  --gx-pr-danger-ring: rgb(254, 202, 202);
+
+  /* ===== Audit Logs (audit-logs.html) =====
+     The page is built almost entirely from tokens that already exist:
+     --gx-page / --gx-card / --gx-org-hair-soft (every card ring and row rule)
+     / --gx-ring-soft (the expanded row's fill and the blue action badge) /
+     --gx-org-ink / --gx-an-sub / --gx-card-title-ink (row ink) /
+     --gx-org-slate-350 / --gx-org-field-bg + --gx-cx-pill-ring (the filter
+     fields) / --gx-org-primary-100 (the copy-box and header-button ring) /
+     --gx-org-primary-500 + --gx-ac-cta-hover (every action ink) /
+     --gx-an-blue-label-strong (the drawer's label and mono ink) /
+     --gx-cx-img-accent (the violet action badge) / --gx-org-danger-bg +
+     --gx-org-danger (the destructive badge) / --gx-hover-soft. Only the violet
+     badge's fill is a shade no token carried. */
+  --gx-al-violet-bg: rgb(243, 238, 254);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -478,13 +579,9 @@
     --gx-blue-soft-hover: rgba(59, 125, 216, 0.26);
     --gx-amber: #e0b566;
     --gx-amber-soft: rgba(199, 154, 46, 0.2);
-    --gx-amber-dot: rgb(199, 154, 46);
-    --gx-green-dot: rgb(46, 158, 108);
-    --gx-avatar: rgb(46, 107, 79);
     --gx-slate: #93a3b8;
 
     --gx-nav-text: #aebdd2;
-    --gx-nav-hover: rgba(255, 255, 255, 0.06);
     --gx-nav-accent: #7fb0f0;
     --gx-nav-active-bg: rgba(45, 144, 107, 0.22);
     --gx-nav-active-bg-hover: rgba(45, 144, 107, 0.3);
@@ -519,13 +616,11 @@
     --gx-tools-badge: rgb(88, 138, 224);
     --gx-teal: #3fd0bd;
     --gx-teal-soft: rgba(13, 148, 136, 0.22);
-    --gx-send: rgb(37, 117, 87);
     --gx-send-hover: rgb(46, 138, 104);
     --gx-hover-soft: rgba(255, 255, 255, 0.06);
     --gx-ok-bg: rgba(34, 197, 94, 0.12);
     --gx-ok-line: rgba(34, 197, 94, 0.32);
     --gx-ok-text: #6ee7a4;
-    --gx-ok-dot: rgb(34, 197, 94);
 
     --gx-org-brand: #4fbf95;
     --gx-org-brand-hover: #66cba6;
@@ -565,7 +660,6 @@
     --gx-an-green: #34d399;
     --gx-an-area: #2dd4bf;
     --gx-an-success: #34d399;
-    --gx-an-red: #f87171;
     --gx-an-bar-blue: #6f9dfb;
     --gx-an-badge-down-bg: rgba(239, 68, 68, 0.18);
     --gx-an-badge-down-fg: #f8a3a3;
@@ -573,8 +667,6 @@
     --gx-an-badge-up-fg: #7fe0a4;
     --gx-an-insight-bg: rgba(255, 255, 255, 0.05);
     --gx-an-insight-fg: #dfe4e2;
-    --gx-an-thead-bg: rgba(255, 255, 255, 0.04);
-    --gx-an-table-ring: rgba(255, 255, 255, 0.08);
 
     /* Control Hub Overview */
     --gx-ch-banner: linear-gradient(90deg,
@@ -623,13 +715,9 @@
     --gx-tx-meta-size: #9aa5a0;
     --gx-tx-chip-ring: rgba(255, 255, 255, 0.14);
     --gx-tx-chip-icon-fg: #93aeea;
-    --gx-tx-att-img-from: rgb(66, 122, 198);
     --gx-tx-att-img-to: rgba(255, 255, 255, 0.12);
-    --gx-tx-att-vid-from: rgb(28, 41, 56);
     --gx-tx-att-vid-to: rgb(80, 88, 100);
     --gx-tx-file-icon-bg: rgba(239, 68, 68, 0.18);
-    --gx-tx-file-icon-fg: #f87171;
-    --gx-tx-file-size: #8d9aab;
     /* Access Control — dark. Soft tints become low-alpha films so they still
        read on the dark page; inks lift to the light end of their hue. */
     --gx-ac-slate-700: #c7d0da;
@@ -640,7 +728,6 @@
     --gx-ac-link-soft: #8fa9d4;
     --gx-ac-green-bg: rgba(43, 145, 107, 0.22);
     --gx-ac-custom-bg: rgba(34, 197, 94, 0.16);
-    --gx-ac-custom-fg: #6ee7a4;
     --gx-ac-system-fg: #93aeea;
     --gx-ac-dept-bg: rgba(4, 120, 87, 0.22);
     --gx-ac-dept-fg: #5fd6ab;
@@ -674,6 +761,61 @@
     --gx-ae-card-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.35);
     --gx-ae-modal-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.55);
     --gx-ae-connect-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.5);
+    /* MCP Servers — dark. Same treatment as AI Engines: tints become low-alpha
+       films over the card, inks lift, shadows go opaque black. */
+    --gx-mcp-title: #e6edf7;
+    --gx-mcp-dim: #8d9aab;
+    --gx-mcp-red: #f08a83;
+    --gx-mcp-edge: rgba(255, 255, 255, 0.1);
+    --gx-mcp-edge-ok: rgba(79, 191, 149, 0.55);
+    --gx-mcp-icon-hover: rgba(112, 155, 218, 0.24);
+    --gx-mcp-scope-fg: #a3aebd;
+    --gx-mcp-skel-a: rgba(255, 255, 255, 0.05);
+    --gx-mcp-skel-b: rgba(255, 255, 255, 0.1);
+    --gx-mcp-ink: #eef1f0;
+    --gx-mcp-err-bg: rgba(216, 86, 78, 0.18);
+    --gx-mcp-err-ring: rgba(240, 138, 131, 0.38);
+    --gx-mcp-err-fg: #f4a8a2;
+    --gx-mcp-err-strong: #f4a8a2;
+    --gx-mcp-m-ink: #eef1f0;
+    --gx-mcp-m-label: #dbe2ea;
+    --gx-mcp-m-section: #a3aebd;
+    --gx-mcp-m-hair: rgba(255, 255, 255, 0.1);
+    --gx-mcp-m-ring: rgba(255, 255, 255, 0.16);
+    --gx-mcp-m-placeholder: #7c8a94;
+    --gx-mcp-m-cancel-ring: rgba(255, 255, 255, 0.22);
+    --gx-mcp-m-cancel-fg: #dbe2ea;
+    --gx-mcp-allow: #5fd3a3;
+    --gx-mcp-deny: #f08a83;
+    --gx-mcp-code-bg: rgba(255, 255, 255, 0.04);
+    --gx-mcp-card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+    --gx-mcp-panel-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.35);
+    --gx-mcp-modal-shadow: 0 24px 60px 0 rgba(0, 0, 0, 0.6);
+    /* Skills — dark. The zinc ramp inverts, the two identity tints become
+       low-alpha films, and the dialog shadow goes opaque black. */
+    --gx-sk-ink: #f1f2f4;
+    --gx-sk-desc: #c3c7cf;
+    --gx-sk-muted: #9aa1ad;
+    --gx-sk-border: rgba(255, 255, 255, 0.12);
+    --gx-sk-chip: rgba(255, 255, 255, 0.06);
+    --gx-sk-built-bg: rgba(5, 150, 105, 0.2);
+    --gx-sk-built-fg: #4ade9f;
+    --gx-sk-lock: #8a8f9a;
+    --gx-sk-add-hover: rgba(59, 125, 216, 0.26);
+    --gx-sk-add-icon-bg: rgba(59, 125, 216, 0.3);
+    --gx-sk-m-border: rgba(255, 255, 255, 0.14);
+    --gx-sk-m-body: #a3aebd;
+    --gx-sk-m-placeholder: #7c8a94;
+    --gx-sk-m-mono: #c3c7cf;
+    --gx-sk-m-seg-bg: rgba(255, 255, 255, 0.08);
+    --gx-sk-m-info-bg: rgba(63, 92, 184, 0.2);
+    --gx-sk-m-info-ring: rgba(112, 137, 219, 0.42);
+    --gx-sk-m-drop-ring: rgba(255, 255, 255, 0.2);
+    --gx-sk-m-drop-icon-bg: rgba(112, 137, 219, 0.28);
+    --gx-sk-m-shadow: 0 20px 60px 0 rgba(0, 0, 0, 0.6);
+    --gx-pr-modal-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.55);
+    --gx-pr-danger-ring: rgba(239, 68, 68, 0.38);
+    --gx-al-violet-bg: rgba(110, 79, 201, 0.24);
     --gx-org-field-bg: rgba(255, 255, 255, 0.04);
     --gx-org-primary-500: rgb(112, 155, 218);
     --gx-org-primary-500-hover: rgb(134, 172, 227);
@@ -681,8 +823,6 @@
     --gx-org-primary-tint: rgba(66, 122, 198, 0.22);
     --gx-org-blue-tint: rgba(64, 121, 197, 0.22);
     --gx-org-blue-fg: #9dbdf0;
-    --gx-org-used: #34d399;
-    --gx-org-dist: #7fb0f0;
     --gx-org-warn: #f0b46a;
     --gx-org-danger: #f87171;
     --gx-org-danger-hover: #fca5a5;

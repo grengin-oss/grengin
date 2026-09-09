@@ -17,6 +17,9 @@ import onboardingRoutes from './routes/onboarding.js'
 import integrationsRoutes from './routes/integrations.js'
 import projectsRoutes from './routes/projects.js'
 import skillsRoutes from './routes/skills.js'
+import mcpServersRoutes from './routes/mcpServers.js'
+import rolePromptsRoutes from './routes/rolePrompts.js'
+import auditLogsRoutes from './routes/auditLogs.js'
 
 // Seed initial data
 seedData()
@@ -42,6 +45,9 @@ app.use(onboardingRoutes)
 app.use(integrationsRoutes)
 app.use(projectsRoutes)
 app.use(skillsRoutes)
+app.use(mcpServersRoutes)
+app.use(rolePromptsRoutes)
+app.use(auditLogsRoutes)
 
 // Fallback 404 handler - always returns JSON
 app.use((req, res) => {
@@ -77,6 +83,8 @@ app.listen(PORT, () => {
   console.log(`  *    /admin/sso-providers/*   - SSO configuration`)
   console.log(`  *    /admin/rate-limits/*     - Rate limit management`)
   console.log(`  *    /admin/budgets/*         - Budget management`)
+  console.log(`  *    /admin/role-prompts/*    - Role-based prompt library`)
+  console.log(`  *    /admin/audit-logs/*      - Compliance audit log`)
   console.log('')
   console.log('🔑 Demo credentials: admin@grengin.com / Demo123456!@')
   console.log('💡 Use "Bearer <token>" for authentication')

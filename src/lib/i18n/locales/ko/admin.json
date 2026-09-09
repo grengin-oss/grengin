@@ -303,6 +303,7 @@
       },
       "oauthProviders": {
         "title": "OAuth 공급자",
+        "pageTitle": "인가",
         "subtitle": "조직의 OAuth 연동을 구성합니다.",
         "common": {
           "enabled": "활성화",
@@ -322,6 +323,8 @@
           "loadError": "SSO 공급자를 불러올 수 없습니다",
           "loadProviderError": "공급자를 불러올 수 없습니다",
           "noDomains": "도메인 없음",
+          "domainBannerOne": "{name}은(는) 이메일 도메인으로 로그인을 제한하지 않으므로 유효한 계정을 가진 사용자는 누구나 참여할 수 있습니다. 공급자를 편집하여 특정 회사 도메인으로 액세스를 제한하세요.",
+          "domainBannerAll": "{names}은(는) 이메일 도메인으로 로그인을 제한하지 않으므로 유효한 계정을 가진 사용자는 누구나 참여할 수 있습니다. 공급자를 편집하여 특정 회사 도메인으로 액세스를 제한하세요.",
           "loadingProvider": "공급자 불러오는 중..."
         },
         "table": {
@@ -372,7 +375,8 @@
           "providerLogoAlt": "{name} 로고",
           "hideClientSecret": "클라이언트 시크릿 숨기기",
           "showClientSecret": "클라이언트 시크릿 보기",
-          "removeDomain": "{domain} 도메인 제거"
+          "removeDomain": "{domain} 도메인 제거",
+          "moreDomains": "도메인 {count}개 더: {domains}"
         },
         "selfProvisioning": {
           "label": "자동 프로비저닝",
@@ -586,6 +590,44 @@
         "apiKey": "API 키",
         "oauthOrg": "OAuth(조직)",
         "oauthUser": "OAuth(사용자)"
+      },
+      "searchPlaceholder": "서버 검색…",
+      "viewModeLabel": "보기 모드",
+      "viewGrid": "그리드",
+      "viewList": "목록",
+      "countOne": "서버 {total}개 · {connected}개 연결됨",
+      "countOther": "서버 {total}개 · {connected}개 연결됨",
+      "noResultsTitle": "검색과 일치하는 서버가 없습니다",
+      "noResultsMessage": "다른 이름으로 검색하거나 검색어를 지워 모든 서버를 확인하세요.",
+      "clearSearch": "검색 지우기",
+      "retry": "다시 시도",
+      "testingNow": "테스트 중…",
+      "testedAgo": "{time} 테스트함",
+      "optional": "(선택 사항)",
+      "sectionBasic": "기본 정보",
+      "sectionConnection": "연결",
+      "sectionAccess": "액세스",
+      "advancedConnectionConfig": "고급 — 연결 구성",
+      "formatJson": "JSON 서식",
+      "defaultAccessHelp": "범위를 설정하기 전에 부서가 이 서버를 기본으로 사용할 수 있는지 여부입니다.",
+      "addModalSubtitle": "모델이 사용할 새 도구 서버를 연결합니다",
+      "editModalSubtitle": "이 서버의 연결과 액세스를 업데이트합니다",
+      "deleteSubtitle": "모든 사용자에게서 서버와 도구가 삭제됩니다",
+      "access": {
+        "allow": "허용",
+        "deny": "거부"
+      },
+      "relative": {
+        "justNow": "방금 전",
+        "minutes": "{count}분 전",
+        "hours": "{count}시간 전",
+        "days": "{count}일 전"
+      },
+      "scope": {
+        "unscoped": "아직 어떤 부서에도 범위가 지정되지 않음",
+        "defaultAccess": "기본 액세스: {value}",
+        "usersConnected": "사용자 {count}명 연결됨",
+        "syncedAgo": "{time} 동기화됨"
       }
     },
     "mcpOAuth": {
@@ -787,7 +829,15 @@
         "creating": "생성 중...",
         "saving": "저장 중...",
         "createButton": "프롬프트 생성",
-        "saveButton": "변경 사항 저장"
+        "saveButton": "변경 사항 저장",
+        "createSubtitle": "조직에서 재사용할 역할 기반 프롬프트를 정의합니다",
+        "editSubtitle": "재사용 가능한 이 역할 기반 프롬프트를 업데이트합니다",
+        "insertHint": "아래에서 변수를 추가하면 여기에 삽입할 수 있습니다",
+        "cursorHint": "위의 변수 칩을 클릭하면 커서 위치에 삽입됩니다",
+        "noVariables": "아직 추가된 변수가 없습니다.",
+        "variablesRef": "변수는 {{variable_name}} 형식으로 참조할 수 있습니다",
+        "insertVariable": "변수 삽입",
+        "removeVariable": "변수 제거"
       },
       "preview": {
         "name": "이름",
@@ -795,7 +845,9 @@
         "sampleValues": "샘플 변수 값",
         "sampleHint": "아래에 샘플 값을 입력하여 프롬프트 렌더링 결과를 미리보기합니다",
         "samplePlaceholder": "샘플 값 입력...",
-        "renderedOutput": "렌더링 결과"
+        "renderedOutput": "렌더링 결과",
+        "copy": "복사",
+        "copied": "복사됨"
       },
       "delete": {
         "confirmMessage": "삭제하시겠습니까",
@@ -812,7 +864,19 @@
       },
       "unknown": "알 수 없음",
       "none": "없음",
-      "viewEffectiveness": "효과 지표 보기"
+      "viewEffectiveness": "효과 지표 보기",
+      "searchLabel": "검색",
+      "viewModeLabel": "보기 모드",
+      "viewGrid": "그리드",
+      "viewList": "목록",
+      "countOne": "프롬프트 {count}개",
+      "countOther": "프롬프트 {count}개",
+      "footerCount": "{total}개 중 {shown}개 프롬프트",
+      "rowsPerPage": "페이지당 행 수:",
+      "noResults": "검색과 일치하는 프롬프트가 없습니다.",
+      "usesOne": "{count}회 사용",
+      "usesOther": "{count}회 사용",
+      "updatedOn": "{date} 업데이트"
     },
     "promptEffectiveness": {
       "title": "프롬프트 효과 분석",
@@ -929,6 +993,36 @@
       "exportJson": "JSON 내보내기",
       "exportSuccess": "내보내기 성공",
       "exportFailed": "내보내기 실패",
+      "refresh": "새로고침",
+      "searchEvent": "이벤트 검색",
+      "searchPlaceholder": "예: 6bc782b8…",
+      "clearAll": "모두 지우기",
+      "eventsMatched": "{count}개 이벤트 일치",
+      "sortedNewestFirst": "최신순으로 정렬됨",
+      "today": "오늘",
+      "yesterday": "어제",
+      "eventCount": "{count}개 이벤트",
+      "showDetails": "이벤트 세부정보 표시",
+      "hideDetails": "이벤트 세부정보 숨기기",
+      "filterByUser": "사용자 {user}(으)로 필터링",
+      "copyValue": "{value} 복사",
+      "copyFailed": "클립보드에 복사하지 못했습니다",
+      "payloadTitle": "로그 이벤트 페이로드 세부정보",
+      "fullUserIdentity": "전체 사용자 식별자",
+      "fullResourceUuid": "전체 리소스 UUID",
+      "networkOrigin": "네트워크 출처",
+      "secureSession": "보안 SSL 세션",
+      "emailLine": "이메일: {email}",
+      "typeLine": "유형: {type}",
+      "visualizedView": "시각화 보기",
+      "jsonView": "JSON 보기",
+      "noDetails": "사용 가능한 세부정보 없음",
+      "arraySummary": "배열[{count}]",
+      "objectSummary": "객체({count}개 속성)",
+      "showMore": "+{count}개 더…",
+      "showLess": "간략히 보기",
+      "rowsPerPage": "페이지당 행 수",
+      "pageInfo": "{total}페이지 중 {current}페이지 · 총 {count}개",
       "columns": {
         "timestamp": "타임스탬프",
         "userId": "사용자 ID",
@@ -1307,6 +1401,7 @@
       "connectedLabel": "연결된 엔진",
       "whitelistedLabel": "허용된 모델",
       "mostUsedLabel": "이번 주 최다 사용 — {count}건",
+      "noUsageValue": "데이터 없음",
       "noUsageLabel": "이번 주 사용 기록 없음"
     },
     "card": {
@@ -1471,7 +1566,8 @@
       "message": "\"{name}\"을(를) 삭제하시겠습니까? 접근 가능한 모든 사용자에게 영향을 미치며 취소할 수 없습니다.",
       "cancel": "취소",
       "confirm": "삭제",
-      "deleting": "삭제 중…"
+      "deleting": "삭제 중…",
+      "subtitle": "이 스킬을 사용할 수 있는 모든 사용자에게서 삭제됩니다"
     },
     "messages": {
       "loadFailed": "스킬을 불러오지 못했습니다",
@@ -1482,6 +1578,43 @@
       "deleted": "스킬이 삭제되었습니다",
       "deleteFailed": "스킬 삭제에 실패했습니다",
       "builtinReadOnly": "기본 제공 스킬은 변경할 수 없습니다"
+    },
+    "import": "가져오기",
+    "addNew": "스킬 추가",
+    "noResults": "검색과 일치하는 스킬이 없습니다.",
+    "stats": {
+      "total": "전체 스킬",
+      "enabled": "활성화됨",
+      "builtin": "기본 제공",
+      "custom": "사용자 지정"
+    },
+    "filters": {
+      "label": "스킬 필터",
+      "all": "전체",
+      "builtin": "기본 제공",
+      "custom": "사용자 지정",
+      "enabled": "활성화됨"
+    },
+    "sections": {
+      "builtinTitle": "기본 제공 스킬",
+      "builtinNote": "플랫폼에서 제공",
+      "customTitle": "사용자 지정 스킬",
+      "customNote": "조직에서 생성"
+    },
+    "addCard": {
+      "title": "사용자 지정 스킬 만들기",
+      "body": "반복 작업에 모델이 따를 수 있는 지침을 팀에 제공하세요."
+    },
+    "tags": {
+      "builtin": "기본 제공",
+      "custom": "사용자 지정"
+    },
+    "card": {
+      "noDescription": "설명이 없습니다.",
+      "managedByPlatform": "플랫폼에서 관리",
+      "edit": "편집",
+      "delete": "삭제",
+      "toggleAria": "{name} 전환"
     }
   }
 }
