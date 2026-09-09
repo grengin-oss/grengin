@@ -364,7 +364,21 @@ SPDX-License-Identifier: Apache-2.0
       onclick={loadData}
       disabled={loading}
     >
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M12.25 7A5.25 5.25 0 0 1 2.36 9.63M1.75 7A5.25 5.25 0 0 1 11.64 4.37M1.75 1.75v3.15h3.15M12.25 12.25V9.1H9.1" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        aria-hidden="true"
+        ><path
+          d="M12.25 7A5.25 5.25 0 0 1 2.36 9.63M1.75 7A5.25 5.25 0 0 1 11.64 4.37M1.75 1.75v3.15h3.15M12.25 12.25V9.1H9.1"
+          stroke="currentColor"
+          stroke-width="1.2"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        /></svg
+      >
       <span>{$_("admin.promptEffectiveness.refresh")}</span>
     </button>
   </div>
@@ -377,7 +391,19 @@ SPDX-License-Identifier: Apache-2.0
       message={$_("admin.promptEffectiveness.emptyMessage")}
     >
       {#snippet icon()}
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        <svg
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          ><path d="M3 3v18h18" /><path d="M18 17V9" /><path
+            d="M13 17V5"
+          /><path d="M8 17v-3" /></svg
+        >
       {/snippet}
     </AdminEmptyState>
   {:else}
@@ -428,7 +454,46 @@ SPDX-License-Identifier: Apache-2.0
             aria-pressed={layout === "grid"}
             onclick={() => (layout = "grid")}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="1.75" y="1.75" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="7.75" y="1.75" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="1.75" y="7.75" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="7.75" y="7.75" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.4"/></svg>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+              ><rect
+                x="1.75"
+                y="1.75"
+                width="4.5"
+                height="4.5"
+                rx="1"
+                stroke="currentColor"
+                stroke-width="1.4"
+              /><rect
+                x="7.75"
+                y="1.75"
+                width="4.5"
+                height="4.5"
+                rx="1"
+                stroke="currentColor"
+                stroke-width="1.4"
+              /><rect
+                x="1.75"
+                y="7.75"
+                width="4.5"
+                height="4.5"
+                rx="1"
+                stroke="currentColor"
+                stroke-width="1.4"
+              /><rect
+                x="7.75"
+                y="7.75"
+                width="4.5"
+                height="4.5"
+                rx="1"
+                stroke="currentColor"
+                stroke-width="1.4"
+              /></svg
+            >
             {$_("admin.promptEffectiveness.viewGrid")}
           </button>
           <button
@@ -437,7 +502,18 @@ SPDX-License-Identifier: Apache-2.0
             aria-pressed={layout === "list"}
             onclick={() => (layout = "list")}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1.75 3.5h10.5M1.75 7h10.5M1.75 10.5h10.5" stroke="currentColor" stroke-width="1.4"/></svg>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+              ><path
+                d="M1.75 3.5h10.5M1.75 7h10.5M1.75 10.5h10.5"
+                stroke="currentColor"
+                stroke-width="1.4"
+              /></svg
+            >
             {$_("admin.promptEffectiveness.viewList")}
           </button>
         </div>
@@ -456,7 +532,19 @@ SPDX-License-Identifier: Apache-2.0
             <option value={role.id}>{role.name}</option>
           {/each}
         </select>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3.5 5.25 7 8.75l3.5-3.5" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          aria-hidden="true"
+          ><path
+            d="M3.5 5.25 7 8.75l3.5-3.5"
+            stroke="currentColor"
+            stroke-width="1.2"
+            fill="none"
+          /></svg
+        >
       </span>
       <span class="filter-chip">
         <select
@@ -468,18 +556,48 @@ SPDX-License-Identifier: Apache-2.0
             <option value={prompt.id}>{prompt.name}</option>
           {/each}
         </select>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3.5 5.25 7 8.75l3.5-3.5" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          aria-hidden="true"
+          ><path
+            d="M3.5 5.25 7 8.75l3.5-3.5"
+            stroke="currentColor"
+            stroke-width="1.2"
+            fill="none"
+          /></svg
+        >
       </span>
       <span class="filter-chip">
         <select
           bind:value={sortKey}
           aria-label={$_("admin.promptEffectiveness.sortBy")}
         >
-          <option value="usage">{$_("admin.promptEffectiveness.sortMostUsed")}</option>
-          <option value="rating">{$_("admin.promptEffectiveness.sortHighestRated")}</option>
-          <option value="feedback">{$_("admin.promptEffectiveness.sortMostFeedback")}</option>
+          <option value="usage"
+            >{$_("admin.promptEffectiveness.sortMostUsed")}</option
+          >
+          <option value="rating"
+            >{$_("admin.promptEffectiveness.sortHighestRated")}</option
+          >
+          <option value="feedback"
+            >{$_("admin.promptEffectiveness.sortMostFeedback")}</option
+          >
         </select>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3.5 5.25 7 8.75l3.5-3.5" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          aria-hidden="true"
+          ><path
+            d="M3.5 5.25 7 8.75l3.5-3.5"
+            stroke="currentColor"
+            stroke-width="1.2"
+            fill="none"
+          /></svg
+        >
       </span>
     </div>
 
@@ -488,30 +606,101 @@ SPDX-License-Identifier: Apache-2.0
       <div class="stat-card">
         <div class="stat-card-header">
           <span>{$_("admin.promptEffectiveness.totalFeedback")}</span>
-          <div class="stat-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.9 1.75h8.2v10.5l-2.9-1.75-2.4 1.75V1.75z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/></svg></div>
+          <div class="stat-icon stat-icon--blue">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+              class="svelte-vdo472"
+              ><path
+                d="M2.9 1.75h1.4v10.5H2.9zM6.3 6.13h1.4v6.12H6.3zM9.7 4h1.4v8.25H9.7z"
+                fill="currentColor"
+              ></path></svg
+            >
+          </div>
         </div>
         <span class="stat-value">{formatNumber(totalFeedback)}</span>
       </div>
       <div class="stat-card">
         <div class="stat-card-header">
           <span>{$_("admin.promptEffectiveness.thumbsUp")}</span>
-          <div class="stat-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M5.25 6.13V12h5.4c.6 0 1.1-.4 1.2-1l.9-4.4c.1-.7-.4-1.3-1.1-1.3H8.9l.4-2.3c.1-.7-.4-1.3-1.1-1.3-.4 0-.8.2-1 .6L5.25 6.13z" stroke="currentColor" stroke-width="1" fill="none" stroke-linejoin="round"/><path d="M1.75 6.13h2.6V12h-2.6z" stroke="currentColor" stroke-width="1" fill="none"/></svg></div>
+          <div class="stat-icon stat-icon--violet">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+              ><path
+                d="M5.25 6.13V12h5.4c.6 0 1.1-.4 1.2-1l.9-4.4c.1-.7-.4-1.3-1.1-1.3H8.9l.4-2.3c.1-.7-.4-1.3-1.1-1.3-.4 0-.8.2-1 .6L5.25 6.13z"
+                stroke="currentColor"
+                stroke-width="1"
+                fill="none"
+                stroke-linejoin="round"
+              /><path
+                d="M1.75 6.13h2.6V12h-2.6z"
+                stroke="currentColor"
+                stroke-width="1"
+                fill="none"
+              /></svg
+            >
+          </div>
         </div>
         <span class="stat-value">{formatNumber(thumbsUp)}</span>
       </div>
       <div class="stat-card">
         <div class="stat-card-header">
           <span>{$_("admin.promptEffectiveness.thumbsDown")}</span>
-          <div class="stat-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M8.75 7.87V2h-5.4c-.6 0-1.1.4-1.2 1l-.9 4.4c-.1.7.4 1.3 1.1 1.3h2.75l-.4 2.3c-.1.7.4 1.3 1.1 1.3.4 0 .8-.2 1-.6l2.05-3.87z" stroke="currentColor" stroke-width="1" fill="none" stroke-linejoin="round"/><path d="M12.25 7.87h-2.6V2h2.6z" stroke="currentColor" stroke-width="1" fill="none"/></svg></div>
+          <div class="stat-icon stat-icon--slate">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+              ><path
+                d="M8.75 7.87V2h-5.4c-.6 0-1.1.4-1.2 1l-.9 4.4c-.1.7.4 1.3 1.1 1.3h2.75l-.4 2.3c-.1.7.4 1.3 1.1 1.3.4 0 .8-.2 1-.6l2.05-3.87z"
+                stroke="currentColor"
+                stroke-width="1"
+                fill="none"
+                stroke-linejoin="round"
+              /><path
+                d="M12.25 7.87h-2.6V2h2.6z"
+                stroke="currentColor"
+                stroke-width="1"
+                fill="none"
+              /></svg
+            >
+          </div>
         </div>
         <span class="stat-value">{formatNumber(thumbsDown)}</span>
       </div>
       <div class="stat-card">
         <div class="stat-card-header">
           <span>{$_("admin.promptEffectiveness.avgRating")}</span>
-          <div class="stat-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 1.75l1.6 3.24 3.58.52-2.59 2.52.61 3.57L7 9.94l-3.2 1.66.61-3.57L1.82 5.51l3.58-.52L7 1.75z" stroke="currentColor" stroke-width="1" fill="none" stroke-linejoin="round"/></svg></div>
+          <div class="stat-icon stat-icon--amber">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+              ><path
+                d="M7 1.75l1.6 3.24 3.58.52-2.59 2.52.61 3.57L7 9.94l-3.2 1.66.61-3.57L1.82 5.51l3.58-.52L7 1.75z"
+                stroke="currentColor"
+                stroke-width="1"
+                fill="none"
+                stroke-linejoin="round"
+              /></svg
+            >
+          </div>
         </div>
-        <span class="stat-value" style:color={totalFeedback > 0 ? ratingColor(avgRating) : null}>
+        <span
+          class="stat-value"
+          style:color={totalFeedback > 0 ? ratingColor(avgRating) : null}
+        >
           {totalFeedback > 0 ? ratingPercent(avgRating) : "—"}
         </span>
       </div>
@@ -524,7 +713,25 @@ SPDX-License-Identifier: Apache-2.0
         : 'info-banner--blue'}"
       role="status"
     >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.4" stroke="currentColor" stroke-width="1.2"/><path d="M8 7.2v3.4M8 5v.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        aria-hidden="true"
+        ><circle
+          cx="8"
+          cy="8"
+          r="6.4"
+          stroke="currentColor"
+          stroke-width="1.2"
+        /><path
+          d="M8 7.2v3.4M8 5v.01"
+          stroke="currentColor"
+          stroke-width="1.2"
+          stroke-linecap="round"
+        /></svg
+      >
       <span>
         {#if totalFeedback > 0}
           {$_("admin.promptEffectiveness.bannerFeedback", {
@@ -553,7 +760,17 @@ SPDX-License-Identifier: Apache-2.0
         aria-selected={activeTab === "usage"}
         onclick={() => (activeTab = "usage")}
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.9 1.75h1.4v10.5H2.9zM6.3 6.13h1.4v6.12H6.3zM9.7 4h1.4v8.25H9.7z" fill="currentColor"/></svg>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          aria-hidden="true"
+          ><path
+            d="M2.9 1.75h1.4v10.5H2.9zM6.3 6.13h1.4v6.12H6.3zM9.7 4h1.4v8.25H9.7z"
+            fill="currentColor"
+          /></svg
+        >
         {$_("admin.promptEffectiveness.usagePerPrompt")}
       </button>
       <button
@@ -563,6 +780,19 @@ SPDX-License-Identifier: Apache-2.0
         aria-selected={activeTab === "effective"}
         onclick={() => (activeTab = "effective")}
       >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          aria-hidden="true"
+          ><path
+            d="M6.83928 1.21276C6.79032 1.24316 6.75083 1.28663 6.72527 1.33828L5.37835 4.0677C5.28951 4.24752 5.15831 4.40307 4.99603 4.52094C4.83375 4.63881 4.64525 4.71549 4.44677 4.74436L1.43385 5.18478C1.37651 5.19289 1.3226 5.21694 1.27826 5.25419C1.23392 5.29144 1.20094 5.34039 1.18306 5.39548C1.16519 5.45056 1.16315 5.50955 1.17716 5.56574C1.19118 5.62193 1.2207 5.67305 1.26235 5.71328L3.44168 7.83487C3.58554 7.97496 3.69316 8.14794 3.75525 8.33889C3.81734 8.52985 3.83205 8.73304 3.7981 8.93095L3.28419 11.9287C3.27419 11.9857 3.28038 12.0443 3.30207 12.098C3.32375 12.1516 3.36006 12.1981 3.40686 12.2322C3.45365 12.2662 3.50906 12.2864 3.56678 12.2905C3.6245 12.2946 3.68221 12.2824 3.73335 12.2554L6.4266 10.839C6.6041 10.7458 6.80158 10.6971 7.00206 10.6971C7.20254 10.6971 7.40002 10.7458 7.57752 10.839L10.2714 12.2554C10.3225 12.2826 10.3803 12.2949 10.4381 12.2909C10.4959 12.2869 10.5514 12.2667 10.5983 12.2326C10.6452 12.1986 10.6816 12.152 10.7033 12.0983C10.725 12.0445 10.7312 11.9858 10.7211 11.9287L10.2066 8.93037C10.1728 8.73255 10.1876 8.52948 10.2497 8.33865C10.3118 8.14781 10.4193 7.97492 10.563 7.83487L12.7424 5.7127C12.7837 5.67242 12.8129 5.62139 12.8267 5.56537C12.8405 5.50935 12.8384 5.45059 12.8205 5.39572C12.8027 5.34085 12.7698 5.29207 12.7257 5.2549C12.6816 5.21772 12.628 5.19364 12.5709 5.18536L9.55735 4.74436C9.35909 4.71526 9.17086 4.63849 9.0088 4.52063C8.84674 4.40277 8.7157 4.24735 8.62694 4.0677L7.27944 1.33828C7.25387 1.28663 7.21438 1.24316 7.16542 1.21276C7.11646 1.18237 7.05998 1.16626 7.00235 1.16626C6.94472 1.16626 6.88824 1.18237 6.83928 1.21276Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          /></svg
+        >
         {$_("admin.promptEffectiveness.mostEffective")}
       </button>
       <button
@@ -572,6 +802,19 @@ SPDX-License-Identifier: Apache-2.0
         aria-selected={activeTab === "department"}
         onclick={() => (activeTab = "department")}
       >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          aria-hidden="true"
+          ><path
+            d="M9.33529 12.25V11.0833C9.33529 10.4645 9.08944 9.871 8.65182 9.43342C8.2142 8.99583 7.62066 8.75 7.00177 8.75H3.50149C2.8826 8.75 2.28906 8.99583 1.85144 9.43342C1.41382 9.871 1.16797 10.4645 1.16797 11.0833V12.25M9.33529 1.82463C9.83569 1.95434 10.2788 2.24653 10.5952 2.65533C10.9116 3.06413 11.0832 3.56639 11.0832 4.08329C11.0832 4.60019 10.9116 5.10246 10.5952 5.51126C10.2788 5.92005 9.83569 6.21224 9.33529 6.34196M12.8356 12.2499V11.0833C12.8352 10.5663 12.6631 10.064 12.3463 9.65545C12.0296 9.24685 11.586 8.95501 11.0854 8.82576M7.58515 4.08333C7.58515 5.372 6.5404 6.41667 5.25163 6.41667C3.96286 6.41667 2.91811 5.372 2.91811 4.08333C2.91811 2.79467 3.96286 1.75 5.25163 1.75C6.5404 1.75 7.58515 2.79467 7.58515 4.08333Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          /></svg
+        >
         {$_("admin.promptEffectiveness.departmentAdoption")}
       </button>
       <button
@@ -581,6 +824,19 @@ SPDX-License-Identifier: Apache-2.0
         aria-selected={activeTab === "ab"}
         onclick={() => (activeTab = "ab")}
       >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          aria-hidden="true"
+          ><path
+            d="M8.75 3.5C7.35761 3.5 6.02226 4.05312 5.03769 5.03769C4.05312 6.02226 3.5 7.35761 3.5 8.75M8.75 3.5C8.75 4.4665 9.5335 5.25 10.5 5.25C11.4665 5.25 12.25 4.4665 12.25 3.5C12.25 2.5335 11.4665 1.75 10.5 1.75C9.5335 1.75 8.75 2.5335 8.75 3.5ZM3.5 8.75V1.75M3.5 8.75C2.5335 8.75 1.75 9.5335 1.75 10.5C1.75 11.4665 2.5335 12.25 3.5 12.25C4.4665 12.25 5.25 11.4665 5.25 10.5C5.25 9.5335 4.4665 8.75 3.5 8.75Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          /></svg
+        >
         {$_("admin.promptEffectiveness.abTest.title")}
       </button>
     </div>
@@ -591,7 +847,24 @@ SPDX-License-Identifier: Apache-2.0
         <div class="table-card">
           <div class="table-filter">
             <div class="search-box">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="6" cy="6" r="4.25" stroke="currentColor" stroke-width="1.2"/><path d="m11 11-2-2" stroke="currentColor" stroke-width="1.2"/></svg>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="none"
+                aria-hidden="true"
+                ><circle
+                  cx="6"
+                  cy="6"
+                  r="4.25"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                /><path
+                  d="m11 11-2-2"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                /></svg
+              >
               <input
                 type="text"
                 bind:value={usageSearch}
@@ -622,10 +895,33 @@ SPDX-License-Identifier: Apache-2.0
 
           {#if sortedRows.length === 0}
             <div class="empty-state">
-              <svg class="empty-icon" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="18.3" cy="18.3" r="11.7" stroke="currentColor" stroke-width="1.7"/><path d="m30 30-5.5-5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <svg
+                class="empty-icon"
+                width="40"
+                height="40"
+                viewBox="0 0 40 40"
+                fill="none"
+                aria-hidden="true"
+                ><circle
+                  cx="18.3"
+                  cy="18.3"
+                  r="11.7"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                /><path
+                  d="m30 30-5.5-5.5"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                /></svg
+              >
               <div class="empty-text-group">
-                <span class="empty-title">{$_("admin.promptEffectiveness.noResults")}</span>
-                <span class="empty-desc">{$_("admin.promptEffectiveness.noResultsMessage")}</span>
+                <span class="empty-title"
+                  >{$_("admin.promptEffectiveness.noResults")}</span
+                >
+                <span class="empty-desc"
+                  >{$_("admin.promptEffectiveness.noResultsMessage")}</span
+                >
               </div>
             </div>
           {:else if layout === "list"}
@@ -636,16 +932,29 @@ SPDX-License-Identifier: Apache-2.0
                     ? $_("admin.promptEffectiveness.columns.prompt")
                     : $_("admin.promptEffectiveness.columns.role")}
                 </span>
-                <span class="col-usage">{$_("admin.promptEffectiveness.columns.usage")}</span>
-                <span class="col-fixed">{$_("admin.promptEffectiveness.columns.feedback")}</span>
-                <span class="col-fixed">{$_("admin.promptEffectiveness.columns.thumbsUp")}</span>
-                <span class="col-fixed">{$_("admin.promptEffectiveness.columns.thumbsDown")}</span>
-                <span class="col-fixed">{$_("admin.promptEffectiveness.columns.rating")}</span>
+                <span class="col-usage"
+                  >{$_("admin.promptEffectiveness.columns.usage")}</span
+                >
+                <span class="col-fixed"
+                  >{$_("admin.promptEffectiveness.columns.feedback")}</span
+                >
+                <span class="col-fixed"
+                  >{$_("admin.promptEffectiveness.columns.thumbsUp")}</span
+                >
+                <span class="col-fixed"
+                  >{$_("admin.promptEffectiveness.columns.thumbsDown")}</span
+                >
+                <span class="col-fixed"
+                  >{$_("admin.promptEffectiveness.columns.rating")}</span
+                >
               </div>
               {#each pagedRows as row (row.id)}
                 <div class="data-row">
                   <div class="name-cell">
-                    <span class="avatar-sq" style:background={avatarColor(row.name)}>
+                    <span
+                      class="avatar-sq"
+                      style:background={avatarColor(row.name)}
+                    >
                       {initial(row.name)}
                     </span>
                     <span class="name-cell-text">{row.name}</span>
@@ -654,13 +963,20 @@ SPDX-License-Identifier: Apache-2.0
                     {/if}
                   </div>
                   <div class="progress-cell col-usage">
-                    <span class="progress-val">{formatNumber(row.usageCount)}</span>
+                    <span class="progress-val"
+                      >{formatNumber(row.usageCount)}</span
+                    >
                     <div class="progress-track">
-                      <div class="progress-fill" style:width="{barWidth(row.usageCount)}%"></div>
+                      <div
+                        class="progress-fill"
+                        style:width="{barWidth(row.usageCount)}%"
+                      ></div>
                     </div>
                   </div>
                   <span class="dash-cell">
-                    {row.feedbackCount > 0 ? formatNumber(row.feedbackCount) : "—"}
+                    {row.feedbackCount > 0
+                      ? formatNumber(row.feedbackCount)
+                      : "—"}
                   </span>
                   <span class="dash-cell">
                     {row.feedbackCount > 0 ? formatNumber(row.thumbsUp) : "—"}
@@ -670,11 +986,16 @@ SPDX-License-Identifier: Apache-2.0
                   </span>
                   <span class="dash-cell">
                     {#if row.feedbackCount > 0}
-                      <span class="rating-value" style:color={ratingColor(row.rating)}>
+                      <span
+                        class="rating-value"
+                        style:color={ratingColor(row.rating)}
+                      >
                         {ratingPercent(row.rating)}
                       </span>
                     {:else}
-                      <span class="nodata-badge">{$_("admin.promptEffectiveness.noDataBadge")}</span>
+                      <span class="nodata-badge"
+                        >{$_("admin.promptEffectiveness.noDataBadge")}</span
+                      >
                     {/if}
                   </span>
                 </div>
@@ -685,7 +1006,10 @@ SPDX-License-Identifier: Apache-2.0
               {#each pagedRows as row (row.id)}
                 <div class="usage-card">
                   <div class="usage-card-head">
-                    <span class="avatar-sq" style:background={avatarColor(row.name)}>
+                    <span
+                      class="avatar-sq"
+                      style:background={avatarColor(row.name)}
+                    >
                       {initial(row.name)}
                     </span>
                     <div class="usage-card-title">
@@ -695,31 +1019,59 @@ SPDX-License-Identifier: Apache-2.0
                       {/if}
                     </div>
                     {#if row.feedbackCount > 0}
-                      <span class="rating-value" style:color={ratingColor(row.rating)}>
+                      <span
+                        class="rating-value"
+                        style:color={ratingColor(row.rating)}
+                      >
                         {ratingPercent(row.rating)}
                       </span>
                     {:else}
-                      <span class="nodata-badge">{$_("admin.promptEffectiveness.noDataBadge")}</span>
+                      <span class="nodata-badge"
+                        >{$_("admin.promptEffectiveness.noDataBadge")}</span
+                      >
                     {/if}
                   </div>
                   <div class="progress-cell">
-                    <span class="progress-val">{formatNumber(row.usageCount)}</span>
+                    <span class="progress-val"
+                      >{formatNumber(row.usageCount)}</span
+                    >
                     <div class="progress-track">
-                      <div class="progress-fill" style:width="{barWidth(row.usageCount)}%"></div>
+                      <div
+                        class="progress-fill"
+                        style:width="{barWidth(row.usageCount)}%"
+                      ></div>
                     </div>
                   </div>
                   <div class="usage-card-stats">
                     <div class="usage-stat">
-                      <span class="usage-stat-label">{$_("admin.promptEffectiveness.columns.feedback")}</span>
-                      <span class="usage-stat-value">{formatNumber(row.feedbackCount)}</span>
+                      <span class="usage-stat-label"
+                        >{$_(
+                          "admin.promptEffectiveness.columns.feedback",
+                        )}</span
+                      >
+                      <span class="usage-stat-value"
+                        >{formatNumber(row.feedbackCount)}</span
+                      >
                     </div>
                     <div class="usage-stat">
-                      <span class="usage-stat-label">{$_("admin.promptEffectiveness.columns.thumbsUp")}</span>
-                      <span class="usage-stat-value">{formatNumber(row.thumbsUp)}</span>
+                      <span class="usage-stat-label"
+                        >{$_(
+                          "admin.promptEffectiveness.columns.thumbsUp",
+                        )}</span
+                      >
+                      <span class="usage-stat-value"
+                        >{formatNumber(row.thumbsUp)}</span
+                      >
                     </div>
                     <div class="usage-stat">
-                      <span class="usage-stat-label">{$_("admin.promptEffectiveness.columns.thumbsDown")}</span>
-                      <span class="usage-stat-value">{formatNumber(row.thumbsDown)}</span>
+                      <span class="usage-stat-label"
+                        >{$_(
+                          "admin.promptEffectiveness.columns.thumbsDown",
+                        )}</span
+                      >
+                      <span class="usage-stat-value"
+                        >{formatNumber(row.thumbsDown)}</span
+                      >
                     </div>
                   </div>
                 </div>
@@ -751,7 +1103,19 @@ SPDX-License-Identifier: Apache-2.0
                 disabled={usagePage === 0}
                 aria-label={$_("admin.common.previousPage")}
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M8.75 3.5 5.25 7l3.5 3.5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  aria-hidden="true"
+                  ><path
+                    d="M8.75 3.5 5.25 7l3.5 3.5"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                    fill="none"
+                  /></svg
+                >
                 {$_("admin.promptEffectiveness.prev")}
               </button>
               <button
@@ -762,14 +1126,26 @@ SPDX-License-Identifier: Apache-2.0
                 aria-label={$_("admin.common.nextPage")}
               >
                 {$_("admin.promptEffectiveness.next")}
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M5.25 3.5 8.75 7l-3.5 3.5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  aria-hidden="true"
+                  ><path
+                    d="M5.25 3.5 8.75 7l-3.5 3.5"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                    fill="none"
+                  /></svg
+                >
               </button>
             </div>
           </div>
         </div>
       </div>
 
-    <!-- ---------------- MOST / LEAST EFFECTIVE ---------------- -->
+      <!-- ---------------- MOST / LEAST EFFECTIVE ---------------- -->
     {:else if activeTab === "effective"}
       <div class="tab-panel">
         <div class="columns-row">
@@ -788,21 +1164,51 @@ SPDX-License-Identifier: Apache-2.0
                       <span class="role-pill">{roleName(m.role_id)}</span>
                     </div>
                     {#if m.feedback_count > 0}
-                      <span class="rating-value" style:color={ratingColor(m.average_rating)}>
+                      <span
+                        class="rating-value"
+                        style:color={ratingColor(m.average_rating)}
+                      >
                         {ratingPercent(m.average_rating)}
                       </span>
                     {:else}
-                      <span class="nodata-badge">{$_("admin.promptEffectiveness.noDataBadge")}</span>
+                      <span class="nodata-badge"
+                        >{$_("admin.promptEffectiveness.noDataBadge")}</span
+                      >
                     {/if}
                   </div>
                 {/each}
               </div>
             {:else}
               <div class="empty-state">
-                <svg class="empty-icon" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="16.7" stroke="currentColor" stroke-width="1.7"/><path d="M13.3 23.3c1.5 2.2 3.9 3.3 6.7 3.3s5.2-1.1 6.7-3.3M15 15.8h.02M25 15.8h.02" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                <svg
+                  class="empty-icon"
+                  width="40"
+                  height="40"
+                  viewBox="0 0 40 40"
+                  fill="none"
+                  aria-hidden="true"
+                  ><circle
+                    cx="20"
+                    cy="20"
+                    r="16.7"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                  /><path
+                    d="M13.3 23.3c1.5 2.2 3.9 3.3 6.7 3.3s5.2-1.1 6.7-3.3M15 15.8h.02M25 15.8h.02"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                  /></svg
+                >
                 <div class="empty-text-group">
-                  <span class="empty-title">{$_("admin.promptEffectiveness.noData")}</span>
-                  <span class="empty-desc">{$_("admin.promptEffectiveness.mostEffectiveEmptyMessage")}</span>
+                  <span class="empty-title"
+                    >{$_("admin.promptEffectiveness.noData")}</span
+                  >
+                  <span class="empty-desc"
+                    >{$_(
+                      "admin.promptEffectiveness.mostEffectiveEmptyMessage",
+                    )}</span
+                  >
                 </div>
               </div>
             {/if}
@@ -818,11 +1224,15 @@ SPDX-License-Identifier: Apache-2.0
                 {#each leastEffective as m, i (m.prompt_id)}
                   <div class="list-item">
                     <div class="list-item-left">
-                      <span class="number-badge number-badge--low">{i + 1}</span>
+                      <span class="number-badge number-badge--low">{i + 1}</span
+                      >
                       <span class="list-item-name">{m.name}</span>
                       <span class="role-pill">{roleName(m.role_id)}</span>
                     </div>
-                    <span class="rating-value" style:color={ratingColor(m.average_rating)}>
+                    <span
+                      class="rating-value"
+                      style:color={ratingColor(m.average_rating)}
+                    >
                       {ratingPercent(m.average_rating)}
                     </span>
                   </div>
@@ -830,10 +1240,35 @@ SPDX-License-Identifier: Apache-2.0
               </div>
             {:else}
               <div class="empty-state">
-                <svg class="empty-icon" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="16.7" stroke="currentColor" stroke-width="1.7"/><path d="M13.3 25c1.5-2.2 3.9-3.3 6.7-3.3s5.2 1.1 6.7 3.3M15 15.8h.02M25 15.8h.02" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                <svg
+                  class="empty-icon"
+                  width="40"
+                  height="40"
+                  viewBox="0 0 40 40"
+                  fill="none"
+                  aria-hidden="true"
+                  ><circle
+                    cx="20"
+                    cy="20"
+                    r="16.7"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                  /><path
+                    d="M13.3 25c1.5-2.2 3.9-3.3 6.7-3.3s5.2 1.1 6.7 3.3M15 15.8h.02M25 15.8h.02"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                  /></svg
+                >
                 <div class="empty-text-group">
-                  <span class="empty-title">{$_("admin.promptEffectiveness.noData")}</span>
-                  <span class="empty-desc">{$_("admin.promptEffectiveness.leastEffectiveEmptyMessage")}</span>
+                  <span class="empty-title"
+                    >{$_("admin.promptEffectiveness.noData")}</span
+                  >
+                  <span class="empty-desc"
+                    >{$_(
+                      "admin.promptEffectiveness.leastEffectiveEmptyMessage",
+                    )}</span
+                  >
                 </div>
               </div>
             {/if}
@@ -841,13 +1276,30 @@ SPDX-License-Identifier: Apache-2.0
         </div>
       </div>
 
-    <!-- ---------------- DEPARTMENT ADOPTION ---------------- -->
+      <!-- ---------------- DEPARTMENT ADOPTION ---------------- -->
     {:else if activeTab === "department"}
       <div class="tab-panel">
         <div class="table-card">
           <div class="table-filter">
             <div class="search-box">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="6" cy="6" r="4.25" stroke="currentColor" stroke-width="1.2"/><path d="m11 11-2-2" stroke="currentColor" stroke-width="1.2"/></svg>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="none"
+                aria-hidden="true"
+                ><circle
+                  cx="6"
+                  cy="6"
+                  r="4.25"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                /><path
+                  d="m11 11-2-2"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                /></svg
+              >
               <input
                 type="text"
                 bind:value={deptSearch}
@@ -867,36 +1319,72 @@ SPDX-License-Identifier: Apache-2.0
 
           {#if searchedDepartments.length === 0}
             <div class="empty-state">
-              <svg class="empty-icon" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M6.7 33.3V10l11.6-5v28.3M18.3 33.3h15V18.3l-15-4.2M11.7 15v3.3M11.7 23.3v3.3M25 22.5v3.3" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg
+                class="empty-icon"
+                width="40"
+                height="40"
+                viewBox="0 0 40 40"
+                fill="none"
+                aria-hidden="true"
+                ><path
+                  d="M6.7 33.3V10l11.6-5v28.3M18.3 33.3h15V18.3l-15-4.2M11.7 15v3.3M11.7 23.3v3.3M25 22.5v3.3"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                /></svg
+              >
               <div class="empty-text-group">
-                <span class="empty-title">{$_("admin.promptEffectiveness.noDepartments")}</span>
-                <span class="empty-desc">{$_("admin.promptEffectiveness.noResultsMessage")}</span>
+                <span class="empty-title"
+                  >{$_("admin.promptEffectiveness.noDepartments")}</span
+                >
+                <span class="empty-desc"
+                  >{$_("admin.promptEffectiveness.noResultsMessage")}</span
+                >
               </div>
             </div>
           {:else}
             <div class="table-scroll">
               <div class="thead-row">
-                <span class="col-name">{$_("admin.promptEffectiveness.columns.department")}</span>
-                <span class="col-fixed col-120">{$_("admin.promptEffectiveness.columns.members")}</span>
-                <span class="col-fixed col-120">{$_("admin.promptEffectiveness.columns.promptsUsed")}</span>
-                <span class="col-fixed col-120">{$_("admin.promptEffectiveness.columns.totalUsage")}</span>
-                <span class="col-adoption">{$_("admin.promptEffectiveness.columns.adoptionRate")}</span>
+                <span class="col-name"
+                  >{$_("admin.promptEffectiveness.columns.department")}</span
+                >
+                <span class="col-fixed col-120"
+                  >{$_("admin.promptEffectiveness.columns.members")}</span
+                >
+                <span class="col-fixed col-120"
+                  >{$_("admin.promptEffectiveness.columns.promptsUsed")}</span
+                >
+                <span class="col-fixed col-120"
+                  >{$_("admin.promptEffectiveness.columns.totalUsage")}</span
+                >
+                <span class="col-adoption"
+                  >{$_("admin.promptEffectiveness.columns.adoptionRate")}</span
+                >
               </div>
               {#each pagedDepartments as dept (dept.id)}
                 <div class="data-row">
                   <div class="name-cell">
-                    <span class="avatar-sq" style:background={avatarColor(dept.name)}>
+                    <span
+                      class="avatar-sq"
+                      style:background={avatarColor(dept.name)}
+                    >
                       {initial(dept.name)}
                     </span>
                     <span class="name-cell-text">{dept.name}</span>
                   </div>
-                  <span class="dash-cell col-120">{formatNumber(dept.memberCount)}</span>
+                  <span class="dash-cell col-120"
+                    >{formatNumber(dept.memberCount)}</span
+                  >
                   <span class="dash-cell col-120">
                     {$_("admin.promptEffectiveness.countPrompts", {
                       values: { count: formatNumber(dept.promptsUsed) },
                     })}
                   </span>
-                  <span class="dash-cell col-120">{formatNumber(dept.totalUsage)}</span>
+                  <span class="dash-cell col-120"
+                    >{formatNumber(dept.totalUsage)}</span
+                  >
                   <div class="progress-cell col-adoption">
                     <span
                       class="progress-val"
@@ -934,7 +1422,19 @@ SPDX-License-Identifier: Apache-2.0
                 disabled={deptPage === 0}
                 aria-label={$_("admin.common.previousPage")}
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M8.75 3.5 5.25 7l3.5 3.5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  aria-hidden="true"
+                  ><path
+                    d="M8.75 3.5 5.25 7l3.5 3.5"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                    fill="none"
+                  /></svg
+                >
                 {$_("admin.promptEffectiveness.prev")}
               </button>
               <button
@@ -945,7 +1445,19 @@ SPDX-License-Identifier: Apache-2.0
                 aria-label={$_("admin.common.nextPage")}
               >
                 {$_("admin.promptEffectiveness.next")}
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M5.25 3.5 8.75 7l-3.5 3.5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  aria-hidden="true"
+                  ><path
+                    d="M5.25 3.5 8.75 7l-3.5 3.5"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                    fill="none"
+                  /></svg
+                >
               </button>
             </div>
           </div>
@@ -953,11 +1465,31 @@ SPDX-License-Identifier: Apache-2.0
 
         {#if unstaffedDepartments.length > 0}
           <div class="info-banner info-banner--blue" role="status">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.4" stroke="currentColor" stroke-width="1.2"/><path d="M8 7.2v3.4M8 5v.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+              ><circle
+                cx="8"
+                cy="8"
+                r="6.4"
+                stroke="currentColor"
+                stroke-width="1.2"
+              /><path
+                d="M8 7.2v3.4M8 5v.01"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              /></svg
+            >
             <span>
               {$_("admin.promptEffectiveness.bannerZeroAdoption", {
                 values: {
-                  departments: unstaffedDepartments.map((d) => d.name).join(", "),
+                  departments: unstaffedDepartments
+                    .map((d) => d.name)
+                    .join(", "),
                 },
               })}
             </span>
@@ -965,13 +1497,17 @@ SPDX-License-Identifier: Apache-2.0
         {/if}
       </div>
 
-    <!-- ---------------- A/B TEST COMPARISON ---------------- -->
+      <!-- ---------------- A/B TEST COMPARISON ---------------- -->
     {:else}
       <div class="tab-panel">
         <div class="comparison-card">
           <div class="comparison-head">
-            <span class="comparison-title">{$_("admin.promptEffectiveness.abTest.title")}</span>
-            <span class="comparison-sub">{$_("admin.promptEffectiveness.abTest.description")}</span>
+            <span class="comparison-title"
+              >{$_("admin.promptEffectiveness.abTest.title")}</span
+            >
+            <span class="comparison-sub"
+              >{$_("admin.promptEffectiveness.abTest.description")}</span
+            >
           </div>
 
           <div class="variant-selectors">
@@ -981,12 +1517,28 @@ SPDX-License-Identifier: Apache-2.0
               </label>
               <div class="variant-dropdown">
                 <select id="ab-variant-a" bind:value={abVariantA}>
-                  <option value="">{$_("admin.promptEffectiveness.abTest.selectPrompt")}</option>
+                  <option value=""
+                    >{$_(
+                      "admin.promptEffectiveness.abTest.selectPrompt",
+                    )}</option
+                  >
                   {#each metrics as m (m.prompt_id)}
                     <option value={m.prompt_id}>{m.name}</option>
                   {/each}
                 </select>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3.5 5.25 7 8.75l3.5-3.5" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  aria-hidden="true"
+                  ><path
+                    d="M3.5 5.25 7 8.75l3.5-3.5"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                    fill="none"
+                  /></svg
+                >
               </div>
             </div>
             <div class="vs-badge-wrap"><div class="vs-badge">VS</div></div>
@@ -996,12 +1548,28 @@ SPDX-License-Identifier: Apache-2.0
               </label>
               <div class="variant-dropdown">
                 <select id="ab-variant-b" bind:value={abVariantB}>
-                  <option value="">{$_("admin.promptEffectiveness.abTest.selectPrompt")}</option>
+                  <option value=""
+                    >{$_(
+                      "admin.promptEffectiveness.abTest.selectPrompt",
+                    )}</option
+                  >
                   {#each metrics as m (m.prompt_id)}
                     <option value={m.prompt_id}>{m.name}</option>
                   {/each}
                 </select>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3.5 5.25 7 8.75l3.5-3.5" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  aria-hidden="true"
+                  ><path
+                    d="M3.5 5.25 7 8.75l3.5-3.5"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                    fill="none"
+                  /></svg
+                >
               </div>
             </div>
           </div>
@@ -1013,28 +1581,46 @@ SPDX-License-Identifier: Apache-2.0
                   <div class="ab-panel-head">
                     <span class="vs-badge ab-tag">{variant.tag}</span>
                     <span class="ab-panel-name">{variant.metric.name}</span>
-                    <span class="role-pill">{roleName(variant.metric.role_id)}</span>
+                    <span class="role-pill"
+                      >{roleName(variant.metric.role_id)}</span
+                    >
                   </div>
                   <div class="ab-metrics">
                     <div class="ab-metric">
-                      <span class="ab-metric-label">{$_("admin.promptEffectiveness.columns.usage")}</span>
-                      <span class="ab-metric-value">{formatNumber(variant.metric.usage_count)}</span>
+                      <span class="ab-metric-label"
+                        >{$_("admin.promptEffectiveness.columns.usage")}</span
+                      >
+                      <span class="ab-metric-value"
+                        >{formatNumber(variant.metric.usage_count)}</span
+                      >
                     </div>
                     <div class="ab-metric">
-                      <span class="ab-metric-label">{$_("admin.promptEffectiveness.columns.feedback")}</span>
-                      <span class="ab-metric-value">{formatNumber(variant.metric.feedback_count)}</span>
+                      <span class="ab-metric-label"
+                        >{$_(
+                          "admin.promptEffectiveness.columns.feedback",
+                        )}</span
+                      >
+                      <span class="ab-metric-value"
+                        >{formatNumber(variant.metric.feedback_count)}</span
+                      >
                     </div>
                     <div class="ab-metric">
-                      <span class="ab-metric-label">{$_("admin.promptEffectiveness.columns.rating")}</span>
+                      <span class="ab-metric-label"
+                        >{$_("admin.promptEffectiveness.columns.rating")}</span
+                      >
                       {#if variant.metric.feedback_count > 0}
                         <span
                           class="ab-metric-value"
-                          style:color={ratingColor(variant.metric.average_rating)}
+                          style:color={ratingColor(
+                            variant.metric.average_rating,
+                          )}
                         >
                           {ratingPercent(variant.metric.average_rating)}
                         </span>
                       {:else}
-                        <span class="nodata-badge">{$_("admin.promptEffectiveness.noDataBadge")}</span>
+                        <span class="nodata-badge"
+                          >{$_("admin.promptEffectiveness.noDataBadge")}</span
+                        >
                       {/if}
                     </div>
                   </div>
@@ -1062,14 +1648,31 @@ SPDX-License-Identifier: Apache-2.0
             </div>
           {:else}
             <div class="comparison-empty">
-              <svg width="44" height="40" viewBox="0 0 44 40" fill="none" aria-hidden="true" class="empty-icon"><path d="M10 8v27h27M18 27V16M27 27V10M35 27V19" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg
+                width="44"
+                height="40"
+                viewBox="0 0 44 40"
+                fill="none"
+                aria-hidden="true"
+                class="empty-icon"
+                ><path
+                  d="M10 8v27h27M18 27V16M27 27V10M35 27V19"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                /></svg
+              >
               <div class="empty-text-group">
                 <span class="empty-title">
                   {abVariantA || abVariantB
                     ? $_("admin.promptEffectiveness.abTest.selectBoth")
                     : $_("admin.promptEffectiveness.abTest.emptyTitle")}
                 </span>
-                <span class="empty-desc">{$_("admin.promptEffectiveness.abTest.emptyMessage")}</span>
+                <span class="empty-desc"
+                  >{$_("admin.promptEffectiveness.abTest.emptyMessage")}</span
+                >
               </div>
             </div>
           {/if}
@@ -1092,7 +1695,17 @@ SPDX-License-Identifier: Apache-2.0
     --pe-desc: var(--gx-an-chip-fg); /* rgb(75,85,99) */
     --pe-muted: rgb(156, 163, 175);
     --pe-field-bg: var(--gx-mcp-code-bg); /* rgb(248,248,249) */
-    --pe-stat-icon-bg: rgba(59, 130, 246, 0.0863);
+    /* One tinted tile per stat card: a 0x16 (8.6%) wash of the glyph's hue.
+       Blue and slate land exactly on existing tokens, so those two follow the
+       dark scheme for free; violet and amber are literals overridden below. */
+    --pe-stat-blue-bg: rgba(59, 130, 246, 0.0863);
+    --pe-stat-blue-fg: var(--gx-org-primary-500); /* #427AC6 */
+    --pe-stat-violet-bg: rgba(139, 92, 246, 0.0863);
+    --pe-stat-violet-fg: rgb(139, 92, 246); /* #8B5CF6 */
+    --pe-stat-slate-bg: rgba(156, 163, 175, 0.0863);
+    --pe-stat-slate-fg: var(--gx-org-slate-350); /* #9CA3B0 */
+    --pe-stat-amber-bg: rgba(245, 158, 11, 0.0863);
+    --pe-stat-amber-fg: rgb(245, 158, 11); /* #F59E0B */
     --pe-avatar-blue: var(--gx-org-primary-500);
     --pe-avatar-green: rgb(46, 168, 117);
     --pe-avatar-slate: var(--pe-muted);
@@ -1109,7 +1722,12 @@ SPDX-License-Identifier: Apache-2.0
       --pe-row-border: rgba(255, 255, 255, 0.08);
       --pe-title: var(--gx-slate-900);
       --pe-muted: var(--gx-org-slate-350);
-      --pe-stat-icon-bg: rgba(59, 130, 246, 0.18);
+      --pe-stat-blue-bg: rgba(59, 130, 246, 0.18);
+      --pe-stat-violet-bg: rgba(139, 92, 246, 0.18);
+      --pe-stat-violet-fg: rgb(167, 139, 250);
+      --pe-stat-slate-bg: rgba(156, 163, 175, 0.18);
+      --pe-stat-amber-bg: rgba(245, 158, 11, 0.18);
+      --pe-stat-amber-fg: var(--gx-an-amber);
       --pe-avatar-green: rgb(52, 138, 102);
       --pe-tab-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
       --pe-toggle-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.45);
@@ -1456,12 +2074,30 @@ SPDX-License-Identifier: Apache-2.0
     width: 28px;
     height: 28px;
     border-radius: 8px;
-    background: var(--pe-stat-icon-bg);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--gx-an-dot);
+  }
+
+  .stat-icon--blue {
+    background: var(--pe-stat-blue-bg);
+    color: var(--pe-stat-blue-fg);
+  }
+
+  .stat-icon--violet {
+    background: var(--pe-stat-violet-bg);
+    color: var(--pe-stat-violet-fg);
+  }
+
+  .stat-icon--slate {
+    background: var(--pe-stat-slate-bg);
+    color: var(--pe-stat-slate-fg);
+  }
+
+  .stat-icon--amber {
+    background: var(--pe-stat-amber-bg);
+    color: var(--pe-stat-amber-fg);
   }
 
   .stat-icon svg {
