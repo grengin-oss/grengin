@@ -56,7 +56,8 @@ SPDX-License-Identifier: Apache-2.0
               stroke-linecap="round"
               stroke-linejoin="round"
             >
-              <path d="M12 2l2.4 5.5L20 8l-4 4 1 6-5-3-5 3 1-6-4-4 5.6-.5z"></path>
+              <path d="M12 2l2.4 5.5L20 8l-4 4 1 6-5-3-5 3 1-6-4-4 5.6-.5z"
+              ></path>
             </svg>
           {/if}
         </span>
@@ -89,10 +90,14 @@ SPDX-License-Identifier: Apache-2.0
 
     <div class="skill-tags">
       {#if skill.is_builtin}
-        <span class="skill-tag skill-tag--builtin">{$_("userSkills.badges.builtin")}</span>
+        <span class="skill-tag skill-tag--builtin"
+          >{$_("userSkills.badges.builtin")}</span
+        >
       {/if}
       {#if isArtifacts}
-        <span class="skill-tag skill-tag--builtin">{$_("userSkills.badges.artifacts")}</span>
+        <span class="skill-tag skill-tag--builtin"
+          >{$_("userSkills.badges.artifacts")}</span
+        >
       {/if}
       {#if skill.instructions}
         <span class="skill-tag">{$_("userSkills.badges.instructions")}</span>
@@ -116,7 +121,13 @@ SPDX-License-Identifier: Apache-2.0
   <!-- ".skill-card-footer" -->
   <div class="skill-card-footer">
     {#if skill.is_builtin}
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        aria-hidden="true"
+      >
         <rect
           x="2.75"
           y="6.1"
@@ -137,7 +148,13 @@ SPDX-License-Identifier: Apache-2.0
       <span>{$_("userSkills.card.managedByPlatform")}</span>
     {:else}
       <button class="footer-btn" type="button" onclick={() => onedit?.(skill)}>
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 13 13"
+          fill="none"
+          aria-hidden="true"
+        >
           <path
             d="M8.5 1.5 11 4 4 11H1.5V8.5z"
             stroke="currentColor"
@@ -153,7 +170,13 @@ SPDX-License-Identifier: Apache-2.0
         type="button"
         onclick={() => ondelete?.(skill)}
       >
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 13 13"
+          fill="none"
+          aria-hidden="true"
+        >
           <path
             d="M2.5 3.5h8M5 3.5V2h3v1.5M3.5 3.5 4 11h5l.5-7.5"
             stroke="currentColor"
@@ -214,6 +237,7 @@ SPDX-License-Identifier: Apache-2.0
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    border: 1px solid rgba(229, 231, 235, 1);
   }
 
   .skill-card--inactive {
