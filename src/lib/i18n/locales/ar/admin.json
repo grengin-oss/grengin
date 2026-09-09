@@ -954,7 +954,8 @@
         "members": "الأعضاء",
         "promptsUsed": "المطالبات المستخدمة",
         "totalUsage": "إجمالي الاستخدام",
-        "adoptionRate": "معدل التبني"
+        "adoptionRate": "معدل التبني",
+        "prompt": "المطالبة"
       },
       "abTest": {
         "title": "مقارنة اختبار A/B",
@@ -964,11 +965,44 @@
         "selectPrompt": "اختر مطالبة...",
         "selectBoth": "اختر كلا المتغيرين للمقارنة",
         "leadsBy": "يتقدم بـ",
-        "tied": "كلا المتغيرين متعادلان"
+        "tied": "كلا المتغيرين متعادلان",
+        "emptyTitle": "حدد مطالبتين للمقارنة",
+        "emptyMessage": "اختر المتغيرين أعلاه لعرض مقاييس الاستخدام والتقييم جنبًا إلى جنب."
       },
       "toast": {
         "failedToLoad": "تعذر تحميل مقاييس المطالبة"
-      }
+      },
+      "groupPrompts": "المطالبات",
+      "groupRoles": "الأدوار",
+      "countPrompts": "{count} مطالبة",
+      "countRoles": "{count} دور",
+      "countDepartments": "{count} قسم",
+      "layout": "التخطيط",
+      "viewGrid": "شبكة",
+      "viewList": "قائمة",
+      "sortBy": "الترتيب حسب",
+      "sortMostUsed": "الأكثر استخدامًا",
+      "sortHighestRated": "الأعلى تقييمًا",
+      "sortMostFeedback": "الأكثر تعليقًا",
+      "searchPrompts": "البحث في المطالبات…",
+      "searchRoles": "البحث في الأدوار…",
+      "searchDepartments": "البحث في الأقسام…",
+      "showingPrompts": "عرض {shown} من {total} مطالبة",
+      "showingRoles": "عرض {shown} من {total} دور",
+      "showingDepartments": "عرض {shown} من {total} قسم",
+      "footerPrompts": "{count} مطالبة · {usage} طلب إجمالي",
+      "footerRoles": "{count} دور · {usage} طلب إجمالي",
+      "footerDepartments": "{count} قسم · {usage} طلب إجمالي",
+      "prev": "السابق",
+      "next": "التالي",
+      "noDataBadge": "لا توجد بيانات",
+      "bannerNoFeedback": "لم يتم إرسال أي تعليقات بالإعجاب أو عدمه لهذه الفترة بعد — لا يزال تتبع الاستخدام جاريًا.",
+      "bannerFeedback": "تم جمع {count} تعليق — {rate} إيجابية عبر {prompts} مطالبة.",
+      "bannerZeroAdoption": "معلومة: {departments} لديه معدل تبنٍ 0% لأنه لا يوجد حاليًا أعضاء معينون لتتبع مقاييس الاستخدام.",
+      "leastEffectiveEmptyMessage": "ستظهر التقييمات هنا بمجرد أن تبدأ المطالبات في تلقي تعليقات سلبية.",
+      "mostEffectiveEmptyMessage": "ستظهر التقييمات هنا بمجرد أن تبدأ المطالبات في تلقي تعليقات إيجابية.",
+      "noResults": "لا توجد نتائج مطابقة",
+      "noResultsMessage": "جرّب مصطلح بحث آخر، أو امسح المرشحات أعلاه."
     },
     "auditLogs": {
       "title": "سجلات التدقيق",

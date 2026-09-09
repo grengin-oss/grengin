@@ -67,7 +67,8 @@
       "modalTitle": "{name} — Outils",
       "loading": "Chargement des outils...",
       "empty": "Aucun outil disponible pour ce serveur."
-    }
+    },
+    "searchPlaceholder": "Filtrer les intégrations..."
   },
   "userPromptSettings": {
     "loading": "Chargement des paramètres d'instructions...",
@@ -84,7 +85,8 @@
       "title": "Variables Disponibles",
       "empty": "Aucune variable disponible",
       "insertHint": "Cliquez sur une variable pour l'insérer dans l'éditeur",
-      "copied": "Variable insérée"
+      "copied": "Variable insérée",
+      "label": "Variables :"
     },
     "editor": {
       "title": "Éditeur d'Instruction Personnalisée",
@@ -93,7 +95,10 @@
       "preview": "Aperçu",
       "edit": "Modifier",
       "previewTitle": "Aperçu de l'Instruction",
-      "previewEmpty": "Rien à prévisualiser. Commencez à rédiger votre instruction personnalisée ci-dessus."
+      "previewEmpty": "Rien à prévisualiser. Commencez à rédiger votre instruction personnalisée ci-dessus.",
+      "description": "Configurez les instructions de base injectées dans le prompt système à chaque session. Vous pouvez référencer des variables précises à l'aide d'accolades.",
+      "hint": "Les instructions personnalisées ne s'appliquent qu'aux sessions de votre espace de travail.",
+      "charCountMax": "{count} / {max} caractères"
     },
     "actions": {
       "save": "Enregistrer l'Instruction",
@@ -122,7 +127,9 @@
       "submitting": "Envoi en cours...",
       "submitted": "Merci pour votre retour !",
       "failedToSubmit": "Échec de l'envoi du retour",
-      "ratingRequired": "Veuillez sélectionner une note avant d'envoyer"
+      "ratingRequired": "Veuillez sélectionner une note avant d'envoyer",
+      "accurate": "Pertinent",
+      "needsTuning": "À améliorer"
     }
   },
   "userSkills": {

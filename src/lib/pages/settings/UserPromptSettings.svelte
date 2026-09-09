@@ -18,6 +18,9 @@ SPDX-License-Identifier: Apache-2.0
   import { ApiError } from "../../api/client.js";
   import { toast } from "../../components/Toaster.svelte";
 
+  /** The mockup's "150 / 2000 characters" counter. */
+  const MAX_CHARS = 2000;
+
   let loading = $state(true);
   let saving = $state(false);
   let resetting = $state(false);
@@ -114,10 +117,7 @@ SPDX-License-Identifier: Apache-2.0
     if (textareaRef) {
       const start = textareaRef.selectionStart;
       const end = textareaRef.selectionEnd;
-      editorText =
-        editorText.substring(0, start) +
-        insertion +
-        editorText.substring(end);
+      editorText = editorText.substring(0, start) + insertion + editorText.substring(end);
       // Restore cursor after insertion
       requestAnimationFrame(() => {
         if (textareaRef) {
@@ -169,67 +169,34 @@ SPDX-License-Identifier: Apache-2.0
   });
 </script>
 
-<div class="prompt-settings-container">
+<div class="prompt-panel">
   {#if loading}
     <LoadingSpinner size="md" text={$_("userPromptSettings.loading")} />
   {:else if prompt}
-    <!-- Active Prompt Info -->
-    <section class="section-card">
-      <div class="section-header">
-        <h2 class="section-title">{$_("userPromptSettings.activePrompt")}</h2>
-        <span
-          class="source-badge"
-          class:source-badge--custom={prompt.source === "user_custom"}
-          class:source-badge--department={prompt.source === "department_default"}
-          class:source-badge--system={prompt.source === "system_default"}
-        >
-          {getSourceLabel(prompt.source)}
-        </span>
-      </div>
-      <div class="active-prompt-text">{prompt.prompt_text || "—"}</div>
-    </section>
-
-    <!-- Variables Helper -->
-    {#if prompt.variables && prompt.variables.length > 0}
-      <section class="section-card">
-        <div class="section-header">
-          <h2 class="section-title">{$_("userPromptSettings.variables.title")}</h2>
+    <!-- ".card" — System prompt -->
+    <section class="card">
+      <div class="card-header-row">
+        <div class="card-title-block">
+          <span class="card-title">{$_("userPromptSettings.editor.title")}</span>
+          <span class="default-pill default-pill--{prompt.source}">
+            {getSourceLabel(prompt.source)}
+          </span>
         </div>
-        <p class="section-hint">{$_("userPromptSettings.variables.insertHint")}</p>
-        <div class="variables-list">
-          {#each prompt.variables as variable}
-            <button
-              type="button"
-              class="variable-chip"
-              onclick={() => insertVariable(variable)}
-              title={`Insert {{${variable}}}`}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="4 17 10 11 4 5"></polyline>
-                <line x1="12" y1="19" x2="20" y2="19"></line>
-              </svg>
-              {`{{${variable}}}`}
-            </button>
-          {/each}
-        </div>
-      </section>
-    {/if}
 
-    <!-- Custom Prompt Editor -->
-    <section class="section-card">
-      <div class="section-header">
-        <h2 class="section-title">{$_("userPromptSettings.editor.title")}</h2>
-        <div class="editor-toggle">
+        <!-- ".preview-toggle" -->
+        <div class="preview-toggle" role="group" aria-label={$_("userPromptSettings.editor.preview")}>
           <button
-            class="toggle-btn"
-            class:toggle-btn--active={!showPreview}
+            class="pv-btn"
+            type="button"
+            aria-pressed={!showPreview}
             onclick={() => (showPreview = false)}
           >
             {$_("userPromptSettings.editor.edit")}
           </button>
           <button
-            class="toggle-btn"
-            class:toggle-btn--active={showPreview}
+            class="pv-btn"
+            type="button"
+            aria-pressed={showPreview}
             onclick={() => (showPreview = true)}
           >
             {$_("userPromptSettings.editor.preview")}
@@ -237,35 +204,58 @@ SPDX-License-Identifier: Apache-2.0
         </div>
       </div>
 
-      {#if showPreview}
-        <div class="preview-area">
-          {#if previewText()}
-            <div class="preview-content">{@html previewText()}</div>
-          {:else}
-            <p class="preview-empty">{$_("userPromptSettings.editor.previewEmpty")}</p>
-          {/if}
-        </div>
-      {:else}
-        <div class="editor-area">
-          <textarea
-            bind:this={textareaRef}
-            bind:value={editorText}
-            class="prompt-textarea"
-            placeholder={$_("userPromptSettings.editor.placeholder")}
-            rows="10"
-          ></textarea>
-          <div class="editor-footer">
-            <span class="char-count">{$_("userPromptSettings.editor.charCount", { values: { count: charCount } })}</span>
-          </div>
+      <span class="card-desc">{$_("userPromptSettings.editor.description")}</span>
+
+      <!-- ".variables-row" -->
+      {#if prompt.variables && prompt.variables.length > 0}
+        <div class="variables-row">
+          <span class="variables-label">{$_("userPromptSettings.variables.label")}</span>
+          {#each prompt.variables as variable (variable)}
+            <button
+              class="var-chip"
+              type="button"
+              onclick={() => insertVariable(variable)}
+              title={$_("userPromptSettings.variables.insertHint")}
+            >
+              {`{{${variable}}}`}
+            </button>
+          {/each}
         </div>
       {/if}
 
-      <div class="editor-actions">
-        <button
-          class="btn btn--primary"
-          onclick={handleSave}
-          disabled={!hasChanges || saving}
-        >
+      <!-- ".prompt-textarea" -->
+      {#if showPreview}
+        <div class="prompt-textarea prompt-textarea--preview">
+          {#if previewText()}
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+            {@html previewText()}
+          {:else}
+            <span class="preview-empty">{$_("userPromptSettings.editor.previewEmpty")}</span>
+          {/if}
+        </div>
+      {:else}
+        <textarea
+          bind:this={textareaRef}
+          bind:value={editorText}
+          class="prompt-textarea"
+          placeholder={$_("userPromptSettings.editor.placeholder")}
+          maxlength={MAX_CHARS}
+          rows="7"
+        ></textarea>
+      {/if}
+
+      <!-- ".textarea-footer" -->
+      <div class="textarea-footer">
+        <span class="textarea-hint">{$_("userPromptSettings.editor.hint")}</span>
+        <span class="char-count">
+          {$_("userPromptSettings.editor.charCountMax", {
+            values: { count: charCount, max: MAX_CHARS },
+          })}
+        </span>
+      </div>
+
+      <div class="card-actions">
+        <button class="cta-btn" type="button" onclick={handleSave} disabled={!hasChanges || saving}>
           {#if saving}
             <span class="btn-spinner"></span>
             {$_("userPromptSettings.actions.saving")}
@@ -275,7 +265,8 @@ SPDX-License-Identifier: Apache-2.0
         </button>
         {#if prompt.source === "user_custom"}
           <button
-            class="btn btn--ghost btn--danger"
+            class="ghost-btn ghost-btn--danger"
+            type="button"
             onclick={() => (showResetModal = true)}
             disabled={resetting}
           >
@@ -285,40 +276,64 @@ SPDX-License-Identifier: Apache-2.0
       </div>
     </section>
 
-    <!-- Feedback Section -->
-    <section class="section-card">
-      <div class="section-header">
-        <h2 class="section-title">{$_("userPromptSettings.feedback.title")}</h2>
-      </div>
-      <p class="section-hint">{$_("userPromptSettings.feedback.subtitle")}</p>
+    <!-- ".card" — Prompt feedback -->
+    <section class="card">
+      <span class="card-title">{$_("userPromptSettings.feedback.title")}</span>
+      <span class="card-desc">{$_("userPromptSettings.feedback.subtitle")}</span>
 
-      <div class="feedback-rating">
+      <!-- ".rating-buttons" -->
+      <div class="rating-buttons">
         <button
-          type="button"
           class="rating-btn"
-          class:rating-btn--active={feedbackRating === 1}
+          type="button"
+          aria-pressed={feedbackRating === 1}
           onclick={() => (feedbackRating = feedbackRating === 1 ? null : 1)}
-          aria-label={$_("userPromptSettings.feedback.thumbsUp")}
           title={$_("userPromptSettings.feedback.thumbsUp")}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill={feedbackRating === 1 ? "currentColor" : "none"} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path
+              d="M6.75 7.9v7.6h6.9c.75 0 1.4-.5 1.55-1.25l1.15-5.65c.15-.85-.5-1.65-1.4-1.65h-3.4l.5-2.9c.15-.85-.5-1.65-1.4-1.65-.5 0-1 .25-1.3.75L6.75 7.9z"
+              stroke="currentColor"
+              stroke-width="1.2"
+              fill="none"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M2.25 7.9h3.35v7.6H2.25z"
+              stroke="currentColor"
+              stroke-width="1.2"
+              fill="none"
+            />
           </svg>
+          {$_("userPromptSettings.feedback.accurate")}
         </button>
         <button
+          class="rating-btn"
           type="button"
-          class="rating-btn rating-btn--down"
-          class:rating-btn--active={feedbackRating === -1}
+          aria-pressed={feedbackRating === -1}
           onclick={() => (feedbackRating = feedbackRating === -1 ? null : -1)}
-          aria-label={$_("userPromptSettings.feedback.thumbsDown")}
           title={$_("userPromptSettings.feedback.thumbsDown")}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill={feedbackRating === -1 ? "currentColor" : "none"} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path
+              d="M11.25 10.1V2.5h-6.9c-.75 0-1.4.5-1.55 1.25L1.65 9.4c-.15.85.5 1.65 1.4 1.65h3.4l-.5 2.9c-.15.85.5 1.65 1.4 1.65.5 0 1-.25 1.3-.75l2.6-4.75z"
+              stroke="currentColor"
+              stroke-width="1.2"
+              fill="none"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M15.75 10.1h-3.35V2.5h3.35z"
+              stroke="currentColor"
+              stroke-width="1.2"
+              fill="none"
+            />
           </svg>
+          {$_("userPromptSettings.feedback.needsTuning")}
         </button>
       </div>
 
+      <!-- ".feedback-textarea" -->
       <textarea
         class="feedback-textarea"
         bind:value={feedbackComment}
@@ -326,9 +341,10 @@ SPDX-License-Identifier: Apache-2.0
         rows="3"
       ></textarea>
 
-      <div class="feedback-actions">
+      <div class="card-actions">
         <button
-          class="btn btn--primary"
+          class="cta-btn"
+          type="button"
           onclick={handleFeedbackSubmit}
           disabled={feedbackRating === null || submittingFeedback}
         >
@@ -353,18 +369,10 @@ SPDX-License-Identifier: Apache-2.0
   <div class="reset-modal-body">
     <p class="reset-modal-message">{$_("userPromptSettings.actions.resetConfirmMessage")}</p>
     <div class="reset-modal-actions">
-      <button
-        class="btn btn--ghost"
-        onclick={() => (showResetModal = false)}
-        disabled={resetting}
-      >
+      <button class="btn btn--ghost" onclick={() => (showResetModal = false)} disabled={resetting}>
         {$_("userPromptSettings.actions.cancel")}
       </button>
-      <button
-        class="btn btn--danger"
-        onclick={handleReset}
-        disabled={resetting}
-      >
+      <button class="btn btn--danger" onclick={handleReset} disabled={resetting}>
         {#if resetting}
           <span class="btn-spinner"></span>
           {$_("userPromptSettings.actions.resetting")}
@@ -377,256 +385,421 @@ SPDX-License-Identifier: Apache-2.0
 </Modal>
 
 <style>
-  .prompt-settings-container {
-    padding: var(--space-lg);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xl);
-  }
+  /* ===== user-settings.html, Prompt Settings panel. Colours come from the
+     --us-* block UserSettings.svelte declares on ".us-page". ===== */
 
-  /* Section Card */
-  .section-card {
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-    padding: var(--space-xl);
-  }
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-    margin-bottom: var(--space-md);
-  }
-
-  .section-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-  }
-
-  .section-hint {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-    margin: 0 0 var(--space-md) 0;
-  }
-
-  /* Source Badge */
-  .source-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: var(--space-2xs) var(--space-sm);
-    border-radius: var(--radius-full);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-  }
-
-  .source-badge--custom {
-    background: rgba(99, 102, 241, 0.15);
-    color: #818cf8;
-  }
-
-  .source-badge--department {
-    background: rgba(234, 179, 8, 0.15);
-    color: #fbbf24;
-  }
-
-  .source-badge--system {
-    background: rgba(107, 114, 128, 0.15);
-    color: #9ca3af;
-  }
-
-  /* Active prompt text */
-  .active-prompt-text {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-break: break-word;
-    max-height: 200px;
-    overflow-y: auto;
-    padding: var(--space-md);
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-md);
-  }
-
-  /* Variables */
-  .variables-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-  }
-
-  .variable-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2xs);
-    padding: var(--space-xs) var(--space-md);
-    background: rgba(var(--glass-tint), 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-full);
-    font-size: 0.8125rem;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    color: var(--text-secondary);
+  /* app.css paints every bare control as a glass pill; every control here is
+     flat. Kept as bare selectors so the class rules below out-rank the reset. */
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
+    white-space: nowrap;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
-  .variable-chip:hover {
-    background: rgba(99, 102, 241, 0.15);
-    border-color: rgba(99, 102, 241, 0.3);
-    color: #818cf8;
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
   }
 
-  /* Editor Toggle */
-  .editor-toggle {
-    display: flex;
-    gap: var(--space-2xs);
-    padding: var(--space-2xs);
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-md);
+  button:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--us-cta);
+    outline-offset: 2px;
   }
 
-  .toggle-btn {
-    padding: var(--space-xs) var(--space-md);
-    border: none;
-    border-radius: var(--radius-sm);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .toggle-btn:hover:not(.toggle-btn--active) {
-    color: var(--text-primary);
-    background: rgba(var(--glass-tint), 0.05);
-  }
-
-  .toggle-btn--active {
-    color: var(--text-primary);
-    background: rgba(var(--glass-tint), 0.1);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  }
-
-  /* Editor Area */
-  .editor-area {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .prompt-textarea {
+  textarea {
     width: 100%;
-    min-height: 200px;
-    padding: var(--space-md);
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    line-height: 1.6;
-    resize: vertical;
-    transition: border-color 0.2s ease;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
     outline: none;
-    box-sizing: border-box;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    font-family: var(--gx-font);
+    color: inherit;
+    transition: none;
+    resize: vertical;
+  }
+
+  textarea:focus {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .prompt-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    align-self: stretch;
+  }
+
+  /* ---------------- ".card" ---------------- */
+  .card {
+    border-radius: 12px;
+    background: var(--us-surface);
+    box-shadow:
+      inset 0 0 0 1px var(--us-border),
+      var(--us-card-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+    align-self: stretch;
+  }
+
+  .card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .card-title-block {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--us-title);
+  }
+
+  .card-desc {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--us-body);
+  }
+
+  /* ---------------- ".default-pill" ---------------- */
+  .default-pill {
+    border-radius: 4px;
+    background: var(--us-track);
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--us-body);
+    white-space: nowrap;
+  }
+
+  .default-pill--user_custom {
+    background: var(--us-mint);
+    color: var(--us-ok);
+  }
+
+  .default-pill--department_default {
+    background: var(--us-tint);
+    color: var(--us-accent);
+  }
+
+  /* ---------------- ".preview-toggle" ---------------- */
+  .preview-toggle {
+    border-radius: 6px;
+    background: var(--us-track);
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    flex-shrink: 0;
+  }
+
+  .pv-btn {
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--us-body);
+    transition:
+      background-color 120ms ease,
+      box-shadow 120ms ease,
+      color 120ms ease;
+  }
+
+  .pv-btn[aria-pressed="true"] {
+    background: var(--us-surface);
+    box-shadow: var(--us-card-shadow);
+    color: var(--us-tab-active);
+  }
+
+  /* ---------------- ".variables-row" ---------------- */
+  .variables-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .variables-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--us-muted);
+    text-transform: uppercase;
+  }
+
+  .var-chip {
+    border-radius: 6px;
+    background: var(--us-tint);
+    padding: 4px 8px;
+    font-family: var(--us-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--us-accent);
+    transition: background-color 120ms ease;
+  }
+
+  .var-chip:hover {
+    background: var(--gx-org-track-hover);
+  }
+
+  /* ---------------- ".prompt-textarea" ---------------- */
+  .prompt-textarea {
+    min-height: 160px;
+    border-radius: 8px;
+    background: var(--us-field-bg);
+    box-shadow: inset 0 0 0 1px var(--us-border);
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--us-title);
+    outline: none;
+    white-space: pre-wrap;
+    align-self: stretch;
+    width: 100%;
   }
 
   .prompt-textarea:focus {
-    border-color: rgba(99, 102, 241, 0.5);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    background: var(--us-field-bg);
+    box-shadow: inset 0 0 0 1.5px var(--us-cta);
   }
 
   .prompt-textarea::placeholder {
-    color: var(--text-secondary);
-    opacity: 0.5;
+    color: var(--us-muted);
+    opacity: 1;
   }
 
-  .editor-footer {
-    display: flex;
-    justify-content: flex-end;
-    padding: var(--space-xs) 0;
-  }
-
-  .char-count {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-  }
-
-  /* Preview Area */
-  .preview-area {
-    padding: var(--space-md);
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-md);
-    min-height: 200px;
-  }
-
-  .preview-content {
-    font-size: 0.875rem;
-    color: var(--text-primary);
-    line-height: 1.6;
-    white-space: pre-wrap;
+  .prompt-textarea--preview {
+    overflow-y: auto;
+    max-height: 420px;
     word-break: break-word;
   }
 
-  .preview-empty {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    font-style: italic;
-    margin: 0;
-  }
-
-  :global(.variable-highlight) {
-    background: rgba(99, 102, 241, 0.2);
-    color: #818cf8;
+  .prompt-textarea--preview :global(.variable-highlight) {
+    border-radius: 4px;
+    background: var(--us-tint);
     padding: 1px 4px;
-    border-radius: 3px;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-weight: 600;
+    font-family: var(--us-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--us-accent);
   }
 
-  /* Editor Actions */
-  .editor-actions {
+  .preview-empty {
+    color: var(--us-muted);
+  }
+
+  /* ---------------- ".textarea-footer" ---------------- */
+  .textarea-footer {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: var(--space-md);
-    margin-top: var(--space-lg);
+    gap: 16px;
+    align-self: stretch;
+    flex-wrap: wrap;
   }
 
-  /* Buttons */
+  .textarea-hint {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--us-muted);
+  }
+
+  .char-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--us-body);
+  }
+
+  /* ---------------- ".rating-buttons" ---------------- */
+  .rating-buttons {
+    display: flex;
+    gap: 12px;
+    align-self: stretch;
+    flex-wrap: wrap;
+  }
+
+  .rating-btn {
+    height: 42px;
+    border-radius: 8px;
+    background: var(--us-surface);
+    box-shadow: inset 0 0 0 1px var(--us-border);
+    display: flex;
+    gap: 8px;
+    padding: 0 12px;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--us-body);
+    transition:
+      box-shadow 120ms ease,
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .rating-btn:hover {
+    background: var(--us-field-bg);
+  }
+
+  .rating-btn[aria-pressed="true"] {
+    box-shadow: inset 0 0 0 1.5px var(--us-cta);
+    background: var(--us-tint);
+    color: var(--us-accent);
+  }
+
+  .rating-btn svg {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  /* ---------------- ".feedback-textarea" ---------------- */
+  .feedback-textarea {
+    min-height: 80px;
+    border-radius: 8px;
+    background: var(--us-surface);
+    box-shadow: inset 0 0 0 1px var(--us-border);
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--us-title);
+    outline: none;
+    align-self: stretch;
+  }
+
+  .feedback-textarea:focus {
+    background: var(--us-surface);
+    box-shadow: inset 0 0 0 1.5px var(--us-cta);
+  }
+
+  .feedback-textarea::placeholder {
+    color: var(--us-muted);
+    opacity: 1;
+  }
+
+  /* ---------------- ".disabled-btn" / the enabled CTA ---------------- */
+  .card-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .cta-btn,
+  .ghost-btn {
+    height: 37px;
+    border-radius: 6px;
+    display: inline-flex;
+    gap: 8px;
+    padding: 0 16px;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .cta-btn {
+    background: var(--us-cta);
+    color: #fff;
+  }
+
+  .cta-btn:hover:not(:disabled) {
+    background: var(--us-cta-hover);
+  }
+
+  .cta-btn:disabled {
+    background: var(--us-border);
+    opacity: 0.6;
+    color: var(--us-muted);
+    cursor: default;
+  }
+
+  .ghost-btn {
+    background: var(--us-field-bg);
+    box-shadow: inset 0 0 0 1px var(--us-border);
+    color: var(--us-body);
+  }
+
+  .ghost-btn--danger {
+    color: var(--us-danger);
+  }
+
+  .ghost-btn--danger:hover:not(:disabled) {
+    background: var(--us-danger-bg);
+  }
+
+  .ghost-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* ---------------- reset dialog (app dialog styling) ---------------- */
+  .reset-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  .reset-modal-message {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .reset-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+  }
+
   .btn {
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-xl);
+    padding: var(--space-sm) var(--space-lg);
     border: none;
     border-radius: var(--radius-md);
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
   }
 
   .btn:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
-  }
-
-  .btn--primary {
-    background: var(--brand, #4079c5);
-    color: white;
-  }
-
-  .btn--primary:hover:not(:disabled) {
-    filter: brightness(1.1);
   }
 
   .btn--ghost {
@@ -650,173 +823,19 @@ SPDX-License-Identifier: Apache-2.0
     background: rgba(239, 68, 68, 0.25);
   }
 
-  .btn--ghost.btn--danger {
-    background: transparent;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    color: #f87171;
-  }
-
-  .btn--ghost.btn--danger:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.1);
-  }
-
   .btn-spinner {
     display: inline-block;
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: currentColor;
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
     border-radius: 50%;
-    animation: spin 0.6s linear infinite;
+    animation: btn-spin 0.7s linear infinite;
   }
 
-  @keyframes spin {
+  @keyframes btn-spin {
     to {
       transform: rotate(360deg);
-    }
-  }
-
-  /* Feedback */
-  .feedback-rating {
-    display: flex;
-    align-items: center;
-    gap: var(--space-lg);
-    margin-bottom: var(--space-md);
-  }
-
-  .rating-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 52px;
-    height: 52px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-lg);
-    background: rgba(var(--glass-tint), 0.03);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .rating-btn:hover {
-    border-color: rgba(34, 197, 94, 0.4);
-    color: #22c55e;
-    background: rgba(34, 197, 94, 0.08);
-  }
-
-  .rating-btn--active {
-    border-color: rgba(34, 197, 94, 0.6);
-    color: #22c55e;
-    background: rgba(34, 197, 94, 0.12);
-    box-shadow: 0 0 12px rgba(34, 197, 94, 0.15);
-  }
-
-  .rating-btn--down:hover {
-    border-color: rgba(239, 68, 68, 0.4);
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.08);
-  }
-
-  .rating-btn--down.rating-btn--active {
-    border-color: rgba(239, 68, 68, 0.6);
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.12);
-    box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
-  }
-
-  .feedback-textarea {
-    width: 100%;
-    padding: var(--space-md);
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    line-height: 1.5;
-    resize: vertical;
-    transition: border-color 0.2s ease;
-    outline: none;
-    box-sizing: border-box;
-  }
-
-  .feedback-textarea:focus {
-    border-color: rgba(99, 102, 241, 0.5);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-  }
-
-  .feedback-textarea::placeholder {
-    color: var(--text-secondary);
-    opacity: 0.5;
-  }
-
-  .feedback-actions {
-    display: flex;
-    margin-top: var(--space-md);
-  }
-
-  /* Reset Modal */
-  .reset-modal-body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xl);
-  }
-
-  .reset-modal-message {
-    font-size: 0.9375rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin: 0;
-  }
-
-  .reset-modal-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: var(--space-md);
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .prompt-settings-container {
-      padding: var(--space-md);
-      gap: var(--space-lg);
-    }
-
-    .section-card {
-      padding: var(--space-lg);
-    }
-
-    .section-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--space-sm);
-    }
-
-    .editor-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .editor-actions .btn {
-      justify-content: center;
-    }
-
-    .feedback-rating {
-      gap: var(--space-md);
-    }
-
-    .rating-btn {
-      width: 48px;
-      height: 48px;
-    }
-
-    .reset-modal-actions {
-      flex-direction: column-reverse;
-      align-items: stretch;
-    }
-
-    .reset-modal-actions .btn {
-      justify-content: center;
     }
   }
 </style>

@@ -1075,7 +1075,8 @@
         "members": "Membros",
         "promptsUsed": "Instruções Usadas",
         "totalUsage": "Uso Total",
-        "adoptionRate": "Taxa de Adoção"
+        "adoptionRate": "Taxa de Adoção",
+        "prompt": "Instrução"
       },
       "abTest": {
         "title": "Comparação de Teste A/B",
@@ -1085,11 +1086,44 @@
         "selectPrompt": "Selecione uma instrução...",
         "selectBoth": "Selecione ambas as variantes para comparar",
         "leadsBy": "lidera por",
-        "tied": "Ambas as variantes estão empatadas"
+        "tied": "Ambas as variantes estão empatadas",
+        "emptyTitle": "Selecione duas instruções para comparar",
+        "emptyMessage": "Escolha as variantes acima para ver as métricas de uso e avaliação lado a lado."
       },
       "toast": {
         "failedToLoad": "Falha ao carregar métricas de instruções"
-      }
+      },
+      "groupPrompts": "Instruções",
+      "groupRoles": "Funções",
+      "countPrompts": "{count} instruções",
+      "countRoles": "{count} funções",
+      "countDepartments": "{count} departamentos",
+      "layout": "Disposição",
+      "viewGrid": "Grade",
+      "viewList": "Lista",
+      "sortBy": "Ordenar por",
+      "sortMostUsed": "Mais usadas",
+      "sortHighestRated": "Melhor avaliadas",
+      "sortMostFeedback": "Mais feedback",
+      "searchPrompts": "Pesquisar instruções…",
+      "searchRoles": "Pesquisar funções…",
+      "searchDepartments": "Pesquisar departamentos…",
+      "showingPrompts": "Mostrando {shown} de {total} instruções",
+      "showingRoles": "Mostrando {shown} de {total} funções",
+      "showingDepartments": "Mostrando {shown} de {total} departamentos",
+      "footerPrompts": "{count} instruções · {usage} solicitações no total",
+      "footerRoles": "{count} funções · {usage} solicitações no total",
+      "footerDepartments": "{count} departamentos · {usage} solicitações no total",
+      "prev": "Anterior",
+      "next": "Próximo",
+      "noDataBadge": "Sem dados",
+      "bannerNoFeedback": "Nenhum feedback positivo ou negativo foi enviado neste período ainda — o uso continua sendo registrado.",
+      "bannerFeedback": "{count} sinais de feedback coletados — {rate} positivos em {prompts} instruções.",
+      "bannerZeroAdoption": "Informação: {departments} tem taxa de adoção de 0% porque não há membros atribuídos para medir o uso no momento.",
+      "leastEffectiveEmptyMessage": "As avaliações aparecerão aqui assim que as instruções começarem a receber feedback negativo.",
+      "mostEffectiveEmptyMessage": "As avaliações aparecerão aqui assim que as instruções começarem a receber feedback positivo.",
+      "noResults": "Nenhum resultado correspondente",
+      "noResultsMessage": "Tente outro termo de pesquisa ou limpe os filtros acima."
     },
     "maintenance": {
       "title": "Manutenção",

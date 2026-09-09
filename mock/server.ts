@@ -20,6 +20,7 @@ import skillsRoutes from './routes/skills.js'
 import mcpServersRoutes from './routes/mcpServers.js'
 import rolePromptsRoutes from './routes/rolePrompts.js'
 import auditLogsRoutes from './routes/auditLogs.js'
+import promptMetricsRoutes from './routes/promptMetrics.js'
 
 // Seed initial data
 seedData()
@@ -48,6 +49,7 @@ app.use(skillsRoutes)
 app.use(mcpServersRoutes)
 app.use(rolePromptsRoutes)
 app.use(auditLogsRoutes)
+app.use(promptMetricsRoutes)
 
 // Fallback 404 handler - always returns JSON
 app.use((req, res) => {

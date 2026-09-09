@@ -1046,7 +1046,8 @@
         "members": "Members",
         "promptsUsed": "Prompts Used",
         "totalUsage": "Total Usage",
-        "adoptionRate": "Adoption Rate"
+        "adoptionRate": "Adoption Rate",
+        "prompt": "Prompt"
       },
       "abTest": {
         "title": "A/B Test Comparison",
@@ -1056,11 +1057,44 @@
         "selectPrompt": "Select a prompt...",
         "selectBoth": "Select both variants to compare",
         "leadsBy": "leads by",
-        "tied": "Both variants are tied"
+        "tied": "Both variants are tied",
+        "emptyTitle": "Select two prompts to compare",
+        "emptyMessage": "Choose variants above to see usage and rating metrics side-by-side."
       },
       "toast": {
         "failedToLoad": "Failed to load prompt metrics"
-      }
+      },
+      "groupPrompts": "Prompts",
+      "groupRoles": "Roles",
+      "countPrompts": "{count} prompts",
+      "countRoles": "{count} roles",
+      "countDepartments": "{count} departments",
+      "layout": "Layout",
+      "viewGrid": "Grid",
+      "viewList": "List",
+      "sortBy": "Sort by",
+      "sortMostUsed": "Most used",
+      "sortHighestRated": "Highest rated",
+      "sortMostFeedback": "Most feedback",
+      "searchPrompts": "Search prompts…",
+      "searchRoles": "Search roles…",
+      "searchDepartments": "Search departments…",
+      "showingPrompts": "Showing {shown} of {total} prompts",
+      "showingRoles": "Showing {shown} of {total} roles",
+      "showingDepartments": "Showing {shown} of {total} departments",
+      "footerPrompts": "{count} prompts · {usage} total requests",
+      "footerRoles": "{count} roles · {usage} total requests",
+      "footerDepartments": "{count} departments · {usage} total requests",
+      "prev": "Prev",
+      "next": "Next",
+      "noDataBadge": "No data",
+      "bannerNoFeedback": "No thumbs-up/down feedback has been submitted for this period yet — usage is still being tracked.",
+      "bannerFeedback": "{count} feedback signals collected — {rate} positive across {prompts} prompts.",
+      "bannerZeroAdoption": "Information: {departments} has 0% adoption rate because there are currently no assigned members to track usage metrics.",
+      "leastEffectiveEmptyMessage": "Ratings will appear here once prompts start receiving thumbs-down feedback.",
+      "mostEffectiveEmptyMessage": "Ratings will appear here once prompts start receiving thumbs-up feedback.",
+      "noResults": "No matching results",
+      "noResultsMessage": "Try a different search term, or clear the filters above."
     },
     "auditLogs": {
       "title": "Audit Logs",

@@ -7,13 +7,8 @@ SPDX-License-Identifier: Apache-2.0
   import { onMount } from "svelte";
   import { _ } from "svelte-i18n";
   import LoadingSpinner from "../../admin/components/LoadingSpinner.svelte";
-  import AdminTableCard from "../../admin/components/AdminTableCard.svelte";
   import Modal from "../../admin/components/Modal.svelte";
-  import type {
-    McpServer,
-    McpConnection,
-    McpToolDetail,
-  } from "../../types/integrations.js";
+  import type { McpConnection, McpToolDetail } from "../../types/integrations.js";
   import {
     getMcpServers,
     getMcpConnections,
@@ -24,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
   import { ApiError } from "../../api/client.js";
   import { toast } from "../../components/Toaster.svelte";
 
-  type ConnectionStatus = 'connected' | 'expired' | 'error' | 'disconnected';
+  type ConnectionStatus = "connected" | "expired" | "error" | "disconnected";
 
   interface MergedServer {
     id: string;
@@ -41,15 +36,17 @@ SPDX-License-Identifier: Apache-2.0
     tools: { name: string; description: string }[];
   }
 
-  function computeStatus(conn: import("../../types/integrations.js").McpConnection | undefined): ConnectionStatus {
-    if (!conn) return 'disconnected';
-    if (conn.status === 'error') return 'error';
-    if (conn.status === 'expired') return 'expired';
+  function computeStatus(
+    conn: import("../../types/integrations.js").McpConnection | undefined,
+  ): ConnectionStatus {
+    if (!conn) return "disconnected";
+    if (conn.status === "error") return "error";
+    if (conn.status === "expired") return "expired";
     if (conn.expires_at) {
       const expiresAt = new Date(conn.expires_at);
-      if (expiresAt.getTime() < Date.now()) return 'expired';
+      if (expiresAt.getTime() < Date.now()) return "expired";
     }
-    return conn.connected ? 'connected' : 'disconnected';
+    return conn.connected ? "connected" : "disconnected";
   }
 
   let servers = $state<MergedServer[]>([]);
@@ -58,27 +55,33 @@ SPDX-License-Identifier: Apache-2.0
   let disconnectingId = $state<string | null>(null);
   let disconnectConfirmId = $state<string | null>(null);
   let filterStatus = $state<"all" | "connected" | "available">("all");
-  let viewMode = $state<"grid" | "table">("grid");
+  let search = $state("");
   let serverTools = $state<McpToolDetail[]>([]);
   let toolsLoading = $state(false);
   let toolsModalOpen = $state(false);
   let toolsModalServerName = $state("");
 
-  const filteredServers = $derived(() => {
-    if (filterStatus === "all") return servers;
-    if (filterStatus === "connected")
-      return servers.filter((s) => s.connected);
-    if (filterStatus === "available")
-      return servers.filter((s) => !s.connected);
-    return servers;
+  const filteredServers = $derived.by(() => {
+    const q = search.trim().toLowerCase();
+    return servers.filter((s) => {
+      if (filterStatus === "connected" && !s.connected) return false;
+      if (filterStatus === "available" && s.connected) return false;
+      if (q) {
+        const hay = `${s.name} ${s.description ?? ""} ${s.transport_type}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
   });
 
-  const connectedCount = $derived(
-    servers.filter((s) => s.connected).length
-  );
-  const availableCount = $derived(
-    servers.filter((s) => !s.connected).length
-  );
+  const connectedCount = $derived(servers.filter((s) => s.connected).length);
+  const availableCount = $derived(servers.filter((s) => !s.connected).length);
+
+  const FILTERS: { id: "all" | "connected" | "available"; label: string }[] = $derived([
+    { id: "all", label: $_("userIntegrations.filters.all") },
+    { id: "connected", label: $_("userIntegrations.filters.connected") },
+    { id: "available", label: $_("userIntegrations.filters.available") },
+  ]);
 
   async function loadData() {
     loading = true;
@@ -102,7 +105,7 @@ SPDX-License-Identifier: Apache-2.0
           description: s.description,
           icon: s.icon,
           transport_type: s.transport_type,
-          connected: status === 'connected',
+          connected: status === "connected",
           status,
           connected_at: conn?.connected_at ?? null,
           expires_at: conn?.expires_at ?? null,
@@ -128,8 +131,11 @@ SPDX-License-Identifier: Apache-2.0
     try {
       const response = await authorizeMcpConnection(server.id);
       if (response?.authorization_url) {
-        sessionStorage.setItem('mcp_oauth_origin', 'user');
-        sessionStorage.setItem('mcp_oauth_redirect_url', window.location.pathname + window.location.search);
+        sessionStorage.setItem("mcp_oauth_origin", "user");
+        sessionStorage.setItem(
+          "mcp_oauth_redirect_url",
+          window.location.pathname + window.location.search,
+        );
         window.location.href = response.authorization_url;
       } else {
         toast.error($_("userIntegrations.failedToGetAuthUrl"));
@@ -138,7 +144,8 @@ SPDX-License-Identifier: Apache-2.0
     } catch (error) {
       const message =
         error instanceof ApiError
-          ? error.description || $_("userIntegrations.failedToConnect", { values: { name: server.name } })
+          ? error.description ||
+            $_("userIntegrations.failedToConnect", { values: { name: server.name } })
           : $_("userIntegrations.failedToConnect", { values: { name: server.name } });
       toast.error(message);
       connectingId = null;
@@ -154,15 +161,24 @@ SPDX-License-Identifier: Apache-2.0
       if (response.success) {
         servers = servers.map((s) =>
           s.id === server.id
-            ? { ...s, connected: false, status: 'disconnected' as ConnectionStatus, connected_at: null, expires_at: null, account_email: null, scopes: [] }
-            : s
+            ? {
+                ...s,
+                connected: false,
+                status: "disconnected" as ConnectionStatus,
+                connected_at: null,
+                expires_at: null,
+                account_email: null,
+                scopes: [],
+              }
+            : s,
         );
         toast.success($_("userIntegrations.disconnected", { values: { name: server.name } }));
       }
     } catch (error) {
       const message =
         error instanceof ApiError
-          ? error.description || $_("userIntegrations.failedToDisconnect", { values: { name: server.name } })
+          ? error.description ||
+            $_("userIntegrations.failedToDisconnect", { values: { name: server.name } })
           : $_("userIntegrations.failedToDisconnect", { values: { name: server.name } });
       toast.error(message);
     } finally {
@@ -201,110 +217,90 @@ SPDX-License-Identifier: Apache-2.0
     });
   }
 
+  function toolsLabel(count: number): string {
+    return `${count} ${count !== 1 ? $_("admin.viewMode.tools") : $_("admin.viewMode.tool")}`;
+  }
+
   onMount(() => {
     loadData();
   });
 </script>
 
-<div class="integrations-container">
+<!-- The spinner glyph the mockup uses for every "Connecting…" affordance. -->
+{#snippet spinner()}
+  <svg class="spin" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path
+      d="M7 1.75a5.25 5.25 0 1 0 5.25 5.25"
+      stroke="currentColor"
+      stroke-width="1.5"
+      fill="none"
+      stroke-linecap="round"
+    />
+  </svg>
+{/snippet}
+
+<div class="integrations-panel">
   {#if loading}
     <LoadingSpinner size="md" text={$_("userIntegrations.loading")} />
   {:else}
-    <!-- Summary bar -->
-    <div class="integrations-summary">
-      <div class="summary-stats">
-        <span class="stat">
-          <span class="stat-value">{connectedCount}</span>
-          <span class="stat-label">{$_("userIntegrations.stats.connected")}</span>
-        </span>
-        <span class="stat-divider"></span>
-        <span class="stat">
-          <span class="stat-value">{availableCount}</span>
-          <span class="stat-label">{$_("userIntegrations.stats.available")}</span>
-        </span>
-        <span class="stat-divider"></span>
-        <span class="stat">
-          <span class="stat-value">{servers.length}</span>
-          <span class="stat-label">{$_("userIntegrations.stats.total")}</span>
-        </span>
+    <!-- ".stat-strip" -->
+    <div class="stat-strip">
+      <div class="stat-cell">
+        <span class="stat-label">{$_("userIntegrations.stats.connected")}</span>
+        <span class="stat-value">{connectedCount}</span>
       </div>
-      <div class="toolbar-right">
-        <div class="view-toggle" role="group" aria-label="View mode">
-          <button
-            class="view-toggle-btn"
-            class:view-toggle-btn--active={viewMode === "grid"}
-            onclick={() => (viewMode = "grid")}
-            aria-label={$_("admin.viewMode.grid")}
-            title={$_("admin.viewMode.grid")}
-          >
-          <span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-          </span>
-          </button>
-          <button
-            class="view-toggle-btn"
-            class:view-toggle-btn--active={viewMode === "table"}
-            onclick={() => (viewMode = "table")}
-            aria-label={$_("admin.viewMode.table")}
-            title={$_("admin.viewMode.table")}
-          >
-          <span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
-          </span>
-          </button>
-        </div>
-        <div class="filter-group" role="tablist" aria-label={$_("userIntegrations.filters.filterAria")}>
-          <button
-            class="filter-btn"
-            class:filter-btn--active={filterStatus === "all"}
-            onclick={() => (filterStatus = "all")}
-            role="tab"
-            aria-selected={filterStatus === "all"}
-          >
-            {$_("userIntegrations.filters.all")}
-          </button>
-          <button
-            class="filter-btn"
-            class:filter-btn--active={filterStatus === "connected"}
-            onclick={() => (filterStatus = "connected")}
-            role="tab"
-            aria-selected={filterStatus === "connected"}
-          >
-            {$_("userIntegrations.filters.connected")}
-          </button>
-          <button
-            class="filter-btn"
-            class:filter-btn--active={filterStatus === "available"}
-            onclick={() => (filterStatus = "available")}
-            role="tab"
-            aria-selected={filterStatus === "available"}
-          >
-            {$_("userIntegrations.filters.available")}
-          </button>
-        </div>
+      <div class="stat-cell">
+        <span class="stat-label">{$_("userIntegrations.stats.available")}</span>
+        <span class="stat-value stat-value--accent">{availableCount}</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-label">{$_("userIntegrations.stats.total")}</span>
+        <span class="stat-value">{servers.length}</span>
       </div>
     </div>
 
-    <!-- Empty state -->
-    {#if filteredServers().length === 0}
-      <div class="empty-state">
-        <svg
-          width="48"
-          height="48"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-        >
-          <path
-            d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101"
-          />
-          <path
-            d="M10.172 13.828a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1"
-          />
+    <!-- ".toolbar" -->
+    <div class="toolbar">
+      <div class="search-input">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.3" />
+          <path d="m13 13-2.3-2.3" stroke="currentColor" stroke-width="1.3" />
         </svg>
-        <p class="empty-title">{$_("userIntegrations.empty.title")}</p>
-        <p class="empty-subtitle">
+        <input
+          type="text"
+          bind:value={search}
+          placeholder={$_("userIntegrations.searchPlaceholder")}
+          aria-label={$_("userIntegrations.searchPlaceholder")}
+        />
+      </div>
+
+      <!-- ".filter-segment" -->
+      <div class="filter-segment" role="tablist" aria-label={$_("userIntegrations.filters.filterAria")}>
+        {#each FILTERS as f (f.id)}
+          <button
+            class="seg-btn"
+            type="button"
+            role="tab"
+            aria-selected={filterStatus === f.id}
+            onclick={() => (filterStatus = f.id)}
+          >
+            {f.label}
+          </button>
+        {/each}
+      </div>
+    </div>
+
+    {#if filteredServers.length === 0}
+      <!-- ".placeholder-card", reused as the empty state -->
+      <div class="empty-state">
+        <span class="empty-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101" />
+            <path d="M10.172 13.828a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1" />
+          </svg>
+        </span>
+        <span class="empty-title">{$_("userIntegrations.empty.title")}</span>
+        <span class="empty-desc">
           {#if filterStatus === "connected"}
             {$_("userIntegrations.empty.noConnected")}
           {:else if filterStatus === "available"}
@@ -312,375 +308,235 @@ SPDX-License-Identifier: Apache-2.0
           {:else}
             {$_("userIntegrations.empty.noConfigured")}
           {/if}
-        </p>
-        {#if filterStatus !== "all"}
-          <button class="empty-reset-btn" onclick={() => (filterStatus = "all")}>
+        </span>
+        {#if filterStatus !== "all" || search.trim()}
+          <button
+            class="int-btn int-btn--connect"
+            type="button"
+            onclick={() => {
+              filterStatus = "all";
+              search = "";
+            }}
+          >
             {$_("userIntegrations.empty.viewAll")}
           </button>
         {/if}
       </div>
-
-    <!-- Table View -->
-    {:else if viewMode === "table"}
-      <AdminTableCard minWidth="760px">
-        <table class="admin-table integrations-table">
-          <thead>
-            <tr>
-              <th>{$_("userIntegrations.columns.name")}</th>
-              <th>{$_("userIntegrations.columns.transport")}</th>
-              <th>{$_("userIntegrations.columns.status")}</th>
-              <th>{$_("userIntegrations.columns.tools")}</th>
-              <th>{$_("userIntegrations.columns.connectedAt")}</th>
-              <th>{$_("userIntegrations.columns.actions")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each filteredServers() as server (server.id)}
-              <tr>
-                <td>
-                  <div class="name-cell">
-                    <div class="table-icon-wrapper">
-                      {#if server.icon}
-                        <img
-                          src={server.icon}
-                          alt={server.name}
-                          class="table-icon"
-                          onerror={(e) => {
-                            const target = e.currentTarget as HTMLImageElement;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent && !parent.querySelector('.table-icon-fallback')) {
-                              const fb = document.createElement('span');
-                              fb.className = 'table-icon-fallback';
-                              fb.textContent = server.name.charAt(0).toUpperCase();
-                              parent.appendChild(fb);
-                            }
-                          }}
-                        />
-                      {:else}
-                        <span class="table-icon-fallback">{server.name.charAt(0).toUpperCase()}</span>
-                      {/if}
-                    </div>
-                    <div class="name-text">
-                      <span class="server-name">{server.name}</span>
-                      {#if server.description}
-                        <span class="server-description">{server.description}</span>
-                      {/if}
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span class="transport-badge">{server.transport_type}</span>
-                </td>
-                <td>
-                  <span
-                    class="status-badge"
-                    class:status-badge--connected={server.status === 'connected'}
-                    class:status-badge--disconnected={server.status === 'disconnected'}
-                    class:status-badge--expired={server.status === 'expired'}
-                    class:status-badge--error={server.status === 'error'}
-                  >
-                    <span class="status-dot"></span>
-                    {$_(`userIntegrations.status.${server.status}`)}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    class="tools-count-btn"
-                    onclick={() => openToolsModal(server)}
-                    title={$_("userIntegrations.actions.viewTools")}
-                  >
-                    {server.tools.length} {server.tools.length !== 1 ? $_("admin.viewMode.tools") : $_("admin.viewMode.tool")}
-                  </button>
-                </td>
-                <td>
-                  <div class="date-cell">
-                    {#if server.account_email}
-                      <span class="account-email">{server.account_email}</span>
-                    {/if}
-                    <span class="date-text">
-                      {server.connected_at ? formatDate(server.connected_at) : "—"}
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    {#if server.status === 'connected'}
-                      <button
-                        class="action-btn action-btn--reconnect"
-                        onclick={() => handleConnect(server)}
-                        disabled={connectingId === server.id}
-                        title={$_("userIntegrations.actions.reconnect")}
-                      >
-                        {#if connectingId === server.id}
-                          <span class="btn-spinner"></span>
-                        {:else}
-                          {$_("userIntegrations.actions.reconnect")}
-                        {/if}
-                      </button>
-                      {#if disconnectConfirmId === server.id}
-                        <div class="confirm-disconnect">
-                          <span class="confirm-text">{$_("userIntegrations.actions.disconnectConfirm")}</span>
-                          <button
-                            class="confirm-btn confirm-btn--yes"
-                            onclick={() => handleDisconnect(server)}
-                            disabled={disconnectingId === server.id}
-                          >
-                            {#if disconnectingId === server.id}
-                              <span class="btn-spinner"></span>
-                            {:else}
-                              {$_("userIntegrations.actions.yes")}
-                            {/if}
-                          </button>
-                          <button
-                            class="confirm-btn confirm-btn--no"
-                            onclick={() => (disconnectConfirmId = null)}
-                            disabled={disconnectingId === server.id}
-                          >
-                            {$_("userIntegrations.actions.no")}
-                          </button>
-                        </div>
-                      {:else}
-                        <button
-                          class="action-btn action-btn--disconnect"
-                          onclick={() => (disconnectConfirmId = server.id)}
-                          disabled={disconnectingId === server.id}
-                        >
-                          {$_("userIntegrations.actions.disconnect")}
-                        </button>
-                      {/if}
-                    {:else if server.status === 'expired'}
-                      <div class="expired-warning">
-                        <span class="expired-text">{$_("userIntegrations.status.expiredWarning")}</span>
-                      </div>
-                      <button
-                        class="action-btn action-btn--reconnect"
-                        onclick={() => handleConnect(server)}
-                        disabled={connectingId === server.id}
-                      >
-                        {#if connectingId === server.id}
-                          <span class="btn-spinner"></span>
-                          {$_("userIntegrations.actions.connecting")}
-                        {:else}
-                          {$_("userIntegrations.actions.reconnect")}
-                        {/if}
-                      </button>
-                    {:else if server.status === 'error'}
-                      <button
-                        class="action-btn action-btn--reconnect"
-                        onclick={() => handleConnect(server)}
-                        disabled={connectingId === server.id}
-                      >
-                        {#if connectingId === server.id}
-                          <span class="btn-spinner"></span>
-                          {$_("userIntegrations.actions.connecting")}
-                        {:else}
-                          {$_("userIntegrations.actions.reconnect")}
-                        {/if}
-                      </button>
-                    {:else}
-                      <button
-                        class="action-btn action-btn--connect"
-                        onclick={() => handleConnect(server)}
-                        disabled={connectingId === server.id}
-                      >
-                        {#if connectingId === server.id}
-                          <span class="btn-spinner"></span>
-                          {$_("userIntegrations.actions.connecting")}
-                        {:else}
-                          {$_("userIntegrations.actions.connect")}
-                        {/if}
-                      </button>
-                    {/if}
-                  </div>
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </AdminTableCard>
-
-    <!-- Grid View -->
     {:else}
-      <div class="integrations-grid">
-        {#each filteredServers() as server (server.id)}
-          <div
-            class="integration-card"
-            class:integration-card--connected={server.status === 'connected'}
-            class:integration-card--expired={server.status === 'expired'}
-            class:integration-card--error={server.status === 'error'}
-          >
-            <div class="card-header">
-              <div class="card-icon-wrapper">
-                {#if server.icon}
-                  <img
-                    src={server.icon}
-                    alt={server.name}
-                    class="card-icon"
-                    onerror={(e) => {
-                      const target = e.currentTarget as HTMLImageElement;
-                      target.style.display = 'none';
-                      const parent = target.parentElement;
-                      if (parent && !parent.querySelector('.card-icon-fallback')) {
-                        const fallback = document.createElement('div');
-                        fallback.className = 'card-icon-fallback';
-                        fallback.textContent = server.name.charAt(0).toUpperCase();
-                        parent.appendChild(fallback);
-                      }
-                    }}
-                  />
-                {:else}
-                  <div class="card-icon-fallback">{server.name.charAt(0).toUpperCase()}</div>
-                {/if}
-              </div>
-              <div class="card-title-group">
-                <h3 class="card-title">{server.name}</h3>
-                <span
-                  class="card-status"
-                  class:status--connected={server.status === 'connected'}
-                  class:status--disconnected={server.status === 'disconnected'}
-                  class:status--expired={server.status === 'expired'}
-                  class:status--error={server.status === 'error'}
-                >
-                  <span class="status-dot"></span>
-                  {$_(`userIntegrations.status.${server.status}`)}
-                </span>
-              </div>
+      <!-- ".cards-grid" -->
+      <div class="cards-grid">
+        {#each filteredServers as server (server.id)}
+          <div class="int-card">
+            <div class="int-card-header">
+              <span class="int-card-name" title={server.name}>{server.name}</span>
+              <span class="status-tag status-tag--{server.status}">
+                {$_(`userIntegrations.status.${server.status}`)}
+              </span>
             </div>
 
-            <p class="card-description">{server.description}</p>
+            <span class="int-card-desc">{server.description}</span>
 
-            <div class="card-meta">
-              <span class="meta-tag">{server.transport_type}</span>
-              <button
-                class="meta-tools-btn"
-                onclick={() => openToolsModal(server)}
-              >
-                {server.tools.length} {server.tools.length !== 1 ? $_("admin.viewMode.tools") : $_("admin.viewMode.tool")}
-              </button>
-            </div>
-
-            {#if server.status === 'expired'}
-              <div class="card-expired-warning">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                  <line x1="12" y1="9" x2="12" y2="13"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+            {#if server.status === "expired"}
+              <div class="warn-note">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <path d="M12 9v4M12 17h.01" />
                 </svg>
                 <span>{$_("userIntegrations.status.expiredWarning")}</span>
               </div>
             {/if}
 
-            {#if (server.status === 'connected' || server.status === 'expired') && server.connected_at}
-              <div class="card-connection-info">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            {#if (server.status === "connected" || server.status === "expired") && server.connected_at}
+              <div class="conn-note">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
                 {#if server.account_email}
-                  <span class="account-email">{server.account_email}</span>
-                  <span class="connection-separator">·</span>
+                  <span>{server.account_email}</span>
+                  <span aria-hidden="true">·</span>
                 {/if}
-                <span class="connection-date">
-                  {$_("userIntegrations.connectedSince", { values: { date: formatDate(server.connected_at) } })}
+                <span>
+                  {$_("userIntegrations.connectedSince", {
+                    values: { date: formatDate(server.connected_at) },
+                  })}
                 </span>
               </div>
             {/if}
 
-            <div class="card-actions">
-              {#if server.status === 'connected'}
-                <button
-                  class="action-btn action-btn--reconnect"
-                  onclick={() => handleConnect(server)}
-                  disabled={connectingId === server.id}
-                  style="margin-right: var(--space-sm);"
-                >
-                  {#if connectingId === server.id}
-                    <span class="btn-spinner"></span>
-                  {:else}
-                    {$_("userIntegrations.actions.reconnect")}
-                  {/if}
+            <!-- ".badges-row" -->
+            <div class="badges-row">
+              <span class="badge-transport">{server.transport_type}</span>
+              <button
+                class="badge-tools"
+                type="button"
+                onclick={() => openToolsModal(server)}
+                title={$_("userIntegrations.actions.viewTools")}
+              >
+                {toolsLabel(server.tools.length)}
+              </button>
+            </div>
+
+            <!-- ".int-btn" row -->
+            <div class="int-card-actions">
+              {#if connectingId === server.id}
+                <span class="int-btn int-btn--connecting">
+                  {@render spinner()}
+                  {$_("userIntegrations.actions.connecting")}
+                </span>
+              {:else if server.status === "connected"}
+                <button class="int-btn int-btn--ghost" type="button" onclick={() => handleConnect(server)}>
+                  {$_("userIntegrations.actions.reconnect")}
                 </button>
                 {#if disconnectConfirmId === server.id}
-                  <div class="confirm-disconnect">
+                  <span class="confirm-row">
                     <span class="confirm-text">{$_("userIntegrations.actions.disconnectConfirm")}</span>
                     <button
-                      class="confirm-btn confirm-btn--yes"
+                      class="int-btn int-btn--danger"
+                      type="button"
                       onclick={() => handleDisconnect(server)}
                       disabled={disconnectingId === server.id}
                     >
                       {#if disconnectingId === server.id}
-                        <span class="btn-spinner"></span>
+                        {@render spinner()}
                       {:else}
                         {$_("userIntegrations.actions.yes")}
                       {/if}
                     </button>
                     <button
-                      class="confirm-btn confirm-btn--no"
+                      class="int-btn int-btn--ghost"
+                      type="button"
                       onclick={() => (disconnectConfirmId = null)}
                       disabled={disconnectingId === server.id}
                     >
                       {$_("userIntegrations.actions.no")}
                     </button>
-                  </div>
+                  </span>
                 {:else}
                   <button
-                    class="action-btn action-btn--disconnect"
+                    class="int-btn int-btn--danger"
+                    type="button"
                     onclick={() => (disconnectConfirmId = server.id)}
                     disabled={disconnectingId === server.id}
                   >
                     {$_("userIntegrations.actions.disconnect")}
                   </button>
                 {/if}
-              {:else if server.status === 'expired'}
-                <button
-                  class="action-btn action-btn--reconnect"
-                  onclick={() => handleConnect(server)}
-                  disabled={connectingId === server.id}
-                >
-                  {#if connectingId === server.id}
-                    <span class="btn-spinner"></span>
-                    {$_("userIntegrations.actions.connecting")}
-                  {:else}
-                    {$_("userIntegrations.actions.reconnect")}
-                  {/if}
-                </button>
-              {:else if server.status === 'error'}
-                <button
-                  class="action-btn action-btn--reconnect"
-                  onclick={() => handleConnect(server)}
-                  disabled={connectingId === server.id}
-                >
-                  {#if connectingId === server.id}
-                    <span class="btn-spinner"></span>
-                    {$_("userIntegrations.actions.connecting")}
-                  {:else}
-                    {$_("userIntegrations.actions.reconnect")}
-                  {/if}
+              {:else if server.status === "expired" || server.status === "error"}
+                <button class="int-btn int-btn--connect" type="button" onclick={() => handleConnect(server)}>
+                  {$_("userIntegrations.actions.reconnect")}
                 </button>
               {:else}
-                <button
-                  class="action-btn action-btn--connect"
-                  onclick={() => handleConnect(server)}
-                  disabled={connectingId === server.id}
-                >
-                  {#if connectingId === server.id}
-                    <span class="btn-spinner"></span>
-                    {$_("userIntegrations.actions.connecting")}
-                  {:else}
-                    {$_("userIntegrations.actions.connect")}
-                  {/if}
+                <button class="int-btn int-btn--connect" type="button" onclick={() => handleConnect(server)}>
+                  {$_("userIntegrations.actions.connect")}
                 </button>
               {/if}
             </div>
           </div>
         {/each}
       </div>
+      <!-- ".int-table" — the mockup stacks the same list below the cards. -->
+      <div class="int-table">
+        <div class="int-table-scroll">
+          <div class="int-thead">
+            <span class="col-int-name">{$_("userIntegrations.columns.name")}</span>
+            <span class="col-int-transport">{$_("userIntegrations.columns.transport")}</span>
+            <span class="col-int-status">{$_("userIntegrations.columns.status")}</span>
+            <span class="col-int-tools">{$_("userIntegrations.columns.tools")}</span>
+            <span class="col-int-last">{$_("userIntegrations.columns.connectedAt")}</span>
+            <span class="col-int-actions">{$_("userIntegrations.columns.actions")}</span>
+          </div>
+
+          {#each filteredServers as server (server.id)}
+            <div class="int-row">
+              <span class="int-row-name" title={server.name}>{server.name}</span>
+              <span class="int-row-transport">{server.transport_type}</span>
+              <span class="int-row-status int-row-status--{server.status}">
+                {#if connectingId === server.id}
+                  {@render spinner()}
+                  {$_("userIntegrations.actions.connecting")}
+                {:else}
+                  {$_(`userIntegrations.status.${server.status}`)}
+                {/if}
+              </span>
+              <span class="int-row-tools">
+                <button
+                  class="tools-link"
+                  type="button"
+                  onclick={() => openToolsModal(server)}
+                  title={$_("userIntegrations.actions.viewTools")}
+                >
+                  {toolsLabel(server.tools.length)}
+                </button>
+              </span>
+              <span class="int-row-last" title={server.account_email ?? undefined}>
+                {server.connected_at ? formatDate(server.connected_at) : "—"}
+              </span>
+              <div class="int-row-action">
+                {#if connectingId === server.id}
+                  <span class="small-btn small-btn--connecting">
+                    {@render spinner()}
+                    {$_("userIntegrations.actions.connecting")}
+                  </span>
+                {:else if server.status === "connected"}
+                  <button class="small-btn small-btn--ghost" type="button" onclick={() => handleConnect(server)}>
+                    {$_("userIntegrations.actions.reconnect")}
+                  </button>
+                  {#if disconnectConfirmId === server.id}
+                    <span class="confirm-text">{$_("userIntegrations.actions.disconnectConfirm")}</span>
+                    <button
+                      class="small-btn small-btn--danger"
+                      type="button"
+                      onclick={() => handleDisconnect(server)}
+                      disabled={disconnectingId === server.id}
+                    >
+                      {#if disconnectingId === server.id}
+                        {@render spinner()}
+                      {:else}
+                        {$_("userIntegrations.actions.yes")}
+                      {/if}
+                    </button>
+                    <button
+                      class="small-btn small-btn--ghost"
+                      type="button"
+                      onclick={() => (disconnectConfirmId = null)}
+                      disabled={disconnectingId === server.id}
+                    >
+                      {$_("userIntegrations.actions.no")}
+                    </button>
+                  {:else}
+                    <button
+                      class="small-btn small-btn--danger"
+                      type="button"
+                      onclick={() => (disconnectConfirmId = server.id)}
+                      disabled={disconnectingId === server.id}
+                    >
+                      {$_("userIntegrations.actions.disconnect")}
+                    </button>
+                  {/if}
+                {:else if server.status === "expired" || server.status === "error"}
+                  <button class="small-btn small-btn--connect" type="button" onclick={() => handleConnect(server)}>
+                    {$_("userIntegrations.actions.reconnect")}
+                  </button>
+                {:else}
+                  <button class="small-btn small-btn--connect" type="button" onclick={() => handleConnect(server)}>
+                    {$_("userIntegrations.actions.connect")}
+                  </button>
+                {/if}
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
     {/if}
   {/if}
 </div>
 
-<Modal isOpen={toolsModalOpen} title={$_("userIntegrations.tools.modalTitle", { values: { name: toolsModalServerName } })} onclose={closeToolsModal}>
+<Modal
+  isOpen={toolsModalOpen}
+  title={$_("userIntegrations.tools.modalTitle", { values: { name: toolsModalServerName } })}
+  onclose={closeToolsModal}
+>
   {#if toolsLoading}
     <div class="tools-loading">
       <span class="btn-spinner"></span>
@@ -701,718 +557,71 @@ SPDX-License-Identifier: Apache-2.0
 </Modal>
 
 <style>
-  .integrations-container {
-    padding: var(--space-lg);
-  }
+  /* ===== user-settings.html, Integrations panel. Colours come from the --us-*
+     block UserSettings.svelte declares on ".us-page"; this file only lays out.
 
-  /* Summary bar */
-  .integrations-summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-lg);
-    margin-bottom: var(--space-2xl);
-    flex-wrap: wrap;
-  }
+     Like the mockup, the panel stacks ".cards-grid" over ".int-table": the
+     cards carry each server's description and primary action, the table the
+     same list at a glance. ===== */
 
-  .summary-stats {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xl);
-  }
-
-  .stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-2xs);
-  }
-
-  .stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1;
-  }
-
-  .stat-label {
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .stat-divider {
-    width: 1px;
-    height: 2rem;
-    background: rgba(255, 255, 255, 0.08);
-  }
-
-  /* Toolbar right */
-  .toolbar-right {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-  }
-
-  /* View toggle */
-  .view-toggle {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2xs);
-    padding: var(--space-2xs);
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-md);
-  }
-
-  .view-toggle-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s ease;
+  /* app.css paints every bare control as a glass pill; every control here is
+     flat. Kept as bare selectors so the class rules below out-rank the reset. */
+  button {
     padding: 0;
-    line-height: 0;
-  }
-
-  .view-toggle-btn:hover:not(.view-toggle-btn--active) {
-    color: var(--text-primary);
-    background: rgba(var(--glass-tint), 0.05);
-  }
-
-  .view-toggle-btn--active {
-    color: var(--text-primary);
-    background: rgba(var(--glass-tint), 0.1);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  }
-
-
-  /* Filter buttons */
-  .filter-group {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2xs);
-    padding: var(--space-2xs);
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-full);
-  }
-
-  .filter-btn {
-    padding: var(--space-xs) var(--space-lg);
-    border: none;
-    border-radius: var(--radius-full);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    background: transparent;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
+    white-space: nowrap;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--us-cta);
+    outline-offset: 2px;
+  }
+
+  input {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    font-family: var(--gx-font);
+    color: inherit;
+    transition: none;
+  }
+
+  input:focus {
+    background: transparent;
     box-shadow: none;
   }
 
-  .filter-btn:hover:not(.filter-btn--active) {
-    color: var(--text-primary);
-    background: rgba(var(--glass-tint), 0.05);
-  }
-
-  .filter-btn--active {
-    color: var(--text-primary);
-    background: rgba(var(--glass-tint), 0.1);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  }
-
-  /* ===== TABLE VIEW ===== */
-  .integrations-table {
-    width: 100%;
-  }
-
-  .name-cell {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-  }
-
-  .table-icon-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    border-radius: var(--radius-md);
-    background: rgba(var(--glass-tint), 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    overflow: hidden;
-  }
-
-  .table-icon {
-    width: 22px;
-    height: 22px;
-    object-fit: contain;
-  }
-
-  :global(.table-icon-fallback) {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: var(--brand);
-    background: rgba(var(--brand-rgb), 0.1);
-  }
-
-  .name-text {
+  .integrations-panel {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2xs);
-    max-width: 200px;
-  }
-
-  .server-name {
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .server-description {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .transport-badge {
-    display: inline-block;
-    padding: var(--space-2xs) var(--space-sm);
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    background: rgba(var(--glass-tint), 0.06);
-    border-radius: var(--radius-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-  }
-
-  .status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    font-size: 0.8125rem;
-    font-weight: 500;
-  }
-
-  .status-badge--connected {
-    color: var(--brand-green);
-  }
-
-  .status-badge--disconnected {
-    color: var(--text-secondary);
-  }
-
-  .status-badge--expired {
-    color: var(--brand-yellow, #ecc94b);
-  }
-
-  .status-badge--error {
-    color: var(--brand-red);
-  }
-
-  .status-badge--expired .status-dot {
-    background: var(--brand-yellow, #ecc94b);
-    box-shadow: 0 0 6px rgba(236, 201, 75, 0.4);
-  }
-
-  .status-badge--error .status-dot {
-    background: var(--brand-red);
-    box-shadow: 0 0 6px rgba(var(--brand-red-rgb), 0.4);
-  }
-
-  .date-cell {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2xs);
-  }
-
-  .account-email {
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-
-  .connection-separator {
-    color: var(--text-secondary);
-    opacity: 0.5;
-  }
-
-  .expired-warning {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-  }
-
-  .expired-text {
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--brand-yellow, #ecc94b);
-  }
-
-  .tools-count-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    padding: var(--space-2xs) var(--space-sm);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--brand);
-    background: rgba(var(--brand-rgb), 0.06);
-    border: 1px solid rgba(var(--brand-rgb), 0.12);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .tools-count-btn:hover {
-    background: rgba(var(--brand-rgb), 0.1);
-    border-color: rgba(var(--brand-rgb), 0.2);
-  }
-
-  .date-text {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-  }
-
-  .action-buttons {
-    display: flex;
-    gap: var(--space-sm);
-    align-items: center;
-  }
-
-  .tool-item {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2xs);
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(var(--glass-tint), 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-sm);
-    margin-bottom: var(--space-sm);
-  }
-
-  .tool-name {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .tool-desc {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    line-height: 1.4;
-  }
-
-  .tools-loading {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-md);
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-  }
-
-  .tools-empty {
-    padding: var(--space-md);
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-    opacity: 0.7;
-  }
-
-  /* ===== GRID VIEW ===== */
-  .integrations-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: var(--space-xl);
-  }
-
-  /* Card */
-  .integration-card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-    padding: var(--space-xl);
-    background: rgba(var(--glass-tint), 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-lg);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .integration-card:hover {
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(var(--glass-tint), 0.05);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  }
-
-  .integration-card--connected {
-    border-color: color-mix(in oklab, var(--brand-green) 20%, transparent);
-  }
-
-  .integration-card--connected:hover {
-    border-color: color-mix(in oklab, var(--brand-green) 35%, transparent);
-  }
-
-  .integration-card--expired {
-    border-color: color-mix(in oklab, var(--brand-yellow, #ecc94b) 25%, transparent);
-  }
-
-  .integration-card--expired:hover {
-    border-color: color-mix(in oklab, var(--brand-yellow, #ecc94b) 40%, transparent);
-  }
-
-  .integration-card--error {
-    border-color: color-mix(in oklab, var(--brand-red) 20%, transparent);
-  }
-
-  .integration-card--error:hover {
-    border-color: color-mix(in oklab, var(--brand-red) 35%, transparent);
-  }
-
-  /* Card header */
-  .card-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-  }
-
-  .card-icon-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    border-radius: var(--radius-md);
-    background: rgba(var(--glass-tint), 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    overflow: hidden;
-  }
-
-  .card-icon {
-    width: 26px;
-    height: 26px;
-    object-fit: contain;
-  }
-
-  :global(.card-icon-fallback) {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--brand);
-    background: rgba(var(--brand-rgb), 0.1);
-  }
-
-  .card-title-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2xs);
+    gap: 32px;
+    align-self: stretch;
     min-width: 0;
-  }
-
-  .card-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    letter-spacing: -0.01em;
-  }
-
-  .card-status {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    font-size: 0.75rem;
-    font-weight: 500;
-  }
-
-  .status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .status--connected {
-    color: var(--brand-green);
-  }
-
-  .status--connected .status-dot {
-    background: var(--brand-green);
-    box-shadow: 0 0 6px rgba(var(--brand-green-rgb), 0.4);
-  }
-
-  .status--disconnected {
-    color: var(--text-secondary);
-  }
-
-  .status--disconnected .status-dot {
-    background: var(--text-secondary);
-    opacity: 0.5;
-  }
-
-  .status--expired {
-    color: var(--brand-yellow, #ecc94b);
-  }
-
-  .status--expired .status-dot {
-    background: var(--brand-yellow, #ecc94b);
-    box-shadow: 0 0 6px rgba(236, 201, 75, 0.4);
-  }
-
-  .status--error {
-    color: var(--brand-red);
-  }
-
-  .status--error .status-dot {
-    background: var(--brand-red);
-    box-shadow: 0 0 6px rgba(var(--brand-red-rgb), 0.4);
-  }
-
-  .status-badge .status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .status-badge--connected .status-dot {
-    background: var(--brand-green);
-    box-shadow: 0 0 6px rgba(var(--brand-green-rgb), 0.4);
-  }
-
-  .status-badge--disconnected .status-dot {
-    background: var(--text-secondary);
-    opacity: 0.5;
-  }
-
-  /* Card description */
-  .card-description {
-    font-size: 0.8125rem;
-    line-height: 1.6;
-    color: var(--text-secondary);
-    margin: 0;
-    flex: 1;
-  }
-
-  /* Card meta (transport + tools) */
-  .card-meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-  }
-
-  .meta-tag {
-    display: inline-block;
-    padding: var(--space-2xs) var(--space-sm);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    background: rgba(var(--glass-tint), 0.06);
-    border-radius: var(--radius-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  .meta-tools-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2xs);
-    padding: var(--space-2xs) var(--space-sm);
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--brand);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: color 0.2s ease;
-  }
-
-  .meta-tools-btn:hover {
-    color: var(--brand-hover);
-  }
-
-  /* Card expired warning */
-  .card-expired-warning {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(236, 201, 75, 0.08);
-    border: 1px solid rgba(236, 201, 75, 0.15);
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--brand-yellow, #ecc94b);
-  }
-
-  .card-expired-warning svg {
-    flex-shrink: 0;
-  }
-
-  /* Connection info */
-  .card-connection-info {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(var(--brand-green-rgb), 0.06);
-    border: 1px solid rgba(var(--brand-green-rgb), 0.1);
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    flex-wrap: wrap;
-  }
-
-
-
-  .connection-date {
-    opacity: 0.7;
-  }
-
-  /* Card actions */
-  .card-actions {
-    display: flex;
-    align-items: center;
-    padding-top: var(--space-sm);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    margin-top: auto;
-  }
-
-  .action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-xl);
-    border-radius: var(--radius-sm);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: none;
-    min-height: 36px;
-  }
-
-  .action-btn--connect {
-    background: var(--brand);
-    color: white;
-    box-shadow: 0 2px 8px rgba(var(--brand-rgb), 0.2);
-  }
-
-  .action-btn--connect:hover:not(:disabled) {
-    background: var(--brand-hover);
-    box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.3);
-    transform: translateY(-1px);
-  }
-
-  .action-btn--disconnect {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .action-btn--disconnect:hover:not(:disabled) {
-    color: var(--brand-red);
-    border-color: color-mix(in oklab, var(--brand-red) 30%, transparent);
-    background: rgba(var(--brand-red-rgb), 0.06);
-    transform: translateY(-1px);
-  }
-
-  .action-btn--reconnect {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .action-btn--reconnect:hover:not(:disabled) {
-    color: var(--brand);
-    border-color: color-mix(in oklab, var(--brand) 30%, transparent);
-    background: rgba(var(--brand-rgb), 0.06);
-    transform: translateY(-1px);
-  }
-
-  .action-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  /* Disconnect confirm */
-  .confirm-disconnect {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-  }
-
-  .confirm-text {
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--brand-red);
-  }
-
-  .confirm-btn {
-    padding: var(--space-xs) var(--space-md);
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    min-height: 28px;
-    transition: all 0.2s ease;
-  }
-
-  .confirm-btn--yes {
-    background: var(--brand-red);
-    color: white;
-  }
-
-  .confirm-btn--yes:hover:not(:disabled) {
-    opacity: 0.9;
-  }
-
-  .confirm-btn--no {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .confirm-btn--no:hover:not(:disabled) {
-    background: rgba(var(--glass-tint), 0.05);
-    color: var(--text-primary);
-  }
-
-  /* Spinner inside buttons */
-  .btn-spinner {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
   }
 
   @keyframes spin {
@@ -1421,215 +630,666 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
-  /* Empty state */
-  .empty-state {
+  .spin {
+    display: block;
+    flex-shrink: 0;
+    color: var(--us-accent);
+    animation: spin 1s linear infinite;
+  }
+
+  /* ---------------- ".stat-strip" ---------------- */
+  .stat-strip {
+    border-radius: 12px;
+    background: var(--us-surface);
+    box-shadow:
+      inset 0 0 0 1px var(--us-border),
+      var(--us-card-shadow);
+    display: flex;
+    align-self: stretch;
+    flex-wrap: wrap;
+  }
+
+  .stat-cell {
+    flex: 1 1 0;
+    min-width: 140px;
     display: flex;
     flex-direction: column;
+    gap: 6px;
+    padding: 20px;
+    border-inline-end: 1px solid var(--us-border);
+  }
+
+  .stat-cell:last-child {
+    border-inline-end: 0;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--us-muted);
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--us-title);
+  }
+
+  .stat-value--accent {
+    color: var(--us-accent);
+  }
+
+  /* ---------------- ".toolbar" ---------------- */
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    align-self: stretch;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  .search-input {
+    width: 240px;
+    height: 37px;
+    border-radius: 8px;
+    background: var(--us-surface);
+    box-shadow: inset 0 0 0 1px var(--us-border);
+    display: flex;
+    gap: 8px;
+    padding: 0 14px;
+    align-items: center;
+  }
+
+  .search-input:focus-within {
+    box-shadow: inset 0 0 0 1px var(--us-cta);
+  }
+
+  .search-input svg {
+    display: block;
+    color: var(--us-muted);
+    flex-shrink: 0;
+  }
+
+  .search-input input {
+    font-size: 14px;
+    line-height: 1.2;
+    flex-grow: 1;
+    min-width: 0;
+    color: var(--us-title);
+  }
+
+  .search-input input::placeholder {
+    color: var(--us-muted);
+    opacity: 1;
+  }
+
+  /* ---------------- ".filter-segment" ---------------- */
+  .filter-segment {
+    border-radius: 8px;
+    background: var(--us-track);
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    flex-shrink: 0;
+  }
+
+  .seg-btn {
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--us-body);
+    white-space: nowrap;
+    transition:
+      background-color 120ms ease,
+      box-shadow 120ms ease,
+      color 120ms ease;
+  }
+
+  .seg-btn[aria-selected="true"] {
+    background: var(--us-surface);
+    box-shadow: var(--us-card-shadow);
+    color: var(--us-tab-active);
+  }
+
+  /* ---------------- ".int-card" ---------------- */
+  .cards-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-self: stretch;
+  }
+
+  .int-card {
+    /* Mockup: "flex: 1 1 0" — cards share one row at equal width. The 300px
+       basis is the mockup's own card width (944px content / 3 - gaps), so >3
+       servers wrap to a new row rather than shrinking to slivers. */
+    flex: 1 1 300px;
+    border-radius: 12px;
+    background: var(--us-surface);
+    box-shadow:
+      inset 0 0 0 1px var(--us-border),
+      var(--us-card-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    min-width: 0;
+  }
+
+  .int-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .int-card-name {
+    font-family: var(--us-mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--us-title);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .int-card-desc {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--us-body);
+    flex-grow: 1;
+  }
+
+  /* ---------------- ".status-tag" ---------------- */
+  .status-tag {
+    border-radius: 4px;
+    background: var(--us-track);
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--us-body);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .status-tag--connected {
+    background: var(--us-mint);
+    color: var(--us-ok);
+  }
+
+  .status-tag--expired {
+    background: var(--us-warn-bg);
+    color: var(--us-warn);
+  }
+
+  .status-tag--error {
+    background: var(--us-danger-bg);
+    color: var(--us-danger);
+  }
+
+  /* ---------------- ".badges-row" ---------------- */
+  .badges-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .badge-transport,
+  .badge-tools {
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: var(--us-mono);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .badge-transport {
+    background: var(--us-tint);
+    color: var(--us-accent);
+  }
+
+  .badge-tools {
+    background: var(--us-track);
+    color: var(--us-body);
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .badge-tools:hover {
+    background: var(--us-tint);
+    color: var(--us-accent);
+  }
+
+  /* ---------------- ".warn-note" / ".conn-note" ---------------- */
+  .warn-note,
+  .conn-note {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 12px;
+    line-height: 1.4;
+    min-width: 0;
+  }
+
+  .warn-note {
+    border-radius: 6px;
+    background: var(--us-warn-bg);
+    padding: 8px 10px;
+    color: var(--us-warn);
+  }
+
+  .conn-note {
+    color: var(--us-muted);
+  }
+
+  .warn-note svg,
+  .conn-note svg {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .conn-note span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ---------------- ".int-btn" ---------------- */
+  /* The mockup's ".int-btn" sits directly in the card's column flex, so it
+     stretches the full width and centres its label. This row keeps that when
+     one button is shown, and splits the width when a state needs two. */
+  .int-card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .int-card-actions > * {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .int-btn {
+    height: 32px;
+    border-radius: 6px;
+    display: inline-flex;
+    gap: 8px;
+    padding: 0 14px;
+    justify-content: center;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background-color 120ms ease;
+  }
+
+  .int-btn--connect {
+    background: var(--us-cta);
+    color: #fff;
+  }
+
+  .int-btn--connect:hover {
+    background: var(--us-cta-hover);
+  }
+
+  .int-btn--connecting,
+  .int-btn--ghost {
+    background: var(--us-field-bg);
+    box-shadow: inset 0 0 0 1px var(--us-border);
+    color: var(--us-body);
+  }
+
+  .int-btn--ghost:hover {
+    background: var(--us-hover);
+  }
+
+  .int-btn--danger {
+    background: var(--us-danger-bg);
+    color: var(--us-danger);
+  }
+
+  .int-btn--danger:hover {
+    background: var(--us-danger-bg);
+    box-shadow: inset 0 0 0 1px var(--us-danger);
+  }
+
+  .int-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .confirm-row {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .confirm-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--us-body);
+    white-space: nowrap;
+  }
+
+  /* ---------------- ".int-table" ---------------- */
+  .int-table {
+    border-radius: 12px;
+    background: var(--us-surface);
+    border: 1px solid var(--us-table-border);
+    box-shadow: var(--us-card-shadow);
+    align-self: stretch;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .int-table-scroll {
+    overflow-x: auto;
+  }
+
+  .int-thead {
+    height: 39px;
+    background: var(--us-field-bg);
+    display: flex;
+    gap: 16px;
+    padding: 12px 20px;
+    align-items: center;
+    min-width: 940px;
+  }
+
+  .int-thead span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--us-body);
+  }
+
+  .col-int-name {
+    width: 180px;
+    flex-shrink: 0;
+  }
+
+  .col-int-transport,
+  .col-int-tools {
+    width: 100px;
+    flex-shrink: 0;
+  }
+
+  .col-int-status {
+    width: 120px;
+    flex-shrink: 0;
+  }
+
+  .col-int-last {
+    width: 140px;
+    flex-shrink: 0;
+  }
+
+  .col-int-actions {
+    flex-grow: 1;
+    min-width: 180px;
+    text-align: end;
+  }
+
+  .int-row {
+    height: 55px;
+    border-top: 1px solid var(--us-table-border);
+    display: flex;
+    gap: 16px;
+    padding: 14px 20px;
+    align-items: center;
+    min-width: 940px;
+  }
+
+  .int-row-name {
+    width: 180px;
+    flex-shrink: 0;
+    font-family: var(--us-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--us-title);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .int-row-transport {
+    width: 100px;
+    flex-shrink: 0;
+    font-family: var(--us-mono);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--us-body);
+  }
+
+  .int-row-status {
+    width: 120px;
+    flex-shrink: 0;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--us-body);
+  }
+
+  .int-row-status--connected {
+    color: var(--us-ok);
+  }
+
+  .int-row-status--expired {
+    color: var(--us-warn);
+  }
+
+  .int-row-status--error {
+    color: var(--us-danger);
+  }
+
+  .int-row-tools {
+    width: 100px;
+    flex-shrink: 0;
+    font-family: var(--us-mono);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--us-body);
+  }
+
+  .tools-link {
+    font-family: var(--us-mono);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--us-body);
+    transition: color 120ms ease;
+  }
+
+  .tools-link:hover {
+    color: var(--us-accent);
+    text-decoration: underline;
+  }
+
+  .int-row-last {
+    width: 140px;
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--us-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .int-row-action {
+    flex-grow: 1;
+    min-width: 180px;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  /* ---------------- ".small-btn" ---------------- */
+  .small-btn {
+    height: 27px;
+    border-radius: 6px;
+    display: inline-flex;
+    gap: 6px;
+    padding: 0 12px;
     align-items: center;
     justify-content: center;
-    padding: var(--space-3xl) var(--space-xl);
-    text-align: center;
-    gap: var(--space-md);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background-color 120ms ease;
   }
 
- 
+  .small-btn--connect {
+    background: var(--us-cta);
+    color: #fff;
+  }
+
+  .small-btn--connect:hover {
+    background: var(--us-cta-hover);
+  }
+
+  .small-btn--connecting,
+  .small-btn--ghost {
+    background: var(--us-field-bg);
+    box-shadow: inset 0 0 0 1px var(--us-border);
+    color: var(--us-body);
+  }
+
+  .small-btn--ghost:hover {
+    background: var(--us-hover);
+  }
+
+  .small-btn--danger {
+    background: var(--us-danger-bg);
+    color: var(--us-danger);
+  }
+
+  .small-btn--danger:hover {
+    background: var(--us-danger-bg);
+    box-shadow: inset 0 0 0 1px var(--us-danger);
+  }
+
+  .small-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* ---------------- empty state ---------------- */
+  .empty-state {
+    border-radius: 12px;
+    background: var(--us-field-bg);
+    outline: 1.5px dashed var(--us-border);
+    outline-offset: -1.5px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 40px 24px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    align-self: stretch;
+  }
+
+  .empty-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    background: var(--us-tint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--us-accent);
+  }
+
+  .empty-icon svg {
+    display: block;
+  }
 
   .empty-title {
-    font-size: 1rem;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--us-title);
+  }
+
+  .empty-desc {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--us-muted);
+    max-width: 420px;
+  }
+
+  /* ---------------- tools dialog (app dialog styling) ---------------- */
+  .tools-loading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--text-secondary);
+    padding: var(--space-md) 0;
+  }
+
+  .tools-empty {
+    color: var(--text-secondary);
+    padding: var(--space-md) 0;
+  }
+
+  .tools-modal-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .tool-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(var(--glass-tint), 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+  }
+
+  .tool-name {
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin: 0;
   }
 
-  .empty-subtitle {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin: 0;
-    max-width: 320px;
-  }
-
-  .empty-reset-btn {
-    padding: var(--space-sm) var(--space-xl);
-    border-radius: var(--radius-sm);
+  .tool-desc {
     font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--brand);
-    background: rgba(var(--brand-rgb), 0.08);
-    border: 1px solid rgba(var(--brand-rgb), 0.15);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-top: var(--space-sm);
+    color: var(--text-secondary);
+    line-height: 1.5;
   }
 
-  .empty-reset-btn:hover {
-    background: rgba(var(--brand-rgb), 0.14);
-    border-color: rgba(var(--brand-rgb), 0.25);
-    transform: translateY(-1px);
+  .btn-spinner {
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
   }
 
-  /* Responsive */
-  @media (max-width: 768px) {
-    .integrations-container {
-      padding: var(--space-md);
-    }
-
-    .integrations-summary {
-      flex-direction: column;
+  @media (max-width: 640px) {
+    .toolbar {
       align-items: stretch;
-      gap: var(--space-md);
     }
 
-    .toolbar-right {
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .summary-stats {
-      justify-content: center;
-    }
-
-    .filter-group {
-      justify-content: center;
-    }
-
-    .integrations-grid {
-      grid-template-columns: 1fr;
-      gap: var(--space-md);
-    }
-  }
-
-  @media (max-width: 480px) {
-    .integrations-container {
-      padding: var(--space-sm);
-    }
-
-    .integration-card {
-      padding: var(--space-lg);
-    }
-
-    .card-icon-wrapper {
-      width: 38px;
-      height: 38px;
-      min-width: 38px;
-    }
-
-    .card-icon {
-      width: 22px;
-      height: 22px;
-    }
-
-    .card-description {
-      font-size: 0.75rem;
-    }
-
-    .summary-stats {
-      gap: var(--space-lg);
-    }
-
-    .stat-value {
-      font-size: 1.25rem;
-    }
-
-    .filter-btn {
-      padding: var(--space-xs) var(--space-md);
-      font-size: 0.75rem;
-    }
-  }
-
-  @media (min-width: 1400px) {
-    .integrations-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-
-  /* Light mode overrides */
-  @media (prefers-color-scheme: light) {
-    .integration-card {
-      background: rgba(0, 0, 0, 0.02);
-      border-color: rgba(0, 0, 0, 0.08);
-    }
-
-    .integration-card:hover {
-      background: rgba(0, 0, 0, 0.03);
-      border-color: rgba(0, 0, 0, 0.12);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-    }
-
-    .integration-card--connected {
-      border-color: color-mix(in oklab, var(--brand-green) 25%, transparent);
-    }
-
-    .stat-divider {
-      background: rgba(0, 0, 0, 0.1);
-    }
-
-    .filter-group {
-      background: rgba(0, 0, 0, 0.03);
-      border-color: rgba(0, 0, 0, 0.06);
-    }
-
-    .filter-btn--active {
-      background: white;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .view-toggle {
-      background: rgba(0, 0, 0, 0.03);
-      border-color: rgba(0, 0, 0, 0.06);
-    }
-
-    .view-toggle-btn--active {
-      background: white;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .card-icon-wrapper {
-      background: rgba(0, 0, 0, 0.04);
-      border-color: rgba(0, 0, 0, 0.06);
-    }
-
-    .table-icon-wrapper {
-      background: rgba(0, 0, 0, 0.04);
-      border-color: rgba(0, 0, 0, 0.06);
-    }
-
-    .card-connection-info {
-      background: rgba(var(--brand-green-rgb), 0.05);
-      border-color: rgba(var(--brand-green-rgb), 0.1);
-    }
-
-    .card-actions {
-      border-top-color: rgba(0, 0, 0, 0.06);
-    }
-
-    .action-btn--disconnect {
-      border-color: rgba(0, 0, 0, 0.12);
-    }
-
-    .action-btn--reconnect {
-      border-color: rgba(0, 0, 0, 0.12);
-    }
-
-    .confirm-btn--no {
-      border-color: rgba(0, 0, 0, 0.12);
-    }
-
-    .integration-card--expired {
-      border-color: color-mix(in oklab, var(--brand-yellow, #ecc94b) 30%, transparent);
-    }
-
-    .integration-card--error {
-      border-color: color-mix(in oklab, var(--brand-red) 25%, transparent);
-    }
-
-    .card-expired-warning {
-      background: rgba(236, 201, 75, 0.06);
-      border-color: rgba(236, 201, 75, 0.12);
-    }
-
-    .tool-item {
-      background: rgba(0, 0, 0, 0.02);
-      border-color: rgba(0, 0, 0, 0.06);
+    .search-input {
+      width: 100%;
     }
   }
 </style>
