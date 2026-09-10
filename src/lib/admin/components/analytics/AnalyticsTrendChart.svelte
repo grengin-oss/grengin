@@ -237,12 +237,26 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   /** Evenly spaced label slots, always keeping the first and last point. */
+  /* Roughly what one "04 Sept"-style label needs before neighbours collide. */
+  const PX_PER_TICK = 52;
+
+  /* `maxTicks` is the ceiling the caller asks for; on a narrow card there is
+     physically no room for that many, and the labels used to spill out past
+     the card's right edge (the axis row is a nowrap flex row). Thin them to
+     whatever the measured plot width can actually hold. */
+  const effectiveMaxTicks = $derived(
+    plotWidth > 0
+      ? Math.max(2, Math.min(maxTicks, Math.floor(plotWidth / PX_PER_TICK)))
+      : maxTicks,
+  );
+
   const tickIndices = $derived.by(() => {
     if (pointCount === 0) return [];
-    if (pointCount <= maxTicks)
+    const ticks = effectiveMaxTicks;
+    if (pointCount <= ticks)
       return Array.from({ length: pointCount }, (_, i) => i);
-    const step = (pointCount - 1) / (maxTicks - 1);
-    return Array.from({ length: maxTicks }, (_, i) => Math.round(i * step));
+    const step = (pointCount - 1) / (ticks - 1);
+    return Array.from({ length: ticks }, (_, i) => Math.round(i * step));
   });
 
   function formatValue(item: Series, value: number): string {
@@ -461,6 +475,18 @@ SPDX-License-Identifier: Apache-2.0
     align-items: center;
     gap: 12px;
     font-family: var(--gx-font);
+    /* The row must be allowed to shrink inside the card, otherwise its
+       nowrap children set a min-content floor wider than the viewport. */
+    min-width: 0;
+  }
+
+  /* The 44px gutters exist to clear the y-axis tick labels on a wide card.
+     On a phone they cost more than a quarter of the screen. */
+  @media (max-width: 560px) {
+    .x-axis-row {
+      padding: 0 8px;
+      gap: 8px;
+    }
   }
 
   .x-axis-dates {

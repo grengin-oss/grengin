@@ -316,4 +316,19 @@ SPDX-License-Identifier: Apache-2.0
     outline: 2px solid var(--gx-an-blue);
     outline-offset: 2px;
   }
+
+  /* The 220px menu is anchored to the trigger's inline-end, which is right
+     while the picker sits at the far side of a wide page header. Once the
+     header stacks on a phone the trigger moves to the inline-start edge, and
+     a menu wider than the 157px trigger then hangs ~43px off-screen — the
+     first characters of every option get clipped ("t 7 days", "s month").
+     Anchor it to the start edge there, and cap the width so it can never
+     overrun the other edge on a 320px screen either. */
+  @media (max-width: 560px) {
+    .date-dropdown {
+      inset-inline-end: auto;
+      inset-inline-start: 0;
+      max-width: calc(100vw - 32px);
+    }
+  }
 </style>

@@ -429,4 +429,13 @@ SPDX-License-Identifier: Apache-2.0
   .footer-btn--danger:hover {
     background: var(--us-danger-bg);
   }
+
+  /* The skill name is the card's identifier; on a narrow phone the single
+     nowrap line clips it. There is vertical room, so let it wrap instead. */
+  @media (max-width: 420px) {
+    .skill-name {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+  }
 </style>

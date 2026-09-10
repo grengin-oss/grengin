@@ -967,4 +967,38 @@ SPDX-License-Identifier: Apache-2.0
       width: 100%;
     }
   }
+
+  /* The quick-link description is a one-line ellipsis so the cards keep a
+     uniform height on a wide grid. On a phone the cards are full-width and
+     stacked, so there is room to show the whole sentence over two lines. */
+  @media (max-width: 640px) {
+    .quick-link-card__desc {
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+  }
+
+  /* Same five-column Top Models table as the analytics overview: below
+     ~640px the equal flex columns crush model names to a few characters.
+     Keep a legible minimum and scroll the table inside its card. */
+  @media (max-width: 640px) {
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+    }
+
+    .table-header,
+    .model-row {
+      min-width: 520px;
+    }
+
+    .table-header > span:first-child,
+    .model-row > div:first-child {
+      flex: 1.6;
+    }
+  }
 </style>

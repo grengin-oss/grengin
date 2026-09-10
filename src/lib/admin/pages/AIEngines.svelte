@@ -3019,4 +3019,21 @@ SPDX-License-Identifier: Apache-2.0
       flex-basis: 100%;
     }
   }
+
+  /* Engine detail rows are key-left / value-right. On a narrow phone the
+     value (an API key tail, or a model id like "claude-sonnet-4-20250514")
+     is squeezed to ~140px and truncates. Stack the pair so the value gets
+     the card's full width. */
+  @media (max-width: 420px) {
+    .detail-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .detail-val {
+      max-width: 100%;
+      text-align: start;
+    }
+  }
 </style>

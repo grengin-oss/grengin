@@ -941,8 +941,12 @@ SPDX-License-Identifier: Apache-2.0
     position: fixed;
     inset-inline-start: 0;
     top: 0;
-    width: 272px;
+    width: var(--app-sidebar-w);
     height: 100vh;
+    /* Dynamic viewport height: on mobile browsers the URL bar collapses on
+       scroll, and 100vh would leave the footer permanently below the fold. */
+    height: 100dvh;
+    padding-bottom: var(--safe-bottom);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -958,10 +962,12 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .sidebar.collapsed {
-    width: 60px;
+    width: var(--app-rail-w);
     align-items: center;
     gap: 4px;
-    padding: 20px 0;
+    /* The shorthand would reset the base rule's safe-area bottom padding,
+       so restate it here. */
+    padding: 20px 0 calc(20px + var(--safe-bottom));
     background: var(--gx-surface-rail);
     border: 1px solid var(--gx-line);
     border-radius: 0 18px 18px 0;
@@ -2085,13 +2091,13 @@ SPDX-License-Identifier: Apache-2.0
 
   @media (max-width: 768px) {
     .sidebar {
-      width: 280px;
+      width: var(--app-drawer-w);
       box-shadow: 4px 0 32px rgba(0, 0, 0, 0.25);
     }
 
     .sidebar.collapsed {
       transform: translateX(-100%);
-      width: 280px;
+      width: var(--app-drawer-w);
       padding: 0;
       border: none;
       border-radius: 0;

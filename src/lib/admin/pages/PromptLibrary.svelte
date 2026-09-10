@@ -1847,4 +1847,27 @@ SPDX-License-Identifier: Apache-2.0
       width: 100%;
     }
   }
+
+  /* Small phones: the wrapped card layout above still carries the desktop
+     table's fixed cell widths with `flex-shrink: 0`, which together overrun a
+     320px screen. Let them size to their content instead. */
+  @media (max-width: 480px) {
+    .prompt-library-container {
+      padding: 16px;
+    }
+
+    .table-row {
+      padding: 16px 14px;
+    }
+
+    .col-role,
+    .col-type,
+    .usage-val,
+    .updated-val,
+    .row-actions {
+      width: auto;
+      flex-shrink: 1;
+      min-width: 0;
+    }
+  }
 </style>

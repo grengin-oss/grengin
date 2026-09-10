@@ -3207,4 +3207,17 @@ SPDX-License-Identifier: Apache-2.0
       white-space: nowrap;
     }
   }
+
+  /* Server descriptions are a one-line ellipsis so the cards line up on a
+     wide grid. Stacked full-width on a phone there is room for two lines,
+     and the description is the only place the server's purpose is stated. */
+  @media (max-width: 640px) {
+    .row-desc {
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+  }
 </style>
