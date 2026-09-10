@@ -1873,7 +1873,14 @@ SPDX-License-Identifier: Apache-2.0
       inset 0 0 0 1px var(--gx-ring-soft),
       var(--gx-mcp-card-shadow);
     align-self: stretch;
+    /* Clips the rows' corners to the 12px radius. */
     overflow: hidden;
+    /* `overflow: hidden` makes a flex item's automatic minimum size zero, so
+       inside the container's fixed-height flex column this card was squashed
+       below its content instead of making the column scroll — the third
+       server row was clipped and unreachable. Keep it at content height and
+       let `.mcp-servers-container`'s own overflow-y do the scrolling. */
+    flex-shrink: 0;
   }
 
   .list-head {
