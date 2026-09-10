@@ -1229,7 +1229,13 @@ SPDX-License-Identifier: Apache-2.0
     background: var(--gx-card);
     box-shadow: inset 0 0 0 1px var(--gx-an-chip-ring);
     align-self: stretch;
+    /* Clips the rows' corners to the 16px radius. */
     overflow: hidden;
+    /* `overflow: hidden` zeroes a flex item's automatic minimum size, so in
+       the container's fixed-height flex column this card was compressed to a
+       fraction of its content (268px of 1041px) with nothing able to scroll.
+       Hold it at content height and let the container scroll instead. */
+    flex-shrink: 0;
   }
 
   .table-header {
