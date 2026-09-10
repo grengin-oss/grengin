@@ -2090,4 +2090,22 @@ SPDX-License-Identifier: Apache-2.0
       gap: 16px;
     }
   }
+
+  /* Small phones: the role header is a single nowrap row (chevron, name,
+     badges, counts). At 320px the name — the one thing that identifies the
+     row — gets squeezed to a few characters. Let the row wrap so the name
+     keeps a full line and the badges drop underneath it. */
+  @media (max-width: 480px) {
+    .role-panel__left {
+      flex-wrap: wrap;
+      gap: 8px 10px;
+    }
+
+    /* Name keeps the first line next to the chevron; the badges and counts
+       wrap onto the line below rather than competing for the same row. */
+    .role-name {
+      flex: 1 1 auto;
+      min-width: 140px;
+    }
+  }
 </style>

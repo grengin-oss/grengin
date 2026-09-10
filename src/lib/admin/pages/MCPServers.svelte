@@ -1873,7 +1873,14 @@ SPDX-License-Identifier: Apache-2.0
       inset 0 0 0 1px var(--gx-ring-soft),
       var(--gx-mcp-card-shadow);
     align-self: stretch;
+    /* Clips the rows' corners to the 12px radius. */
     overflow: hidden;
+    /* `overflow: hidden` makes a flex item's automatic minimum size zero, so
+       inside the container's fixed-height flex column this card was squashed
+       below its content instead of making the column scroll — the third
+       server row was clipped and unreachable. Keep it at content height and
+       let `.mcp-servers-container`'s own overflow-y do the scrolling. */
+    flex-shrink: 0;
   }
 
   .list-head {
@@ -3205,6 +3212,19 @@ SPDX-License-Identifier: Apache-2.0
       padding: var(--space-sm) var(--space-md);
       font-size: 0.8125rem;
       white-space: nowrap;
+    }
+  }
+
+  /* Server descriptions are a one-line ellipsis so the cards line up on a
+     wide grid. Stacked full-width on a phone there is room for two lines,
+     and the description is the only place the server's purpose is stated. */
+  @media (max-width: 640px) {
+    .row-desc {
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
   }
 </style>

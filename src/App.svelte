@@ -87,14 +87,36 @@ SPDX-License-Identifier: Apache-2.0
     return currentPath === "/admin";
   }
 
+  /* Keep in sync with the breakpoint ladder documented in app.css. */
+  const MOBILE_BREAKPOINT = 768;
+  const COMPACT_BREAKPOINT = 1024;
+
   function isMobile() {
-    return window.innerWidth <= 768;
+    return window.innerWidth <= MOBILE_BREAKPOINT;
   }
 
+  /* Phones *and* tablets: viewports too narrow to spend 272px on navigation. */
+  function isCompactViewport() {
+    return window.innerWidth <= COMPACT_BREAKPOINT;
+  }
+
+  let wasCompactViewport = false;
+  /* What the user last chose on a wide viewport. Auto-collapsing for a tablet
+     must not silently discard that preference when they resize back. */
+  let wideViewportCollapsed = false;
+
   function handleResize() {
-    if (isMobile()) {
-      sidebarCollapsed = true;
-    }
+    const compact = isCompactViewport();
+    /* Only act when the viewport actually crosses the boundary, so a user who
+       expands the rail on a tablet doesn't get it slammed shut on every
+       scroll-driven resize event. */
+    if (compact === wasCompactViewport) return;
+    wasCompactViewport = compact;
+    sidebarCollapsed = compact ? true : wideViewportCollapsed;
+  }
+
+  function rememberSidebarPreference(collapsed: boolean) {
+    if (!isCompactViewport()) wideViewportCollapsed = collapsed;
   }
 
   // Keep currentPath in sync with client navigation (Link / navigate), not only back/forward.
@@ -137,7 +159,8 @@ SPDX-License-Identifier: Apache-2.0
   onMount(() => {
     initAuth();
     permissionsStore.init();
-    sidebarCollapsed = isMobile();
+    wasCompactViewport = isCompactViewport();
+    sidebarCollapsed = wasCompactViewport;
     window.addEventListener("resize", handleResize);
   });
 
@@ -172,11 +195,13 @@ SPDX-License-Identifier: Apache-2.0
 
   function handleSidebarToggle(collapsed: boolean) {
     sidebarCollapsed = collapsed;
+    rememberSidebarPreference(collapsed);
   }
 
   function toggleSidebarFromMain(event: Event) {
     event.stopPropagation();
     sidebarCollapsed = !sidebarCollapsed;
+    rememberSidebarPreference(sidebarCollapsed);
   }
 
   function handleMainContentClick(event: Event) {
@@ -273,13 +298,16 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .main-content {
-    /* flush against the sidebar, matching the Figma screen frame */
-    margin-inline-start: 272px;
+    /* flush against the sidebar, matching the Figma screen frame.
+       Widths come from the shell tokens in app.css so the offset here and the
+       sidebar's own width can never drift apart. */
+    margin-inline-start: var(--app-sidebar-w);
     min-height: 100vh;
+    min-height: 100dvh;
     background: var(--gx-page);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    width: calc(100vw - 272px);
-    max-width: calc(100vw - 272px);
+    width: calc(100% - var(--app-sidebar-w));
+    max-width: calc(100% - var(--app-sidebar-w));
     overflow-x: hidden;
     box-sizing: border-box;
     display: flex;
@@ -287,9 +315,9 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .main-content.collapsed {
-    margin-inline-start: 60px;
-    width: calc(100vw - 60px);
-    max-width: calc(100vw - 60px);
+    margin-inline-start: var(--app-rail-w);
+    width: calc(100% - var(--app-rail-w));
+    max-width: calc(100% - var(--app-rail-w));
   }
 
   .main-content-body {
@@ -312,6 +340,8 @@ SPDX-License-Identifier: Apache-2.0
     transition: opacity 0.3s ease;
   }
 
+  /* Phones and small tablets: the sidebar becomes an overlay drawer, so the
+     content pane takes the full width and never reserves an offset. */
   @media (max-width: 768px) {
     .mobile-overlay {
       display: block;
@@ -320,21 +350,28 @@ SPDX-License-Identifier: Apache-2.0
       z-index: 500;
     }
 
-    .main-content {
+    .main-content,
+    .main-content.collapsed {
       margin-inline-start: 0;
-      width: 100vw;
-      max-width: 100vw;
+      width: 100%;
+      max-width: 100%;
       height: 100dvh;
     }
 
-    .main-content.collapsed {
-      margin-inline-start: 0;
-      width: 100vw;
-      max-width: 100vw;
-    }
+    /* The shell is locked to the viewport height on mobile so Chat can pin its
+       composer and scroll only its transcript. That made this the app's scroll
+       container, but it was set to `overflow: hidden`, so any page that does
+       NOT bring its own scroller (every admin page) simply had its overflow
+       clipped and unreachable — Overview lost ~830px of its 1595px.
 
+       Scrolling vertically here fixes those pages and costs Chat nothing: its
+       root is `height: 100%` on mobile, so it fits this box exactly and never
+       produces a second scrollbar. The horizontal axis stays clipped. */
     .main-content-body {
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
     }
   }
 
@@ -342,18 +379,6 @@ SPDX-License-Identifier: Apache-2.0
     .mobile-overlay {
       background: rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(8px);
-    }
-
-    .main-content {
-      margin-inline-start: 0;
-      width: 100vw;
-      max-width: 100vw;
-    }
-
-    .main-content.collapsed {
-      margin-inline-start: 0;
-      width: 100vw;
-      max-width: 100vw;
     }
   }
 </style>

@@ -1424,7 +1424,6 @@ SPDX-License-Identifier: Apache-2.0
 
   /* Image turns get the design's navy fill instead of the green. */
   .user-message--image {
-    background: var(--gx-org-primary-500);
     box-shadow: 0 4px 14px 0 rgba(66, 122, 198, 0.18);
   }
 

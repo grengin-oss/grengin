@@ -229,4 +229,18 @@ SPDX-License-Identifier: Apache-2.0
     line-height: 1.4;
     color: var(--us-muted);
   }
+
+  /* Same anchoring problem as the analytics range picker: the 320px panel is
+     pinned to the trigger's inline-end, which is correct while the "New Skill"
+     button sits at the far side of a wide toolbar. On a phone the toolbar
+     stacks and the button moves to the inline-start edge, putting 184px of the
+     panel off-screen. Anchor to the start edge and let the width shrink with
+     the viewport so it also fits a 320px screen. */
+  @media (max-width: 560px) {
+    .add-menu__panel {
+      inset-inline-end: auto;
+      inset-inline-start: 0;
+      width: min(320px, calc(100vw - 32px));
+    }
+  }
 </style>

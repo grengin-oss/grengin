@@ -2145,7 +2145,10 @@ SPDX-License-Identifier: Apache-2.0
     font-size: 26px;
     line-height: 100%;
     text-align: center;
-    color: var(--gx-slate-900);
+    background: linear-gradient(90deg, #3F5CB8 0%, #3D8C64 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   .greeting {
@@ -2489,6 +2492,13 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   @media (max-width: 768px) {
+    /* Fill the shell's content box rather than the viewport: on mobile the
+       app renders a ~45px header above this, so a hardcoded 100vh overflows
+       its parent by exactly the header's height. */
+    .chat-layout {
+      height: 100%;
+    }
+
     .chat-container {
       height: 100%;
     }

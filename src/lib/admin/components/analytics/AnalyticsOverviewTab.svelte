@@ -1436,4 +1436,51 @@ SPDX-License-Identifier: Apache-2.0
       font-size: 12px;
     }
   }
+
+  /* Below ~560px two cards per row leaves ~130px each, which is narrower than
+     the title + delta badge can render; the card's `overflow: hidden` then
+     silently cuts the badge off. Go one-up instead. */
+  @media (max-width: 560px) {
+    .stat-card {
+      flex-basis: 100%;
+    }
+  }
+
+  /* Belt and braces for the narrowest phones (320px): let the head row wrap
+     rather than clip if the title is long or the font is scaled up. */
+  @media (max-width: 380px) {
+    .stat-card__head {
+      flex-wrap: wrap;
+    }
+
+    .stat-title {
+      min-width: 0;
+    }
+  }
+
+  /* The Top Models table has five equal flex columns. Below ~640px they each
+     fall under ~60px, which truncates model names to a few characters
+     ("claude-sonnet-4-6" rendered in 40px). Let the table keep a legible
+     minimum and scroll horizontally inside its card instead — every column
+     stays readable and the page itself never scrolls sideways. */
+  @media (max-width: 640px) {
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+    }
+
+    .table-header,
+    .model-row {
+      min-width: 520px;
+    }
+
+    /* Model names are the longest values in the table and the numeric columns
+       are the shortest, so weight the first column instead of splitting the
+       width five equal ways. */
+    .table-header span:first-child,
+    .model-row > div:first-child {
+      flex: 1.6;
+    }
+  }
 </style>

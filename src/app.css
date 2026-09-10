@@ -640,9 +640,9 @@
     --gx-ok-line: rgba(34, 197, 94, 0.32);
     --gx-ok-text: #6ee7a4;
 
-    --gx-org-brand: #4fbf95;
+    --gx-org-brand: #2B916B;
     --gx-org-brand-hover: #66cba6;
-    --gx-org-brand-alt: #4fbf95;
+    --gx-org-brand-alt: #2B916B;
     --gx-org-brand-alt-hover: #66cba6;
     --gx-org-brand-tint: rgba(45, 144, 107, 0.22);
     --gx-org-brand-alt-tint: rgba(45, 144, 107, 0.18);
@@ -863,6 +863,44 @@
     --gx-org-kpi-icon-fg: #9dbdf0;
     --gx-org-card-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.35);
   }
+}
+
+/* ===========================================================================
+ * Responsive foundation
+ *
+ * Breakpoint ladder used across the whole app. CSS custom properties cannot
+ * be used inside `@media` preludes, so these names are the *contract* that
+ * every component's media queries are written against — keep them in sync:
+ *
+ *   xs   <= 480px    small phones
+ *   sm   <= 768px    phones / small tablets  (app switches to the drawer shell)
+ *   md   <= 1024px   tablets, landscape phones (sidebar auto-collapses to rail)
+ *   lg   <= 1280px   small laptops
+ *   xl   <= 1536px   desktops
+ *
+ * The shell widths below are the single source of truth for the sidebar and
+ * the matching offset `main-content` reserves. App.svelte and Sidebar.svelte
+ * both read them, so the two can never drift apart.
+ * ========================================================================= */
+:root {
+  --app-sidebar-w: 272px;
+  --app-rail-w: 60px;
+  /* Width of the off-canvas drawer on phones. */
+  --app-drawer-w: 280px;
+
+  /* Fluid gutter for page-level content. Scales with the viewport instead of
+     stepping at each breakpoint, so tablets stop wasting horizontal space. */
+  --page-pad: clamp(0.875rem, 2.5vw, 2rem);
+  --page-pad-tight: clamp(0.75rem, 1.8vw, 1.25rem);
+
+  /* Minimum comfortable hit area on touch input (WCAG 2.5.8 / Apple HIG). */
+  --tap-target: 44px;
+
+  /* Safe-area insets (notched phones). Zero everywhere else. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 /* ===== Base layout ===== */
@@ -1585,6 +1623,73 @@ pre {
     inset 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
+/* ===========================================================================
+ * Global responsive safety net
+ *
+ * These rules stop the two failure modes that break a layout on a narrow
+ * screen no matter how carefully each page is written:
+ *   1. an unbreakable string (URL, token, ID, e-mail) forcing a min-content
+ *      width wider than the viewport, and
+ *   2. a replaced element (image, video, canvas, iframe) rendering at its
+ *      intrinsic size.
+ * ========================================================================= */
+
+/* Long unbroken strings wrap instead of widening their container. Applied to
+   text-bearing elements only, so it can't affect flex/grid track sizing. */
+p,
+li,
+dd,
+dt,
+figcaption,
+blockquote,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+}
+
+img,
+video,
+canvas {
+  height: auto;
+}
+
+/* Flex and grid children default to `min-width: auto`, which refuses to
+   shrink below their content. Every truncating row in this app relies on the
+   opposite, so make the ellipsis utility carry its own escape hatch. */
+.truncate {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Wrapper for any wide table / chart / code listing: it scrolls itself
+   instead of pushing the page sideways, and keeps momentum scroll on iOS. */
+.responsive-scroll-x {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* Tables are the single most common source of horizontal overflow. Any
+   <table> that isn't already inside a scroller gets a sane minimum. */
+.responsive-scroll-x>table {
+  min-width: max-content;
+}
+
 /* ===== Responsive adaptations ===== */
 @media (max-width: 768px) {
   :root {
@@ -1601,11 +1706,40 @@ pre {
   a {
     touch-action: manipulation;
   }
+
+  /* iOS Safari zooms the whole page when a focused control's text is under
+     16px. Holding form controls at 16px on phones keeps the viewport put. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
 }
 
 @media (max-width: 480px) {
   :root {
     --glass-blur: 1rem;
+  }
+}
+
+/* Touch hit areas.
+ *
+ * Deliberately NOT applied blanket-wide to every `button` on coarse pointers:
+ * this app's admin tables and toolbars are dense by design, and forcing a
+ * 44px minimum on them would reflow layouts that already work on tablets.
+ * Instead the minimum is opt-in via `.tap-target`, plus the one case that is
+ * unambiguously too small everywhere — native checkboxes and radios. */
+.tap-target {
+  min-width: var(--tap-target);
+  min-height: var(--tap-target);
+}
+
+@media (pointer: coarse) {
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 18px;
+    min-height: 18px;
   }
 }
 
