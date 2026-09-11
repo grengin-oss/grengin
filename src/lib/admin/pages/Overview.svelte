@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0
   import { Link } from "svelte-routing";
   import { getAuthState } from "../../features/auth/index.js";
   import { setPageTitle } from "../../utils/pageTitle";
+  import { PROMPTS_FEATURE_ENABLED } from "../../config/features.js";
 
   $effect(() => {
     setPageTitle($_("sidebar.adminPanel"));
@@ -110,38 +111,43 @@ SPDX-License-Identifier: Apache-2.0
     icon: "organization" | "analytics" | "prompts" | "settings" | "system";
   }
 
-  const QUICK_LINKS = $derived<QuickLink[]>([
-    {
-      href: "/admin/departments",
-      title: $_("admin.departments.organization"),
-      description: $_("adminOverview.manageOrganization"),
-      icon: "organization",
-    },
-    {
-      href: "/admin/analytics",
-      title: $_("sidebar.usageAnalytics"),
-      description: $_("adminOverview.viewAnalytics"),
-      icon: "analytics",
-    },
-    {
-      href: "/admin/prompt-effectiveness",
-      title: $_("sidebar.promptEffectiveness"),
-      description: $_("adminOverview.viewPromptEffectiveness"),
-      icon: "prompts",
-    },
-    {
-      href: "/admin/settings",
-      title: $_("sidebar.settings"),
-      description: $_("adminOverview.configureSettings"),
-      icon: "settings",
-    },
-    {
-      href: "/admin/system-metrics",
-      title: $_("sidebar.systemMetrics"),
-      description: $_("adminOverview.viewSystemMetrics"),
-      icon: "system",
-    },
-  ]);
+  const QUICK_LINKS = $derived<QuickLink[]>(
+    ([
+      {
+        href: "/admin/departments",
+        title: $_("admin.departments.organization"),
+        description: $_("adminOverview.manageOrganization"),
+        icon: "organization",
+      },
+      {
+        href: "/admin/analytics",
+        title: $_("sidebar.usageAnalytics"),
+        description: $_("adminOverview.viewAnalytics"),
+        icon: "analytics",
+      },
+      // Prompts is hidden for the v1.0.0 launch (ENGG-423).
+      PROMPTS_FEATURE_ENABLED
+        ? {
+            href: "/admin/prompt-effectiveness",
+            title: $_("sidebar.promptEffectiveness"),
+            description: $_("adminOverview.viewPromptEffectiveness"),
+            icon: "prompts",
+          }
+        : null,
+      {
+        href: "/admin/settings",
+        title: $_("sidebar.settings"),
+        description: $_("adminOverview.configureSettings"),
+        icon: "settings",
+      },
+      {
+        href: "/admin/system-metrics",
+        title: $_("sidebar.systemMetrics"),
+        description: $_("adminOverview.viewSystemMetrics"),
+        icon: "system",
+      },
+    ] as (QuickLink | null)[]).filter((link): link is QuickLink => link !== null),
+  );
 
   onMount(() => {
     fetchOverview();
