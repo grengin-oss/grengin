@@ -215,14 +215,18 @@ SPDX-License-Identifier: Apache-2.0
           format: formatNumber,
         },
         {
+          // Tokens carry their own unit, so they get the right-hand axis
+          // opposite Requests rather than being folded into one scale (ENGG-423).
           key: "tokens",
           label: $_("analytics.charts.multiMetric.tokens"),
           color: "var(--gx-an-area)",
           values: points.map((point) => point.total_tokens),
-          tooltipOnly: true,
+          axis: "right",
           format: formatNumber,
         },
         {
+          // Latency stays off the legend and off the plot: it only surfaces in
+          // the tooltip for the hovered point (ENGG-423).
           key: "latency",
           label: $_("analytics.charts.multiMetric.latency"),
           color: "var(--gx-danger)",

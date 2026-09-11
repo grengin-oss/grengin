@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0
   import grenginLogo from "../../../assets/grengin-logo.svg";
   import { permissionsStore } from "../../features/auth/index.js";
   import { PERMISSIONS } from "../../features/auth/permissions.js";
+  import { PROMPTS_FEATURE_ENABLED } from "../../config/features.js";
   import { getNotificationsState } from "../../features/notifications/index.js";
   import AlertsPopover from "../../features/notifications/AlertsPopover.svelte";
   import SidebarSearchModal from "./SidebarSearchModal.svelte";
@@ -117,7 +118,7 @@ SPDX-License-Identifier: Apache-2.0
   const analyticsMenuItem: AdminMenuItem = {
     id: "usage-analytics",
     path: "/admin/analytics",
-    label: $_("sidebar.usageAnalytics"),
+    label: $_("sidebar.usage"),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>',
     type: "item",
   };
@@ -221,7 +222,9 @@ SPDX-License-Identifier: Apache-2.0
   let monitorItems = $derived<AdminMenuItem[]>(
     [
       canViewAnalytics ? analyticsMenuItem : null,
-      canViewAnalytics ? promptEffectivenessMenuItem : null,
+      canViewAnalytics && PROMPTS_FEATURE_ENABLED
+        ? promptEffectivenessMenuItem
+        : null,
       canViewAuditLogs || hasAdminPermissions ? auditLogsMenuItem : null,
     ].filter(isMenuItem),
   );
@@ -230,7 +233,7 @@ SPDX-License-Identifier: Apache-2.0
     [
       canViewRoles ? accessControlMenuItem : null,
       canViewRoles ? skillsMenuItem : null,
-      canViewRoles ? promptLibraryMenuItem : null,
+      canViewRoles && PROMPTS_FEATURE_ENABLED ? promptLibraryMenuItem : null,
     ].filter(isMenuItem),
   );
 

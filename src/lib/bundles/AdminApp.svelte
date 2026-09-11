@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
   import { Route } from 'svelte-routing';
   import PermissionGuard from '$lib/components/PermissionGuard.svelte';
   import { PERMISSIONS } from '$lib/features/auth/permissions.js';
+  import { PROMPTS_FEATURE_ENABLED } from '$lib/config/features.js';
+  import Redirect from '$lib/components/Redirect.svelte';
   import {
     Overview,
     Users,
@@ -85,19 +87,30 @@ SPDX-License-Identifier: Apache-2.0
     {/snippet}
   </PermissionGuard>
 </Route>
+<!-- Prompts is hidden for the v1.0.0 launch (ENGG-423); while it is off the
+     routes stay registered and bounce to Overview so bookmarks and in-product
+     links do not land on an empty shell. -->
 <Route path="/admin/prompt-library">
-  <PermissionGuard permission={PERMISSIONS.roles.view}>
-    {#snippet children()}
-      <PromptLibrary />
-    {/snippet}
-  </PermissionGuard>
+  {#if PROMPTS_FEATURE_ENABLED}
+    <PermissionGuard permission={PERMISSIONS.roles.view}>
+      {#snippet children()}
+        <PromptLibrary />
+      {/snippet}
+    </PermissionGuard>
+  {:else}
+    <Redirect to="/admin/overview" />
+  {/if}
 </Route>
 <Route path="/admin/prompt-effectiveness">
-  <PermissionGuard permission={PERMISSIONS.roles.view}>
-    {#snippet children()}
-      <PromptEffectiveness />
-    {/snippet}
-  </PermissionGuard>
+  {#if PROMPTS_FEATURE_ENABLED}
+    <PermissionGuard permission={PERMISSIONS.roles.view}>
+      {#snippet children()}
+        <PromptEffectiveness />
+      {/snippet}
+    </PermissionGuard>
+  {:else}
+    <Redirect to="/admin/overview" />
+  {/if}
 </Route>
 <Route path="/admin/audit-logs">
   <AuditLogs />

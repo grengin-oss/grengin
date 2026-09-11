@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0
   import DepartmentPromptsTab from "./DepartmentPromptsTab.svelte";
   import { formatCurrency } from "$lib/utils/format.js";
   import { permissionsStore } from "$lib/features/auth/index.js";
+  import { PROMPTS_FEATURE_ENABLED } from "$lib/config/features.js";
   import { tick } from "svelte";
 
   interface Props {
@@ -44,10 +45,14 @@ SPDX-License-Identifier: Apache-2.0
 
   const initial = $derived((department?.name?.trim()?.[0] ?? "?").toUpperCase());
 
+  // Prompts is hidden for the v1.0.0 launch (ENGG-423).
   const visibleTabs = $derived<TabId[]>(
-    canViewBudget
-      ? ['overview', 'members', 'budget', 'prompts']
-      : ['overview', 'members', 'prompts']
+    ([
+      'overview',
+      'members',
+      canViewBudget ? 'budget' : null,
+      PROMPTS_FEATURE_ENABLED ? 'prompts' : null,
+    ] as (TabId | null)[]).filter((tab): tab is TabId => tab !== null)
   );
 
   $effect(() => {
