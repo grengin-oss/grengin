@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { request } from '../client.js';
-import type { AIEngine, AIEngineModels } from '../../admin/types.js';
+import type {
+  AIEngine,
+  AIEngineModels,
+  CustomAIEngineCreate,
+} from '../../admin/types.js';
 
 export async function getAIEngines(): Promise<AIEngine[]> {
   const response = await request<AIEngine[]>('/admin/ai-engines', {
@@ -61,3 +65,16 @@ export async function deleteAIEngineKey(engineKey: string): Promise<AIEngine> {
   return response;
 }
 
+/**
+ * Register a custom, OpenAI-compatible engine (ai-engines.html
+ * "Add Custom Engine").
+ */
+export async function createCustomAIEngine(
+  data: CustomAIEngineCreate
+): Promise<AIEngine> {
+  const response = await request<AIEngine>('/admin/ai-engines', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return response;
+}

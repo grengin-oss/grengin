@@ -16,7 +16,12 @@ SPDX-License-Identifier: Apache-2.0
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
-  import type { MCPServer, McpAuthType, McpAuthMode, McpOAuthProvider } from "../types.js";
+  import type {
+    MCPServer,
+    McpAuthType,
+    McpAuthMode,
+    McpOAuthProvider,
+  } from "../types.js";
   import {
     authorizeMcpConnection,
     createMcpServer,
@@ -79,12 +84,12 @@ SPDX-License-Identifier: Apache-2.0
     connection_config: "{}",
   });
   let oauthForm = $state({
-    auth_type: 'none' as McpAuthType,
-    auth_mode: 'per_user' as McpAuthMode,
+    auth_type: "none" as McpAuthType,
+    auth_mode: "per_user" as McpAuthMode,
     oauth_provider: null as McpOAuthProvider | null,
-    scopes: '',
-    auth_url: '',
-    token_url: '',
+    scopes: "",
+    auth_url: "",
+    token_url: "",
   });
   let formErrors = $state<Record<string, string>>({});
 
@@ -188,8 +193,9 @@ SPDX-License-Identifier: Apache-2.0
 
   /** OAuth is only offered over a URL-addressable transport, same as the API. */
   function hasOauthConnectionConfig(server: MCPServer): boolean {
-    const oauth = (server.connection_config as { oauth?: Record<string, unknown> })
-      ?.oauth;
+    const oauth = (
+      server.connection_config as { oauth?: Record<string, unknown> }
+    )?.oauth;
     return Boolean(oauth && Object.keys(oauth).length);
   }
 
@@ -205,7 +211,9 @@ SPDX-License-Identifier: Apache-2.0
       });
     const hours = Math.floor(minutes / 60);
     if (hours < 24)
-      return $_("admin.mcpServers.relative.hours", { values: { count: hours } });
+      return $_("admin.mcpServers.relative.hours", {
+        values: { count: hours },
+      });
     return $_("admin.mcpServers.relative.days", {
       values: { count: Math.floor(hours / 24) },
     });
@@ -269,9 +277,12 @@ SPDX-License-Identifier: Apache-2.0
     try {
       const result = await testMcpConnection(server.id);
       if (result.success) {
-        const msg = result.latency_ms != null
-          ? $_("admin.mcpServers.testSuccessWithLatency", { values: { latency: result.latency_ms } })
-          : $_("admin.mcpServers.testSuccess");
+        const msg =
+          result.latency_ms != null
+            ? $_("admin.mcpServers.testSuccessWithLatency", {
+                values: { latency: result.latency_ms },
+              })
+            : $_("admin.mcpServers.testSuccess");
         toast.success(msg);
         clearTestError(server.id);
       } else {
@@ -335,12 +346,12 @@ SPDX-License-Identifier: Apache-2.0
       connection_config: "{}",
     };
     oauthForm = {
-      auth_type: 'none',
-      auth_mode: 'per_user',
+      auth_type: "none",
+      auth_mode: "per_user",
       oauth_provider: null,
-      scopes: '',
-      auth_url: '',
-      token_url: '',
+      scopes: "",
+      auth_url: "",
+      token_url: "",
     };
     formErrors = {};
     submitError = null;
@@ -368,12 +379,12 @@ SPDX-License-Identifier: Apache-2.0
       ),
     };
     oauthForm = {
-      auth_type: server.auth_type ?? 'none',
-      auth_mode: server.auth_mode ?? 'per_user',
+      auth_type: server.auth_type ?? "none",
+      auth_mode: server.auth_mode ?? "per_user",
       oauth_provider: server.oauth_provider ?? null,
-      scopes: (server.scopes ?? []).join(', '),
-      auth_url: server.auth_url ?? '',
-      token_url: server.token_url ?? '',
+      scopes: (server.scopes ?? []).join(", "),
+      auth_url: server.auth_url ?? "",
+      token_url: server.token_url ?? "",
     };
     formErrors = {};
     submitError = null;
@@ -459,17 +470,24 @@ SPDX-License-Identifier: Apache-2.0
         );
       }
     }
-    if (oauthForm.auth_type === 'oauth2') {
+    if (oauthForm.auth_type === "oauth2") {
       if (!oauthForm.oauth_provider) {
-        errors.oauth_provider = $_("admin.mcpOAuth.validation.providerRequired");
+        errors.oauth_provider = $_(
+          "admin.mcpOAuth.validation.providerRequired",
+        );
       }
       if (!formData.client_id.trim()) {
         errors.client_id = $_("admin.mcpOAuth.validation.clientIdRequired");
       }
-      if (!formData.client_secret.trim() && !serverToEdit?.client_secret_configured) {
-        errors.client_secret = $_("admin.mcpOAuth.validation.clientSecretRequired");
+      if (
+        !formData.client_secret.trim() &&
+        !serverToEdit?.client_secret_configured
+      ) {
+        errors.client_secret = $_(
+          "admin.mcpOAuth.validation.clientSecretRequired",
+        );
       }
-      if (oauthForm.oauth_provider === 'custom') {
+      if (oauthForm.oauth_provider === "custom") {
         if (!oauthForm.auth_url.trim()) {
           errors.auth_url = $_("admin.mcpOAuth.validation.authUrlRequired");
         }
@@ -493,23 +511,29 @@ SPDX-License-Identifier: Apache-2.0
     isSubmitting = true;
     try {
       const scopesArray = oauthForm.scopes.trim()
-        ? oauthForm.scopes.split(',').map(s => s.trim()).filter(Boolean)
+        ? oauthForm.scopes
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
         : null;
-      const oauthPayload = oauthForm.auth_type === 'oauth2' ? {
-        auth_type: oauthForm.auth_type,
-        auth_mode: oauthForm.auth_mode,
-        oauth_provider: oauthForm.oauth_provider,
-        scopes: scopesArray,
-        auth_url: oauthForm.auth_url.trim() || null,
-        token_url: oauthForm.token_url.trim() || null,
-      } : {
-        auth_type: oauthForm.auth_type,
-        auth_mode: null,
-        oauth_provider: null,
-        scopes: null,
-        auth_url: null,
-        token_url: null,
-      };
+      const oauthPayload =
+        oauthForm.auth_type === "oauth2"
+          ? {
+              auth_type: oauthForm.auth_type,
+              auth_mode: oauthForm.auth_mode,
+              oauth_provider: oauthForm.oauth_provider,
+              scopes: scopesArray,
+              auth_url: oauthForm.auth_url.trim() || null,
+              token_url: oauthForm.token_url.trim() || null,
+            }
+          : {
+              auth_type: oauthForm.auth_type,
+              auth_mode: null,
+              oauth_provider: null,
+              scopes: null,
+              auth_url: null,
+              token_url: null,
+            };
 
       if (serverToEdit) {
         await updateMcpServer(serverToEdit.id, {
@@ -638,8 +662,11 @@ SPDX-License-Identifier: Apache-2.0
       }
 
       // Store current URL for OAuth callback redirect
-      sessionStorage.setItem('mcp_oauth_origin', 'admin');
-      sessionStorage.setItem('mcp_oauth_redirect_url', window.location.pathname + window.location.search);
+      sessionStorage.setItem("mcp_oauth_origin", "admin");
+      sessionStorage.setItem(
+        "mcp_oauth_redirect_url",
+        window.location.pathname + window.location.search,
+      );
 
       const width = 600;
       const height = 700;
@@ -727,40 +754,74 @@ SPDX-License-Identifier: Apache-2.0
 
 <!-- ===== icons, transcribed from mcp-servers.html ===== -->
 {#snippet testIcon()}
-  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-    <path d="M7 1 2 7.5h3.5L5.5 12 11 5.5H7.5z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round" />
-  </svg>
-{/snippet}
-
-{#snippet syncIcon()}
-  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-    <path d="M11 6.5a4.5 4.5 0 0 1-7.8 3.05M2 6.5a4.5 4.5 0 0 1 7.8-3.05" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linecap="round" />
-    <path d="M9.4 1.4v2.2H7.2M3.6 11.6V9.4h2.2" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-  </svg>
-{/snippet}
-
-{#snippet editIcon()}
-  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-    <path d="M8.5 1.5 11 4 4 11H1.5V8.5z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round" />
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path
+      d="M12.2992 5.41865C12.5656 6.72608 12.3758 8.08532 11.7613 9.2697C11.1468 10.4541 10.1449 11.392 8.9226 11.9271C7.7003 12.4622 6.3315 12.562 5.04448 12.21C3.75745 11.858 2.63 11.0755 1.85013 9.99282C1.07026 8.91016 0.685122 7.59288 0.758938 6.26063C0.832754 4.92838 1.36106 3.66171 2.25576 2.67184C3.15046 1.68197 4.35747 1.02874 5.67551 0.821086C6.99354 0.613432 8.34292 0.863906 9.49863 1.53074M4.83219 6.00171L6.58219 7.75171L12.4155 1.91838"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+    />
   </svg>
 {/snippet}
 
 {#snippet scopeIcon()}
-  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-    <circle cx="4.5" cy="4.5" r="2" stroke="currentColor" stroke-width="1.1" />
-    <circle cx="9" cy="7.5" r="2" stroke="currentColor" stroke-width="1.1" />
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path
+      d="M5.24841 6.99972L6.41496 8.16643L8.74806 5.83302M11.6644 7.58334C11.6644 10.5001 9.62297 11.9585 7.19654 12.8043C7.06949 12.8474 6.93147 12.8453 6.80575 12.7985C4.37349 11.9585 2.33203 10.5001 2.33203 7.58334V3.49987C2.33203 3.34516 2.39348 3.19678 2.50287 3.08738C2.61225 2.97798 2.76061 2.91652 2.91531 2.91652C4.08186 2.91652 5.54004 2.21649 6.55494 1.3298C6.67851 1.22421 6.8357 1.1662 6.99823 1.1662C7.16076 1.1662 7.31795 1.22421 7.44152 1.3298C8.46225 2.22233 9.91461 2.91652 11.0812 2.91652C11.2358 2.91652 11.3842 2.97798 11.4936 3.08738C11.603 3.19678 11.6644 3.34516 11.6644 3.49987V7.58334Z"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+    />
+  </svg>
+{/snippet}
+
+{#snippet syncIcon()}
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path
+      d="M1.75 7C1.75 5.60761 2.30312 4.27226 3.28769 3.28769C4.27226 2.30312 5.60761 1.75 7 1.75C8.46769 1.75552 9.87643 2.32821 10.9317 3.34833L12.25 4.66667M9.33333 4.66667H12.25V1.75M12.25 7C12.25 8.39239 11.6969 9.72774 10.7123 10.7123C9.72774 11.6969 8.39239 12.25 7 12.25C5.53231 12.2445 4.12357 11.6718 3.06833 10.6517L1.75 9.33333M1.75 12.25V9.33333H4.66667"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+    />
+  </svg>
+{/snippet}
+
+{#snippet editIcon()}
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path
+      d="M7.58521 12.2493H12.2523M12.3538 3.97337C12.6622 3.66504 12.8355 3.24682 12.8356 2.81072C12.8356 2.37462 12.6624 1.95636 12.3541 1.64795C12.0457 1.33955 11.6274 1.16625 11.1913 1.1662C10.7551 1.16614 10.3368 1.33933 10.0284 1.64766L2.24253 9.43445C2.10708 9.56949 2.00691 9.73575 1.95083 9.9186L1.18018 12.4572C1.1651 12.5077 1.16397 12.5613 1.17689 12.6123C1.18981 12.6633 1.2163 12.7099 1.25357 12.7471C1.29083 12.7843 1.33747 12.8108 1.38854 12.8236C1.43961 12.8364 1.4932 12.8352 1.54363 12.8201L4.08311 12.0501C4.26581 11.9945 4.43207 11.895 4.56732 11.7602L12.3538 3.97337Z"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+    />
   </svg>
 {/snippet}
 
 {#snippet deleteIcon()}
-  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-    <path d="M2.5 3.5h8M5 3.5V2h3v1.5M3.5 3.5 4 11h5l.5-7.5" stroke="currentColor" stroke-width="1.1" fill="none" />
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path
+      d="M11.0833 3.49972V11.667C11.0833 11.9765 10.9604 12.2733 10.7416 12.4921C10.5228 12.7109 10.2261 12.8338 9.91667 12.8338H4.08333C3.77391 12.8338 3.47717 12.7109 3.25838 12.4921C3.03958 12.2733 2.91667 11.9765 2.91667 11.667V3.49972M1.75 3.49972H12.25M4.66667 3.49972V2.33296C4.66667 2.02351 4.78958 1.72674 5.00838 1.50793C5.22717 1.28912 5.52391 1.1662 5.83333 1.1662H8.16667C8.47609 1.1662 8.77283 1.28912 8.99162 1.50793C9.21042 1.72674 9.33333 2.02351 9.33333 2.33296V3.49972"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+    />
   </svg>
 {/snippet}
 
 {#snippet connectIcon()}
-  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-    <path d="M4.5 7.5 7.5 4.5M5 3l1-1a2 2 0 0 1 3 3l-1 1M7 9l-1 1a2 2 0 0 1-3-3l1-1" stroke="currentColor" stroke-width="1" fill="none" />
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 12 12"
+    fill="none"
+    aria-hidden="true"
+  >
+    <path
+      d="M4.5 7.5 7.5 4.5M5 3l1-1a2 2 0 0 1 3 3l-1 1M7 9l-1 1a2 2 0 0 1-3-3l1-1"
+      stroke="currentColor"
+      stroke-width="1"
+      fill="none"
+    />
   </svg>
 {/snippet}
 
@@ -804,7 +865,7 @@ SPDX-License-Identifier: Apache-2.0
     </button>
   {/if}
   <button
-    class="icon-btn"
+    class="icon-btn icon-btn--ok"
     type="button"
     onclick={() => handleTestConnection(server)}
     disabled={testingServerId === server.id}
@@ -818,7 +879,16 @@ SPDX-License-Identifier: Apache-2.0
     {/if}
   </button>
   <button
-    class="icon-btn"
+    class="icon-btn icon-btn--info"
+    type="button"
+    onclick={() => openServerDetail(server)}
+    aria-label={$_("admin.mcpAccess.accessControl")}
+    title={$_("admin.mcpAccess.accessControl")}
+  >
+    {@render scopeIcon()}
+  </button>
+  <button
+    class="icon-btn icon-btn--plain"
     type="button"
     onclick={() => handleSyncTools(server)}
     disabled={syncingServerId === server.id}
@@ -832,22 +902,13 @@ SPDX-License-Identifier: Apache-2.0
     {/if}
   </button>
   <button
-    class="icon-btn"
+    class="icon-btn icon-btn--plain"
     type="button"
     onclick={() => openEditModal(server)}
     aria-label={$_("admin.mcpServers.actions.edit")}
     title={$_("admin.mcpServers.actions.edit")}
   >
     {@render editIcon()}
-  </button>
-  <button
-    class="icon-btn"
-    type="button"
-    onclick={() => openServerDetail(server)}
-    aria-label={$_("admin.mcpAccess.accessControl")}
-    title={$_("admin.mcpAccess.accessControl")}
-  >
-    {@render scopeIcon()}
   </button>
   <button
     class="icon-btn icon-btn--danger"
@@ -867,17 +928,50 @@ SPDX-License-Identifier: Apache-2.0
       <div class="error-left">
         <span class="error-db-icon" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <ellipse cx="8" cy="3.3" rx="5" ry="1.8" stroke="currentColor" stroke-width="1.1" />
-            <path d="M3 3.3v9.4c0 1 2.2 1.8 5 1.8s5-.8 5-1.8V3.3" stroke="currentColor" stroke-width="1.1" fill="none" />
-            <path d="M3 8c0 1 2.2 1.8 5 1.8s5-.8 5-1.8" stroke="currentColor" stroke-width="1.1" fill="none" />
+            <ellipse
+              cx="8"
+              cy="3.3"
+              rx="5"
+              ry="1.8"
+              stroke="currentColor"
+              stroke-width="1.1"
+            />
+            <path
+              d="M3 3.3v9.4c0 1 2.2 1.8 5 1.8s5-.8 5-1.8V3.3"
+              stroke="currentColor"
+              stroke-width="1.1"
+              fill="none"
+            />
+            <path
+              d="M3 8c0 1 2.2 1.8 5 1.8s5-.8 5-1.8"
+              stroke="currentColor"
+              stroke-width="1.1"
+              fill="none"
+            />
           </svg>
         </span>
         <div>
           <div class="error-name">{server.name}</div>
           <div class="error-failed">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1" />
-              <path d="M6 3.5v3M6 8v.1" stroke="currentColor" stroke-width="1" />
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle
+                cx="6"
+                cy="6"
+                r="5"
+                stroke="currentColor"
+                stroke-width="1"
+              />
+              <path
+                d="M6 3.5v3M6 8v.1"
+                stroke="currentColor"
+                stroke-width="1"
+              />
             </svg>
             <span>{$_("admin.mcpServers.connectFailed")}</span>
           </div>
@@ -895,7 +989,7 @@ SPDX-License-Identifier: Apache-2.0
             : $_("admin.mcpServers.retry")}
         </button>
         <button
-          class="icon-btn"
+          class="icon-btn icon-btn--plain"
           type="button"
           onclick={() => openEditModal(server)}
           aria-label={$_("admin.mcpServers.actions.edit")}
@@ -915,7 +1009,13 @@ SPDX-License-Identifier: Apache-2.0
       </div>
     </div>
     <div class="error-banner-row">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        aria-hidden="true"
+      >
         <circle cx="7" cy="7" r="5.8" stroke="currentColor" stroke-width="1" />
         <path d="M7 4.5v3M7 9.4v.1" stroke="currentColor" stroke-width="1" />
       </svg>
@@ -926,71 +1026,68 @@ SPDX-License-Identifier: Apache-2.0
 
 <div class="mcp-servers-container">
   {#if selectedServer}
-    <!-- Server Detail View -->
+    <!-- ===== Server detail view — mcp-server-detail.html ".main" ===== -->
     <div class="detail-view">
-      <div class="detail-header">
-        <button class="detail-back-btn" onclick={closeServerDetail}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
-          <span>{$_("admin.mcpAccess.backToServers")}</span>
-        </button>
-        <div class="detail-title-row">
-          <div class="detail-title-group">
-            <h2 class="detail-server-name">{selectedServer.name}</h2>
-            <span
-              class="detail-status"
-              class:detail-status--connected={selectedServer.status === "connected"}
-              class:detail-status--disconnected={selectedServer.status === "disconnected"}
-            >
-              <span class="detail-status-dot"></span>
-              {getLocalizedStatus(selectedServer.status)}
+      <button class="back-link" type="button" onclick={closeServerDetail}>
+        <span class="back-link__arrow" aria-hidden="true">&#8592;</span>
+        <span>{$_("admin.mcpAccess.backToServers")}</span>
+      </button>
+
+      <!-- ".server-header" -->
+      <div class="server-header">
+        <div class="server-identity">
+          <div class="title-status">
+            <h2 class="server-name">{selectedServer.name}</h2>
+            <span class="status-pill">
+              <span
+                class="status-dot"
+                class:status-dot--on={selectedServer.status === "connected"}
+                class:status-dot--off={selectedServer.status !== "connected"}
+              ></span>
+              <span
+                class="status-label"
+                class:status-label--on={selectedServer.status === "connected"}
+                class:status-label--off={selectedServer.status !== "connected"}
+              >
+                {getLocalizedStatus(selectedServer.status)}
+              </span>
             </span>
           </div>
           {#if selectedServer.description}
-            <p class="detail-description">{selectedServer.description}</p>
+            <span class="server-desc">{selectedServer.description}</span>
           {/if}
         </div>
       </div>
 
-      <div class="detail-tabs" role="tablist">
+      <!-- ".tabs-switcher" -->
+      <div class="tabs-switcher" role="tablist">
         <button
-          class="detail-tab"
-          class:detail-tab--active={detailTab === "access"}
-          onclick={() => detailTab = "access"}
+          class="tab-btn"
+          type="button"
           role="tab"
           aria-selected={detailTab === "access"}
+          onclick={() => (detailTab = "access")}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          <span>{$_("admin.mcpAccess.tabAccess")}</span>
+          {$_("admin.mcpAccess.tabAccess")}
         </button>
         <button
-          class="detail-tab"
-          class:detail-tab--active={detailTab === "tools"}
-          onclick={() => detailTab = "tools"}
+          class="tab-btn"
+          type="button"
           role="tab"
           aria-selected={detailTab === "tools"}
+          onclick={() => (detailTab = "tools")}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-          </svg>
-          <span>{$_("admin.mcpAccess.tabTools")}</span>
+          {$_("admin.mcpAccess.tabTools")}
         </button>
         {#if selectedServer.auth_type === "oauth2"}
           <button
-            class="detail-tab"
-            class:detail-tab--active={detailTab === "connection"}
-            onclick={() => detailTab = "connection"}
+            class="tab-btn"
+            type="button"
             role="tab"
             aria-selected={detailTab === "connection"}
+            onclick={() => (detailTab = "connection")}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101"/>
-              <path d="M10.172 13.828a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1"/>
-            </svg>
-            <span>{$_("admin.mcpOAuth.tabConnection")}</span>
+            {$_("admin.mcpOAuth.tabConnection")}
           </button>
         {/if}
       </div>
@@ -1017,7 +1114,13 @@ SPDX-License-Identifier: Apache-2.0
     >
       {#snippet children()}
         <button class="cta-btn" type="button" onclick={openCreateModal}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            aria-hidden="true"
+          >
             <path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.6" />
           </svg>
           <span>{$_("admin.mcpServers.addServer")}</span>
@@ -1030,8 +1133,20 @@ SPDX-License-Identifier: Apache-2.0
     <div class="toolbar-row">
       <div class="toolbar-left">
         <div class="search-row">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-            <circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.3" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              cx="6"
+              cy="6"
+              r="4.2"
+              stroke="currentColor"
+              stroke-width="1.3"
+            />
             <path d="m11.3 11.3-2-2" stroke="currentColor" stroke-width="1.3" />
           </svg>
           <input
@@ -1054,11 +1169,49 @@ SPDX-License-Identifier: Apache-2.0
           aria-pressed={viewMode === "grid"}
           onclick={() => (viewMode = "grid")}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-            <rect x="1.75" y="1.75" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.4" />
-            <rect x="7.75" y="1.75" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.4" />
-            <rect x="1.75" y="7.75" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.4" />
-            <rect x="7.75" y="7.75" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.4" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            aria-hidden="true"
+          >
+            <rect
+              x="1.75"
+              y="1.75"
+              width="4.5"
+              height="4.5"
+              rx="1"
+              stroke="currentColor"
+              stroke-width="1.4"
+            />
+            <rect
+              x="7.75"
+              y="1.75"
+              width="4.5"
+              height="4.5"
+              rx="1"
+              stroke="currentColor"
+              stroke-width="1.4"
+            />
+            <rect
+              x="1.75"
+              y="7.75"
+              width="4.5"
+              height="4.5"
+              rx="1"
+              stroke="currentColor"
+              stroke-width="1.4"
+            />
+            <rect
+              x="7.75"
+              y="7.75"
+              width="4.5"
+              height="4.5"
+              rx="1"
+              stroke="currentColor"
+              stroke-width="1.4"
+            />
           </svg>
           <span>{$_("admin.mcpServers.viewGrid")}</span>
         </button>
@@ -1068,8 +1221,18 @@ SPDX-License-Identifier: Apache-2.0
           aria-pressed={viewMode === "list"}
           onclick={() => (viewMode = "list")}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-            <path d="M1.75 3.5h10.5M1.75 7h10.5M1.75 10.5h10.5" stroke="currentColor" stroke-width="1.4" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M1.75 3.5h10.5M1.75 7h10.5M1.75 10.5h10.5"
+              stroke="currentColor"
+              stroke-width="1.4"
+            />
           </svg>
           <span>{$_("admin.mcpServers.viewList")}</span>
         </button>
@@ -1079,7 +1242,11 @@ SPDX-License-Identifier: Apache-2.0
     {#if isLoading && servers.length === 0}
       <!-- ".loading-state" -->
       <div class="loading-state">
-        <div class="skel-card" aria-busy="true" aria-label={$_("admin.mcpServers.loading")}>
+        <div
+          class="skel-card"
+          aria-busy="true"
+          aria-label={$_("admin.mcpServers.loading")}
+        >
           {#each [[40, 65], [35, 55], [45, 60]] as [top, bottom] (top)}
             <div class="skel-row">
               <span class="skel-box skel-icon"></span>
@@ -1097,8 +1264,18 @@ SPDX-License-Identifier: Apache-2.0
         <div class="empty-card">
           <span class="empty-icon-bg" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <circle cx="10" cy="10" r="2.3" stroke="currentColor" stroke-width="1.4" />
-              <path d="M10 5v-2M10 17v-2M5 10H3M17 10h-2M6.5 6.5 5 5M15 15l-1.5-1.5M6.5 13.5 5 15M15 5l-1.5 1.5" stroke="currentColor" stroke-width="1.4" />
+              <circle
+                cx="10"
+                cy="10"
+                r="2.3"
+                stroke="currentColor"
+                stroke-width="1.4"
+              />
+              <path
+                d="M10 5v-2M10 17v-2M5 10H3M17 10h-2M6.5 6.5 5 5M15 15l-1.5-1.5M6.5 13.5 5 15M15 5l-1.5 1.5"
+                stroke="currentColor"
+                stroke-width="1.4"
+              />
             </svg>
           </span>
           <div>
@@ -1116,30 +1293,57 @@ SPDX-License-Identifier: Apache-2.0
         <div class="empty-card">
           <span class="empty-icon-bg" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.4" />
-              <path d="m16.5 16.5-3.6-3.6" stroke="currentColor" stroke-width="1.4" />
+              <circle
+                cx="8.5"
+                cy="8.5"
+                r="5.5"
+                stroke="currentColor"
+                stroke-width="1.4"
+              />
+              <path
+                d="m16.5 16.5-3.6-3.6"
+                stroke="currentColor"
+                stroke-width="1.4"
+              />
             </svg>
           </span>
           <div>
-            <div class="empty-title">{$_("admin.mcpServers.noResultsTitle")}</div>
-            <div class="empty-desc">{$_("admin.mcpServers.noResultsMessage")}</div>
+            <div class="empty-title">
+              {$_("admin.mcpServers.noResultsTitle")}
+            </div>
+            <div class="empty-desc">
+              {$_("admin.mcpServers.noResultsMessage")}
+            </div>
           </div>
-          <button class="empty-add-btn" type="button" onclick={() => (query = "")}>
+          <button
+            class="empty-add-btn"
+            type="button"
+            onclick={() => (query = "")}
+          >
             {$_("admin.mcpServers.clearSearch")}
           </button>
         </div>
       </div>
     {:else if viewMode === "list"}
       <!-- ===== ".list-card" ===== -->
-      <div class="list-card" class:list-card--connectable={hasConnectableServer}>
+      <div
+        class="list-card"
+        class:list-card--connectable={hasConnectableServer}
+      >
         <div class="list-head">
           <span class="col-name">{$_("admin.mcpServers.columns.name")}</span>
-          <span class="col-transport">{$_("admin.mcpServers.columns.transport")}</span>
+          <span class="col-transport"
+            >{$_("admin.mcpServers.columns.transport")}</span
+          >
           <span class="col-auth">{$_("admin.mcpServers.columns.auth")}</span>
-          <span class="col-status">{$_("admin.mcpServers.columns.enabled")}</span>
+          <span class="col-status"
+            >{$_("admin.mcpServers.columns.enabled")}</span
+          >
           <span class="col-conn">{$_("admin.mcpServers.columns.status")}</span>
           <span class="col-tools">{$_("admin.mcpServers.columns.tools")}</span>
-          <span class="col-actions">{$_("admin.mcpServers.columns.actions")}</span>
+          <span class="col-actions"
+            >{$_("admin.mcpServers.columns.actions")}</span
+          >
         </div>
 
         {#each filteredServers as server (server.id)}
@@ -1152,7 +1356,9 @@ SPDX-License-Identifier: Apache-2.0
               <div class="col-name">
                 <span class="row-name">{server.name}</span>
                 {#if server.description}
-                  <span class="row-desc" title={server.description}>{server.description}</span>
+                  <span class="row-desc" title={server.description}
+                    >{server.description}</span
+                  >
                 {/if}
               </div>
               <div class="col-transport">
@@ -1178,7 +1384,10 @@ SPDX-License-Identifier: Apache-2.0
                   {getLocalizedStatus(server.status)}
                 </span>
               </div>
-              <div class="col-tools" class:col-tools--dim={server.tool_count === 0}>
+              <div
+                class="col-tools"
+                class:col-tools--dim={server.tool_count === 0}
+              >
                 {server.tool_count}
               </div>
               <div class="col-actions">
@@ -1197,11 +1406,15 @@ SPDX-License-Identifier: Apache-2.0
           {:else}
             <div
               class="mcp-card"
-              data-status={server.status === "connected" ? "connected" : "disconnected"}
+              data-status={server.status === "connected"
+                ? "connected"
+                : "disconnected"}
             >
               <div class="mcp-card-body">
                 <div class="mcp-card-head">
-                  <span class="mcp-card-name" title={server.name}>{server.name}</span>
+                  <span class="mcp-card-name" title={server.name}
+                    >{server.name}</span
+                  >
                   {@render enabledToggle(server)}
                 </div>
                 <div class="mcp-status-line">
@@ -1225,9 +1438,27 @@ SPDX-License-Identifier: Apache-2.0
                   <p class="mcp-card-desc">{server.description}</p>
                 {/if}
                 <div class="scope-block">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                    <circle cx="5" cy="5" r="2" stroke="currentColor" stroke-width="1.1" />
-                    <circle cx="10" cy="8.5" r="2" stroke="currentColor" stroke-width="1.1" />
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      cx="5"
+                      cy="5"
+                      r="2"
+                      stroke="currentColor"
+                      stroke-width="1.1"
+                    />
+                    <circle
+                      cx="10"
+                      cy="8.5"
+                      r="2"
+                      stroke="currentColor"
+                      stroke-width="1.1"
+                    />
                   </svg>
                   <span title={scopeText(server)}>{scopeText(server)}</span>
                 </div>
@@ -1267,7 +1498,14 @@ SPDX-License-Identifier: Apache-2.0
     {#snippet headerIcon()}
       <span class="add-header-icon" aria-hidden="true">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M6 6 3 9l3 3M12 6l3 3-3 3M10.5 4 7.5 14" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+          <path
+            d="M6 6 3 9l3 3M12 6l3 3-3 3M10.5 4 7.5 14"
+            stroke="currentColor"
+            stroke-width="1.3"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </span>
     {/snippet}
@@ -1286,14 +1524,28 @@ SPDX-License-Identifier: Apache-2.0
           <div class="add-section-header">
             <span class="add-section-icon" aria-hidden="true">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1" />
-                <path d="M6 5.3v3.4M6 3.6v.1" stroke="currentColor" stroke-width="1" />
+                <circle
+                  cx="6"
+                  cy="6"
+                  r="5"
+                  stroke="currentColor"
+                  stroke-width="1"
+                />
+                <path
+                  d="M6 5.3v3.4M6 3.6v.1"
+                  stroke="currentColor"
+                  stroke-width="1"
+                />
               </svg>
             </span>
-            <span class="add-section-title">{$_("admin.mcpServers.sectionBasic")}</span>
+            <span class="add-section-title"
+              >{$_("admin.mcpServers.sectionBasic")}</span
+            >
           </div>
           <div class="add-field">
-            <label class="add-label" for="mcp-name">{$_("admin.mcpServers.name")}</label>
+            <label class="add-label" for="mcp-name"
+              >{$_("admin.mcpServers.name")}</label
+            >
             <input
               id="mcp-name"
               class="add-input"
@@ -1326,18 +1578,44 @@ SPDX-License-Identifier: Apache-2.0
           <div class="add-section-header">
             <span class="add-section-icon" aria-hidden="true">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <circle cx="2" cy="2" r="1.3" stroke="currentColor" stroke-width="0.9" />
-                <circle cx="10" cy="2" r="1.3" stroke="currentColor" stroke-width="0.9" />
-                <circle cx="6" cy="10" r="1.3" stroke="currentColor" stroke-width="0.9" />
-                <path d="M3.2 2.6 5 9M8.8 2.6 7 9" stroke="currentColor" stroke-width="0.9" />
+                <circle
+                  cx="2"
+                  cy="2"
+                  r="1.3"
+                  stroke="currentColor"
+                  stroke-width="0.9"
+                />
+                <circle
+                  cx="10"
+                  cy="2"
+                  r="1.3"
+                  stroke="currentColor"
+                  stroke-width="0.9"
+                />
+                <circle
+                  cx="6"
+                  cy="10"
+                  r="1.3"
+                  stroke="currentColor"
+                  stroke-width="0.9"
+                />
+                <path
+                  d="M3.2 2.6 5 9M8.8 2.6 7 9"
+                  stroke="currentColor"
+                  stroke-width="0.9"
+                />
               </svg>
             </span>
-            <span class="add-section-title">{$_("admin.mcpServers.sectionConnection")}</span>
+            <span class="add-section-title"
+              >{$_("admin.mcpServers.sectionConnection")}</span
+            >
           </div>
           <div class="add-field-row">
             <!-- ".dd" — Transport -->
             <div class="add-field dd" data-open={openDropdown === "transport"}>
-              <span class="add-label" id="mcp-transport-label">{$_("admin.mcpServers.transport")}</span>
+              <span class="add-label" id="mcp-transport-label"
+                >{$_("admin.mcpServers.transport")}</span
+              >
               <button
                 class="dd-trigger"
                 type="button"
@@ -1347,11 +1625,26 @@ SPDX-License-Identifier: Apache-2.0
                 aria-labelledby="mcp-transport-label"
               >
                 <span>{getTransportLabel(formData.transport_type)}</span>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                  <path d="m3 4.5 3 3 3-3" stroke="currentColor" stroke-width="1.2" fill="none" />
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="m3 4.5 3 3 3-3"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                    fill="none"
+                  />
                 </svg>
               </button>
-              <div class="dd-menu" role="listbox" aria-labelledby="mcp-transport-label">
+              <div
+                class="dd-menu"
+                role="listbox"
+                aria-labelledby="mcp-transport-label"
+              >
                 {#each TRANSPORT_OPTIONS as option (option)}
                   <button
                     class="dd-item"
@@ -1362,8 +1655,19 @@ SPDX-License-Identifier: Apache-2.0
                     onclick={() => selectTransport(option)}
                   >
                     <span>{getTransportLabel(option)}</span>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                      <path d="m2 6 3 3 5-6" stroke="currentColor" stroke-width="1.3" fill="none" />
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="m2 6 3 3 5-6"
+                        stroke="currentColor"
+                        stroke-width="1.3"
+                        fill="none"
+                      />
                     </svg>
                   </button>
                 {/each}
@@ -1375,7 +1679,9 @@ SPDX-License-Identifier: Apache-2.0
 
             <!-- ".dd" — Auth Type -->
             <div class="add-field dd" data-open={openDropdown === "auth"}>
-              <span class="add-label" id="mcp-auth-label">{$_("admin.mcpOAuth.authType")}</span>
+              <span class="add-label" id="mcp-auth-label"
+                >{$_("admin.mcpOAuth.authType")}</span
+              >
               <button
                 class="dd-trigger"
                 type="button"
@@ -1385,11 +1691,26 @@ SPDX-License-Identifier: Apache-2.0
                 aria-labelledby="mcp-auth-label"
               >
                 <span>{getAuthTypeLabel(oauthForm.auth_type)}</span>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                  <path d="m3 4.5 3 3 3-3" stroke="currentColor" stroke-width="1.2" fill="none" />
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="m3 4.5 3 3 3-3"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                    fill="none"
+                  />
                 </svg>
               </button>
-              <div class="dd-menu" role="listbox" aria-labelledby="mcp-auth-label">
+              <div
+                class="dd-menu"
+                role="listbox"
+                aria-labelledby="mcp-auth-label"
+              >
                 {#each AUTH_TYPE_OPTIONS as option (option)}
                   <button
                     class="dd-item"
@@ -1400,8 +1721,19 @@ SPDX-License-Identifier: Apache-2.0
                     onclick={() => selectAuthType(option)}
                   >
                     <span>{getAuthTypeLabel(option)}</span>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                      <path d="m2 6 3 3 5-6" stroke="currentColor" stroke-width="1.3" fill="none" />
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="m2 6 3 3 5-6"
+                        stroke="currentColor"
+                        stroke-width="1.3"
+                        fill="none"
+                      />
                     </svg>
                   </button>
                 {/each}
@@ -1410,7 +1742,9 @@ SPDX-License-Identifier: Apache-2.0
           </div>
 
           <div class="add-field">
-            <label class="add-label" for="mcp-url">{$_("admin.mcpServers.url")}</label>
+            <label class="add-label" for="mcp-url"
+              >{$_("admin.mcpServers.url")}</label
+            >
             <input
               id="mcp-url"
               class="add-input add-input--mono"
@@ -1439,8 +1773,8 @@ SPDX-License-Identifier: Apache-2.0
               tokenUrl={oauthForm.token_url}
               {showClientSecret}
               errors={formErrors}
-              onAuthTypeChange={(v) => oauthForm.auth_type = v}
-              onAuthModeChange={(v) => oauthForm.auth_mode = v}
+              onAuthTypeChange={(v) => (oauthForm.auth_type = v)}
+              onAuthModeChange={(v) => (oauthForm.auth_mode = v)}
               onProviderChange={(v) => {
                 oauthForm.oauth_provider = v;
                 clearFieldError("oauth_provider");
@@ -1453,7 +1787,7 @@ SPDX-License-Identifier: Apache-2.0
                 formData.client_secret = v;
                 clearFieldError("client_secret");
               }}
-              onScopesChange={(v) => oauthForm.scopes = v}
+              onScopesChange={(v) => (oauthForm.scopes = v)}
               onAuthUrlChange={(v) => {
                 oauthForm.auth_url = v;
                 clearFieldError("auth_url");
@@ -1462,7 +1796,7 @@ SPDX-License-Identifier: Apache-2.0
                 oauthForm.token_url = v;
                 clearFieldError("token_url");
               }}
-              onToggleSecret={() => showClientSecret = !showClientSecret}
+              onToggleSecret={() => (showClientSecret = !showClientSecret)}
             />
           {/if}
         </div>
@@ -1472,14 +1806,28 @@ SPDX-License-Identifier: Apache-2.0
           <div class="add-section-header">
             <span class="add-section-icon" aria-hidden="true">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M6 1 2 3v3.3c0 3.4 2 5.4 4 6.7 2-1.3 4-3.3 4-6.7V3z" stroke="currentColor" stroke-width="1" fill="none" stroke-linejoin="round" />
+                <path
+                  d="M6 1 2 3v3.3c0 3.4 2 5.4 4 6.7 2-1.3 4-3.3 4-6.7V3z"
+                  stroke="currentColor"
+                  stroke-width="1"
+                  fill="none"
+                  stroke-linejoin="round"
+                />
               </svg>
             </span>
-            <span class="add-section-title">{$_("admin.mcpServers.sectionAccess")}</span>
+            <span class="add-section-title"
+              >{$_("admin.mcpServers.sectionAccess")}</span
+            >
           </div>
           <div class="add-field">
-            <span class="add-label" id="mcp-access-label">{$_("admin.mcpServers.defaultAccess")}</span>
-            <div class="seg-control" role="group" aria-labelledby="mcp-access-label">
+            <span class="add-label" id="mcp-access-label"
+              >{$_("admin.mcpServers.defaultAccess")}</span
+            >
+            <div
+              class="seg-control"
+              role="group"
+              aria-labelledby="mcp-access-label"
+            >
               {#each DEFAULT_ACCESS_OPTIONS as option (option)}
                 <button
                   class="seg-opt"
@@ -1490,20 +1838,49 @@ SPDX-License-Identifier: Apache-2.0
                   onclick={() => (formData.default_access = option)}
                 >
                   {#if option === "allow"}
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                      <path d="m1.5 7 4 4 7-8" stroke="currentColor" stroke-width="1.3" fill="none" />
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 14 14"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="m1.5 7 4 4 7-8"
+                        stroke="currentColor"
+                        stroke-width="1.3"
+                        fill="none"
+                      />
                     </svg>
                   {:else}
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                      <circle cx="7" cy="7" r="5.8" stroke="currentColor" stroke-width="1" />
-                      <path d="m4.5 4.5 5 5" stroke="currentColor" stroke-width="1" />
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 14 14"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <circle
+                        cx="7"
+                        cy="7"
+                        r="5.8"
+                        stroke="currentColor"
+                        stroke-width="1"
+                      />
+                      <path
+                        d="m4.5 4.5 5 5"
+                        stroke="currentColor"
+                        stroke-width="1"
+                      />
                     </svg>
                   {/if}
                   <span>{$_("admin.mcpServers.access." + option)}</span>
                 </button>
               {/each}
             </div>
-            <span class="seg-help">{$_("admin.mcpServers.defaultAccessHelp")}</span>
+            <span class="seg-help"
+              >{$_("admin.mcpServers.defaultAccessHelp")}</span
+            >
           </div>
         </div>
 
@@ -1517,14 +1894,40 @@ SPDX-License-Identifier: Apache-2.0
             aria-controls="mcp-connection-config"
           >
             <span class="adv-toggle-left">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M2 4h9M2 8h6M2 12h9" stroke="currentColor" stroke-width="1.2" />
-                <path d="m13 7 1.5 1-1.5 1" stroke="currentColor" stroke-width="1.2" fill="none" />
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M2 4h9M2 8h6M2 12h9"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                />
+                <path
+                  d="m13 7 1.5 1-1.5 1"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                  fill="none"
+                />
               </svg>
               <span>{$_("admin.mcpServers.advancedConnectionConfig")}</span>
             </span>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="m5.5 3 4 4-4 4" stroke="currentColor" stroke-width="1.2" fill="none" />
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="m5.5 3 4 4-4 4"
+                stroke="currentColor"
+                stroke-width="1.2"
+                fill="none"
+              />
             </svg>
           </button>
           <div class="adv-body">
@@ -1542,7 +1945,11 @@ SPDX-License-Identifier: Apache-2.0
             {#if formErrors.connection_config}
               <span class="error-text">{formErrors.connection_config}</span>
             {/if}
-            <button class="format-link" type="button" onclick={formatConnectionConfig}>
+            <button
+              class="format-link"
+              type="button"
+              onclick={formatConnectionConfig}
+            >
               {$_("admin.mcpServers.formatJson")}
             </button>
           </div>
@@ -1553,9 +1960,25 @@ SPDX-License-Identifier: Apache-2.0
     {#snippet footer()}
       {#if submitError}
         <div class="add-error-banner" role="alert">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <circle cx="10" cy="10" r="8.3" stroke="currentColor" stroke-width="1.3" />
-            <path d="M10 6v4.5M10 14v.1" stroke="currentColor" stroke-width="1.3" />
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              cx="10"
+              cy="10"
+              r="8.3"
+              stroke="currentColor"
+              stroke-width="1.3"
+            />
+            <path
+              d="M10 6v4.5M10 14v.1"
+              stroke="currentColor"
+              stroke-width="1.3"
+            />
           </svg>
           <span>{submitError}</span>
         </div>
@@ -1602,7 +2025,13 @@ SPDX-License-Identifier: Apache-2.0
     {#snippet headerIcon()}
       <span class="add-header-icon add-header-icon--danger" aria-hidden="true">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M3.5 5h11M6.5 5V2.8h5V5M4.8 5l.7 10.2h7l.7-10.2" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round" />
+          <path
+            d="M3.5 5h11M6.5 5V2.8h5V5M4.8 5l.7 10.2h7l.7-10.2"
+            stroke="currentColor"
+            stroke-width="1.3"
+            fill="none"
+            stroke-linejoin="round"
+          />
         </svg>
       </span>
     {/snippet}
@@ -2083,30 +2512,63 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-mcp-red);
   }
 
-  /* ".icon-btn" / ".connect-pill" */
+  /* ".icon-btn" / ".connect-pill" — every row action wears its own chip: a
+     tinted fill inside a ring of the same hue, glyph at full strength. */
   .icon-btn {
     width: 28px;
     height: 28px;
     border-radius: 6px;
-    background: var(--gx-ring-soft);
+    background: var(--icon-btn-bg);
+    box-shadow: inset 0 0 0 1px var(--icon-btn-ring);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--gx-an-sub);
+    color: var(--icon-btn-fg);
     flex-shrink: 0;
     transition:
       background-color 120ms ease,
+      box-shadow 120ms ease,
       color 120ms ease;
   }
 
-  .icon-btn:hover:not(:disabled) {
-    background: var(--gx-mcp-icon-hover);
-    color: var(--gx-org-primary-500);
+  /* Test connection — #22C55E0A / #22C55E20 / #2B916B */
+  .icon-btn--ok {
+    --icon-btn-bg: var(--gx-mcp-act-ok-bg);
+    --icon-btn-ring: var(--gx-mcp-act-ok-ring);
+    --icon-btn-fg: var(--gx-org-brand-alt);
   }
 
-  .icon-btn--danger:hover:not(:disabled) {
-    background: var(--gx-mcp-err-bg);
-    color: var(--gx-mcp-red);
+  /* Access control — #3B67BD0A / #3B67BD20 / #427AC6 */
+  .icon-btn--info {
+    --icon-btn-bg: var(--gx-mcp-act-info-bg);
+    --icon-btn-ring: var(--gx-mcp-act-info-ring);
+    --icon-btn-fg: var(--gx-org-primary-500);
+  }
+
+  /* Sync tools and Edit — #FFFFFF / #EFF4FC / #6B7281 */
+  .icon-btn--plain {
+    --icon-btn-bg: var(--gx-card);
+    --icon-btn-ring: var(--gx-ring-soft);
+    --icon-btn-fg: var(--gx-an-sub);
+  }
+
+  /* Delete — #B93A3E0A / #B93A3E20 / #B93A3E */
+  .icon-btn--danger {
+    --icon-btn-bg: var(--gx-mcp-act-danger-bg);
+    --icon-btn-ring: var(--gx-mcp-act-danger-ring);
+    --icon-btn-fg: var(--gx-mcp-red);
+  }
+
+  /* Hover deepens a chip into its own ring colour, so each action keeps its
+     hue instead of all five turning the same blue. */
+  .icon-btn:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--icon-btn-bg) 35%, var(--icon-btn-ring));
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--icon-btn-ring) 40%, var(--icon-btn-fg));
+  }
+
+  .icon-btn--plain:hover:not(:disabled) {
+    background: var(--gx-mcp-icon-hover);
+    color: var(--gx-org-primary-500);
   }
 
   .icon-btn:focus-visible,
@@ -3058,160 +3520,174 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
-  /* ---------------- Detail view (access / tools / connection) ----------------
-     Not part of mcp-servers.html — it keeps the app's own panel styling. */
+  /* ---------------- Detail view — mcp-server-detail.html ".main" ----------------
+     The Access Control / Tool Access view behind a row's shield icon. The page
+     container already supplies the design's 32px padding and 28px column gap,
+     so this block only lays out the header, the switcher and the panels. */
   .detail-view {
     display: flex;
     flex-direction: column;
-    gap: 0;
-    height: 100%;
+    gap: 28px;
+    align-items: flex-start;
+    width: 100%;
     animation: fadeSlideIn 0.25s ease;
   }
 
   @keyframes fadeSlideIn {
-    from { opacity: 0; transform: translateX(-8px); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+      opacity: 0;
+      transform: translateX(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
-  .detail-header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-    padding-bottom: var(--space-lg);
-    border-bottom: 1px solid var(--gx-hair);
-  }
-
-  .detail-back-btn {
-    display: inline-flex;
-    align-items: center;
-    align-self: flex-start;
-    gap: var(--space-xs);
-    padding: var(--space-xs) var(--space-sm);
-    margin-inline-start: calc(-1 * var(--space-sm));
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--gx-slate-500);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-
-  .detail-back-btn:hover {
-    color: var(--gx-slate-900);
-    background: var(--gx-hover-soft);
-  }
-
-  .detail-title-row {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-
-  .detail-title-group {
+  /* ".back-link" */
+  .back-link {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
+    gap: 4px;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-ac-system-fg);
+    transition: color 120ms ease;
   }
 
-  .detail-server-name {
-    font-size: 1.375rem;
+  .back-link:hover {
+    color: var(--gx-tx-accent);
+  }
+
+  .back-link:focus-visible {
+    outline: 2px solid var(--gx-tx-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* The arrow points back along the reading direction. */
+  :global([dir="rtl"]) .back-link__arrow {
+    transform: scaleX(-1);
+  }
+
+  /* ".server-header" */
+  .server-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    gap: 16px;
+  }
+
+  .server-identity {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .title-status {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .server-name {
+    margin: 0;
+    font-family: var(--gx-font-display);
     font-weight: 700;
-    color: var(--gx-slate-900);
-    margin: 0;
-    letter-spacing: -0.02em;
+    font-size: 28px;
+    line-height: 1.2;
+    color: var(--gx-org-ink);
+    overflow-wrap: anywhere;
   }
 
-  .detail-status {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: var(--space-2xs) var(--space-sm);
-    border-radius: var(--radius-full, 9999px);
-  }
-
-  .detail-status--connected {
-    color: var(--gx-org-brand-alt);
-    background: var(--gx-ae-ok-bg);
-  }
-
-  .detail-status--disconnected {
-    color: var(--gx-mcp-red);
-    background: var(--gx-mcp-err-bg);
-  }
-
-  .detail-status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-
-  .detail-description {
-    font-size: 0.8125rem;
-    color: var(--gx-slate-500);
-    margin: 0;
-    line-height: 1.5;
-  }
-
-  .detail-tabs {
+  .status-pill {
     display: flex;
-    gap: var(--space-md);
-    border-bottom: 1px solid var(--gx-hair);
-    margin-top: var(--space-lg);
-  }
-
-  .detail-tab {
-    display: inline-flex;
+    gap: 6px;
     align-items: center;
-    gap: var(--space-xs);
-    padding: var(--space-md) var(--space-lg);
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
-    border-bottom: 2px solid transparent;
-    background: transparent;
-    color: var(--gx-slate-500);
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    margin-bottom: -1px;
+    flex-shrink: 0;
   }
 
-  .detail-tab:hover:not(.detail-tab--active) {
-    color: var(--gx-slate-900);
-    background: var(--gx-hover-soft);
-  }
-
-  .detail-tab--active {
-    color: var(--gx-org-primary-500);
-    border-bottom-color: var(--gx-org-primary-500);
+  .status-label {
     font-weight: 600;
+    font-size: 11px;
+    line-height: 100%;
+    text-transform: capitalize;
+  }
+
+  .status-label--on {
+    color: var(--gx-org-brand-alt);
+  }
+
+  .status-label--off {
+    color: var(--gx-mcp-red);
+  }
+
+  .server-desc {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--gx-an-sub);
+  }
+
+  /* ".tabs-switcher" — the segmented pill above the panels. The design sizes
+     it to its two tabs; the OAuth build adds a third, so it hugs instead. */
+  .tabs-switcher {
+    min-height: 36px;
+    border-radius: 8px;
+    background: var(--gx-rule);
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
+    white-space: nowrap;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease,
+      box-shadow 120ms ease;
+  }
+
+  .tab-btn[aria-selected="true"] {
+    background: var(--gx-surface);
+    box-shadow: var(--gx-mcpd-switch-shadow);
+    color: var(--gx-tx-accent);
+  }
+
+  .tab-btn:focus-visible {
+    outline: 2px solid var(--gx-tx-accent);
+    outline-offset: 2px;
   }
 
   .detail-content {
-    padding-top: var(--space-xl);
-    flex: 1;
+    align-self: stretch;
+    min-width: 0;
   }
 
-  @media (max-width: 768px) {
-    .detail-title-group {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--space-xs);
+  @media (max-width: 640px) {
+    .server-name {
+      font-size: 22px;
     }
 
-    .detail-server-name {
-      font-size: 1.125rem;
+    .tabs-switcher {
+      align-self: stretch;
     }
 
-    .detail-tabs {
-      overflow-x: auto;
-    }
-
-    .detail-tab {
-      padding: var(--space-sm) var(--space-md);
-      font-size: 0.8125rem;
-      white-space: nowrap;
+    .tab-btn {
+      flex: 1 1 auto;
+      padding-inline: 10px;
     }
   }
 

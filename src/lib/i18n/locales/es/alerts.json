@@ -11,6 +11,11 @@
     "loadMore": "Cargar más",
     "unread": "Sin leer",
     "loadError": "Error al cargar las alertas",
-    "markReadError": "No se pudo marcar la alerta como leída"
+    "markReadError": "No se pudo marcar la alerta como leída",
+    "needsAttention": "Requiere atención",
+    "earlier": "Anteriores",
+    "markAllRead": "Marcar todo como leído",
+    "markAllReadError": "No se pudieron marcar todas las alertas como leídas",
+    "reviewBudget": "Revisar presupuesto"
   }
 }

@@ -309,30 +309,25 @@
           "enabled": "활성화",
           "disabled": "비활성화",
           "enableVerb": "활성화",
-          "disableVerb": "비활성화"
+          "disableVerb": "비활성화",
+          "active": "활성",
+          "inactive": "비활성"
         },
         "actions": {
           "retry": "다시 시도",
           "deleting": "삭제 중…",
           "saving": "저장 중…",
-          "validating": "검증 중…"
+          "validating": "검증 중…",
+          "configure": "구성"
         },
         "messages": {
           "loading": "OAuth 공급자를 불러오는 중...",
           "empty": "아직 구성된 OAuth 공급자가 없습니다.",
           "loadError": "SSO 공급자를 불러올 수 없습니다",
           "loadProviderError": "공급자를 불러올 수 없습니다",
-          "noDomains": "도메인 없음",
-          "domainBannerOne": "{name}은(는) 이메일 도메인으로 로그인을 제한하지 않으므로 유효한 계정을 가진 사용자는 누구나 참여할 수 있습니다. 공급자를 편집하여 특정 회사 도메인으로 액세스를 제한하세요.",
-          "domainBannerAll": "{names}은(는) 이메일 도메인으로 로그인을 제한하지 않으므로 유효한 계정을 가진 사용자는 누구나 참여할 수 있습니다. 공급자를 편집하여 특정 회사 도메인으로 액세스를 제한하세요.",
-          "loadingProvider": "공급자 불러오는 중..."
-        },
-        "table": {
-          "caption": "OAuth 공급자 구성",
-          "provider": "공급자",
-          "allowedDomains": "허용 도메인",
-          "status": "상태",
-          "actions": "작업"
+          "loadingProvider": "공급자 불러오는 중...",
+          "emptyTitle": "사용할 수 있는 ID 공급자가 없습니다",
+          "errorTitle": "ID 공급자를 불러오지 못했습니다"
         },
         "modals": {
           "confirmDeleteTitle": "삭제 확인",
@@ -376,11 +371,24 @@
           "hideClientSecret": "클라이언트 시크릿 숨기기",
           "showClientSecret": "클라이언트 시크릿 보기",
           "removeDomain": "{domain} 도메인 제거",
-          "moreDomains": "도메인 {count}개 더: {domains}"
+          "moreDomains": "도메인 {count}개 더: {domains}",
+          "editDomains": "{name}의 허용 도메인 편집"
         },
         "selfProvisioning": {
           "label": "자동 프로비저닝",
           "hint": "첫 로그인 시 자동으로 계정 생성"
+        },
+        "card": {
+          "allowedDomains": "허용 도메인",
+          "allDomains": "모든 도메인",
+          "unrestricted": "제한 없음 — 누구나 로그인할 수 있습니다"
+        },
+        "descriptions": {
+          "azure": "Microsoft Entra ID — 회사 또는 학교 계정으로 로그인",
+          "google": "Google 계정으로 로그인",
+          "okta": "Okta를 통한 엔터프라이즈 SSO",
+          "saml": "SAML 2.0 호환 ID 공급자 연결",
+          "generic": "{name}(으)로 로그인"
         }
       }
     },
@@ -703,6 +711,7 @@
       "failedToLoad": "액세스 규칙을 불러오지 못했습니다",
       "failedToLoadTools": "도구 액세스를 불러오지 못했습니다",
       "defaultAccessTitle": "기본 액세스",
+      "defaultAccessDesc": "기본적으로 이 서버를 사용할 수 있는 사람을 선택하세요.",
       "defaultAccessUpdated": "기본 액세스가 업데이트됨",
       "failedToUpdateDefault": "기본 액세스 업데이트 실패",
       "defaultAccess": {
@@ -715,6 +724,7 @@
       },
       "accessRules": "액세스 규칙",
       "addRule": "규칙 추가",
+      "addRules": "규칙 추가",
       "adding": "추가 중...",
       "ruleAdded": "액세스 규칙이 추가됨",
       "failedToAddRule": "액세스 규칙 추가 실패",
@@ -757,9 +767,11 @@
       "serverTools": "서버 도구(총 {count}개)",
       "noTools": "사용할 수 있는 도구 없음",
       "noToolsHint": "여기에서 보려면 서버 목록에서 도구를 동기화하세요",
+      "notConnected": "연결되지 않음",
+      "notConnectedHint": "사용할 수 있는 도구를 보려면 서버에 연결하세요",
       "configureTool": "액세스 구성",
       "toolStatus": {
-        "inherit": "상속",
+        "proxyFallback": "프록시 폴백",
         "custom": "사용자 지정 규칙 {count}개",
         "noRules": "규칙 없음",
         "customBadge": "사용자 지정"
@@ -768,7 +780,9 @@
       "inheritFromServerDesc": "서버 수준에서 구성된 것과 동일한 액세스 규칙 사용",
       "customRules": "사용자 지정 규칙",
       "customRulesDesc": "이 도구에 대한 특정 액세스 규칙 구성",
-      "noCustomRules": "사용자 지정 규칙이 없습니다. 이 도구에 대한 액세스를 제한하려면 규칙을 추가하세요.",
+      "toolAccessSubtitle": "이 도구에 대한 액세스를 관리하는 방법을 선택하세요.",
+      "noCustomRulesTitle": "사용자 지정 규칙 없음",
+      "noCustomRulesHint": "이 도구에 대한 액세스를 제한하려면 규칙을 추가하세요.",
       "toolAccessSaved": "도구 액세스가 저장됨",
       "failedToSaveToolAccess": "도구 액세스 저장 실패",
       "save": "저장",
@@ -1425,10 +1439,10 @@
     "connectEngine": "엔진 연결",
     "noResults": "“{query}”과(와) 일치하는 엔진이 없습니다.",
     "filters": {
-      "label": "엔진 필터",
+      "label": "상태별로 엔진 필터링",
       "all": "전체",
-      "active": "활성",
-      "available": "사용 가능"
+      "connected": "연결됨",
+      "attention": "조치 필요"
     },
     "stats": {
       "connectedValue": "{total}개 중 {connected}개",
@@ -1461,7 +1475,76 @@
       "connecting": "연결 중...",
       "connected": "{name}이(가) 연결되었습니다"
     },
-    "noFilterResults": "이 보기에 표시할 엔진이 없습니다."
+    "noFilterResults": "이 보기에 표시할 엔진이 없습니다.",
+    "sectionTitle": "내 엔진",
+    "view": {
+      "label": "엔진 보기 방식",
+      "grid": "그리드",
+      "list": "목록"
+    },
+    "table": {
+      "engine": "엔진",
+      "status": "상태",
+      "defaultModel": "기본 모델",
+      "whitelist": "허용 목록",
+      "enabled": "사용",
+      "actions": "작업",
+      "mostUsed": "최다 사용",
+      "configure": "구성",
+      "connect": "연결"
+    },
+    "browse": {
+      "cta": "공급자 둘러보기",
+      "title": "공급자 둘러보기",
+      "subtitle": "연결 가능한 공급자 {count}개",
+      "searchPlaceholder": "공급자 검색…",
+      "categoryLabel": "카테고리별로 공급자 필터링",
+      "showing": "공급자 {total}개 중 {count}개 표시",
+      "modelsAvailable": "모델 {count}개 사용 가능",
+      "showMore": "+ {count}개 더 보기",
+      "showLess": "간략히 보기",
+      "noResults": "“{query}”와 일치하는 공급자가 없습니다.",
+      "allConnected": "사용 가능한 모든 공급자가 이미 연결되어 있습니다.",
+      "categories": {
+        "major": "주요 공급자",
+        "aggregators": "애그리게이터",
+        "regional": "지역 공급자",
+        "voice": "음성 및 오디오",
+        "image": "이미지 및 동영상",
+        "embeddings": "임베딩 및 검색",
+        "other": "기타 공급자"
+      }
+    },
+    "custom": {
+      "cta": "사용자 지정 엔진 추가",
+      "title": "사용자 지정 엔진 추가",
+      "subtitle": "OpenAI 호환 엔드포인트를 연결합니다",
+      "submit": "엔진 추가",
+      "adding": "추가하는 중…",
+      "fields": {
+        "name": "표시 이름",
+        "nameHelper": "엔진 카드와 이 엔진이 표시되는 모든 곳에 사용됩니다.",
+        "namePlaceholder": "예: 사내 vLLM 클러스터",
+        "baseUrl": "기본 URL 재정의",
+        "baseUrlHelper": "Grengin이 공급자의 기본 URL 대신 호출할 엔드포인트입니다.",
+        "plugin": "플러그인 JSON",
+        "pluginHelper": "OpenAI 플러그인 스키마 형식의 공급자 설정, 모델 목록 및 라우팅 규칙입니다.",
+        "compatible": "OpenAI 호환",
+        "optional": "선택 사항",
+        "apiKeyHelper": "이 엔드포인트에 인증이 필요 없으면 비워 두세요."
+      },
+      "errors": {
+        "nameRequired": "이 엔진의 표시 이름을 입력하세요.",
+        "baseUrlRequired": "이 엔진이 호출할 기본 URL을 입력하세요.",
+        "baseUrlInvalid": "기본 URL은 http:// 또는 https://로 시작해야 합니다.",
+        "pluginRequired": "이 엔진의 플러그인 JSON을 입력하세요.",
+        "pluginInvalid": "플러그인 JSON이 올바른 JSON 객체가 아닙니다."
+      },
+      "toasts": {
+        "added": "{name}이(가) 추가되었습니다",
+        "failed": "사용자 지정 엔진을 추가하지 못했습니다"
+      }
+    }
   },
   "adminOverview": {
     "title": "개요",

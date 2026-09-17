@@ -2064,14 +2064,16 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   /* Three-layer sticker (round 2): a conic-gradient ring around a soft
-     off-white disc around the brand-blue chat-bubble tile.
+     off-white disc around the brand-blue chat-bubble tile. Design review
+     ENGG-426 called the 104px sticker oversized; scaled to 88px, with the
+     glyph kept proportionally larger (24/56) so it reads more clearly.
      Motion (Figma): the whole sticker breathes on a 6.4s scale loop. Switched
      off by the global prefers-reduced-motion rule in app.css. */
   .sticker-ring {
     position: relative;
-    width: 104px;
-    height: 104px;
-    border-radius: 52px;
+    width: 88px;
+    height: 88px;
+    border-radius: 44px;
     background: conic-gradient(
       from 90deg at 50% 50%,
       rgb(79, 114, 210) 0deg,
@@ -2110,9 +2112,9 @@ SPDX-License-Identifier: Apache-2.0
 
   .sticker-inner {
     position: relative;
-    width: 96px;
-    height: 98px;
-    border-radius: 49px;
+    width: 81px;
+    height: 83px;
+    border-radius: 42px;
     background: var(--gx-sticker-disc);
     display: flex;
     align-items: center;
@@ -2120,9 +2122,9 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .chat-bubble-block {
-    width: 64px;
-    height: 64px;
-    border-radius: 18px;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
     background: rgb(63, 92, 184);
     box-shadow: 0 6px 16px 0 rgba(63, 92, 184, 0.251);
     display: flex;
@@ -2131,8 +2133,8 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .bubble-icon {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     color: #fff;
   }
 

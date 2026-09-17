@@ -4,7 +4,6 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
-  import { onMount } from 'svelte';
   import type {
     McpToolAccess,
     McpAccessRule,
@@ -113,75 +112,88 @@ SPDX-License-Identifier: Apache-2.0
   }
 </script>
 
+<!-- "MODAL: Tool Access Control" — mcp-server-detail.html -->
 <Modal
   title={`${toolName} › ${$_('admin.mcpAccess.accessControl')}`}
+  subtitle={$_('admin.mcpAccess.toolAccessSubtitle')}
   {isOpen}
   onclose={onClose}
+  variant="mcp-tool"
 >
   {#snippet children()}
     {#if isLoading}
       <LoadingSpinner text={$_('admin.mcpAccess.loading')} size="md" />
     {:else}
-      <div class="tool-access-form">
-        <div class="inherit-section">
-          <label class="inherit-option" class:inherit-option--active={inheritFromServer}>
-            <input type="radio" name="tool_inherit" value="inherit" checked={inheritFromServer} onchange={() => { inheritFromServer = true; }} />
-            <div class="inherit-radio"><div class="inherit-dot"></div></div>
-            <div class="inherit-content">
-              <span class="inherit-label">{$_('admin.mcpAccess.inheritFromServer')}</span>
-              <span class="inherit-desc">{$_('admin.mcpAccess.inheritFromServerDesc')}</span>
+      <!-- "#toolAccessModeOptions" -->
+      <div class="access-modes">
+        <label class="access-mode-option" data-selected={inheritFromServer}>
+          <input
+            type="radio"
+            name="tool_inherit"
+            value="inherit"
+            checked={inheritFromServer}
+            onchange={() => { inheritFromServer = true; }}
+          />
+          <span class="access-mode-radio"></span>
+          <span class="access-mode-copy">
+            <span class="access-mode-title">{$_('admin.mcpAccess.inheritFromServer')}</span>
+            <span class="access-mode-desc">{$_('admin.mcpAccess.inheritFromServerDesc')}</span>
+          </span>
+        </label>
+        <label class="access-mode-option" data-selected={!inheritFromServer}>
+          <input
+            type="radio"
+            name="tool_inherit"
+            value="custom"
+            checked={!inheritFromServer}
+            onchange={() => { inheritFromServer = false; }}
+          />
+          <span class="access-mode-radio"></span>
+          <span class="access-mode-copy">
+            <span class="access-mode-title">{$_('admin.mcpAccess.customRules')}</span>
+            <span class="access-mode-desc">{$_('admin.mcpAccess.customRulesDesc')}</span>
+          </span>
+        </label>
+      </div>
+
+      <!-- "#toolRulesSection" — dimmed and inert while the tool inherits -->
+      <div class="tool-rules-section" data-mode={inheritFromServer ? 'inherit' : 'custom'}>
+        <div class="tool-rules-heading">
+          <div>
+            <div class="tool-rules-heading-title">{$_('admin.mcpAccess.accessRules')}</div>
+            <div class="tool-rules-count">
+              {$_('admin.mcpAccess.toolStatus.custom', { values: { count: localRules.length } })}
             </div>
-          </label>
-          <label class="inherit-option" class:inherit-option--active={!inheritFromServer}>
-            <input type="radio" name="tool_inherit" value="custom" checked={!inheritFromServer} onchange={() => { inheritFromServer = false; }} />
-            <div class="inherit-radio"><div class="inherit-dot"></div></div>
-            <div class="inherit-content">
-              <span class="inherit-label">{$_('admin.mcpAccess.customRules')}</span>
-              <span class="inherit-desc">{$_('admin.mcpAccess.customRulesDesc')}</span>
-            </div>
-          </label>
+          </div>
+          <button class="btn-secondary-sm" type="button" onclick={() => addRuleModalOpen = true}>
+            + {$_('admin.mcpAccess.addRule')}
+          </button>
         </div>
 
-        {#if !inheritFromServer}
-          <div class="custom-rules-section">
-            <div class="custom-rules-header">
-              <h4 class="custom-rules-title">{$_('admin.mcpAccess.accessRules')}</h4>
-              <button class="btn-add-rule-sm" onclick={() => addRuleModalOpen = true}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                <span>{$_('admin.mcpAccess.addRule')}</span>
-              </button>
-            </div>
-
-            {#if localRules.length === 0}
-              <div class="empty-custom-rules">
-                <span>{$_('admin.mcpAccess.noCustomRules')}</span>
-              </div>
-            {:else}
-              <div class="custom-rules-list">
-                {#each localRules as rule (rule.id)}
-                  <AccessRuleCard
-                    {rule}
-                    onDelete={handleRemoveLocalRule}
-                  />
-                {/each}
-              </div>
-            {/if}
+        {#if localRules.length === 0}
+          <div class="tool-rules-empty">
+            <span class="tool-empty-icon" aria-hidden="true">＋</span>
+            <span class="rules-empty-title">{$_('admin.mcpAccess.noCustomRulesTitle')}</span>
+            <span class="rules-empty-desc">{$_('admin.mcpAccess.noCustomRulesHint')}</span>
+          </div>
+        {:else}
+          <div class="tool-rules-list">
+            {#each localRules as rule (rule.id)}
+              <AccessRuleCard {rule} onDelete={handleRemoveLocalRule} />
+            {/each}
           </div>
         {/if}
-
-        <div class="tool-form-actions">
-          <button type="button" class="btn-secondary" onclick={onClose} disabled={isSaving}>
-            {$_('common.cancel')}
-          </button>
-          <button type="button" class="btn-accent" onclick={handleSave} disabled={isSaving}>
-            {isSaving ? $_('admin.mcpAccess.saving') : $_('admin.mcpAccess.save')}
-          </button>
-        </div>
       </div>
     {/if}
+  {/snippet}
+
+  {#snippet footer()}
+    <button class="btn-cancel" type="button" onclick={onClose} disabled={isSaving}>
+      {$_('common.cancel')}
+    </button>
+    <button class="btn-primary" type="button" onclick={handleSave} disabled={isSaving || isLoading}>
+      {isSaving ? $_('admin.mcpAccess.saving') : $_('admin.mcpAccess.save')}
+    </button>
   {/snippet}
 </Modal>
 
@@ -193,157 +205,267 @@ SPDX-License-Identifier: Apache-2.0
 />
 
 <style>
-  .tool-access-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xl);
-  }
-
-  .inherit-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .inherit-option {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-md);
+  /* ===== mcp-server-detail.html "MODAL: Tool Access Control", transcribed.
+     The card itself (680px, gradient rule, 32px gutters) is Modal's "mcp-tool"
+     variant; this sheet is only its contents. ===== */
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
+    white-space: nowrap;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: none;
   }
 
-  .inherit-option input[type="radio"] {
-    display: none;
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
   }
 
-  .inherit-option:hover {
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(var(--glass-tint), 0.03);
+  button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
   }
 
-  .inherit-option--active {
-    border-color: var(--brand);
-    background: rgba(var(--brand-rgb), 0.04);
+  /* ---------------- ".access-mode-option" ---------------- */
+  .access-modes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-self: stretch;
+    width: 100%;
+    font-family: var(--gx-font);
   }
 
-  .inherit-radio {
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+  .access-mode-option {
+    border-radius: 12px;
+    background: var(--gx-surface);
+    box-shadow: inset 0 0 0 1px var(--gx-ring-soft);
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    align-items: center;
+    cursor: pointer;
+    transition:
+      box-shadow 120ms ease,
+      background-color 120ms ease;
+  }
+
+  .access-mode-option input[type="radio"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .access-mode-option[data-selected="true"] {
+    box-shadow: inset 0 0 0 1.5px var(--gx-tx-accent);
+    background: color-mix(in oklab, var(--gx-tx-accent) 6%, var(--gx-surface));
+  }
+
+  .access-mode-option:focus-within {
+    outline: 2px solid var(--gx-tx-accent);
+    outline-offset: 2px;
+  }
+
+  .access-mode-radio {
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
+    box-shadow: inset 0 0 0 1.5px var(--gx-ring-soft);
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    margin-top: 1px;
-    transition: border-color 0.2s ease;
+    background: var(--gx-surface);
   }
 
-  .inherit-option--active .inherit-radio {
-    border-color: var(--brand);
+  .access-mode-option[data-selected="true"] .access-mode-radio {
+    box-shadow: none;
+    background: var(--gx-tx-accent);
   }
 
-  .inherit-dot {
-    width: 8px;
-    height: 8px;
+  .access-mode-option[data-selected="true"] .access-mode-radio::after {
+    content: "";
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: transparent;
-    transition: background 0.2s ease;
+    background: var(--gx-surface);
   }
 
-  .inherit-option--active .inherit-dot {
-    background: var(--brand);
+  .access-mode-copy {
+    min-width: 0;
   }
 
-  .inherit-content {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .inherit-label {
-    font-size: 0.875rem;
+  .access-mode-title {
+    display: block;
     font-weight: 600;
-    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-mcp-m-ink);
+    margin-bottom: 4px;
   }
 
-  .inherit-desc {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
+  .access-mode-desc {
+    display: block;
+    font-weight: 400;
+    font-size: 12px;
     line-height: 1.4;
+    color: var(--gx-mcp-dim);
   }
 
-  .custom-rules-section {
+  /* ---------------- "#toolRulesSection" ---------------- */
+  .tool-rules-section {
+    align-self: stretch;
+    width: 100%;
+    font-family: var(--gx-font);
+  }
+
+  .tool-rules-section[data-mode="inherit"] {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .tool-rules-heading {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-    padding-top: var(--space-md);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    animation: fadeIn 0.2s ease;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .custom-rules-header {
-    display: flex;
-    align-items: center;
     justify-content: space-between;
-  }
-
-  .custom-rules-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-  }
-
-  .btn-add-rule-sm {
-    display: inline-flex;
     align-items: center;
-    gap: var(--space-2xs);
-    padding: var(--space-2xs) var(--space-sm);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--brand);
-    font-size: 0.75rem;
+    gap: 12px;
+  }
+
+  .tool-rules-heading-title {
+    font-family: var(--gx-font-display);
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-mcp-m-ink);
+  }
+
+  .tool-rules-count {
+    font-weight: 400;
+    font-size: 11px;
+    line-height: 100%;
+    color: var(--gx-mcp-dim);
+    margin-top: 2px;
+  }
+
+  .btn-secondary-sm {
+    height: 33px;
+    border-radius: 8px;
+    background: var(--gx-surface);
+    box-shadow: inset 0 0 0 1px var(--gx-mcp-m-ring);
+    padding: 8px 14px;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-mcp-m-ink);
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
   }
 
-  .btn-add-rule-sm:hover {
-    background: rgba(var(--brand-rgb), 0.06);
-    border-color: rgba(var(--brand-rgb), 0.3);
+  .btn-secondary-sm:hover:not(:disabled) {
+    background: var(--gx-mcp-m-hair);
   }
 
-  .custom-rules-list {
+  .tool-rules-empty {
+    margin-top: 12px;
+    border-radius: 12px;
+    background: var(--gx-an-field-bg);
+    box-shadow: inset 0 0 0 1px var(--gx-ring-soft);
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .empty-custom-rules {
-    padding: var(--space-lg);
+    gap: 8px;
+    padding: 24px 32px;
+    align-items: center;
     text-align: center;
-    color: var(--text-tertiary);
-    font-size: 0.8125rem;
-    border: 1px dashed rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-md);
   }
 
-  .tool-form-actions {
+  .tool-empty-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: color-mix(in oklab, var(--gx-tx-accent) 12%, var(--gx-surface));
     display: flex;
-    justify-content: flex-end;
-    gap: var(--space-md);
-    padding-top: var(--space-lg);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    align-items: center;
+    justify-content: center;
+    color: var(--gx-tx-accent);
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .rules-empty-title {
+    font-family: var(--gx-font-display);
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-org-ink);
+  }
+
+  .rules-empty-desc {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--gx-an-sub);
+  }
+
+  .tool-rules-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ---------------- footer actions ---------------- */
+  .btn-cancel {
+    height: 33px;
+    border-radius: 8px;
+    background: var(--gx-surface);
+    box-shadow: inset 0 0 0 1px var(--gx-mcp-m-cancel-ring);
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-mcp-m-cancel-fg);
+    transition: background-color 120ms ease;
+  }
+
+  .btn-cancel:hover:not(:disabled) {
+    background: var(--gx-mcp-m-hair);
+  }
+
+  .btn-primary {
+    height: 33px;
+    border-radius: 8px;
+    background: var(--gx-vdt-cta);
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-surface);
+    transition: background-color 120ms ease;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--gx-mcpd-cta-hover);
+  }
+
+  .btn-cancel:focus-visible,
+  .btn-primary:focus-visible,
+  .btn-secondary-sm:focus-visible {
+    outline: 2px solid var(--gx-tx-accent);
+    outline-offset: 2px;
   }
 </style>

@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import { _, locale } from "svelte-i18n";
+  import { _ } from "svelte-i18n";
   import PageHeader from "../../components/PageHeader.svelte";
   import LoadingSpinner from "../../components/LoadingSpinner.svelte";
   import Modal from "../../components/Modal.svelte";
@@ -30,7 +30,14 @@ SPDX-License-Identifier: Apache-2.0
     google: "/google.svg",
   };
 
-  /** ".col-domains" shows three chips, then a "+N" overflow chip. */
+  /** ".skel-card" — three placeholder rows, each with its own bar widths. */
+  const SKELETON_WIDTHS = [
+    ["60%", "85%"],
+    ["50%", "70%"],
+    ["65%", "75%"],
+  ] as const;
+
+  /** ".pills-group" shows three domain pills, then a "+N" overflow pill. */
   const MAX_DOMAIN_CHIPS = 3;
 
   let providers = $state<SSOProvider[]>([]);
@@ -68,34 +75,32 @@ SPDX-License-Identifier: Apache-2.0
     permissionsStore.canManageSsoProviders(),
   );
 
-  /** ".info-banner" — only worth showing while some provider takes all comers. */
-  const unrestrictedProviders = $derived(
-    providers.filter((provider) => !provider.allowed_domains?.length),
-  );
+  /**
+   * ".provider-desc" — the list API carries no blurb, so the copy is keyed off
+   * the provider key. Anything outside this set falls back to the generic line
+   * rather than a missing-key lookup.
+   */
+  const DESCRIBED_PROVIDERS = ["azure", "google", "okta", "saml"];
 
-  function formatNameList(names: string[]): string {
-    try {
-      return new Intl.ListFormat($locale ?? "en", {
-        style: "long",
-        type: "conjunction",
-      }).format(names);
-    } catch {
-      return names.join(", ");
+  function describeProvider(provider: SSOProvider): string {
+    if (DESCRIBED_PROVIDERS.includes(provider.provider)) {
+      return $_(
+        `admin.settings.oauthProviders.descriptions.${provider.provider}`,
+      );
     }
+    return $_("admin.settings.oauthProviders.descriptions.generic", {
+      values: { name: provider.name },
+    });
   }
 
-  const domainBanner = $derived.by(() => {
-    if (!unrestrictedProviders.length) return null;
-    const names = unrestrictedProviders.map((provider) => provider.name);
-    if (names.length === 1) {
-      return $_("admin.settings.oauthProviders.messages.domainBannerOne", {
-        values: { name: names[0] },
-      });
-    }
-    return $_("admin.settings.oauthProviders.messages.domainBannerAll", {
-      values: { names: formatNameList(names) },
-    });
-  });
+  /**
+   * A provider the backend knows about but that carries no credentials yet gets
+   * the blue "Configure" call to action instead of the enable toggle.
+   */
+  function isConfigured(provider: SSOProvider): boolean {
+    const clientId = provider.client_id?.trim();
+    return Boolean(clientId) && clientId !== "<empty>";
+  }
 
   function visibleDomains(domains: string[]): string[] {
     return domains.slice(0, MAX_DOMAIN_CHIPS);
@@ -427,265 +432,331 @@ SPDX-License-Identifier: Apache-2.0
   onMount(() => loadProviders());
 </script>
 
+<!-- The two glyphs the card design repeats: the gear on every configure
+     control, and the alert triangle on the warning row and the empty/error
+     card. -->
+{#snippet gearGlyph()}
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <circle cx="8" cy="8" r="2.2" stroke="currentColor" stroke-width="1.3" />
+    <path
+      d="M13 9.9a1.1 1.1 0 0 0 .22 1.21l.04.04a1.33 1.33 0 1 1-1.89 1.89l-.04-.04a1.1 1.1 0 0 0-1.21-.22 1.1 1.1 0 0 0-.67 1v.11a1.33 1.33 0 1 1-2.67 0v-.06a1.1 1.1 0 0 0-.72-1 1.1 1.1 0 0 0-1.21.22l-.04.04a1.33 1.33 0 1 1-1.89-1.89l.04-.04a1.1 1.1 0 0 0 .22-1.21 1.1 1.1 0 0 0-1-.67h-.11a1.33 1.33 0 1 1 0-2.67h.06a1.1 1.1 0 0 0 1-.72 1.1 1.1 0 0 0-.22-1.21l-.04-.04a1.33 1.33 0 1 1 1.89-1.89l.04.04a1.1 1.1 0 0 0 1.21.22h.05a1.1 1.1 0 0 0 .67-1v-.11a1.33 1.33 0 1 1 2.67 0v.06a1.1 1.1 0 0 0 .67 1 1.1 1.1 0 0 0 1.21-.22l.04-.04a1.33 1.33 0 1 1 1.89 1.89l-.04.04a1.1 1.1 0 0 0-.22 1.21v.05a1.1 1.1 0 0 0 1 .67h.11a1.33 1.33 0 1 1 0 2.67h-.06a1.1 1.1 0 0 0-1 .67z"
+      stroke="currentColor"
+      stroke-width="1.3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+{/snippet}
+
+{#snippet alertGlyph(size = 22)}
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+  >
+    <path
+      d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+      stroke="currentColor"
+      stroke-width="1.7"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M12 9v4M12 17h.01"
+      stroke="currentColor"
+      stroke-width="1.7"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+{/snippet}
+
 <div class="authorisation-container">
   <PageHeader
     title={$_("admin.settings.oauthProviders.pageTitle")}
     subtitle={$_("admin.settings.oauthProviders.subtitle")}
   />
 
-  <!-- ".oauth-card" -->
-  <section class="oauth-card">
-    <div class="card-header">
-      <span class="badge" aria-hidden="true">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <path
-            d="M8.3 11.7a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2l-1 1M11.7 8.3a3 3 0 0 0-4.2 0l-2.3 2.3a3 3 0 0 0 4.2 4.2l1-1"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </span>
-      <h2 class="card-title">{$_("admin.settings.oauthProviders.title")}</h2>
+  {#if isLoading}
+    <!-- ".cards-list" — loading -->
+    <div class="cards-list" aria-busy="true">
+      {#each SKELETON_WIDTHS as widths, index (index)}
+        <div class="skel-card" aria-hidden="true">
+          <div class="skel-row">
+            <span class="skel skel-icon"></span>
+            <div class="skel-lines">
+              <span class="skel skel-line" style:width={widths[0]}></span>
+              <span class="skel skel-line" style:width={widths[1]}></span>
+            </div>
+          </div>
+        </div>
+      {/each}
+      <span class="sr-only" role="status"
+        >{$_("admin.settings.oauthProviders.messages.loading")}</span
+      >
     </div>
-
-    {#if isLoading}
-      <div class="card-state">
-        <LoadingSpinner
-          text={$_("admin.settings.oauthProviders.messages.loading")}
-          size="lg"
-        />
-      </div>
-    {:else if error}
-      <div class="card-state card-state--message">
-        <p>{error}</p>
-        <button class="retry-btn" type="button" onclick={() => loadProviders()}>
-          {$_("admin.settings.oauthProviders.actions.retry")}
+  {:else if error}
+    <!-- ".cards-list" — error -->
+    <div class="cards-list">
+      <div class="empty-card" role="alert">
+        <span class="warning-icon-bg" aria-hidden="true">
+          {@render alertGlyph()}
+        </span>
+        <div class="empty-text-group">
+          <span class="empty-title"
+            >{$_("admin.settings.oauthProviders.messages.errorTitle")}</span
+          >
+          <span class="empty-body">{error}</span>
+        </div>
+        <button class="cta-btn" type="button" onclick={() => loadProviders()}>
+          <span>{$_("admin.settings.oauthProviders.actions.retry")}</span>
         </button>
       </div>
-    {:else if providers.length === 0}
-      <div class="card-state card-state--message">
-        <p>{$_("admin.settings.oauthProviders.messages.empty")}</p>
-      </div>
-    {:else}
-      <div
-        class="providers-table"
-        role="table"
-        aria-label={$_("admin.settings.oauthProviders.table.caption")}
-      >
-        <!-- ".table-headers" -->
-        <div class="table-headers" role="row">
-          <span class="th th-provider" role="columnheader"
-            >{$_("admin.settings.oauthProviders.table.provider")}</span
+    </div>
+  {:else if providers.length === 0}
+    <!-- ".cards-list" — empty -->
+    <div class="cards-list">
+      <div class="empty-card" role="status">
+        <span class="warning-icon-bg" aria-hidden="true">
+          {@render alertGlyph()}
+        </span>
+        <div class="empty-text-group">
+          <span class="empty-title"
+            >{$_("admin.settings.oauthProviders.messages.emptyTitle")}</span
           >
-          <span class="th th-domains" role="columnheader"
-            >{$_("admin.settings.oauthProviders.table.allowedDomains")}</span
+          <span class="empty-body"
+            >{$_("admin.settings.oauthProviders.messages.empty")}</span
           >
-          <span class="th th-status" role="columnheader"
-            >{$_("admin.settings.oauthProviders.table.status")}</span
-          >
-          {#if canManageSsoProviders}
-            <span class="th th-actions" role="columnheader"
-              >{$_("admin.settings.oauthProviders.table.actions")}</span
-            >
-          {/if}
         </div>
-
-        <div class="table-body" role="rowgroup">
-          {#each providers as provider (provider.id)}
-            <div
-              class="row"
-              class:row--pending={pendingToggleId === provider.id}
-              role="row"
-            >
-              <!-- ".col-provider" -->
-              <div class="col-provider" role="cell">
+      </div>
+    </div>
+  {:else}
+    <!-- ".cards-list" — default -->
+    <div class="cards-list">
+      {#each providers as provider (provider.id)}
+        {@const configured = isConfigured(provider)}
+        {@const unrestricted = !provider.allowed_domains?.length}
+        <article
+          class="provider-card"
+          class:provider-card--pending={pendingToggleId === provider.id}
+        >
+          <div class="top-info">
+            <div class="left-brand">
+              {#if providerIcons[provider.provider]}
                 <img
-                  class="provider-icon"
-                  src={providerIcons[provider.provider] ?? "/grengin-icon.svg"}
+                  class="logo-square"
+                  src={providerIcons[provider.provider]}
                   alt={$_(
                     "admin.settings.oauthProviders.aria.providerLogoAlt",
-                    {
-                      values: { name: provider.name },
-                    },
+                    { values: { name: provider.name } },
                   )}
                   loading="lazy"
                 />
-                <span class="provider-name">{provider.name}</span>
+              {:else}
+                <!-- No brand mark shipped for this provider key; the design's
+                     ".logo-square" carries its initial instead. -->
+                <span class="logo-square logo-square--initial" aria-hidden="true"
+                  >{provider.name.trim().charAt(0).toUpperCase()}</span
+                >
+              {/if}
+              <div class="details">
+                <div class="title-status">
+                  <span class="provider-title">{provider.name}</span>
+                  <span class="status-indicator">
+                    <span class="status-dot" data-on={provider.is_enabled}
+                    ></span>
+                    <span class="status-word" data-on={provider.is_enabled}>
+                      {provider.is_enabled
+                        ? $_("admin.settings.oauthProviders.common.active")
+                        : $_("admin.settings.oauthProviders.common.inactive")}
+                    </span>
+                  </span>
+                </div>
+                <span class="provider-desc">{describeProvider(provider)}</span>
               </div>
+            </div>
 
-              <!-- ".col-domains" -->
-              <div class="col-domains" role="cell">
-                {#if provider.allowed_domains?.length}
-                  {#each visibleDomains(provider.allowed_domains) as domain (domain)}
-                    <span class="chip">{domain}</span>
-                  {/each}
-                  {#if overflowDomains(provider.allowed_domains).length}
-                    {@const rest = overflowDomains(provider.allowed_domains)}
-                    <span
-                      class="chip"
-                      title={$_(
-                        "admin.settings.oauthProviders.aria.moreDomains",
-                        {
-                          values: {
-                            count: rest.length,
-                            domains: rest.join(", "),
-                          },
-                        },
-                      )}>+{rest.length}</span
-                    >
-                  {/if}
-                {:else}
-                  <span class="domain-empty"
+            <div class="right-controls">
+              {#if canManageSsoProviders && !configured}
+                <!-- ".cta-btn" — the provider has no credentials yet. -->
+                <button
+                  class="cta-btn"
+                  type="button"
+                  onclick={() => openEditModal(provider)}
+                  disabled={isEditLoading}
+                >
+                  {@render gearGlyph()}
+                  <span
                     >{$_(
-                      "admin.settings.oauthProviders.messages.noDomains",
+                      "admin.settings.oauthProviders.actions.configure",
                     )}</span
                   >
-                {/if}
-              </div>
+                </button>
+              {:else if canManageSsoProviders}
+                <button
+                  class="gear-btn"
+                  type="button"
+                  aria-label={$_(
+                    "admin.settings.oauthProviders.aria.configureProvider",
+                    { values: { name: provider.name } },
+                  )}
+                  onclick={() => openEditModal(provider)}
+                  disabled={isEditLoading}
+                >
+                  {@render gearGlyph()}
+                </button>
+              {/if}
 
-              <!-- ".col-status" -->
-              <div class="col-status" role="cell">
-                {#if canManageSsoProviders}
-                  <label class="status-switch">
-                    <input
-                      type="checkbox"
-                      checked={provider.is_enabled}
-                      disabled={pendingToggleId !== null}
-                      aria-label={$_(
-                        "admin.settings.oauthProviders.aria.toggleProviderStatus",
-                        {
-                          values: { name: provider.name },
-                        },
-                      )}
-                      aria-describedby={`provider-status-${provider.id}`}
-                      onchange={() => toggleProvider(provider)}
+              {#if canManageSsoProviders}
+                <button
+                  class="gear-btn gear-btn--danger"
+                  type="button"
+                  aria-label={$_(
+                    "admin.settings.oauthProviders.aria.deleteProvider",
+                    { values: { name: provider.name } },
+                  )}
+                  onclick={() => promptDelete(provider)}
+                  disabled={isDeleting && providerToDelete?.id === provider.id}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M1.75 3.5h10.5M5.25 1.75h3.5M2.917 3.5v8.167a1.167 1.167 0 0 0 1.166 1.166h5.834a1.167 1.167 0 0 0 1.166-1.166V3.5"
+                      stroke="currentColor"
+                      stroke-width="1.2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
                     />
-                    <span class="status-slider"></span>
-                    <span
-                      class="status-label"
-                      id={`provider-status-${provider.id}`}
-                    >
-                      {provider.is_enabled
-                        ? $_("admin.settings.oauthProviders.common.enabled")
-                        : $_("admin.settings.oauthProviders.common.disabled")}
-                    </span>
-                  </label>
-                {:else}
-                  <span class="status-dot" data-on={provider.is_enabled}></span>
+                  </svg>
+                </button>
+              {/if}
+
+              {#if configured && canManageSsoProviders}
+                <!-- ".col-status" -->
+                <label class="col-status status-switch">
+                  <input
+                    type="checkbox"
+                    checked={provider.is_enabled}
+                    disabled={pendingToggleId !== null}
+                    aria-label={$_(
+                      "admin.settings.oauthProviders.aria.toggleProviderStatus",
+                      { values: { name: provider.name } },
+                    )}
+                    onchange={() => toggleProvider(provider)}
+                  />
+                  <span class="toggle"><span class="toggle-thumb"></span></span>
                   <span class="status-label">
                     {provider.is_enabled
                       ? $_("admin.settings.oauthProviders.common.enabled")
                       : $_("admin.settings.oauthProviders.common.disabled")}
                   </span>
-                {/if}
-              </div>
-
-              <!-- ".col-actions" -->
-              {#if canManageSsoProviders}
-                <div class="col-actions" role="cell">
-                  <button
-                    class="icon-btn icon-btn--edit"
-                    type="button"
-                    aria-label={$_(
-                      "admin.settings.oauthProviders.aria.configureProvider",
-                      {
-                        values: { name: provider.name },
-                      },
-                    )}
-                    onclick={() => openEditModal(provider)}
-                    disabled={isEditLoading}
+                </label>
+              {:else if !canManageSsoProviders}
+                <div class="col-status">
+                  <span class="toggle" data-on={provider.is_enabled}
+                    ><span class="toggle-thumb"></span></span
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 14 14"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M9.5 1.5 12.5 4.5 4.5 12.5 1 13l0.5-3.5z"
-                        stroke="currentColor"
-                        stroke-width="1.2"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    class="icon-btn icon-btn--delete"
-                    type="button"
-                    aria-label={$_(
-                      "admin.settings.oauthProviders.aria.deleteProvider",
-                      {
-                        values: { name: provider.name },
-                      },
-                    )}
-                    onclick={() => promptDelete(provider)}
-                    disabled={isDeleting &&
-                      providerToDelete?.id === provider.id}
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 14 14"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M1.75 3.5h10.5M5.25 1.75h3.5M2.917 3.5v8.167a1.167 1.167 0 0 0 1.166 1.166h5.834a1.167 1.167 0 0 0 1.166-1.166V3.5"
-                        stroke="currentColor"
-                        stroke-width="1.2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </button>
+                  <span class="status-label" data-on={provider.is_enabled}>
+                    {provider.is_enabled
+                      ? $_("admin.settings.oauthProviders.common.enabled")
+                      : $_("admin.settings.oauthProviders.common.disabled")}
+                  </span>
                 </div>
               {/if}
             </div>
-          {/each}
-        </div>
-      </div>
+          </div>
 
-      <!-- ".info-banner" -->
-      {#if domainBanner}
-        <div class="info-banner">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle
-              cx="8"
-              cy="8"
-              r="6.7"
-              stroke="currentColor"
-              stroke-width="1.3"
-            />
-            <path
-              d="M6.1 6.1a1.9 1.9 0 0 1 3.6.9c0 1.3-1.7 1.5-1.7 2.9"
-              stroke="currentColor"
-              stroke-width="1.3"
-              stroke-linecap="round"
-            />
-            <circle
-              cx="8"
-              cy="11.6"
-              r="0.1"
-              fill="currentColor"
-              stroke="currentColor"
-              stroke-width="1"
-            />
-          </svg>
-          <span>{domainBanner}</span>
-        </div>
-      {/if}
-    {/if}
-  </section>
-
+          <!-- ".domains-row" — a live provider is the only one whose domain
+               rules are actually gating anyone. -->
+          {#if configured && provider.is_enabled}
+            <div class="domains-row">
+              <div class="domains-content">
+                <div class="pills-group">
+                  <span class="pills-label"
+                    >{$_(
+                      "admin.settings.oauthProviders.card.allowedDomains",
+                    )}</span
+                  >
+                  {#if provider.allowed_domains?.length}
+                    {#each visibleDomains(provider.allowed_domains) as domain (domain)}
+                      <span class="pill"><span>{domain}</span></span>
+                    {/each}
+                    {#if overflowDomains(provider.allowed_domains).length}
+                      {@const rest = overflowDomains(provider.allowed_domains)}
+                      <span
+                        class="pill"
+                        title={$_(
+                          "admin.settings.oauthProviders.aria.moreDomains",
+                          {
+                            values: {
+                              count: rest.length,
+                              domains: rest.join(", "),
+                            },
+                          },
+                        )}><span>+{rest.length}</span></span
+                      >
+                    {/if}
+                  {:else}
+                    <span class="pill pill--warn"
+                      ><span
+                        >{$_(
+                          "admin.settings.oauthProviders.card.allDomains",
+                        )}</span
+                      ></span
+                    >
+                  {/if}
+                  {#if canManageSsoProviders}
+                    <button
+                      class="gear-btn"
+                      type="button"
+                      aria-label={$_(
+                        "admin.settings.oauthProviders.aria.editDomains",
+                        { values: { name: provider.name } },
+                      )}
+                      onclick={() => openEditModal(provider)}
+                      disabled={isEditLoading}
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M9.5 1.5 12.5 4.5 4.5 12.5 1 13l0.5-3.5z"
+                          stroke="currentColor"
+                          stroke-width="1.2"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  {/if}
+                </div>
+                {#if unrestricted}
+                  <div class="warning-label">
+                    {@render alertGlyph(16)}
+                    <span
+                      >{$_(
+                        "admin.settings.oauthProviders.card.unrestricted",
+                      )}</span
+                    >
+                  </div>
+                {/if}
+              </div>
+            </div>
+          {/if}
+        </article>
+      {/each}
+    </div>
+  {/if}
   <!-- Delete Confirmation Modal -->
   <Modal
     title={$_("admin.settings.oauthProviders.modals.confirmDeleteTitle")}
@@ -942,7 +1013,7 @@ SPDX-License-Identifier: Apache-2.0
           >
           <label class="status-switch">
             <input type="checkbox" bind:checked={editForm.is_enabled} />
-            <span class="status-slider"></span>
+            <span class="toggle"><span class="toggle-thumb"></span></span>
             <span class="status-label">
               {editForm.is_enabled
                 ? $_("admin.settings.oauthProviders.common.enabled")
@@ -1010,7 +1081,7 @@ SPDX-License-Identifier: Apache-2.0
               type="checkbox"
               bind:checked={editForm.allow_self_provisioning}
             />
-            <span class="status-slider"></span>
+            <span class="toggle"><span class="toggle-thumb"></span></span>
             <span class="status-label">
               {editForm.allow_self_provisioning
                 ? $_("admin.settings.oauthProviders.common.enabled")
@@ -1058,33 +1129,43 @@ SPDX-License-Identifier: Apache-2.0
      page-local, so nothing else can read them. */
   .authorisation-container,
   :global(#modal-portal) {
-    /* ".th" ink and the provider/card headings. */
-    --oa-head-fg: rgb(140, 145, 154);
-    --oa-name: rgb(19, 22, 30);
-    /* ".chip" text and the ".status-label" / edit-glyph ink. */
-    --oa-chip-fg: rgb(73, 85, 100);
-    --oa-label: rgb(73, 78, 90);
-    --oa-toggle-on: rgb(46, 168, 85);
-    /* ".icon-btn--delete" — a tinted square at rest, not on hover. */
+    /* ".provider-title" / ".pill" / ".empty-title" ink. */
+    --oa-name: rgb(30, 41, 59);
+    /* ".provider-desc" and the empty-card body. */
+    --oa-body: rgb(100, 116, 139);
+    /* ".status-word--inactive" and the modal's chip ink. */
+    --oa-chip-fg: rgb(100, 116, 139);
+    /* ".pills-label" and the resting ".status-dot". */
+    --oa-muted: rgb(148, 163, 184);
+    /* ".gear-btn" — a cool hairline, darker ink than the card body. */
+    --oa-icon-ring: rgb(220, 229, 244);
+    --oa-icon-fg: rgb(55, 65, 81);
+    /* ".toggle--on" / ".toggle--off" and the labels that track them. */
+    --oa-toggle-on: rgb(45, 144, 107);
+    --oa-toggle-off: rgb(156, 163, 176);
+    /* The delete control — a tinted square at rest, not on hover. */
     --oa-del-bg: rgb(253, 236, 239);
     --oa-del-fg: rgb(229, 72, 77);
-    /* ".info-banner" */
-    --oa-banner-bg: rgb(183, 205, 235);
-    --oa-banner-fg: rgb(43, 82, 161);
+    /* ".skel" — the loading cards' bars and their travelling sheen. */
+    --oa-skel: rgb(241, 245, 249);
+    --oa-skel-sheen: rgba(255, 255, 255, 0.6);
   }
 
   @media (prefers-color-scheme: dark) {
     .authorisation-container,
     :global(#modal-portal) {
-      --oa-head-fg: var(--gx-slate-400);
       --oa-name: var(--gx-slate-900);
+      --oa-body: var(--gx-slate-500);
       --oa-chip-fg: var(--gx-slate-600);
-      --oa-label: var(--gx-slate-600);
+      --oa-muted: var(--gx-slate-400);
+      --oa-icon-ring: var(--gx-hair);
+      --oa-icon-fg: var(--gx-slate-600);
       --oa-toggle-on: rgb(52, 180, 96);
+      --oa-toggle-off: var(--gx-slate-500);
       --oa-del-bg: rgba(229, 72, 77, 0.18);
       --oa-del-fg: #f08a83;
-      --oa-banner-bg: rgba(59, 103, 189, 0.22);
-      --oa-banner-fg: #bcd2f5;
+      --oa-skel: var(--gx-ring-soft);
+      --oa-skel-sheen: rgba(255, 255, 255, 0.08);
     }
   }
 
@@ -1141,7 +1222,7 @@ SPDX-License-Identifier: Apache-2.0
     box-shadow: none;
   }
 
-  /* ".main" */
+  /* ---------------- page shell (".main") ---------------- */
   .authorisation-container {
     display: flex;
     flex-direction: column;
@@ -1154,278 +1235,108 @@ SPDX-License-Identifier: Apache-2.0
     font-family: var(--gx-font);
   }
 
-  /* The design spaces the header from the card with the column gap alone. */
+  /* The design spaces the header from the cards with the column gap alone. */
   .authorisation-container :global(.page-header) {
     padding-bottom: 0;
   }
 
-  /* ---------------- ".oauth-card" ---------------- */
-  .oauth-card {
-    border-radius: 12px;
-    background: var(--gx-card);
-    box-shadow: inset 0 0 0 1px var(--gx-mcp-m-ring);
+  /* ---------------- ".cards-list" ---------------- */
+  .cards-list {
     display: flex;
     flex-direction: column;
+    gap: 16px;
     align-self: stretch;
     flex-shrink: 0;
-    overflow: hidden;
   }
 
-  .card-header {
-    min-height: 88px;
-    /* The design's 88px/62px include the hairline; a real border-bottom would
-       stack on top of the content box and add a pixel, so draw it inset. */
-    box-shadow: inset 0 -1px 0 0 var(--gx-mcp-m-ring);
+  /* ---------------- ".provider-card" ---------------- */
+  .provider-card {
+    border-radius: 12px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
     display: flex;
+    flex-direction: column;
     gap: 16px;
     padding: 24px;
+    align-self: stretch;
+  }
+
+  .provider-card--pending {
+    opacity: 0.65;
+    pointer-events: none;
+  }
+
+  .top-info {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    gap: 16px;
+    align-self: stretch;
+    flex-wrap: wrap;
+  }
+
+  .left-brand {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .logo-square {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: contain;
+    padding: 6px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
     flex-shrink: 0;
   }
 
-  .badge {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: var(--gx-ring-soft);
+  .logo-square--initial {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--gx-tx-chip-icon-fg);
-    flex-shrink: 0;
+    background: var(--gx-ring-soft);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--oa-icon-fg);
+    padding: 0;
   }
 
-  .badge svg {
-    display: block;
+  .details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
   }
 
-  .card-title {
-    margin: 0;
+  .title-status {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .provider-title {
     font-weight: 700;
     font-size: 16px;
     line-height: 100%;
     color: var(--oa-name);
   }
 
-  /* ---------------- table ---------------- */
-  .providers-table {
+  .status-indicator {
     display: flex;
-    flex-direction: column;
-    align-self: stretch;
-    min-width: 0;
-    overflow-x: auto;
-  }
-
-  /* ".table-headers" */
-  .table-headers,
-  .row {
-    display: flex;
-    align-items: center;
-    align-self: stretch;
-    min-width: 720px;
-  }
-
-  .table-headers {
-    min-height: 37px;
-    background: var(--gx-mcp-code-bg);
-    border-left: 1px solid var(--gx-mcp-m-ring);
-    border-right: 1px solid var(--gx-mcp-m-ring);
-    border-bottom: 1px solid var(--gx-mcp-m-ring);
-    padding: 12px 24px;
-    flex-shrink: 0;
-  }
-
-  .th {
-    font-weight: 700;
-    font-size: 11px;
-    line-height: 100%;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: var(--oa-head-fg);
-  }
-
-  .table-body {
-    display: flex;
-    flex-direction: column;
-    align-self: stretch;
-  }
-
-  .row {
-    min-height: 62px;
-    box-shadow: inset 0 -1px 0 0 var(--gx-mcp-m-ring);
-    padding: 16px 24px;
-    flex-shrink: 0;
-  }
-
-  /* The banner, when it renders, keeps the last row's rule; without it the
-     card closes on the row itself. */
-  .providers-table:last-child .table-body .row:last-child {
-    box-shadow: none;
-  }
-
-  .row--pending {
-    opacity: 0.35;
-    pointer-events: none;
-  }
-
-  .th-provider,
-  .col-provider {
-    width: 220px;
-    flex-shrink: 0;
-  }
-
-  .th-domains,
-  .col-domains {
-    flex-grow: 1;
-    min-width: 0;
-  }
-
-  .th-status,
-  .col-status {
-    width: 150px;
-    flex-shrink: 0;
-  }
-
-  .th-actions,
-  .col-actions {
-    width: 100px;
-    flex-shrink: 0;
-  }
-
-  .th-actions {
-    text-align: end;
-  }
-
-  /* ".col-provider" */
-  .col-provider {
-    display: flex;
-    gap: 12px;
+    gap: 4px;
     align-items: center;
   }
 
-  .provider-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 8px;
-    box-shadow: inset 0 0 0 1px var(--gx-mcp-m-ring);
-    padding: 3px;
-    object-fit: contain;
-    flex-shrink: 0;
-    background: var(--gx-card);
-  }
-
-  .provider-name {
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 100%;
-    color: var(--oa-name);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* ".col-domains" */
-  .col-domains {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-  }
-
-  .chip {
-    min-height: 21px;
-    border-radius: 6px;
-    background: var(--gx-ring-soft);
-    display: flex;
-    align-items: center;
-    padding: 4px 8px;
-    font-weight: 400;
-    font-size: 11px;
-    line-height: 100%;
-    color: var(--oa-chip-fg);
-    white-space: nowrap;
-  }
-
-  .domain-empty {
-    font-weight: 400;
-    font-size: 12px;
-    line-height: 100%;
-    color: var(--gx-slate-400);
-  }
-
-  /* ".col-status" */
-  .col-status {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .status-switch {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    position: relative;
-    cursor: pointer;
-  }
-
-  .status-switch input {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  /* ".toggle" + ".toggle-thumb" */
-  .status-slider {
-    position: relative;
-    display: block;
-    width: 36px;
-    height: 20px;
-    border-radius: 10px;
-    background: var(--gx-org-toggle-off);
-    flex-shrink: 0;
-    transition: background-color 160ms ease;
-  }
-
-  .status-slider::before {
-    content: "";
-    position: absolute;
-    top: 2px;
-    inset-inline-start: 2px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #fff;
-    transition: transform 160ms ease;
-  }
-
-  .status-switch input:checked + .status-slider {
-    background: var(--oa-toggle-on);
-  }
-
-  .status-switch input:checked + .status-slider::before {
-    transform: translateX(16px);
-  }
-
-  :global([dir="rtl"]) .status-switch input:checked + .status-slider::before {
-    transform: translateX(-16px);
-  }
-
-  .status-switch input:focus-visible + .status-slider {
-    outline: 2px solid var(--gx-org-primary-500);
-    outline-offset: 2px;
-  }
-
-  .status-switch:has(input:disabled) {
-    cursor: not-allowed;
-  }
-
-  /* Read-only status, for admins without the manage permission. */
   .status-dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: var(--gx-org-toggle-off);
+    background: var(--oa-muted);
     flex-shrink: 0;
   }
 
@@ -1433,124 +1344,382 @@ SPDX-License-Identifier: Apache-2.0
     background: var(--oa-toggle-on);
   }
 
-  .status-label {
-    font-weight: 500;
-    font-size: 13px;
+  .status-word {
+    font-weight: 600;
+    font-size: 12px;
     line-height: 100%;
-    color: var(--oa-label);
-    white-space: nowrap;
+    color: var(--oa-chip-fg);
   }
 
-  /* ".col-actions" */
-  .col-actions {
+  .status-word[data-on="true"] {
+    color: var(--oa-toggle-on);
+  }
+
+  .provider-desc {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--oa-body);
+  }
+
+  /* ---------------- right-hand controls ---------------- */
+  .right-controls {
     display: flex;
     gap: 8px;
-    justify-content: flex-end;
+    align-items: center;
+    flex-shrink: 0;
   }
 
-  .icon-btn {
-    width: 30px;
-    height: 30px;
-    border-radius: 6px;
-    display: flex;
+  /* ".gear-btn" — the square icon control, at rest a hairline on the card. */
+  .gear-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--oa-icon-ring);
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    color: var(--oa-icon-fg);
     flex-shrink: 0;
-    transition: filter 120ms ease;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
   }
 
-  .icon-btn svg {
+  .gear-btn svg {
     display: block;
   }
 
-  .icon-btn:hover:not(:disabled) {
-    filter: brightness(0.97);
+  .gear-btn:hover:not(:disabled) {
+    background: var(--gx-ring-soft);
   }
 
-  .icon-btn:focus-visible {
+  .gear-btn:focus-visible {
     outline: 2px solid var(--gx-org-primary-500);
     outline-offset: 2px;
   }
 
-  .icon-btn--edit {
-    background: var(--gx-card);
-    box-shadow: inset 0 0 0 1px var(--gx-mcp-m-ring);
-    color: var(--oa-label);
-  }
-
-  .icon-btn--delete {
-    background: var(--oa-del-bg);
+  .gear-btn--danger {
     color: var(--oa-del-fg);
+    box-shadow: inset 0 0 0 1px var(--oa-del-bg);
   }
 
-  /* ".info-banner" */
-  .info-banner {
-    background: var(--oa-banner-bg);
-    display: flex;
-    gap: 12px;
-    padding: 16px;
-    align-items: flex-start;
-    align-self: stretch;
-    flex-shrink: 0;
+  .gear-btn--danger:hover:not(:disabled) {
+    background: var(--oa-del-bg);
   }
 
-  .info-banner svg {
-    display: block;
-    color: var(--gx-tx-chip-icon-fg);
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  .info-banner span {
-    font-weight: 400;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--oa-banner-fg);
-  }
-
-  /* ---------------- loading / error / empty ---------------- */
-  .card-state {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    align-items: center;
-    justify-content: center;
-    align-self: stretch;
-  }
-
-  .card-state--message {
-    padding: 48px 24px;
-  }
-
-  .card-state p {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--gx-slate-500);
-    text-align: center;
-  }
-
-  .retry-btn {
-    height: 37px;
+  /* ".cta-btn" — "Configure" on a provider with no credentials yet, and the
+     retry on the error card. */
+  .cta-btn {
+    height: 38px;
     border-radius: 8px;
-    background: var(--gx-org-primary-500);
+    background: var(--gx-tx-chip-icon-fg);
+    display: inline-flex;
+    gap: 8px;
     padding: 10px 16px;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 100%;
+    align-items: center;
+    flex-shrink: 0;
     color: #fff;
     transition: background-color 120ms ease;
   }
 
-  .retry-btn:hover {
+  .cta-btn:hover:not(:disabled) {
     background: var(--gx-ac-cta-hover);
   }
 
-  .retry-btn:focus-visible {
+  .cta-btn:focus-visible {
     outline: 2px solid var(--gx-org-primary-500);
     outline-offset: 2px;
   }
 
+  .cta-btn svg {
+    display: block;
+  }
+
+  .cta-btn span {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 100%;
+  }
+
+  /* ".col-status" — the pill toggle plus its word. */
+  .col-status {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .status-switch {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .status-switch:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .status-switch input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .toggle {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background: var(--oa-toggle-off);
+    display: flex;
+    padding: 2px;
+    align-items: center;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    transition:
+      background-color 120ms ease,
+      justify-content 120ms ease;
+  }
+
+  .toggle-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+  }
+
+  .toggle[data-on="true"],
+  .status-switch input:checked + .toggle {
+    background: var(--oa-toggle-on);
+    justify-content: flex-end;
+  }
+
+  .status-switch input:focus-visible + .toggle {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
+  }
+
+  .status-label {
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--oa-toggle-off);
+  }
+
+  .status-label[data-on="true"],
+  .status-switch input:checked ~ .status-label {
+    color: var(--oa-toggle-on);
+  }
+
+  /* ---------------- ".domains-row" ---------------- */
+  .domains-row {
+    border-top: 1px solid var(--gx-hair);
+    padding-top: 16px;
+    align-self: stretch;
+  }
+
+  .domains-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .pills-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .pills-label {
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 100%;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--oa-muted);
+  }
+
+  .pill {
+    min-height: 23px;
+    border-radius: 6px;
+    background: var(--gx-ring-soft);
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    max-width: 100%;
+  }
+
+  .pill span {
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 100%;
+    color: var(--oa-name);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pill--warn {
+    background: var(--gx-mcpd-warn-bg);
+  }
+
+  .pill--warn span {
+    color: var(--gx-mcpd-warn-fg);
+  }
+
+  .warning-label {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    color: var(--gx-org-warn);
+  }
+
+  .warning-label svg {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .warning-label span {
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  /* ---------------- ".skel-card" (loading) ---------------- */
+  .skel-card {
+    border-radius: 12px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    padding: 24px;
+    align-self: stretch;
+    min-height: 87px;
+    display: flex;
+    align-items: center;
+  }
+
+  .skel-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    width: 100%;
+  }
+
+  .skel {
+    background: var(--oa-skel);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .skel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--oa-skel-sheen),
+      transparent
+    );
+    animation: oa-shimmer 1.4s infinite;
+  }
+
+  @keyframes oa-shimmer {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skel::after {
+      animation: none;
+    }
+  }
+
+  .skel-icon {
+    width: 39px;
+    height: 39px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .skel-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+    max-width: 320px;
+  }
+
+  .skel-line {
+    height: 12px;
+    border-radius: 4px;
+  }
+
+  /* ---------------- ".empty-card" (empty / error) ---------------- */
+  .empty-card {
+    border-radius: 12px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 64px;
+    justify-content: center;
+    align-items: center;
+    align-self: stretch;
+  }
+
+  .warning-icon-bg {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--oa-body);
+  }
+
+  .warning-icon-bg :global(svg) {
+    display: block;
+  }
+
+  .empty-text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    max-width: 400px;
+  }
+
+  .empty-title {
+    font-weight: 700;
+    font-size: 16px;
+    text-align: center;
+    line-height: 100%;
+    color: var(--oa-name);
+  }
+
+  .empty-body {
+    font-weight: 400;
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.5;
+    color: var(--oa-body);
+  }
   /* ---------------- dialogs ----------------
      authorisation.html ships no dialog of its own, so the Edit and Delete
      cards borrow the light 560px shell the rest of the redesign uses
@@ -1823,9 +1992,13 @@ SPDX-License-Identifier: Apache-2.0
       gap: 20px;
     }
 
-    .card-header {
-      min-height: 72px;
+    .provider-card,
+    .skel-card {
       padding: 16px;
+    }
+
+    .empty-card {
+      padding: 40px 24px;
     }
   }
 </style>

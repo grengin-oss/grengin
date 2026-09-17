@@ -42,10 +42,16 @@ export async function refreshUnreadCount(): Promise<void> {
   }
 }
 
-/** Loads unread total + first 5 notifications without toggling previewLoading (sidebar popover opens instantly). */
-export async function fetchNotificationFeed(): Promise<void> {
+/**
+ * Loads unread total + first 5 notifications. Pass `silent` to refresh in place
+ * without raising previewLoading, so a popover that already has rows does not
+ * blink back to a spinner.
+ */
+export async function fetchNotificationFeed(options: { silent?: boolean } = {}): Promise<void> {
   try {
-    state.previewLoading = true;
+    if (!options.silent) {
+      state.previewLoading = true;
+    }
     const [unreadRes, previewRes] = await Promise.all([
       listNotifications({ limit: 1, offset: 0, unread_only: true }),
       listNotifications({ limit: 5, offset: 0 }),
