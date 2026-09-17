@@ -44,6 +44,18 @@ SPDX-License-Identifier: Apache-2.0
 
   let formError = $state('');
 
+  const typeChoices: { value: McpAccessType; labelKey: string }[] = [
+    { value: 'role', labelKey: 'admin.mcpAccess.types.role' },
+    { value: 'department', labelKey: 'admin.mcpAccess.types.department' },
+    { value: 'user', labelKey: 'admin.mcpAccess.types.user' },
+  ];
+
+  const permissionChoices: { value: McpPermission; labelKey: string; descKey: string }[] = [
+    { value: 'full', labelKey: 'admin.mcpAccess.permissions.full', descKey: 'admin.mcpAccess.permissions.fullDesc' },
+    { value: 'read_only', labelKey: 'admin.mcpAccess.permissions.readOnly', descKey: 'admin.mcpAccess.permissions.readOnlyDesc' },
+    { value: 'denied', labelKey: 'admin.mcpAccess.permissions.denied', descKey: 'admin.mcpAccess.permissions.deniedDesc' },
+  ];
+
   $effect(() => {
     if (isOpen) {
       untrack(() => {
@@ -64,6 +76,12 @@ SPDX-License-Identifier: Apache-2.0
     selectedUserId = '';
     userSearchQuery = '';
     users = [];
+    formError = '';
+  }
+
+  function selectType(value: McpAccessType) {
+    if (accessType === value) return;
+    accessType = value;
     formError = '';
   }
 
@@ -105,6 +123,9 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   function handleUserSearch() {
+    // Typing again after a pick clears it, so the rule can never carry a user
+    // the field no longer names.
+    selectedUserId = '';
     if (userSearchTimeout) clearTimeout(userSearchTimeout);
     if (!userSearchQuery.trim()) {
       users = [];
@@ -121,11 +142,6 @@ SPDX-License-Identifier: Apache-2.0
         loadingUsers = false;
       }
     }, 300);
-  }
-
-  function selectRole(role: Role) {
-    selectedRoleId = role.id;
-    selectedRoleName = role.name;
   }
 
   function selectUser(user: User) {
@@ -173,59 +189,53 @@ SPDX-License-Identifier: Apache-2.0
   }
 </script>
 
+<!-- "MODAL: Add Rule" — mcp-server-detail.html -->
 <Modal
   title={$_('admin.mcpAccess.addRule')}
   {isOpen}
   onclose={onClose}
+  variant="mcp-access"
 >
   {#snippet children()}
-    <form class="access-rule-form" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-
-      <div class="form-section">
-        <span class="form-label">{$_('admin.mcpAccess.ruleType')}</span>
-        <div class="radio-group">
-          <label class="radio-option" class:radio-option--active={accessType === 'role'}>
-            <input type="radio" name="access_type" value="role" bind:group={accessType} />
-            <div class="radio-icon radio-icon--role">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-            </div>
-            <span>{$_('admin.mcpAccess.types.role')}</span>
-          </label>
-          <label class="radio-option" class:radio-option--active={accessType === 'department'}>
-            <input type="radio" name="access_type" value="department" bind:group={accessType} />
-            <div class="radio-icon radio-icon--department">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
-            </div>
-            <span>{$_('admin.mcpAccess.types.department')}</span>
-          </label>
-          <label class="radio-option" class:radio-option--active={accessType === 'user'}>
-            <input type="radio" name="access_type" value="user" bind:group={accessType} />
-            <div class="radio-icon radio-icon--user">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </div>
-            <span>{$_('admin.mcpAccess.types.user')}</span>
-          </label>
+    <form
+      class="rule-form"
+      id="mcp-add-rule-form"
+      onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}
+    >
+      <!-- ".type-choices" -->
+      <fieldset class="field">
+        <legend class="field-label">{$_('admin.mcpAccess.ruleType')}</legend>
+        <div class="type-choices">
+          {#each typeChoices as choice (choice.value)}
+            <button
+              class="type-choice"
+              type="button"
+              data-selected={accessType === choice.value}
+              aria-pressed={accessType === choice.value}
+              onclick={() => selectType(choice.value)}
+            >
+              {$_(choice.labelKey)}
+            </button>
+          {/each}
         </div>
-      </div>
+      </fieldset>
 
-      <div class="form-section">
+      <!-- ".dd-select" — the context picker the chosen type calls for -->
+      <div class="field">
         {#if accessType === 'role'}
-          <label class="form-label" for="role-select">{$_('admin.mcpAccess.selectRole')}</label>
+          <label class="field-label" for="mcp-rule-role">{$_('admin.mcpAccess.selectRole')}</label>
           {#if loadingRoles}
-            <div class="select-loading">{$_('common.loading')}</div>
+            <div class="field-loading">{$_('common.loading')}</div>
           {:else}
-            <select id="role-select" class="form-select" bind:value={selectedRoleId} onchange={() => {
-              const r = roles.find(r => r.id === selectedRoleId);
-              if (r) selectedRoleName = r.name;
-            }}>
+            <select
+              id="mcp-rule-role"
+              class="dd-select"
+              bind:value={selectedRoleId}
+              onchange={() => {
+                const r = roles.find((r) => r.id === selectedRoleId);
+                selectedRoleName = r ? r.name : '';
+              }}
+            >
               <option value="">{$_('admin.mcpAccess.placeholders.role')}</option>
               {#each roles as role (role.id)}
                 <option value={role.id}>{role.name}</option>
@@ -233,51 +243,45 @@ SPDX-License-Identifier: Apache-2.0
             </select>
           {/if}
         {:else if accessType === 'department'}
-          <label class="form-label" for="dept-select">{$_('admin.mcpAccess.selectDepartment')}</label>
+          <label class="field-label" for="mcp-rule-dept">{$_('admin.mcpAccess.selectDepartment')}</label>
           {#if loadingDepartments}
-            <div class="select-loading">{$_('common.loading')}</div>
+            <div class="field-loading">{$_('common.loading')}</div>
           {:else}
-            <select id="dept-select" class="form-select" bind:value={selectedDepartmentId}>
+            <select id="mcp-rule-dept" class="dd-select" bind:value={selectedDepartmentId}>
               <option value="">{$_('admin.mcpAccess.placeholders.department')}</option>
               {#each departments as dept (dept.id)}
                 <option value={dept.id}>
-                  {'\u00A0\u00A0\u00A0\u00A0'.repeat(dept.depth)}{dept.name}
+                  {'    '.repeat(dept.depth ?? 0)}{dept.name}
                 </option>
               {/each}
             </select>
-            <label class="checkbox-option">
+            <label class="check-row">
               <input type="checkbox" bind:checked={inheritDepartments} />
               <span>{$_('admin.mcpAccess.includeSubDepartments')}</span>
             </label>
           {/if}
-        {:else if accessType === 'user'}
-          <label class="form-label" for="user-search">{$_('admin.mcpAccess.searchUser')}</label>
-          <div class="user-search-wrapper">
+        {:else}
+          <label class="field-label" for="mcp-rule-user">{$_('admin.mcpAccess.searchUser')}</label>
+          <div class="user-search">
             <input
-              id="user-search"
+              id="mcp-rule-user"
               type="text"
-              class="form-input"
+              class="dd-select dd-select--input"
               placeholder={$_('admin.mcpAccess.placeholders.user')}
               bind:value={userSearchQuery}
               oninput={handleUserSearch}
               autocomplete="off"
             />
             {#if loadingUsers}
-              <div class="search-spinner-container">
-                <span class="search-spinner"></span>
-              </div>
+              <span class="user-search-spinner" aria-hidden="true"></span>
             {/if}
             {#if users.length > 0 && !selectedUserId}
-              <div class="user-search-results">
+              <div class="user-results">
                 {#each users as user (user.id)}
-                  <button
-                    type="button"
-                    class="user-search-item"
-                    onclick={() => selectUser(user)}
-                  >
-                    <span class="user-search-name">{user.name || user.email}</span>
+                  <button type="button" class="user-result" onclick={() => selectUser(user)}>
+                    <span class="user-result-name">{user.name || user.email}</span>
                     {#if user.name}
-                      <span class="user-search-email">{user.email}</span>
+                      <span class="user-result-email">{user.email}</span>
                     {/if}
                   </button>
                 {/each}
@@ -287,346 +291,464 @@ SPDX-License-Identifier: Apache-2.0
         {/if}
       </div>
 
-      <div class="form-section">
-        <span class="form-label">{$_('admin.mcpAccess.permission')}</span>
-        <div class="permission-options">
-          <label class="permission-option" class:permission-option--active={permission === 'full'}>
-            <input type="radio" name="permission" value="full" bind:group={permission} />
-            <div class="permission-content">
-              <span class="permission-name permission-name--full">{$_('admin.mcpAccess.permissions.full')}</span>
-              <span class="permission-desc">{$_('admin.mcpAccess.permissions.fullDesc')}</span>
-            </div>
-          </label>
-          <label class="permission-option" class:permission-option--active={permission === 'read_only'}>
-            <input type="radio" name="permission" value="read_only" bind:group={permission} />
-            <div class="permission-content">
-              <span class="permission-name permission-name--read-only">{$_('admin.mcpAccess.permissions.readOnly')}</span>
-              <span class="permission-desc">{$_('admin.mcpAccess.permissions.readOnlyDesc')}</span>
-            </div>
-          </label>
-          <label class="permission-option" class:permission-option--active={permission === 'denied'}>
-            <input type="radio" name="permission" value="denied" bind:group={permission} />
-            <div class="permission-content">
-              <span class="permission-name permission-name--denied">{$_('admin.mcpAccess.permissions.denied')}</span>
-              <span class="permission-desc">{$_('admin.mcpAccess.permissions.deniedDesc')}</span>
-            </div>
-          </label>
+      <!-- ".perm-choice" list -->
+      <fieldset class="field">
+        <legend class="field-label">{$_('admin.mcpAccess.permission')}</legend>
+        <div class="perm-choices">
+          {#each permissionChoices as choice (choice.value)}
+            <label class="perm-choice" data-selected={permission === choice.value}>
+              <input type="radio" name="mcp_rule_permission" value={choice.value} bind:group={permission} />
+              <span class="perm-radio"></span>
+              <span class="perm-copy">
+                <span class="perm-title-row">
+                  <span
+                    class="perm-dot"
+                    class:perm-dot--full={choice.value === 'full'}
+                    class:perm-dot--read-only={choice.value === 'read_only'}
+                    class:perm-dot--denied={choice.value === 'denied'}
+                  ></span>
+                  <span class="perm-title">{$_(choice.labelKey)}</span>
+                </span>
+                <span class="perm-desc">{$_(choice.descKey)}</span>
+              </span>
+            </label>
+          {/each}
         </div>
-      </div>
+      </fieldset>
 
       {#if formError}
-        <div class="form-error">{formError}</div>
+        <p class="form-error" role="alert">{formError}</p>
       {/if}
-
-      <div class="form-actions">
-        <button type="button" class="btn-secondary" onclick={onClose} disabled={isSubmitting}>
-          {$_('common.cancel')}
-        </button>
-        <button type="submit" class="btn-accent" disabled={isSubmitting}>
-          {#if isSubmitting}
-            {$_('admin.mcpAccess.adding')}
-          {:else}
-            {$_('admin.mcpAccess.addRule')}
-          {/if}
-        </button>
-      </div>
     </form>
+  {/snippet}
+
+  {#snippet footer()}
+    <button class="btn-cancel" type="button" onclick={onClose} disabled={isSubmitting}>
+      {$_('common.cancel')}
+    </button>
+    <button class="btn-primary" type="submit" form="mcp-add-rule-form" disabled={isSubmitting}>
+      {isSubmitting ? $_('admin.mcpAccess.adding') : $_('admin.mcpAccess.addRule')}
+    </button>
   {/snippet}
 </Modal>
 
 <style>
-  .access-rule-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xl);
-  }
-
-  .form-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .form-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .radio-group {
-    display: flex;
-    gap: var(--space-sm);
-  }
-
-  .radio-option {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    flex: 1;
-    padding: var(--space-md);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-md);
+  /* ===== mcp-server-detail.html "MODAL: Add Rule", transcribed. The card
+     itself (560px, gradient rule, 32px gutters) is Modal's "mcp-access"
+     variant; this sheet is only its contents. ===== */
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: none;
+  }
+
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  /* Bare element selectors, so the .dd-select skin below still wins. */
+  input,
+  select {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    outline: none;
     background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    font-family: var(--gx-font);
+    line-height: 100%;
   }
 
-  .radio-option input[type="radio"] {
-    display: none;
+  input:focus,
+  select:focus {
+    background: transparent;
+    box-shadow: none;
   }
 
-  .radio-option:hover {
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(var(--glass-tint), 0.03);
-  }
-
-  .radio-option--active {
-    border-color: var(--brand);
-    background: rgba(var(--brand-rgb), 0.06);
-  }
-
-  .radio-option span {
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-
-  .radio-icon {
+  .rule-form {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: var(--radius-sm);
-    flex-shrink: 0;
-  }
-
-  .radio-icon--role {
-    background: rgba(139, 92, 246, 0.12);
-    color: #a78bfa;
-  }
-
-  .radio-icon--department {
-    background: rgba(59, 130, 246, 0.12);
-    color: #60a5fa;
-  }
-
-  .radio-icon--user {
-    background: rgba(16, 185, 129, 0.12);
-    color: #34d399;
-  }
-
-  .form-select {
+    flex-direction: column;
+    gap: 20px;
+    align-self: stretch;
     width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(var(--glass-tint), 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    outline: none;
-    transition: border-color 0.2s ease;
+    font-family: var(--gx-font);
+  }
+
+  .field {
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+
+  .field-label {
+    display: block;
+    padding: 0;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-mcp-m-ink);
+    margin-bottom: 8px;
+  }
+
+  .field-loading {
+    font-size: 13px;
+    color: var(--gx-mcp-m-placeholder);
+    padding: 10px 13px;
+  }
+
+  /* ---------------- ".type-choices" ---------------- */
+  .type-choices {
+    display: flex;
+    gap: 10px;
+  }
+
+  .type-choice {
+    flex: 1 1 0;
+    min-width: 0;
+    border-radius: 10px;
+    background: var(--gx-surface);
+    box-shadow: inset 0 0 0 1px var(--gx-mcp-m-ring);
+    padding: 12px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-mcp-m-label);
+    transition:
+      box-shadow 120ms ease,
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .type-choice[data-selected="true"] {
+    box-shadow: inset 0 0 0 1.5px var(--gx-tx-accent);
+    background: color-mix(in oklab, var(--gx-tx-accent) 8%, var(--gx-surface));
+    color: var(--gx-tx-accent);
+  }
+
+  .type-choice:focus-visible {
+    outline: 2px solid var(--gx-tx-accent);
+    outline-offset: 2px;
+  }
+
+  /* ---------------- ".dd-select" ---------------- */
+  .dd-select {
+    width: 100%;
+    border-radius: 8px;
+    background: var(--gx-surface);
+    box-shadow: inset 0 0 0 1px var(--gx-mcp-m-ring);
+    padding: 10px 13px;
+    font-family: inherit;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.2;
+    color: var(--gx-mcp-m-ink);
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'%3E%3C/polyline%3E%3C/svg%3E");
+  }
+
+  .dd-select:focus-visible {
+    outline: 2px solid var(--gx-tx-accent);
+    outline-offset: 1px;
+  }
+
+  .dd-select--input::placeholder {
+    color: var(--gx-mcp-m-placeholder);
+  }
+
+  select.dd-select {
+    /* Room for the caret the design draws on the right of the field. */
+    padding-inline-end: 32px;
+    background-image: linear-gradient(
+        45deg,
+        transparent 50%,
+        var(--gx-mcp-m-placeholder) 50%
+      ),
+      linear-gradient(135deg, var(--gx-mcp-m-placeholder) 50%, transparent 50%);
+    background-position:
+      right 16px center,
+      right 11px center;
+    background-size:
+      5px 5px,
+      5px 5px;
     background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 36px;
   }
 
-  .form-select:focus {
-    border-color: var(--brand);
+  :global([dir="rtl"]) select.dd-select {
+    background-position:
+      left 11px center,
+      left 16px center;
   }
 
-  .form-input {
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(var(--glass-tint), 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    outline: none;
-    transition: border-color 0.2s ease;
-  }
-
-  .form-input:focus {
-    border-color: var(--brand);
-  }
-
-  .form-input::placeholder {
-    color: var(--text-tertiary);
-  }
-
-  .select-loading {
-    padding: var(--space-sm);
-    font-size: 0.8125rem;
-    color: var(--text-tertiary);
-  }
-
-  .checkbox-option {
+  .check-row {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    cursor: pointer;
-    margin-top: var(--space-xs);
-  }
-
-  .checkbox-option input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--brand);
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--gx-mcp-m-label);
     cursor: pointer;
   }
 
-  .checkbox-option span {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
+  .check-row input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    accent-color: var(--gx-tx-accent);
+    cursor: pointer;
   }
 
-  .user-search-wrapper {
+  /* ---------------- user typeahead ---------------- */
+  .user-search {
     position: relative;
   }
 
-  .search-spinner-container {
+  .user-search-spinner {
     position: absolute;
-    right: 12px;
+    inset-inline-end: 12px;
     top: 50%;
-    transform: translateY(-50%);
-  }
-
-  .search-spinner {
-    display: inline-block;
+    margin-top: -7px;
     width: 14px;
     height: 14px;
-    border: 2px solid rgba(224, 224, 224, 0.4);
-    border-top-color: var(--brand);
+    border: 2px solid var(--gx-mcp-m-ring);
+    border-top-color: var(--gx-tx-accent);
     border-radius: 50%;
-    animation: spin 0.6s linear infinite;
+    animation: user-spin 0.6s linear infinite;
   }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+  @keyframes user-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
-  .user-search-results {
+  .user-results {
     position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    margin-top: 4px;
-    background: var(--bg-primary);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: var(--radius-md);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    inset-inline: 0;
+    top: calc(100% + 4px);
+    z-index: 2;
     max-height: 200px;
     overflow-y: auto;
-    z-index: 10;
-  }
-
-  .user-search-item {
+    border-radius: 8px;
+    background: var(--gx-surface);
+    box-shadow:
+      inset 0 0 0 1px var(--gx-mcp-m-ring),
+      var(--gx-mcp-panel-shadow);
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    cursor: pointer;
-    text-align: left;
-    transition: background 0.15s ease;
-    color: var(--text-primary);
+    padding: 4px;
   }
 
-  .user-search-item:hover {
-    background: rgba(var(--glass-tint), 0.06);
-  }
-
-  .user-search-item:last-child {
-    border-bottom: none;
-  }
-
-  .user-search-name {
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
-
-  .user-search-email {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-  }
-
-  .permission-options {
+  .user-result {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .permission-option {
-    display: flex;
+    /* app.css centres every bare button's flex children; these read as text. */
     align-items: flex-start;
-    gap: var(--space-md);
-    padding: var(--space-md);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all 0.2s ease;
+    gap: 2px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    white-space: normal;
+    transition: background-color 120ms ease;
   }
 
-  .permission-option input[type="radio"] {
-    display: none;
+  .user-result:hover {
+    background: var(--gx-mcp-m-hair);
   }
 
-  .permission-option:hover {
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(var(--glass-tint), 0.03);
+  .user-result-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--gx-mcp-m-ink);
   }
 
-  .permission-option--active {
-    border-color: var(--brand);
-    background: rgba(var(--brand-rgb), 0.04);
+  .user-result-email {
+    font-size: 11px;
+    color: var(--gx-mcp-m-placeholder);
   }
 
-  .permission-content {
+  /* ---------------- ".perm-choice" ---------------- */
+  .perm-choices {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 10px;
   }
 
-  .permission-name {
-    font-size: 0.875rem;
+  .perm-choice {
+    border-radius: 12px;
+    background: var(--gx-surface);
+    box-shadow: inset 0 0 0 1.5px var(--gx-mcp-m-ring);
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    align-items: center;
+    cursor: pointer;
+    transition:
+      box-shadow 120ms ease,
+      background-color 120ms ease;
+  }
+
+  .perm-choice input[type="radio"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .perm-choice[data-selected="true"] {
+    box-shadow: inset 0 0 0 1.5px var(--gx-tx-accent);
+    background: color-mix(in oklab, var(--gx-tx-accent) 6%, var(--gx-surface));
+  }
+
+  .perm-choice:focus-within {
+    outline: 2px solid var(--gx-tx-accent);
+    outline-offset: 2px;
+  }
+
+  .perm-radio {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 2px var(--gx-mcp-m-ring);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gx-surface);
+  }
+
+  .perm-choice[data-selected="true"] .perm-radio {
+    box-shadow: none;
+    background: var(--gx-tx-accent);
+  }
+
+  .perm-choice[data-selected="true"] .perm-radio::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gx-surface);
+  }
+
+  .perm-copy {
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  .perm-title-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .perm-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .perm-dot--full {
+    background: var(--gx-mcpd-perm-full);
+  }
+
+  .perm-dot--read-only {
+    background: var(--gx-mcpd-perm-read);
+  }
+
+  .perm-dot--denied {
+    background: var(--gx-mcpd-perm-denied);
+  }
+
+  .perm-title {
     font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-mcp-m-ink);
   }
 
-  .permission-name--full { color: #34d399; }
-  .permission-name--read-only { color: #60a5fa; }
-  .permission-name--denied { color: #f87171; }
-
-  .permission-desc {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
+  .perm-desc {
+    display: block;
+    font-weight: 400;
+    font-size: 12px;
     line-height: 1.4;
+    color: var(--gx-mcp-m-placeholder);
   }
 
   .form-error {
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(239, 68, 68, 0.08);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: var(--radius-sm);
-    color: #f87171;
-    font-size: 0.8125rem;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--gx-mcp-err-fg);
   }
 
-  .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-md);
-    padding-top: var(--space-lg);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  /* ---------------- footer actions ---------------- */
+  .btn-cancel {
+    height: 33px;
+    border-radius: 8px;
+    background: var(--gx-surface);
+    box-shadow: inset 0 0 0 1px var(--gx-mcp-m-cancel-ring);
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-mcp-m-cancel-fg);
+    transition: background-color 120ms ease;
   }
 
-  @media (max-width: 640px) {
-    .radio-group {
+  .btn-cancel:hover:not(:disabled) {
+    background: var(--gx-mcp-m-hair);
+  }
+
+  .btn-primary {
+    height: 33px;
+    border-radius: 8px;
+    background: var(--gx-vdt-cta);
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-surface);
+    transition: background-color 120ms ease;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--gx-mcpd-cta-hover);
+  }
+
+  .btn-cancel:focus-visible,
+  .btn-primary:focus-visible {
+    outline: 2px solid var(--gx-tx-accent);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 480px) {
+    .type-choices {
       flex-direction: column;
     }
   }

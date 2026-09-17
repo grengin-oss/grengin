@@ -33,7 +33,18 @@ SPDX-License-Identifier: Apache-2.0
      * "chart-data" is the 680px card from usage-analytics-overview.html
      * (.vdt) — the same gradient rule, a badge-and-subtitle header, and a
      * tinted footer that splits a caption on the left from actions on the
-     * right.
+     * right;
+     * "ai-browse" is the 920px provider picker from ai-engines.html (.bp-modal)
+     * — a gradient rule, a display-face heading and a search bar stacked into
+     * the header (pass it through `headerExtra`), and no footer;
+     * "ai-custom" is the 640px form from ai-engines.html (.ace-modal) — the
+     * gradient rule, a tile-and-subtitle header, and a faintly tinted footer
+     * whose actions sit right;
+     * "mcp-access" and "mcp-tool" are the two dialogs from
+     * mcp-server-detail.html (.modal at 560px and at 680px) — a 6px gradient
+     * rule, a 32px-gutter header and body, and a hairline-topped footer whose
+     * actions sit right. "mcp-tool" is the wider of the two and carries a
+     * subtitle under its title.
      */
     variant?:
       | "default"
@@ -43,7 +54,11 @@ SPDX-License-Identifier: Apache-2.0
       | "ai-connect"
       | "mcp-servers"
       | "prompts"
-      | "chart-data";
+      | "chart-data"
+      | "ai-browse"
+      | "ai-custom"
+      | "mcp-access"
+      | "mcp-tool";
     /** Pinned footer bar, outside the scrolling body (access-control design). */
     footer?: any;
     /** Second line under the title (ai-engines design: ".cfg-subtitle"). */
@@ -52,6 +67,12 @@ SPDX-License-Identifier: Apache-2.0
     headerIcon?: any;
     /** Status pill beside the title (ai-connect design: ".cnx-badge"). */
     headerBadge?: any;
+    /**
+     * A second row inside the header, below the title/close row — the search
+     * bar the ai-browse design stacks under its heading. Supplying it switches
+     * the header to a column; without it the header keeps its single row.
+     */
+    headerExtra?: any;
   }
 
   let {
@@ -63,6 +84,7 @@ SPDX-License-Identifier: Apache-2.0
     subtitle,
     headerIcon,
     headerBadge,
+    headerExtra,
     descriptionId,
     restoreFocusOnClose = true,
     variant = "default",
@@ -273,6 +295,10 @@ SPDX-License-Identifier: Apache-2.0
       class:modal-backdrop--mcp={variant === "mcp-servers"}
       class:modal-backdrop--pr={variant === "prompts"}
       class:modal-backdrop--vdt={variant === "chart-data"}
+      class:modal-backdrop--bp={variant === "ai-browse"}
+      class:modal-backdrop--ace={variant === "ai-custom"}
+      class:modal-backdrop--mcpd={variant === "mcp-access" ||
+        variant === "mcp-tool"}
       data-modal-id={modalId}
       onclick={handleBackdropClick}
       onkeydown={(e) => e.key === "Enter" && handleBackdropClick(e as any)}
@@ -291,8 +317,13 @@ SPDX-License-Identifier: Apache-2.0
         class:modal-content--mcp={variant === "mcp-servers"}
         class:modal-content--pr={variant === "prompts"}
         class:modal-content--vdt={variant === "chart-data"}
+        class:modal-content--bp={variant === "ai-browse"}
+        class:modal-content--ace={variant === "ai-custom"}
+        class:modal-content--mcpd={variant === "mcp-access" ||
+          variant === "mcp-tool"}
+        class:modal-content--mcpd-wide={variant === "mcp-tool"}
       >
-        <div class="modal-header">
+        {#snippet headingRow()}
           <div class="modal-header-left">
             {#if headerIcon}
               <span class="modal-header-icon">{@render headerIcon()}</span>
@@ -324,6 +355,17 @@ SPDX-License-Identifier: Apache-2.0
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
+        {/snippet}
+
+        <!-- Without `headerExtra` the header keeps its original single row, so
+             every existing variant's header CSS still matches. -->
+        <div class="modal-header" class:modal-header--stacked={!!headerExtra}>
+          {#if headerExtra}
+            <div class="modal-header-row">{@render headingRow()}</div>
+            <div class="modal-header-extra">{@render headerExtra()}</div>
+          {:else}
+            {@render headingRow()}
+          {/if}
         </div>
         <div class="modal-body">
           {@render children?.()}
@@ -623,6 +665,325 @@ SPDX-License-Identifier: Apache-2.0
     padding: 20px;
     background: var(--gx-surface-rail);
     border-top: 1px solid var(--gx-line);
+  }
+
+  /* ===== "ai-browse" / "ai-custom" variants (ai-engines.html .bp-modal and
+     .ace-modal) — the provider picker and the custom-engine form. Selectors are
+     doubled for the same reason as the variants above: the base .modal-content
+     rules come later in this sheet. ===== */
+  .modal-backdrop.modal-backdrop--bp,
+  .modal-backdrop.modal-backdrop--ace {
+    background: var(--gx-ac-modal-scrim);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .modal-content.modal-content--bp,
+  .modal-content.modal-content--ace {
+    position: relative;
+    max-height: 90vh;
+    overflow: hidden;
+    border: none;
+    background: var(--gx-card);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--gx-font);
+  }
+
+  /* Both cards carry the design's large 24px drop. That is the same shadow
+     family --gx-mcp-modal-shadow already defines (and already flips for dark),
+     so reuse it rather than minting two near-identical tokens. */
+  .modal-content.modal-content--bp {
+    width: 920px;
+    max-width: 94vw;
+    border-radius: 18px;
+    box-shadow: var(--gx-mcp-modal-shadow);
+  }
+
+  .modal-content.modal-content--ace {
+    width: 640px;
+    max-width: 92vw;
+    border-radius: 16px;
+    box-shadow: var(--gx-mcp-modal-shadow);
+  }
+
+  .modal-content.modal-content--bp .modal-header,
+  .modal-content.modal-content--ace .modal-header {
+    position: relative;
+    border: none;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    flex-shrink: 0;
+  }
+
+  .modal-content.modal-content--bp .modal-header {
+    padding: 28px 36px 24px;
+  }
+
+  .modal-content.modal-content--ace .modal-header {
+    padding: 20px 24px;
+  }
+
+  .modal-content.modal-content--bp .modal-header::before,
+  .modal-content.modal-content--ace .modal-header::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 5px;
+    background: linear-gradient(
+      90deg,
+      rgb(74, 125, 212) 0%,
+      rgb(46, 168, 117) 100%
+    );
+  }
+
+  .modal-content.modal-content--bp .modal-title,
+  .modal-content.modal-content--ace .modal-title {
+    font-family: var(--gx-font-display);
+    font-weight: 700;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+  }
+
+  .modal-content.modal-content--bp .modal-title {
+    font-size: 26px;
+  }
+
+  .modal-content.modal-content--ace .modal-title {
+    font-size: 20px;
+  }
+
+  .modal-content.modal-content--bp .modal-subtitle {
+    font-size: 14px;
+    color: var(--gx-an-sub);
+  }
+
+  .modal-content.modal-content--ace .modal-subtitle {
+    font-size: 12px;
+    color: var(--gx-an-sub);
+  }
+
+  .modal-content.modal-content--bp .modal-heading,
+  .modal-content.modal-content--ace .modal-heading {
+    gap: 4px;
+  }
+
+  .modal-content.modal-content--ace .modal-header-left:has(.modal-subtitle) {
+    gap: 12px;
+  }
+
+  .modal-content.modal-content--bp .modal-close,
+  .modal-content.modal-content--ace .modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
+  }
+
+  .modal-content.modal-content--bp .modal-close:hover,
+  .modal-content.modal-content--ace .modal-close:hover {
+    background: var(--gx-hover-soft);
+    color: var(--gx-an-sub);
+  }
+
+  .modal-content.modal-content--bp .modal-close svg,
+  .modal-content.modal-content--ace .modal-close svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .modal-content.modal-content--bp .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 24px 36px 28px;
+    align-self: stretch;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0;
+  }
+
+  .modal-content.modal-content--ace .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+    align-self: stretch;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0;
+  }
+
+  .modal-content.modal-content--ace .modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 16px 24px;
+    background: color-mix(in oklch, var(--gx-org-primary-500) 5%, var(--gx-card));
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    border: none;
+    flex-shrink: 0;
+  }
+
+  /* ===== "mcp-access" / "mcp-tool" variants (mcp-server-detail.html .modal)
+     — the Add Rule dialog and the per-tool Access Control dialog. Doubled
+     selectors for the same reason as the variants above: the base
+     .modal-content rules come later in this sheet. ===== */
+  .modal-backdrop.modal-backdrop--mcpd {
+    background: var(--gx-ac-modal-scrim);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .modal-content.modal-content--mcpd {
+    position: relative;
+    width: 560px;
+    max-width: calc(100vw - 32px);
+    max-height: 90vh;
+    overflow: hidden;
+    border: none;
+    border-radius: 18px;
+    background: var(--gx-surface);
+    box-shadow: var(--gx-mcpd-modal-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--gx-font);
+  }
+
+  .modal-content.modal-content--mcpd.modal-content--mcpd-wide {
+    width: 680px;
+  }
+
+  .modal-content.modal-content--mcpd .modal-header {
+    position: relative;
+    border: none;
+    box-shadow: inset 0 0 0 1px var(--gx-mcp-m-hair);
+    padding: 24px 32px;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .modal-content.modal-content--mcpd .modal-header::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 6px;
+    background: linear-gradient(
+      90deg,
+      var(--gx-vdt-cta) 0%,
+      var(--gx-mcpd-grad-end) 100%
+    );
+    z-index: 1;
+  }
+
+  .modal-content.modal-content--mcpd .modal-heading {
+    gap: 4px;
+  }
+
+  .modal-content.modal-content--mcpd .modal-title {
+    font-family: var(--gx-font-display);
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 100%;
+    color: var(--gx-mcp-m-ink);
+  }
+
+  .modal-content.modal-content--mcpd .modal-subtitle {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--gx-mcp-dim);
+  }
+
+  .modal-content.modal-content--mcpd .modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--gx-surface);
+    box-shadow: inset 0 0 0 1px var(--gx-an-grid);
+    color: var(--gx-an-axis);
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
+  }
+
+  .modal-content.modal-content--mcpd .modal-close:hover {
+    background: var(--gx-mcp-m-hair);
+    color: var(--gx-an-axis);
+  }
+
+  .modal-content.modal-content--mcpd .modal-close svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .modal-content.modal-content--mcpd .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px 32px;
+    align-self: stretch;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0;
+  }
+
+  .modal-content.modal-content--mcpd .modal-footer {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 16px 32px;
+    background: var(--gx-surface);
+    border: none;
+    border-top: 1px solid var(--gx-mcp-m-hair);
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 640px) {
+    .modal-content.modal-content--mcpd .modal-header,
+    .modal-content.modal-content--mcpd .modal-body,
+    .modal-content.modal-content--mcpd .modal-footer {
+      padding-inline: 20px;
+    }
+  }
+
+  /* A header carrying `headerExtra` becomes two stacked rows. */
+  .modal-header.modal-header--stacked {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 22px;
+  }
+
+  .modal-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .modal-header-extra {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+  }
+
+  @media (max-width: 640px) {
+    .modal-content.modal-content--bp .modal-header {
+      padding: 24px 20px 20px;
+    }
+
+    .modal-content.modal-content--bp .modal-body {
+      padding: 20px;
+    }
   }
 
   /* ===== "mcp-servers" variant (mcp-servers.html .add-modal) =====

@@ -946,7 +946,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .section-header__left--tight {
-    gap: 2px;
+    gap: 6px;
   }
 
   .section-label {
@@ -1066,17 +1066,20 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     height: 24px;
     align-items: center;
-    gap: 2px;
+    gap: 6px;
     align-self: stretch;
     color: var(--gx-dim);
   }
 
+  /* The box has to match the glyph it holds (14px): at 12px the svg was
+     squeezed by flex-shrink and the icon rendered smaller and out of square
+     than the design's section icons. */
   .section-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
     color: currentcolor;
   }

@@ -173,7 +173,7 @@ SPDX-License-Identifier: Apache-2.0
         title={$_('sidebar.allProjects')}
       >
         <span class="section-icon" aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="16" height="16" viewBox="5 6 14 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <rect x="6" y="9" width="12" height="8" rx="2"/>
             <path d="M9 9C9 7.89543 9.89543 7 11 7H13C14.1046 7 15 7.89543 15 9H9Z"/>
             <path d="M6 13H18"/>
@@ -400,12 +400,14 @@ SPDX-License-Identifier: Apache-2.0
     outline-offset: 2px;
   }
 
+  /* Matches the 16px svg it wraps; at 12px flex-shrink squashed the briefcase
+     out of square and it read smaller than the design's section icons. */
   .section-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 12px;
-    height: 12px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
     color: currentcolor;
   }

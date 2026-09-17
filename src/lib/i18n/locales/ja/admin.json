@@ -309,30 +309,25 @@
           "enabled": "有効",
           "disabled": "無効",
           "enableVerb": "有効化",
-          "disableVerb": "無効化"
+          "disableVerb": "無効化",
+          "active": "有効",
+          "inactive": "無効"
         },
         "actions": {
           "retry": "再試行",
           "deleting": "削除中…",
           "saving": "保存中…",
-          "validating": "検証中…"
+          "validating": "検証中…",
+          "configure": "設定"
         },
         "messages": {
           "loading": "OAuthプロバイダーを読み込み中...",
           "empty": "OAuthプロバイダーはまだ設定されていません。",
           "loadError": "SSOプロバイダーを読み込めませんでした",
           "loadProviderError": "プロバイダーを読み込めませんでした",
-          "noDomains": "ドメインなし",
-          "domainBannerOne": "{name} はメールドメインによるサインインの制限を行っていないため、有効なアカウントを持つユーザーであれば誰でも参加できます。プロバイダーを編集して、特定の会社ドメインにアクセスを制限してください。",
-          "domainBannerAll": "{names} はメールドメインによるサインインの制限を行っていないため、有効なアカウントを持つユーザーであれば誰でも参加できます。プロバイダーを編集して、特定の会社ドメインにアクセスを制限してください。",
-          "loadingProvider": "プロバイダーを読み込み中..."
-        },
-        "table": {
-          "caption": "OAuthプロバイダー設定",
-          "provider": "プロバイダー",
-          "allowedDomains": "許可ドメイン",
-          "status": "ステータス",
-          "actions": "操作"
+          "loadingProvider": "プロバイダーを読み込み中...",
+          "emptyTitle": "利用できる ID プロバイダーがありません",
+          "errorTitle": "ID プロバイダーを読み込めませんでした"
         },
         "modals": {
           "confirmDeleteTitle": "削除の確認",
@@ -376,11 +371,24 @@
           "hideClientSecret": "クライアントシークレットを非表示",
           "showClientSecret": "クライアントシークレットを表示",
           "removeDomain": "ドメイン {domain} を削除",
-          "moreDomains": "他 {count} 件のドメイン: {domains}"
+          "moreDomains": "他 {count} 件のドメイン: {domains}",
+          "editDomains": "{name} の許可ドメインを編集"
         },
         "selfProvisioning": {
           "label": "自動プロビジョニング",
           "hint": "初回サインイン時にアカウントを自動作成"
+        },
+        "card": {
+          "allowedDomains": "許可ドメイン",
+          "allDomains": "すべてのドメイン",
+          "unrestricted": "制限なし — すべてのユーザーがサインインできます"
+        },
+        "descriptions": {
+          "azure": "Microsoft Entra ID — 職場または学校のアカウントでサインイン",
+          "google": "Google アカウントでサインイン",
+          "okta": "Okta による企業向けシングルサインオン",
+          "saml": "SAML 2.0 対応の ID プロバイダーを接続",
+          "generic": "{name} でサインイン"
         }
       }
     },
@@ -703,6 +711,7 @@
       "failedToLoad": "アクセスルールの読み込みに失敗しました",
       "failedToLoadTools": "ツールアクセスの読み込みに失敗しました",
       "defaultAccessTitle": "デフォルトアクセス",
+      "defaultAccessDesc": "このサーバーをデフォルトで使用できるユーザーを選択します。",
       "defaultAccessUpdated": "デフォルトアクセスを更新しました",
       "failedToUpdateDefault": "デフォルトアクセスの更新に失敗しました",
       "defaultAccess": {
@@ -715,6 +724,7 @@
       },
       "accessRules": "アクセスルール",
       "addRule": "ルールを追加",
+      "addRules": "ルールを追加",
       "adding": "追加中...",
       "ruleAdded": "アクセスルールを追加しました",
       "failedToAddRule": "アクセスルールの追加に失敗しました",
@@ -757,9 +767,11 @@
       "serverTools": "サーバーツール（合計 {count}）",
       "noTools": "利用できるツールがありません",
       "noToolsHint": "ここに表示するにはサーバー一覧からツールを同期してください",
+      "notConnected": "未接続",
+      "notConnectedHint": "利用できるツールを表示するにはサーバーに接続してください",
       "configureTool": "アクセスを設定",
       "toolStatus": {
-        "inherit": "継承",
+        "proxyFallback": "プロキシフォールバック",
         "custom": "{count} 件のカスタムルール",
         "noRules": "ルールなし",
         "customBadge": "カスタム"
@@ -768,7 +780,9 @@
       "inheritFromServerDesc": "サーバーレベルで設定されたのと同じアクセスルールを使用",
       "customRules": "カスタムルール",
       "customRulesDesc": "このツール用の特定のアクセスルールを設定",
-      "noCustomRules": "カスタムルールがありません。このツールへのアクセスを制限するルールを追加してください。",
+      "toolAccessSubtitle": "このツールへのアクセスの管理方法を選択します。",
+      "noCustomRulesTitle": "カスタムルールがありません",
+      "noCustomRulesHint": "このツールへのアクセスを制限するルールを追加してください。",
       "toolAccessSaved": "ツールアクセスを保存しました",
       "failedToSaveToolAccess": "ツールアクセスの保存に失敗しました",
       "save": "保存",
@@ -1425,10 +1439,10 @@
     "connectEngine": "エンジンを接続",
     "noResults": "「{query}」に一致するエンジンはありません。",
     "filters": {
-      "label": "エンジンを絞り込む",
+      "label": "ステータスでエンジンを絞り込む",
       "all": "すべて",
-      "active": "有効",
-      "available": "利用可能"
+      "connected": "接続済み",
+      "attention": "要対応"
     },
     "stats": {
       "connectedValue": "{total} 件中 {connected} 件",
@@ -1461,7 +1475,76 @@
       "connecting": "接続しています...",
       "connected": "{name} を接続しました"
     },
-    "noFilterResults": "このビューに該当するエンジンはありません。"
+    "noFilterResults": "このビューに該当するエンジンはありません。",
+    "sectionTitle": "あなたのエンジン",
+    "view": {
+      "label": "エンジンの表示形式",
+      "grid": "グリッド",
+      "list": "リスト"
+    },
+    "table": {
+      "engine": "エンジン",
+      "status": "ステータス",
+      "defaultModel": "既定のモデル",
+      "whitelist": "許可リスト",
+      "enabled": "有効",
+      "actions": "操作",
+      "mostUsed": "最も利用",
+      "configure": "設定",
+      "connect": "接続"
+    },
+    "browse": {
+      "cta": "プロバイダーを見る",
+      "title": "プロバイダーを見る",
+      "subtitle": "接続可能なプロバイダー {count} 件",
+      "searchPlaceholder": "プロバイダーを検索…",
+      "categoryLabel": "カテゴリーでプロバイダーを絞り込む",
+      "showing": "{total} 件中 {count} 件のプロバイダーを表示",
+      "modelsAvailable": "{count} 個のモデルが利用可能",
+      "showMore": "+ さらに {count} 件表示",
+      "showLess": "表示を減らす",
+      "noResults": "「{query}」に一致するプロバイダーはありません。",
+      "allConnected": "利用可能なプロバイダーはすべて接続済みです。",
+      "categories": {
+        "major": "主要プロバイダー",
+        "aggregators": "アグリゲーター",
+        "regional": "地域プロバイダー",
+        "voice": "音声・オーディオ",
+        "image": "画像・動画",
+        "embeddings": "埋め込み・検索",
+        "other": "その他のプロバイダー"
+      }
+    },
+    "custom": {
+      "cta": "カスタムエンジンを追加",
+      "title": "カスタムエンジンを追加",
+      "subtitle": "OpenAI 互換のエンドポイントを接続します",
+      "submit": "エンジンを追加",
+      "adding": "追加中…",
+      "fields": {
+        "name": "表示名",
+        "nameHelper": "エンジンカードおよびこのエンジンが表示されるすべての場所に使われます。",
+        "namePlaceholder": "例: 社内 vLLM クラスター",
+        "baseUrl": "ベース URL の上書き",
+        "baseUrlHelper": "Grengin がプロバイダーの既定 URL の代わりに呼び出すエンドポイントです。",
+        "plugin": "プラグイン JSON",
+        "pluginHelper": "OpenAI プラグインスキーマ形式のプロバイダー設定、モデル一覧、ルーティング規則。",
+        "compatible": "OpenAI 互換",
+        "optional": "任意",
+        "apiKeyHelper": "このエンドポイントが認証を必要としない場合は空欄のままにしてください。"
+      },
+      "errors": {
+        "nameRequired": "このエンジンの表示名を入力してください。",
+        "baseUrlRequired": "このエンジンが呼び出すベース URL を入力してください。",
+        "baseUrlInvalid": "ベース URL は http:// または https:// で始まる必要があります。",
+        "pluginRequired": "このエンジンのプラグイン JSON を入力してください。",
+        "pluginInvalid": "プラグイン JSON が有効な JSON オブジェクトではありません。"
+      },
+      "toasts": {
+        "added": "{name} を追加しました",
+        "failed": "カスタムエンジンの追加に失敗しました"
+      }
+    }
   },
   "adminOverview": {
     "title": "概要",

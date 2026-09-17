@@ -464,22 +464,34 @@ SPDX-License-Identifier: Apache-2.0
 {/snippet}
 
 <!--
-  The role's own controls. The design's head only draws "+ Add user", but edit and
-  delete must not disappear with the restyle — they keep their existing gates and
-  sit alongside it as labelled icon buttons.
+  The role's own controls. Per the design review these are icon-only — the glyph
+  alone, no text label — matching the compact button row the design draws on the
+  expanded role head. The action names stay on title/aria-label.
 -->
 {#snippet roleControls(role: Role)}
   {#if canAssignRoles}
     <button
-      class="add-user-btn"
+      class="icon-btn"
       type="button"
       onclick={(e) => {
         e.stopPropagation();
         openAddUser(role.id);
       }}
       title={$_("admin.accessControl.addUser")}
+      aria-label={$_("admin.accessControl.addUser")}
     >
-      + {$_("admin.accessControl.addUser")}
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M8 3.5v9M3.5 8h9" />
+      </svg>
     </button>
   {/if}
   {@render roleEditControls(role)}
@@ -488,7 +500,7 @@ SPDX-License-Identifier: Apache-2.0
 {#snippet roleEditControls(role: Role)}
   {#if canManageRoles && canEditRole(role)}
     <button
-      class="icon-btn icon-btn--labeled"
+      class="icon-btn"
       type="button"
       onclick={(e) => {
         e.stopPropagation();
@@ -510,12 +522,11 @@ SPDX-License-Identifier: Apache-2.0
           d="M11.5 2.5a1.5 1.5 0 0 1 2.12 2.12L5 11.25v2.25h2.25l6.62-6.62a1.5 1.5 0 0 0-2.12-2.12L5.25 11"
         />
       </svg>
-      <span>{$_("common.edit")}</span>
     </button>
   {/if}
   {#if canManageRoles && canDeleteRole(role)}
     <button
-      class="icon-btn icon-btn--labeled icon-btn--danger"
+      class="icon-btn icon-btn--danger"
       type="button"
       onclick={(e) => {
         e.stopPropagation();
@@ -538,7 +549,6 @@ SPDX-License-Identifier: Apache-2.0
         />
         <path d="M6 7v4M10 7v4" />
       </svg>
-      <span>{$_("common.delete")}</span>
     </button>
   {/if}
 {/snippet}
@@ -1098,8 +1108,8 @@ SPDX-License-Identifier: Apache-2.0
 
   /* Same app.css bare-<button> glass chrome as the modal: clear it on the plain
      text/icon buttons so they don't each sit in a stray rounded pill. Buttons
-     that set their own box-shadow (.icon-btn, .add-user-btn, .perm-card-more)
-     already replace it and only need the blur cleared. */
+     that set their own box-shadow (.icon-btn, .perm-card-more) already replace
+     it and only need the blur cleared. */
   .link-btn,
   .chev-btn,
   .search-close-btn,
@@ -1113,7 +1123,6 @@ SPDX-License-Identifier: Apache-2.0
   .search-close-btn,
   .search-result-item,
   .icon-btn,
-  .add-user-btn,
   .perm-card-more {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -1321,31 +1330,13 @@ SPDX-License-Identifier: Apache-2.0
     flex-wrap: wrap;
   }
 
-  .add-user-btn {
-    height: 32px;
-    border: none;
-    border-radius: 8px;
-    background: transparent;
-    box-shadow: inset 0 0 0 1px var(--gx-hair);
-    display: flex;
-    padding: 8px 12px;
-    align-items: center;
-    font-family: var(--gx-font);
-    font-weight: 600;
-    font-size: 13px;
-    color: var(--gx-slate-900);
-    white-space: nowrap;
-    cursor: pointer;
-    transition: background-color 120ms ease;
-  }
-
-  .add-user-btn:hover {
-    background: var(--gx-org-track);
-  }
-
   .icon-btn {
     width: 32px;
     height: 32px;
+    /* app.css gives every bare <button> 0.625rem/1.25rem of padding, and with
+       the global border-box that leaves this 32px square no content width at
+       all — the glyph gets crushed to nothing. */
+    padding: 0;
     border: none;
     border-radius: 8px;
     background: transparent;
@@ -1366,25 +1357,11 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-slate-900);
   }
 
-  /* Edit/delete carry their label next to the glyph, so they size to content
-     instead of the 32px icon-only square. */
-  .icon-btn--labeled {
-    width: auto;
-    gap: 6px;
-    padding: 8px 12px;
-    font-family: var(--gx-font);
-    font-weight: 600;
-    font-size: 13px;
-    color: var(--gx-slate-900);
-    white-space: nowrap;
-  }
-
   .icon-btn--danger:hover {
     background: var(--gx-danger-soft);
     color: var(--gx-danger);
   }
 
-  .add-user-btn:focus-visible,
   .icon-btn:focus-visible {
     outline: 2px solid var(--gx-org-primary-500);
     outline-offset: 2px;
@@ -1392,7 +1369,6 @@ SPDX-License-Identifier: Apache-2.0
 
   /* Without an explicit size these collapse to width:0 as flex items and the
      button renders empty. */
-  .add-user-btn svg,
   .icon-btn svg {
     width: 16px;
     height: 16px;

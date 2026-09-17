@@ -309,30 +309,25 @@
           "enabled": "مفعّل",
           "disabled": "معطّل",
           "enableVerb": "تفعيل",
-          "disableVerb": "تعطيل"
+          "disableVerb": "تعطيل",
+          "active": "نشط",
+          "inactive": "غير نشط"
         },
         "actions": {
           "retry": "إعادة المحاولة",
           "deleting": "جارٍ الحذف…",
           "saving": "جارٍ الحفظ…",
-          "validating": "جارٍ التحقق…"
+          "validating": "جارٍ التحقق…",
+          "configure": "تهيئة"
         },
         "messages": {
           "loading": "جارٍ تحميل مزودي OAuth...",
           "empty": "لم يتم تكوين مزودي OAuth بعد.",
           "loadError": "تعذر تحميل مزودي SSO",
           "loadProviderError": "تعذر تحميل المزود",
-          "noDomains": "لا توجد نطاقات",
-          "domainBannerOne": "لا يقيّد {name} تسجيل الدخول حسب نطاق البريد الإلكتروني، لذا يمكن لأي مستخدم لديه حساب صالح الانضمام. عدّل المزوّد لتقييد الوصول على نطاقات محددة للشركة.",
-          "domainBannerAll": "لا تقيّد {names} تسجيل الدخول حسب نطاق البريد الإلكتروني، لذا يمكن لأي مستخدم لديه حساب صالح الانضمام. عدّل أحد المزوّدين لتقييد الوصول على نطاقات محددة للشركة.",
-          "loadingProvider": "جارٍ تحميل المزود..."
-        },
-        "table": {
-          "caption": "تكوين مزودي OAuth",
-          "provider": "المزود",
-          "allowedDomains": "النطاقات المسموح بها",
-          "status": "الحالة",
-          "actions": "الإجراءات"
+          "loadingProvider": "جارٍ تحميل المزود...",
+          "emptyTitle": "لا يوجد موفّرو هوية متاحون",
+          "errorTitle": "تعذّر تحميل موفّري الهوية"
         },
         "modals": {
           "confirmDeleteTitle": "تأكيد الحذف",
@@ -376,11 +371,24 @@
           "hideClientSecret": "إخفاء سر العميل",
           "showClientSecret": "إظهار سر العميل",
           "removeDomain": "إزالة النطاق {domain}",
-          "moreDomains": "{count} نطاقات إضافية: {domains}"
+          "moreDomains": "{count} نطاقات إضافية: {domains}",
+          "editDomains": "تعديل النطاقات المسموح بها لـ {name}"
         },
         "selfProvisioning": {
           "label": "التوفير التلقائي",
           "hint": "إنشاء الحسابات تلقائياً عند تسجيل الدخول لأول مرة"
+        },
+        "card": {
+          "allowedDomains": "النطاقات المسموح بها",
+          "allDomains": "جميع النطاقات",
+          "unrestricted": "غير مقيّد — يمكن لأي مستخدم تسجيل الدخول"
+        },
+        "descriptions": {
+          "azure": "Microsoft Entra ID — تسجيل الدخول بحسابات العمل أو الدراسة",
+          "google": "تسجيل الدخول بحسابات Google",
+          "okta": "تسجيل دخول موحّد للمؤسسات عبر Okta",
+          "saml": "اربط أي موفّر هوية متوافق مع SAML 2.0",
+          "generic": "تسجيل الدخول عبر {name}"
         }
       }
     },
@@ -703,6 +711,7 @@
       "failedToLoad": "تعذر تحميل قواعد الوصول",
       "failedToLoadTools": "تعذر تحميل وصول الأداة",
       "defaultAccessTitle": "الوصول الافتراضي",
+      "defaultAccessDesc": "اختر من يمكنه استخدام هذا الخادم افتراضيًا.",
       "defaultAccessUpdated": "تم تحديث الوصول الافتراضي",
       "failedToUpdateDefault": "تعذر تحديث الوصول الافتراضي",
       "defaultAccess": {
@@ -715,6 +724,7 @@
       },
       "accessRules": "قواعد الوصول",
       "addRule": "إضافة قاعدة",
+      "addRules": "إضافة قواعد",
       "adding": "جارٍ الإضافة...",
       "ruleAdded": "تمت إضافة قاعدة الوصول",
       "failedToAddRule": "تعذر إضافة قاعدة الوصول",
@@ -757,9 +767,11 @@
       "serverTools": "أدوات الخادم ({count} إجمالي)",
       "noTools": "لا توجد أدوات متاحة",
       "noToolsHint": "زامن الأدوات من قائمة الخوادم لرؤيتها هنا",
+      "notConnected": "غير متصل",
+      "notConnectedHint": "اتصل بالخادم لعرض الأدوات المتاحة",
       "configureTool": "تكوين الوصول",
       "toolStatus": {
-        "inherit": "موروث",
+        "proxyFallback": "وكيل احتياطي",
         "custom": "{count} قواعد مخصصة",
         "noRules": "لا توجد قواعد",
         "customBadge": "مخصص"
@@ -768,7 +780,9 @@
       "inheritFromServerDesc": "استخدام نفس قواعد الوصول المكونة على مستوى الخادم",
       "customRules": "قواعد مخصصة",
       "customRulesDesc": "تكوين قواعد وصول محددة لهذه الأداة",
-      "noCustomRules": "لا توجد قواعد مخصصة. أضف قواعد لتقييد الوصول إلى هذه الأداة.",
+      "toolAccessSubtitle": "اختر كيفية إدارة الوصول إلى هذه الأداة.",
+      "noCustomRulesTitle": "لا توجد قواعد مخصصة",
+      "noCustomRulesHint": "أضف قواعد لتقييد الوصول إلى هذه الأداة.",
       "toolAccessSaved": "تم حفظ وصول الأداة",
       "failedToSaveToolAccess": "تعذر حفظ وصول الأداة",
       "save": "حفظ",
@@ -1425,10 +1439,10 @@
     "connectEngine": "توصيل المحرك",
     "noResults": "لا توجد محركات تطابق «{query}».",
     "filters": {
-      "label": "تصفية المحركات",
+      "label": "تصفية المحركات حسب الحالة",
       "all": "الكل",
-      "active": "نشطة",
-      "available": "متاحة"
+      "connected": "متصلة",
+      "attention": "تحتاج إلى انتباه"
     },
     "stats": {
       "connectedValue": "{connected} من {total}",
@@ -1461,7 +1475,76 @@
       "connecting": "جارٍ التوصيل...",
       "connected": "تم توصيل {name} بنجاح"
     },
-    "noFilterResults": "لا توجد محركات في هذا العرض."
+    "noFilterResults": "لا توجد محركات في هذا العرض.",
+    "sectionTitle": "محركاتك",
+    "view": {
+      "label": "تخطيط المحركات",
+      "grid": "شبكة",
+      "list": "قائمة"
+    },
+    "table": {
+      "engine": "المحرك",
+      "status": "الحالة",
+      "defaultModel": "النموذج الافتراضي",
+      "whitelist": "القائمة المسموح بها",
+      "enabled": "مفعّل",
+      "actions": "الإجراءات",
+      "mostUsed": "الأكثر استخدامًا",
+      "configure": "تهيئة",
+      "connect": "ربط"
+    },
+    "browse": {
+      "cta": "استعراض المزوّدين",
+      "title": "استعراض المزوّدين",
+      "subtitle": "{count} مزوّدًا متاحًا للربط",
+      "searchPlaceholder": "البحث عن المزوّدين…",
+      "categoryLabel": "تصفية المزوّدين حسب الفئة",
+      "showing": "عرض {count} من أصل {total} مزوّدًا",
+      "modelsAvailable": "{count} نموذجًا متاحًا",
+      "showMore": "+ عرض {count} إضافية",
+      "showLess": "عرض أقل",
+      "noResults": "لا يوجد مزوّد يطابق «{query}».",
+      "allConnected": "جميع المزوّدين المتاحين مرتبطون بالفعل.",
+      "categories": {
+        "major": "المزوّدون الرئيسيون",
+        "aggregators": "المجمّعات",
+        "regional": "إقليميون",
+        "voice": "الصوت والمقاطع الصوتية",
+        "image": "الصور والفيديو",
+        "embeddings": "التضمينات والبحث",
+        "other": "مزوّدون آخرون"
+      }
+    },
+    "custom": {
+      "cta": "إضافة محرك مخصّص",
+      "title": "إضافة محرك مخصّص",
+      "subtitle": "اربط نقطة نهاية متوافقة مع OpenAI",
+      "submit": "إضافة المحرك",
+      "adding": "جارٍ الإضافة…",
+      "fields": {
+        "name": "الاسم المعروض",
+        "nameHelper": "يظهر على بطاقة المحرك وفي كل مكان يظهر فيه هذا المحرك.",
+        "namePlaceholder": "مثال: عنقود vLLM الداخلي",
+        "baseUrl": "تجاوز عنوان URL الأساسي",
+        "baseUrlHelper": "نقطة النهاية التي ستستدعيها Grengin بدلاً من عنوان URL الافتراضي للمزوّد.",
+        "plugin": "JSON الخاص بالإضافة",
+        "pluginHelper": "إعدادات المزوّد وقائمة النماذج وقواعد التوجيه وفق مخطط إضافات OpenAI.",
+        "compatible": "متوافق مع OpenAI",
+        "optional": "اختياري",
+        "apiKeyHelper": "اتركه فارغًا إذا كانت نقطة النهاية هذه لا تتطلب مصادقة."
+      },
+      "errors": {
+        "nameRequired": "أدخل اسمًا معروضًا لهذا المحرك.",
+        "baseUrlRequired": "أدخل عنوان URL الأساسي الذي يجب أن يستدعيه هذا المحرك.",
+        "baseUrlInvalid": "يجب أن يبدأ عنوان URL الأساسي بـ http:// أو https://.",
+        "pluginRequired": "أدخل JSON الخاص بالإضافة لهذا المحرك.",
+        "pluginInvalid": "JSON الخاص بالإضافة ليس كائن JSON صالحًا."
+      },
+      "toasts": {
+        "added": "تمت إضافة {name} بنجاح",
+        "failed": "تعذّرت إضافة المحرك المخصّص"
+      }
+    }
   },
   "adminOverview": {
     "title": "نظرة عامة",

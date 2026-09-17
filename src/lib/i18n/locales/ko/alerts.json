@@ -11,6 +11,11 @@
     "loadMore": "더 보기",
     "unread": "읽지 않음",
     "loadError": "알림을 불러오지 못했습니다",
-    "markReadError": "알림을 읽음으로 표시할 수 없습니다"
+    "markReadError": "알림을 읽음으로 표시할 수 없습니다",
+    "needsAttention": "주의 필요",
+    "earlier": "이전",
+    "markAllRead": "모두 읽음으로 표시",
+    "markAllReadError": "모든 알림을 읽음으로 표시할 수 없습니다",
+    "reviewBudget": "예산 검토"
   }
 }

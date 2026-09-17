@@ -11,6 +11,11 @@
     "loadMore": "さらに読み込む",
     "unread": "未読",
     "loadError": "アラートの読み込みに失敗しました",
-    "markReadError": "アラートを既読にできませんでした"
+    "markReadError": "アラートを既読にできませんでした",
+    "needsAttention": "要対応",
+    "earlier": "それ以前",
+    "markAllRead": "すべて既読にする",
+    "markAllReadError": "すべてのアラートを既読にできませんでした",
+    "reviewBudget": "予算を確認"
   }
 }

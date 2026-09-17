@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import { navigate } from 'svelte-routing';
   import {
     listNotifications,
     markNotificationRead,
@@ -14,7 +15,11 @@ SPDX-License-Identifier: Apache-2.0
   import { ApiError } from '../../api/client.js';
   import { toast } from '../../components/Toaster.svelte';
   import LoadingSpinner from '../../admin/components/LoadingSpinner.svelte';
-  import { getNotificationsState, markNotificationReadLocal } from './index.js';
+  import AlertIcon from './AlertIcon.svelte';
+  import { isBudgetAlert, isUnread, needsAttention, severityOf } from './alertPresentation.js';
+  import { getNotificationsState, markNotificationReadLocal, fetchNotificationFeed } from './index.js';
+  import { permissionsStore } from '../auth/index.js';
+  import { PERMISSIONS } from '../auth/permissions.js';
   import { setPageTitle } from '../../utils/pageTitle';
 
   $effect(() => {
@@ -24,6 +29,9 @@ SPDX-License-Identifier: Apache-2.0
   const PAGE_SIZE = 20;
   const AUTO_READ_VISIBLE_MS = 3000;
   const AUTO_READ_VISIBLE_RATIO = 0.75;
+  /** Mark-all walks the unread list in pages this size and reads them in batches. */
+  const MARK_ALL_PAGE_SIZE = 100;
+  const MARK_ALL_BATCH = 8;
 
   /** IDs we already POSTed read for (UI may still show unread until refetch). */
   const readApiCompletedIds = new Set<string>();
@@ -39,6 +47,8 @@ SPDX-License-Identifier: Apache-2.0
 
   let filter = $state<Filter>('all');
   let initialLoading = $state(true);
+  let markingAll = $state(false);
+  let scrollEl = $state<HTMLElement | undefined>();
   let datasets = $state<Record<Filter, FilterDataset>>({
     all: {
       items: [],
@@ -60,9 +70,27 @@ SPDX-License-Identifier: Apache-2.0
   const activeLoadingMore = $derived(datasets[filter].loadingMore);
   const activeHasMore = $derived(datasets[filter].hasMore);
   const showLoadMoreSentinel = $derived(!initialLoading && activeHasMore);
+  const allTotal = $derived(datasets.all.total);
+  const unreadTotal = $derived(datasets.unread.total);
 
-  function isUnread(n: NotificationItem): boolean {
-    return n.read_at == null || n.read_at === '';
+  /* ".alert-group" — unread alerts and alerts still live for their budget
+     period sit up top; everything seen and out of period is history. */
+  const attentionItems = $derived(activeItems.filter((n) => needsAttention(n)));
+  const earlierItems = $derived(activeItems.filter((n) => !needsAttention(n)));
+
+  /** The "Review Budget" action only makes sense for someone who can open it. */
+  const canReviewBudget = $derived(permissionsStore.hasPermission(PERMISSIONS.departments.view));
+
+  /** ".alert-date" — the design shows a bare day, the full stamp is the tooltip. */
+  function shortDate(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
+  }
+
+  function fullDate(iso: string): string {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? '' : d.toLocaleString();
   }
 
   async function loadInitial(): Promise<void> {
@@ -96,7 +124,7 @@ SPDX-License-Identifier: Apache-2.0
   function handleAlertListScroll(event: Event) {
     const target = event.currentTarget as HTMLElement | null;
     if (!target) return;
-    const nearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 300;
+    const nearBottom = target.scrollHeight - target.scrollTop - target.clientHeight <= 300;
     if (nearBottom && !initialLoading && !activeLoadingMore && activeHasMore) {
       loadMore();
     }
@@ -128,6 +156,47 @@ SPDX-License-Identifier: Apache-2.0
       target.loadingMore = false;
       await tick();
     }
+  }
+
+  /** No bulk endpoint exists, so walk the unread list and read each one. */
+  async function markAllAsRead(): Promise<void> {
+    if (markingAll || unreadTotal === 0) return;
+    markingAll = true;
+
+    try {
+      const ids: string[] = [];
+      let offset = 0;
+      for (;;) {
+        const { notifications, total } = await listNotifications({
+          limit: MARK_ALL_PAGE_SIZE,
+          offset,
+          unread_only: true,
+        });
+        ids.push(...notifications.map((n) => n.id));
+        offset += notifications.length;
+        if (notifications.length === 0 || ids.length >= total) break;
+      }
+
+      for (let i = 0; i < ids.length; i += MARK_ALL_BATCH) {
+        const batch = ids.slice(i, i + MARK_ALL_BATCH);
+        const results = await Promise.allSettled(batch.map((id) => markNotificationRead(id)));
+        const rejected = results.find((r) => r.status === 'rejected');
+        if (rejected) throw (rejected as PromiseRejectedResult).reason;
+        batch.forEach((id) => readApiCompletedIds.add(id));
+      }
+
+      await Promise.all([loadInitial(), fetchNotificationFeed()]);
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : $_('alerts.markAllReadError');
+      toast.error(msg);
+      void loadInitial();
+    } finally {
+      markingAll = false;
+    }
+  }
+
+  function openBudget(): void {
+    navigate('/admin/departments');
   }
 
   /** When unread row is ≥75% visible for 3s, POST read then disconnect (no local UI updates). */
@@ -218,167 +287,479 @@ SPDX-License-Identifier: Apache-2.0
     void loadInitial();
   });
 
+  /* The feed scrolls inside this page, so a first page that does not fill the
+     viewport would leave the reader with nothing to scroll and the rest of the
+     list unreachable — keep pulling until it overflows or the list runs out. */
+  $effect(() => {
+    void activeItems.length;
+    void activeLoadingMore;
+    void initialLoading;
+    if (!scrollEl || initialLoading || activeLoadingMore || !activeHasMore) return;
+    if (scrollEl.scrollHeight <= scrollEl.clientHeight + 1) {
+      void loadMore();
+    }
+  });
+
   /** Update list when stream toast is received. */
   $effect(() => {
     const fromStream = getNotificationsState().streamToast;
     if (fromStream == null) return;
     void loadInitial();
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   });
-
 </script>
 
-<svelte:window on:scroll={handleAlertListScroll} />
-<div class="alerts-page surface-elevated" role="main" aria-label={$_('alerts.title') || 'Alerts'}>
-  <header class="alerts-header">
-    <h1 class="alerts-title">{$_('alerts.title')}</h1>
-    <p class="alerts-subtitle">{$_('alerts.subtitle')}</p>
-  </header>
-
-  <div class="filter-row" role="group" aria-label={$_('alerts.filterLabel') || 'Filter alerts'}>
-    <button
-      type="button"
-      class="filter-btn"
-      class:active={filter === 'all'}
-      onclick={() => setFilter('all')}
-      aria-label={$_('alerts.filterAll')}
-      aria-pressed={filter === 'all'}
+{#snippet alertCard(n: NotificationItem, group: 'attention' | 'earlier')}
+  {@const unread = isUnread(n)}
+  {@const severity = severityOf(n)}
+  <li>
+    <div
+      class="alert-card"
+      class:alert-card--tinted={group === 'attention'}
+      class:alert-card--warning={group === 'attention' && severity === 'warning'}
+      class:alert-card--unread={unread}
+      use:autoReadOnVisible={unread ? n.id : null}
+      aria-label={`${n.title}${n.body ? ': ' + n.body : ''}`}
     >
-      {$_('alerts.filterAll')}
-    </button>
-    <button
-      type="button"
-      class="filter-btn"
-      class:active={filter === 'unread'}
-      onclick={() => setFilter('unread')}
-      aria-label={$_('alerts.filterUnread')}
-      aria-pressed={filter === 'unread'}
-    >
-      {$_('alerts.filterUnread')}
-    </button>
-  </div>
-
-  {#if initialLoading}
-    <div class="loading-wrap" role="status" aria-live="polite" aria-label={$_('alerts.loading') || 'Loading alerts'}>
-      <LoadingSpinner size="md" />
+      <AlertIcon item={n} size={40} muted={group === 'earlier'} />
+      <div class="alert-content">
+        <div class="alert-title-row">
+          {#if unread}
+            <span class="new-dot" aria-hidden="true"></span>
+          {/if}
+          <span class="alert-title">{n.title}</span>
+        </div>
+        {#if n.body}
+          <p class="alert-desc">{n.body}</p>
+        {/if}
+        {#if isBudgetAlert(n) && canReviewBudget}
+          <button type="button" class="action-link" onclick={openBudget}>
+            {$_('alerts.reviewBudget')}
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M5 3.5 9 7l-4 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        {/if}
+      </div>
+      <time class="alert-date" datetime={n.created_at} title={fullDate(n.created_at)}>
+        {shortDate(n.created_at)}
+      </time>
     </div>
-  {:else if activeItems.length === 0}
-    <div class="surface-card empty-card" role="status" aria-label={$_('alerts.empty') || 'No alerts found'}>
-      <p class="muted">{$_('alerts.empty')}</p>
+  </li>
+{/snippet}
+
+<div
+  class="alerts-page"
+  role="main"
+  aria-label={$_('alerts.title') || 'Alerts'}
+  bind:this={scrollEl}
+  onscroll={handleAlertListScroll}
+>
+  <div class="alerts-main">
+    <header class="header-row">
+      <div class="title-col">
+        <h1 class="page-title">{$_('alerts.title')}</h1>
+        <p class="page-sub">{$_('alerts.subtitle')}</p>
+      </div>
+    </header>
+
+    <div class="tabs-row">
+      <div class="alert-tabs" role="group" aria-label={$_('alerts.filterLabel') || 'Filter alerts'}>
+        <button
+          type="button"
+          class="alert-tab"
+          class:alert-tab--selected={filter === 'all'}
+          aria-pressed={filter === 'all'}
+          onclick={() => setFilter('all')}
+        >
+          {$_('alerts.filterAll')}
+          {#if allTotal > 0}<span class="tab-count">{allTotal}</span>{/if}
+        </button>
+        <button
+          type="button"
+          class="alert-tab"
+          class:alert-tab--selected={filter === 'unread'}
+          aria-pressed={filter === 'unread'}
+          onclick={() => setFilter('unread')}
+        >
+          {$_('alerts.filterUnread')}
+        </button>
+      </div>
+
+      {#if unreadTotal > 0}
+        <button
+          type="button"
+          class="mark-read-btn"
+          onclick={markAllAsRead}
+          disabled={markingAll}
+        >
+          {#if markingAll}<span class="btn-spinner" aria-hidden="true"></span>{/if}
+          {$_('alerts.markAllRead')}
+        </button>
+      {/if}
     </div>
-  {:else}
-    <ul
-      class="alert-list"
-      role="list"
-      aria-label={$_('alerts.notificationsList') || 'Notifications list'}
-    >
-      {#each activeItems as n (n.id)}
-        <li>
-          <div
-            class="surface-card-interactive alert-row"
-            class:unread={isUnread(n)}
-            use:autoReadOnVisible={isUnread(n) ? n.id : null}
-            aria-label={`${n.title}${n.body ? ': ' + n.body : ''}`}
-          >
-            <div class="alert-row-inner">
-              <div class="alert-row-main">
-                <div class="alert-row-top">
-                  <span class="alert-title-wrap">
-                    {#if isUnread(n)}
-                      <span class="alert-unread-dot" aria-hidden="true"></span>
-                    {/if}
-                    <span class="alert-title">{n.title}</span>
-                  </span>
-                  <time class="alert-time" datetime={n.created_at}>
-                    {new Date(n.created_at).toLocaleString()}
-                  </time>
-                </div>
-                {#if n.body}
-                  <p class="alert-body">{n.body}</p>
-                {/if}
-              </div>
+
+    {#if initialLoading}
+      <div class="loading-wrap" role="status" aria-live="polite" aria-label={$_('alerts.loading') || 'Loading alerts'}>
+        <LoadingSpinner size="md" />
+      </div>
+    {:else if activeItems.length === 0}
+      <div class="empty-card" role="status" aria-label={$_('alerts.empty') || 'No alerts found'}>
+        <p class="empty-text">{$_('alerts.empty')}</p>
+      </div>
+    {:else}
+      <div class="alerts-groups">
+        {#if attentionItems.length > 0}
+          <section class="alert-group">
+            <div class="group-heading">
+              <h2 class="group-heading-label">{$_('alerts.needsAttention')}</h2>
+              <span class="badge-count">{attentionItems.length}</span>
             </div>
-          </div>
-        </li>
-      {/each}
-      {#if showLoadMoreSentinel}
-        <li class="loading-item" aria-live="polite" aria-busy={activeLoadingMore}>
-          <div class="loading-indicator">
+            <ul class="group-items" aria-label={$_('alerts.notificationsList') || 'Notifications list'}>
+              {#each attentionItems as n (n.id)}
+                {@render alertCard(n, 'attention')}
+              {/each}
+            </ul>
+          </section>
+        {/if}
+
+        {#if earlierItems.length > 0}
+          <section class="alert-group">
+            <div class="group-heading">
+              <h2 class="group-heading-label">{$_('alerts.earlier')}</h2>
+              <span class="badge-count">{earlierItems.length}</span>
+            </div>
+            <ul class="group-items" aria-label={$_('alerts.notificationsList') || 'Notifications list'}>
+              {#each earlierItems as n (n.id)}
+                {@render alertCard(n, 'earlier')}
+              {/each}
+            </ul>
+          </section>
+        {/if}
+
+        {#if showLoadMoreSentinel}
+          <div class="loading-item" aria-live="polite" aria-busy={activeLoadingMore}>
             {#if activeLoadingMore}
               <span class="load-more-spinner" aria-hidden="true"></span>
             {/if}
           </div>
-        </li>
-      {/if}
-    </ul>
-  {/if}
+        {/if}
+      </div>
+    {/if}
+  </div>
 </div>
 
 <style>
-  .alerts-page {
-    margin: 0;
-    max-width: none;
-    width: 100%;
-    height: 100%;
-    padding: var(--space-3xl);
+  /* ===== alerts.html, transcribed. Design values that no --gx-* token already
+     carried live in app.css as --gx-alr-*. ===== */
+
+  /* app.css paints every bare <button> as a glass pill — padding, a fill, a
+     radius, an inset shadow, a lift on hover. Every control below is flat, so
+     strip that once here and let each rule paint its own skin. */
+  button {
+    padding: 0;
+    border: 0;
     border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
+    cursor: pointer;
+    transition: none;
+  }
+
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* ".right-col" */
+  .alerts-page {
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    background: var(--gx-page);
+    font-family: var(--gx-font);
     box-sizing: border-box;
+  }
+
+  /* ".main-area" */
+  .alerts-main {
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
+    gap: 32px;
+    padding: 40px 48px;
+    box-sizing: border-box;
   }
 
-  .alerts-header {
-    margin-bottom: var(--space-lg);
-  }
-
-  .alerts-title {
-    margin: 0 0 var(--space-xs);
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-  }
-
-  .alerts-subtitle {
-    margin: 0;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-  }
-
-  .filter-row {
+  /* ".header-row" */
+  .header-row {
     display: flex;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-lg);
+    gap: 6px;
+    align-items: center;
+    align-self: stretch;
   }
 
-  .filter-btn {
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--glass-stroke-dark);
-    background: var(--btn-secondary);
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
+  .title-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  .page-title {
+    margin: 0;
+    font-weight: 800;
+    font-size: 28px;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    color: var(--gx-an-strong);
+  }
+
+  .page-sub {
+    margin: 0;
     font-weight: 500;
-    cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--gx-slate-500);
   }
 
-  .filter-btn:hover {
-    background: var(--btn-tertiary);
-    color: var(--text-primary);
+  /* ".tabs-row" */
+  .tabs-row {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    flex-wrap: wrap;
   }
 
-  .filter-btn.active {
-    border-color: var(--color-accent-500, var(--brand));
-    color: var(--brand);
-    background: var(--btn-tertiary);
+  .alert-tabs {
+    height: 41px;
+    border-radius: 10px;
+    background: var(--gx-rule);
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    flex-shrink: 0;
   }
 
-  .muted {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
+  .alert-tab {
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-an-chip-fg);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
   }
 
+  .alert-tab:hover {
+    color: var(--gx-org-slate-800);
+  }
+
+  .alert-tab--selected {
+    background: var(--gx-card);
+    box-shadow: var(--gx-alr-tab-shadow);
+    color: var(--gx-org-primary-500);
+    font-weight: 600;
+  }
+
+  .tab-count {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mark-read-btn {
+    height: 37px;
+    border-radius: 8px;
+    background: var(--gx-org-primary-500);
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    align-items: center;
+    flex-shrink: 0;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 100%;
+    white-space: nowrap;
+    color: #fff;
+    transition: background-color 120ms ease;
+  }
+
+  .mark-read-btn:hover:not(:disabled) {
+    background: var(--gx-ac-cta-hover);
+  }
+
+  .alert-tab:focus-visible,
+  .mark-read-btn:focus-visible,
+  .action-link:focus-visible {
+    outline: 2px solid var(--gx-an-dot);
+    outline-offset: 2px;
+  }
+
+  /* ".alerts-groups" */
+  .alerts-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    align-self: stretch;
+  }
+
+  .alert-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-self: stretch;
+  }
+
+  .group-heading {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .group-heading-label {
+    margin: 0;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.3;
+    color: var(--gx-org-slate-800);
+  }
+
+  .badge-count {
+    border-radius: 12px;
+    background: var(--gx-hair);
+    padding: 2px 6px;
+    font-weight: 600;
+    font-size: 11px;
+    line-height: 1.3;
+    color: var(--gx-ac-slate-600);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .group-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-self: stretch;
+  }
+
+  /* ".alert-card" — the tint belongs to the top group: amber for a low budget,
+     blue for everything else. The "Earlier" group is plain white with a hairline
+     ring, and its icon tiles go neutral (see AlertIcon's `muted`). */
+  .alert-card {
+    border-radius: 12px;
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    align-items: flex-start;
+    align-self: stretch;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    transition: background-color 120ms ease, box-shadow 120ms ease;
+  }
+
+  /* #EFF6FF / #D0E1FD */
+  .alert-card--tinted {
+    background: var(--gx-blue-soft);
+    box-shadow: inset 0 0 0 1px var(--gx-alr-tint-ring);
+  }
+
+  /* #FFFBEB / #FDE68A */
+  .alert-card--warning {
+    background: var(--gx-alr-warn-bg);
+    box-shadow: inset 0 0 0 1px var(--gx-alr-warn-ring);
+  }
+
+  .alert-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  .alert-title-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .new-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gx-an-dot);
+    flex-shrink: 0;
+  }
+
+  .alert-title {
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.35;
+    color: var(--gx-org-slate-800);
+    overflow-wrap: anywhere;
+  }
+
+  .alert-desc {
+    margin: 0;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--gx-ac-slate-600);
+    overflow-wrap: anywhere;
+  }
+
+  .action-link {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    align-self: flex-start;
+    padding: 4px 0;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-an-dot);
+    border-radius: 4px;
+    transition: color 120ms ease;
+  }
+
+  .action-link:hover {
+    color: var(--gx-ac-link);
+  }
+
+  .alert-date {
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--gx-slate-400);
+    flex-shrink: 0;
+    padding-inline-start: 16px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- states ---- */
   .loading-wrap {
     min-height: 280px;
     display: flex;
@@ -387,202 +768,94 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .empty-card {
-    padding: var(--space-xl);
+    border-radius: 12px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    padding: 40px 16px;
     text-align: center;
   }
 
-  .alert-list {
-    list-style: none;
+  .empty-text {
     margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .alert-row {
-    position: relative;
-    width: 100%;
-    text-align: left;
-    padding: 0;
-    display: block;
-    box-sizing: border-box;
-    border: 1px solid color-mix(in oklab, var(--glass-stroke-dark) 85%, transparent);
-    border-radius: var(--radius-xl);
-    background: color-mix(in oklab, var(--btn-secondary) 96%, transparent);
-    overflow: hidden;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 2px 8px rgba(0, 0, 0, 0.04);
-    transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-  }
-
-  .alert-row:hover {
-    background: color-mix(in oklab, var(--btn-tertiary) 90%, transparent);
-    border-color: color-mix(in oklab, var(--brand) 22%, var(--glass-stroke-dark));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 22px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
-  }
-
-  .alert-row.unread::before {
-    content: '';
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 3px;
-    background: linear-gradient(180deg, var(--brand) 0%, color-mix(in oklab, var(--brand) 78%, white) 100%);
-    pointer-events: none;
-  }
-
-  .alert-row.unread {
-    border-color: color-mix(in oklab, var(--brand) 28%, var(--glass-stroke-dark));
-    background: linear-gradient(
-      135deg,
-      color-mix(in oklab, var(--btn-secondary) 88%, rgba(var(--brand-rgb), 0.18)) 0%,
-      color-mix(in oklab, var(--btn-secondary) 93%, transparent) 100%
-    );
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 6px 20px rgba(var(--brand-rgb), 0.1);
-  }
-
-  .alert-row:not(.unread) {
-    background: color-mix(in oklab, var(--btn-secondary) 97%, transparent);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 1px 2px rgba(0, 0, 0, 0.03);
-  }
-
-  .alert-row-inner {
-    display: flex;
-    align-items: flex-start;
-    padding: var(--space-lg) var(--space-xl);
-    min-height: 3.25rem;
-  }
-
-  .alert-row-main {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-
-  .alert-row-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-  }
-
-  .alert-title-wrap {
-    display: inline-flex;
-    align-items: flex-start;
-    gap: var(--space-sm);
-    min-width: 0;
-  }
-
-  .alert-unread-dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: var(--radius-full);
-    background: var(--brand);
-    box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.18);
-    margin-top: 0.25rem;
-    flex: 0 0 auto;
-  }
-
-  .alert-title {
-    font-weight: 600;
-    font-size: 0.9375rem;
-    color: color-mix(in oklab, var(--text-primary) 74%, var(--text-secondary));
-    line-height: 1.35;
-    overflow-wrap: anywhere;
-  }
-
-  .alert-row.unread .alert-title {
-    color: var(--text-primary);
-  }
-
-  .alert-body {
-    margin: 0;
-    font-size: 0.8125rem;
-    color: color-mix(in oklab, var(--text-secondary) 84%, var(--text-primary));
-    line-height: 1.5;
-    line-clamp: 3;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .alert-row.unread .alert-body {
-    color: color-mix(in oklab, var(--text-secondary) 94%, var(--text-primary));
-  }
-
-  .alert-time {
-    flex-shrink: 0;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: color-mix(in oklab, var(--text-secondary) 86%, var(--text-primary));
-    background: color-mix(in oklab, var(--btn-tertiary) 72%, transparent);
-    border: 1px solid color-mix(in oklab, var(--glass-stroke-dark) 80%, transparent);
-    border-radius: var(--radius-full);
-    padding: 0.125rem var(--space-sm);
-    margin-left: var(--space-md);
-  }
-
-  .alert-row.unread .alert-time {
-    color: color-mix(in oklab, var(--text-secondary) 96%, var(--text-primary));
-    background: color-mix(in oklab, rgba(var(--brand-rgb), 0.16) 50%, var(--btn-tertiary));
-    border-color: color-mix(in oklab, var(--brand) 20%, transparent);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gx-slate-500);
   }
 
   .loading-item {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 3rem;
-    padding: var(--space-md) 0;
+    min-height: 48px;
   }
 
-  .loading-indicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .load-more-spinner {
-    width: 1rem;
-    height: 1rem;
-    border: 2px solid var(--glass-stroke-dark);
-    border-top-color: var(--brand);
+  .load-more-spinner,
+  .btn-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--gx-hair);
+    border-top-color: var(--gx-org-primary-500);
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: alertsSpin 0.8s linear infinite;
   }
 
-  @keyframes spin {
+  .btn-spinner {
+    border-color: rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    width: 14px;
+    height: 14px;
+  }
+
+  @keyframes alertsSpin {
     to {
       transform: rotate(360deg);
     }
   }
 
-  @media (max-width: 768px) {
-    .alerts-page {
-      padding: var(--space-xl);
+  @media (prefers-reduced-motion: reduce) {
+    .load-more-spinner,
+    .btn-spinner {
+      animation-duration: 2s;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .alerts-main {
+      padding: 24px;
+      gap: 24px;
     }
 
-    .alert-row-top {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--space-sm);
+    .alerts-groups {
+      gap: 28px;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .alerts-main {
+      padding: 20px 16px;
     }
 
-    .alert-time {
-      margin-left: 0;
+    .page-title {
+      font-size: 22px;
     }
 
-    .alert-row-inner {
-      padding: var(--space-lg);
+    .tabs-row {
+      align-items: stretch;
+    }
+
+    .alert-tabs,
+    .mark-read-btn {
+      flex-grow: 1;
+      justify-content: center;
+    }
+
+    .alert-card {
+      padding: 12px;
+      gap: 12px;
+    }
+
+    .alert-date {
+      padding-inline-start: 8px;
     }
   }
 </style>

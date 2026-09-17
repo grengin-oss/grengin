@@ -309,30 +309,25 @@
           "enabled": "Ativado",
           "disabled": "Desativado",
           "enableVerb": "ativar",
-          "disableVerb": "desativar"
+          "disableVerb": "desativar",
+          "active": "Ativo",
+          "inactive": "Inativo"
         },
         "actions": {
           "retry": "Tentar novamente",
           "deleting": "A eliminar…",
           "saving": "A guardar…",
-          "validating": "A validar…"
+          "validating": "A validar…",
+          "configure": "Configurar"
         },
         "messages": {
           "loading": "A carregar fornecedores OAuth...",
           "empty": "Ainda não existem fornecedores OAuth configurados.",
           "loadError": "Não foi possível carregar os fornecedores SSO",
           "loadProviderError": "Não foi possível carregar o fornecedor",
-          "noDomains": "Sem domínios",
-          "domainBannerOne": "{name} não restringe o início de sessão por domínio de e-mail, pelo que qualquer utilizador com uma conta válida pode aderir. Edite o fornecedor para limitar o acesso a domínios específicos da empresa.",
-          "domainBannerAll": "{names} não restringem o início de sessão por domínio de e-mail, pelo que qualquer utilizador com uma conta válida pode aderir. Edite um fornecedor para limitar o acesso a domínios específicos da empresa.",
-          "loadingProvider": "A carregar fornecedor..."
-        },
-        "table": {
-          "caption": "Configuração de fornecedores OAuth",
-          "provider": "Fornecedor",
-          "allowedDomains": "Domínios permitidos",
-          "status": "Estado",
-          "actions": "Ações"
+          "loadingProvider": "A carregar fornecedor...",
+          "emptyTitle": "Nenhum provedor de identidade disponível",
+          "errorTitle": "Não foi possível carregar os provedores de identidade"
         },
         "modals": {
           "confirmDeleteTitle": "Confirmar eliminação",
@@ -376,11 +371,24 @@
           "hideClientSecret": "Ocultar segredo do cliente",
           "showClientSecret": "Mostrar segredo do cliente",
           "removeDomain": "Remover domínio {domain}",
-          "moreDomains": "Mais {count} domínios: {domains}"
+          "moreDomains": "Mais {count} domínios: {domains}",
+          "editDomains": "Editar domínios permitidos de {name}"
         },
         "selfProvisioning": {
           "label": "Autoprovisionamento",
           "hint": "Criar contas automaticamente no primeiro início de sessão"
+        },
+        "card": {
+          "allowedDomains": "Domínios permitidos",
+          "allDomains": "Todos os domínios",
+          "unrestricted": "Sem restrição — qualquer usuário pode entrar"
+        },
+        "descriptions": {
+          "azure": "Microsoft Entra ID — entre com contas corporativas ou de estudante",
+          "google": "Entre com contas do Google",
+          "okta": "SSO corporativo via Okta",
+          "saml": "Conecte qualquer provedor de identidade compatível com SAML 2.0",
+          "generic": "Entre com {name}"
         }
       }
     },
@@ -703,6 +711,7 @@
       "failedToLoad": "Falha ao carregar regras de acesso",
       "failedToLoadTools": "Falha ao carregar o acesso às ferramentas",
       "defaultAccessTitle": "Acesso predefinido",
+      "defaultAccessDesc": "Escolha quem pode usar este servidor por predefinição.",
       "defaultAccessUpdated": "Acesso predefinido atualizado",
       "failedToUpdateDefault": "Falha ao atualizar o acesso predefinido",
       "defaultAccess": {
@@ -715,6 +724,7 @@
       },
       "accessRules": "Regras de acesso",
       "addRule": "Adicionar regra",
+      "addRules": "Adicionar regras",
       "adding": "A adicionar...",
       "ruleAdded": "Regra de acesso adicionada",
       "failedToAddRule": "Falha ao adicionar a regra de acesso",
@@ -757,9 +767,11 @@
       "serverTools": "Ferramentas do servidor ({count} no total)",
       "noTools": "Nenhuma ferramenta disponível",
       "noToolsHint": "Sincronize as ferramentas a partir da lista de servidores para as ver aqui",
+      "notConnected": "Sem ligação",
+      "notConnectedHint": "Ligue o servidor para ver as ferramentas disponíveis",
       "configureTool": "Configurar acesso",
       "toolStatus": {
-        "inherit": "Herdar",
+        "proxyFallback": "Proxy de reserva",
         "custom": "{count} regras personalizadas",
         "noRules": "Sem regras",
         "customBadge": "Personalizado"
@@ -768,7 +780,9 @@
       "inheritFromServerDesc": "Usar as mesmas regras de acesso configuradas ao nível do servidor",
       "customRules": "Regras personalizadas",
       "customRulesDesc": "Configurar regras de acesso específicas para esta ferramenta",
-      "noCustomRules": "Sem regras personalizadas. Adicione regras para restringir o acesso a esta ferramenta.",
+      "toolAccessSubtitle": "Escolha como o acesso a esta ferramenta é gerido.",
+      "noCustomRulesTitle": "Sem regras personalizadas",
+      "noCustomRulesHint": "Adicione regras para restringir o acesso a esta ferramenta.",
       "toolAccessSaved": "Acesso às ferramentas guardado",
       "failedToSaveToolAccess": "Falha ao guardar o acesso às ferramentas",
       "save": "Guardar",
@@ -1425,10 +1439,10 @@
     "connectEngine": "Conectar motor",
     "noResults": "Nenhum motor corresponde a “{query}”.",
     "filters": {
-      "label": "Filtrar motores",
+      "label": "Filtrar motores por estado",
       "all": "Todos",
-      "active": "Ativos",
-      "available": "Disponíveis"
+      "connected": "Conectados",
+      "attention": "Precisam de atenção"
     },
     "stats": {
       "connectedValue": "{connected} de {total}",
@@ -1461,7 +1475,76 @@
       "connecting": "Conectando...",
       "connected": "{name} conectado com sucesso"
     },
-    "noFilterResults": "Nenhum motor nesta visualização."
+    "noFilterResults": "Nenhum motor nesta visualização.",
+    "sectionTitle": "Seus motores",
+    "view": {
+      "label": "Disposição dos motores",
+      "grid": "Grade",
+      "list": "Lista"
+    },
+    "table": {
+      "engine": "Motor",
+      "status": "Estado",
+      "defaultModel": "Modelo padrão",
+      "whitelist": "Lista de permissões",
+      "enabled": "Ativado",
+      "actions": "Ações",
+      "mostUsed": "MAIS USADO",
+      "configure": "Configurar",
+      "connect": "Conectar"
+    },
+    "browse": {
+      "cta": "Explorar provedores",
+      "title": "Explorar provedores",
+      "subtitle": "{count} provedores disponíveis para conectar",
+      "searchPlaceholder": "Pesquisar provedores…",
+      "categoryLabel": "Filtrar provedores por categoria",
+      "showing": "Mostrando {count} de {total} provedores",
+      "modelsAvailable": "{count} modelos disponíveis",
+      "showMore": "+ Mostrar mais {count}",
+      "showLess": "Mostrar menos",
+      "noResults": "Nenhum provedor corresponde a “{query}”.",
+      "allConnected": "Todos os provedores disponíveis já estão conectados.",
+      "categories": {
+        "major": "Principais provedores",
+        "aggregators": "Agregadores",
+        "regional": "Regionais",
+        "voice": "Voz e áudio",
+        "image": "Imagem e vídeo",
+        "embeddings": "Embeddings e pesquisa",
+        "other": "Outros provedores"
+      }
+    },
+    "custom": {
+      "cta": "Adicionar motor personalizado",
+      "title": "Adicionar motor personalizado",
+      "subtitle": "Conecte um endpoint compatível com OpenAI",
+      "submit": "Adicionar motor",
+      "adding": "Adicionando…",
+      "fields": {
+        "name": "Nome de exibição",
+        "nameHelper": "Exibido no cartão do motor e em todos os lugares onde este motor aparece.",
+        "namePlaceholder": "ex.: Cluster vLLM interno",
+        "baseUrl": "Substituição da URL base",
+        "baseUrlHelper": "O endpoint que a Grengin chamará em vez da URL padrão do provedor.",
+        "plugin": "JSON do plugin",
+        "pluginHelper": "Configuração do provedor, lista de modelos e regras de roteamento no esquema de plugin da OpenAI.",
+        "compatible": "Compatível com OpenAI",
+        "optional": "Opcional",
+        "apiKeyHelper": "Deixe em branco se este endpoint não exigir autenticação."
+      },
+      "errors": {
+        "nameRequired": "Informe um nome de exibição para este motor.",
+        "baseUrlRequired": "Informe a URL base que este motor deve chamar.",
+        "baseUrlInvalid": "A URL base deve começar com http:// ou https://.",
+        "pluginRequired": "Informe o JSON do plugin para este motor.",
+        "pluginInvalid": "O JSON do plugin não é um objeto JSON válido."
+      },
+      "toasts": {
+        "added": "{name} adicionado com sucesso",
+        "failed": "Falha ao adicionar o motor personalizado"
+      }
+    }
   },
   "adminOverview": {
     "title": "Visão Geral",

@@ -133,7 +133,11 @@ SPDX-License-Identifier: Apache-2.0
     id: "organization",
     path: "/admin/departments",
     label: $_("sidebar.organization"),
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>',
+    // Drawn on a 12-unit grid, rendered at the 20px every other nav icon uses.
+    // The source carries a flat #6B7281 and a full-bounds clipPath; the fill is
+    // currentColor here so the active/hover nav ink reaches it, and the clip is
+    // dropped so the id cannot collide once the string is injected.
+    icon: '<svg width="20" height="20" viewBox="0 0 12 12" fill="none"><path d="M8.00056 10.5V9.5C8.00056 8.96957 7.78983 8.46086 7.41473 8.08579C7.03962 7.71071 6.53088 7.5 6.0004 7.5H3.00016C2.46968 7.5 1.96094 7.71071 1.58583 8.08579C1.21073 8.46086 1 8.96957 1 9.5V10.5M8.00056 1.56396C8.42947 1.67515 8.80932 1.9256 9.08049 2.276C9.35165 2.6264 9.49878 3.05691 9.49878 3.49996C9.49878 3.94302 9.35165 4.37353 9.08049 4.72393C8.80932 5.07433 8.42947 5.32478 8.00056 5.43596M11.0008 10.4999V9.49994C11.0005 9.05681 10.853 8.62633 10.5814 8.2761C10.3099 7.92587 9.92978 7.67573 9.50068 7.56494M6.50044 3.5C6.50044 4.60457 5.60494 5.5 4.50028 5.5C3.39562 5.5 2.50012 4.60457 2.50012 3.5C2.50012 2.39543 3.39562 1.5 4.50028 1.5C5.60494 1.5 6.50044 2.39543 6.50044 3.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
     type: "item",
   };
   const aiEnginesMenuItem: AdminMenuItem = {
@@ -896,7 +900,7 @@ SPDX-License-Identifier: Apache-2.0
           <span class="user-text">
             <span class="user-name">{user?.name || $_("sidebar.user")}</span>
             {#if user?.email}
-              <span class="user-plan">{user.email}</span>
+              <span class="user-plan" title={user.email}>{user.email}</span>
             {/if}
           </span>
         {/if}
@@ -1742,10 +1746,14 @@ SPDX-License-Identifier: Apache-2.0
     text-align: start;
   }
 
+  /* line-height must leave room for descenders: `overflow: hidden` (needed for
+     the ellipsis) clips whatever spills out of the line box, and at line-height:1
+     the "g" tails in an address like agrani@grengin.com were sliced off.
+     16 + 2 (gap) + 14 fills the row's 32px content box exactly. */
   .user-name {
     font-size: 13px;
     font-weight: 600;
-    line-height: 1;
+    line-height: 16px;
     color: var(--gx-ink);
     white-space: nowrap;
     overflow: hidden;
@@ -1755,7 +1763,7 @@ SPDX-License-Identifier: Apache-2.0
   .user-plan {
     font-size: 11px;
     font-weight: 400;
-    line-height: 1;
+    line-height: 14px;
     color: var(--gx-dim);
     white-space: nowrap;
     overflow: hidden;

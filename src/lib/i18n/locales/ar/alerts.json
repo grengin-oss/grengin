@@ -11,6 +11,11 @@
     "loadMore": "تحميل المزيد",
     "unread": "غير مقروء",
     "loadError": "تعذر تحميل التنبيهات",
-    "markReadError": "تعذر تحديد التنبيه كمقروء"
+    "markReadError": "تعذر تحديد التنبيه كمقروء",
+    "needsAttention": "يتطلب انتباهاً",
+    "earlier": "سابقاً",
+    "markAllRead": "تحديد الكل كمقروء",
+    "markAllReadError": "تعذر تحديد جميع التنبيهات كمقروءة",
+    "reviewBudget": "مراجعة الميزانية"
   }
 }

@@ -16,15 +16,6 @@ SPDX-License-Identifier: Apache-2.0
 
   let { rule, inherited = false, deleting = false, onDelete }: Props = $props();
 
-  const typeIcon = $derived(() => {
-    switch (rule.access_type) {
-      case 'role': return 'role';
-      case 'department': return 'department';
-      case 'user': return 'user';
-      default: return 'user';
-    }
-  });
-
   const displayName = $derived(() => {
     switch (rule.access_type) {
       case 'role': return rule.role_name || rule.role_id || '';
@@ -51,78 +42,48 @@ SPDX-License-Identifier: Apache-2.0
       default: return rule.access_type;
     }
   });
-
-  const displayId = $derived(() => {
-    switch (rule.access_type) {
-      case 'role': return rule.role_id || '';
-      case 'department': return rule.department_id || '';
-      case 'user': return rule.user_id || '';
-      default: return '';
-    }
-  });
 </script>
 
-<div class="rule-card" class:rule-card--inherited={inherited}>
-  <div class="rule-main">
-    <div class="rule-icon" class:rule-icon--role={rule.access_type === 'role'} class:rule-icon--department={rule.access_type === 'department'} class:rule-icon--user={rule.access_type === 'user'}>
-      {#if rule.access_type === 'role'}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        </svg>
-      {:else if rule.access_type === 'department'}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-          <polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
-      {:else}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
-        </svg>
-      {/if}
-    </div>
-    <div class="rule-content">
-      <div class="rule-header">
-        <span class="rule-name" title={displayName()}>{displayName()}</span>
-        {#if rule.access_type === 'department' && rule.inherit_departments}
-          <span class="rule-badge">{$_('admin.mcpAccess.includesSubDepts')}</span>
-        {/if}
-      </div>
-      <div class="rule-meta">
-        <span class="rule-type">{typeLabel()}</span>
-        {#if displayId()}
-          <span class="rule-separator">•</span>
-          <span class="rule-id" title={displayId()}>ID: {displayId().substring(0, 8)}&hellip;</span>
-        {/if}
-      </div>
-    </div>
+<!-- ".rule-row" — mcp-server-detail.html -->
+<div class="rule-row" class:rule-row--inherited={inherited}>
+  <div class="rule-row-left">
+    <span class="rule-kind">{typeLabel()}</span>
+    <span class="rule-name" title={displayName()}>{displayName()}</span>
+    {#if rule.access_type === 'department' && rule.inherit_departments}
+      <span class="rule-sub">{$_('admin.mcpAccess.includesSubDepts')}</span>
+    {/if}
   </div>
-  <div class="rule-actions">
+  <div class="rule-row-right">
     <span
-      class="permission-badge"
-      class:permission-badge--full={rule.permission === 'full'}
-      class:permission-badge--read-only={rule.permission === 'read_only'}
-      class:permission-badge--denied={rule.permission === 'denied'}
+      class="rule-perm"
+      class:rule-perm--full={rule.permission === 'full'}
+      class:rule-perm--read-only={rule.permission === 'read_only'}
+      class:rule-perm--denied={rule.permission === 'denied'}
     >
-      <span class="permission-dot"></span>
+      <span class="rule-perm-dot"></span>
       {permissionLabel()}
     </span>
     {#if inherited}
-      <span class="inherited-label">{$_('admin.mcpAccess.inherited')}</span>
+      <span class="rule-inherited">{$_('admin.mcpAccess.inherited')}</span>
     {:else if onDelete}
       <button
-        class="rule-delete-btn"
+        class="rule-remove"
+        type="button"
         onclick={() => onDelete?.(rule.id)}
         disabled={deleting}
         aria-label={$_('admin.mcpAccess.removeRule')}
         title={$_('admin.mcpAccess.removeRule')}
       >
         {#if deleting}
-          <span class="rule-delete-spinner"></span>
+          <span class="rule-remove-spinner" aria-hidden="true"></span>
         {:else}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+            <path
+              d="M2.5 3.5h8M5 3.5V2h3v1.5M3.5 3.5 4 11h5l.5-7.5"
+              stroke="currentColor"
+              stroke-width="1.1"
+              fill="none"
+            />
           </svg>
         {/if}
       </button>
@@ -131,217 +92,178 @@ SPDX-License-Identifier: Apache-2.0
 </div>
 
 <style>
-  .rule-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
-    background: rgba(var(--glass-tint), 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-lg);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .rule-card:hover {
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(var(--glass-tint), 0.04);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  }
-
-  .rule-card--inherited {
-    opacity: 0.65;
-    border-style: dashed;
-  }
-
-  .rule-main {
-    display: flex;
-    align-items: center;
-    gap: var(--space-lg);
-    min-width: 0;
-    flex: 1;
-  }
-
-  .rule-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-md);
-    flex-shrink: 0;
-  }
-
-  .rule-icon--role {
-    background: rgba(139, 92, 246, 0.12);
-    color: #a78bfa;
-  }
-
-  .rule-icon--department {
-    background: rgba(59, 130, 246, 0.12);
-    color: #60a5fa;
-  }
-
-  .rule-icon--user {
-    background: rgba(16, 185, 129, 0.12);
-    color: #34d399;
-  }
-
-  .rule-content {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-  }
-
-  .rule-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-  }
-
-  .rule-name {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .rule-badge {
-    font-size: 0.6875rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: rgba(59, 130, 246, 0.1);
-    color: #60a5fa;
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    white-space: nowrap;
-  }
-
-  .rule-meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-  }
-
-  .rule-type {
-    font-weight: 500;
-  }
-
-  .rule-separator {
-    opacity: 0.4;
-    font-size: 0.625rem;
-  }
-
-  .rule-id {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    opacity: 0.8;
-  }
-
-  .rule-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    flex-shrink: 0;
-  }
-
-  .permission-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border-radius: 9999px;
-    border: 1px solid transparent;
-    white-space: nowrap;
-  }
-
-  .permission-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-  }
-
-  .permission-badge--full {
-    background: rgba(16, 185, 129, 0.08);
-    color: #34d399;
-    border-color: rgba(16, 185, 129, 0.2);
-  }
-  .permission-badge--full .permission-dot { background: #34d399; }
-
-  .permission-badge--read-only {
-    background: rgba(59, 130, 246, 0.08);
-    color: #60a5fa;
-    border-color: rgba(59, 130, 246, 0.2);
-  }
-  .permission-badge--read-only .permission-dot { background: #60a5fa; }
-
-  .permission-badge--denied {
-    background: rgba(239, 68, 68, 0.08);
-    color: #f87171;
-    border-color: rgba(239, 68, 68, 0.2);
-  }
-  .permission-badge--denied .permission-dot { background: #f87171; }
-
-  .inherited-label {
-    font-size: 0.6875rem;
-    color: var(--text-tertiary);
-    font-style: italic;
-  }
-
-  .rule-delete-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
+  /* ===== mcp-server-detail.html ".rule-row", transcribed. ===== */
+  button {
     padding: 0;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-tertiary);
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: none;
   }
 
-  .rule-delete-btn:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.08);
-    border-color: rgba(239, 68, 68, 0.4);
-    color: #f87171;
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
   }
 
-  .rule-delete-btn:disabled {
-    opacity: 0.5;
+  button:disabled {
+    opacity: 0.55;
     cursor: not-allowed;
   }
 
-  .rule-delete-spinner {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border: 2px solid rgba(224, 224, 224, 0.4);
-    border-top-color: var(--brand-red);
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
+  .rule-row {
+    border-radius: 10px;
+    background: var(--gx-surface);
+    box-shadow: inset 0 0 0 1px var(--gx-ring-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    font-family: var(--gx-font);
   }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+  /* A tool rule that comes down from the server is shown, not editable. */
+  .rule-row--inherited {
+    opacity: 0.65;
+  }
+
+  .rule-row-left {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .rule-kind {
+    border-radius: 6px;
+    background: var(--gx-an-field-bg);
+    padding: 3px 8px;
+    font-weight: 700;
+    font-size: 10px;
+    line-height: 100%;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--gx-an-sub);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .rule-name {
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-org-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rule-sub {
+    border-radius: 6px;
+    background: var(--gx-ring-soft);
+    padding: 3px 8px;
+    font-weight: 600;
+    font-size: 10px;
+    line-height: 100%;
+    color: var(--gx-tx-accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .rule-row-right {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .rule-perm {
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 100%;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .rule-perm-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  .rule-perm--full {
+    color: var(--gx-mcpd-perm-full);
+  }
+
+  .rule-perm--read-only {
+    color: var(--gx-mcpd-perm-read);
+  }
+
+  .rule-perm--denied {
+    color: var(--gx-mcpd-perm-denied);
+  }
+
+  .rule-inherited {
+    font-size: 11px;
+    color: var(--gx-an-sub);
+    font-style: italic;
+  }
+
+  .rule-remove {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gx-an-sub);
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
+  }
+
+  .rule-remove:hover:not(:disabled) {
+    background: var(--gx-an-field-bg);
+  }
+
+  .rule-remove:focus-visible {
+    outline: 2px solid var(--gx-tx-accent);
+    outline-offset: 2px;
+  }
+
+  .rule-remove-spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--gx-ring-soft);
+    border-top-color: var(--gx-an-sub);
+    border-radius: 50%;
+    animation: rule-spin 0.6s linear infinite;
+  }
+
+  @keyframes rule-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   @media (max-width: 640px) {
-    .rule-card {
+    .rule-row {
       flex-direction: column;
       align-items: flex-start;
-      gap: var(--space-sm);
     }
 
-    .rule-actions {
+    .rule-row-right {
       align-self: flex-end;
     }
   }

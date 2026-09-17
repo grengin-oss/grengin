@@ -11,6 +11,11 @@
     "loadMore": "Load more",
     "unread": "Unread",
     "loadError": "Failed to load alerts",
-    "markReadError": "Could not mark alert as read"
+    "markReadError": "Could not mark alert as read",
+    "needsAttention": "Needs Attention",
+    "earlier": "Earlier",
+    "markAllRead": "Mark all as read",
+    "markAllReadError": "Could not mark all alerts as read",
+    "reviewBudget": "Review Budget"
   }
 }

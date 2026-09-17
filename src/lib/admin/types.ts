@@ -85,6 +85,18 @@ export interface AIEngine {
   updated_at?: string | null;
 }
 
+/**
+ * Payload for creating a custom, OpenAI-compatible engine
+ * (ai-engines.html "Add Custom Engine"). `plugin_config` is the parsed Plugin
+ * JSON from the form — provider config, model list and routing rules.
+ */
+export interface CustomAIEngineCreate {
+  display_name: string;
+  base_url: string;
+  plugin_config: Record<string, unknown>;
+  api_key?: string;
+}
+
 export type McpAuthType = 'none' | 'api_key' | 'oauth2';
 export type McpAuthMode = 'organization' | 'per_user';
 export type McpOAuthProvider = 'atlassian' | 'google' | 'github' | 'slack' | 'custom';

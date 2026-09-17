@@ -333,7 +333,7 @@
      stat card, this teal for the Usage Growth / Cost Trend areas, and
      --gx-an-success for the API Reliability Success bars. */
   --gx-an-area: rgb(34, 139, 119);
-  --gx-an-success: rgb(34, 197, 136);
+  --gx-an-success: #2B916B;
   --gx-an-bar-blue: rgb(95, 141, 206);
   --gx-an-badge-down-bg: rgb(254, 226, 226);
   --gx-an-badge-down-fg: rgb(239, 68, 68);
@@ -501,6 +501,45 @@
   --gx-mcp-card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.0392);
   --gx-mcp-panel-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.0314);
   --gx-mcp-modal-shadow: 0 24px 60px 0 rgba(19, 22, 30, 0.25);
+  /* Row actions. Each control wears its own chip: a 4% tinted fill inside a
+     12.5% ring of the same hue, with the glyph at full strength. The plain pair
+     (sync, edit) sits on the card colour inside --gx-ring-soft (#EFF4FC) with
+     --gx-an-sub ink (#6B7281); test is #2B916B, access #427AC6, delete
+     #B93A3E — all three already carried by existing tokens. */
+  --gx-mcp-act-ok-bg: #22C55E0A;
+  --gx-mcp-act-ok-ring: #22C55E20;
+  --gx-mcp-act-info-bg: #3B67BD0A;
+  --gx-mcp-act-info-ring: #3B67BD20;
+  --gx-mcp-act-danger-bg: #B93A3E0A;
+  --gx-mcp-act-danger-ring: #B93A3E20;
+
+  /* ===== MCP Server detail (mcp-server-detail.html) =====
+     The Access Control / Tool Access view behind a server's shield icon. Only
+     the values no existing --gx-* token already carries; the view otherwise
+     reuses --gx-page / --gx-surface / --gx-card / --gx-hair / --gx-ring-soft /
+     --gx-rule / --gx-org-ink / --gx-an-sub / --gx-an-field-bg / --gx-tx-accent
+     / --gx-ac-cta-hover / --gx-ac-system-fg / --gx-org-brand-alt /
+     --gx-nav-active-fg / --gx-mcp-red and the --gx-mcp-m-* dialog ramp. */
+  /* Segmented tab switcher above the panels. */
+  --gx-mcpd-switch-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.0314);
+  /* Tool rows: the hairline they stack on, and the rounded glyph tile. */
+  --gx-mcpd-tool-edge: rgb(232, 235, 240);
+  --gx-mcpd-tool-icon-bg: rgb(242, 243, 246);
+  --gx-mcpd-tool-icon-fg: rgb(125, 135, 151);
+  --gx-mcpd-tool-ink: rgb(51, 51, 51);
+  --gx-mcpd-ctrl-ring: rgb(221, 226, 234);
+  /* The two tool badges: an amber "proxy fallback" and a green "active". */
+  --gx-mcpd-ok-bg: rgb(230, 246, 240);
+  --gx-mcpd-warn-bg: rgb(254, 243, 199);
+  --gx-mcpd-warn-fg: rgb(146, 64, 14);
+  /* Permission dots, on the rule rows and in the Add Rule dialog. */
+  --gx-mcpd-perm-full: rgb(66, 167, 123);
+  --gx-mcpd-perm-read: rgb(73, 110, 216);
+  --gx-mcpd-perm-denied: rgb(222, 84, 75);
+  /* Dialog: the gradient rule's warm end, the submit hover, the drop shadow. */
+  --gx-mcpd-grad-end: rgb(46, 168, 117);
+  --gx-mcpd-cta-hover: rgb(48, 88, 163);
+  --gx-mcpd-modal-shadow: 0 22px 56px -8px rgba(0, 0, 0, 0.1882);
 
   /* ===== Skills (skills.html) =====
      Again only the values no existing --gx-* token already carries. The page
@@ -578,6 +617,26 @@
   --gx-vdt-peak-fg: rgb(138, 90, 14);
   --gx-vdt-cta: rgb(59, 103, 189);
   --gx-vdt-cta-hover: rgb(48, 89, 168);
+
+  /* ===== Alerts (alerts.html) =====
+     The page is almost entirely existing tokens: --gx-page / --gx-card /
+     --gx-hair (the read card ring and the count badge fill) / --gx-an-strong
+     (page title) / --gx-slate-500 (subtitle) / --gx-rule (the tab track) /
+     --gx-an-chip-fg (idle tab ink) / --gx-org-primary-500 + --gx-ac-cta-hover
+     (the CTA and the selected tab ink) / --gx-org-slate-800 (group and card
+     titles) / --gx-ac-slate-600 (body ink, count-badge ink) / --gx-slate-400
+     (dates) / --gx-blue-soft (the unread card fill and the info tile) /
+     --gx-an-dot (the unread dot and the action links) / --gx-ac-link (link
+     hover) / --gx-org-danger-line + --gx-danger (the critical tile) /
+     --gx-org-warn (amber ink) / --gx-an-insight-bg + --gx-an-axis (a read
+     card's muted tile). New here: the selected tab's shadow, the unread card's
+     ring and the amber warning skin. */
+  --gx-alr-tab-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.0588);
+  --gx-alr-tint-ring: rgb(208, 225, 253);
+  --gx-alr-warn-bg: rgb(255, 251, 235);
+  --gx-alr-warn-ring: rgb(253, 230, 138);
+  --gx-alr-warn-tile: rgb(254, 243, 199);
+  --gx-alr-badge-warn-bg: rgb(255, 237, 213);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -677,7 +736,7 @@
     --gx-an-mint-fg: #7fd3b0;
     --gx-an-green: #34d399;
     --gx-an-area: #2dd4bf;
-    --gx-an-success: #34d399;
+    --gx-an-success: #2B916B;
     --gx-an-bar-blue: #6f9dfb;
     --gx-an-badge-down-bg: rgba(239, 68, 68, 0.18);
     --gx-an-badge-down-fg: #f8a3a3;
@@ -787,6 +846,13 @@
     --gx-mcp-edge: rgba(255, 255, 255, 0.1);
     --gx-mcp-edge-ok: rgba(79, 191, 149, 0.55);
     --gx-mcp-icon-hover: rgba(112, 155, 218, 0.24);
+    /* The 4%/12.5% chips vanish on a dark card, so both steps go up. */
+    --gx-mcp-act-ok-bg: rgba(34, 197, 94, 0.14);
+    --gx-mcp-act-ok-ring: rgba(34, 197, 94, 0.3);
+    --gx-mcp-act-info-bg: rgba(112, 155, 218, 0.14);
+    --gx-mcp-act-info-ring: rgba(112, 155, 218, 0.3);
+    --gx-mcp-act-danger-bg: rgba(240, 138, 131, 0.14);
+    --gx-mcp-act-danger-ring: rgba(240, 138, 131, 0.3);
     --gx-mcp-scope-fg: #a3aebd;
     --gx-mcp-skel-a: rgba(255, 255, 255, 0.05);
     --gx-mcp-skel-b: rgba(255, 255, 255, 0.1);
@@ -809,6 +875,23 @@
     --gx-mcp-card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
     --gx-mcp-panel-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.35);
     --gx-mcp-modal-shadow: 0 24px 60px 0 rgba(0, 0, 0, 0.6);
+    /* MCP Server detail — dark. Tints become low-alpha films over the card,
+       inks lift, the shadow goes opaque black. */
+    --gx-mcpd-switch-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --gx-mcpd-tool-edge: rgba(255, 255, 255, 0.1);
+    --gx-mcpd-tool-icon-bg: rgba(255, 255, 255, 0.06);
+    --gx-mcpd-tool-icon-fg: #a3aebd;
+    --gx-mcpd-tool-ink: #e6edf7;
+    --gx-mcpd-ctrl-ring: rgba(255, 255, 255, 0.16);
+    --gx-mcpd-ok-bg: rgba(79, 191, 149, 0.18);
+    --gx-mcpd-warn-bg: rgba(217, 158, 42, 0.2);
+    --gx-mcpd-warn-fg: #e7b96a;
+    --gx-mcpd-perm-full: #5fd3a3;
+    --gx-mcpd-perm-read: #8fa9ea;
+    --gx-mcpd-perm-denied: #f08a83;
+    --gx-mcpd-grad-end: rgb(46, 168, 117);
+    --gx-mcpd-cta-hover: rgb(134, 172, 227);
+    --gx-mcpd-modal-shadow: 0 22px 56px -8px rgba(0, 0, 0, 0.6);
     /* Skills — dark. The zinc ramp inverts, the two identity tints become
        low-alpha films, and the dialog shadow goes opaque black. */
     --gx-sk-ink: #f1f2f4;
@@ -834,6 +917,12 @@
     --gx-pr-modal-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.55);
     --gx-pr-danger-ring: rgba(239, 68, 68, 0.38);
     --gx-al-violet-bg: rgba(110, 79, 201, 0.24);
+    --gx-alr-tab-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+    --gx-alr-tint-ring: rgba(66, 122, 198, 0.38);
+    --gx-alr-warn-bg: rgba(217, 119, 6, 0.12);
+    --gx-alr-warn-ring: rgba(217, 119, 6, 0.32);
+    --gx-alr-warn-tile: rgba(217, 119, 6, 0.24);
+    --gx-alr-badge-warn-bg: rgba(217, 119, 6, 0.22);
     --gx-vdt-shadow: 0 16px 48px -4px rgba(0, 0, 0, 0.6);
     --gx-vdt-surface: rgba(255, 255, 255, 0.04);
     --gx-vdt-icon-bg: rgba(66, 122, 198, 0.22);

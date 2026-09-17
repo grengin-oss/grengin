@@ -401,30 +401,25 @@
           "enabled": "Enabled",
           "disabled": "Disabled",
           "enableVerb": "enable",
-          "disableVerb": "disable"
+          "disableVerb": "disable",
+          "active": "Active",
+          "inactive": "Inactive"
         },
         "actions": {
           "retry": "Retry",
           "deleting": "Deleting…",
           "saving": "Saving…",
-          "validating": "Validating…"
+          "validating": "Validating…",
+          "configure": "Configure"
         },
         "messages": {
           "loading": "Loading OAuth providers...",
           "empty": "No OAuth providers have been configured yet.",
           "loadError": "Unable to load SSO providers",
           "loadProviderError": "Unable to load provider",
-          "noDomains": "No domains",
-          "domainBannerOne": "{name} does not restrict sign-in by email domain, so any user with a valid account can join. Edit the provider to limit access to specific company domains.",
-          "domainBannerAll": "{names} do not restrict sign-in by email domain, so any user with a valid account can join. Edit a provider to limit access to specific company domains.",
-          "loadingProvider": "Loading provider..."
-        },
-        "table": {
-          "caption": "OAuth providers configuration",
-          "provider": "Provider",
-          "allowedDomains": "Allowed domains",
-          "status": "Status",
-          "actions": "Actions"
+          "loadingProvider": "Loading provider...",
+          "emptyTitle": "No identity providers available",
+          "errorTitle": "Couldn't load identity providers"
         },
         "modals": {
           "confirmDeleteTitle": "Confirm deletion",
@@ -468,11 +463,24 @@
           "hideClientSecret": "Hide client secret",
           "showClientSecret": "Show client secret",
           "removeDomain": "Remove domain {domain}",
-          "moreDomains": "{count} more domains: {domains}"
+          "moreDomains": "{count} more domains: {domains}",
+          "editDomains": "Edit allowed domains for {name}"
         },
         "selfProvisioning": {
           "label": "Auto-provisioning",
           "hint": "Automatically create accounts on first sign-in"
+        },
+        "card": {
+          "allowedDomains": "Allowed domains",
+          "allDomains": "All domains",
+          "unrestricted": "Unrestricted — any user can sign in"
+        },
+        "descriptions": {
+          "azure": "Microsoft Entra ID — sign in with work or school accounts",
+          "google": "Sign in with Google accounts",
+          "okta": "Enterprise SSO via Okta",
+          "saml": "Connect any SAML 2.0-compatible identity provider",
+          "generic": "Sign in with {name}"
         }
       }
     },
@@ -795,6 +803,7 @@
       "failedToLoad": "Failed to load access rules",
       "failedToLoadTools": "Failed to load tool access",
       "defaultAccessTitle": "Default Access",
+      "defaultAccessDesc": "Choose who can use this server by default.",
       "defaultAccessUpdated": "Default access updated",
       "failedToUpdateDefault": "Failed to update default access",
       "defaultAccess": {
@@ -807,6 +816,7 @@
       },
       "accessRules": "Access Rules",
       "addRule": "Add Rule",
+      "addRules": "Add Rules",
       "adding": "Adding...",
       "ruleAdded": "Access rule added",
       "failedToAddRule": "Failed to add access rule",
@@ -849,9 +859,11 @@
       "serverTools": "Server Tools ({count} total)",
       "noTools": "No tools available",
       "noToolsHint": "Sync tools from the server list to see them here",
+      "notConnected": "Not connected",
+      "notConnectedHint": "Connect the server to see available tools",
       "configureTool": "Configure access",
       "toolStatus": {
-        "inherit": "Inherit",
+        "proxyFallback": "Proxy Fallback",
         "custom": "{count} custom rules",
         "noRules": "No rules",
         "customBadge": "Custom"
@@ -860,7 +872,9 @@
       "inheritFromServerDesc": "Use the same access rules configured at the server level",
       "customRules": "Custom rules",
       "customRulesDesc": "Configure specific access rules for this tool",
-      "noCustomRules": "No custom rules. Add rules to restrict access to this tool.",
+      "toolAccessSubtitle": "Choose how access to this tool is managed.",
+      "noCustomRulesTitle": "No custom rules",
+      "noCustomRulesHint": "Add rules to restrict access to this tool.",
       "toolAccessSaved": "Tool access saved",
       "failedToSaveToolAccess": "Failed to save tool access",
       "save": "Save",
@@ -1517,10 +1531,10 @@
     "connectEngine": "Connect Engine",
     "noResults": "No engines match “{query}”.",
     "filters": {
-      "label": "Filter engines",
+      "label": "Filter engines by status",
       "all": "All",
-      "active": "Active",
-      "available": "Available"
+      "connected": "Connected",
+      "attention": "Needs attention"
     },
     "stats": {
       "connectedValue": "{connected} of {total}",
@@ -1553,7 +1567,76 @@
       "connecting": "Connecting...",
       "connected": "{name} connected successfully"
     },
-    "noFilterResults": "No engines in this view."
+    "noFilterResults": "No engines in this view.",
+    "sectionTitle": "Your Engines",
+    "view": {
+      "label": "Engine layout",
+      "grid": "Grid",
+      "list": "List"
+    },
+    "table": {
+      "engine": "Engine",
+      "status": "Status",
+      "defaultModel": "Default model",
+      "whitelist": "Whitelist",
+      "enabled": "Enabled",
+      "actions": "Actions",
+      "mostUsed": "MOST USED",
+      "configure": "Configure",
+      "connect": "Connect"
+    },
+    "browse": {
+      "cta": "Browse Providers",
+      "title": "Browse Providers",
+      "subtitle": "{count} providers available to connect",
+      "searchPlaceholder": "Search providers…",
+      "categoryLabel": "Filter providers by category",
+      "showing": "Showing {count} of {total} providers",
+      "modelsAvailable": "{count} models available",
+      "showMore": "+ Show {count} more",
+      "showLess": "Show fewer",
+      "noResults": "No providers match “{query}”.",
+      "allConnected": "Every available provider is already connected.",
+      "categories": {
+        "major": "Major Providers",
+        "aggregators": "Aggregators",
+        "regional": "Regional",
+        "voice": "Voice & Audio",
+        "image": "Image & Video",
+        "embeddings": "Embeddings & Search",
+        "other": "Other Providers"
+      }
+    },
+    "custom": {
+      "cta": "Add Custom Engine",
+      "title": "Add Custom Engine",
+      "subtitle": "Connect an OpenAI-compatible endpoint",
+      "submit": "Add Engine",
+      "adding": "Adding…",
+      "fields": {
+        "name": "Display Name",
+        "nameHelper": "Shown on the engine card and everywhere this engine appears.",
+        "namePlaceholder": "e.g. Internal vLLM Cluster",
+        "baseUrl": "Base URL Override",
+        "baseUrlHelper": "The endpoint Grengin will call instead of the provider’s default URL.",
+        "plugin": "Plugin JSON",
+        "pluginHelper": "Provider config, model list, and routing rules in OpenAI plugin schema.",
+        "compatible": "OpenAI-compatible",
+        "optional": "Optional",
+        "apiKeyHelper": "Leave blank if this endpoint doesn’t require authentication."
+      },
+      "errors": {
+        "nameRequired": "Enter a display name for this engine.",
+        "baseUrlRequired": "Enter the base URL this engine should call.",
+        "baseUrlInvalid": "The base URL must start with http:// or https://.",
+        "pluginRequired": "Enter the plugin JSON for this engine.",
+        "pluginInvalid": "The plugin JSON is not a valid JSON object."
+      },
+      "toasts": {
+        "added": "{name} added successfully",
+        "failed": "Failed to add the custom engine"
+      }
+    }
   },
   "adminOverview": {
     "title": "Overview",

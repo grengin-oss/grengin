@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
   import type {
     MCPServer,
     McpServerAccessResponse,
-    McpAccessRule,
     McpAccessRuleCreatePayload,
     McpDefaultAccess,
   } from '../../types.js';
@@ -118,20 +117,21 @@ SPDX-License-Identifier: Apache-2.0
   }
 </script>
 
-<div class="access-panel">
+<!-- ".panel[data-panel=access]" — mcp-server-detail.html -->
+<div class="panel">
   {#if isLoading}
     <LoadingSpinner text={$_('admin.mcpAccess.loading')} size="md" />
   {:else if accessData}
-    <div class="access-section">
-      <div class="section-header">
-        <h3 class="section-title">{$_('admin.mcpAccess.defaultAccessTitle')}</h3>
-      </div>
-      <div class="default-access-options">
+    <!-- ".default-access" -->
+    <div class="default-access">
+      <span class="section-label">{$_('admin.mcpAccess.defaultAccessTitle')}</span>
+      <span class="section-desc">{$_('admin.mcpAccess.defaultAccessDesc')}</span>
+      <div class="access-options">
         {#each defaultAccessOptions as option (option.value)}
           <label
-            class="default-access-option"
-            class:default-access-option--active={defaultAccess === option.value}
-            class:default-access-option--saving={savingDefault}
+            class="access-option"
+            data-selected={defaultAccess === option.value}
+            class:access-option--saving={savingDefault}
           >
             <input
               type="radio"
@@ -141,39 +141,32 @@ SPDX-License-Identifier: Apache-2.0
               onchange={() => handleDefaultAccessChange(option.value)}
               disabled={savingDefault}
             />
-            <div class="option-header">
-              <div class="default-access-radio">
-                <div class="radio-dot"></div>
-              </div>
-              <span class="default-access-label">{$_(option.labelKey)}</span>
-            </div>
-            <span class="default-access-desc">{$_(option.descKey)}</span>
+            <span class="access-option-head">
+              <span class="access-option-title">{$_(option.labelKey)}</span>
+              <span class="access-radio"></span>
+            </span>
+            <span class="access-option-desc">{$_(option.descKey)}</span>
           </label>
         {/each}
       </div>
     </div>
 
-    <div class="section-divider"></div>
-
-    <div class="access-section">
-      <div class="section-header">
-        <h3 class="section-title">{$_('admin.mcpAccess.accessRules')}</h3>
-        <button class="btn-add-rule" onclick={() => addRuleModalOpen = true}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
+    <!-- ".rules-section" -->
+    <div class="rules-section">
+      <div class="rules-heading">
+        <span class="section-label">{$_('admin.mcpAccess.accessRules')}</span>
+        <button class="btn-add-rule" type="button" onclick={() => addRuleModalOpen = true}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.6" />
           </svg>
-          <span>{$_('admin.mcpAccess.addRule')}</span>
+          <span>{$_('admin.mcpAccess.addRules')}</span>
         </button>
       </div>
 
       {#if !accessData.rules || accessData.rules.length === 0}
-        <div class="empty-rules">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          <p>{$_('admin.mcpAccess.noRules')}</p>
-          <span class="empty-rules-hint">{$_('admin.mcpAccess.noRulesHint')}</span>
+        <div class="rules-empty">
+          <span class="rules-empty-title">{$_('admin.mcpAccess.noRules')}</span>
+          <span class="rules-empty-desc">{$_('admin.mcpAccess.noRulesHint')}</span>
         </div>
       {:else}
         <div class="rules-list">
@@ -198,199 +191,263 @@ SPDX-License-Identifier: Apache-2.0
 />
 
 <style>
-  .access-panel {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-  }
+  /* ===== mcp-server-detail.html, ".panel[data-panel=access]" transcribed.
+     Design values that no --gx-* token already carried live in app.css as
+     --gx-mcpd-*. ===== */
 
-  .access-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-  }
-
-  .section-title {
-    font-size: 0.9375rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
-    letter-spacing: -0.01em;
-  }
-
-  .section-divider {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.06);
-    margin: var(--space-sm) 0;
-  }
-
-  .default-access-options {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-md);
-  }
-
-  .default-access-option {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    padding: var(--space-lg);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
+  /* app.css paints every bare <button>/<input> as a glass pill. Every control
+     below is flat, so strip that once here. */
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
+    white-space: nowrap;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    background: rgba(var(--glass-tint), 0.02);
+    transition: none;
   }
 
-  .default-access-option input[type="radio"] {
-    display: none;
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
   }
 
-  .default-access-option:hover:not(.default-access-option--saving) {
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(var(--glass-tint), 0.05);
-    transform: translateY(-2px);
+  button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
   }
 
-  .default-access-option--active {
-    border-color: var(--brand);
-    background: rgba(var(--brand-rgb), 0.06);
-    box-shadow: 0 0 0 1px var(--brand);
+  .panel {
+    border-radius: 18px;
+    background: var(--gx-surface);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-self: stretch;
+    font-family: var(--gx-font);
   }
 
-  .default-access-option--saving {
+  .section-label {
+    font-family: var(--gx-font-display);
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 100%;
+    color: var(--gx-org-ink);
+  }
+
+  .section-desc {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 100%;
+    color: var(--gx-an-sub);
+  }
+
+  /* ---------------- ".default-access" ---------------- */
+  .default-access {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .access-options {
+    display: flex;
+    gap: 10px;
+    align-self: stretch;
+  }
+
+  .access-option {
+    flex: 1 1 0;
+    min-width: 0;
+    border-radius: 12px;
+    background: var(--gx-surface);
+    box-shadow: inset 0 0 0 1px var(--gx-ring-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    cursor: pointer;
+    transition:
+      box-shadow 120ms ease,
+      background-color 120ms ease;
+  }
+
+  .access-option input[type="radio"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .access-option[data-selected="true"] {
+    box-shadow: inset 0 0 0 1.5px var(--gx-tx-accent);
+    background: color-mix(in oklab, var(--gx-tx-accent) 6%, var(--gx-surface));
+  }
+
+  .access-option:hover:not(.access-option--saving) {
+    box-shadow: inset 0 0 0 1.5px var(--gx-tx-accent);
+  }
+
+  .access-option:focus-within {
+    outline: 2px solid var(--gx-tx-accent);
+    outline-offset: 2px;
+  }
+
+  .access-option--saving {
     opacity: 0.6;
     cursor: wait;
   }
 
-  .option-header {
+  .access-option-head {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 8px;
   }
 
-  .default-access-radio {
+  .access-option-title {
+    font-family: var(--gx-font-display);
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-org-ink);
+  }
+
+  .access-radio {
     width: 18px;
     height: 18px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
+    box-shadow: inset 0 0 0 2px var(--gx-ring-soft);
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    transition: border-color 0.2s ease;
   }
 
-  .default-access-option--active .default-access-radio {
-    border-color: var(--brand);
+  .access-option[data-selected="true"] .access-radio {
+    box-shadow: none;
+    background: var(--gx-tx-accent);
   }
 
-  .radio-dot {
-    width: 8px;
-    height: 8px;
+  .access-option[data-selected="true"] .access-radio::after {
+    content: "";
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: transparent;
-    transition: background 0.2s ease;
+    background: var(--gx-surface);
   }
 
-  .default-access-option--active .radio-dot {
-    background: var(--brand);
+  .access-option-desc {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--gx-an-sub);
   }
 
-  .default-access-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary);
+  /* ---------------- ".rules-section" ---------------- */
+  .rules-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-self: stretch;
   }
 
-  .default-access-desc {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-    line-height: 1.4;
-  }
-
-  @media (max-width: 768px) {
-    .default-access-options {
-      grid-template-columns: 1fr;
-    }
+  .rules-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
   }
 
   .btn-add-rule {
-    display: inline-flex;
+    height: 33px;
+    border-radius: 8px;
+    background: var(--gx-tx-accent);
+    display: flex;
+    gap: 6px;
+    padding: 8px 14px;
     align-items: center;
-    gap: var(--space-xs);
-    padding: var(--space-xs) var(--space-md);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-md);
-    background: transparent;
-    color: var(--brand);
-    font-size: 0.8125rem;
+    flex-shrink: 0;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-surface);
+    transition: background-color 120ms ease;
   }
 
   .btn-add-rule:hover {
-    background: rgba(var(--brand-rgb), 0.06);
-    border-color: rgba(var(--brand-rgb), 0.3);
+    background: var(--gx-ac-cta-hover);
+  }
+
+  .btn-add-rule:focus-visible {
+    outline: 2px solid var(--gx-tx-accent);
+    outline-offset: 2px;
+  }
+
+  .btn-add-rule svg {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .rules-empty {
+    border-radius: 12px;
+    background: var(--gx-an-field-bg);
+    box-shadow: inset 0 0 0 1px var(--gx-ring-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 30px;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    text-align: center;
+  }
+
+  .rules-empty-title {
+    font-family: var(--gx-font-display);
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-org-ink);
+  }
+
+  .rules-empty-desc {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--gx-an-sub);
   }
 
   .rules-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 8px;
+    align-self: stretch;
   }
 
-  .empty-rules {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-2xl) var(--space-lg);
-    text-align: center;
-    color: var(--text-tertiary);
-  }
-
-  .empty-rules svg {
-    opacity: 0.3;
-  }
-
-  .empty-rules p {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin: 0;
-  }
-
-  .empty-rules-hint {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-  }
-
-  @media (prefers-color-scheme: light) {
-    .section-divider {
-      background: rgba(0, 0, 0, 0.08);
+  /* The three default-access cards sit side by side on the design's 1000px
+     canvas; below that there is no room for three 16px-padded columns. */
+  @media (max-width: 860px) {
+    .access-options {
+      flex-direction: column;
     }
+  }
 
-    .default-access-option {
-      border-color: rgba(0, 0, 0, 0.08);
-    }
-
-    .default-access-option:hover:not(.default-access-option--saving) {
-      border-color: rgba(0, 0, 0, 0.15);
-      background: rgba(0, 0, 0, 0.02);
-    }
-
-    .default-access-radio {
-      border-color: rgba(0, 0, 0, 0.2);
+  @media (max-width: 640px) {
+    .panel {
+      padding: 16px;
     }
   }
 </style>

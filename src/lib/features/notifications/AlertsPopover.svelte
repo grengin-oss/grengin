@@ -6,7 +6,9 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { getNotificationsState, type NotificationItem } from './index.js';
+  import AlertIcon from './AlertIcon.svelte';
+  import { isUnread, needsAttention, severityOf } from './alertPresentation.js';
+  import { fetchNotificationFeed, getNotificationsState, type NotificationItem } from './index.js';
 
   type Align = 'start' | 'center' | 'end';
 
@@ -36,10 +38,6 @@ SPDX-License-Identifier: Apache-2.0
 
   let flyoutStyle = $state('');
   let popoverElement: HTMLDivElement | undefined = $state();
-
-  function isNotificationUnread(n: { read_at: string | null }): boolean {
-    return n.read_at == null || n.read_at === '';
-  }
 
   function updateFlyoutPosition(): void {
     if (!anchorEl) return;
@@ -83,6 +81,13 @@ SPDX-License-Identifier: Apache-2.0
     };
   });
 
+  /* The feed is seeded at sign-in and kept warm by the SSE stream; re-read it on
+     open so rows read elsewhere (another tab, the Alerts page) are current. */
+  $effect(() => {
+    if (!open) return;
+    void fetchNotificationFeed({ silent: notifState.preview.length > 0 });
+  });
+
   // Focus management: focus the dialog when opened
   $effect(() => {
     if (open && popoverElement) {
@@ -95,8 +100,9 @@ SPDX-License-Identifier: Apache-2.0
 
 {#if open}
   <div class="alerts-flyout-stack" style={flyoutStyle}>
+    <!-- ".popover" from alerts.html -->
     <div
-      class="alerts-popover"
+      class="popover"
       bind:this={popoverElement}
       role="dialog"
       aria-modal="true"
@@ -110,11 +116,11 @@ SPDX-License-Identifier: Apache-2.0
         }
       }}
     >
-      <div class="alerts-popover-header">
-        <span class="alerts-popover-title">{$_('app.notifications')}</span>
+      <div class="popover-header">
+        <span class="popover-title">{$_('app.notifications')}</span>
         <button
           type="button"
-          class="alerts-popover-close"
+          class="popover-close"
           onclick={(e) => {
             e.stopPropagation();
             onClose();
@@ -122,52 +128,56 @@ SPDX-License-Identifier: Apache-2.0
           aria-label={$_('sidebar.close')}
           title={$_('sidebar.close')}
         >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M2 2l12 12M14 2 2 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
         </button>
       </div>
 
-      <div class="alerts-popover-body">
+      <div class="popover-body">
         {#if notifState.previewLoading}
-          <div class="alerts-popover-loading" aria-live="polite" aria-label={$_('alerts.loading')}>
-            <span class="alerts-popover-spinner" aria-hidden="true"></span>
+          <div class="popover-loading" aria-live="polite" aria-label={$_('alerts.loading')}>
+            <span class="popover-spinner" aria-hidden="true"></span>
           </div>
         {:else if notifState.preview.length === 0}
-          <p class="alerts-popover-empty">{$_('sidebar.noRecentAlerts')}</p>
+          <p class="popover-empty">{$_('sidebar.noRecentAlerts')}</p>
         {:else}
           {#each notifState.preview as n (n.id)}
+            {@const unread = isUnread(n as NotificationItem)}
+            {@const attention = needsAttention(n as NotificationItem)}
+            {@const severity = severityOf(n as NotificationItem)}
             <button
               type="button"
-              class="alerts-popover-item"
-              class:alerts-popover-item-unread={isNotificationUnread(n as NotificationItem)}
+              class="mini-card"
+              class:mini-card--tinted={attention}
+              class:mini-card--warning={attention && severity === 'warning'}
               aria-label={`${n.title}${n.body ? ': ' + n.body : ''}`}
               onclick={(e) => {
                 e.stopPropagation();
                 onNavigate();
               }}
             >
-              <span class="alerts-popover-item-top">
-                <span class="alerts-popover-item-title-wrap">
-                  {#if isNotificationUnread(n as NotificationItem)}
-                    <span class="alerts-popover-item-dot" aria-hidden="true"></span>
+              <AlertIcon item={n as NotificationItem} size={36} />
+              <span class="mini-text">
+                <span class="mini-title-row">
+                  {#if unread}
+                    <span class="new-dot" aria-hidden="true"></span>
                   {/if}
-                  <span class="alerts-popover-item-title">{n.title}</span>
+                  <span class="mini-title">{n.title}</span>
                 </span>
+                {#if n.body}
+                  <span class="mini-desc">{n.body}</span>
+                {/if}
               </span>
-              {#if n.body}
-                <span class="alerts-popover-item-body">{n.body}</span>
-              {/if}
             </button>
           {/each}
         {/if}
       </div>
 
-      <div class="alerts-view-all-container">
+      <div class="popover-footer">
         <button
           type="button"
-          class="alerts-view-all"
+          class="view-all-link"
           onclick={(e) => {
             e.stopPropagation();
             onNavigate();
@@ -181,35 +191,56 @@ SPDX-License-Identifier: Apache-2.0
 {/if}
 
 <style>
+  /* ===== alerts.html ".popover", transcribed. ===== */
+
+  /* app.css paints every bare <button> as a glass pill — strip that once here
+     and let each rule below paint its own skin. */
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
+    cursor: pointer;
+    transition: none;
+  }
+
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
+  }
+
   .alerts-flyout-stack {
     /* fixed + inline top/left/width: escapes sidebar overflow-x clipping */
     position: fixed;
     z-index: 1100;
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
     min-width: 0;
     box-sizing: border-box;
     pointer-events: auto;
+    font-family: var(--gx-font);
   }
 
-  .alerts-popover {
-    background: color-mix(in oklab, var(--bg-primary) 85%, var(--btn-secondary));
-    backdrop-filter: blur(calc(var(--glass-blur) * 1.25)) saturate(1.5);
-    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.25)) saturate(1.5);
-    /* Subtle lensing boundary (avoid double-stroking with box-shadow) */
-    border: 1px solid var(--glass-stroke-light);
-    border-radius: var(--radius-lg);
-    box-shadow:
-      var(--glass-highlight),
-      var(--glass-edge-glow),
-      /* Top: subtle */
-      0 1px 8px rgba(0, 0, 0, 0.08),
-      /* Bottom: progressively deeper */
-      0 10px 24px rgba(0, 0, 0, 0.16),
-      0 22px 50px rgba(0, 0, 0, 0.12);
+  .popover {
     overflow: hidden;
+    border-radius: 16px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair), var(--gx-cx-panel-shadow);
+    display: flex;
+    flex-direction: column;
     animation: slideUpFade 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .popover:focus-visible {
+    outline: 2px solid var(--gx-an-dot);
+    outline-offset: 2px;
   }
 
   @keyframes slideUpFade {
@@ -223,209 +254,190 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
-  .alerts-popover-header {
+  .popover-header {
+    height: 66px;
+    border-bottom: 1px solid var(--gx-hair);
     display: flex;
-    align-items: center;
+    padding: 16px;
+    gap: 8px;
     justify-content: space-between;
-    gap: var(--space-sm);
-    padding: var(--space-md) var(--space-md) var(--space-sm);
-    border-bottom: 1px solid var(--glass-stroke-dark);
-  }
-
-  .alerts-popover-title {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .alerts-popover-close {
+    align-items: center;
     flex-shrink: 0;
-    width: 2rem;
-    height: 2rem;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: color 0.15s ease, background 0.15s ease;
+    box-sizing: border-box;
+  }
+
+  .popover-title {
+    font-family: var(--gx-font-display);
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.3;
+    color: var(--gx-org-slate-800);
+  }
+
+  .popover-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-an-chip-ring);
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-
-  .alerts-popover-close:hover {
-    color: var(--text-primary);
-    background: var(--btn-tertiary);
-  }
-
-  .alerts-popover-body {
-    max-height: 280px;
-    overflow-y: auto;
-    padding: var(--space-sm);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .alerts-popover-empty {
-    margin: 0;
-    padding: var(--space-lg) var(--space-md);
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-    text-align: center;
-  }
-
-  .alerts-popover-item {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-xs);
-    width: 100%;
     flex-shrink: 0;
-    padding: var(--space-md) var(--space-lg);
-    border: 1px solid color-mix(in oklab, var(--glass-stroke-dark) 85%, transparent);
-    border-radius: var(--radius-md);
-    background: color-mix(in oklab, var(--btn-secondary) 96%, transparent);
-    cursor: pointer;
-    text-align: left;
-    transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-    overflow-x: hidden;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 2px 8px rgba(0, 0, 0, 0.04);
-    position: relative;
+    color: var(--gx-an-axis);
+    transition: background-color 120ms ease, color 120ms ease;
   }
 
-  .alerts-popover-item:last-child {
-    border-bottom: none;
+  .popover-close:hover {
+    background: var(--gx-an-insight-bg);
+    color: var(--gx-org-slate-800);
   }
 
-  .alerts-popover-item:hover {
-    background: color-mix(in oklab, var(--btn-tertiary) 90%, transparent);
-    border-color: color-mix(in oklab, var(--brand) 20%, var(--glass-stroke-dark));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 22px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
-  }
-
-  .alerts-popover-item-top {
-    width: 100%;
+  .popover-body {
     display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    align-self: stretch;
+    max-height: min(380px, 60vh);
+    overflow-y: auto;
   }
 
-  .alerts-popover-item-title-wrap {
-    display: inline-flex;
-    align-items: flex-start;
-    gap: var(--space-sm);
-    min-width: 0;
-  }
-
-  .alerts-popover-item-dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: var(--radius-full);
-    background: var(--brand);
-    box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.18);
-    margin-top: 0.2rem;
-    flex: 0 0 auto;
-  }
-
-  .alerts-popover-item-unread .alerts-popover-item-title {
-    color: var(--text-primary);
-  }
-
-  .alerts-popover-item-unread {
-    border-color: color-mix(in oklab, var(--brand) 26%, var(--glass-stroke-dark));
-    background: linear-gradient(
-      135deg,
-      color-mix(in oklab, var(--btn-secondary) 88%, rgba(var(--brand-rgb), 0.16)) 0%,
-      color-mix(in oklab, var(--btn-secondary) 94%, transparent) 100%
-    );
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 6px 20px rgba(var(--brand-rgb), 0.1);
-  }
-
-  .alerts-popover-item-unread::before {
-    content: '';
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 3px;
-    background: linear-gradient(180deg, var(--brand) 0%, color-mix(in oklab, var(--brand) 78%, white) 100%);
-    pointer-events: none;
-  }
-
-  .alerts-popover-item-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: color-mix(in oklab, var(--text-primary) 82%, var(--text-secondary));
-    line-height: 1.35;
-    overflow-wrap: anywhere;
-  }
-
-  .alerts-popover-item-body {
-    width: 100%;
-    font-size: 0.75rem;
-    color: color-mix(in oklab, var(--text-secondary) 90%, var(--text-primary));
-    line-height: 1.45;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    word-break: break-word;
-  }
-
-  .alerts-view-all-container {
-    padding: var(--space-md);
-    padding-right: var(--space-xl);
+  /* The popover has no headings, but it follows the page's rule for which rows
+     are tinted: unread, or still live for their budget period. Amber for a low
+     budget, blue otherwise, plain white for the rest. Tiles keep their colour
+     here — there is no muted "Earlier" pile for them to fall into. */
+  .mini-card {
+    border-radius: 12px;
+    background: var(--mini-card-fill, var(--gx-card));
+    box-shadow: inset 0 0 0 1px var(--mini-card-ring, var(--gx-hair));
     display: flex;
-    justify-content: flex-end;
-  }
-
-  .alerts-view-all {
-    align-self: center;
-    margin: 0;
-    padding: 0.2rem 0.35rem;
-    width: auto;
-    max-width: 100%;
+    gap: 12px;
+    padding: 10px 12px;
+    align-items: center;
+    align-self: stretch;
+    width: 100%;
     box-sizing: border-box;
-    border: none;
-    background: transparent;
-    color: var(--brand);
-    font-size: 0.75rem;
-    font-weight: 600;
-    line-height: 1.3;
-    letter-spacing: 0.01em;
-    cursor: pointer;
-    text-align: center;
-    text-decoration: none;
-    border-radius: var(--radius-sm);
-    transition: color 0.15s ease, text-decoration-color 0.15s ease;
+    transition: background-color 120ms ease, box-shadow 120ms ease;
   }
 
-  .alerts-view-all:hover {
-    color: var(--link-color);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+  /* #EFF6FF / #D0E1FD */
+  .mini-card--tinted {
+    --mini-card-fill: var(--gx-blue-soft);
+    --mini-card-ring: var(--gx-alr-tint-ring);
   }
 
-  .alerts-view-all:focus-visible {
-    outline: 2px solid var(--brand);
+  /* #FFFBEB / #FDE68A */
+  .mini-card--warning {
+    --mini-card-fill: var(--gx-alr-warn-bg);
+    --mini-card-ring: var(--gx-alr-warn-ring);
+  }
+
+  /* Hover deepens a row toward its own ring colour, so each row keeps its hue. */
+  .mini-card:hover {
+    background: color-mix(in oklab, var(--mini-card-fill, var(--gx-card)) 65%, var(--mini-card-ring, var(--gx-hair)));
+  }
+
+  .mini-card:focus-visible,
+  .popover-close:focus-visible,
+  .view-all-link:focus-visible {
+    outline: 2px solid var(--gx-an-dot);
     outline-offset: 2px;
   }
 
-  .alerts-popover-loading {
+  .mini-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  .mini-title-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    align-self: stretch;
+    min-width: 0;
+  }
+
+  .new-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gx-an-dot);
+    flex-shrink: 0;
+  }
+
+  .mini-title {
+    flex-grow: 1;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--gx-org-slate-800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mini-desc {
+    align-self: stretch;
+    font-weight: 500;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--gx-slate-500);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .popover-footer {
+    min-height: 39px;
+    background: var(--gx-surface-rail);
+    border-top: 1px solid var(--gx-hair);
+    display: flex;
+    padding: 12px 16px;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  .view-all-link {
+    font-family: var(--gx-font-display);
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--gx-blue);
+    border-radius: 4px;
+    transition: color 120ms ease;
+  }
+
+  .view-all-link:hover {
+    color: var(--gx-ac-link);
+  }
+
+  .popover-empty {
+    margin: 0;
+    padding: 24px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gx-slate-500);
+    text-align: center;
+  }
+
+  .popover-loading {
     min-height: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  .alerts-popover-spinner {
-    width: 1.125rem;
-    height: 1.125rem;
-    border: 2px solid var(--glass-stroke-dark);
-    border-top-color: var(--brand);
+  .popover-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--gx-hair);
+    border-top-color: var(--gx-org-primary-500);
     border-radius: 50%;
     animation: alertsSpin 0.8s linear infinite;
   }
@@ -437,21 +449,12 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .alerts-popover {
+    .popover {
       animation: none;
     }
-  }
 
-  @media (max-width: 768px) {
-    .alerts-popover-item {
-      padding: var(--space-md);
-    }
-
-    .alerts-popover-item-top {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: var(--space-xs);
+    .popover-spinner {
+      animation-duration: 2s;
     }
   }
 </style>
-

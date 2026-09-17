@@ -2,13 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // AI Engines Store - AI engine management state using Svelte 5 runes
-import type { AIEngine, AIEngineModels, Branding } from '../types.js';
+import type {
+  AIEngine,
+  AIEngineModels,
+  Branding,
+  CustomAIEngineCreate,
+} from '../types.js';
 import {
   getAIEngines,
   updateAIEngine,
   validateAIEngineKey,
   getAIEngineModels,
   deleteAIEngineKey,
+  createCustomAIEngine,
 } from '../../api/admin/AiEngines.js';
 import { getBranding, updateBranding } from '../../api/admin/branding.js';
 import { _ } from 'svelte-i18n';
@@ -28,6 +34,11 @@ function createAIEnginesStore() {
   // The design splits configuring an engine from connecting one: an engine with
   // no key gets the "Connect <engine>" dialog, which only asks for the key.
   let showConnectModal = $state(false);
+  // ai-engines.html adds two more dialogs off the page header: the provider
+  // picker (.bp-modal) and the custom-engine form (.ace-modal).
+  let showBrowseModal = $state(false);
+  let showCustomModal = $state(false);
+  let creating = $state(false);
   let selectedEngine = $state<AIEngine | null>(null);
 
   // Models state
@@ -199,6 +210,37 @@ function createAIEnginesStore() {
     apiKeyMessage = null;
     apiKeyLoading = false;
     apiKeyMode = 'cta';
+  }
+
+  function openBrowseModal() {
+    showBrowseModal = true;
+  }
+
+  function closeBrowseModal() {
+    showBrowseModal = false;
+  }
+
+  function openCustomModal() {
+    showCustomModal = true;
+  }
+
+  function closeCustomModal() {
+    showCustomModal = false;
+  }
+
+  /** Register a custom OpenAI-compatible engine, then refresh the list. */
+  async function createEngine(data: CustomAIEngineCreate): Promise<AIEngine> {
+    creating = true;
+    try {
+      const engine = await createCustomAIEngine(data);
+      await fetch();
+      return engine;
+    } catch (err: any) {
+      error = err;
+      throw err;
+    } finally {
+      creating = false;
+    }
   }
 
   function closeConfigModal() {
@@ -411,11 +453,14 @@ function createAIEnginesStore() {
     defaultEngineKey = undefined;
     showConfigModal = false;
     showConnectModal = false;
+    showBrowseModal = false;
+    showCustomModal = false;
     selectedEngine = null;
     availableModels = null;
     loadingModels = false;
     loadingOrganization = false;
     saving = false;
+    creating = false;
     resetApiKeyState();
     formData = {
       is_enabled: true,
@@ -441,6 +486,15 @@ function createAIEnginesStore() {
     },
     get showConnectModal() {
       return showConnectModal;
+    },
+    get showBrowseModal() {
+      return showBrowseModal;
+    },
+    get showCustomModal() {
+      return showCustomModal;
+    },
+    get creating() {
+      return creating;
     },
     get selectedEngine() {
       return selectedEngine;
@@ -505,6 +559,12 @@ function createAIEnginesStore() {
     set formData(value: typeof formData) {
       formData = value;
     },
+    set showBrowseModal(value: boolean) {
+      showBrowseModal = value;
+    },
+    set showCustomModal(value: boolean) {
+      showCustomModal = value;
+    },
 
     // Methods
     fetch,
@@ -513,6 +573,11 @@ function createAIEnginesStore() {
     closeConfigModal,
     openConnectModal,
     closeConnectModal,
+    openBrowseModal,
+    closeBrowseModal,
+    openCustomModal,
+    closeCustomModal,
+    createEngine,
     refreshSelectedEngine,
     loadModelsForSelected,
     updateEngine,
