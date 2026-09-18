@@ -9,7 +9,7 @@ SPDX-License-Identifier: Apache-2.0
   import type { Department, User } from "../../types.js";
   import LoadingSpinner from "../LoadingSpinner.svelte";
   import DepartmentTreeNode from "../DepartmentTreeNode.svelte";
-  import DeleteDepartmentModal from "../DeleteDepartmentModal.svelte";
+  import DestructiveConfirmModal from "../DestructiveConfirmModal.svelte";
   import DepartmentDetailsPanel from "../DepartmentDetailsPanel.svelte";
   import DepartmentFormModal from "../DepartmentFormModal.svelte";
   import UnassignedPanel from "./UnassignedPanel.svelte";
@@ -360,6 +360,45 @@ SPDX-License-Identifier: Apache-2.0
   let deleteTarget = $state<Department | null>(null);
   let isDeleting = $state(false);
 
+  /**
+   * Typing the name back is asked for only when the delete actually takes
+   * something with it. An empty leaf department is a one-click delete — the
+   * extra step there is friction without a warning to earn it.
+   */
+  const deleteNeedsTypedConfirm = $derived(
+    !!deleteTarget &&
+      (deleteTarget.member_count > 0 || deleteTarget.child_count > 0),
+  );
+
+  /** Only the consequences that actually apply to this department. */
+  const deleteImpacts = $derived.by<string[]>(() => {
+    const dept = deleteTarget;
+    if (!dept) return [];
+    const lines: string[] = [];
+    if (dept.member_count > 0) {
+      lines.push(
+        $_('admin.departments.deleteModal.impactMembers', {
+          values: { count: dept.member_count },
+        }),
+      );
+    }
+    if (dept.child_count > 0) {
+      lines.push(
+        $_('admin.departments.deleteModal.impactChildren', {
+          values: { count: dept.child_count },
+        }),
+      );
+    }
+    if (dept.budget_allocated > 0) {
+      lines.push(
+        $_('admin.departments.deleteModal.impactBudget', {
+          values: { amount: formatCurrency(dept.budget_allocated) },
+        }),
+      );
+    }
+    return lines;
+  });
+
   function requestDeleteDepartment(dept: Department) {
     deleteTarget = dept;
   }
@@ -696,11 +735,23 @@ SPDX-License-Identifier: Apache-2.0
 {/if}
 
 {#if deleteTarget}
-  <DeleteDepartmentModal
-    department={deleteTarget}
-    {isDeleting}
+  <DestructiveConfirmModal
+    title={$_('admin.departments.deleteModal.title', {
+      values: { name: deleteTarget.name },
+    })}
+    subtitle={$_('admin.departments.deleteModal.subtitle')}
+    impactLabel={$_('admin.departments.deleteModal.impactLabel')}
+    impacts={deleteImpacts}
+    confirmWord={deleteNeedsTypedConfirm ? deleteTarget.name : null}
+    confirmLabel={$_('admin.departments.deleteModal.confirmLabel', {
+      values: { name: deleteTarget.name },
+    })}
+    confirmHint={$_('admin.departments.deleteModal.confirmHint')}
+    confirmButtonLabel={$_('admin.departments.deleteModal.confirmButton')}
+    busyLabel={$_('admin.departments.deleteModal.deleting')}
+    isBusy={isDeleting}
     onCancel={cancelDeleteDepartment}
-    onConfirm={handleDeleteDepartment}
+    onConfirm={() => deleteTarget && handleDeleteDepartment(deleteTarget)}
   />
 {/if}
 

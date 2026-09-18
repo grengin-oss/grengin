@@ -554,6 +554,17 @@
       "deleteRoleConfirmTitle": "Delete role",
       "deleteRoleConfirmMessage": "Delete role \"{name}\"?",
       "deleteRoleConfirmWarning": "This cannot be undone. Users with this role will lose its permissions.",
+      "deleteRoleModal": {
+        "title": "Delete \"{name}\" role?",
+        "subtitle": "This action can't be undone.",
+        "impactLabel": "This will also remove",
+        "impactUsers": "{count} {count, plural, one {user} other {users}} — they'll lose this role's permissions",
+        "impactPermissions": "{count} {count, plural, one {permission} other {permissions}} granted by this role",
+        "impactSystemRole": "This is a built-in system role",
+        "confirmLabel": "Type {name} to confirm",
+        "confirmHint": "Required for roles that are assigned or built in.",
+        "confirmButton": "Delete role"
+      },
       "roleDeleted": "Role deleted",
       "failedToDeleteRole": "Failed to delete role",
       "deleting": "Deleting…",
