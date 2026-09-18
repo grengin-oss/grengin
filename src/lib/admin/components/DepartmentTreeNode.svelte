@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import type { Department } from "../types.js";
-  import DepartmentTreeNode from './DepartmentTreeNode.svelte';
+  import DepartmentTreeNode from "./DepartmentTreeNode.svelte";
   import { formatCurrency } from "$lib/utils/format.js";
   import { _ } from "svelte-i18n";
 
@@ -56,13 +56,14 @@ SPDX-License-Identifier: Apache-2.0
   const initial = $derived((department.name?.trim()?.[0] ?? "?").toUpperCase());
 
   const budgetStatus = $derived.by(() => {
-    const usagePercent = department.budget_allocated > 0
-      ? (department.budget_used / department.budget_allocated) * 100
-      : 0;
+    const usagePercent =
+      department.budget_allocated > 0
+        ? (department.budget_used / department.budget_allocated) * 100
+        : 0;
 
-    if (usagePercent >= 100) return 'exceeded';
-    if (usagePercent >= 80) return 'warning';
-    return 'ok';
+    if (usagePercent >= 100) return "exceeded";
+    if (usagePercent >= 80) return "warning";
+    return "ok";
   });
 
   function toggleExpand() {
@@ -74,7 +75,11 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   function handleNodeKeydown(event: KeyboardEvent) {
-    if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+    if (
+      event.key === "Enter" ||
+      event.key === " " ||
+      event.key === "Spacebar"
+    ) {
       event.preventDefault();
       handleSelect();
     }
@@ -82,15 +87,15 @@ SPDX-License-Identifier: Apache-2.0
 
   function handleDragStart(e: DragEvent) {
     if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', department.id);
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", department.id);
     }
   }
 
   function handleDragOver(e: DragEvent) {
     e.preventDefault();
     if (e.dataTransfer) {
-      e.dataTransfer.dropEffect = 'move';
+      e.dataTransfer.dropEffect = "move";
     }
     isDragOver = true;
   }
@@ -103,9 +108,9 @@ SPDX-License-Identifier: Apache-2.0
     e.preventDefault();
     isDragOver = false;
 
-    const draggedId = e.dataTransfer?.getData('text/plain');
+    const draggedId = e.dataTransfer?.getData("text/plain");
     if (draggedId && draggedId !== department.id && onMove) {
-      const draggedDept = allDepartments.find(d => d.id === draggedId);
+      const draggedDept = allDepartments.find((d) => d.id === draggedId);
       if (draggedDept && !isDescendant(draggedId, department.id)) {
         onMove(draggedId, department.id);
       }
@@ -113,10 +118,10 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   function isDescendant(ancestorId: string, descendantId: string): boolean {
-    let current = allDepartments.find(d => d.id === descendantId);
+    let current = allDepartments.find((d) => d.id === descendantId);
     while (current) {
       if (current.parent_id === ancestorId) return true;
-      current = allDepartments.find(d => d.id === current!.parent_id);
+      current = allDepartments.find((d) => d.id === current!.parent_id);
     }
     return false;
   }
@@ -130,7 +135,9 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   function getMemberCountLabel() {
-    return $_('admin.departments.memberCount', { values: { count: department.member_count } });
+    return $_("admin.departments.memberCount", {
+      values: { count: department.member_count },
+    });
   }
 
   function getTreeItemLabel() {
@@ -175,7 +182,11 @@ SPDX-License-Identifier: Apache-2.0
     onkeydown={handleNodeKeydown}
   >
     {#if indent > 0}
-      <span class="tree-row__indent" style="width: {indent}px" aria-hidden="true"></span>
+      <span
+        class="tree-row__indent"
+        style="width: {indent}px"
+        aria-hidden="true"
+      ></span>
     {/if}
 
     {#if hasChildren}
@@ -183,17 +194,24 @@ SPDX-License-Identifier: Apache-2.0
         type="button"
         class="tree-row__toggle"
         class:tree-row__toggle--closed={!expanded}
-        onclick={(e) => { e.stopPropagation(); toggleExpand(); }}
+        onclick={(e) => {
+          e.stopPropagation();
+          toggleExpand();
+        }}
         onkeydown={(e) => e.stopPropagation()}
         aria-controls={getChildrenContainerId()}
         aria-expanded={expanded}
-        aria-label={
-          expanded
-            ? $_("admin.departments.collapseDepartment")
-            : $_("admin.departments.expandDepartment")
-        }
+        aria-label={expanded
+          ? $_("admin.departments.collapseDepartment")
+          : $_("admin.departments.expandDepartment")}
       >
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+        >
           <path
             d={expanded ? "M4 6L8 10L12 6" : "M6 4L10 8L6 12"}
             stroke="currentColor"
@@ -204,7 +222,8 @@ SPDX-License-Identifier: Apache-2.0
         </svg>
       </button>
     {:else}
-      <span class="tree-row__toggle tree-row__toggle--empty" aria-hidden="true"></span>
+      <span class="tree-row__toggle tree-row__toggle--empty" aria-hidden="true"
+      ></span>
     {/if}
 
     <span class="tree-row__inner">
@@ -214,11 +233,14 @@ SPDX-License-Identifier: Apache-2.0
         <span class="tree-meta">
           {getMemberCountLabel()}
           &nbsp;·&nbsp;
-          {formatCurrency(department.budget_used)} / {formatCurrency(department.budget_allocated)}
+          {formatCurrency(department.budget_used)} / {formatCurrency(
+            department.budget_allocated,
+          )}
         </span>
       </span>
       <span class="tree-trailing">
-        <span class={`tree-dot tree-dot--${budgetStatus}`} aria-hidden="true"></span>
+        <span class={`tree-dot tree-dot--${budgetStatus}`} aria-hidden="true"
+        ></span>
         <span class="sr-only">{getBudgetStatusDescription()}</span>
         {#if canManage && (onEdit || onDelete)}
           <span class="tree-menu">
@@ -227,8 +249,13 @@ SPDX-License-Identifier: Apache-2.0
               class="tree-kebab"
               aria-haspopup="menu"
               aria-expanded={menuOpen}
-              aria-label={$_('admin.organization.departmentActions', { values: { name: department.name } })}
-              onclick={(e) => { e.stopPropagation(); menuOpen = !menuOpen; }}
+              aria-label={$_("admin.organization.departmentActions", {
+                values: { name: department.name },
+              })}
+              onclick={(e) => {
+                e.stopPropagation();
+                menuOpen = !menuOpen;
+              }}
               onkeydown={(e) => e.stopPropagation()}
             >
               <i></i><i></i><i></i>
@@ -239,9 +266,13 @@ SPDX-License-Identifier: Apache-2.0
                   <button
                     type="button"
                     role="menuitem"
-                    onclick={(e) => { e.stopPropagation(); closeMenu(); onEdit?.(department); }}
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      closeMenu();
+                      onEdit?.(department);
+                    }}
                   >
-                    {$_('admin.departments.editDepartment')}
+                    {$_("admin.departments.editDepartment")}
                   </button>
                 {/if}
                 {#if onDelete}
@@ -249,9 +280,13 @@ SPDX-License-Identifier: Apache-2.0
                     type="button"
                     role="menuitem"
                     class="danger"
-                    onclick={(e) => { e.stopPropagation(); closeMenu(); onDelete?.(department); }}
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      closeMenu();
+                      onDelete?.(department);
+                    }}
                   >
-                    {$_('admin.departments.deleteDepartment')}
+                    {$_("admin.departments.deleteDepartment")}
                   </button>
                 {/if}
               </div>
@@ -267,8 +302,12 @@ SPDX-License-Identifier: Apache-2.0
       class="children"
       id={getChildrenContainerId()}
       role="group"
-      aria-label={`${department.name} ${$_('admin.departments.childDepartments')}`}
-      style="--branch-x: {level === 0 ? 20 : 28 + 24 * level}px; --branch-end: {canManage && onAddChild ? '11px' : '23px'}"
+      aria-label={`${department.name} ${$_("admin.departments.childDepartments")}`}
+      style="--branch-x: {level === 0
+        ? 20
+        : 28 + 24 * level}px; --branch-end: {canManage && onAddChild
+        ? '11px'
+        : '23px'}"
     >
       {#each department.children ?? [] as child (child.id)}
         <DepartmentTreeNode
@@ -276,7 +315,9 @@ SPDX-License-Identifier: Apache-2.0
           {allDepartments}
           {onSelect}
           {selectedId}
-          shouldExpandOnInitialRender={initialExpandedDepartmentIds.has(child.id)}
+          shouldExpandOnInitialRender={initialExpandedDepartmentIds.has(
+            child.id,
+          )}
           {initialExpandedDepartmentIds}
           {forceExpanded}
           {onMove}
@@ -293,12 +334,26 @@ SPDX-License-Identifier: Apache-2.0
           type="button"
           class="tree-add"
           style="padding-inline-start: {28 + 24 * (level + 1)}px"
-          onclick={(e) => { e.stopPropagation(); onAddChild?.(department); }}
+          onclick={(e) => {
+            e.stopPropagation();
+            onAddChild?.(department);
+          }}
         >
-          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M6 1.5v9M1.5 6h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 12 12"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M6 1.5v9M1.5 6h9"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
           </svg>
-          <span>{$_('admin.organization.addSubDepartment')}</span>
+          <span>{$_("admin.organization.addSubDepartment")}</span>
         </button>
       {/if}
     </div>

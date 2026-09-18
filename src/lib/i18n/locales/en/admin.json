@@ -267,6 +267,18 @@
       "deleteConfirmTitle": "Delete Department",
       "deleteConfirmMessage": "Are you sure you want to delete this department?",
       "deleteConfirmWarning": "This action cannot be undone. All sub-departments will also be deleted.",
+      "deleteModal": {
+        "title": "Delete \"{name}\" department?",
+        "subtitle": "This action can't be undone.",
+        "impactLabel": "This will also remove",
+        "impactMembers": "{count} {count, plural, one {member} other {members}} — they'll be unassigned, not deleted",
+        "impactChildren": "{count} child {count, plural, one {department} other {departments}}",
+        "impactBudget": "{amount} budget allocation",
+        "confirmLabel": "Type {name} to confirm",
+        "confirmHint": "Required for departments with members or sub-departments.",
+        "confirmButton": "Delete department",
+        "deleting": "Deleting…"
+      },
       "deleting": "Deleting...",
       "departmentCreated": "Department created successfully",
       "departmentUpdated": "Department updated successfully",

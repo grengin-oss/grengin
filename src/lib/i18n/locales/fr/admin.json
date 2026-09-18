@@ -174,6 +174,18 @@
       "deleteConfirmTitle": "Supprimer le département",
       "deleteConfirmMessage": "Êtes-vous sûr de vouloir supprimer ce département ?",
       "deleteConfirmWarning": "Cette action est irréversible. Tous les sous-départements seront également supprimés.",
+      "deleteModal": {
+        "title": "Supprimer le département « {name} » ?",
+        "subtitle": "Cette action est irréversible.",
+        "impactLabel": "Cela supprimera également",
+        "impactMembers": "{count} {count, plural, one {membre} other {membres}} — {count, plural, one {il sera désaffecté, pas supprimé} other {ils seront désaffectés, pas supprimés}}",
+        "impactChildren": "{count} {count, plural, one {département enfant} other {départements enfants}}",
+        "impactBudget": "Allocation budgétaire de {amount}",
+        "confirmLabel": "Saisissez {name} pour confirmer",
+        "confirmHint": "Obligatoire pour les départements avec des membres ou des sous-départements.",
+        "confirmButton": "Supprimer le département",
+        "deleting": "Suppression…"
+      },
       "deleting": "Suppression...",
       "departmentCreated": "Département créé avec succès",
       "departmentUpdated": "Département mis à jour avec succès",
