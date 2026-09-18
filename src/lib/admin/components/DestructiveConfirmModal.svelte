@@ -4,75 +4,91 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <!--
-  Destructive confirm for a department (design: organization.html
-  ".delete-modal"). It spells out what the delete takes with it, and for a
-  department that is not empty it holds the button disarmed until the admin
-  types the department's name back.
+  The destructive confirm from organization.html (".delete-modal"): a red trash
+  tile, a list of what the action takes with it, and — when the caller asks for
+  one — a field that holds the danger button disarmed until the admin types the
+  subject's name back.
 
-  The component owns only the confirmation; the caller performs the delete and
-  reports progress through `isDeleting`, so the same dialog serves both entry
-  points (the details panel's danger zone and the tree row's context menu).
+  It is deliberately content-agnostic. Callers pass already-localised strings
+  (they know whether it is a department, a role, or something else) and perform
+  the work themselves, reporting progress through `isBusy`. That keeps one copy
+  of the dialog's design for every destructive action in the admin.
 -->
 
 <script lang="ts">
   import { _ } from "svelte-i18n";
   import Modal from "./Modal.svelte";
-  import type { Department } from "../types.js";
-  import { formatCurrency } from "$lib/utils/format.js";
 
   interface Props {
-    department: Department;
-    /** True while the caller's delete request is in flight. */
-    isDeleting: boolean;
+    title: string;
+    subtitle: string;
+    /** Heading above the impact list, e.g. "This will also remove". */
+    impactLabel: string;
+    /** Localised lines for the impact box. Empty hides the box entirely. */
+    impacts: string[];
+    /**
+     * Word the admin must type before the button arms. Leave null to arm
+     * immediately — right when the action carries no warned-about consequence.
+     */
+    confirmWord?: string | null;
+    /** Label above the confirm field; only read when `confirmWord` is set. */
+    confirmLabel?: string;
+    /** Small print under the confirm field. */
+    confirmHint?: string;
+    /** Danger button at rest. */
+    confirmButtonLabel: string;
+    /** Danger button while `isBusy`. */
+    busyLabel: string;
+    /** True while the caller's request is in flight. */
+    isBusy: boolean;
     onCancel: () => void;
-    onConfirm: (dept: Department) => void;
+    onConfirm: () => void;
   }
 
-  let { department, isDeleting, onCancel, onConfirm }: Props = $props();
+  let {
+    title,
+    subtitle,
+    impactLabel,
+    impacts,
+    confirmWord = null,
+    confirmLabel = "",
+    confirmHint = "",
+    confirmButtonLabel,
+    busyLabel,
+    isBusy,
+    onCancel,
+    onConfirm,
+  }: Props = $props();
 
   let typedName = $state("");
 
-  /**
-   * Typing the name back is asked for only when the delete actually takes
-   * something with it. An empty leaf department is a one-click delete — the
-   * extra step there is friction without a warning to earn it.
-   */
-  const needsTypedConfirm = $derived(
-    department.member_count > 0 || department.child_count > 0,
-  );
+  const needsTypedConfirm = $derived(!!confirmWord);
 
-  const hasImpact = $derived(
-    department.member_count > 0 ||
-      department.child_count > 0 ||
-      department.budget_allocated > 0,
-  );
-
-  /** Name comparison ignores surrounding space and case — it is a speed bump, not a password. */
+  /** Comparison ignores surrounding space and case — a speed bump, not a password. */
   const nameMatches = $derived(
-    typedName.trim().toLocaleLowerCase() ===
-      department.name.trim().toLocaleLowerCase(),
+    !!confirmWord &&
+      typedName.trim().toLocaleLowerCase() ===
+        confirmWord.trim().toLocaleLowerCase(),
   );
 
-  const canDelete = $derived(
-    !isDeleting && (!needsTypedConfirm || nameMatches),
-  );
+  const canConfirm = $derived(!isBusy && (!needsTypedConfirm || nameMatches));
 
-  // A different department in the same mounted dialog starts from a blank field.
-  let lastDepartmentId = $state<string | null>(null);
+  // A different subject in the same mounted dialog starts from a blank field.
+  let lastConfirmWord = $state<string | null | undefined>(undefined);
   $effect(() => {
-    if (department.id !== lastDepartmentId) {
-      lastDepartmentId = department.id;
+    if (confirmWord !== lastConfirmWord) {
+      lastConfirmWord = confirmWord;
       typedName = "";
     }
   });
 
   function handleConfirm() {
-    if (!canDelete) return;
-    onConfirm(department);
+    if (!canConfirm) return;
+    onConfirm();
   }
 
   function handleClose() {
-    if (isDeleting) return;
+    if (isBusy) return;
     onCancel();
   }
 
@@ -89,11 +105,9 @@ SPDX-License-Identifier: Apache-2.0
   isOpen={true}
   variant="delete-department"
   onclose={handleClose}
-  title={$_("admin.departments.deleteModal.title", {
-    values: { name: department.name },
-  })}
-  subtitle={$_("admin.departments.deleteModal.subtitle")}
-  descriptionId="delete-department-impact"
+  {title}
+  {subtitle}
+  descriptionId="destructive-confirm-impact"
 >
   {#snippet headerIcon()}
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -107,68 +121,48 @@ SPDX-License-Identifier: Apache-2.0
     </svg>
   {/snippet}
 
-  <div class="dd-body" id="delete-department-impact">
-    {#if hasImpact}
+  <div class="dd-body" id="destructive-confirm-impact">
+    {#if impacts.length > 0}
       <div class="impact-box">
-        <span class="impact-box__label"
-          >{$_("admin.departments.deleteModal.impactLabel")}</span
-        >
+        <span class="impact-box__label">{impactLabel}</span>
         <div class="impact-rows">
-          {#if department.member_count > 0}
+          {#each impacts as line (line)}
             <div class="impact-row">
-              {@render impactIcon()}
-              <span
-                >{$_("admin.departments.deleteModal.impactMembers", {
-                  values: { count: department.member_count },
-                })}</span
-              >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3" />
+                <path
+                  d="M4.8 4.8l4.4 4.4M9.2 4.8l-4.4 4.4"
+                  stroke="currentColor"
+                  stroke-width="1.3"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <span>{line}</span>
             </div>
-          {/if}
-          {#if department.child_count > 0}
-            <div class="impact-row">
-              {@render impactIcon()}
-              <span
-                >{$_("admin.departments.deleteModal.impactChildren", {
-                  values: { count: department.child_count },
-                })}</span
-              >
-            </div>
-          {/if}
-          {#if department.budget_allocated > 0}
-            <div class="impact-row">
-              {@render impactIcon()}
-              <span
-                >{$_("admin.departments.deleteModal.impactBudget", {
-                  values: { amount: formatCurrency(department.budget_allocated) },
-                })}</span
-              >
-            </div>
-          {/if}
+          {/each}
         </div>
       </div>
     {/if}
 
     {#if needsTypedConfirm}
       <div class="confirm-block">
-        <label class="confirm-label" for="delete-department-confirm">
-          {$_("admin.departments.deleteModal.confirmLabel", {
-            values: { name: department.name },
-          })}
+        <label class="confirm-label" for="destructive-confirm-input">
+          {confirmLabel}
         </label>
         <input
-          id="delete-department-confirm"
+          id="destructive-confirm-input"
           class="confirm-input"
           type="text"
           autocomplete="off"
           spellcheck="false"
-          disabled={isDeleting}
-          placeholder={department.name}
+          disabled={isBusy}
+          placeholder={confirmWord}
           bind:value={typedName}
           onkeydown={handleInputKeydown}
         />
-        <span class="confirm-hint"
-          >{$_("admin.departments.deleteModal.confirmHint")}</span
-        >
+        {#if confirmHint}
+          <span class="confirm-hint">{confirmHint}</span>
+        {/if}
       </div>
     {/if}
   </div>
@@ -177,7 +171,7 @@ SPDX-License-Identifier: Apache-2.0
     <button
       type="button"
       class="btn-cancel"
-      disabled={isDeleting}
+      disabled={isBusy}
       onclick={handleClose}
     >
       {$_("common.cancel")}
@@ -185,34 +179,18 @@ SPDX-License-Identifier: Apache-2.0
     <button
       type="button"
       class="btn-delete"
-      class:btn-delete--busy={isDeleting}
-      data-armed={canDelete}
-      disabled={!canDelete}
+      class:btn-delete--busy={isBusy}
+      data-armed={canConfirm}
+      disabled={!canConfirm}
       onclick={handleConfirm}
     >
-      {#if isDeleting}
+      {#if isBusy}
         <span class="spinner" aria-hidden="true"></span>
       {/if}
-      <span
-        >{isDeleting
-          ? $_("admin.departments.deleteModal.deleting")
-          : $_("admin.departments.deleteModal.confirmButton")}</span
-      >
+      <span>{isBusy ? busyLabel : confirmButtonLabel}</span>
     </button>
   {/snippet}
 </Modal>
-
-{#snippet impactIcon()}
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3" />
-    <path
-      d="M4.8 4.8l4.4 4.4M9.2 4.8l-4.4 4.4"
-      stroke="currentColor"
-      stroke-width="1.3"
-      stroke-linecap="round"
-    />
-  </svg>
-{/snippet}
 
 <style>
   /* app.css paints every bare <button> as a glass pill; the two footer actions

@@ -462,6 +462,17 @@
       "deleteRoleConfirmTitle": "حذف الدور",
       "deleteRoleConfirmMessage": "حذف الدور \"{name}\"؟",
       "deleteRoleConfirmWarning": "لا يمكن التراجع عن هذا الإجراء. سيفقد المستخدمون الذين لديهم هذا الدور صلاحياته.",
+      "deleteRoleModal": {
+        "title": "حذف دور \"{name}\"؟",
+        "subtitle": "لا يمكن التراجع عن هذا الإجراء.",
+        "impactLabel": "سيؤدي هذا أيضًا إلى إزالة",
+        "impactUsers": "{count} {count, plural, one {مستخدم} other {مستخدمين}} — سيفقدون أذونات هذا الدور",
+        "impactPermissions": "{count} {count, plural, one {إذن} other {أذونات}} يمنحها هذا الدور",
+        "impactSystemRole": "هذا دور نظام مدمج",
+        "confirmLabel": "اكتب {name} للتأكيد",
+        "confirmHint": "مطلوب للأدوار المعيّنة أو المدمجة.",
+        "confirmButton": "حذف الدور"
+      },
       "roleDeleted": "تم حذف الدور",
       "failedToDeleteRole": "تعذر حذف الدور",
       "deleting": "جارٍ الحذف…",

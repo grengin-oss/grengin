@@ -462,6 +462,17 @@
       "deleteRoleConfirmTitle": "Supprimer le rôle",
       "deleteRoleConfirmMessage": "Supprimer le rôle « {name} » ?",
       "deleteRoleConfirmWarning": "Cette action est irréversible. Les utilisateurs avec ce rôle perdront ses autorisations.",
+      "deleteRoleModal": {
+        "title": "Supprimer le rôle « {name} » ?",
+        "subtitle": "Cette action est irréversible.",
+        "impactLabel": "Cela supprimera également",
+        "impactUsers": "{count} {count, plural, one {utilisateur} other {utilisateurs}} — {count, plural, one {il perdra} other {ils perdront}} les autorisations de ce rôle",
+        "impactPermissions": "{count} {count, plural, one {autorisation accordée} other {autorisations accordées}} par ce rôle",
+        "impactSystemRole": "Il s'agit d'un rôle système intégré",
+        "confirmLabel": "Saisissez {name} pour confirmer",
+        "confirmHint": "Obligatoire pour les rôles attribués ou intégrés.",
+        "confirmButton": "Supprimer le rôle"
+      },
       "roleDeleted": "Rôle supprimé",
       "failedToDeleteRole": "Échec de la suppression du rôle",
       "deleting": "Suppression…",

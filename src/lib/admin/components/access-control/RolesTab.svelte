@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0
   import AdminPanelCard from "../AdminPanelCard.svelte";
   import AdminEmptyState from "../AdminEmptyState.svelte";
   import Modal from "../Modal.svelte";
+  import DestructiveConfirmModal from "../DestructiveConfirmModal.svelte";
   import RoleFormModal from "./RoleFormModal.svelte";
   import DepartmentScopingModal from "./DepartmentScopingModal.svelte";
   import { toast } from "../../../components/Toaster.svelte";
@@ -428,6 +429,46 @@ SPDX-License-Identifier: Apache-2.0
   function handleRoleFormSuccess() {
     onRolesChange();
     roleFormOpen = null;
+  }
+
+  /**
+   * Typing the name back is asked for when the delete has a blast radius: the
+   * role is in use, or it is one of the built-ins. A bare, unassigned custom
+   * role is a one-click delete.
+   */
+  const deleteRoleNeedsTypedConfirm = $derived(
+    !!roleToDelete && ((roleToDelete.user_count ?? 0) > 0 || roleToDelete.is_system),
+  );
+
+  /** Only the consequences that actually apply to this role. */
+  const deleteRoleImpacts = $derived.by<string[]>(() => {
+    const role = roleToDelete;
+    if (!role) return [];
+    const lines: string[] = [];
+    const userCount = role.user_count ?? 0;
+    if (userCount > 0) {
+      lines.push(
+        $_("admin.accessControl.deleteRoleModal.impactUsers", {
+          values: { count: userCount },
+        }),
+      );
+    }
+    if (role.permissions.length > 0) {
+      lines.push(
+        $_("admin.accessControl.deleteRoleModal.impactPermissions", {
+          values: { count: role.permissions.length },
+        }),
+      );
+    }
+    if (role.is_system) {
+      lines.push($_("admin.accessControl.deleteRoleModal.impactSystemRole"));
+    }
+    return lines;
+  });
+
+  function cancelDeleteRole() {
+    if (deletingRole) return;
+    roleToDelete = null;
   }
 
   async function handleDeleteRole() {
@@ -1012,43 +1053,24 @@ SPDX-License-Identifier: Apache-2.0
 {/if}
 
 {#if roleToDelete}
-  <Modal
-    isOpen={!!roleToDelete}
-    onclose={() => (roleToDelete = null)}
-    title={$_("admin.accessControl.deleteRoleConfirmTitle")}
-  >
-    <div class="remove-confirm">
-      <p>
-        {$_("admin.accessControl.deleteRoleConfirmMessage", {
-          values: { name: roleToDelete.name },
-        })}
-      </p>
-      <p class="warning">
-        {$_("admin.accessControl.deleteRoleConfirmWarning")}
-      </p>
-      <div class="modal-actions">
-        <button
-          class="btn-secondary"
-          onclick={() => (roleToDelete = null)}
-          disabled={deletingRole}>{$_("common.cancel")}</button
-        >
-        <button
-          class="btn-danger"
-          onclick={handleDeleteRole}
-          disabled={deletingRole}
-        >
-          {#if deletingRole}
-            <span class="btn-loading">
-              <LoadingSpinner size="sm" />
-              {$_("admin.accessControl.deleting")}
-            </span>
-          {:else}
-            {$_("common.delete")}
-          {/if}
-        </button>
-      </div>
-    </div>
-  </Modal>
+  <DestructiveConfirmModal
+    title={$_("admin.accessControl.deleteRoleModal.title", {
+      values: { name: roleToDelete.name },
+    })}
+    subtitle={$_("admin.accessControl.deleteRoleModal.subtitle")}
+    impactLabel={$_("admin.accessControl.deleteRoleModal.impactLabel")}
+    impacts={deleteRoleImpacts}
+    confirmWord={deleteRoleNeedsTypedConfirm ? roleToDelete.name : null}
+    confirmLabel={$_("admin.accessControl.deleteRoleModal.confirmLabel", {
+      values: { name: roleToDelete.name },
+    })}
+    confirmHint={$_("admin.accessControl.deleteRoleModal.confirmHint")}
+    confirmButtonLabel={$_("admin.accessControl.deleteRoleModal.confirmButton")}
+    busyLabel={$_("admin.accessControl.deleting")}
+    isBusy={deletingRole}
+    onCancel={cancelDeleteRole}
+    onConfirm={handleDeleteRole}
+  />
 {/if}
 
 {#if userToRemove}

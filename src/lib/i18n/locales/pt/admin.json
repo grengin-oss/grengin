@@ -462,6 +462,17 @@
       "deleteRoleConfirmTitle": "Excluir papel",
       "deleteRoleConfirmMessage": "Excluir o papel \"{name}\"?",
       "deleteRoleConfirmWarning": "Esta ação não pode ser desfeita. Os usuários com este papel perderão suas permissões.",
+      "deleteRoleModal": {
+        "title": "Excluir a função \"{name}\"?",
+        "subtitle": "Esta ação não pode ser desfeita.",
+        "impactLabel": "Isso também removerá",
+        "impactUsers": "{count} {count, plural, one {usuário} other {usuários}} — {count, plural, one {ele perderá} other {eles perderão}} as permissões desta função",
+        "impactPermissions": "{count} {count, plural, one {permissão concedida} other {permissões concedidas}} por esta função",
+        "impactSystemRole": "Esta é uma função de sistema integrada",
+        "confirmLabel": "Digite {name} para confirmar",
+        "confirmHint": "Obrigatório para funções atribuídas ou integradas.",
+        "confirmButton": "Excluir função"
+      },
       "roleDeleted": "Papel excluído",
       "failedToDeleteRole": "Falha ao excluir papel",
       "deleting": "Excluindo…",

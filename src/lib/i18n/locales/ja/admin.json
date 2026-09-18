@@ -462,6 +462,17 @@
       "deleteRoleConfirmTitle": "ロールを削除",
       "deleteRoleConfirmMessage": "ロール「{name}」を削除しますか？",
       "deleteRoleConfirmWarning": "この操作は元に戻せません。このロールを持つユーザーは権限を失います。",
+      "deleteRoleModal": {
+        "title": "ロール「{name}」を削除しますか？",
+        "subtitle": "この操作は取り消せません。",
+        "impactLabel": "次の項目も削除されます",
+        "impactUsers": "ユーザー {count} 名 — このロールの権限を失います",
+        "impactPermissions": "このロールが付与する権限 {count} 件",
+        "impactSystemRole": "これは組み込みのシステムロールです",
+        "confirmLabel": "確認のため {name} と入力してください",
+        "confirmHint": "割り当て済みまたは組み込みのロールでは必須です。",
+        "confirmButton": "ロールを削除"
+      },
       "roleDeleted": "ロールを削除しました",
       "failedToDeleteRole": "ロールの削除に失敗しました",
       "deleting": "削除中…",

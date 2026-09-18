@@ -462,6 +462,17 @@
       "deleteRoleConfirmTitle": "Eliminar rol",
       "deleteRoleConfirmMessage": "¿Eliminar el rol \"{name}\"?",
       "deleteRoleConfirmWarning": "Esta acción no se puede deshacer. Los usuarios con este rol perderán sus permisos.",
+      "deleteRoleModal": {
+        "title": "¿Eliminar el rol \"{name}\"?",
+        "subtitle": "Esta acción no se puede deshacer.",
+        "impactLabel": "Esto también eliminará",
+        "impactUsers": "{count} {count, plural, one {usuario} other {usuarios}}: {count, plural, one {perderá} other {perderán}} los permisos de este rol",
+        "impactPermissions": "{count} {count, plural, one {permiso concedido} other {permisos concedidos}} por este rol",
+        "impactSystemRole": "Este es un rol de sistema integrado",
+        "confirmLabel": "Escribe {name} para confirmar",
+        "confirmHint": "Obligatorio para roles asignados o integrados.",
+        "confirmButton": "Eliminar rol"
+      },
       "roleDeleted": "Rol eliminado",
       "failedToDeleteRole": "Error al eliminar el rol",
       "deleting": "Eliminando…",
