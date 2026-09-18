@@ -40,6 +40,10 @@ SPDX-License-Identifier: Apache-2.0
      * "ai-custom" is the 640px form from ai-engines.html (.ace-modal) — the
      * gradient rule, a tile-and-subtitle header, and a faintly tinted footer
      * whose actions sit right;
+     * "delete-department" is the 440px destructive confirm from
+     * organization.html (.delete-modal) — no gradient rule, a red trash tile
+     * beside a title-and-subtitle heading, a pill close button, and a
+     * hairline-boxed footer whose actions sit right;
      * "mcp-access" and "mcp-tool" are the two dialogs from
      * mcp-server-detail.html (.modal at 560px and at 680px) — a 6px gradient
      * rule, a 32px-gutter header and body, and a hairline-topped footer whose
@@ -57,6 +61,7 @@ SPDX-License-Identifier: Apache-2.0
       | "chart-data"
       | "ai-browse"
       | "ai-custom"
+      | "delete-department"
       | "mcp-access"
       | "mcp-tool";
     /** Pinned footer bar, outside the scrolling body (access-control design). */
@@ -297,6 +302,7 @@ SPDX-License-Identifier: Apache-2.0
       class:modal-backdrop--vdt={variant === "chart-data"}
       class:modal-backdrop--bp={variant === "ai-browse"}
       class:modal-backdrop--ace={variant === "ai-custom"}
+      class:modal-backdrop--dd={variant === "delete-department"}
       class:modal-backdrop--mcpd={variant === "mcp-access" ||
         variant === "mcp-tool"}
       data-modal-id={modalId}
@@ -319,6 +325,7 @@ SPDX-License-Identifier: Apache-2.0
         class:modal-content--vdt={variant === "chart-data"}
         class:modal-content--bp={variant === "ai-browse"}
         class:modal-content--ace={variant === "ai-custom"}
+        class:modal-content--dd={variant === "delete-department"}
         class:modal-content--mcpd={variant === "mcp-access" ||
           variant === "mcp-tool"}
         class:modal-content--mcpd-wide={variant === "mcp-tool"}
@@ -1099,6 +1106,123 @@ SPDX-License-Identifier: Apache-2.0
     border: none;
     background: none;
     box-shadow: none;
+    flex-shrink: 0;
+  }
+
+  /* ===== "delete-department" variant (organization.html .delete-modal) =====
+     440px destructive confirm. Unlike the other variants it carries no gradient
+     rule: the red trash tile and the danger button do the signalling. Selectors
+     are doubled for the same reason as the variants below — the base
+     .modal-content rules come later in this sheet. */
+  .modal-backdrop.modal-backdrop--dd {
+    background: var(--gx-ac-modal-scrim);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .modal-content.modal-content--dd {
+    position: relative;
+    width: 440px;
+    max-width: calc(100vw - 32px);
+    max-height: 90vh;
+    overflow: hidden;
+    border: none;
+    border-radius: 20px;
+    background: var(--gx-card);
+    box-shadow: var(--gx-pr-modal-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--gx-font);
+  }
+
+  /* The design has no header rule or divider here — the heading simply sits on
+     the card, so only the gutters come from the header. */
+  .modal-content.modal-content--dd .modal-header {
+    padding: 22px 24px 0;
+    border: none;
+    flex-shrink: 0;
+  }
+
+  .modal-content.modal-content--dd .modal-header-left {
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .modal-content.modal-content--dd .modal-header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--gx-org-danger-bg);
+    color: var(--gx-org-danger);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .modal-content.modal-content--dd .modal-heading {
+    gap: 4px;
+  }
+
+  .modal-content.modal-content--dd .modal-title {
+    font-family: var(--gx-font);
+    font-weight: 700;
+    font-size: 17px;
+    line-height: 1.25;
+    color: var(--gx-org-ink);
+  }
+
+  .modal-content.modal-content--dd .modal-subtitle {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
+  }
+
+  /* ".modal-close--delete": a 24px pill, not the square the other variants use. */
+  .modal-content.modal-content--dd .modal-close {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--gx-hover-soft);
+    box-shadow: none;
+    color: var(--gx-slate-500);
+    flex-shrink: 0;
+    align-self: flex-start;
+    transition: background-color 120ms ease;
+  }
+
+  .modal-content.modal-content--dd .modal-close:hover {
+    background: var(--gx-hair);
+  }
+
+  .modal-content.modal-content--dd .modal-close svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .modal-content.modal-content--dd .modal-body {
+    padding: 16px 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+  }
+
+  .modal-content.modal-content--dd .modal-footer {
+    height: 68px;
+    box-sizing: border-box;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 16px 24px;
+    margin-top: 16px;
+    border: none;
+    border-top: 1px solid var(--gx-hair);
+    background: var(--gx-card);
     flex-shrink: 0;
   }
 

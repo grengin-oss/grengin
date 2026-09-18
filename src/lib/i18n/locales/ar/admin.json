@@ -175,6 +175,18 @@
       "deleteConfirmTitle": "حذف القسم",
       "deleteConfirmMessage": "هل أنت متأكد من أنك تريد حذف هذا القسم؟",
       "deleteConfirmWarning": "لا يمكن التراجع عن هذا الإجراء. سيتم أيضًا حذف جميع الأقسام الفرعية.",
+      "deleteModal": {
+        "title": "حذف قسم \"{name}\"؟",
+        "subtitle": "لا يمكن التراجع عن هذا الإجراء.",
+        "impactLabel": "سيؤدي هذا أيضًا إلى إزالة",
+        "impactMembers": "{count} {count, plural, one {عضو} other {أعضاء}} — سيتم إلغاء تعيينهم، وليس حذفهم",
+        "impactChildren": "{count} {count, plural, one {قسم فرعي} other {أقسام فرعية}}",
+        "impactBudget": "تخصيص ميزانية {amount}",
+        "confirmLabel": "اكتب {name} للتأكيد",
+        "confirmHint": "مطلوب للأقسام التي تضم أعضاء أو أقسامًا فرعية.",
+        "confirmButton": "حذف القسم",
+        "deleting": "جارٍ الحذف…"
+      },
       "deleting": "جارٍ الحذف...",
       "departmentCreated": "تم إنشاء القسم بنجاح",
       "departmentUpdated": "تم تحديث القسم بنجاح",

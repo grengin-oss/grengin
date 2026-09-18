@@ -6,7 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
   import type { Department } from "../types.js";
   import { _ } from "svelte-i18n";
-  import Modal from "./Modal.svelte";
   import BudgetManagement from "./BudgetManagement.svelte";
   import MemberManagement from "./MemberManagement.svelte";
   import DepartmentAdminsSection from "./DepartmentAdminsSection.svelte";
@@ -29,7 +28,6 @@ SPDX-License-Identifier: Apache-2.0
   type TabId = 'overview' | 'members' | 'budget' | 'prompts';
 
   let activeTab = $state<TabId>('overview');
-  let showDeleteConfirm = $state(false);
 
   const canViewBudget = $derived(
     department ? permissionsStore.canViewBudgetForDepartment(department.id) : false
@@ -74,15 +72,12 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
-  function confirmDelete() {
-    showDeleteConfirm = true;
-  }
-
-  function handleDelete() {
-    if (department) {
-      showDeleteConfirm = false;
-      onDelete(department);
-    }
+  /**
+   * Raises the request only — the confirm dialog lives in TeamsTab so the tree
+   * row's context menu goes through the same one.
+   */
+  function requestDelete() {
+    if (department) onDelete(department);
   }
 
   function getTabId(tab: string) {
@@ -219,7 +214,7 @@ SPDX-License-Identifier: Apache-2.0
                 <span class="danger-title">{$_('admin.departments.deleteDepartment')}</span>
                 <span class="danger-body">{$_('admin.organization.deleteDepartmentCaption')}</span>
               </div>
-              <button type="button" class="btn-destructive" onclick={confirmDelete}>
+              <button type="button" class="btn-destructive" onclick={requestDelete}>
                 {$_('admin.departments.deleteDepartment')}
               </button>
             </div>
@@ -258,28 +253,6 @@ SPDX-License-Identifier: Apache-2.0
       {/if}
     </div>
   </div>
-{/if}
-
-{#if showDeleteConfirm}
-  <Modal
-    isOpen={showDeleteConfirm}
-    onclose={() => showDeleteConfirm = false}
-    title={$_('admin.departments.deleteConfirmTitle')}
-  >
-    <div class="delete-confirm">
-      <p>{$_('admin.departments.deleteConfirmMessage')}</p>
-      <p class="warning">{$_('admin.departments.deleteConfirmWarning')}</p>
-
-      <div class="modal-actions">
-        <button type="button" class="btn-secondary" onclick={() => showDeleteConfirm = false}>
-          {$_('common.cancel')}
-        </button>
-        <button type="button" class="btn-destructive" onclick={handleDelete}>
-          {$_('common.delete')}
-        </button>
-      </div>
-    </div>
-  </Modal>
 {/if}
 
 <style>
@@ -625,29 +598,6 @@ SPDX-License-Identifier: Apache-2.0
 
   .danger-zone .btn-destructive {
     width: 161px;
-  }
-
-  .delete-confirm {
-    padding: 20px;
-    font-family: var(--gx-font);
-  }
-
-  .delete-confirm p {
-    margin: 0 0 12px 0;
-    color: var(--gx-slate-900);
-    font-size: 14px;
-  }
-
-  .delete-confirm .warning {
-    color: var(--gx-org-danger);
-    font-size: 13px;
-  }
-
-  .modal-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-    margin-top: 24px;
   }
 
   @media (max-width: 1024px) {

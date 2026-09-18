@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0
   import type { Department, User } from "../../types.js";
   import LoadingSpinner from "../LoadingSpinner.svelte";
   import DepartmentTreeNode from "../DepartmentTreeNode.svelte";
+  import DeleteDepartmentModal from "../DeleteDepartmentModal.svelte";
   import DepartmentDetailsPanel from "../DepartmentDetailsPanel.svelte";
   import DepartmentFormModal from "../DepartmentFormModal.svelte";
   import UnassignedPanel from "./UnassignedPanel.svelte";
@@ -351,10 +352,30 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
+  /**
+   * Both delete entry points — the details panel's danger zone and the tree
+   * row's context menu — open the same confirm here rather than deleting on
+   * the spot, so neither can drop a department without a warning.
+   */
+  let deleteTarget = $state<Department | null>(null);
+  let isDeleting = $state(false);
+
+  function requestDeleteDepartment(dept: Department) {
+    deleteTarget = dept;
+  }
+
+  function cancelDeleteDepartment() {
+    if (isDeleting) return;
+    deleteTarget = null;
+  }
+
   async function handleDeleteDepartment(dept: Department) {
+    if (isDeleting) return;
+    isDeleting = true;
     try {
       await departmentsStore.deleteDepartment(dept.id);
       toast.success($_('admin.departments.departmentDeleted'));
+      deleteTarget = null;
       selectedDepartmentId = null;
       syncSelectedDepartmentToUrl(null);
     } catch (error) {
@@ -362,6 +383,9 @@ SPDX-License-Identifier: Apache-2.0
         ? getLocalizedError(error, 'description', $_)
         : 'Failed to delete department';
       toast.error(errorMessage);
+      // The dialog stays open on failure so the admin can retry or back out.
+    } finally {
+      isDeleting = false;
     }
   }
 
@@ -467,7 +491,25 @@ SPDX-License-Identifier: Apache-2.0
           />
         </label>
 
-        {#if store.loading && store.departmentsTree.length === 0}
+        {#if isDeleting}
+          <!-- Design: the tree swaps for a shape-matched skeleton card while a
+               delete is in flight, rather than leaving stale rows clickable. -->
+          <div
+            class="loading-card"
+            role="status"
+            aria-label={$_('admin.departments.deleteModal.deleting')}
+          >
+            {#each [0, 1, 2] as row (row)}
+              <div class="skeleton-row">
+                <span class="skeleton-avatar"></span>
+                <span class="skeleton-lines">
+                  <span class="skeleton-line skeleton-line--wide"></span>
+                  <span class="skeleton-line skeleton-line--narrow"></span>
+                </span>
+              </div>
+            {/each}
+          </div>
+        {:else if store.loading && store.departmentsTree.length === 0}
           <div class="tree-state">
             <LoadingSpinner />
             <p>{$_('admin.departments.loading')}</p>
@@ -509,7 +551,7 @@ SPDX-License-Identifier: Apache-2.0
                 forceExpanded={isSearchingTree}
                 onMove={handleMoveDepartment}
                 onEdit={openEditModal}
-                onDelete={handleDeleteDepartment}
+                onDelete={requestDeleteDepartment}
                 onAddChild={handleAddSubDepartment}
                 canManage={canManageDepartments}
               />
@@ -605,7 +647,7 @@ SPDX-License-Identifier: Apache-2.0
           allDepartments={store.administeredDepartments}
           onClose={handleCloseDetails}
           onEdit={openEditModal}
-          onDelete={handleDeleteDepartment}
+          onDelete={requestDeleteDepartment}
         />
       </section>
     {:else}
@@ -650,6 +692,15 @@ SPDX-License-Identifier: Apache-2.0
     department={editingDepartment}
     allDepartments={store.administeredDepartments}
     mode="edit"
+  />
+{/if}
+
+{#if deleteTarget}
+  <DeleteDepartmentModal
+    department={deleteTarget}
+    {isDeleting}
+    onCancel={cancelDeleteDepartment}
+    onConfirm={handleDeleteDepartment}
   />
 {/if}
 
@@ -839,6 +890,82 @@ SPDX-License-Identifier: Apache-2.0
     align-self: stretch;
     flex-grow: 1;
     min-height: 0;
+  }
+
+  /* ".loading-card" — the design's skeleton that stands in for the tree while
+     a delete runs. Shapes match a tree row (32px avatar + two lines) so the
+     panel does not change height when the real rows come back. */
+  .loading-card {
+    border-radius: 16px;
+    background: var(--gx-card);
+    box-shadow:
+      inset 0 0 0 1px var(--gx-hair),
+      0 4px 16px 0 rgba(0, 0, 0, 0.0314);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    margin: 4px 0;
+  }
+
+  .skeleton-row {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .skeleton-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--gx-hover-soft);
+    flex-shrink: 0;
+    animation: tt-shimmer 1.2s ease-in-out infinite;
+  }
+
+  .skeleton-lines {
+    height: 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    flex-grow: 1;
+  }
+
+  .skeleton-line {
+    height: 11px;
+    border-radius: 6px;
+    animation: tt-shimmer 1.2s ease-in-out infinite;
+  }
+
+  .skeleton-line--wide {
+    width: 110px;
+    background: var(--gx-hair);
+  }
+
+  .skeleton-line--narrow {
+    width: 70px;
+    background: var(--gx-hover-soft);
+  }
+
+  @keyframes tt-shimmer {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-avatar,
+    .skeleton-line {
+      animation: none;
+      opacity: 0.8;
+    }
   }
 
   .tree-list {
