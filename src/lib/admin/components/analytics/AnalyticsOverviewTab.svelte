@@ -8,6 +8,8 @@ SPDX-License-Identifier: Apache-2.0
   import LoadingSpinner from "../LoadingSpinner.svelte";
   import ChartDataTableModal from "./ChartDataTableModal.svelte";
   import AnalyticsTrendChart from "./AnalyticsTrendChart.svelte";
+  import AnalyticsGranularityPicker from "./AnalyticsGranularityPicker.svelte";
+  import type { Granularity } from "../../../api/admin/analytics.js";
   import type {
     AnalyticsOverview,
     AnalyticsTimeseries,
@@ -25,6 +27,11 @@ SPDX-License-Identifier: Apache-2.0
     rangeLabel: string;
     error: string | null;
     onRetry: () => void;
+    /** Bucket the timeseries is currently cut into — drives the Aggregated picker. */
+    granularity: Granularity;
+    /** Buckets the selected range can be cut into; the rest render disabled. */
+    granularityOptions: Granularity[];
+    onGranularityChange: (next: Granularity) => void;
   }
 
   let {
@@ -36,6 +43,9 @@ SPDX-License-Identifier: Apache-2.0
     rangeLabel,
     error,
     onRetry,
+    granularity,
+    granularityOptions,
+    onGranularityChange,
   }: Props = $props();
 
   type ChartId =
@@ -664,6 +674,9 @@ SPDX-License-Identifier: Apache-2.0
 
     <!-- ===================== trends card ===================== -->
     <div class="chart-card">
+      <!-- ".chart-tabs-row": metric tabs on the left, the Aggregated bucket
+           picker pinned to the right (design: usage-analytics-overview.html). -->
+      <div class="chart-tabs-row">
       <div
         class="chart-tabs"
         role="tablist"
@@ -756,6 +769,14 @@ SPDX-License-Identifier: Apache-2.0
             {config.tabLabel}
           </button>
         {/each}
+      </div>
+
+        <AnalyticsGranularityPicker
+          {granularity}
+          options={granularityOptions}
+          onChange={onGranularityChange}
+          disabled={chartsLoading}
+        />
       </div>
 
       <div class="chart-title-row">
@@ -1126,6 +1147,17 @@ SPDX-License-Identifier: Apache-2.0
     flex-direction: column;
     gap: 20px;
     padding: 24px;
+  }
+
+  /* Design: tabs left, Aggregated picker right. The tabs already wrap, so on a
+     narrow viewport the row wraps too and the picker drops onto its own line
+     rather than squeezing the tab labels. */
+  .chart-tabs-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
   }
 
   .chart-tabs {

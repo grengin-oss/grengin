@@ -9,10 +9,13 @@ export interface GetAnalyticsOverviewParams {
   end_date: string;
 }
 
+/** Bucket size the timeseries endpoint folds rows into. */
+export type Granularity = 'hour' | 'day' | 'week' | 'month';
+
 export interface GetAnalyticsTimeseriesParams {
   start_date: string;
   end_date: string;
-  granularity: 'hour' | 'day' | 'week' | 'month';
+  granularity: Granularity;
 }
 
 function buildQueryString(params: Record<string, string | number | boolean | undefined>): string {

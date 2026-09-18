@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
   import AdminTabs from "../components/AdminTabs.svelte";
   import AnalyticsRangePicker from "../components/analytics/AnalyticsRangePicker.svelte";
   import { getAnalyticsOverview, getAnalyticsTimeseries } from "../../api/admin/analytics.js";
+  import type { Granularity } from "../../api/admin/analytics.js";
   import type { AnalyticsOverview, AnalyticsTimeseries } from "../types.js";
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
@@ -111,7 +112,13 @@ SPDX-License-Identifier: Apache-2.0
   let selectedPreset = $state<DatePreset>('last7');
   let startDate = $state(getDefaultStartDate('last7'));
   let endDate = $state(getDefaultEndDate());
-  let granularity = $state<'hour' | 'day' | 'week' | 'month'>('day');
+  /**
+   * The admin's explicit pick from the Aggregated control, or null to follow
+   * whatever the date range implies. It is kept across range changes so the
+   * preference sticks, and is ignored whenever the range can no longer be cut
+   * that way (see `granularity` below).
+   */
+  let granularityChoice = $state<Granularity | null>(null);
 
   function getDefaultStartDate(preset: DatePreset): string {
     const date = new Date();
@@ -160,12 +167,39 @@ SPDX-License-Identifier: Apache-2.0
     return Math.max(1, Math.ceil(Math.abs(end.getTime() - start.getTime()) / 86400000) + 1);
   });
 
-  /** The design has no granularity control, so the range picks the bucket. */
-  $effect(() => {
-    const next: typeof granularity =
-      rangeDays <= 2 ? 'hour' : rangeDays <= 62 ? 'day' : rangeDays <= 210 ? 'week' : 'month';
-    if (next !== granularity) granularity = next;
-  });
+  /** The bucket the range implies on its own, before any explicit pick. */
+  const defaultGranularity = $derived<Granularity>(
+    rangeDays <= 2 ? 'hour' : rangeDays <= 62 ? 'day' : rangeDays <= 210 ? 'week' : 'month',
+  );
+
+  /**
+   * Buckets the current range can sensibly be cut into. Hourly over a long
+   * range would ask the API for hundreds of points and draw an unreadable
+   * chart; weekly/monthly need at least one whole bucket to say anything.
+   * `defaultGranularity` is always a member, by construction.
+   */
+  const granularityOptions = $derived<Granularity[]>(
+    (['hour', 'day', 'week', 'month'] as Granularity[]).filter((option) =>
+      option === 'hour'
+        ? rangeDays <= 31
+        : option === 'week'
+          ? rangeDays >= 7
+          : option === 'month'
+            ? rangeDays >= 28
+            : true,
+    ),
+  );
+
+  /** What actually goes on the wire: the admin's pick while it still fits the range. */
+  const granularity = $derived<Granularity>(
+    granularityChoice && granularityOptions.includes(granularityChoice)
+      ? granularityChoice
+      : defaultGranularity,
+  );
+
+  function setGranularity(next: Granularity) {
+    granularityChoice = next;
+  }
 
   const PRESET_LABEL_KEYS: Record<Exclude<DatePreset, 'custom'>, string> = {
     last7: 'analytics.filters.presets.last7Days',
@@ -321,7 +355,7 @@ SPDX-License-Identifier: Apache-2.0
   // Track previous values to detect what changed
   let prevStartDate = $state<string | undefined>(undefined);
   let prevEndDate = $state<string | undefined>(undefined);
-  let prevGranularity = $state<typeof granularity | undefined>(undefined);
+  let prevGranularity = $state<Granularity | undefined>(undefined);
 
   $effect(() => {
     if (currentTab !== 'overview' && currentTab !== 'by-model') return;
@@ -430,6 +464,9 @@ SPDX-License-Identifier: Apache-2.0
         {rangeLabel}
         {error}
         onRetry={() => fetchAnalytics({showLoading: true})}
+        {granularity}
+        {granularityOptions}
+        onGranularityChange={setGranularity}
       />
     </div>
   {:else if currentTab === 'by-user'}

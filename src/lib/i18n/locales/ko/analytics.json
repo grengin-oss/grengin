@@ -129,6 +129,7 @@
       "day": "일별",
       "week": "주별",
       "month": "월별",
+      "bucketUnavailable": "선택한 기간에는 사용할 수 없습니다",
       "rangeFields": "기간 입력란"
     },
     "loading": "분석 로딩 중...",

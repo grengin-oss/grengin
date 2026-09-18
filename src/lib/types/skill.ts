@@ -11,7 +11,18 @@
 // first-class built-in "Artifacts" skill gates Anthropic-style artifact generation.
 
 /** Identifier of the platform built-in that gates artifact generation. */
-export const ARTIFACTS_SKILL_IDENTIFIER = 'artifacts';
+export const ARTIFACTS_SKILL_IDENTIFIER = 'artifact-create';
+
+/**
+ * Every identifier that built-in has been seen under. The platform backend
+ * serves it as "artifact-create" (name: "Artifact Creator"); the local mock
+ * server seeds the older "artifacts". Both are recognised so the check works
+ * against either, rather than silently matching nothing.
+ */
+const ARTIFACTS_SKILL_IDENTIFIERS: readonly string[] = [
+  ARTIFACTS_SKILL_IDENTIFIER,
+  'artifacts',
+];
 
 /** Skill names are kebab-case slugs, e.g. "research-assistant". */
 export const KEBAB_CASE_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -173,4 +184,4 @@ export const emptyToolsConfig = (): SkillToolsConfig => ({
 });
 
 export const isArtifactsSkill = (skill: Pick<SkillResponse, 'identifier'>): boolean =>
-  skill.identifier === ARTIFACTS_SKILL_IDENTIFIER;
+  ARTIFACTS_SKILL_IDENTIFIERS.includes(skill.identifier);

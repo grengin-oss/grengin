@@ -129,6 +129,7 @@
       "day": "Quotidien",
       "week": "Hebdomadaire",
       "month": "Mensuel",
+      "bucketUnavailable": "Indisponible pour la plage de dates sélectionnée",
       "rangeFields": "Champs de période"
     },
     "loading": "Chargement de l'analytique...",
