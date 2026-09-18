@@ -2,7 +2,7 @@
 # Grengin release installer for Linux amd64/arm64.
 # Intended usage:
 #   curl --proto '=https' --tlsv1.2 -sSf \
-#     https://raw.githubusercontent.com/grengin-oss/grengin/main/install.sh | sh
+#     https://meta.grengin.com/install.sh | sh
 
 set -eu
 
@@ -12,7 +12,7 @@ BIN_DIR="${GRENGIN_BIN_DIR:-$HOME/.local/bin}"
 REQUESTED_VERSION="${GRENGIN_VERSION:-latest}"
 NO_MODIFY_PATH="${GRENGIN_NO_MODIFY_PATH:-0}"
 GITHUB_BASE="${GRENGIN_GITHUB_BASE:-https://github.com}"
-RAW_BASE="${GRENGIN_RAW_BASE:-https://raw.githubusercontent.com}"
+INSTALL_SCRIPT_URL="${GRENGIN_INSTALL_URL:-https://meta.grengin.com/install.sh}"
 
 say() { printf '%s\n' "$*"; }
 info() { printf '\033[1;34minfo:\033[0m %s\n' "$*"; }
@@ -230,7 +230,7 @@ cat > "$BIN_DIR/grengin" <<EOF_MANAGER
 set -eu
 GRENGIN_HOME="\${GRENGIN_HOME:-$GRENGIN_HOME}"
 BIN_DIR="\${GRENGIN_BIN_DIR:-$BIN_DIR}"
-INSTALL_URL="$RAW_BASE/$REPO/main/install.sh"
+INSTALL_URL="\${GRENGIN_INSTALL_URL:-$INSTALL_SCRIPT_URL}"
 
 usage() {
   cat <<'HELP'
