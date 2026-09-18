@@ -129,6 +129,7 @@
       "day": "Daily",
       "week": "Weekly",
       "month": "Monthly",
+      "bucketUnavailable": "Not available for the selected date range",
       "rangeFields": "Range Fields"
     },
     "loading": "Loading analytics...",

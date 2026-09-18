@@ -91,6 +91,7 @@
       "modelCount": "{count} models",
       "latestTag": "LATEST",
       "showLegacyModels": "Show {count} legacy models…",
+      "manageProviders": "Manage Providers",
       "toolsSubtitle": "Capabilities the model can use this session",
       "connectorsSection": "Connectors",
       "connectorConnected": "Connected",

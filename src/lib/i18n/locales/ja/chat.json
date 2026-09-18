@@ -81,6 +81,7 @@
       "modelCount": "{count} 個のモデル",
       "latestTag": "最新",
       "showLegacyModels": "旧モデルを {count} 件表示…",
+      "manageProviders": "プロバイダーを管理",
       "toolsSubtitle": "このセッションでモデルが使用できる機能",
       "connectorsSection": "コネクタ",
       "connectorConnected": "接続済み",

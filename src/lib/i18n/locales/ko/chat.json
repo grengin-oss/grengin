@@ -81,6 +81,7 @@
       "modelCount": "{count}개 모델",
       "latestTag": "최신",
       "showLegacyModels": "이전 모델 {count}개 표시…",
+      "manageProviders": "제공업체 관리",
       "toolsSubtitle": "이 세션에서 모델이 사용할 수 있는 기능",
       "connectorsSection": "커넥터",
       "connectorConnected": "연결됨",

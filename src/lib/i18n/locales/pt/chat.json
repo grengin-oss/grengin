@@ -81,6 +81,7 @@
       "modelCount": "{count} modelos",
       "latestTag": "RECENTE",
       "showLegacyModels": "Mostrar {count} modelos antigos…",
+      "manageProviders": "Gerenciar provedores",
       "toolsSubtitle": "Recursos que o modelo pode usar nesta sessão",
       "connectorsSection": "Conectores",
       "connectorConnected": "Conectado",

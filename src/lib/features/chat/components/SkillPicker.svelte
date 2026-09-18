@@ -12,6 +12,9 @@ SPDX-License-Identifier: Apache-2.0
       and linked by Chat.svelte on first send
   The component renders rows only — the panel, section label and surrounding
   chrome belong to MessageInput's tools menu.
+
+  The built-in "artifacts" skill is excluded from these rows — see the note on
+  `loadAvailable` below.
 -->
 
 <script lang="ts">
@@ -23,7 +26,10 @@ SPDX-License-Identifier: Apache-2.0
     linkSkill,
     unlinkSkill,
   } from "../../../api/skills.js";
-  import type { SkillResponse } from "../../../types/skill.js";
+  import {
+    isArtifactsSkill,
+    type SkillResponse,
+  } from "../../../types/skill.js";
   import { ApiError } from "../../../api/client.js";
   import { toast } from "../../../components/Toaster.svelte";
 
@@ -55,11 +61,19 @@ SPDX-License-Identifier: Apache-2.0
     selectedCount = selectedIds.length;
   });
 
+  /*
+   * The built-in "artifacts" skill is deliberately absent from this menu: it
+   * gates platform behaviour rather than being a per-conversation choice, and
+   * offering it beside ordinary skills confused users. It is filtered out of
+   * BOTH lists below — the catalog (so no row renders) and the conversation's
+   * linked set (so the Tools chip does not badge a skill with no visible row
+   * on a conversation that already has it linked server-side).
+   */
   async function loadAvailable() {
     loading = true;
     try {
       const res = await listSkills({ is_active: true });
-      available = res.skills ?? [];
+      available = (res.skills ?? []).filter((skill) => !isArtifactsSkill(skill));
     } catch {
       available = [];
     } finally {
@@ -74,7 +88,9 @@ SPDX-License-Identifier: Apache-2.0
     }
     try {
       const links = await listConversationSkills(conversationId);
-      linkedIds = links.map((l) => l.skill.id);
+      linkedIds = links
+        .filter((l) => !isArtifactsSkill(l.skill))
+        .map((l) => l.skill.id);
     } catch {
       linkedIds = [];
     }

@@ -141,6 +141,17 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   /**
+   * What the avatar's hover card names: the registry's display name for the
+   * model this turn actually ran on, falling back to the raw key the backend
+   * stored (an unregistered or retired model still gets a label).
+   */
+  const modelDisplayName = $derived(
+    findModel(providers ?? [], message.model)?.model.name ||
+      message.model ||
+      "",
+  );
+
+  /**
    * ".conv-ai-logo" letter fallback: the provider's initial, shown only when the
    * registry has no icon for this message's provider.
    */
@@ -545,7 +556,18 @@ SPDX-License-Identifier: Apache-2.0
   needs the same tile beside a generated image card.
 -->
 {#snippet aiLogo()}
-  <div class="conv-ai-logo">
+  <!--
+    The tile carries the turn's model name as a hover card, so a conversation
+    that switched models mid-thread can be read back turn by turn. The same
+    name is the tile's accessible name, which is how assistive tech gets it —
+    the tile is not a control, so it is deliberately not focusable.
+  -->
+  <div
+    class="conv-ai-logo"
+    class:conv-ai-logo--labelled={modelDisplayName}
+    role={modelDisplayName ? "img" : undefined}
+    aria-label={modelDisplayName || undefined}
+  >
     {#if messageProvider?.icon}
       {@const avatarIcon = getIconForTheme(messageProvider)}
       {@const avatarSvg = providerIconSvg(avatarIcon)}
@@ -561,6 +583,15 @@ SPDX-License-Identifier: Apache-2.0
       {/if}
     {:else}
       {providerLetter}
+    {/if}
+
+    {#if modelDisplayName}
+      <span class="model-tip" role="tooltip">
+        <span class="model-tip__name">{modelDisplayName}</span>
+        {#if messageProvider?.name}
+          <span class="model-tip__provider">{messageProvider.name}</span>
+        {/if}
+      </span>
     {/if}
   </div>
 {/snippet}
@@ -1392,6 +1423,65 @@ SPDX-License-Identifier: Apache-2.0
     height: 36px;
     display: block;
     object-fit: contain;
+  }
+
+  .conv-ai-logo--labelled {
+    position: relative;
+  }
+
+  /* The hover card sits to the RIGHT of the tile, vertically centred, rather
+     than above it: the avatar is pinned to the top of its message, so a card
+     above the first turn would be clipped by the scroller. */
+  .model-tip {
+    position: absolute;
+    top: 50%;
+    inset-inline-start: calc(100% + 8px);
+    transform: translateY(-50%) translateX(-4px);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow:
+      inset 0 0 0 1px var(--gx-cx-panel-ring),
+      var(--gx-cx-panel-shadow);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 30;
+    transition:
+      opacity 0.15s ease,
+      transform 0.15s ease,
+      visibility 0.15s;
+  }
+
+  .conv-ai-logo--labelled:hover .model-tip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(0);
+  }
+
+  .model-tip__name {
+    font-family: var(--gx-font);
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--gx-cx-ink);
+  }
+
+  .model-tip__provider {
+    font-family: var(--gx-font);
+    font-size: 11px;
+    line-height: 14px;
+    color: var(--gx-cx-sub);
+  }
+
+  /* Direction is mirrored for RTL by `inset-inline-start`; flip the arrow-less
+     card's slide-in so it still eases outward from the tile. */
+  :global([dir="rtl"]) .model-tip {
+    transform: translateY(-50%) translateX(4px);
   }
 
   .message-content {

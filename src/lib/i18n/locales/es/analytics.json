@@ -129,6 +129,7 @@
       "day": "Diario",
       "week": "Semanal",
       "month": "Mensual",
+      "bucketUnavailable": "No disponible para el rango de fechas seleccionado",
       "rangeFields": "Campos de intervalo"
     },
     "loading": "Cargando analítica...",

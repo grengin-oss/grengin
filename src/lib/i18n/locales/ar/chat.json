@@ -81,6 +81,7 @@
       "modelCount": "{count} نموذجًا",
       "latestTag": "الأحدث",
       "showLegacyModels": "إظهار {count} من النماذج القديمة…",
+      "manageProviders": "إدارة المزودين",
       "toolsSubtitle": "القدرات التي يمكن للنموذج استخدامها في هذه الجلسة",
       "connectorsSection": "الموصلات",
       "connectorConnected": "متصل",

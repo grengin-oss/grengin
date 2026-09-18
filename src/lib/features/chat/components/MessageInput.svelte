@@ -21,6 +21,7 @@ SPDX-License-Identifier: Apache-2.0
   import type { MCPServer } from "../../../admin/types.js";
   import { _ } from "svelte-i18n";
   import { navigate } from "svelte-routing";
+  import { permissionsStore } from "../../auth/index.js";
   import SkillPicker from "./SkillPicker.svelte";
   import {
     providerIconSvg,
@@ -241,6 +242,12 @@ SPDX-License-Identifier: Apache-2.0
     for (const brand of textBrands) push(brand.provider, brand.models[0]);
     return out.slice(0, 3);
   });
+
+  /**
+   * The picker's "Manage Providers" footer links into the admin AI-engines
+   * page, so it is only offered to users who can actually open it.
+   */
+  const canManageProviders = $derived(permissionsStore.canViewAiEngines());
 
   let modelQuery = $state("");
   const modelQueryTerm = $derived(modelQuery.trim().toLowerCase());
@@ -1599,109 +1606,127 @@ SPDX-License-Identifier: Apache-2.0
                   />
                 </div>
 
-                {#if loadingModels}
-                  <div class="dropdown-loading">
-                    <div class="loading-spinner"></div>
-                    <span>{$_("chat.messageInput.loadingModels")}</span>
-                  </div>
-                {:else if modelsError}
-                  <div class="dropdown-error">{modelsError}</div>
-                {:else if textBrands.length === 0}
-                  <div class="dropdown-empty">
-                    {$_("chat.messageInput.noModels")}
-                  </div>
-                {:else if modelQueryTerm}
-                  <div class="model-group">
-                    <span class="model-group__label"
-                      >{$_("chat.messageInput.resultsGroup")}</span
-                    >
-                    {#if modelSearchResults.length === 0}
-                      <span class="cx-state"
-                        >{$_("chat.messageInput.noModelMatches")}</span
-                      >
-                    {:else}
-                      {#each modelSearchResults as entry (entry.provider.key + "/" + entry.model.key)}
-                        {@render modelRow(entry.provider, entry.model)}
-                      {/each}
-                    {/if}
-                  </div>
-                {:else}
-                  {#if recommendedModels.length > 0}
+                <!-- The search field and the footer stay put; only the
+                     registry list scrolls (see .model-picker__list). -->
+                <div class="model-picker__list">
+                  {#if loadingModels}
+                    <div class="dropdown-loading">
+                      <div class="loading-spinner"></div>
+                      <span>{$_("chat.messageInput.loadingModels")}</span>
+                    </div>
+                  {:else if modelsError}
+                    <div class="dropdown-error">{modelsError}</div>
+                  {:else if textBrands.length === 0}
+                    <div class="dropdown-empty">
+                      {$_("chat.messageInput.noModels")}
+                    </div>
+                  {:else if modelQueryTerm}
                     <div class="model-group">
                       <span class="model-group__label"
-                        >{$_("chat.messageInput.recommendedGroup")}</span
+                        >{$_("chat.messageInput.resultsGroup")}</span
                       >
-                      {#each recommendedModels as entry (entry.provider.key + "/" + entry.model.key)}
-                        {@render modelRow(entry.provider, entry.model)}
+                      {#if modelSearchResults.length === 0}
+                        <span class="cx-state"
+                          >{$_("chat.messageInput.noModelMatches")}</span
+                        >
+                      {:else}
+                        {#each modelSearchResults as entry (entry.provider.key + "/" + entry.model.key)}
+                          {@render modelRow(entry.provider, entry.model)}
+                        {/each}
+                      {/if}
+                    </div>
+                  {:else}
+                    {#if recommendedModels.length > 0}
+                      <div class="model-group">
+                        <span class="model-group__label"
+                          >{$_("chat.messageInput.recommendedGroup")}</span
+                        >
+                        {#each recommendedModels as entry (entry.provider.key + "/" + entry.model.key)}
+                          {@render modelRow(entry.provider, entry.model)}
+                        {/each}
+                      </div>
+                    {/if}
+
+                    <div class="model-group">
+                      {#each textBrands as brand (brand.provider.key)}
+                        {@const brandOpen = expandedBrands.has(
+                          brand.provider.key,
+                        )}
+                        <button
+                          class="model-brand-row"
+                          type="button"
+                          onclick={(e) => {
+                            e.stopPropagation();
+                            toggleBrand(brand.provider.key);
+                          }}
+                          aria-expanded={brandOpen}
+                        >
+                          <svg
+                            class="chev-toggle"
+                            class:chev-toggle--collapsed={!brandOpen}
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            aria-hidden="true"
+                          >
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                          </svg>
+                          {@render brandBadge(brand.provider)}
+                          <span class="model-brand-row__name"
+                            >{brand.provider.name}</span
+                          >
+                          <span class="model-brand-row__count"
+                            >{$_("chat.messageInput.modelCount", {
+                              values: { count: brand.models.length },
+                            })}</span
+                          >
+                        </button>
+
+                        {#if brandOpen}
+                          <div class="model-brand-children">
+                            {#each visibleBrandModels(brand) as model, index (model.key)}
+                              {@render modelChildRow(
+                                brand.provider,
+                                model,
+                                index === 0,
+                              )}
+                            {/each}
+                            {#if hiddenBrandCount(brand) > 0}
+                              <button
+                                class="model-legacy-link"
+                                type="button"
+                                onclick={(e) => {
+                                  e.stopPropagation();
+                                  revealLegacy(brand.provider.key);
+                                }}
+                              >
+                                {$_("chat.messageInput.showLegacyModels", {
+                                  values: { count: hiddenBrandCount(brand) },
+                                })}
+                              </button>
+                            {/if}
+                          </div>
+                        {/if}
                       {/each}
                     </div>
                   {/if}
+                </div>
 
-                  <div class="model-group">
-                    {#each textBrands as brand (brand.provider.key)}
-                      {@const brandOpen = expandedBrands.has(
-                        brand.provider.key,
-                      )}
-                      <button
-                        class="model-brand-row"
-                        type="button"
-                        onclick={(e) => {
-                          e.stopPropagation();
-                          toggleBrand(brand.provider.key);
-                        }}
-                        aria-expanded={brandOpen}
-                      >
-                        <svg
-                          class="chev-toggle"
-                          class:chev-toggle--collapsed={!brandOpen}
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          aria-hidden="true"
-                        >
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                        {@render brandBadge(brand.provider)}
-                        <span class="model-brand-row__name"
-                          >{brand.provider.name}</span
-                        >
-                        <span class="model-brand-row__count"
-                          >{$_("chat.messageInput.modelCount", {
-                            values: { count: brand.models.length },
-                          })}</span
-                        >
-                      </button>
-
-                      {#if brandOpen}
-                        <div class="model-brand-children">
-                          {#each visibleBrandModels(brand) as model, index (model.key)}
-                            {@render modelChildRow(
-                              brand.provider,
-                              model,
-                              index === 0,
-                            )}
-                          {/each}
-                          {#if hiddenBrandCount(brand) > 0}
-                            <button
-                              class="model-legacy-link"
-                              type="button"
-                              onclick={(e) => {
-                                e.stopPropagation();
-                                revealLegacy(brand.provider.key);
-                              }}
-                            >
-                              {$_("chat.messageInput.showLegacyModels", {
-                                values: { count: hiddenBrandCount(brand) },
-                              })}
-                            </button>
-                          {/if}
-                        </div>
-                      {/if}
-                    {/each}
-                  </div>
+                {#if canManageProviders}
+                  <button
+                    class="model-picker__footer"
+                    type="button"
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      closeMenus();
+                      navigate("/admin/ai-engines");
+                    }}
+                  >
+                    {$_("chat.messageInput.manageProviders")}
+                  </button>
                 {/if}
               </div>
             {/if}
@@ -2883,8 +2908,22 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   /* ---- model picker ---- */
+  /* Like .tools-menu, the scroll lives INSIDE the panel rather than on it, so
+     the search field and the "Manage Providers" footer stay put while a long
+     registry scrolls between them. */
   .model-picker {
     width: 360px;
+    overflow: hidden;
+  }
+
+  .model-picker__list {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .model-search {
@@ -3260,7 +3299,10 @@ SPDX-License-Identifier: Apache-2.0
     justify-content: flex-end;
   }
 
-  .tools-menu__footer {
+  /* One footer link, shared by the tools menu and the model picker, so
+     "Manage connectors" and "Manage Providers" read identically. */
+  .tools-menu__footer,
+  .model-picker__footer {
     flex-shrink: 0;
     text-align: center;
     padding: 6px 0;
