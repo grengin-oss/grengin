@@ -564,6 +564,11 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .tabs-row {
+    /* Active tab ink: #427AC6, the same hook Access Control uses. Custom
+       properties cross the component boundary, so this recolours only THIS
+       page's Overview / By Users / By Department / By Model pills — the other
+       pages on AdminTabs keep the default slate. */
+    --admin-tab-active-fg: var(--gx-org-primary-500);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;

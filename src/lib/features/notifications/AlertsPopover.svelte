@@ -4,7 +4,7 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AlertIcon from './AlertIcon.svelte';
   import { isUnread, needsAttention, severityOf } from './alertPresentation.js';
@@ -82,10 +82,15 @@ SPDX-License-Identifier: Apache-2.0
   });
 
   /* The feed is seeded at sign-in and kept warm by the SSE stream; re-read it on
-     open so rows read elsewhere (another tab, the Alerts page) are current. */
+     open so rows read elsewhere (another tab, the Alerts page) are current.
+
+     `preview` is read through untrack(): fetchNotificationFeed assigns
+     notifState.preview, so a tracked read here would make this effect depend on
+     its own result and refetch forever while the popover stayed open. */
   $effect(() => {
     if (!open) return;
-    void fetchNotificationFeed({ silent: notifState.preview.length > 0 });
+    const silent = untrack(() => notifState.preview.length > 0);
+    void fetchNotificationFeed({ silent });
   });
 
   // Focus management: focus the dialog when opened
