@@ -1687,7 +1687,7 @@
     },
     "welcomeBack": "Welcome back, {name} 👋",
     "welcomeSummary": "Your workspace used {cost} across {users} users in the last 30 days",
-    "connectAccount": "Connect Account"
+    "viewFullReport": "View full report"
   },
   "systemMetrics": {
     "title": "System",

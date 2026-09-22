@@ -195,32 +195,23 @@ SPDX-License-Identifier: Apache-2.0
           })}
         </span>
       </div>
-      <Link to="/admin/mcp-servers" class="connect-btn">
+      <Link to="/admin/analytics" class="report-btn">
         <svg
+          xmlns="http://www.w3.org/2000/svg"
           width="14"
           height="14"
-          viewBox="0 0 14 14"
+          viewBox="0 0 18 18"
           fill="none"
           aria-hidden="true"
         >
-          <line
-            x1="7"
-            y1="1"
-            x2="7"
-            y2="13"
+          <path
+            d="M2.25 2.25V14.25C2.25 14.6478 2.40804 15.0294 2.68934 15.3107C2.97064 15.592 3.35218 15.75 3.75 15.75H15.75M13.5 12.75V6.75M9.75 12.75V3.75M6 12.75V10.5"
             stroke="currentColor"
-            stroke-width="1.5"
-          />
-          <line
-            x1="1"
-            y1="7"
-            x2="13"
-            y2="7"
-            stroke="currentColor"
-            stroke-width="1.5"
+            stroke-width="2"
+            stroke-linecap="round"
           />
         </svg>
-        <span>{$_("adminOverview.connectAccount")}</span>
+        <span>{$_("adminOverview.viewFullReport")}</span>
       </Link>
     </div>
 
@@ -625,7 +616,7 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-ch-banner-sub);
   }
 
-  .overview-page :global(.connect-btn) {
+  .overview-page :global(.report-btn) {
     min-height: 38px;
     border-radius: 8px;
     background: var(--gx-ch-connect-bg);
@@ -644,12 +635,12 @@ SPDX-License-Identifier: Apache-2.0
     transition: background-color 120ms ease;
   }
 
-  .overview-page :global(.connect-btn:hover) {
+  .overview-page :global(.report-btn:hover) {
     background: var(--gx-ch-connect-bg-hover);
     color: #fff;
   }
 
-  .overview-page :global(.connect-btn:focus-visible) {
+  .overview-page :global(.report-btn:focus-visible) {
     outline: 2px solid #fff;
     outline-offset: 2px;
   }
@@ -972,7 +963,7 @@ SPDX-License-Identifier: Apache-2.0
       align-items: stretch;
     }
 
-    .overview-page :global(.connect-btn) {
+    .overview-page :global(.report-btn) {
       width: 100%;
     }
   }

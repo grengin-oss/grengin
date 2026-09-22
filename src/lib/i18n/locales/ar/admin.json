@@ -1595,7 +1595,7 @@
     },
     "welcomeBack": "مرحبًا بعودتك، {name} 👋",
     "welcomeSummary": "استخدمت مساحة عملك {cost} عبر {users} مستخدمًا خلال الثلاثين يومًا الماضية",
-    "connectAccount": "ربط حساب"
+    "viewFullReport": "عرض التقرير الكامل"
   },
   "systemMetrics": {
     "title": "النظام",

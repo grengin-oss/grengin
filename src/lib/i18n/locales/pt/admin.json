@@ -1595,7 +1595,7 @@
     },
     "welcomeBack": "Bem-vindo de volta, {name} 👋",
     "welcomeSummary": "Seu espaço de trabalho usou {cost} entre {users} usuários nos últimos 30 dias",
-    "connectAccount": "Conectar conta"
+    "viewFullReport": "Ver relatório completo"
   },
   "systemMetrics": {
     "title": "Sistema",

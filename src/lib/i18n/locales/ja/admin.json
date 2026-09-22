@@ -1595,7 +1595,7 @@
     },
     "welcomeBack": "おかえりなさい、{name}さん 👋",
     "welcomeSummary": "過去30日間でワークスペースの{users}人のユーザーが{cost}を使用しました",
-    "connectAccount": "アカウントを接続"
+    "viewFullReport": "詳細レポートを表示"
   },
   "systemMetrics": {
     "title": "システム",
