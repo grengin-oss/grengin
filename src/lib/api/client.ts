@@ -17,7 +17,7 @@ const normalizeBase = (base: string): string => {
 };
 
 // Use env override when provided, fall back to /api (proxied locally & via Pages Functions)
-export const API_BASE = normalizeBase(rawApiBase ?? defaultApiBase);
+export const API_BASE = import.meta.env.VITE_MANAGED_CLOUD === 'true' ? '/api' : normalizeBase(rawApiBase ?? defaultApiBase);
 
 
 export interface RichErrorDetail {

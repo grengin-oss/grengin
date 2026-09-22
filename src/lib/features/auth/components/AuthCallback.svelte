@@ -12,6 +12,12 @@ SPDX-License-Identifier: Apache-2.0
   import { getLocalizedError } from '../../../utils/errorLocalization';
   import { API_BASE } from '../../../api/client.js';
 
+  import { MANAGED_CLOUD, managedCallbackInput, type ManagedProvider } from '../../../managed-setup';
+
+  let { managedSetup = false, creatorProvider, onSetupComplete }: {
+    managedSetup?: boolean; creatorProvider?: ManagedProvider; onSetupComplete?: () => void;
+  } = $props();
+
   // UI State
   type CallbackStatus = 'processing' | 'success' | 'error';
   let status = $state<CallbackStatus>('processing');
@@ -29,14 +35,6 @@ SPDX-License-Identifier: Apache-2.0
   async function trySSOProxyFallback(): Promise<boolean> {
     const queryParams = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-
-    // Debug: log every param in the URL so we can see what the SSO proxy sent
-    console.debug('[AuthCallback] SSO proxy fallback — URL params:', {
-      search: window.location.search,
-      hash: window.location.hash,
-      query: Object.fromEntries(queryParams.entries()),
-      hash_params: Object.fromEntries(hashParams.entries()),
-    });
 
     // Check all common token param names (query string first, then hash fragment)
     const accessToken =
@@ -91,7 +89,7 @@ SPDX-License-Identifier: Apache-2.0
     const assertion = params.get('assertion') || hashParams.get('assertion');
 
     // 3. Retrieve provider from session storage
-    const provider = sessionStorage.getItem('oauth_provider');
+    const provider = readSessionStorage('oauth_provider');
     if (!provider) {
       const message = $_('error.auth.oauth_provider_not_found');
       throw new ApiError(400, message);
@@ -107,7 +105,6 @@ SPDX-License-Identifier: Apache-2.0
       response = await handleOAuthCallback(provider, code, state, null);
     } else {
       // No standard code/state and no assertion — try legacy SSO proxy fallback (token in URL)
-      console.warn('[AuthCallback] No code/state/assertion in URL, attempting SSO proxy fallback...');
       const ssoSuccess = await trySSOProxyFallback();
       if (ssoSuccess) {
         return;
@@ -129,19 +126,36 @@ SPDX-License-Identifier: Apache-2.0
     return;
   }
 
+  // Browsers may block either access to sessionStorage or individual operations.
+  function readSessionStorage(key: string): string | null {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  function removeSessionStorageItem(key: string): void {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      // Best-effort cleanup must not interrupt success or error handling.
+    }
+  }
+
   /**
    * Clean up session storage
    */
   function cleanupSessionStorage(): void {
-    sessionStorage.removeItem('oauth_provider');
+    removeSessionStorageItem('oauth_provider');
   }
 
   /**
    * Redirect to return URL after successful authentication
    */
   function redirectAfterSuccess(): void {
-    const returnUrl = sessionStorage.getItem('auth_return_url') || '/';
-    sessionStorage.removeItem('auth_return_url');
+    const returnUrl = readSessionStorage('auth_return_url') || '/';
+    removeSessionStorageItem('auth_return_url');
     
     setTimeout(() => {
       window.location.href = returnUrl;
@@ -161,7 +175,6 @@ SPDX-License-Identifier: Apache-2.0
    * Handle errors and show toast notification
    */
   function handleError(err: ApiError): void {
-    console.error('OAuth callback error:', err);
     
     const errorMessage = getLocalizedError(err, 'description', $_) || err.description;
     
@@ -174,6 +187,29 @@ SPDX-License-Identifier: Apache-2.0
 
   // Initialize OAuth callback processing on component mount
   onMount(async () => {
+    if (MANAGED_CLOUD) {
+      // Strict managed branch: no code flow, raw URL tokens, /me, or query/hash/error logging.
+      const callbackUrl = new URL(window.location.href);
+      window.history.replaceState(null, '', window.location.pathname);
+      try {
+        if (managedSetup && !creatorProvider) throw new Error('setup_sign_in_failed');
+        const input = managedCallbackInput(callbackUrl, managedSetup ? creatorProvider : undefined);
+        const response = await handleOAuthCallback(input.provider, null, input.state, input.assertion);
+        if (!response?.accessToken || !response?.user) throw new Error('setup_sign_in_failed');
+        setAuth(response.accessToken, response.refreshToken || '', response.user);
+        cleanupSessionStorage();
+        removeSessionStorageItem('auth_return_url');
+        status = 'success';
+        if (managedSetup) onSetupComplete?.();
+        else {
+          window.location.replace('/');
+        }
+      } catch {
+        cleanupSessionStorage();
+        status = 'error';
+      }
+      return;
+    }
     try {
       await processOAuthCallback();
       cleanupSessionStorage();
@@ -255,7 +291,12 @@ SPDX-License-Identifier: Apache-2.0
           </div>
           <div class="status-text">
             <h2>{$_('auth.signInFailed')}</h2>
-            <p class="status-submessage">{$_('auth.redirectingToLogin')}</p>
+            {#if MANAGED_CLOUD}
+              <p class="status-submessage">Sign-in could not be completed. Start a new sign-in to try again.</p>
+              <a href="/">Return to setup</a>
+            {:else}
+              <p class="status-submessage">{$_('auth.redirectingToLogin')}</p>
+            {/if}
           </div>
         </div>
       </div>

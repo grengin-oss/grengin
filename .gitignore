@@ -18,6 +18,9 @@ dist
 dist-ssr
 *.local
 
+# Local Wrangler state
+/mock/.wrangler/
+
 # Local release assembly
 .release-work/
 release-dist/
