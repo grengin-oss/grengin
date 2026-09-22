@@ -66,13 +66,13 @@ SPDX-License-Identifier: Apache-2.0
         return true;
       })
       .sort((a, b) => {
-        // Built-in first, then alphabetical.
-        if (a.is_builtin !== b.is_builtin) return a.is_builtin ? -1 : 1;
+        // My skills first, then alphabetical.
+        if (a.is_builtin !== b.is_builtin) return a.is_builtin ? 1 : -1;
         return a.name.localeCompare(b.name);
       });
   });
 
-  // The design splits the grid into a "Built-in" and a "My Skills" section,
+  // The design splits the grid into a "My Skills" and a "Built-in" section,
   // each with its own count badge.
   const visibleBuiltin = $derived(visibleSkills.filter((s) => s.is_builtin));
   const visibleMine = $derived(visibleSkills.filter((s) => !s.is_builtin));
@@ -253,61 +253,6 @@ SPDX-License-Identifier: Apache-2.0
   {#if loading}
     <LoadingSpinner size="md" text={$_("userSkills.loading")} />
   {:else}
-    <!-- ".settings-section" — Built-in -->
-    {#if showBuiltinSection}
-      <section class="settings-section">
-        <div class="section-title-row">
-          <span class="section-title">{$_("userSkills.filters.builtin")}</span>
-          <span class="count-badge">{visibleBuiltin.length}</span>
-        </div>
-
-        <!-- ".builtin-banner" -->
-        <div class="builtin-banner">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 18 18"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle
-              cx="9"
-              cy="9"
-              r="7.2"
-              stroke="currentColor"
-              stroke-width="1.3"
-            />
-            <path
-              d="M9 8.1v3.9M9 5.6v.01"
-              stroke="currentColor"
-              stroke-width="1.3"
-              stroke-linecap="round"
-            />
-          </svg>
-          <div class="builtin-banner-text">
-            <span class="builtin-banner-title"
-              >{$_("userSkills.banner.title")}</span
-            >
-            <span class="builtin-banner-desc"
-              >{$_("userSkills.banner.body")}</span
-            >
-          </div>
-        </div>
-
-        <div class="skill-grid">
-          {#each visibleBuiltin as skill (skill.id)}
-            <SkillCard
-              {skill}
-              toggling={togglingId === skill.id}
-              onedit={openEdit}
-              ondelete={(s) => (deleteTarget = s)}
-              ontoggle={handleToggle}
-            />
-          {/each}
-        </div>
-      </section>
-    {/if}
-
     <!-- ".settings-section" — My Skills -->
     {#if showMineSection}
       <section class="settings-section">
@@ -372,6 +317,61 @@ SPDX-License-Identifier: Apache-2.0
         {:else}
           <p class="empty-hint">{$_("userSkills.empty.body")}</p>
         {/if}
+      </section>
+    {/if}
+
+    <!-- ".settings-section" — Built-in -->
+    {#if showBuiltinSection}
+      <section class="settings-section">
+        <div class="section-title-row">
+          <span class="section-title">{$_("userSkills.filters.builtin")}</span>
+          <span class="count-badge">{visibleBuiltin.length}</span>
+        </div>
+
+        <!-- ".builtin-banner" -->
+        <div class="builtin-banner">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              cx="9"
+              cy="9"
+              r="7.2"
+              stroke="currentColor"
+              stroke-width="1.3"
+            />
+            <path
+              d="M9 8.1v3.9M9 5.6v.01"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linecap="round"
+            />
+          </svg>
+          <div class="builtin-banner-text">
+            <span class="builtin-banner-title"
+              >{$_("userSkills.banner.title")}</span
+            >
+            <span class="builtin-banner-desc"
+              >{$_("userSkills.banner.body")}</span
+            >
+          </div>
+        </div>
+
+        <div class="skill-grid">
+          {#each visibleBuiltin as skill (skill.id)}
+            <SkillCard
+              {skill}
+              toggling={togglingId === skill.id}
+              onedit={openEdit}
+              ondelete={(s) => (deleteTarget = s)}
+              ontoggle={handleToggle}
+            />
+          {/each}
+        </div>
       </section>
     {/if}
 
