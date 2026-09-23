@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0
   import type { Project, ProjectCategory } from '../../types/project';
   import { toast } from '../Toaster.svelte';
   import CreateProjectModal from './CreateProjectModal.svelte';
-  import Modal from '$lib/admin/components/Modal.svelte';
+  import DeleteConfirmDialog from '../DeleteConfirmDialog.svelte';
 
   interface Props {
     isCollapsed: boolean;
@@ -323,33 +323,20 @@ SPDX-License-Identifier: Apache-2.0
 />
 
 {#if showDeleteConfirm}
-  <Modal
-    isOpen={showDeleteConfirm}
+  <DeleteConfirmDialog
     title={$_('sidebar.deleteProject')}
-    onclose={() => { showDeleteConfirm = false; projectToDelete = null; }}
-  >
-    {#snippet children()}
-      <div class="confirm-content">
-        <p>{$_('sidebar.deleteProjectConfirm')}</p>
-      </div>
-      <div class="confirm-actions">
-        <button class="cancel-btn" onclick={() => { showDeleteConfirm = false; projectToDelete = null; }} disabled={deleting}>
-          {$_('sidebar.cancel')}
-        </button>
-        <button class="delete-btn" onclick={handleDelete} disabled={deleting}>
-          {#if deleting}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spinner" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" opacity="0.25"/>
-              <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"/>
-            </svg>
-            {$_('sidebar.deleting')}
-          {:else}
-            {$_('sidebar.delete')}
-          {/if}
-        </button>
-      </div>
-    {/snippet}
-  </Modal>
+    subtitle={projectToDelete?.name}
+    message={$_('sidebar.deleteProjectConfirm')}
+    confirmLabel={$_('sidebar.delete')}
+    busyLabel={$_('sidebar.deleting')}
+    cancelLabel={$_('sidebar.cancel')}
+    isBusy={deleting}
+    onCancel={() => {
+      showDeleteConfirm = false;
+      projectToDelete = null;
+    }}
+    onConfirm={handleDelete}
+  />
 {/if}
 
 <style>
@@ -763,79 +750,14 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-blue);
   }
 
-  .confirm-content p {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    line-height: 1.6;
-  }
 
-  .confirm-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-md);
-    padding: var(--space-lg) var(--space-xl);
-  }
 
-  .cancel-btn {
-    padding: var(--space-sm) var(--space-xl);
-    border: 1px solid var(--glass-stroke-dark);
-    background: transparent;
-    color: var(--text-primary);
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
 
-  .cancel-btn:hover:not(:disabled) {
-    background: var(--btn-secondary);
-    border-color: var(--glass-stroke-light);
-    transform: none;
-    box-shadow: none;
-  }
 
-  .cancel-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 
-  .delete-btn {
-    padding: var(--space-sm) var(--space-xl);
-    border: none;
-    background: var(--brand-red);
-    color: white;
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
 
-  .delete-btn:hover:not(:disabled) {
-    background: color-mix(in oklab, var(--brand-red) 85%, black);
-    transform: none;
-    box-shadow: none;
-  }
 
-  .delete-btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
 
-  .spinner {
-    animation: spin 1s linear infinite;
-  }
 
   @keyframes spin {
     to { transform: rotate(360deg); }

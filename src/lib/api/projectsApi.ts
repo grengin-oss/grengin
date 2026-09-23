@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { request } from './client';
+import { camelizeKeys } from '../utils/camelize';
 import type {
   Project,
   ProjectListResponse,
@@ -16,26 +17,41 @@ import type {
   ProjectArtifact,
 } from '../types/project';
 
+/*
+ * The project endpoints answer in snake_case on the real backend
+ * (`updated_at`, `chat_count`, `last_activity_at`) while the mock server
+ * answers in camelCase — and the UI types are camelCase throughout. Every
+ * response used to be cast straight to those types, so against the real API
+ * each multi-word field arrived `undefined`: the card's date rendered
+ * "Invalid Date" and its chat-count badge silently never appeared.
+ *
+ * `camelizeKeys` handles both shapes, so the mock keeps working unchanged.
+ */
+
 export async function listProjects(): Promise<ProjectListResponse> {
-  return request<ProjectListResponse>('/projects');
+  return camelizeKeys<ProjectListResponse>(await request('/projects'));
 }
 
 export async function getProject(id: string): Promise<Project> {
-  return request<Project>(`/projects/${id}`);
+  return camelizeKeys<Project>(await request(`/projects/${id}`));
 }
 
 export async function createProject(payload: CreateProjectPayload): Promise<Project> {
-  return request<Project>('/projects', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+  return camelizeKeys<Project>(
+    await request('/projects', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  );
 }
 
 export async function updateProject(id: string, payload: UpdateProjectPayload): Promise<Project> {
-  return request<Project>(`/projects/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(payload),
-  });
+  return camelizeKeys<Project>(
+    await request(`/projects/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+  );
 }
 
 export async function deleteProject(id: string): Promise<void> {
@@ -45,13 +61,13 @@ export async function deleteProject(id: string): Promise<void> {
 }
 
 export async function shareProject(id: string): Promise<{ shareUrl: string }> {
-  return request<{ shareUrl: string }>(`/projects/${id}/share`, {
-    method: 'POST',
-  });
+  return camelizeKeys<{ shareUrl: string }>(
+    await request(`/projects/${id}/share`, { method: 'POST' }),
+  );
 }
 
 export async function getProjectDetail(id: string): Promise<ProjectDetail> {
-  return request<ProjectDetail>(`/projects/${id}/detail`);
+  return camelizeKeys<ProjectDetail>(await request(`/projects/${id}/detail`));
 }
 
 export async function updateProjectInstructions(id: string, instructions: string): Promise<void> {
@@ -64,11 +80,13 @@ export async function updateProjectInstructions(id: string, instructions: string
 export async function uploadProjectSource(id: string, file: File): Promise<ProjectSource> {
   const formData = new FormData();
   formData.append('file', file);
-  return request<ProjectSource>(`/projects/${id}/sources`, {
-    method: 'POST',
-    body: formData,
-    headers: {},
-  });
+  return camelizeKeys<ProjectSource>(
+    await request(`/projects/${id}/sources`, {
+      method: 'POST',
+      body: formData,
+      headers: {},
+    }),
+  );
 }
 
 export async function deleteProjectSource(projectId: string, sourceId: string): Promise<void> {
@@ -78,21 +96,25 @@ export async function deleteProjectSource(projectId: string, sourceId: string): 
 }
 
 export async function contributeArtifact(projectId: string, payload: ContributeArtifactPayload): Promise<ProjectSource> {
-  return request<ProjectSource>(`/projects/${projectId}/artifacts`, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+  return camelizeKeys<ProjectSource>(
+    await request(`/projects/${projectId}/artifacts`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  );
 }
 
 // --- Membership (cross-department sharing) — owner-only on the backend ---
 
 export async function getProjectMembers(projectId: string): Promise<ProjectMember[]> {
-  return request<ProjectMember[]>(`/projects/${projectId}/members`);
+  return camelizeKeys<ProjectMember[]>(await request(`/projects/${projectId}/members`));
 }
 
 export async function searchProjectMembers(projectId: string, query: string, limit = 20): Promise<ProjectMemberSearchResponse> {
   const q = encodeURIComponent(query);
-  return request<ProjectMemberSearchResponse>(`/projects/${projectId}/members/search?q=${q}&limit=${limit}`);
+  return camelizeKeys<ProjectMemberSearchResponse>(
+    await request(`/projects/${projectId}/members/search?q=${q}&limit=${limit}`),
+  );
 }
 
 export async function addProjectMember(projectId: string, payload: AddMemberPayload): Promise<void> {
@@ -111,7 +133,7 @@ export async function removeProjectMember(projectId: string, userId: string): Pr
 // --- Artifacts ---
 
 export async function getProjectArtifacts(projectId: string): Promise<ProjectArtifact[]> {
-  return request<ProjectArtifact[]>(`/projects/${projectId}/artifacts`);
+  return camelizeKeys<ProjectArtifact[]>(await request(`/projects/${projectId}/artifacts`));
 }
 
 // --- Conversation ↔ project linking (a chat can reference many projects) ---
@@ -140,7 +162,9 @@ export interface ProjectMcpServerEntry {
 }
 
 export async function getProjectMcpServers(projectId: string): Promise<ProjectMcpServerEntry[]> {
-  return request<ProjectMcpServerEntry[]>(`/projects/${projectId}/mcp-servers`);
+  return camelizeKeys<ProjectMcpServerEntry[]>(
+    await request(`/projects/${projectId}/mcp-servers`),
+  );
 }
 
 export async function enableProjectMcpServer(projectId: string, serverId: string): Promise<void> {
