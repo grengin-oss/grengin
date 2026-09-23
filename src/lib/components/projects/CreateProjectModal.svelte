@@ -120,31 +120,68 @@ SPDX-License-Identifier: Apache-2.0
   let isValid = $derived(name.trim().length > 0);
 </script>
 
+<!--
+  The dialog wears the redesigned family the Configure, Delete and
+  Add-to-project dialogs use: a 6px gradient rule, a tile beside a
+  title-and-subtitle heading, 14px sentence-case labels over hairline-ringed
+  controls, and a pinned footer whose actions sit on the end edge.
+-->
 <Modal
   {isOpen}
   title={editProject ? $_('sidebar.editProject') : $_('sidebar.newProject')}
+  subtitle={editProject ? editProject.name : $_('sidebar.newProjectSubtitle')}
   {onclose}
+  variant="access-control"
 >
-  {#snippet children()}
-    <form class="project-form" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-      <div class="form-group">
-        <label class="form-label" for="project-name">{$_('sidebar.projectName')}</label>
+  {#snippet headerIcon()}
+    <span class="cp-tile" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+      </svg>
+    </span>
+  {/snippet}
+
+  <form
+    class="project-form"
+    id="create-project-form"
+    onsubmit={(e) => {
+      e.preventDefault();
+      handleSubmit();
+    }}
+  >
+    <div class="form-group">
+      <label class="form-label form-label--required" for="project-name"
+        >{$_('sidebar.projectName')}</label
+      >
+      <div class="input-wrap">
         <input
           id="project-name"
           type="text"
-          class="form-input"
           placeholder={$_('sidebar.projectNamePlaceholder')}
           bind:value={name}
           bind:this={nameInputEl}
           maxlength="100"
         />
       </div>
+    </div>
 
-      <div class="category-chips">
-        {#each categories as cat}
+    <div class="form-group">
+      <!-- The chips had no label and no grouping semantics: a screen reader
+           announced eight unrelated buttons with no sense of a single choice. -->
+      <span class="form-label" id="project-category-label"
+        >{$_('sidebar.projectCategory')}</span
+      >
+      <div
+        class="category-chips"
+        role="radiogroup"
+        aria-labelledby="project-category-label"
+      >
+        {#each categories as cat (cat.id)}
           {@const colors = categoryColors[cat.id]}
           <button
             type="button"
+            role="radio"
+            aria-checked={selectedCategory === cat.id}
             class="category-chip"
             class:selected={selectedCategory === cat.id}
             style:--chip-bg-selected={colors.bg}
@@ -152,242 +189,365 @@ SPDX-License-Identifier: Apache-2.0
             style:--chip-border-selected={colors.border}
             onclick={() => selectCategory(cat)}
           >
-            <span class="chip-emoji">{cat.emoji}</span>
+            <span class="chip-emoji" aria-hidden="true">{cat.emoji}</span>
             <span class="chip-label">{$_(cat.labelKey)}</span>
           </button>
         {/each}
       </div>
+    </div>
 
-      <div class="form-group">
-        <label class="form-label" for="project-description">{$_('sidebar.projectDescription')}</label>
+    <div class="form-group">
+      <label class="form-label" for="project-description"
+        >{$_('sidebar.projectDescription')}</label
+      >
+      <div class="input-wrap input-wrap--area">
         <textarea
           id="project-description"
-          class="form-textarea"
           placeholder={$_('sidebar.projectDescriptionPlaceholder')}
           bind:value={description}
           rows="3"
           maxlength="500"
         ></textarea>
       </div>
+    </div>
 
-      <div class="form-group">
-        <span class="form-label" id="visibility-label">{$_('sidebar.projectVisibility')}</span>
-        <div class="visibility-options" role="radiogroup" aria-labelledby="visibility-label">
-          <button
-            type="button"
-            class="visibility-option"
-            class:selected={visibility === 'private'}
-            onclick={() => visibility = 'private'}
-          >
-            <div class="visibility-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-            </div>
-            <div class="visibility-text">
-              <span class="visibility-label">{$_('sidebar.projectVisibilityPrivate')}</span>
-              <span class="visibility-desc">{$_('sidebar.projectVisibilityPrivateDesc')}</span>
-            </div>
-          </button>
-          <button
-            type="button"
-            class="visibility-option"
-            class:selected={visibility === 'team'}
-            onclick={() => visibility = 'team'}
-          >
-            <div class="visibility-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <div class="visibility-text">
-              <span class="visibility-label">{$_('sidebar.projectVisibilityTeam')}</span>
-              <span class="visibility-desc">{$_('sidebar.projectVisibilityTeamDesc')}</span>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <button type="button" class="cancel-btn" onclick={onclose} disabled={saving}>
-          {$_('sidebar.cancel')}
-        </button>
-        <button type="submit" class="submit-btn" disabled={!isValid || saving}>
-          {#if saving}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spinner" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" opacity="0.25"/>
-              <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"/>
+    <div class="form-group">
+      <span class="form-label" id="visibility-label"
+        >{$_('sidebar.projectVisibility')}</span
+      >
+      <div
+        class="visibility-options"
+        role="radiogroup"
+        aria-labelledby="visibility-label"
+      >
+        <button
+          type="button"
+          role="radio"
+          aria-checked={visibility === 'private'}
+          class="visibility-option"
+          class:selected={visibility === 'private'}
+          onclick={() => (visibility = 'private')}
+        >
+          <span class="visibility-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
-            {editProject ? $_('sidebar.saving') : $_('sidebar.creating')}
-          {:else}
-            {$_('sidebar.createProject')}
-          {/if}
+          </span>
+          <span class="visibility-text">
+            <span class="visibility-label"
+              >{$_('sidebar.projectVisibilityPrivate')}</span
+            >
+            <span class="visibility-desc"
+              >{$_('sidebar.projectVisibilityPrivateDesc')}</span
+            >
+          </span>
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={visibility === 'team'}
+          class="visibility-option"
+          class:selected={visibility === 'team'}
+          onclick={() => (visibility = 'team')}
+        >
+          <span class="visibility-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </span>
+          <span class="visibility-text">
+            <span class="visibility-label"
+              >{$_('sidebar.projectVisibilityTeam')}</span
+            >
+            <span class="visibility-desc"
+              >{$_('sidebar.projectVisibilityTeamDesc')}</span
+            >
+          </span>
         </button>
       </div>
-    </form>
+    </div>
+  </form>
+
+  {#snippet footer()}
+    <span></span>
+    <div class="footer-actions">
+      <button
+        class="btn-cancel"
+        type="button"
+        onclick={onclose}
+        disabled={saving}
+      >
+        {$_('sidebar.cancel')}
+      </button>
+      <button
+        class="btn-primary"
+        type="submit"
+        form="create-project-form"
+        disabled={!isValid || saving}
+      >
+        {#if saving}
+          <span class="spinner" aria-hidden="true"></span>
+        {/if}
+        <span>
+          {saving
+            ? editProject
+              ? $_('sidebar.saving')
+              : $_('sidebar.creating')
+            : editProject
+              ? $_('common.save')
+              : $_('sidebar.createProject')}
+        </span>
+      </button>
+    </div>
   {/snippet}
 </Modal>
 
 <style>
+  /* The dialog renders in the shared #modal-portal, outside this component's
+     tree; Svelte stamps its scope class on the markup, so these rules follow
+     it there. Only global --gx-* tokens are used, so nothing needs
+     re-declaring on the portal root.
+
+     app.css paints every bare <button>/<input>/<textarea> as a glass pill, so
+     that is stripped once here — every control below is flat. */
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
+    cursor: pointer;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: none;
+  }
+
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    font-family: var(--gx-font);
+    color: var(--gx-slate-900);
+  }
+
+  input:focus,
+  textarea:focus {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .cp-tile {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gx-ring-soft);
+    color: var(--gx-tx-chip-icon-fg);
+  }
+
+  /* The dialog body is a column flex container with `align-items: flex-start`,
+     so a `width: auto` child is sized to its max-content rather than
+     stretched — the form has to claim the width explicitly or its fields
+     spill past the card. */
   .project-form {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: 20px;
+    align-self: stretch;
+    width: 100%;
   }
 
   .form-group {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 8px;
+    align-items: flex-start;
+    align-self: stretch;
   }
 
   .form-label {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--text-secondary);
+    font-family: var(--gx-font);
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-org-ink);
   }
 
-  .form-input,
-  .form-textarea {
-    width: 100%;
-    padding: var(--space-md) var(--space-lg);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-md);
-    background: var(--btn-secondary);
-    color: var(--text-primary);
-    font-size: 0.9375rem;
-    font-family: inherit;
-    transition: all 0.2s ease;
+  .form-label--required::after {
+    content: " *";
+    color: var(--gx-org-danger);
   }
 
-  .form-input:focus,
-  .form-textarea:focus {
-    outline: none;
-    border-color: var(--brand);
-    box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.15);
-    background: var(--bg-primary);
+  .input-wrap {
+    min-height: 42px;
+    border-radius: 10px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    padding: 0 14px;
+    align-items: center;
+    align-self: stretch;
+    box-sizing: border-box;
+    transition: box-shadow 120ms ease;
   }
 
-  .form-input::placeholder,
-  .form-textarea::placeholder {
-    color: var(--text-secondary);
-    opacity: 0.6;
+  .input-wrap:focus-within {
+    box-shadow:
+      inset 0 0 0 1.5px var(--gx-tx-chip-icon-fg),
+      inset 0 0 4px 0 rgba(59, 103, 189, 0.149);
   }
 
-  .form-textarea {
+  .input-wrap--area {
+    padding: 12px 14px;
+    align-items: stretch;
+  }
+
+  .input-wrap input {
+    padding-block: 12px;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 100%;
+  }
+
+  .input-wrap textarea {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.5;
     resize: vertical;
-    min-height: 80px;
+    min-height: 66px;
   }
 
-  /* ===== Category Chips ===== */
+  .input-wrap input::placeholder,
+  .input-wrap textarea::placeholder {
+    color: var(--gx-slate-400);
+    opacity: 1;
+  }
+
+  /* ---------------- category chips ---------------- */
   .category-chips {
     display: flex;
-    gap: var(--space-sm);
     flex-wrap: wrap;
+    gap: 8px;
+    align-self: stretch;
   }
 
   .category-chip {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
     gap: 6px;
-    padding: 6px 14px;
-    border: 1.5px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-full);
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-
-  .category-chip:hover {
-    border-color: var(--glass-stroke-light);
-    background: var(--btn-tertiary);
-    color: var(--text-primary);
-    transform: none;
-    box-shadow: none;
-  }
-
-  .category-chip.selected {
-    border-color: var(--chip-border-selected, var(--brand));
-    background: var(--chip-bg-selected, rgba(var(--brand-rgb), 0.08));
-    color: var(--chip-text-selected, var(--brand));
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    font-family: var(--gx-font);
     font-weight: 600;
-    box-shadow: none;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-500);
+    transition:
+      background-color 120ms ease,
+      box-shadow 120ms ease,
+      color 120ms ease;
+  }
+
+  .category-chip:hover:not(:disabled) {
+    background: var(--gx-ring-soft);
+    color: var(--gx-org-ink);
+  }
+
+  /* The category's own colour marks the selection — it is the one place in the
+     dialog where colour carries meaning rather than decoration. */
+  .category-chip.selected {
+    background: var(--chip-bg-selected);
+    box-shadow: inset 0 0 0 1.5px var(--chip-border-selected);
+    color: var(--chip-text-selected);
+  }
+
+  .category-chip:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
   }
 
   .chip-emoji {
-    font-size: 0.875rem;
+    font-size: 14px;
     line-height: 1;
   }
 
-  .chip-label {
-    line-height: 1;
-  }
-
-  /* ===== Visibility ===== */
+  /* ---------------- visibility ---------------- */
   .visibility-options {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 8px;
+    align-self: stretch;
   }
 
   .visibility-option {
     display: flex;
     align-items: flex-start;
-    justify-content: flex-start;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
-    border: 2px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-md);
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: start;
-    width: 100%;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    gap: 12px;
+    align-self: stretch;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    transition:
+      background-color 120ms ease,
+      box-shadow 120ms ease;
   }
 
-  .visibility-option:hover {
-    border-color: var(--glass-stroke-light);
-    background: var(--btn-tertiary);
-    transform: none;
-    box-shadow: none;
+  .visibility-option:hover:not(:disabled) {
+    background: var(--gx-ring-soft);
   }
 
   .visibility-option.selected {
-    border-color: var(--brand);
-    background: rgba(var(--brand-rgb), 0.06);
-    box-shadow: none;
+    background: var(--gx-ring-soft);
+    box-shadow: inset 0 0 0 1.5px var(--gx-tx-chip-icon-fg);
+  }
+
+  .visibility-option:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
   }
 
   .visibility-icon {
-    flex-shrink: 0;
-    width: 36px;
-    height: 36px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-sm);
-    background: var(--btn-tertiary);
-    color: var(--text-secondary);
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--gx-slate-500);
   }
 
   .visibility-option.selected .visibility-icon {
-    background: rgba(var(--brand-rgb), 0.12);
-    color: var(--brand);
+    color: var(--gx-tx-chip-icon-fg);
   }
 
   .visibility-text {
@@ -398,99 +558,86 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .visibility-label {
-    font-size: 0.875rem;
     font-weight: 600;
-    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 1.2;
+    color: var(--gx-org-ink);
   }
 
   .visibility-desc {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
+    font-weight: 400;
+    font-size: 12.5px;
     line-height: 1.4;
+    color: var(--gx-slate-500);
   }
 
-  /* ===== Actions ===== */
-  .form-actions {
+  /* ---------------- footer ---------------- */
+  .footer-actions {
     display: flex;
-    justify-content: flex-end;
-    gap: var(--space-md);
-    padding-top: var(--space-md);
-    border-top: 1px solid var(--glass-stroke-dark);
+    gap: 12px;
+    flex-shrink: 0;
+    margin-inline-start: auto;
   }
 
-  .cancel-btn {
-    padding: var(--space-sm) var(--space-xl);
-    border: 1px solid var(--glass-stroke-dark);
-    background: transparent;
-    color: var(--text-primary);
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-
-  .cancel-btn:hover:not(:disabled) {
-    background: var(--btn-secondary);
-    border-color: var(--glass-stroke-light);
-    transform: none;
-    box-shadow: none;
-  }
-
-  .cancel-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .submit-btn {
-    padding: var(--space-sm) var(--space-xl);
-    border: none;
-    background: var(--brand);
-    color: white;
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    display: flex;
+  .btn-cancel,
+  .btn-primary {
+    height: 37px;
+    border-radius: 10px;
+    padding: 10px 16px;
+    display: inline-flex;
     align-items: center;
-    gap: var(--space-sm);
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    gap: 8px;
+    font-family: var(--gx-font);
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 100%;
+    transition: background-color 120ms ease;
   }
 
-  .submit-btn:hover:not(:disabled) {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
-    box-shadow: none;
+  .btn-cancel {
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    color: var(--gx-ac-slate-600);
   }
 
-  .submit-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .btn-cancel:hover:not(:disabled) {
+    background: var(--gx-org-track);
+  }
+
+  .btn-primary {
+    background: var(--gx-tx-chip-icon-fg);
+    color: #fff;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--gx-ac-cta-hover);
+  }
+
+  .btn-cancel:focus-visible,
+  .btn-primary:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
   }
 
   .spinner {
-    animation: spin 1s linear infinite;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
-  @media (max-width: 480px) {
-    .form-actions {
-      flex-direction: column-reverse;
-    }
-
-    .cancel-btn,
-    .submit-btn {
-      width: 100%;
-      justify-content: center;
+  @media (prefers-reduced-motion: reduce) {
+    .spinner {
+      animation: none;
     }
   }
 </style>

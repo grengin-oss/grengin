@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0
   import type { Project, ProjectCategory } from '../../types/project';
   import { toast } from '../Toaster.svelte';
   import CreateProjectModal from './CreateProjectModal.svelte';
-  import Modal from '$lib/admin/components/Modal.svelte';
+  import DeleteConfirmDialog from '../DeleteConfirmDialog.svelte';
   import { setPageTitle } from '../../utils/pageTitle';
 
   $effect(() => {
@@ -118,8 +118,14 @@ SPDX-License-Identifier: Apache-2.0
     navigate(`/projects/${project.id}`);
   }
 
-  function formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString(undefined, {
+  /* A missing or unparseable timestamp renders as an em dash. `new Date()`
+     answers "Invalid Date" for both, which is what a user saw whenever a
+     field did not reach the UI. */
+  function formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return '\u2014';
+    const parsed = new Date(dateStr);
+    if (Number.isNaN(parsed.getTime())) return '\u2014';
+    return parsed.toLocaleDateString(undefined, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -186,35 +192,20 @@ SPDX-License-Identifier: Apache-2.0
       </div>
     {:else if projects.length === 0}
       <div class="glass-empty-card">
-        <div class="glow-container">
-          <div class="glow-effect"></div>
-          <svg class="animated-empty-illustration" width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="primary-grad" x1="0" y1="0" x2="160" y2="160" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="var(--brand)" />
-                <stop offset="100%" stop-color="var(--brand-green-accent)" />
-              </linearGradient>
-              <radialGradient id="glow-grad" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="var(--brand)" stop-opacity="0.3" />
-                <stop offset="100%" stop-color="var(--brand)" stop-opacity="0" />
-              </radialGradient>
-            </defs>
-
-            <circle cx="80" cy="80" r="60" fill="url(#glow-grad)" class="pulse-glow" />
-            <circle cx="80" cy="80" r="45" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" stroke-dasharray="6 4" class="spin-clockwise" />
-            <circle cx="80" cy="80" r="30" stroke="rgba(255, 255, 255, 0.04)" stroke-width="1" />
-
-            <g class="float-animation">
-              <path d="M55 58C55 55.7909 56.7909 54 59 54H74.5858C75.6467 54 76.6641 54.4214 77.4142 55.1716L81.5858 59.3431C82.3359 60.0933 83.3533 60.5147 84.4142 60.5147H97C99.2091 60.5147 101 62.3239 101 64.533V94C101 96.2091 99.2091 98 97 98H59C56.7909 98 55 96.2091 55 94V58Z" fill="url(#primary-grad)" fill-opacity="0.15" stroke="url(#primary-grad)" stroke-width="1.5"/>
-              <path d="M55 64C55 61.7909 56.7909 60 59 60H97C99.2091 60 101 61.7909 101 64V94C101 96.2091 99.2091 98 97 98H59C56.7909 98 55 96.2091 55 94V64Z" fill="url(#primary-grad)" fill-opacity="0.3" stroke="url(#primary-grad)" stroke-width="1.5"/>
-              <path d="M74 79H86M80 73V85" stroke="white" stroke-width="2" stroke-linecap="round" />
-            </g>
-
-            <circle cx="110" cy="55" r="4" fill="var(--brand-green-accent)" class="float-particle-1" />
-            <circle cx="50" cy="105" r="3" fill="var(--brand)" class="float-particle-2" />
-            <circle cx="45" cy="65" r="2.5" fill="var(--brand-cyan)" class="float-particle-3" />
-          </svg>
-        </div>
+        <svg
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          class="empty-icon"
+          aria-hidden="true"
+        >
+          <path
+            d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+          />
+        </svg>
         <h3 class="empty-title">{$_('sidebar.noProjectsYet')}</h3>
         <p class="empty-description">{$_('projects.emptyStateDesc')}</p>
         <button class="empty-create-btn premium-btn" onclick={openCreateModal}>
@@ -228,7 +219,7 @@ SPDX-License-Identifier: Apache-2.0
     {:else}
       {#each filteredProjects as project (project.id)}
         {@const colors = categoryColors[project.category]}
-        <div class="project-card" style:--accent-color={colors?.text}>
+        <div class="project-card">
           <button class="card-main" onclick={() => openProject(project)}>
             <div class="card-header">
               <div 
@@ -325,33 +316,20 @@ SPDX-License-Identifier: Apache-2.0
 />
 
 {#if showDeleteConfirm}
-  <Modal
-    isOpen={showDeleteConfirm}
+  <DeleteConfirmDialog
     title={$_('sidebar.deleteProject')}
-    onclose={() => { showDeleteConfirm = false; projectToDelete = null; }}
-  >
-    {#snippet children()}
-      <div class="confirm-content">
-        <p>{$_('sidebar.deleteProjectConfirm')}</p>
-      </div>
-      <div class="confirm-actions">
-        <button class="cancel-btn" onclick={() => { showDeleteConfirm = false; projectToDelete = null; }} disabled={deleting}>
-          {$_('sidebar.cancel')}
-        </button>
-        <button class="delete-btn" onclick={handleDelete} disabled={deleting}>
-          {#if deleting}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spinner" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" opacity="0.25"/>
-              <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"/>
-            </svg>
-            {$_('sidebar.deleting')}
-          {:else}
-            {$_('sidebar.delete')}
-          {/if}
-        </button>
-      </div>
-    {/snippet}
-  </Modal>
+    subtitle={projectToDelete?.name}
+    message={$_('sidebar.deleteProjectConfirm')}
+    confirmLabel={$_('sidebar.delete')}
+    busyLabel={$_('sidebar.deleting')}
+    cancelLabel={$_('sidebar.cancel')}
+    isBusy={deleting}
+    onCancel={() => {
+      showDeleteConfirm = false;
+      projectToDelete = null;
+    }}
+    onConfirm={handleDelete}
+  />
 {/if}
 
 <style>
@@ -532,224 +510,139 @@ SPDX-License-Identifier: Apache-2.0
     animation: spin 1s linear infinite;
   }
 
+  /* Matches the empty states on the project detail page and the cards above
+     it: a flat surface with a hairline ring and a 12px corner. */
   .glass-empty-card {
     grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--space-md);
-    padding: var(--space-3xl) var(--space-2xl);
-    color: var(--text-secondary);
+    gap: 12px;
+    padding: 48px 24px;
     text-align: center;
-    background: rgba(255, 255, 255, 0.015);
-    backdrop-filter: blur(24px) saturate(1.2);
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-xl);
-    max-width: 520px;
-    margin: 3rem auto;
-    position: relative;
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 12px 40px rgba(0, 0, 0, 0.35);
-    transition: all 0.4s ease;
+    background: var(--gx-card);
+    border: 1px solid var(--gx-hair);
+    border-radius: 12px;
+    width: 100%;
+    margin: 24px 0;
   }
 
-  .glass-empty-card:hover {
-    border-color: rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.03);
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.12),
-      0 16px 48px rgba(0, 0, 0, 0.45);
+  .empty-icon {
+    box-sizing: border-box;
+    width: 48px;
+    height: 48px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--gx-ring-soft);
+    color: var(--gx-tx-chip-icon-fg);
+    flex-shrink: 0;
   }
 
-  .glow-container {
-    position: relative;
-    width: 160px;
-    height: 160px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: var(--space-sm);
-  }
 
-  .glow-effect {
-    position: absolute;
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(var(--brand-rgb), 0.12) 0%, transparent 70%);
-    filter: blur(15px);
-    pointer-events: none;
-  }
 
-  .animated-empty-illustration {
-    overflow: visible;
-  }
 
-  .float-animation {
-    animation: svg-float 6s ease-in-out infinite;
-  }
 
-  .pulse-glow {
-    animation: svg-pulse 4s ease-in-out infinite;
-    transform-origin: center;
-  }
 
-  .spin-clockwise {
-    animation: svg-spin 25s linear infinite;
-    transform-origin: center;
-  }
 
-  .float-particle-1 {
-    animation: svg-float-particle-1 5s ease-in-out infinite;
-  }
 
-  .float-particle-2 {
-    animation: svg-float-particle-2 7s ease-in-out infinite;
-  }
 
-  .float-particle-3 {
-    animation: svg-float-particle-3 6s ease-in-out infinite;
-  }
 
-  @keyframes svg-float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
-  }
 
-  @keyframes svg-pulse {
-    0%, 100% { transform: scale(0.95); opacity: 0.7; }
-    50% { transform: scale(1.05); opacity: 1; }
-  }
 
-  @keyframes svg-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
 
-  @keyframes svg-float-particle-1 {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(4px, -8px); opacity: 0.8; }
-  }
 
-  @keyframes svg-float-particle-2 {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(-6px, 6px); opacity: 0.7; }
-  }
 
-  @keyframes svg-float-particle-3 {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(5px, 5px); opacity: 0.9; }
-  }
 
   .empty-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--text-primary);
     margin: 0;
-    letter-spacing: -0.015em;
+    font-family: var(--gx-font);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.3;
+    color: var(--gx-org-ink);
   }
 
   .empty-description {
-    font-size: 0.875rem;
+    margin: 0;
+    max-width: 460px;
+    font-size: 13px;
     line-height: 1.5;
-    color: var(--text-secondary);
-    opacity: 0.75;
-    margin: 0 var(--space-md);
+    color: var(--gx-slate-500);
   }
 
+  /* The gradient-and-lift CTA belonged to the old glass era; this matches the
+     primary action in every redesigned dialog on the page. */
   .empty-create-btn.premium-btn {
-    margin-top: var(--space-sm);
+    margin-top: 4px;
+    height: 37px;
     display: inline-flex;
     align-items: center;
-    gap: var(--space-sm);
-    padding: 0.75rem 1.75rem;
-    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-green-accent) 100%);
+    gap: 8px;
+    padding: 10px 16px;
     border: none;
-    border-radius: var(--radius-md);
-    color: white;
-    font-size: 0.875rem;
+    border-radius: 10px;
+    background: var(--gx-tx-chip-icon-fg);
+    color: #fff;
+    font-family: var(--gx-font);
+    font-size: 14px;
     font-weight: 600;
+    line-height: 100%;
     cursor: pointer;
-    box-shadow: 
-      0 4px 15px rgba(var(--brand-rgb), 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: background-color 120ms ease;
   }
 
   .empty-create-btn.premium-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-      0 8px 24px rgba(var(--brand-rgb), 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    filter: brightness(1.08);
+    transform: none;
+    filter: none;
+    box-shadow: none;
+    background: var(--gx-ac-cta-hover);
   }
 
   .empty-create-btn.premium-btn:active {
-    transform: translateY(0);
+    transform: none;
   }
 
+  .empty-create-btn.premium-btn:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
+  }
+
+  /* ===== ".project-card" =====
+     Brought onto the --gx-* card language the rest of the redesign uses: a
+     flat surface with a hairline ring, a 12px corner and a restrained hover.
+     The old treatment — a blurred glass fill, a gradient bar across the top
+     and a translate-and-scale lift — predated the design system and matched
+     nothing else in the app. The --gx-* tokens carry their own dark values, so
+     the hand-written light-scheme overrides are gone too. */
   .project-card {
     position: relative;
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-xl);
-    background: rgba(255, 255, 255, 0.015);
-    backdrop-filter: blur(16px) saturate(1.2);
-    -webkit-backdrop-filter: blur(16px) saturate(1.2);
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    background: var(--gx-card);
     overflow: hidden;
-    min-height: 195px;
+    min-height: 186px;
     height: 100%;
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.05),
-      0 4px 12px rgba(0, 0, 0, 0.15);
+    /* Same treatment ".mcp-card" uses for a connected server: a real border so
+       the leading edge can thicken, and the same edge colour it uses. One
+       colour across every card — the category is already carried by the tile
+       and the badge, so repeating it on the edge made the grid read as eight
+       competing accents. */
+    border: 1px solid var(--gx-hair);
+    border-inline-start-width: 4px;
+    border-inline-start-color: var(--gx-mcp-edge-ok);
+    transition:
+      border-color 140ms ease,
+      box-shadow 140ms ease;
   }
 
-  .project-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--accent-color, var(--brand)), color-mix(in oklab, var(--accent-color, var(--brand)) 50%, white));
-    opacity: 0.4;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 2;
-  }
-
-  .project-card:hover {
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.035);
-    transform: translateY(-6px) scale(1.015);
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 12px 28px rgba(0, 0, 0, 0.35),
-      0 0 20px rgba(var(--brand-rgb), 0.05);
-  }
-
-  .project-card:hover::before {
-    opacity: 1;
-    height: 5px;
-  }
-
-  @media (prefers-color-scheme: light) {
-    .project-card {
-      background: rgba(0, 0, 0, 0.012);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    }
-    .project-card:hover {
-      background: rgba(0, 0, 0, 0.025);
-      border-color: rgba(0, 0, 0, 0.08);
-      box-shadow: 
-        0 12px 28px rgba(0, 0, 0, 0.1),
-        0 0 16px rgba(var(--brand-rgb), 0.05);
-    }
+  .project-card:hover,
+  .project-card:focus-within {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
   }
 
   .card-main {
@@ -758,8 +651,10 @@ SPDX-License-Identifier: Apache-2.0
     flex-direction: column;
     align-items: stretch;
     justify-content: space-between;
-    padding: var(--space-lg);
+    gap: 12px;
+    padding: 20px;
     border: none;
+    border-radius: 0;
     background: transparent;
     cursor: pointer;
     text-align: start;
@@ -771,19 +666,27 @@ SPDX-License-Identifier: Apache-2.0
     height: 100%;
   }
 
-  .card-main:hover {
+  .card-main:hover,
+  .card-main:active {
     transform: none;
     box-shadow: none;
     background: transparent;
+  }
+
+  .card-main:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: -2px;
   }
 
   .card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: var(--space-md);
+    gap: 10px;
   }
 
+  /* The category's colour lives on the tile and the badge — the two places it
+     actually tells you something. */
   .card-emoji {
     flex-shrink: 0;
     width: 40px;
@@ -791,152 +694,128 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-sm);
+    border-radius: 10px;
     background: var(--emoji-bg);
     color: var(--emoji-color);
-    font-size: 1.3rem;
+    font-size: 19px;
     line-height: 1;
-    transition: all 0.25s ease;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   }
 
-  .project-card:hover .card-emoji {
-    transform: scale(1.08) rotate(4deg);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+  .card-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--badge-bg);
+    box-shadow: inset 0 0 0 1px var(--badge-border);
+    color: var(--badge-text);
+    font-weight: 600;
+    font-size: 11.5px;
+    line-height: 100%;
+    white-space: nowrap;
   }
 
   .card-body {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-md);
+    gap: 4px;
+    min-width: 0;
   }
 
   .card-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--text-primary);
     margin: 0;
-    white-space: nowrap;
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.3;
+    color: var(--gx-org-ink);
     overflow: hidden;
     text-overflow: ellipsis;
-    letter-spacing: -0.01em;
+    white-space: nowrap;
   }
 
   .card-description {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-    opacity: 0.8;
     margin: 0;
+    font-weight: 400;
+    font-size: 13px;
     line-height: 1.45;
+    color: var(--gx-slate-500);
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    height: 2.4rem;
   }
 
   .card-description--empty {
-    opacity: 0.45;
     font-style: italic;
+    color: var(--gx-slate-400);
   }
 
   .card-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-top: var(--space-sm);
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
-  }
-
-  @media (prefers-color-scheme: light) {
-    .card-footer {
-      border-top-color: rgba(0, 0, 0, 0.04);
-    }
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--gx-hair);
   }
 
   .card-date {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    opacity: 0.65;
-  }
-
-  .card-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    color: var(--badge-text, var(--text-secondary));
-    padding: 3px 11px;
-    border-radius: var(--radius-full);
-    background: var(--badge-bg, var(--btn-tertiary));
-    border: 1px solid var(--badge-border, transparent);
-    line-height: 1.4;
-    letter-spacing: 0.02em;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 100%;
+    color: var(--gx-slate-400);
+    white-space: nowrap;
   }
 
   .card-meta {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 10px;
+    flex-shrink: 0;
   }
 
   .meta-indicator {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    opacity: 0.7;
-    background: var(--btn-secondary);
-    padding: 2px var(--space-sm);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--glass-stroke-dark);
+    color: var(--gx-slate-400);
   }
 
   .meta-indicator--team {
-    color: var(--brand);
-    border-color: rgba(var(--brand-rgb), 0.15);
+    color: var(--gx-tx-chip-icon-fg);
   }
 
   .indicator-count {
     font-weight: 600;
+    font-size: 12px;
+    line-height: 100%;
   }
 
+  /* The row actions were revealed on hover alone, so a keyboard user could
+     never reach edit, share or delete. They now also appear on focus-within,
+     and stay reachable because only their opacity is animated. */
   .card-actions-wrapper {
     position: absolute;
-    top: var(--space-md);
-    inset-inline-end: var(--space-md);
+    top: 10px;
+    inset-inline-end: 10px;
     display: flex;
-    align-items: center;
     gap: 2px;
-    opacity: 0;
-    transform: translateY(-8px);
-    transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-    background: rgba(18, 18, 22, 0.7);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-sm);
     padding: 3px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow:
+      inset 0 0 0 1px var(--gx-hair),
+      0 4px 12px rgba(0, 0, 0, 0.08);
+    opacity: 0;
+    transition: opacity 140ms ease;
     z-index: 10;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   }
 
-  @media (prefers-color-scheme: light) {
-    .card-actions-wrapper {
-      background: rgba(255, 255, 255, 0.7);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    }
-  }
-
-  .project-card:hover .card-actions-wrapper {
+  .project-card:hover .card-actions-wrapper,
+  .project-card:focus-within .card-actions-wrapper {
     opacity: 1;
-    transform: translateY(0);
   }
 
   .action-btn {
@@ -947,103 +826,43 @@ SPDX-License-Identifier: Apache-2.0
     height: 28px;
     padding: 0;
     border: none;
+    border-radius: 6px;
     background: transparent;
-    color: var(--text-secondary);
+    color: var(--gx-slate-500);
     cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: all 0.15s ease;
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
   }
 
   .action-btn:hover {
-    background: var(--btn-tertiary);
-    color: var(--text-primary);
     transform: none;
-    box-shadow: none;
+    background: var(--gx-ring-soft);
+    color: var(--gx-org-ink);
+  }
+
+  .action-btn:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 1px;
   }
 
   .action-btn--danger:hover {
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--color-danger, #ef4444);
-    transform: none;
-    box-shadow: none;
+    background: var(--gx-org-danger-bg);
+    color: var(--gx-org-danger);
   }
 
-  .confirm-content p {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    line-height: 1.6;
-  }
 
-  .confirm-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-md);
-    padding: var(--space-lg) var(--space-xl);
-  }
 
-  .cancel-btn {
-    padding: var(--space-sm) var(--space-xl);
-    border: 1px solid var(--glass-stroke-dark);
-    background: transparent;
-    color: var(--text-primary);
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
 
-  .cancel-btn:hover:not(:disabled) {
-    background: var(--btn-secondary);
-    border-color: var(--glass-stroke-light);
-    transform: none;
-    box-shadow: none;
-  }
 
-  .cancel-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 
-  .delete-btn {
-    padding: var(--space-sm) var(--space-xl);
-    border: none;
-    background: var(--brand-red);
-    color: white;
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
 
-  .delete-btn:hover:not(:disabled) {
-    background: color-mix(in oklab, var(--brand-red) 85%, black);
-    transform: none;
-    box-shadow: none;
-  }
 
-  .delete-btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
 
-  .spinner {
-    animation: spin 1s linear infinite;
-  }
+
 
   @keyframes spin {
     to { transform: rotate(360deg); }

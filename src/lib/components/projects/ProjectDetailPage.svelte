@@ -558,16 +558,24 @@ SPDX-License-Identifier: Apache-2.0
     navigate(`/?projectId=${id}`);
   }
 
-  function formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString(undefined, {
+  /* A missing or unparseable timestamp renders as an em dash rather than
+     the literal "Invalid Date". */
+  function formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return "\u2014";
+    const parsed = new Date(dateStr);
+    if (Number.isNaN(parsed.getTime())) return "\u2014";
+    return parsed.toLocaleDateString(undefined, {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   }
 
-  function formatTime(dateStr: string): string {
-    return new Date(dateStr).toLocaleTimeString(undefined, {
+  function formatTime(dateStr: string | null | undefined): string {
+    if (!dateStr) return "";
+    const parsed = new Date(dateStr);
+    if (Number.isNaN(parsed.getTime())) return "";
+    return parsed.toLocaleTimeString(undefined, {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -947,107 +955,20 @@ SPDX-License-Identifier: Apache-2.0
 
           {#if filteredChats.length === 0 && chats.length === 0}
             <div class="glass-empty-card">
-              <div class="glow-container">
-                <div class="glow-effect"></div>
-                <svg
-                  class="animated-empty-illustration"
-                  width="140"
-                  height="140"
-                  viewBox="0 0 160 160"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <defs>
-                    <linearGradient
-                      id="chat-grad"
-                      x1="0"
-                      y1="0"
-                      x2="160"
-                      y2="160"
-                      gradientUnits="userSpaceOnUse"
-                    >
-                      <stop offset="0%" stop-color="var(--brand)" />
-                      <stop
-                        offset="100%"
-                        stop-color="var(--brand-green-accent)"
-                      />
-                    </linearGradient>
-                    <radialGradient
-                      id="chat-glow-grad"
-                      cx="50%"
-                      cy="50%"
-                      r="50%"
-                    >
-                      <stop
-                        offset="0%"
-                        stop-color="var(--brand)"
-                        stop-opacity="0.25"
-                      />
-                      <stop
-                        offset="100%"
-                        stop-color="var(--brand)"
-                        stop-opacity="0"
-                      />
-                    </radialGradient>
-                  </defs>
-                  <circle
-                    cx="80"
-                    cy="80"
-                    r="55"
-                    fill="url(#chat-glow-grad)"
-                    class="pulse-glow"
-                  />
-                  <circle
-                    cx="80"
-                    cy="80"
-                    r="40"
-                    stroke="rgba(255, 255, 255, 0.06)"
-                    stroke-width="1.5"
-                    stroke-dasharray="5 3"
-                    class="spin-clockwise"
-                  />
-                  <g class="float-animation">
-                    <path
-                      d="M50 85C50 68.4315 63.4315 55 80 55C96.5685 55 110 68.4315 110 85C110 93.3512 106.591 100.906 101.1 106.3L104 116L94.5 112.5C90.1 114.1 85.2 115 80 115C63.4315 115 50 101.569 50 85Z"
-                      fill="url(#chat-grad)"
-                      fill-opacity="0.15"
-                      stroke="url(#chat-grad)"
-                      stroke-width="1.5"
-                    />
-                    <path
-                      d="M60 85C60 73.9543 68.9543 65 80 65C91.0457 65 100 73.9543 100 85C100 96.0457 91.0457 105 80 105C74.5 105 69.5 102.8 65.8 99.2L58 102L60.5 94.2C60.2 91.3 60 88.2 60 85Z"
-                      fill="url(#chat-grad)"
-                      fill-opacity="0.25"
-                      stroke="url(#chat-grad)"
-                      stroke-width="1.5"
-                    />
-                    <circle cx="72" cy="85" r="2" fill="white" />
-                    <circle cx="80" cy="85" r="2" fill="white" />
-                    <circle cx="88" cy="85" r="2" fill="white" />
-                  </g>
-                  <circle
-                    cx="120"
-                    cy="65"
-                    r="3.5"
-                    fill="var(--brand-green-accent)"
-                    class="float-particle-1"
-                  />
-                  <circle
-                    cx="42"
-                    cy="95"
-                    r="2.5"
-                    fill="var(--brand)"
-                    class="float-particle-2"
-                  />
-                  <circle
-                    cx="48"
-                    cy="60"
-                    r="2"
-                    fill="var(--brand-cyan)"
-                    class="float-particle-3"
-                  />
-                </svg>
-              </div>
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                class="empty-icon"
+                aria-hidden="true"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                />
+              </svg>
               <h3 class="empty-title">{$_('projects.noChatsYet')}</h3>
               <p class="empty-description">
                 {$_('projects.noChatsDesc')}
@@ -2209,18 +2130,17 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .empty-search-info {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-xl);
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--glass-stroke-dark);
+    padding: 24px;
+    border-radius: 12px;
+    background: var(--gx-ring-soft);
+    text-align: center;
   }
 
   .empty-search-info p {
     margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--gx-slate-500);
   }
 
   /* Chats list visual */
@@ -2945,182 +2865,112 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   /* Glass Empty Card Illustration System */
+  /* The empty state every panel on this page shares — no chats, no MCP
+     servers, no members, no activity, project not found. Brought onto the
+     --gx-* card language: a flat surface with a hairline ring and a 12px
+     corner, matching the project cards on the list page. It used to be a
+     blurred glass panel that lifted on hover, which read as interactive when
+     nothing about it is. */
   .glass-empty-card {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--space-md);
-    padding: var(--space-3xl) var(--space-2xl);
-    color: var(--text-secondary);
+    gap: 12px;
+    padding: 48px 24px;
     text-align: center;
-    background: rgba(255, 255, 255, 0.015);
-    backdrop-filter: blur(24px) saturate(1.2);
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: var(--radius-xl);
-    max-width: 520px;
-    margin: 3rem auto;
-    position: relative;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 12px 40px rgba(0, 0, 0, 0.35);
-    transition: all 0.4s ease;
+    background: var(--gx-card);
+    border: 1px solid var(--gx-hair);
+    border-radius: 12px;
+    width: 100%;
+    margin: 24px 0;
   }
 
-  .glass-empty-card:hover {
-    border-color: rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.035);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.12),
-      0 16px 48px rgba(0, 0, 0, 0.45);
-  }
 
-  .glow-container {
-    position: relative;
-    width: 140px;
-    height: 140px;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /* One tile for all three icon shapes the panels use: a stroked glyph, an
+     emoji, or nothing. Sizing here overrides the SVG's own width/height. */
+  .empty-icon,
+  .empty-icon-large {
+    box-sizing: border-box;
+    width: 48px;
+    height: 48px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--gx-ring-soft);
+    color: var(--gx-tx-chip-icon-fg);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: var(--space-sm);
+    flex-shrink: 0;
   }
 
-  .glow-effect {
-    position: absolute;
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    background: radial-gradient(
-      circle,
-      rgba(var(--brand-rgb), 0.15) 0%,
-      transparent 70%
-    );
-    filter: blur(15px);
-    pointer-events: none;
-  }
-
-  .animated-empty-illustration {
-    overflow: visible;
-  }
-
-  .float-animation {
-    animation: svg-float 6s ease-in-out infinite;
-  }
-
-  .pulse-glow {
-    animation: svg-pulse 4s ease-in-out infinite;
-    transform-origin: center;
-  }
-
-  .spin-clockwise {
-    animation: svg-spin 25s linear infinite;
-    transform-origin: center;
-  }
-
-  .float-particle-1 {
-    animation: svg-float-particle-1 5s ease-in-out infinite;
-  }
-
-  .float-particle-2 {
-    animation: svg-float-particle-2 7s ease-in-out infinite;
-  }
-
-  .float-particle-3 {
-    animation: svg-float-particle-3 6s ease-in-out infinite;
-  }
-
-  @keyframes svg-float {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-6px);
-    }
-  }
-
-  @keyframes svg-pulse {
-    0%,
-    100% {
-      transform: scale(0.95);
-      opacity: 0.7;
-    }
-    50% {
-      transform: scale(1.05);
-      opacity: 1;
-    }
-  }
-
-  @keyframes svg-spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @keyframes svg-float-particle-1 {
-    0%,
-    100% {
-      transform: translate(0, 0);
-    }
-    50% {
-      transform: translate(4px, -8px);
-      opacity: 0.8;
-    }
-  }
-
-  @keyframes svg-float-particle-2 {
-    0%,
-    100% {
-      transform: translate(0, 0);
-    }
-    50% {
-      transform: translate(-6px, 6px);
-      opacity: 0.7;
-    }
-  }
-
-  @keyframes svg-float-particle-3 {
-    0%,
-    100% {
-      transform: translate(0, 0);
-    }
-    50% {
-      transform: translate(5px, 5px);
-      opacity: 0.9;
-    }
+  .empty-icon-large {
+    padding: 0;
+    font-size: 22px;
+    line-height: 1;
   }
 
   .empty-title {
-    font-family: "Outfit", sans-serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--text-primary);
     margin: 0;
-    letter-spacing: -0.015em;
+    font-family: var(--gx-font);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.3;
+    color: var(--gx-org-ink);
   }
 
   .empty-description {
-    font-size: 0.85rem;
+    margin: 0;
+    max-width: 460px;
+    font-size: 13px;
     line-height: 1.5;
-    color: var(--text-secondary);
-    opacity: 0.75;
-    margin: 0 var(--space-md);
+    color: var(--gx-slate-500);
   }
 
   .empty-action-btn {
-    margin-top: var(--space-xs);
+    margin-top: 4px;
+    height: 37px;
     display: inline-flex;
     align-items: center;
-    gap: var(--space-sm);
-    padding: 0.75rem 1.6rem;
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--gx-tx-chip-icon-fg);
+    color: #fff;
+    font-family: var(--gx-font);
     font-weight: 600;
+    font-size: 14px;
+    line-height: 100%;
     cursor: pointer;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    transition: background-color 120ms ease;
+  }
+
+  .empty-action-btn:hover {
+    transform: none;
+    background: var(--gx-ac-cta-hover);
+  }
+
+  .empty-action-btn:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
   }
 
   .project-chat-input-wrapper {
