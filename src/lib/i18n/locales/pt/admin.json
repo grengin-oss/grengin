@@ -307,7 +307,7 @@
       "prompts": "Instruções"
     },
     "settings": {
-      "title": "Configurações",
+      "title": "Autenticação",
       "subtitle": "Configurar definições do sistema e integrações",
       "tabs": {
         "oauth": "OAuth",
@@ -315,8 +315,8 @@
       },
       "oauthProviders": {
         "title": "Fornecedores OAuth",
-        "pageTitle": "Autorização",
-        "subtitle": "Configure as integrações OAuth para a sua organização.",
+        "pageTitle": "Autenticação",
+        "subtitle": "Ligue fornecedores de identidade para que a sua organização possa iniciar sessão com SSO.",
         "common": {
           "enabled": "Ativado",
           "disabled": "Desativado",
@@ -330,12 +330,14 @@
           "deleting": "A eliminar…",
           "saving": "A guardar…",
           "validating": "A validar…",
-          "configure": "Configurar"
+          "configure": "Configurar",
+          "saveEnable": "Guardar e ativar",
+          "close": "Fechar"
         },
         "messages": {
           "loading": "A carregar fornecedores OAuth...",
           "empty": "Ainda não existem fornecedores OAuth configurados.",
-          "loadError": "Não foi possível carregar os fornecedores SSO",
+          "loadError": "Não foi possível carregar os fornecedores a partir do serviço de identidade. Verifique a sua ligação ou tente novamente.",
           "loadProviderError": "Não foi possível carregar o fornecedor",
           "loadingProvider": "A carregar fornecedor...",
           "emptyTitle": "Nenhum provedor de identidade disponível",
@@ -365,7 +367,14 @@
           "tenantIdPlaceholder": "Introduza o ID do tenant",
           "allowedDomains": "Domínios permitidos",
           "domainsPlaceholder": "Prima Enter para adicionar",
-          "status": "Estado"
+          "status": "Estado",
+          "hints": {
+            "clientIdAzure": "Encontra-se no Azure Portal → Registos de aplicações → a sua aplicação → Descrição geral → ID de aplicação (cliente).",
+            "clientId": "O ID de aplicação (cliente) emitido pelo seu fornecedor de identidade.",
+            "clientSecretAzure": "Encontra-se no Azure Portal → Registos de aplicações → a sua aplicação → Certificados e segredos → gere um novo segredo de cliente.",
+            "clientSecret": "O segredo de cliente gerado para esta aplicação pelo seu fornecedor de identidade.",
+            "tenantId": "O ID de diretório (inquilino) do seu inquilino do Microsoft Entra ID."
+          }
         },
         "validation": {
           "clientIdRequired": "O ID do cliente é obrigatório",
@@ -401,6 +410,22 @@
           "okta": "SSO corporativo via Okta",
           "saml": "Conecte qualquer provedor de identidade compatível com SAML 2.0",
           "generic": "Entre com {name}"
+        },
+        "scopes": {
+          "trigger": "Ver âmbitos necessários",
+          "note": "Estes âmbitos são solicitados automaticamente e não podem ser alterados."
+        },
+        "docs": {
+          "link": "Ver a documentação de configuração de {name}"
+        },
+        "success": {
+          "title": "{name} ligado e ativado",
+          "body": "Os utilizadores dos domínios permitidos já podem iniciar sessão.",
+          "titleDisabled": "{name} ligado",
+          "bodyDisabled": "Ative-o quando quiser que os utilizadores iniciem sessão com ele."
+        },
+        "domains": {
+          "placeholder": "Escreva um domínio e prima Enter (ex.: grengin.com)"
         }
       }
     },

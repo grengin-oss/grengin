@@ -162,6 +162,23 @@
       "empty": "No hay habilidades disponibles. Crea una en Ajustes.",
       "builtin": "Integrada",
       "updateFailed": "No se pudo actualizar la habilidad"
+    },
+    "saveToProject": {
+      "title": "Añadir artefacto al proyecto",
+      "subtitle": "Elige un proyecto donde guardar este artefacto.",
+      "titleLabel": "Título",
+      "titlePlaceholder": "p. ej., Borrador de campaña del T3",
+      "projectLabel": "Selecciona un proyecto",
+      "searchPlaceholder": "Buscar proyectos...",
+      "loading": "Cargando proyectos...",
+      "emptyNone": "Aún no hay proyectos. Crea uno primero.",
+      "emptyNoMatch": "Ningún proyecto coincide con tu búsqueda.",
+      "previewLabel": "Vista previa",
+      "save": "Guardar artefacto",
+      "saving": "Guardando...",
+      "loadError": "No se pudieron cargar los proyectos",
+      "saved": "Artefacto guardado en «{name}»",
+      "saveError": "No se pudo guardar el artefacto"
     }
   }
 }

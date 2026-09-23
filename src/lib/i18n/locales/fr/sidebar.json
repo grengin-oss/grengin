@@ -31,6 +31,7 @@
     "userMenu": "Menu utilisateur",
     "user": "Utilisateur",
     "settings": "Paramètres",
+    "authentication": "Authentification",
     "admin": "Espace de gestion",
     "signOut": "Se déconnecter",
     "deleteChat": "Supprimer la conversation",

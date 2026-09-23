@@ -71,7 +71,7 @@ SPDX-License-Identifier: Apache-2.0
     '/admin/access-control': 'sidebar.accessControl',
     '/admin/skills': 'sidebar.skills',
     '/admin/prompt-library': 'sidebar.promptLibrary',
-    '/admin/settings': 'sidebar.settings',
+    '/admin/settings': 'sidebar.authentication',
     '/admin/system-metrics': 'sidebar.systemMetrics',
     '/admin/alerts': 'topBar.alerts',
     '/projects': 'sidebar.projects',

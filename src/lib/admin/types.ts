@@ -39,6 +39,8 @@ export interface SSOProvider {
   allowed_domains: string[];
   is_enabled: boolean;
   tenant_id?: string;
+  /** Fixed OIDC scopes the provider is asked for; the API defaults these. */
+  scopes?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -59,6 +61,14 @@ export interface SSOProviderDetails {
   tenant_id?: EditableField;
   allowed_domains: string[];
   is_enabled: boolean;
+  /** Fixed OIDC scopes the provider is asked for; the API defaults these. */
+  scopes?: string[];
+  /**
+   * JIT account creation on first sign-in. The detail payload spells it
+   * `allow_self_provisioning`; the update payload takes it as
+   * `jit_provisioning`. Declared here so reading it back needs no cast.
+   */
+  allow_self_provisioning?: boolean;
   created_at: string;
   updated_at: string;
 }

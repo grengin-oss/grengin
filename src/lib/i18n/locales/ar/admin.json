@@ -307,7 +307,7 @@
       "removeAdminConfirmWarning": "لن يتمكنوا بعد ذلك من إدارة هذا القسم."
     },
     "settings": {
-      "title": "الإعدادات",
+      "title": "المصادقة",
       "subtitle": "تكوين إعدادات النظام والتكاملات",
       "tabs": {
         "oauth": "OAuth",
@@ -315,8 +315,8 @@
       },
       "oauthProviders": {
         "title": "مزودو OAuth",
-        "pageTitle": "التفويض",
-        "subtitle": "تكوين تكاملات OAuth لمؤسستك.",
+        "pageTitle": "المصادقة",
+        "subtitle": "اربط موفّري الهوية ليتمكن أعضاء مؤسستك من تسجيل الدخول عبر SSO.",
         "common": {
           "enabled": "مفعّل",
           "disabled": "معطّل",
@@ -330,12 +330,14 @@
           "deleting": "جارٍ الحذف…",
           "saving": "جارٍ الحفظ…",
           "validating": "جارٍ التحقق…",
-          "configure": "تهيئة"
+          "configure": "تهيئة",
+          "saveEnable": "حفظ وتفعيل",
+          "close": "إغلاق"
         },
         "messages": {
           "loading": "جارٍ تحميل مزودي OAuth...",
           "empty": "لم يتم تكوين مزودي OAuth بعد.",
-          "loadError": "تعذر تحميل مزودي SSO",
+          "loadError": "تعذّر تحميل الموفّرين من خدمة الهوية. تحقّق من اتصالك أو أعد المحاولة.",
           "loadProviderError": "تعذر تحميل المزود",
           "loadingProvider": "جارٍ تحميل المزود...",
           "emptyTitle": "لا يوجد موفّرو هوية متاحون",
@@ -365,7 +367,14 @@
           "tenantIdPlaceholder": "إدخال معرف المستأجر",
           "allowedDomains": "النطاقات المسموح بها",
           "domainsPlaceholder": "اضغط Enter للإضافة",
-          "status": "الحالة"
+          "status": "الحالة",
+          "hints": {
+            "clientIdAzure": "تجده في Azure Portal ← تسجيلات التطبيقات ← تطبيقك ← نظرة عامة ← معرّف التطبيق (العميل).",
+            "clientId": "معرّف التطبيق (العميل) الصادر عن موفّر الهوية لديك.",
+            "clientSecretAzure": "تجده في Azure Portal ← تسجيلات التطبيقات ← تطبيقك ← الشهادات والأسرار ← أنشئ سرّ عميل جديدًا.",
+            "clientSecret": "سرّ العميل الذي أنشأه موفّر الهوية لهذا التطبيق.",
+            "tenantId": "معرّف الدليل (المستأجر) الخاص بمستأجر Microsoft Entra ID لديك."
+          }
         },
         "validation": {
           "clientIdRequired": "معرف العميل مطلوب",
@@ -401,6 +410,22 @@
           "okta": "تسجيل دخول موحّد للمؤسسات عبر Okta",
           "saml": "اربط أي موفّر هوية متوافق مع SAML 2.0",
           "generic": "تسجيل الدخول عبر {name}"
+        },
+        "scopes": {
+          "trigger": "عرض النطاقات المطلوبة",
+          "note": "تُطلب هذه النطاقات تلقائيًا ولا يمكن تغييرها."
+        },
+        "docs": {
+          "link": "عرض وثائق إعداد {name}"
+        },
+        "success": {
+          "title": "تم توصيل {name} وتفعيله",
+          "body": "يمكن الآن للمستخدمين في النطاقات المسموح بها تسجيل الدخول.",
+          "titleDisabled": "تم توصيل {name}",
+          "bodyDisabled": "فعّله عندما تكون مستعدًا لتمكين المستخدمين من تسجيل الدخول به."
+        },
+        "domains": {
+          "placeholder": "اكتب نطاقًا واضغط Enter (مثال: grengin.com)"
         }
       }
     },

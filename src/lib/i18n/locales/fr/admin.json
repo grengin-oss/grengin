@@ -307,7 +307,7 @@
       "prompts": "Instructions"
     },
     "settings": {
-      "title": "Paramètres",
+      "title": "Authentification",
       "subtitle": "Configurer les paramètres système et intégrations",
       "tabs": {
         "oauth": "OAuth",
@@ -315,8 +315,8 @@
       },
       "oauthProviders": {
         "title": "Fournisseurs OAuth",
-        "pageTitle": "Autorisation",
-        "subtitle": "Configurez les intégrations OAuth pour votre organisation.",
+        "pageTitle": "Authentification",
+        "subtitle": "Connectez des fournisseurs d'identité pour que votre organisation puisse se connecter via SSO.",
         "common": {
           "enabled": "Activé",
           "disabled": "Désactivé",
@@ -330,12 +330,14 @@
           "deleting": "Suppression…",
           "saving": "Enregistrement…",
           "validating": "Validation…",
-          "configure": "Configurer"
+          "configure": "Configurer",
+          "saveEnable": "Enregistrer et activer",
+          "close": "Fermer"
         },
         "messages": {
           "loading": "Chargement des fournisseurs OAuth...",
           "empty": "Aucun fournisseur OAuth n'a encore été configuré.",
-          "loadError": "Impossible de charger les fournisseurs SSO",
+          "loadError": "Impossible de charger les fournisseurs depuis le service d'identité. Vérifiez votre connexion ou réessayez.",
           "loadProviderError": "Impossible de charger le fournisseur",
           "loadingProvider": "Chargement du fournisseur...",
           "emptyTitle": "Aucun fournisseur d'identité disponible",
@@ -365,7 +367,14 @@
           "tenantIdPlaceholder": "Saisissez l'ID du locataire",
           "allowedDomains": "Domaines autorisés",
           "domainsPlaceholder": "Appuyez sur Entrée pour ajouter",
-          "status": "Statut"
+          "status": "Statut",
+          "hints": {
+            "clientIdAzure": "Disponible dans le portail Azure → Inscriptions d'applications → votre application → Vue d'ensemble → ID d'application (client).",
+            "clientId": "L'ID d'application (client) fourni par votre fournisseur d'identité.",
+            "clientSecretAzure": "Disponible dans le portail Azure → Inscriptions d'applications → votre application → Certificats et secrets → générez un nouveau secret client.",
+            "clientSecret": "Le secret client généré pour cette application par votre fournisseur d'identité.",
+            "tenantId": "L'ID d'annuaire (locataire) de votre locataire Microsoft Entra ID."
+          }
         },
         "validation": {
           "clientIdRequired": "L'ID client est requis",
@@ -401,6 +410,22 @@
           "okta": "SSO d'entreprise via Okta",
           "saml": "Connectez n'importe quel fournisseur d'identité compatible SAML 2.0",
           "generic": "Connexion avec {name}"
+        },
+        "scopes": {
+          "trigger": "Afficher les portées requises",
+          "note": "Ces portées sont demandées automatiquement et ne peuvent pas être modifiées."
+        },
+        "docs": {
+          "link": "Consulter la documentation de configuration de {name}"
+        },
+        "success": {
+          "title": "{name} connecté et activé",
+          "body": "Les utilisateurs des domaines autorisés peuvent désormais se connecter.",
+          "titleDisabled": "{name} connecté",
+          "bodyDisabled": "Activez-le lorsque vous serez prêt à ce que les utilisateurs s'en servent pour se connecter."
+        },
+        "domains": {
+          "placeholder": "Saisissez un domaine et appuyez sur Entrée (ex. grengin.com)"
         }
       }
     },

@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
   import { tick } from "svelte";
   import { renderMarkdown, copyToClipboard } from "../../../utils/markdown";
   import { getArtifact } from "../../../api/artifactsApi";
+  import { _ } from "svelte-i18n";
   import SaveToProjectModal from "./SaveToProjectModal.svelte";
   import type { ArtifactItem } from "../artifacts";
 
@@ -247,7 +248,7 @@ SPDX-License-Identifier: Apache-2.0
       <button
         class="header-btn"
         onclick={() => (showSaveToProject = true)}
-        title="Save to project"
+        title={$_("chat.saveToProject.title")}
         disabled={isStreaming}
       >
         <svg
