@@ -162,6 +162,23 @@
       "empty": "Aucune compétence disponible. Créez-en une dans les Paramètres.",
       "builtin": "Intégrée",
       "updateFailed": "Échec de la mise à jour de la compétence"
+    },
+    "saveToProject": {
+      "title": "Ajouter l'artefact au projet",
+      "subtitle": "Choisissez un projet où conserver cet artefact.",
+      "titleLabel": "Titre",
+      "titlePlaceholder": "ex. Brouillon de campagne T3",
+      "projectLabel": "Sélectionner un projet",
+      "searchPlaceholder": "Rechercher des projets...",
+      "loading": "Chargement des projets...",
+      "emptyNone": "Aucun projet pour l'instant. Créez-en un d'abord.",
+      "emptyNoMatch": "Aucun projet ne correspond à votre recherche.",
+      "previewLabel": "Aperçu",
+      "save": "Enregistrer l'artefact",
+      "saving": "Enregistrement...",
+      "loadError": "Impossible de charger les projets",
+      "saved": "Artefact enregistré dans « {name} »",
+      "saveError": "Impossible d'enregistrer l'artefact"
     }
   }
 }

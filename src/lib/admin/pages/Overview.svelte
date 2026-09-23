@@ -137,7 +137,7 @@ SPDX-License-Identifier: Apache-2.0
           : null,
         {
           href: "/admin/settings",
-          title: $_("sidebar.settings"),
+          title: $_("sidebar.authentication"),
           description: $_("adminOverview.configureSettings"),
           icon: "settings",
         },

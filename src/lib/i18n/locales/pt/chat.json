@@ -162,6 +162,23 @@
       "empty": "Nenhuma habilidade disponível. Crie uma nas Configurações.",
       "builtin": "Integrada",
       "updateFailed": "Falha ao atualizar a habilidade"
+    },
+    "saveToProject": {
+      "title": "Adicionar artefato ao projeto",
+      "subtitle": "Escolha um projeto onde guardar este artefato.",
+      "titleLabel": "Título",
+      "titlePlaceholder": "ex.: Rascunho da campanha do T3",
+      "projectLabel": "Selecionar projeto",
+      "searchPlaceholder": "Pesquisar projetos...",
+      "loading": "A carregar projetos...",
+      "emptyNone": "Ainda não existem projetos. Crie um primeiro.",
+      "emptyNoMatch": "Nenhum projeto corresponde à sua pesquisa.",
+      "previewLabel": "Pré-visualização",
+      "save": "Guardar artefato",
+      "saving": "A guardar...",
+      "loadError": "Não foi possível carregar os projetos",
+      "saved": "Artefato guardado em «{name}»",
+      "saveError": "Não foi possível guardar o artefato"
     }
   }
 }

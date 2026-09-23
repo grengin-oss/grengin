@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0
   import UserPromptSettings from "./settings/UserPromptSettings.svelte";
   import UserSkills from "./settings/UserSkills.svelte";
   import { loadNamespaces } from "$lib/i18n/index.js";
+  import { PROMPTS_FEATURE_ENABLED } from "$lib/config/features.js";
   import { setPageTitle } from "../utils/pageTitle";
 
   $effect(() => {
@@ -24,23 +25,34 @@ SPDX-License-Identifier: Apache-2.0
     ariaLabel: string;
   }
 
-  const TABS: TabConfig[] = $derived([
-    {
-      id: "skills",
-      label: $_("userSettings.tabs.skills"),
-      ariaLabel: $_("userSettings.tabs.skillsAria"),
-    },
-    {
-      id: "integrations",
-      label: $_("userSettings.tabs.integrations"),
-      ariaLabel: $_("userSettings.tabs.integrationsAria"),
-    },
-    {
-      id: "promptSettings",
-      label: $_("userSettings.tabs.promptSettings"),
-      ariaLabel: $_("userSettings.tabs.promptSettingsAria"),
-    },
-  ]);
+  /* Prompt Settings rides the same launch switch as every other prompt
+     surface. Dropping it from TABS also takes care of the deep link:
+     `getTabFromQuery` validates against `availableTabIds`, so
+     "?tab=promptSettings" now falls back to the default rather than opening a
+     tab with no button. */
+  const TABS: TabConfig[] = $derived(
+    [
+      {
+        id: "skills" as TabId,
+        label: $_("userSettings.tabs.skills"),
+        ariaLabel: $_("userSettings.tabs.skillsAria"),
+      },
+      {
+        id: "integrations" as TabId,
+        label: $_("userSettings.tabs.integrations"),
+        ariaLabel: $_("userSettings.tabs.integrationsAria"),
+      },
+      ...(PROMPTS_FEATURE_ENABLED
+        ? [
+            {
+              id: "promptSettings" as TabId,
+              label: $_("userSettings.tabs.promptSettings"),
+              ariaLabel: $_("userSettings.tabs.promptSettingsAria"),
+            },
+          ]
+        : []),
+    ],
+  );
 
   const DEFAULT_TAB: TabId = "skills";
   const availableTabIds = $derived(TABS.map((t) => t.id));
@@ -144,7 +156,7 @@ SPDX-License-Identifier: Apache-2.0
       <UserSkills />
     {:else if currentTab === "integrations"}
       <UserIntegrations />
-    {:else if currentTab === "promptSettings"}
+    {:else if PROMPTS_FEATURE_ENABLED && currentTab === "promptSettings"}
       <UserPromptSettings />
     {/if}
   </div>

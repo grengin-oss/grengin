@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
   import Modal from '$lib/admin/components/Modal.svelte';
   import { listProjects, contributeArtifact } from '../../../api/projectsApi';
   import type { Project, ProjectCategory } from '../../../types/project';
@@ -57,7 +58,7 @@ SPDX-License-Identifier: Apache-2.0
       const res = await listProjects();
       projects = res.projects;
     } catch {
-      toast.error('Failed to load projects');
+      toast.error($_('chat.saveToProject.loadError'));
     } finally {
       loading = false;
     }
@@ -73,11 +74,11 @@ SPDX-License-Identifier: Apache-2.0
         contentType,
       });
       const projectName = projects.find((p) => p.id === selectedProjectId)?.name;
-      toast.success(`Artifact saved to "${projectName}"`);
+      toast.success($_('chat.saveToProject.saved', { values: { name: projectName ?? '' } }));
       isOpen = false;
       onclose();
     } catch {
-      toast.error('Failed to save artifact');
+      toast.error($_('chat.saveToProject.saveError'));
     } finally {
       saving = false;
     }
@@ -104,94 +105,97 @@ SPDX-License-Identifier: Apache-2.0
   }
 </script>
 
-<Modal {isOpen} title="Save to Project" onclose={handleClose}>
-  <div class="save-to-project">
-    <div class="field">
-      <label class="field-label" for="artifact-title">Artifact title</label>
-      <input
-        id="artifact-title"
-        type="text"
-        class="field-input"
-        bind:value={artifactTitle}
-        placeholder="e.g. Q3 Campaign Draft"
-        maxlength="100"
-      />
-    </div>
+<!--
+  The dialog wears the redesigned family the Configure and Delete dialogs use:
+  a 6px gradient rule, a tile beside a title-and-subtitle heading, 14px
+  sentence-case field labels over hairline-ringed inputs, and a pinned footer
+  whose actions sit on the end edge. The old glass-and-indigo styling predated
+  the design system and matched nothing else in the app.
+-->
+<Modal
+  {isOpen}
+  title={$_('chat.saveToProject.title')}
+  subtitle={$_('chat.saveToProject.subtitle')}
+  onclose={handleClose}
+  variant="access-control"
+>
+  {#snippet headerIcon()}
+    <span class="stp-tile" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+        <line x1="12" y1="11" x2="12" y2="17" />
+        <line x1="9" y1="14" x2="15" y2="14" />
+      </svg>
+    </span>
+  {/snippet}
 
+  <div class="stp-form">
     <div class="field">
-      <span class="field-label" id="content-type-label">Content type</span>
-      <div class="content-type-toggle" role="radiogroup" aria-labelledby="content-type-label">
-        <button
-          class="type-btn"
-          class:active={contentType === 'text/markdown'}
-          onclick={() => (contentType = 'text/markdown')}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-          </svg>
-          Markdown
-        </button>
-        <button
-          class="type-btn"
-          class:active={contentType === 'text/html'}
-          onclick={() => (contentType = 'text/html')}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="16 18 22 12 16 6" />
-            <polyline points="8 6 2 12 8 18" />
-          </svg>
-          HTML
-        </button>
+      <label class="field-label field-label--required" for="artifact-title"
+        >{$_('chat.saveToProject.titleLabel')}</label
+      >
+      <div class="input-wrap">
+        <input
+          id="artifact-title"
+          type="text"
+          bind:value={artifactTitle}
+          placeholder={$_('chat.saveToProject.titlePlaceholder')}
+          maxlength="100"
+        />
       </div>
     </div>
 
     <div class="field">
-      <label class="field-label" for="project-search">Select project</label>
-      <div class="search-box">
-        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <label class="field-label field-label--required" for="project-search"
+        >{$_('chat.saveToProject.projectLabel')}</label
+      >
+      <div class="input-wrap input-wrap--search">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <circle cx="11" cy="11" r="8" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <input
           id="project-search"
           type="text"
-          class="search-input"
           bind:value={searchQuery}
-          placeholder="Search projects..."
+          placeholder={$_('chat.saveToProject.searchPlaceholder')}
         />
       </div>
 
       {#if loading}
-        <div class="project-list-loading">
-          <div class="loading-spinner small"></div>
-          <span>Loading projects...</span>
+        <div class="list-note" role="status">
+          <span class="spinner" aria-hidden="true"></span>
+          <span>{$_('chat.saveToProject.loading')}</span>
         </div>
       {:else if filteredProjects.length === 0}
-        <div class="project-list-empty">
-          {#if projects.length === 0}
-            <p>No projects yet. Create one first.</p>
-          {:else}
-            <p>No projects match your search.</p>
-          {/if}
+        <div class="list-note" role="status">
+          <span
+            >{projects.length === 0
+              ? $_('chat.saveToProject.emptyNone')
+              : $_('chat.saveToProject.emptyNoMatch')}</span
+          >
         </div>
       {:else}
         <div class="project-list">
           {#each filteredProjects as proj (proj.id)}
             <button
               class="project-option"
-              class:selected={selectedProjectId === proj.id}
+              type="button"
+              aria-pressed={selectedProjectId === proj.id}
+              class:project-option--on={selectedProjectId === proj.id}
               onclick={() => (selectedProjectId = proj.id)}
             >
-              <span class="project-option-icon">{categoryEmoji[proj.category] || '📁'}</span>
-              <div class="project-option-info">
-                <span class="project-option-name">{proj.name}</span>
+              <span class="project-option__icon" aria-hidden="true"
+                >{categoryEmoji[proj.category] || '📁'}</span
+              >
+              <span class="project-option__info">
+                <span class="project-option__name">{proj.name}</span>
                 {#if proj.description}
-                  <span class="project-option-desc">{proj.description}</span>
+                  <span class="project-option__desc">{proj.description}</span>
                 {/if}
-              </div>
+              </span>
               {#if selectedProjectId === proj.id}
-                <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <svg class="project-option__check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               {/if}
@@ -201,291 +205,356 @@ SPDX-License-Identifier: Apache-2.0
       {/if}
     </div>
 
-    <div class="preview-section">
-      <span class="field-label">Content preview</span>
-      <div class="content-preview">
+    <div class="field">
+      <span class="field-label">{$_('chat.saveToProject.previewLabel')}</span>
+      <div class="preview">
         {messageContent.slice(0, 300)}{messageContent.length > 300 ? '...' : ''}
       </div>
     </div>
+  </div>
 
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick={handleClose}>Cancel</button>
+  {#snippet footer()}
+    <span></span>
+    <div class="footer-actions">
+      <button class="btn-cancel" type="button" onclick={handleClose} disabled={saving}>
+        {$_('common.cancel')}
+      </button>
       <button
-        class="btn-save"
+        class="btn-primary"
+        type="button"
         onclick={handleSave}
         disabled={!canSave || saving}
       >
         {#if saving}
-          <div class="loading-spinner tiny"></div>
-          Saving...
-        {:else}
-          Save Artifact
+          <span class="spinner spinner--on-brand" aria-hidden="true"></span>
         {/if}
+        <span>{saving ? $_('chat.saveToProject.saving') : $_('chat.saveToProject.save')}</span>
       </button>
     </div>
-  </div>
+  {/snippet}
 </Modal>
 
 <style>
-  .save-to-project {
+  /* The dialog renders in the shared #modal-portal, outside this component's
+     tree, but Svelte stamps its scope class on the markup itself, so these
+     rules follow the elements there. Only global --gx-* tokens are used, so
+     nothing has to be re-declared on the portal root.
+
+     app.css paints every bare <button>/<input> as a glass pill — padding, a
+     fill, a radius, an inset shadow, a lift on hover. Every control below is
+     flat, so that is stripped once here. */
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: normal;
+    text-align: start;
+    cursor: pointer;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: none;
+  }
+
+  button:hover,
+  button:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  input {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    font-family: var(--gx-font);
+    line-height: 100%;
+  }
+
+  input:focus {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  /* ---------------- header tile ---------------- */
+  .stp-tile {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gx-ring-soft);
+    color: var(--gx-tx-chip-icon-fg);
+  }
+
+  /* ---------------- body ---------------- */
+  /* The dialog body is a column flex container with `align-items: flex-start`,
+     so an item with `width: auto` is sized to its MAX-content, not stretched.
+     Left alone this form measured 529px inside a 322px body and every field
+     spilled past the card. Stretching it explicitly is what binds it to the
+     dialog's width. */
+  .stp-form {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg, 16px);
-    padding: var(--space-md, 12px) 0;
+    gap: 20px;
+    align-self: stretch;
+    width: 100%;
   }
 
   .field {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs, 6px);
+    gap: 8px;
+    align-items: flex-start;
+    align-self: stretch;
   }
 
   .field-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-secondary, #888);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-family: var(--gx-font);
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-org-ink);
   }
 
-  .field-input {
-    padding: var(--space-sm, 8px) var(--space-md, 12px);
-    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
-    border-radius: var(--glass-radius, 12px);
-    background: rgba(var(--glass-tint, 255, 255, 255), 0.06);
-    color: var(--text-primary, #fff);
-    font-size: 0.9rem;
-    outline: none;
-    transition: border-color 0.2s;
+  .field-label--required::after {
+    content: " *";
+    color: var(--gx-org-danger);
   }
 
-  .field-input:focus {
-    border-color: var(--brand, #6366f1);
-  }
-
-  .content-type-toggle {
-    display: flex;
-    gap: var(--space-xs, 6px);
-  }
-
-  .type-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs, 6px);
-    padding: var(--space-xs, 6px) var(--space-md, 12px);
-    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
-    border-radius: var(--glass-radius, 12px);
-    background: rgba(var(--glass-tint, 255, 255, 255), 0.04);
-    color: var(--text-secondary, #888);
-    font-size: 0.82rem;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .type-btn.active {
-    border-color: var(--brand, #6366f1);
-    background: rgba(99, 102, 241, 0.12);
-    color: var(--brand, #6366f1);
-  }
-
-  .search-box {
+  .input-wrap {
     position: relative;
+    min-height: 42px;
+    border-radius: 10px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    display: flex;
+    gap: 8px;
+    padding-inline: 14px;
+    align-items: center;
+    align-self: stretch;
+    box-sizing: border-box;
+    transition: box-shadow 120ms ease;
+  }
+
+  .input-wrap:focus-within {
+    box-shadow:
+      inset 0 0 0 1.5px var(--gx-tx-chip-icon-fg),
+      inset 0 0 4px 0 rgba(59, 103, 189, 0.149);
+  }
+
+  .input-wrap input {
+    flex-grow: 1;
+    min-width: 0;
+    padding-block: 12px;
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--gx-slate-900);
+  }
+
+  .input-wrap input::placeholder {
+    color: var(--gx-slate-400);
+    opacity: 1;
   }
 
   .search-icon {
-    position: absolute;
-    left: var(--space-sm, 10px);
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-tertiary, #666);
-    pointer-events: none;
+    flex-shrink: 0;
+    color: var(--gx-slate-400);
   }
 
-  .search-input {
-    width: 100%;
-    padding: var(--space-sm, 8px) var(--space-sm, 8px) var(--space-sm, 8px) var(--space-2xl, 34px);
-    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
-    border-radius: var(--glass-radius, 12px);
-    background: rgba(var(--glass-tint, 255, 255, 255), 0.06);
-    color: var(--text-primary, #fff);
-    font-size: 0.85rem;
-    outline: none;
-    box-sizing: border-box;
-  }
-
-  .search-input:focus {
-    border-color: var(--brand, #6366f1);
-  }
-
+  /* ---------------- project picker ---------------- */
   .project-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs, 4px);
+    gap: 6px;
+    align-self: stretch;
     max-height: 220px;
     overflow-y: auto;
-    margin-top: var(--space-xs, 4px);
   }
 
-  .project-list-loading,
-  .project-list-empty {
+  .list-note {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-sm, 8px);
-    padding: var(--space-xl, 24px);
-    color: var(--text-tertiary, #666);
-    font-size: 0.85rem;
+    gap: 8px;
+    align-self: stretch;
+    padding: 24px;
+    border-radius: 10px;
+    background: var(--gx-ring-soft);
+    font-size: 13px;
+    color: var(--gx-slate-500);
   }
 
   .project-option {
     display: flex;
     align-items: center;
-    gap: var(--space-sm, 10px);
-    padding: var(--space-sm, 10px) var(--space-md, 12px);
-    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
-    border-radius: var(--glass-radius, 12px);
-    background: rgba(var(--glass-tint, 255, 255, 255), 0.03);
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: left;
-    width: 100%;
-    color: inherit;
+    gap: 10px;
+    align-self: stretch;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    transition:
+      background-color 120ms ease,
+      box-shadow 120ms ease;
   }
 
-  .project-option:hover {
-    background: rgba(var(--glass-tint, 255, 255, 255), 0.08);
+  .project-option:hover:not(:disabled) {
+    background: var(--gx-ring-soft);
   }
 
-  .project-option.selected {
-    border-color: var(--brand, #6366f1);
-    background: rgba(99, 102, 241, 0.1);
+  .project-option--on {
+    background: var(--gx-ring-soft);
+    box-shadow: inset 0 0 0 1.5px var(--gx-tx-chip-icon-fg);
   }
 
-  .project-option-icon {
-    font-size: 1.2rem;
+  .project-option:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
+  }
+
+  .project-option__icon {
+    font-size: 18px;
+    line-height: 1;
     flex-shrink: 0;
   }
 
-  .project-option-info {
-    flex: 1;
+  .project-option__info {
+    flex-grow: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
   }
 
-  .project-option-name {
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: var(--text-primary, #fff);
-    white-space: nowrap;
+  .project-option__name {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.2;
+    color: var(--gx-org-ink);
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .project-option-desc {
-    font-size: 0.76rem;
-    color: var(--text-tertiary, #666);
-    white-space: nowrap;
+  .project-option__desc {
+    font-size: 12px;
+    line-height: 1.35;
+    color: var(--gx-slate-500);
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .check-icon {
+  .project-option__check {
     flex-shrink: 0;
-    color: var(--brand, #6366f1);
+    color: var(--gx-tx-chip-icon-fg);
   }
 
-  .preview-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs, 6px);
-  }
-
-  .content-preview {
-    padding: var(--space-sm, 10px) var(--space-md, 12px);
-    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
-    border-radius: var(--glass-radius, 12px);
-    background: rgba(var(--glass-tint, 255, 255, 255), 0.03);
-    font-size: 0.8rem;
-    color: var(--text-secondary, #888);
+  /* ---------------- preview ---------------- */
+  .preview {
+    align-self: stretch;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--gx-ring-soft);
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--gx-ac-slate-600);
     max-height: 100px;
     overflow-y: auto;
     white-space: pre-wrap;
-    word-break: break-word;
-    line-height: 1.5;
+    overflow-wrap: anywhere;
   }
 
-  .modal-actions {
+  /* ---------------- footer ---------------- */
+  .footer-actions {
     display: flex;
-    justify-content: flex-end;
-    gap: var(--space-sm, 8px);
-    padding-top: var(--space-sm, 8px);
-    border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+    gap: 12px;
+    flex-shrink: 0;
+    margin-inline-start: auto;
+  }
+
+  .btn-cancel,
+  .btn-primary {
+    height: 37px;
+    border-radius: 10px;
+    padding: 10px 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--gx-font);
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 100%;
+    transition: background-color 120ms ease;
   }
 
   .btn-cancel {
-    padding: var(--space-sm, 8px) var(--space-lg, 16px);
-    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
-    border-radius: var(--glass-radius, 12px);
-    background: transparent;
-    color: var(--text-secondary, #888);
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.2s;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    color: var(--gx-ac-slate-600);
   }
 
-  .btn-cancel:hover {
-    background: rgba(var(--glass-tint, 255, 255, 255), 0.06);
+  .btn-cancel:hover:not(:disabled) {
+    background: var(--gx-org-track);
   }
 
-  .btn-save {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs, 6px);
-    padding: var(--space-sm, 8px) var(--space-lg, 20px);
-    border: none;
-    border-radius: var(--glass-radius, 12px);
-    background: var(--brand, #6366f1);
-    color: white;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
+  .btn-primary {
+    background: var(--gx-tx-chip-icon-fg);
+    color: #fff;
   }
 
-  .btn-save:hover:not(:disabled) {
-    background: var(--brand-hover, #4f46e5);
+  .btn-primary:hover:not(:disabled) {
+    background: var(--gx-ac-cta-hover);
   }
 
-  .btn-save:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .btn-cancel:focus-visible,
+  .btn-primary:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
   }
 
-  .loading-spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-top-color: currentColor;
+  /* ---------------- spinner ---------------- */
+  .spinner {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    border: 2px solid var(--gx-hair);
+    border-top-color: var(--gx-tx-chip-icon-fg);
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
   }
 
-  .loading-spinner.small {
-    width: 16px;
-    height: 16px;
-  }
-
-  .loading-spinner.tiny {
-    width: 12px;
-    height: 12px;
-    border-width: 1.5px;
+  .spinner--on-brand {
+    border-color: rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
   }
 
   @keyframes spin {
     to {
       transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spinner {
+      animation: none;
     }
   }
 </style>

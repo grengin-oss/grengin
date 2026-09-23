@@ -307,7 +307,7 @@
       "prompts": "プロンプト"
     },
     "settings": {
-      "title": "設定",
+      "title": "認証",
       "subtitle": "システム設定と連携を構成",
       "tabs": {
         "oauth": "OAuth",
@@ -315,8 +315,8 @@
       },
       "oauthProviders": {
         "title": "OAuthプロバイダー",
-        "pageTitle": "認可",
-        "subtitle": "組織向けのOAuth連携を設定します。",
+        "pageTitle": "認証",
+        "subtitle": "ID プロバイダーを接続して、組織が SSO でサインインできるようにします。",
         "common": {
           "enabled": "有効",
           "disabled": "無効",
@@ -330,12 +330,14 @@
           "deleting": "削除中…",
           "saving": "保存中…",
           "validating": "検証中…",
-          "configure": "設定"
+          "configure": "設定",
+          "saveEnable": "保存して有効化",
+          "close": "閉じる"
         },
         "messages": {
           "loading": "OAuthプロバイダーを読み込み中...",
           "empty": "OAuthプロバイダーはまだ設定されていません。",
-          "loadError": "SSOプロバイダーを読み込めませんでした",
+          "loadError": "ID サービスからプロバイダーを読み込めませんでした。接続を確認するか、もう一度お試しください。",
           "loadProviderError": "プロバイダーを読み込めませんでした",
           "loadingProvider": "プロバイダーを読み込み中...",
           "emptyTitle": "利用できる ID プロバイダーがありません",
@@ -365,7 +367,14 @@
           "tenantIdPlaceholder": "テナントIDを入力",
           "allowedDomains": "許可ドメイン",
           "domainsPlaceholder": "Enterキーで追加",
-          "status": "ステータス"
+          "status": "ステータス",
+          "hints": {
+            "clientIdAzure": "Azure Portal → アプリの登録 → 対象アプリ → 概要 → アプリケーション (クライアント) ID で確認できます。",
+            "clientId": "ID プロバイダーが発行したアプリケーション (クライアント) ID です。",
+            "clientSecretAzure": "Azure Portal → アプリの登録 → 対象アプリ → 証明書とシークレット で新しいクライアント シークレットを生成してください。",
+            "clientSecret": "ID プロバイダーがこのアプリケーション用に生成したクライアント シークレットです。",
+            "tenantId": "Microsoft Entra ID テナントのディレクトリ (テナント) ID です。"
+          }
         },
         "validation": {
           "clientIdRequired": "クライアントIDは必須です",
@@ -401,6 +410,22 @@
           "okta": "Okta による企業向けシングルサインオン",
           "saml": "SAML 2.0 対応の ID プロバイダーを接続",
           "generic": "{name} でサインイン"
+        },
+        "scopes": {
+          "trigger": "必要なスコープを表示",
+          "note": "これらのスコープは自動的に要求され、変更できません。"
+        },
+        "docs": {
+          "link": "{name} のセットアップ ドキュメントを表示"
+        },
+        "success": {
+          "title": "{name} を接続して有効にしました",
+          "body": "許可されたドメインのユーザーがサインインできるようになりました。",
+          "titleDisabled": "{name} を接続しました",
+          "bodyDisabled": "ユーザーがこの方法でサインインできるようにする準備ができたら、有効にしてください。"
+        },
+        "domains": {
+          "placeholder": "ドメインを入力して Enter キーを押してください (例: grengin.com)"
         }
       }
     },

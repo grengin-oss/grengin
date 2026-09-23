@@ -399,7 +399,7 @@
       "removeAdminConfirmWarning": "They will no longer be able to manage this department."
     },
     "settings": {
-      "title": "Settings",
+      "title": "Authentication",
       "subtitle": "Configure system settings and integrations",
       "tabs": {
         "oauth": "OAuth",
@@ -407,8 +407,8 @@
       },
       "oauthProviders": {
         "title": "OAuth Providers",
-        "pageTitle": "Authorisation",
-        "subtitle": "Configure OAuth integrations for your organization.",
+        "pageTitle": "Authentication",
+        "subtitle": "Connect identity providers so your organization can sign in with SSO.",
         "common": {
           "enabled": "Enabled",
           "disabled": "Disabled",
@@ -422,12 +422,14 @@
           "deleting": "Deleting…",
           "saving": "Saving…",
           "validating": "Validating…",
-          "configure": "Configure"
+          "configure": "Configure",
+          "saveEnable": "Save & Enable",
+          "close": "Close"
         },
         "messages": {
           "loading": "Loading OAuth providers...",
           "empty": "No OAuth providers have been configured yet.",
-          "loadError": "Unable to load SSO providers",
+          "loadError": "We couldn't load providers from the identity service. Check your connection or try again.",
           "loadProviderError": "Unable to load provider",
           "loadingProvider": "Loading provider...",
           "emptyTitle": "No identity providers available",
@@ -457,7 +459,14 @@
           "tenantIdPlaceholder": "Enter tenant ID",
           "allowedDomains": "Allowed domains",
           "domainsPlaceholder": "Press Enter to add",
-          "status": "Status"
+          "status": "Status",
+          "hints": {
+            "clientIdAzure": "Found in Azure Portal → App registrations → your app → Overview → Application (client) ID.",
+            "clientId": "The application (client) ID issued by your identity provider.",
+            "clientSecretAzure": "Found in Azure Portal → App registrations → your app → Certificates & secrets → generate a new client secret.",
+            "clientSecret": "The client secret generated for this application by your identity provider.",
+            "tenantId": "The directory (tenant) ID of your Microsoft Entra ID tenant."
+          }
         },
         "validation": {
           "clientIdRequired": "Client ID is required",
@@ -493,6 +502,22 @@
           "okta": "Enterprise SSO via Okta",
           "saml": "Connect any SAML 2.0-compatible identity provider",
           "generic": "Sign in with {name}"
+        },
+        "scopes": {
+          "trigger": "View required scopes",
+          "note": "These scopes are requested automatically and can't be changed."
+        },
+        "docs": {
+          "link": "View {name} setup documentation"
+        },
+        "success": {
+          "title": "{name} connected and enabled",
+          "body": "Users in allowed domains can now sign in.",
+          "titleDisabled": "{name} connected",
+          "bodyDisabled": "Turn it on when you're ready for people to sign in with it."
+        },
+        "domains": {
+          "placeholder": "Type a domain and press Enter (e.g. grengin.com)"
         }
       }
     },

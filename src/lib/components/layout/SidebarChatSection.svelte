@@ -204,6 +204,14 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
+  /** The header subtitle names the conversation the action will destroy. */
+  const chatToDeleteTitle = $derived(
+    chatToDelete
+      ? (chatHistory.find((chat) => chat.id === chatToDelete)?.title ??
+        $_('sidebar.untitledChat'))
+      : '',
+  );
+
   function cancelDeleteChat() {
     showDeleteConfirmation = false;
     chatToDelete = null;
@@ -819,30 +827,54 @@ SPDX-License-Identifier: Apache-2.0
   </div>
 {/if}
 
+<!--
+  Deleting a chat is irreversible, so it gets the dialog the redesigned pages
+  use: the gradient rule, a tile beside a title-and-subtitle heading — the
+  subtitle names the conversation — and the hairline footer with the actions on
+  the end edge. The tile is red because the action is destructive.
+-->
 {#if showDeleteConfirmation}
-  <Modal 
-    isOpen={showDeleteConfirmation} 
-    title={$_('sidebar.deleteChat')} 
+  <Modal
+    isOpen={showDeleteConfirmation}
+    title={$_('sidebar.deleteChat')}
+    subtitle={chatToDeleteTitle}
     onclose={cancelDeleteChat}
+    variant="access-control"
   >
-    {#snippet children()}
-      <div class="confirmation-content">
-        <p>{$_('sidebar.deleteChatConfirm')}</p>
-      </div>
-      <div class="confirmation-actions">
-        <button class="cancel-btn" onclick={cancelDeleteChat} disabled={deletingChat} aria-label={$_('sidebar.cancel')}>
+    {#snippet headerIcon()}
+      <span class="del-tile" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path
+            d="M2.5 5h15M8 5V3.5A1.5 1.5 0 0 1 9.5 2h1A1.5 1.5 0 0 1 12 3.5V5m2.5 0-.6 10.2a2 2 0 0 1-2 1.8H8.1a2 2 0 0 1-2-1.8L5.5 5"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+    {/snippet}
+
+    <p class="confirm-text">{$_('sidebar.deleteChatConfirm')}</p>
+
+    {#snippet footer()}
+      <span></span>
+      <div class="confirm-actions">
+        <button
+          class="btn-cancel"
+          type="button"
+          onclick={cancelDeleteChat}
+          disabled={deletingChat}
+        >
           {$_('sidebar.cancel')}
         </button>
-        <button class="delete-btn" onclick={confirmDeleteChat} disabled={deletingChat} aria-label={deletingChat ? $_('sidebar.deleting') : $_('sidebar.delete')}>
-          {#if deletingChat}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spinner" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
-              <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"></path>
-            </svg> &nbsp;
-            {$_('sidebar.deleting')}
-          {:else}
-            {$_('sidebar.delete')}
-          {/if}
+        <button
+          class="btn-danger"
+          type="button"
+          onclick={confirmDeleteChat}
+          disabled={deletingChat}
+        >
+          {deletingChat ? $_('sidebar.deleting') : $_('sidebar.delete')}
         </button>
       </div>
     {/snippet}
@@ -1398,73 +1430,92 @@ SPDX-License-Identifier: Apache-2.0
     justify-content: center;
   }
 
-  /* ===== Confirmation Dialog Actions (with Modal component) ===== */
-  .confirmation-content {
-    padding: 0;
-  }
-
-  .confirmation-content p {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    line-height: 1.6;
-  }
-
-  .confirmation-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-md);
-    padding: var(--space-lg) var(--space-xl);
-  }
-
-  .cancel-btn {
-    padding: var(--space-sm) var(--space-xl);
-    border: 1px solid var(--glass-stroke-dark);
-    background: transparent;
-    color: var(--text-primary);
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-
-  .cancel-btn:hover {
-    background: var(--btn-secondary);
-    border-color: var(--glass-stroke-light);
-  }
-
-  .cancel-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .delete-btn {
-    padding: var(--space-sm) var(--space-xl);
-    border: none;
-    background: var(--brand-red);
-    color: white;
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
+  /* ===== Delete-chat dialog =====
+     It renders in the shared #modal-portal, outside this component's tree, so
+     only the pieces this file owns are styled here: the header tile, the body
+     line, and the two footer actions. app.css paints every bare <button> as a
+     glass pill, so the two actions switch that off before painting their own
+     flat skin. */
+  .del-tile {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    justify-content: center;
+    background: var(--gx-org-danger-bg);
+    color: var(--gx-org-danger);
   }
 
-  .delete-btn:hover {
-    background: color-mix(in oklab, var(--brand-red) 85%, black);
+  .confirm-text {
+    margin: 0;
+    font-family: var(--gx-font);
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--gx-ac-slate-600);
   }
 
-  .delete-btn:disabled {
-    opacity: 0.7;
+  .confirm-actions {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+    margin-inline-start: auto;
+  }
+
+  .btn-cancel,
+  .btn-danger {
+    height: 37px;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 10px;
+    font-family: var(--gx-font);
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 100%;
+    cursor: pointer;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: background-color 120ms ease;
+  }
+
+  .btn-cancel:hover,
+  .btn-danger:hover,
+  .btn-cancel:active,
+  .btn-danger:active {
+    transform: none;
+  }
+
+  .btn-cancel {
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    color: var(--gx-ac-slate-600);
+  }
+
+  .btn-cancel:hover:not(:disabled) {
+    background: var(--gx-org-track);
+  }
+
+  .btn-danger {
+    background: var(--gx-org-danger);
+    box-shadow: none;
+    color: #fff;
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--gx-org-danger) 88%, black);
+  }
+
+  .btn-cancel:disabled,
+  .btn-danger:disabled {
+    opacity: 0.6;
     cursor: not-allowed;
   }
 
-  .spinner {
-    animation: spin 1s linear infinite;
+  .btn-cancel:focus-visible,
+  .btn-danger:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
   }
 
   @keyframes spin {

@@ -162,6 +162,23 @@
       "notNow": "Not now",
       "requestedPermissions": "Requested permissions:",
       "manageInSettings": "You can manage connected accounts in Settings."
+    },
+    "saveToProject": {
+      "title": "Add artifact to project",
+      "subtitle": "Choose a project to keep this artifact in.",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Q3 Campaign Draft",
+      "projectLabel": "Select project",
+      "searchPlaceholder": "Search projects...",
+      "loading": "Loading projects...",
+      "emptyNone": "No projects yet. Create one first.",
+      "emptyNoMatch": "No projects match your search.",
+      "previewLabel": "Preview",
+      "save": "Save Artifact",
+      "saving": "Saving...",
+      "loadError": "Failed to load projects",
+      "saved": "Artifact saved to \"{name}\"",
+      "saveError": "Failed to save artifact"
     }
   }
 }
