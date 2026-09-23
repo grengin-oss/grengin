@@ -1033,7 +1033,14 @@ SPDX-License-Identifier: Apache-2.0
   .md-preview :global(ul),
   .md-preview :global(ol) {
     margin: 0 0 0.7em;
-    padding-left: 1.4em;
+    padding-inline-start: 1.4em;
+  }
+
+  /* ".md-preview" scrolls, so it clips markers that overflow its inline-start
+     edge. Numbered markers need room for their digits or the leading one is
+     cut off — see ENGG-431. */
+  .md-preview :global(ol) {
+    padding-inline-start: 2.5em;
   }
 
   .md-preview :global(pre) {

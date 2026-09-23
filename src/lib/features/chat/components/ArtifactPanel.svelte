@@ -723,7 +723,14 @@ SPDX-License-Identifier: Apache-2.0
   .markdown-preview :global(ul),
   .markdown-preview :global(ol) {
     margin: 0.5em 0;
-    padding-left: 1.5em;
+    padding-inline-start: 1.5em;
+  }
+
+  /* ".markdown-preview" scrolls, so it clips markers that overflow its
+     inline-start edge. Numbered markers need room for their digits or the
+     leading one is cut off — see ENGG-431. */
+  .markdown-preview :global(ol) {
+    padding-inline-start: 2.5em;
   }
 
   .markdown-preview :global(code) {

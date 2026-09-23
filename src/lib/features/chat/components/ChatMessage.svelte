@@ -177,6 +177,91 @@ SPDX-License-Identifier: Apache-2.0
   // renders clean prose (the artifact itself is surfaced via its card/panel).
   let displayContent = $derived(stripArtifactTags(message.content));
 
+  const hasThinking = $derived(!!message.thinking?.trim());
+
+  /**
+   * The turn is live and has produced nothing visible yet. This is the whole
+   * dead window the user sees as a blank bubble — and it exists whether or not
+   * the backend ever sends a thinking_delta, so the live row is driven by THIS,
+   * not by the presence of reasoning text.
+   */
+  const thinkingActive = $derived(
+    !!message.isStreaming && !displayContent.trim(),
+  );
+
+  /** Show the row while the turn is working, and afterwards if it left reasoning. */
+  const showThinking = $derived(thinkingActive || hasThinking);
+
+  /**
+   * Reasoning is context, not the answer, so it collapses as soon as the answer
+   * starts. Until then it stays open — while the model is still working it is
+   * the only thing on screen.
+   */
+  let thinkingOpen = $state(false);
+
+  /**
+   * Plain `let`, deliberately not $state: once the reader has opened or closed
+   * the block themselves, the effect below stops managing it, and this latch
+   * must not itself re-trigger that effect.
+   */
+  let thinkingUserControlled = false;
+
+  $effect(() => {
+    const autoOpen = hasThinking && !displayContent.trim();
+    if (thinkingUserControlled) return;
+    thinkingOpen = autoOpen;
+  });
+
+  function toggleThinking() {
+    if (!hasThinking) return;
+    thinkingUserControlled = true;
+    thinkingOpen = !thinkingOpen;
+  }
+
+  /* ---- elapsed timer ----
+     `thinkingStartMs` is a plain let, not $state: the interval reads it and
+     writes `thinkingElapsedMs`, and making the start stamp reactive would put
+     the effect's own write back into its own dependency set. */
+  let thinkingStartMs = 0;
+  let thinkingElapsedMs = $state(0);
+
+  $effect(() => {
+    if (!thinkingActive) return;
+    if (!thinkingStartMs) thinkingStartMs = Date.now();
+
+    // 200ms is well under a second, so the counter never visibly skips one.
+    const id = setInterval(() => {
+      thinkingElapsedMs = Date.now() - thinkingStartMs;
+    }, 200);
+    return () => clearInterval(id);
+  });
+
+  const thinkingSeconds = $derived(
+    Math.max(1, Math.round(thinkingElapsedMs / 1000)),
+  );
+
+  /**
+   * The phrase escalates with the wait, which is what makes a long pause read
+   * as "still working" rather than "stuck".
+   */
+  const thinkingPhrase = $derived(
+    thinkingSeconds >= 10
+      ? $_("chat.message.thinkingStill")
+      : $_("chat.message.thinkingActive"),
+  );
+
+  /* While reasoning streams, keep the newest line in view — the panel is the
+     progress indicator, so a stale first line would defeat the point. */
+  let thinkingTextEl = $state<HTMLDivElement | null>(null);
+
+  $effect(() => {
+    const el = thinkingTextEl;
+    // read so the effect re-runs on every delta
+    const _ = message.thinking;
+    if (!el || !thinkingActive) return;
+    el.scrollTop = el.scrollHeight;
+  });
+
   // Async markdown rendering with copy button addition
   $effect(() => {
     const contentToRender =
@@ -983,6 +1068,74 @@ SPDX-License-Identifier: Apache-2.0
     </div>
   {/if}
   <div class="message-body">
+    {#if showThinking}
+      <!--
+        The live progress row, in the shape Claude Code uses: an animated glyph,
+        the elapsed seconds, and a phrase that escalates as the wait grows. It
+        is driven by `thinkingActive` (the turn is streaming with nothing to
+        show yet), so it appears even when the backend sends no thinking_delta
+        at all — that gap was previously a blank bubble. When reasoning HAS
+        streamed, the same row becomes the disclosure for it.
+      -->
+      <svelte:element
+        this={hasThinking ? "button" : "div"}
+        role={hasThinking ? "button" : "status"}
+        type={hasThinking ? "button" : undefined}
+        class="thinking-row"
+        class:thinking-row--active={thinkingActive}
+        class:thinking-row--expandable={hasThinking}
+        aria-expanded={hasThinking ? thinkingOpen : undefined}
+        aria-live={thinkingActive && !hasThinking ? "polite" : undefined}
+        onclick={hasThinking ? toggleThinking : undefined}
+      >
+        <span class="thinking-row__glyph" aria-hidden="true">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12 1.6l1.55 6.3 4.62-4.62-2.9 5.84 6.3-1.55-5.84 2.9 5.84 2.9-6.3-1.55 2.9 5.84-4.62-4.62L12 22.4l-1.55-6.3-4.62 4.62 2.9-5.84-6.3 1.55 5.84-2.9-5.84-2.9 6.3 1.55-2.9-5.84 4.62 4.62z"
+            />
+          </svg>
+        </span>
+
+        {#if thinkingActive}
+          <span class="thinking-row__elapsed">{thinkingSeconds}s</span>
+          <span class="thinking-row__dot" aria-hidden="true">·</span>
+          <span class="thinking-row__phrase">{thinkingPhrase}</span>
+        {:else}
+          <span class="thinking-row__phrase thinking-row__phrase--done">
+            {$_("chat.message.thoughtFor", {
+              values: { seconds: thinkingSeconds },
+            })}
+          </span>
+        {/if}
+
+        {#if hasThinking}
+          <svg
+            class="thinking-row__chev"
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="9 6 15 12 9 18" />
+          </svg>
+        {/if}
+      </svelte:element>
+
+      {#if hasThinking && thinkingOpen}
+        <div class="thinking-panel">
+          <div class="thinking-panel__text" bind:this={thinkingTextEl}>{message.thinking}{#if thinkingActive}<span
+                class="thinking-panel__caret"
+                aria-hidden="true"
+              ></span>{/if}</div>
+        </div>
+      {/if}
+    {/if}
+
     {@html renderedContent}
 
     {#if hasPreviewableContent}
@@ -1202,7 +1355,13 @@ SPDX-License-Identifier: Apache-2.0
         </div>
       </div>
       <!-- {/if} end of edit mode conditional -->
-    {:else if message.content || (message.files && message.files.length > 0) || hasPreviewableContent}
+    <!--
+      `showThinking` belongs in this gate: without it an assistant turn that is
+      streaming but has produced nothing yet renders as a bare avatar and no
+      body at all — the blank bubble a reasoning model leaves for as long as it
+      thinks. The progress row IS the body in that window.
+    -->
+    {:else if message.content || (message.files && message.files.length > 0) || hasPreviewableContent || showThinking}
       {#if generatedImages.length > 0}
         <!-- ".msg-stack": logo + borderless image card, caption bubble below. -->
         <div class="msg-stack">
@@ -1235,7 +1394,10 @@ SPDX-License-Identifier: Apache-2.0
           {/if}
         </div>
       {:else}
-        <div class="assistant-message">
+        <div
+          class="assistant-message"
+          class:assistant-message--no-text={!displayContent.trim()}
+        >
           {@render assistantInner()}
         </div>
       {/if}
@@ -1482,6 +1644,201 @@ SPDX-License-Identifier: Apache-2.0
      card's slide-in so it still eases outward from the tile. */
   :global([dir="rtl"]) .model-tip {
     transform: translateY(-50%) translateX(4px);
+  }
+
+  /* ---- thinking / progress row ---- */
+  /* Modelled on Claude Code's indicator: a bare line — glyph, elapsed seconds,
+     phrase — rather than a card. It carries the whole "working" state, so it
+     must not look like content.
+
+     It is sized to its text and sits at the start edge deliberately:
+     ".message-actions" is absolutely positioned over the TOP END of this same
+     message (z-index 10), so a full-width row would put its click target under
+     the TTS/copy rail and swallow the clicks. */
+  .thinking-row {
+    width: fit-content;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    font-family: var(--gx-font);
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--gx-slate-400);
+    text-align: start;
+  }
+
+  .thinking-row--expandable {
+    cursor: pointer;
+  }
+
+  .thinking-row--expandable:hover {
+    background: none;
+    transform: none;
+    color: var(--gx-slate-500);
+  }
+
+  .thinking-row__glyph {
+    display: flex;
+    flex-shrink: 0;
+    color: var(--gx-slate-400);
+  }
+
+  /* The glyph is the liveness cue — it turns and breathes only while working. */
+  .thinking-row--active .thinking-row__glyph {
+    color: var(--gx-an-dot);
+    animation: thinking-glyph 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  @keyframes thinking-glyph {
+    0% {
+      transform: rotate(0deg) scale(0.86);
+      opacity: 0.6;
+    }
+    50% {
+      transform: rotate(180deg) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: rotate(360deg) scale(0.86);
+      opacity: 0.6;
+    }
+  }
+
+  /* Tabular figures so the counter does not jitter as the digits change. */
+  .thinking-row__elapsed {
+    font-variant-numeric: tabular-nums;
+    color: var(--gx-slate-400);
+  }
+
+  .thinking-row__dot {
+    color: var(--gx-hair-strong);
+  }
+
+  /* The phrase carries a slow blue→violet sweep while active — the same cue a
+     spinner would give, without adding a second moving part. */
+  .thinking-row--active .thinking-row__phrase {
+    background: linear-gradient(
+      100deg,
+      var(--gx-slate-400) 0%,
+      var(--gx-slate-400) 34%,
+      var(--gx-an-dot) 47%,
+      var(--gx-cx-img-accent) 55%,
+      var(--gx-slate-400) 68%,
+      var(--gx-slate-400) 100%
+    );
+    background-size: 260% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: thinking-sweep 2.4s linear infinite;
+  }
+
+  @keyframes thinking-sweep {
+    from {
+      background-position: 160% 0;
+    }
+    to {
+      background-position: -60% 0;
+    }
+  }
+
+  .thinking-row__chev {
+    flex-shrink: 0;
+    color: var(--gx-hair-strong);
+    transition: transform 160ms ease;
+  }
+
+  .thinking-row[aria-expanded="true"] .thinking-row__chev {
+    transform: rotate(90deg);
+  }
+
+  :global([dir="rtl"]) .thinking-row__chev {
+    transform: rotate(180deg);
+  }
+
+  :global([dir="rtl"]) .thinking-row[aria-expanded="true"] .thinking-row__chev {
+    transform: rotate(90deg);
+  }
+
+  /* A rail down the start edge marks the reasoning as an aside rather than
+     prose — the indent does the work a blockquote would. */
+  .thinking-panel {
+    margin: 0 0 10px;
+    padding-inline-start: 11px;
+    border-inline-start: 2px solid var(--gx-thinking-rail);
+  }
+
+  /* Reasoning arrives as plain text, not markdown, so it renders verbatim. Its
+     own scroll keeps a long chain from pushing the answer off the screen. */
+  .thinking-panel__text {
+    max-height: 200px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    font-family: var(--gx-font);
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--gx-slate-400);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .thinking-panel__text::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .thinking-panel__text::-webkit-scrollbar-thumb {
+    border-radius: 2px;
+    background: var(--gx-hair-strong);
+  }
+
+  .thinking-panel__caret {
+    display: inline-block;
+    width: 2px;
+    height: 12px;
+    margin-inline-start: 2px;
+    border-radius: 1px;
+    background: var(--gx-an-dot);
+    vertical-align: text-bottom;
+    animation: thinking-caret 1s steps(2, start) infinite;
+  }
+
+  @keyframes thinking-caret {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .thinking-row__chev {
+      transition: none;
+    }
+
+    .thinking-row--active .thinking-row__glyph,
+    .thinking-panel__caret {
+      animation: none;
+    }
+
+    /* Without the sweep the gradient would leave the phrase transparent. */
+    .thinking-row--active .thinking-row__phrase {
+      background: none;
+      -webkit-background-clip: border-box;
+      background-clip: border-box;
+      color: var(--gx-an-dot);
+      animation: none;
+    }
   }
 
   .message-content {
@@ -1978,6 +2335,18 @@ SPDX-License-Identifier: Apache-2.0
     padding-inline-start: var(--space-2xl);
   }
 
+  /* An `outside` list marker is painted in the list's inline-start padding, and
+     ".message-body" is a scroll container (overflow-x) — which clips at its
+     padding box and cannot scroll towards inline-start. So any marker wider
+     than this padding is silently cut off, which is what hid the leading digit
+     of items 10+ (ENGG-431). Numbered markers grow with the item count, so the
+     ordered list needs its own, font-relative measure: 2.5em clears a
+     three-digit marker ("100.") in both LTR and RTL. Bullets are fixed-width
+     and keep the tighter design indent above. */
+  .assistant-message :global(ol) {
+    padding-inline-start: 2.5em;
+  }
+
   .assistant-message :global(li) {
     margin: var(--space-sm) 0;
     line-height: 1.6;
@@ -2078,7 +2447,10 @@ SPDX-License-Identifier: Apache-2.0
     font-weight: 600;
   }
 
-  .streaming .assistant-message::after {
+  /* The block cursor trails streaming TEXT. Before the first token there is no
+     text for it to trail, so it would render as a lone square under the
+     progress row — suppress it until there is something to sit after. */
+  .streaming .assistant-message:not(.assistant-message--no-text)::after {
     content: "▊";
     animation: blink 1s infinite;
     margin-inline-start: 2px;

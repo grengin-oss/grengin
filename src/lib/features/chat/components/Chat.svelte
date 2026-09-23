@@ -569,13 +569,48 @@ SPDX-License-Identifier: Apache-2.0
               currentStreamingMessage as ChatMessageType,
             ];
 
-            // Update loading and typing states. For image models there may be no
-            // text deltas — keep the existing typing indicator visible until the
-            // image_generated event arrives (reuses the standard stream state,
-            // no bespoke image spinner).
+            /*
+             * The assistant bubble is empty at `message_start`, but it now
+             * carries its own progress row (ChatMessage's .thinking-row, which
+             * runs off `isStreaming`), so the standalone dots hand over here.
+             * Image models keep them: that turn produces no text and no
+             * reasoning, so its bubble has nothing to show until
+             * image_generated lands.
+             */
             isTyping = selectedIsImageModel;
             isLoading = true;
 
+            scrollToStreamingMessageTop(pendingStreamingMessage.id);
+          }
+        },
+        /*
+         * Reasoning text arrives before the answer does. Showing it as soon as
+         * it lands is the point — it is the only sign of life on a model that
+         * thinks for a while — so the placeholder joins the array here too,
+         * exactly as a first visible token would do below.
+         */
+        onThinkingDelta: (token) => {
+          if (pendingStreamingMessage) {
+            if (!messageAddedToArray) {
+              messages = [...messages, pendingStreamingMessage];
+              messageAddedToArray = true;
+            }
+            // The thinking chip is now the progress indicator; drop the dots.
+            isTyping = false;
+
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              thinking: (pendingStreamingMessage.thinking ?? "") + token,
+            };
+            currentStreamingMessage = { ...pendingStreamingMessage };
+
+            messages = messages.map((m) =>
+              m.id === pendingStreamingMessage?.id
+                ? (currentStreamingMessage as ChatMessageType)
+                : m,
+            );
+
+            isLoading = true;
             scrollToStreamingMessageTop(pendingStreamingMessage.id);
           }
         },
@@ -1044,11 +1079,28 @@ SPDX-License-Identifier: Apache-2.0
               return msg;
             });
           }
+          // Handed over to the message's own progress row — see the other site.
           isTyping = false;
           isLoading = true;
         },
+        onThinkingDelta: (token) => {
+          if (pendingStreamingMessage) {
+            isTyping = false;
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              thinking: (pendingStreamingMessage.thinking ?? "") + token,
+            };
+
+            messages = messages.map((m) =>
+              m.id === pendingStreamingMessage?.id
+                ? (pendingStreamingMessage as ChatMessageType)
+                : m,
+            );
+          }
+        },
         onResponseDelta: (token) => {
           if (pendingStreamingMessage) {
+            if (token.trim()) isTyping = false;
             // Update the pending streaming message content
             pendingStreamingMessage = {
               ...pendingStreamingMessage,

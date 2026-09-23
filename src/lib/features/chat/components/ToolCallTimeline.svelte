@@ -1214,8 +1214,15 @@ SPDX-License-Identifier: Apache-2.0
 
   .markdown-block :global(ul),
   .markdown-block :global(ol) {
-    padding-left: 1.25rem;
+    padding-inline-start: 1.25rem;
     margin: 0.375em 0;
+  }
+
+  /* ".markdown-block" scrolls (overflow-y), so it clips markers that overflow
+     its inline-start edge. Numbered markers need room for their digits or the
+     leading one is cut off — see ENGG-431. */
+  .markdown-block :global(ol) {
+    padding-inline-start: 2.5em;
   }
 
   .markdown-block :global(code) {

@@ -17,6 +17,8 @@ export interface SendMessageOptions {
   onConversationInitialized?: (data: {newConversationId: string}) => void;
   onStreamingStart?: (messageId: string) => void;
   onResponseDelta?: (token: string) => void;
+  /** Extended-thinking text, streamed before (and between) the visible answer. */
+  onThinkingDelta?: (token: string) => void;
   onBudgetWarning?: (data: BudgetWarningMessage) => void;
   onToolCall?: (toolCall: any) => void;
   onToolResult?: (toolResult: any) => void;
@@ -85,7 +87,7 @@ export async function uploadDocument(options: UploadDocumentOptions): Promise<Up
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onArtifact, onImageGenerated, onMcpAuthRequired, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onThinkingDelta, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onArtifact, onImageGenerated, onMcpAuthRequired, onDone, onError } = options;
 
   try {
     const token = getAccessToken();
@@ -223,6 +225,40 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
                 onResponseDelta?.(data.text);
               }
               break;
+            /*
+             * Envelope form: `event: "event"` with the real payload nested under
+             * `data.event`, discriminated by `event_type` —
+             *   data: {"event":{"event_type":"thinking_delta","text":"."}}
+             * Unwrapped here and dispatched alongside the flat events above, so
+             * both wire shapes reach the same callbacks. Unknown `event_type`s
+             * are ignored rather than treated as an error: the backend may add
+             * more of them, and an older client should stay quiet, not break.
+             */
+            case 'event': {
+              const inner = data?.event;
+              if (!inner) break;
+              switch (inner.event_type) {
+                case 'thinking_delta':
+                  if (typeof inner.text === 'string' && inner.text) {
+                    onThinkingDelta?.(inner.text);
+                  }
+                  break;
+                case 'delta':
+                case 'text_delta':
+                  if (typeof inner.text === 'string' && inner.text) {
+                    onResponseDelta?.(inner.text);
+                  }
+                  break;
+                default:
+                  // Dev-only: an event_type the client drops on the floor is
+                  // invisible otherwise, which makes "the UI never appeared"
+                  // impossible to tell apart from "the backend never sent it".
+                  if (import.meta.env?.DEV) {
+                    console.warn('[chat stream] unhandled event_type:', inner.event_type, inner);
+                  }
+              }
+              break;
+            }
             case 'tool_call':
               if (data?.tool_call) {
                 const tc = data.tool_call;
@@ -349,6 +385,12 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
               onError?.(streamError);
               break;
             }
+            default:
+              // Same reasoning as the inner switch: surface, in dev only, any
+              // SSE event name this client does not know how to render.
+              if (import.meta.env?.DEV) {
+                console.warn('[chat stream] unhandled event:', event, data);
+              }
           }
         }
       }
