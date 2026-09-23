@@ -321,6 +321,10 @@
   --gx-an-blue-tint-soft: rgb(239, 246, 255);
   --gx-an-line: rgb(60, 122, 255);
   --gx-an-dot: rgb(59, 130, 246);
+  /* Extended-thinking chip: the ring it wears while the model is reasoning,
+     and the rail down the start edge of the expanded reasoning panel. */
+  --gx-thinking-ring: rgb(214, 226, 248);
+  --gx-thinking-rail: rgb(224, 231, 240);
   --gx-an-grid: rgb(229, 231, 235);
   --gx-an-axis: rgb(107, 114, 128);
   --gx-an-chip-ring: rgb(229, 231, 235);
@@ -728,6 +732,8 @@
     --gx-an-blue-tint-soft: rgba(66, 122, 198, 0.16);
     --gx-an-line: #6f9dfb;
     --gx-an-dot: #7ba7ec;
+    --gx-thinking-ring: rgba(123, 167, 236, 0.32);
+    --gx-thinking-rail: rgba(255, 255, 255, 0.14);
     --gx-an-grid: rgba(255, 255, 255, 0.08);
     --gx-an-axis: #8f9a95;
     --gx-an-chip-ring: rgba(255, 255, 255, 0.12);

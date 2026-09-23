@@ -60,6 +60,12 @@ export interface ChatMessage {
   mcpAuthRequests?: McpAuthRequest[];
   /** Server-declared artifacts attached to this message (from parts.artifacts). */
   artifacts?: MessageArtifact[];
+  /**
+   * Extended-thinking text accumulated from `thinking_delta` stream events.
+   * Present only while/after a model that exposes its reasoning has streamed;
+   * it is never persisted by the client, so a reloaded conversation has none.
+   */
+  thinking?: string;
 }
 
 export interface StreamEvent {
