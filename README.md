@@ -35,6 +35,10 @@ a responsive chat experience with organization controls, model routing, project
 workspaces, semantic search, MCP integrations, budgets, analytics, and audit
 logs.
 
+<p align="center">
+  <img src="docs/assets/grengin-ui-overview.gif" alt="Grengin UI overview" width="900">
+</p>
+
 ## Key Features
 
 - **Multi-provider AI**: configure OpenAI, Anthropic, Mistral, and Gemini models
