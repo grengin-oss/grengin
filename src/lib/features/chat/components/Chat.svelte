@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0
   import TypingIndicator from "./TypingIndicator.svelte";
   import ArtifactPanel from "./ArtifactPanel.svelte";
   import MessageScrollNavigator from "./MessageScrollNavigator.svelte";
-  import type { ArtifactItem, StreamedArtifact } from "../artifacts";
+  import { streamedToItems, type ArtifactItem, type StreamedArtifact } from "../artifacts";
   import type {
     MergedToolResult,
     ToolCall,
@@ -165,31 +165,55 @@ SPDX-License-Identifier: Apache-2.0
   // Whether we've already auto-opened the panel this generation. Enforces
   // "auto-show only one artifact in automatic loading".
   let autoShownArtifact = false;
-  // All artifacts streaming in via artifact_* SSE events, keyed by id in arrival
-  // order, so the panel can offer tabs across them.
-  let streamingArtifacts = new Map<string, StreamedArtifact>();
 
-  // Reset all per-generation artifact accumulation/UI state. Called at the start
-  // of every send/regenerate so a fresh generation starts clean.
-  function resetArtifactState() {
-    streamingArtifacts = new Map();
+  // Artifacts streaming in via artifact_* SSE events for ONE generation, keyed
+  // by id in arrival order so the panel can offer tabs across them. Each
+  // generation owns its own stream, tagged with the conversation it belongs to:
+  // this component outlives conversation switches, so a generation keeps
+  // streaming after the user opens another chat and must only ever paint the
+  // panel of its own conversation (ENGG-445).
+  interface ArtifactStream {
+    conversationId: string | null;
+    artifacts: Map<string, StreamedArtifact>;
+  }
+  // Generations still streaming, so returning to their conversation can show
+  // live progress again.
+  const liveArtifactStreams = new Set<ArtifactStream>();
+
+  // The conversation on screen. Read from the URL rather than conversationId,
+  // which loadConversationFromUrl() only updates after the fetch resolves.
+  function isViewingStream(stream: ArtifactStream): boolean {
+    const chatId = new URLSearchParams(window.location.search).get("chatId");
+    return stream.conversationId === chatId;
+  }
+
+  // Start a generation's artifact stream and reset the per-generation panel
+  // state. Called at the start of every send/regenerate so it starts clean.
+  function startArtifactStream(): ArtifactStream {
     panelArtifacts = [];
     panelActiveIndex = 0;
     viewedArtifactIds = new Set();
     autoShownArtifact = false;
+    const stream: ArtifactStream = { conversationId, artifacts: new Map() };
+    liveArtifactStreams.add(stream);
+    return stream;
   }
 
-  // Feed a streamed artifact into the side panel live.
-  function applyStreamingArtifact(artifact: {
-    id?: string;
-    title: string;
-    contentType: string;
-    content: string;
-    streaming?: boolean;
-  }) {
-    const key = artifact.id ?? `__artifact_${streamingArtifacts.size}`;
-    const isNew = !streamingArtifacts.has(key);
-    streamingArtifacts.set(key, {
+  // Feed a streamed artifact into its stream, and into the side panel live —
+  // only while its own conversation is the one on screen.
+  function applyStreamingArtifact(
+    stream: ArtifactStream,
+    artifact: {
+      id?: string;
+      title: string;
+      contentType: string;
+      content: string;
+      streaming?: boolean;
+    },
+  ) {
+    const key = artifact.id ?? `__artifact_${stream.artifacts.size}`;
+    const isNew = !stream.artifacts.has(key);
+    stream.artifacts.set(key, {
       id: artifact.id ?? key,
       title: artifact.title,
       contentType: artifact.contentType,
@@ -197,20 +221,9 @@ SPDX-License-Identifier: Apache-2.0
       streaming: artifact.streaming ?? false,
     });
 
-    panelArtifacts = [...streamingArtifacts.values()].map((a) => {
-      const type =
-        a.contentType === "text/markdown"
-          ? ("markdown" as const)
-          : ("html" as const);
-      return {
-        id: a.id,
-        title:
-          a.title || (type === "html" ? "HTML Artifact" : "Markdown Document"),
-        code: a.content,
-        type,
-        streaming: a.streaming,
-      };
-    });
+    if (!isViewingStream(stream)) return;
+
+    panelArtifacts = streamedToItems([...stream.artifacts.values()]);
 
     // Auto-open the panel for the FIRST artifact only, once per generation, and
     // never for one the user already closed. Subsequent artifacts stay in the
@@ -220,6 +233,28 @@ SPDX-License-Identifier: Apache-2.0
       panelActiveIndex = panelArtifacts.length - 1;
       showArtifactPanel = true;
     }
+  }
+
+  // The generation ended. If its conversation is on screen, clear the
+  // per-artifact streaming flag so the panel enables download/save.
+  function finishArtifactStream(stream: ArtifactStream) {
+    if (!liveArtifactStreams.delete(stream)) return;
+    if (isViewingStream(stream) && stream.artifacts.size > 0) {
+      panelArtifacts = panelArtifacts.map((a) => ({ ...a, streaming: false }));
+    }
+  }
+
+  // Returning to a conversation that is still generating: bring its live
+  // artifacts back into the panel (unless the user had closed it).
+  function restoreArtifactStream(chatId: string) {
+    const stream = [...liveArtifactStreams].find(
+      (s) => s.conversationId === chatId && s.artifacts.size > 0,
+    );
+    if (!stream) return;
+    panelArtifacts = streamedToItems([...stream.artifacts.values()]);
+    panelActiveIndex = panelArtifacts.length - 1;
+    const active = panelArtifacts[panelActiveIndex];
+    showArtifactPanel = !(active?.id && viewedArtifactIds.has(active.id));
   }
 
   function activePanelArtifact(): ArtifactItem | undefined {
@@ -519,7 +554,7 @@ SPDX-License-Identifier: Apache-2.0
     // How many generated images have arrived for this assistant message (an
     // image model may return more than one — cap is a model property).
     let generatedImageIndex = 0;
-    resetArtifactState();
+    const artifactStream = startArtifactStream();
     isTyping = true;
     scrollToBottom();
 
@@ -546,6 +581,7 @@ SPDX-License-Identifier: Apache-2.0
             pendingConversationId = newConversationId;
             updateUrlWithConversationId(newConversationId);
           }
+          if (newConversationId) artifactStream.conversationId = newConversationId;
           if (newConversationId) void linkPendingProject(newConversationId);
           if (newConversationId) void linkPendingSkills(newConversationId);
 
@@ -744,7 +780,7 @@ SPDX-License-Identifier: Apache-2.0
           }
         },
         onArtifact: (artifact) => {
-          applyStreamingArtifact(artifact);
+          applyStreamingArtifact(artifactStream, artifact);
         },
         onImageGenerated: (image) => {
           if (pendingStreamingMessage) {
@@ -858,7 +894,7 @@ SPDX-License-Identifier: Apache-2.0
               isStreaming: false,
               toolCalls: finalizedToolCalls,
               mergedWebSearch: updatedMergedWebSearch as MergedToolResult,
-              artifacts: [...streamingArtifacts.values()].map((a) => ({
+              artifacts: [...artifactStream.artifacts.values()].map((a) => ({
                 id: a.id,
                 title: a.title,
                 content_type: a.contentType,
@@ -874,13 +910,7 @@ SPDX-License-Identifier: Apache-2.0
                 : m,
             );
 
-            // Streaming finished — clear the per-artifact streaming flag so the
-            // panel enables download/save.
-            panelArtifacts = panelArtifacts.map((a) => ({
-              ...a,
-              streaming: false,
-            }));
-            streamingArtifacts = new Map();
+            finishArtifactStream(artifactStream);
           }
         },
         onError: (errorMessage) => {
@@ -933,6 +963,8 @@ SPDX-License-Identifier: Apache-2.0
 
       error = apiError;
     } finally {
+      finishArtifactStream(artifactStream);
+
       // Reset states
       isTyping = false;
       isLoading = false;
@@ -1035,7 +1067,7 @@ SPDX-License-Identifier: Apache-2.0
     });
 
     // Process the original request without creating a new message
-    resetArtifactState();
+    const artifactStream = startArtifactStream();
     isLoading = true;
     isTyping = true;
     autoScrollEnabled = true;
@@ -1060,6 +1092,7 @@ SPDX-License-Identifier: Apache-2.0
             conversationId = newConversationId;
             updateUrlWithConversationId(newConversationId);
           }
+          if (newConversationId) artifactStream.conversationId = newConversationId;
           if (newConversationId) void linkPendingProject(newConversationId);
           if (newConversationId) void linkPendingSkills(newConversationId);
           window.dispatchEvent(new CustomEvent("refreshChatHistory"));
@@ -1192,7 +1225,7 @@ SPDX-License-Identifier: Apache-2.0
           }
         },
         onArtifact: (artifact) => {
-          applyStreamingArtifact(artifact);
+          applyStreamingArtifact(artifactStream, artifact);
         },
         onImageGenerated: (image) => {
           if (pendingStreamingMessage) {
@@ -1259,7 +1292,7 @@ SPDX-License-Identifier: Apache-2.0
               isStreaming: false,
               toolCalls: finalizedToolCalls,
               mergedWebSearch: updatedMergedWebSearch as MergedToolResult,
-              artifacts: [...streamingArtifacts.values()].map((a) => ({
+              artifacts: [...artifactStream.artifacts.values()].map((a) => ({
                 id: a.id,
                 title: a.title,
                 content_type: a.contentType,
@@ -1273,13 +1306,7 @@ SPDX-License-Identifier: Apache-2.0
                 : m,
             );
 
-            // Streaming finished — clear the per-artifact streaming flag so the
-            // panel enables download/save.
-            panelArtifacts = panelArtifacts.map((a) => ({
-              ...a,
-              streaming: false,
-            }));
-            streamingArtifacts = new Map();
+            finishArtifactStream(artifactStream);
           }
           isLoading = false;
           isTyping = false;
@@ -1324,6 +1351,8 @@ SPDX-License-Identifier: Apache-2.0
       }
       isLoading = false;
       isTyping = false;
+    } finally {
+      finishArtifactStream(artifactStream);
     }
   }
 
@@ -1485,6 +1514,7 @@ SPDX-License-Identifier: Apache-2.0
             artifacts: msg.parts.artifacts || [],
           };
         });
+        restoreArtifactStream(chatId);
 
         // Web search enabled
         webSearchEnabled = conversation.web_search_enabled || false;
