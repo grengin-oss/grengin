@@ -54,6 +54,7 @@
       "stopRecording": "녹음 중지",
       "sendMessage": "메시지 보내기",
       "sendMessageTitle": "메시지 보내기 (Enter)",
+      "stopGenerating": "생성 중지",
       "messageInput": "메시지 입력",
       "removeFile": "파일 제거",
       "previewImage": "이미지 미리보기: {name}",
@@ -118,7 +119,8 @@
       "download": "다운로드",
       "creatingImage": "이미지 생성 중…",
       "copyImage": "이미지 복사",
-      "downloadFile": "파일 다운로드"
+      "downloadFile": "파일 다운로드",
+      "responseStopped": "응답이 중지됨"
     },
     "toolCalls": {
       "searching": "웹 검색 중",

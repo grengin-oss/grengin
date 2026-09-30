@@ -203,6 +203,15 @@ router.delete('/chat/:chatId', requireAuth, (req, res) => {
   res.status(204).send()
 })
 
+// Assistant message ids a client asked to stop. The streaming handler polls
+// this between chunks, then emits `cancelled` + `done` like the real backend.
+const cancelledStreams = new Set<string>()
+
+router.post('/chat/stream/:messageId/cancel', requireAuth, (req, res) => {
+  cancelledStreams.add(req.params.messageId)
+  res.status(202).send()
+})
+
 // The frontend posts to /chat/stream for a brand-new conversation and to
 // /chat/stream/:conversationId to continue an existing one (see sendMessage in
 // src/lib/api/chatApi.ts). Both land on the same handler; the path id wins over
@@ -307,21 +316,30 @@ router.post(['/chat/stream', '/chat/stream/:conversationId'], requireAuth, async
   // Send message_start event
   res.write(`event: message_start\ndata: ${JSON.stringify({ message_id: assistantMsgId })}\n\n`)
 
+  let sentText = ''
+  const isCancelled = () => cancelledStreams.has(assistantMsgId)
+  const writeDelta = (text: string) => {
+    sentText += text
+    res.write(`event: delta\ndata: ${JSON.stringify({ text })}\n\n`)
+  }
+
   // Send delta events — stream code blocks line-by-line for a live-coding effect
   const hasCodeBlock = responseText.includes('```html') || responseText.includes('```markdown') || responseText.includes('```md')
   if (hasCodeBlock) {
     const parts = responseText.split(/(```(?:html|markdown|md)\s*\n[\s\S]*?```)/);
-    for (const part of parts) {
+    stream: for (const part of parts) {
       if (part.match(/^```(?:html|markdown|md)\s*\n/)) {
         const lines = part.split('\n')
         for (const line of lines) {
-          res.write(`event: delta\ndata: ${JSON.stringify({ text: line + '\n' })}\n\n`)
+          if (isCancelled()) break stream
+          writeDelta(line + '\n')
           await new Promise(resolve => setTimeout(resolve, 18))
         }
       } else {
         const words = part.split(' ')
         for (const word of words) {
-          res.write(`event: delta\ndata: ${JSON.stringify({ text: word + ' ' })}\n\n`)
+          if (isCancelled()) break stream
+          writeDelta(word + ' ')
           await new Promise(resolve => setTimeout(resolve, 25))
         }
       }
@@ -329,9 +347,16 @@ router.post(['/chat/stream', '/chat/stream/:conversationId'], requireAuth, async
   } else {
     const chunks = responseText.split(' ')
     for (const chunk of chunks) {
-      res.write(`event: delta\ndata: ${JSON.stringify({ text: chunk + ' ' })}\n\n`)
+      if (isCancelled()) break
+      writeDelta(chunk + ' ')
       await new Promise(resolve => setTimeout(resolve, 30))
     }
+  }
+
+  if (isCancelled()) {
+    cancelledStreams.delete(assistantMsgId)
+    assistantMsg.parts = { text: sentText }
+    res.write(`event: cancelled\ndata: ${JSON.stringify({ message_id: assistantMsgId })}\n\n`)
   }
 
   // Send done event

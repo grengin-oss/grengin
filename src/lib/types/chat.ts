@@ -66,10 +66,12 @@ export interface ChatMessage {
    * it is never persisted by the client, so a reloaded conversation has none.
    */
   thinking?: string;
+  /** The user stopped this response before it finished. */
+  cancelled?: boolean;
 }
 
 export interface StreamEvent {
-  event: 'conversation' | 'delta' | 'done' | 'event' | 'message_end' | 'message_start' | 'tool_call' | 'tool_result' | 'artifact' | 'image_generated' | 'mcp_oauth_required' | 'error';
+  event: 'conversation' | 'delta' | 'done' | 'event' | 'message_end' | 'message_start' | 'tool_call' | 'tool_result' | 'artifact' | 'image_generated' | 'mcp_oauth_required' | 'cancelled' | 'error';
   data: any;
 }
 

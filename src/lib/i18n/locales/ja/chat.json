@@ -54,6 +54,7 @@
       "stopRecording": "録音を停止",
       "sendMessage": "メッセージを送信",
       "sendMessageTitle": "メッセージを送信（Enter）",
+      "stopGenerating": "生成を停止",
       "messageInput": "メッセージ入力",
       "removeFile": "ファイルを削除",
       "previewImage": "画像プレビュー: {name}",
@@ -118,7 +119,8 @@
       "download": "ダウンロード",
       "creatingImage": "画像を作成中…",
       "copyImage": "画像をコピー",
-      "downloadFile": "ファイルをダウンロード"
+      "downloadFile": "ファイルをダウンロード",
+      "responseStopped": "応答を停止しました"
     },
     "toolCalls": {
       "searching": "ウェブを検索中",

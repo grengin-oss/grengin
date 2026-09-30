@@ -55,6 +55,11 @@ SPDX-License-Identifier: Apache-2.0
     pendingSkillIds?: string[];
     /** True when the selected model generates images (drives the composer hint & badge). */
     imageModelSelected?: boolean;
+    /** A response is generating and can be stopped: the send button becomes Stop. */
+    canStop?: boolean;
+    /** Stop was pressed and the stream is winding down. */
+    stopping?: boolean;
+    onStop?: () => void;
   }
 
   let {
@@ -78,6 +83,9 @@ SPDX-License-Identifier: Apache-2.0
     conversationId = null,
     pendingSkillIds = $bindable([]),
     imageModelSelected = false,
+    canStop = false,
+    stopping = false,
+    onStop,
   }: MessageInputProps = $props();
 
   // Split a provider's models into selectable text and image groups (embedding
@@ -2056,6 +2064,19 @@ SPDX-License-Identifier: Apache-2.0
             {/if}
           </button>
 
+          {#if canStop && onStop}
+          <button
+            class="input-btn send-btn stop-btn"
+            onclick={onStop}
+            disabled={stopping}
+            aria-label={$_("chat.messageInput.stopGenerating")}
+            title={$_("chat.messageInput.stopGenerating")}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+              <rect width="12" height="12" rx="2" fill="currentColor" />
+            </svg>
+          </button>
+          {:else}
           <button
             class="input-btn send-btn"
             onclick={handleSend}
@@ -2099,6 +2120,7 @@ SPDX-License-Identifier: Apache-2.0
               </svg>
             {/if}
           </button>
+          {/if}
         </div>
       </div>
     </div>
@@ -2519,6 +2541,11 @@ SPDX-License-Identifier: Apache-2.0
 
   .input-btn.send-btn:active:not(:disabled) {
     transform: scale(0.96);
+  }
+
+  .input-btn.send-btn.stop-btn svg {
+    width: 12px;
+    height: 12px;
   }
 
   .input-btn.send-btn:disabled {
