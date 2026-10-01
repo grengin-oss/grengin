@@ -24,6 +24,7 @@ SPDX-License-Identifier: Apache-2.0
   } from "../../../types/chat";
   import {
     sendMessage,
+    cancelMessageStream,
     getConversation,
     getChatMcpServers,
     type UploadedFile,
@@ -113,6 +114,77 @@ SPDX-License-Identifier: Apache-2.0
   let messageInput = $state<MessageInput | undefined>(undefined);
   let currentStreamingMessage = $state<ChatMessageType | null>(null);
   let autoScrollEnabled = true;
+
+  /*
+   * The generation the Stop button acts on. The server cancels by assistant
+   * message id, which only exists once `message_start` arrives, so a stop
+   * pressed earlier is remembered and sent from there. The server then emits
+   * `cancelled` + `done` and closes the stream; if it has not closed within
+   * STOP_ABORT_FALLBACK_MS the request is aborted locally instead.
+   */
+  interface ActiveGeneration {
+    conversationId: string | null;
+    messageId: string | null;
+    controller: AbortController;
+    stopRequested: boolean;
+    abortTimer?: ReturnType<typeof setTimeout>;
+  }
+  const STOP_ABORT_FALLBACK_MS = 5000;
+  let activeGeneration = $state.raw<ActiveGeneration | null>(null);
+  let isStopping = $state(false);
+  // Only offered on the conversation the generation belongs to.
+  const canStopGeneration = $derived(
+    isLoading &&
+      activeGeneration !== null &&
+      activeGeneration.conversationId === conversationId,
+  );
+
+  function beginGeneration(): ActiveGeneration {
+    const generation: ActiveGeneration = {
+      conversationId,
+      messageId: null,
+      controller: new AbortController(),
+      stopRequested: false,
+    };
+    activeGeneration = generation;
+    isStopping = false;
+    return generation;
+  }
+
+  function endGeneration(generation: ActiveGeneration) {
+    clearTimeout(generation.abortTimer);
+    if (activeGeneration === generation) {
+      activeGeneration = null;
+      isStopping = false;
+    }
+  }
+
+  function requestServerCancel(generation: ActiveGeneration) {
+    if (!generation.messageId) return;
+    cancelMessageStream(generation.messageId).catch(() =>
+      generation.controller.abort(),
+    );
+  }
+
+  function handleStopGeneration() {
+    const generation = activeGeneration;
+    if (!generation || generation.stopRequested) return;
+    generation.stopRequested = true;
+    isStopping = true;
+    requestServerCancel(generation);
+    generation.abortTimer = setTimeout(
+      () => generation.controller.abort(),
+      STOP_ABORT_FALLBACK_MS,
+    );
+  }
+
+  function markGenerationStarted(
+    generation: ActiveGeneration,
+    messageId: string,
+  ) {
+    generation.messageId = messageId;
+    if (generation.stopRequested) requestServerCancel(generation);
+  }
   let selectedModel = $state("gpt-5.2");
   let selectedProvider = $state("openai");
   let selectedModelInfo = $state<ProviderInfo | undefined>(undefined);
@@ -555,6 +627,7 @@ SPDX-License-Identifier: Apache-2.0
     // image model may return more than one — cap is a model property).
     let generatedImageIndex = 0;
     const artifactStream = startArtifactStream();
+    const generation = beginGeneration();
     isTyping = true;
     scrollToBottom();
 
@@ -573,8 +646,10 @@ SPDX-License-Identifier: Apache-2.0
         uploadedFiles: uploadedFiles,
         webSearch: webSearch,
         selectedMcpServers,
+        signal: generation.controller.signal,
 
         onConversationInitialized: ({ newConversationId }) => {
+          if (newConversationId) generation.conversationId = newConversationId;
           // Update conversation ID and URL
           if (newConversationId && newConversationId !== conversationId) {
             conversationId = newConversationId;
@@ -593,6 +668,7 @@ SPDX-License-Identifier: Apache-2.0
           window.dispatchEvent(new CustomEvent("refreshChatHistory"));
         },
         onStreamingStart: (messageId) => {
+          markGenerationStarted(generation, messageId);
           if (pendingStreamingMessage) {
             messageAddedToArray = true;
             pendingStreamingMessage = {
@@ -853,6 +929,14 @@ SPDX-License-Identifier: Apache-2.0
             }
           }
         },
+        onCancelled: () => {
+          if (pendingStreamingMessage) {
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              cancelled: true,
+            };
+          }
+        },
         onDone: async (_data) => {
           if (pendingStreamingMessage) {
             let updatedMergedWebSearch = null;
@@ -964,6 +1048,7 @@ SPDX-License-Identifier: Apache-2.0
       error = apiError;
     } finally {
       finishArtifactStream(artifactStream);
+      endGeneration(generation);
 
       // Reset states
       isTyping = false;
@@ -1068,6 +1153,7 @@ SPDX-License-Identifier: Apache-2.0
 
     // Process the original request without creating a new message
     const artifactStream = startArtifactStream();
+    const generation = beginGeneration();
     isLoading = true;
     isTyping = true;
     autoScrollEnabled = true;
@@ -1086,8 +1172,10 @@ SPDX-License-Identifier: Apache-2.0
         })),
         webSearch: webSearchEnabled,
         selectedMcpServers,
+        signal: generation.controller.signal,
 
         onConversationInitialized: ({ newConversationId }) => {
+          if (newConversationId) generation.conversationId = newConversationId;
           if (newConversationId && newConversationId !== conversationId) {
             conversationId = newConversationId;
             updateUrlWithConversationId(newConversationId);
@@ -1098,6 +1186,7 @@ SPDX-License-Identifier: Apache-2.0
           window.dispatchEvent(new CustomEvent("refreshChatHistory"));
         },
         onStreamingStart: (messageId) => {
+          markGenerationStarted(generation, messageId);
           if (pendingStreamingMessage) {
             pendingStreamingMessage = {
               ...pendingStreamingMessage,
@@ -1254,6 +1343,14 @@ SPDX-License-Identifier: Apache-2.0
             isLoading = true;
           }
         },
+        onCancelled: () => {
+          if (pendingStreamingMessage) {
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              cancelled: true,
+            };
+          }
+        },
         onDone: async (_data) => {
           if (pendingStreamingMessage) {
             let updatedMergedWebSearch = null;
@@ -1353,6 +1450,7 @@ SPDX-License-Identifier: Apache-2.0
       isTyping = false;
     } finally {
       finishArtifactStream(artifactStream);
+      endGeneration(generation);
     }
   }
 
@@ -1750,6 +1848,9 @@ SPDX-License-Identifier: Apache-2.0
           bind:this={messageInput}
           onSend={handleSendMessage}
           disabled={isLoading}
+          canStop={canStopGeneration}
+          stopping={isStopping}
+          onStop={handleStopGeneration}
           placeholder={selectedIsImageModel
             ? $_("chat.messageInput.placeholderImage")
             : $_("chat.messageInput.placeholderWithModel", {
@@ -2000,6 +2101,9 @@ SPDX-License-Identifier: Apache-2.0
           bind:this={messageInput}
           onSend={handleSendMessage}
           disabled={isLoading}
+          canStop={canStopGeneration}
+          stopping={isStopping}
+          onStop={handleStopGeneration}
           placeholder={selectedIsImageModel
             ? $_("chat.messageInput.placeholderImage")
             : $_("chat.messageInput.placeholderWithModel", {

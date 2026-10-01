@@ -25,8 +25,16 @@ export interface SendMessageOptions {
   onArtifact?: (artifact: { id: string; title: string; contentType: string; content: string; streaming?: boolean }) => void;
   onImageGenerated?: (image: ImageGeneratedEvent) => void;
   onMcpAuthRequired?: (authRequest: McpAuthRequest) => void;
+  /**
+   * The generation was stopped before it finished — by the server after
+   * `cancelMessageStream()` (`cancelled` event), or locally when `signal`
+   * aborted the request. `onDone` still follows, as it does on the wire.
+   */
+  onCancelled?: () => void;
   onDone?: (data: any) => void;
   onError?: (error: ApiError | Error) => void;
+  /** Aborts the stream request locally; prefer `cancelMessageStream()` once a message id is known. */
+  signal?: AbortSignal;
 }
 
 export interface UploadedFile {
@@ -84,10 +92,21 @@ export async function uploadDocument(options: UploadDocumentOptions): Promise<Up
 }
 
 /**
+ * Ask the server to stop generating an assistant message. The open stream then
+ * emits `cancelled` followed by `done` and closes, so the caller keeps reading
+ * it rather than aborting.
+ */
+export async function cancelMessageStream(messageId: string): Promise<void> {
+  await request<void>(`/chat/stream/${encodeURIComponent(messageId)}/cancel`, {
+    method: 'POST',
+  });
+}
+
+/**
  * Send a message and handle streaming response
  */
 export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onThinkingDelta, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onArtifact, onImageGenerated, onMcpAuthRequired, onDone, onError } = options;
+  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onThinkingDelta, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onArtifact, onImageGenerated, onMcpAuthRequired, onCancelled, onDone, onError, signal } = options;
 
   try {
     const token = getAccessToken();
@@ -130,6 +149,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
         'Authorization': `Bearer ${token}`,
       },
       body: requestBody,
+      signal,
     });
 
     // Handle token expiration for streaming requests
@@ -157,6 +177,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
           'Authorization': `Bearer ${newToken}`,
         },
         body: requestBody,
+        signal,
       });
     }
 
@@ -369,6 +390,9 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
             case 'message_end':
               // Handle tokens usage
               break;
+            case 'cancelled':
+              onCancelled?.();
+              break;
             case 'done':
               onDone?.(data);
               break;
@@ -396,6 +420,13 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
       }
     }
   } catch (error) {
+    // A local abort is a stop, not a failure. The server never got to send
+    // `cancelled`/`done`, so both are raised here to finish the turn the same way.
+    if (signal?.aborted) {
+      onCancelled?.();
+      onDone?.({});
+      return;
+    }
     // Convert all errors to ApiError for consistent handling
     if (error instanceof ApiError) {
       onError?.(error);

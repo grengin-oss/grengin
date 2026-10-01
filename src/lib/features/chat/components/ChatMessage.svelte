@@ -1417,6 +1417,10 @@ SPDX-License-Identifier: Apache-2.0
       </div>
     {/if}
 
+    {#if message.cancelled && !message.error}
+      <div class="cancelled-note">{$_("chat.message.responseStopped")}</div>
+    {/if}
+
     {#if message.error}
       <div class="error-message">
         <svg
@@ -2472,6 +2476,13 @@ SPDX-License-Identifier: Apache-2.0
     flex-direction: column;
     gap: var(--space-sm);
     margin-top: var(--space-md);
+  }
+
+  .cancelled-note {
+    margin-top: var(--space-sm);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-style: italic;
   }
 
   .error-message {

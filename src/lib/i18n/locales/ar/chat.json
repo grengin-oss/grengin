@@ -54,6 +54,7 @@
       "stopRecording": "إيقاف التسجيل",
       "sendMessage": "إرسال رسالة",
       "sendMessageTitle": "إرسال رسالة (Enter)",
+      "stopGenerating": "إيقاف الإنشاء",
       "messageInput": "إدخال الرسالة",
       "removeFile": "إزالة الملف",
       "previewImage": "معاينة الصورة: {name}",
@@ -118,7 +119,8 @@
       "download": "تنزيل",
       "creatingImage": "جارٍ إنشاء الصورة…",
       "copyImage": "نسخ الصورة",
-      "downloadFile": "تنزيل الملف"
+      "downloadFile": "تنزيل الملف",
+      "responseStopped": "تم إيقاف الرد"
     },
     "toolCalls": {
       "searching": "جارٍ البحث على الويب",

@@ -54,6 +54,7 @@
       "stopRecording": "Detener grabación",
       "sendMessage": "Enviar mensaje",
       "sendMessageTitle": "Enviar mensaje (Enter)",
+      "stopGenerating": "Detener generación",
       "messageInput": "Entrada de mensaje",
       "removeFile": "Eliminar archivo",
       "previewImage": "Vista previa de imagen: {name}",
@@ -118,7 +119,8 @@
       "download": "Descargar",
       "creatingImage": "Creando la imagen…",
       "copyImage": "Copiar imagen",
-      "downloadFile": "Descargar archivo"
+      "downloadFile": "Descargar archivo",
+      "responseStopped": "Respuesta detenida"
     },
     "toolCalls": {
       "searching": "Buscando en la web",

@@ -64,6 +64,7 @@
       "stopRecording": "Stop recording",
       "sendMessage": "Send message",
       "sendMessageTitle": "Send message (Enter)",
+      "stopGenerating": "Stop generating",
       "messageInput": "Message input",
       "removeFile": "Remove file",
       "previewImage": "Preview image: {name}",
@@ -128,7 +129,8 @@
       "download": "Download",
       "creatingImage": "Creating image…",
       "copyImage": "Copy image",
-      "downloadFile": "Download file"
+      "downloadFile": "Download file",
+      "responseStopped": "Response stopped"
     },
     "toolCalls": {
       "searching": "Searching the web",
