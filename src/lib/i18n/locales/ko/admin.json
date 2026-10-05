@@ -538,7 +538,13 @@
         "scopeableBadge": "범위 지정 가능",
         "scopeableBadgeTitle": "부서에 맞게 제한할 수 있습니다",
         "globalBadge": "전체",
-        "domainCount": "{count}개 권한"
+        "domainCount": "{count}개 권한",
+        "matrixNote": "매트릭스에는 각 역할에 부여된 권한이 표시됩니다. 역할 할당은 역할 페이지에서 관리하세요.",
+        "matrixGranted": "부여됨",
+        "matrixNotGranted": "부여되지 않음",
+        "matrixCellLabel": "{role}: {permission}",
+        "matrixLoadingRoles": "역할을 로딩 중...",
+        "matrixNoRoles": "아직 생성된 역할이 없어 비교할 항목이 없습니다."
       },
       "roleCount": "{count}개 역할",
       "permissionCount": "{count}개 권한",
@@ -554,7 +560,8 @@
       "morePermissions": "+ {count}개 더",
       "usersStatLabel": "사용자",
       "showLess": "간략히 보기",
-      "footerSummary": "{categories}개 카테고리에서 {count}개 권한 선택"
+      "footerSummary": "{categories}개 카테고리에서 {count}개 권한 선택",
+      "viewMatrix": "매트릭스"
     },
     "mcpServers": {
       "title": "MCP 서버",
@@ -1310,6 +1317,46 @@
           "waitingForApi": "API가 돌아오기를 기다리는 중…",
           "newVersion": "Grengin이 돌아왔으며, 현재 v{version}을(를) 실행 중입니다."
         }
+      }
+    },
+    "permissionDescriptions": {
+      "ai_platform": {
+        "manage": "AI 엔진 및 모델 구성",
+        "view": "AI 엔진 구성 보기"
+      },
+      "analytics": {
+        "view": "사용량 분석 및 보고서 보기"
+      },
+      "audit_logs": {
+        "view": "시스템 감사 로그 보기"
+      },
+      "budget": {
+        "view": "예산 할당 및 사용량 보기",
+        "allocate": "부서 예산 할당 및 조정"
+      },
+      "departments": {
+        "view": "부서 구조 및 구성원 보기",
+        "manage": "부서 생성, 편집 및 관리"
+      },
+      "mcp_servers": {
+        "manage": "MCP 서버 구성 관리",
+        "admin": "MCP 서버 설정 및 배포 관리",
+        "delegate": "부서에 MCP 서버 접근 권한 위임"
+      },
+      "roles": {
+        "view": "역할 및 해당 권한 보기",
+        "manage": "역할 생성, 편집 및 삭제",
+        "assign": "사용자에게 역할 할당"
+      },
+      "skills": {
+        "view": "사용 가능한 스킬 보기"
+      },
+      "sso_providers": {
+        "view": "SSO 공급자 구성 보기"
+      },
+      "users": {
+        "view": "사용자 및 해당 역할 보기",
+        "manage": "사용자 초대, 편집 및 비활성화"
       }
     }
   },

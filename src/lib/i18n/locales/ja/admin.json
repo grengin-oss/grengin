@@ -538,7 +538,13 @@
         "scopeableBadge": "範囲指定可",
         "scopeableBadgeTitle": "部門に限定できます",
         "globalBadge": "グローバル",
-        "domainCount": "{count} 件の権限"
+        "domainCount": "{count} 件の権限",
+        "matrixNote": "マトリックスには、各ロールに付与されている権限が表示されます。ロールの割り当てはロールページで管理してください。",
+        "matrixGranted": "付与済み",
+        "matrixNotGranted": "未付与",
+        "matrixCellLabel": "{role}: {permission}",
+        "matrixLoadingRoles": "ロールを読み込み中…",
+        "matrixNoRoles": "ロールがまだ作成されていないため、比較する項目がありません。"
       },
       "roleCount": "{count} 件のロール",
       "permissionCount": "{count} 件の権限",
@@ -554,7 +560,8 @@
       "morePermissions": "+ 他 {count} 件",
       "usersStatLabel": "ユーザー",
       "showLess": "表示を減らす",
-      "footerSummary": "{categories} 個のカテゴリで {count} 件の権限を選択"
+      "footerSummary": "{categories} 個のカテゴリで {count} 件の権限を選択",
+      "viewMatrix": "マトリックス"
     },
     "mcpServers": {
       "title": "MCPサーバー",
@@ -1310,6 +1317,46 @@
           "waitingForApi": "API の復帰を待機しています…",
           "newVersion": "Grengin が復帰しました。現在 v{version} で実行中です。"
         }
+      }
+    },
+    "permissionDescriptions": {
+      "ai_platform": {
+        "manage": "AIエンジンとモデルを設定",
+        "view": "AIエンジンの設定を表示"
+      },
+      "analytics": {
+        "view": "利用状況の分析とレポートを表示"
+      },
+      "audit_logs": {
+        "view": "システムのオーディットログを表示"
+      },
+      "budget": {
+        "view": "予算の割り当てと使用状況を表示",
+        "allocate": "部門の予算を割り当て・調整"
+      },
+      "departments": {
+        "view": "部門の構成とメンバーを表示",
+        "manage": "部門を作成・編集・管理"
+      },
+      "mcp_servers": {
+        "manage": "MCPサーバーの設定を管理",
+        "admin": "MCPサーバーの設定とデプロイを管理",
+        "delegate": "MCPサーバーへのアクセスを部門に委任"
+      },
+      "roles": {
+        "view": "ロールとその権限を表示",
+        "manage": "ロールを作成・編集・削除",
+        "assign": "ユーザーにロールを割り当て"
+      },
+      "skills": {
+        "view": "利用可能なスキルを表示"
+      },
+      "sso_providers": {
+        "view": "SSOプロバイダーの設定を表示"
+      },
+      "users": {
+        "view": "ユーザーとそのロールを表示",
+        "manage": "ユーザーを招待・編集・無効化"
       }
     }
   },

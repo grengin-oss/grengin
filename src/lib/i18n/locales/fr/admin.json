@@ -538,7 +538,13 @@
         "scopeableBadge": "Limitable",
         "scopeableBadgeTitle": "Peut être limité à des départements",
         "globalBadge": "Général",
-        "domainCount": "{count} autorisations"
+        "domainCount": "{count} autorisations",
+        "matrixNote": "La matrice indique les autorisations accordées à chaque rôle. Gérez les attributions de rôles depuis la page Rôles.",
+        "matrixGranted": "Accordée",
+        "matrixNotGranted": "Non accordée",
+        "matrixCellLabel": "{role} : {permission}",
+        "matrixLoadingRoles": "Chargement des rôles…",
+        "matrixNoRoles": "Aucun rôle n’a encore été créé, il n’y a donc rien à comparer."
       },
       "roleCount": "{count} rôles",
       "permissionCount": "{count} autorisations",
@@ -554,7 +560,8 @@
       "morePermissions": "+ {count} de plus",
       "usersStatLabel": "Utilisateurs",
       "showLess": "Afficher moins",
-      "footerSummary": "{count} autorisations sélectionnées dans {categories} catégories"
+      "footerSummary": "{count} autorisations sélectionnées dans {categories} catégories",
+      "viewMatrix": "Matrice"
     },
     "mcpServers": {
       "title": "Serveurs MCP",
@@ -1310,6 +1317,46 @@
           "waitingForApi": "En attente du retour de l'API…",
           "newVersion": "Grengin est de retour, exécutant désormais la v{version}."
         }
+      }
+    },
+    "permissionDescriptions": {
+      "ai_platform": {
+        "manage": "Configurer les moteurs IA et les modèles",
+        "view": "Voir les configurations des moteurs IA"
+      },
+      "analytics": {
+        "view": "Voir les analyses d’utilisation et les rapports"
+      },
+      "audit_logs": {
+        "view": "Voir la piste d’audit du système"
+      },
+      "budget": {
+        "view": "Voir les allocations budgétaires et leur utilisation",
+        "allocate": "Allouer et ajuster les budgets des départements"
+      },
+      "departments": {
+        "view": "Voir la structure et les membres des départements",
+        "manage": "Créer, modifier et gérer les départements"
+      },
+      "mcp_servers": {
+        "manage": "Gérer les configurations des serveurs MCP",
+        "admin": "Gérer les paramètres et les déploiements des serveurs MCP",
+        "delegate": "Déléguer l’accès aux serveurs MCP aux départements"
+      },
+      "roles": {
+        "view": "Voir les rôles et leurs autorisations",
+        "manage": "Créer, modifier et supprimer des rôles",
+        "assign": "Attribuer des rôles aux utilisateurs"
+      },
+      "skills": {
+        "view": "Voir les compétences disponibles"
+      },
+      "sso_providers": {
+        "view": "Voir les configurations des fournisseurs SSO"
+      },
+      "users": {
+        "view": "Voir les utilisateurs et leurs rôles",
+        "manage": "Inviter, modifier et désactiver des utilisateurs"
       }
     }
   },
