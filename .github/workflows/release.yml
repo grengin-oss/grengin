@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Product version to preview (for example, v0.3.2)
+        description: Product version to preview (for example, v0.9.3)
         required: true
-        default: v0.3.2
+        default: v0.9.3
 
 permissions:
   contents: read

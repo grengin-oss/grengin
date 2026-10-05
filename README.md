@@ -63,6 +63,12 @@ Stable releases are available from the
 [GitHub Releases page](https://github.com/grengin-oss/grengin/releases). Every
 release records the exact frontend and backend commits used to build it.
 
+Install the latest stable Linux release with:
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://meta.grengin.com/install.sh | sh
+```
+
 ## Release Assets
 
 Grengin uses one public product version across its release assets:
