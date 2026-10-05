@@ -74,6 +74,11 @@ done
 
 FRONTEND_COMMIT="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
 BACKEND_VERSION="$(sed -n 's/^version = "\([^"]*\)"/\1/p' "${BACKEND_SOURCE_DIR}/Cargo.toml" | head -n 1)"
+if [[ "${BACKEND_VERSION}" != "${RELEASE_VERSION}" ]]; then
+  echo "Backend version ${BACKEND_VERSION} does not match release version ${RELEASE_VERSION}." >&2
+  exit 1
+fi
+
 SOURCE_DATE_EPOCH="$(git -C "${REPOSITORY_ROOT}" show -s --format=%ct HEAD)"
 SOURCE_NAME="grengin-${RELEASE_VERSION}-source"
 AMD64_NAME="grengin-${RELEASE_VERSION}-linux-amd64"
