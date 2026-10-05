@@ -16,15 +16,18 @@ RUN case "${TARGETARCH}" in \
 WORKDIR /usr/src/grengin-api
 
 COPY Cargo.* ./
+COPY llm-plugin/Cargo.toml llm-plugin/Cargo.toml
 COPY migration/Cargo.toml migration/Cargo.toml
 COPY sqlx-mcp/Cargo.toml sqlx-mcp/Cargo.toml
-RUN mkdir -p src migration/src sqlx-mcp/src \
+RUN mkdir -p src llm-plugin/src migration/src sqlx-mcp/src \
  && echo "fn main(){}" > src/main.rs \
+ && echo "" > llm-plugin/src/lib.rs \
  && echo "" > migration/src/lib.rs \
  && echo "fn main(){}" > sqlx-mcp/src/main.rs \
  && cargo fetch --locked
 
 COPY src ./src
+COPY llm-plugin ./llm-plugin
 COPY migration ./migration
 COPY sqlx-mcp ./sqlx-mcp
 COPY swagger-overrides /swagger-overrides
