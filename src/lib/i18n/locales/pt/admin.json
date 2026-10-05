@@ -538,7 +538,13 @@
         "scopeableBadge": "Escopo configurável",
         "scopeableBadgeTitle": "Pode ser limitado a departamentos",
         "globalBadge": "Geral",
-        "domainCount": "{count} permissões"
+        "domainCount": "{count} permissões",
+        "matrixNote": "A matriz mostra quais permissões são concedidas a cada função. Gerencie as atribuições de funções na página Funções.",
+        "matrixGranted": "Concedida",
+        "matrixNotGranted": "Não concedida",
+        "matrixCellLabel": "{role}: {permission}",
+        "matrixLoadingRoles": "Carregando funções…",
+        "matrixNoRoles": "Nenhuma função foi criada ainda, então não há nada para comparar."
       },
       "roleCount": "{count} funções",
       "permissionCount": "{count} permissões",
@@ -554,7 +560,8 @@
       "morePermissions": "+ {count} mais",
       "usersStatLabel": "Usuários",
       "showLess": "Mostrar menos",
-      "footerSummary": "{count} permissões selecionadas em {categories} categorias"
+      "footerSummary": "{count} permissões selecionadas em {categories} categorias",
+      "viewMatrix": "Matriz"
     },
     "mcpServers": {
       "title": "Servidores MCP",
@@ -1310,6 +1317,46 @@
           "waitingForApi": "Aguardando o retorno da API…",
           "newVersion": "O Grengin voltou, agora executando a v{version}."
         }
+      }
+    },
+    "permissionDescriptions": {
+      "ai_platform": {
+        "manage": "Configurar motores de IA e modelos",
+        "view": "Ver configurações dos motores de IA"
+      },
+      "analytics": {
+        "view": "Ver análises de uso e relatórios"
+      },
+      "audit_logs": {
+        "view": "Ver a trilha de auditoria do sistema"
+      },
+      "budget": {
+        "view": "Ver alocações e uso do orçamento",
+        "allocate": "Alocar e ajustar orçamentos dos departamentos"
+      },
+      "departments": {
+        "view": "Ver a estrutura e os membros dos departamentos",
+        "manage": "Criar, editar e gerenciar departamentos"
+      },
+      "mcp_servers": {
+        "manage": "Gerenciar configurações de servidores MCP",
+        "admin": "Gerenciar configurações e implantações de servidores MCP",
+        "delegate": "Delegar acesso a servidores MCP para departamentos"
+      },
+      "roles": {
+        "view": "Ver funções e suas permissões",
+        "manage": "Criar, editar e excluir funções",
+        "assign": "Atribuir funções a usuários"
+      },
+      "skills": {
+        "view": "Ver habilidades disponíveis"
+      },
+      "sso_providers": {
+        "view": "Ver configurações de provedores SSO"
+      },
+      "users": {
+        "view": "Ver usuários e suas funções",
+        "manage": "Convidar, editar e desativar usuários"
       }
     }
   },

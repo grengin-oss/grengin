@@ -538,7 +538,13 @@
         "scopeableBadge": "قابل للنطاق",
         "scopeableBadgeTitle": "يمكن تحديد نطاقه للأقسام",
         "globalBadge": "عالمي",
-        "domainCount": "{count} صلاحية"
+        "domainCount": "{count} صلاحية",
+        "matrixNote": "توضح المصفوفة الصلاحيات الممنوحة لكل دور. أدِر تعيينات الأدوار من صفحة الأدوار.",
+        "matrixGranted": "ممنوحة",
+        "matrixNotGranted": "غير ممنوحة",
+        "matrixCellLabel": "{role}: {permission}",
+        "matrixLoadingRoles": "جارٍ تحميل الأدوار…",
+        "matrixNoRoles": "لم يتم إنشاء أي أدوار بعد، لذا لا يوجد ما يمكن مقارنته."
       },
       "roleCount": "{count} أدوار",
       "permissionCount": "{count} أذونات",
@@ -554,7 +560,8 @@
       "morePermissions": "+ {count} إضافية",
       "usersStatLabel": "المستخدمون",
       "showLess": "عرض أقل",
-      "footerSummary": "{count} أذونات محددة في {categories} فئات"
+      "footerSummary": "{count} أذونات محددة في {categories} فئات",
+      "viewMatrix": "مصفوفة"
     },
     "mcpServers": {
       "title": "خوادم MCP",
@@ -1310,6 +1317,46 @@
           "waitingForApi": "في انتظار عودة API…",
           "newVersion": "عاد Grengin، ويعمل الآن بالإصدار v{version}."
         }
+      }
+    },
+    "permissionDescriptions": {
+      "ai_platform": {
+        "manage": "تكوين محركات الذكاء الاصطناعي والنماذج",
+        "view": "عرض تكوينات محركات الذكاء الاصطناعي"
+      },
+      "analytics": {
+        "view": "عرض تحليلات الاستخدام والتقارير"
+      },
+      "audit_logs": {
+        "view": "عرض سجل تدقيق النظام"
+      },
+      "budget": {
+        "view": "عرض مخصصات الميزانية واستخدامها",
+        "allocate": "تخصيص ميزانيات الأقسام وتعديلها"
+      },
+      "departments": {
+        "view": "عرض هيكل الأقسام وأعضائها",
+        "manage": "إنشاء الأقسام وتعديلها وإدارتها"
+      },
+      "mcp_servers": {
+        "manage": "إدارة تكوينات خوادم MCP",
+        "admin": "إدارة إعدادات خوادم MCP وعمليات نشرها",
+        "delegate": "تفويض الوصول إلى خوادم MCP للأقسام"
+      },
+      "roles": {
+        "view": "عرض الأدوار وصلاحياتها",
+        "manage": "إنشاء الأدوار وتعديلها وحذفها",
+        "assign": "تعيين الأدوار للمستخدمين"
+      },
+      "skills": {
+        "view": "عرض المهارات المتاحة"
+      },
+      "sso_providers": {
+        "view": "عرض تكوينات موفري SSO"
+      },
+      "users": {
+        "view": "عرض المستخدمين وأدوارهم",
+        "manage": "دعوة المستخدمين وتعديلهم وإلغاء تنشيطهم"
       }
     }
   },
