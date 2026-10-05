@@ -19,6 +19,7 @@ import {
 import { getBranding, updateBranding } from '../../api/admin/branding.js';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { onboarding } from '../../features/onboarding/onboardingState.svelte.js';
 
 type ApiKeyStatus = 'valid' | 'in_valid' | 'not_validated' | 'not_configured';
 type ApiKeyMode = 'cta' | 'add' | 'view' | 'update';
@@ -368,6 +369,8 @@ function createAIEnginesStore() {
       apiKeyMode = 'view';
       await refreshSelectedEngine();
       apiKeyInput = '';
+      // A first key completes half of the Setup guide (ENGG-447).
+      void onboarding.refreshSetupStatus();
     } catch (err: any) {
       const t = get(_);
       apiKeyStatus = 'in_valid';
@@ -421,6 +424,7 @@ function createAIEnginesStore() {
       apiKeyDeleteConfirm = false;
       await refreshSelectedEngine();
       await loadModelsForSelected();
+      void onboarding.refreshSetupStatus();
     } catch (err: any) {
       error = err;
       throw err;

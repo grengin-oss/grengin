@@ -4,7 +4,7 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { _ } from "svelte-i18n";
   import AdminTabs from "../components/AdminTabs.svelte";
   import TeamsTab from "../components/organization/TeamsTab.svelte";
@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
   import { PERMISSIONS } from "$lib/features/auth/permissions.js";
   import { getRoles, type Role } from "$lib/api/admin/roles.js";
   import { setPageTitle } from "../../utils/pageTitle";
+  import { onboarding } from "$lib/features/onboarding/onboardingState.svelte.js";
 
   /**
    * Feature flag — hides the Unassigned node in the Teams tab. Default on.
@@ -64,6 +65,22 @@ SPDX-License-Identifier: Apache-2.0
   // Contextual create-modal signals, driven by the single header primary button.
   let showTeamsCreate = $state(false);
   let showUsersCreate = $state(false);
+
+  // Onboarding tour Step 4 (ENGG-447) opens the Create Users dialog on the
+  // Users tab, and closes it again if the tour moves on while it is open.
+  $effect(() => {
+    const request = onboarding.inviteDialogRequest;
+    if (!request) return;
+    untrack(() => {
+      onboarding.consumeInviteDialogRequest();
+      if (request === "open" && canViewUsers && canManageUsers) {
+        currentTab = "users";
+        showUsersCreate = true;
+      } else if (request === "close") {
+        showUsersCreate = false;
+      }
+    });
+  });
 
   // Shared team picker.
   let assignTarget = $state<User | null>(null);
@@ -117,18 +134,20 @@ SPDX-License-Identifier: Apache-2.0
     applyFilters();
   }
 
-  function openPrimaryAction() {
-    if (currentTab === "teams") {
-      showTeamsCreate = true;
-    } else {
-      showUsersCreate = true;
-    }
+  // Both create actions sit in the header on either tab (ENGG-441), so a
+  // first-time admin can add a user without discovering the Users tab first.
+  // Each opens its own dialog in place; the tab stays as it is. The dialogs
+  // belong to TeamsTab / UsersTab, which only mount with the view permission.
+  const canCreateDepartments = $derived(canViewDepartments && canManageDepartments);
+  const canCreateUsers = $derived(canViewUsers && canManageUsers);
+
+  function openCreateDepartment() {
+    showTeamsCreate = true;
   }
 
-  const showCreateDepartmentButton = $derived(
-    currentTab === "teams" && canManageDepartments,
-  );
-  const showCreateUserButton = $derived(currentTab === "users" && canManageUsers);
+  function openCreateUser() {
+    showUsersCreate = true;
+  }
 
   function requestAssign(user: User) {
     assignTarget = user;
@@ -165,22 +184,43 @@ SPDX-License-Identifier: Apache-2.0
         <span class="page-title">{$_('admin.departments.organization')}</span>
         <span class="page-sub">{$_('admin.organization.subtitle')}</span>
       </div>
-      {#if showCreateDepartmentButton}
-        <button type="button" class="cta" onclick={openPrimaryAction}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <span class="cta__label">{$_('admin.departments.createDepartment')}</span>
-        </button>
-      {:else if showCreateUserButton}
-        <button type="button" class="cta cta--users" onclick={openPrimaryAction}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <span class="cta__label">{$_('admin.users.createUserButton')}</span>
-        </button>
+      {#if canCreateDepartments || canCreateUsers}
+        <!-- Figma 241:23327 / 247:24510: the current tab's own action is the
+             right-most button. -->
+        <div class="header-actions">
+          {#if currentTab === 'teams'}
+            {#if canCreateUsers}{@render createUserButton()}{/if}
+            {#if canCreateDepartments}{@render createDepartmentButton()}{/if}
+          {:else}
+            {#if canCreateDepartments}{@render createDepartmentButton()}{/if}
+            {#if canCreateUsers}{@render createUserButton()}{/if}
+          {/if}
+        </div>
       {/if}
     </div>
+
+    {#snippet createDepartmentButton()}
+      <button type="button" class="cta" onclick={openCreateDepartment}>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="cta__label">{$_('admin.departments.createDepartment')}</span>
+      </button>
+    {/snippet}
+
+    {#snippet createUserButton()}
+      <button
+        type="button"
+        class="cta"
+        data-tour="create-users"
+        onclick={openCreateUser}
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="cta__label">{$_('admin.users.createUserButton')}</span>
+      </button>
+    {/snippet}
 
     <div class="controls-row">
       {#if tabs.length > 1}
@@ -351,11 +391,22 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-slate-500);
   }
 
+  /* Figma page-header: both actions 11px apart, right-aligned. */
+  .header-actions {
+    display: flex;
+    gap: 11px;
+    align-items: center;
+    flex-shrink: 0;
+    margin-inline-start: auto;
+    flex-wrap: wrap;
+  }
+
+  /* Figma cta-button: Primary/500 (#427AC6). */
   .cta {
     height: 37px;
     border: 0;
     border-radius: 8px;
-    background: var(--gx-org-brand);
+    background: var(--gx-org-primary-500);
     display: flex;
     gap: 8px;
     padding: 10px 16px;
@@ -369,21 +420,13 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .cta:hover {
-    background: var(--gx-org-brand-hover);
+    background: var(--gx-org-primary-500-hover);
     transform: none;
   }
 
   .cta:focus-visible {
-    outline: 2px solid var(--gx-org-brand-alt);
+    outline: 2px solid var(--gx-org-primary-500);
     outline-offset: 2px;
-  }
-
-  .cta--users {
-    background: var(--gx-org-brand);
-  }
-
-  .cta--users:hover {
-    background: var(--gx-org-brand-alt);
   }
 
   .cta__label {
@@ -553,6 +596,10 @@ SPDX-License-Identifier: Apache-2.0
       flex-direction: column;
       align-items: flex-start;
       gap: 12px;
+    }
+
+    .header-actions {
+      margin-inline-start: 0;
     }
 
     .page-title {

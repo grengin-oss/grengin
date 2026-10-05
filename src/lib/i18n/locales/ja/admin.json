@@ -1592,6 +1592,12 @@
         "added": "{name} を追加しました",
         "failed": "カスタムエンジンの追加に失敗しました"
       }
+    },
+    "noKeys": {
+      "title": "まだ AIエンジンが接続されていません",
+      "description": "OpenAI、Anthropic など利用しているプロバイダーのキーを追加してください。チームのプロンプトはそのキーを経由して送信されます。",
+      "addKey": "API キーを追加",
+      "securityNote": "API キーは保存時に暗号化され、保存後は二度と表示されません。"
     }
   },
   "adminOverview": {

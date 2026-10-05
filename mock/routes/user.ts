@@ -15,6 +15,46 @@ router.get('/me', requireAuth, (req, res) => {
   res.json(meExample)
 })
 
+// Per-user metadata (ENGG-447 tour progress), keyed by bearer token: every
+// sign-in issues a new token, so each sign-in starts as a first login.
+const metadataByToken = new Map<string, { firstLoginAt: string; guidePageCount: number }>()
+
+function tourGuideFor(req: { headers: Record<string, unknown> }) {
+  const token = String(req.headers.authorization ?? '')
+  let entry = metadataByToken.get(token)
+  if (!entry) {
+    entry = { firstLoginAt: new Date().toISOString(), guidePageCount: 0 }
+    metadataByToken.set(token, entry)
+  }
+  return entry
+}
+
+function metadataResponse(entry: { firstLoginAt: string; guidePageCount: number }) {
+  return {
+    metadata: {
+      tourGuide: {
+        firstLogin: true,
+        firstLoginAt: entry.firstLoginAt,
+        guidePageCount: entry.guidePageCount,
+      },
+    },
+  }
+}
+
+router.get('/me/metadata', requireAuth, (req, res) => {
+  res.json(metadataResponse(tourGuideFor(req)))
+})
+
+router.put('/me/metadata', requireAuth, (req, res) => {
+  const count = req.body?.guide_page_count
+  if (!Number.isInteger(count) || count < 0) {
+    return res.status(400).json({ detail: 'guide_page_count must be a non-negative integer' })
+  }
+  const entry = tourGuideFor(req)
+  entry.guidePageCount = count
+  res.json(metadataResponse(entry))
+})
+
 router.get('/me/rate-limit', requireAuth, (req, res) => {
   res.json(rateLimitExample)
 })

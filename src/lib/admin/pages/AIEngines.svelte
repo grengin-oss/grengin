@@ -64,7 +64,9 @@ SPDX-License-Identifier: Apache-2.0
 }`;
 
   let query = $state("");
-  let filter = $state<EngineFilter>("all");
+  // For now the page lists connected engines only; the status-filter pills
+  // are commented out below. Restore "all" as the default when they come back.
+  let filter = $state<EngineFilter>("connected");
   let view = $state<EngineView>("list");
   let modelQuery = $state("");
 
@@ -224,8 +226,11 @@ SPDX-License-Identifier: Apache-2.0
   const visibleEngines = $derived.by(() =>
     searchedEngines.filter((engine) => {
       if (filter === "connected") return isHealthy(engine);
-      if (filter === "attention") return !isHealthy(engine);
-      return true;
+      // Hidden for now along with their pills: engines that need attention
+      // (no key, invalid or unvalidated key, disabled) and the "All" view.
+      // if (filter === "attention") return !isHealthy(engine);
+      // return true;
+      return false;
     }),
   );
 
@@ -1002,6 +1007,58 @@ SPDX-License-Identifier: Apache-2.0
         {/snippet}
       </AdminEmptyState>
     </AdminPanelCard>
+  {:else if connectedCount === 0}
+    <!-- Fresh workspace: no engine holds a key yet — Figma "Empty state card"
+         (1611:20759). "Add API key" opens Browse Providers; the onboarding
+         tour (ENGG-447) points at it. -->
+    <section class="keys-empty" aria-labelledby="keys-empty-title">
+      <span class="keys-empty__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="7.5" cy="15.5" r="4.5" />
+          <path d="M10.7 12.3L20 3M16 7l3 3M14 9l2 2" />
+        </svg>
+      </span>
+      <div class="keys-empty__copy">
+        <h2 class="keys-empty__title" id="keys-empty-title">
+          {$_("aiEngines.noKeys.title")}
+        </h2>
+        <p class="keys-empty__desc">{$_("aiEngines.noKeys.description")}</p>
+      </div>
+      {#if canManageEngines}
+        <button
+          class="keys-empty__add"
+          type="button"
+          data-tour="add-api-key"
+          onclick={openBrowse}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          {$_("aiEngines.noKeys.addKey")}
+        </button>
+      {/if}
+      <div class="keys-empty__placeholders" aria-hidden="true">
+        {#each [104, 124, 92] as width (width)}
+          <div class="keys-empty__ph">
+            <div class="keys-empty__ph-head">
+              <span class="keys-empty__ph-mark"></span>
+              <span class="keys-empty__ph-lines">
+                <span class="keys-empty__ph-title" style:width="{width}px"></span>
+                <span class="keys-empty__ph-meta"></span>
+              </span>
+            </div>
+            <span class="keys-empty__ph-status"></span>
+          </div>
+        {/each}
+      </div>
+    </section>
+    <p class="keys-note">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3l8 3v6c0 4.5-3.2 7.7-8 9-4.8-1.3-8-4.5-8-9V6z" />
+        <path d="M8.8 12.2l2.2 2.2 4.2-4.4" />
+      </svg>
+      {$_("aiEngines.noKeys.securityNote")}
+    </p>
   {:else}
     <!-- ".toolbar-row" -->
     <div class="toolbar-row">
@@ -1117,7 +1174,9 @@ SPDX-License-Identifier: Apache-2.0
       </div>
     </div>
 
-    <!-- ".status-filters" -->
+    <!-- ".status-filters" — hidden for now: the page lists connected engines
+         only. Restore this row (and `filter`'s "all" default) to bring back
+         the All / Connected / Needs attention pills.
     <div
       class="status-filters"
       role="group"
@@ -1153,6 +1212,7 @@ SPDX-License-Identifier: Apache-2.0
         {attentionCount}
       </button>
     </div>
+    -->
 
     {#if visibleEngines.length === 0}
       <AdminPanelCard>
@@ -1164,7 +1224,7 @@ SPDX-License-Identifier: Apache-2.0
       </AdminPanelCard>
     {:else if view === "list"}
       <!-- ".engines-table" -->
-      <div class="engines-table">
+      <div class="engines-table" data-tour="engines-list">
         <div class="engines-table__scroll">
           <div class="table-head-row">
             <span class="col-label col-engine">
@@ -1262,6 +1322,7 @@ SPDX-License-Identifier: Apache-2.0
       <!-- ".engines-grid" -->
       <div
         class="engines-grid"
+        data-tour="engines-list"
         role="list"
         aria-labelledby="ai-engines-section-title"
       >
@@ -2392,6 +2453,174 @@ SPDX-License-Identifier: Apache-2.0
   /* The design spaces the header from the toolbar with the column gap alone. */
   .ai-engines-container :global(.page-header) {
     padding-bottom: 0;
+  }
+
+  /* ---- No key connected yet — Figma "Empty state card" (1611:20759) ---- */
+  .keys-empty {
+    align-self: stretch;
+    box-sizing: border-box;
+    background: var(--gx-surface);
+    border: 1px solid var(--gx-line);
+    border-radius: 20px;
+    box-shadow: 0 4px 18px 0 rgba(22, 36, 31, 0.04);
+    padding: 44px 38px 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .keys-empty__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: #e7f3ef;
+    color: #2e8b68;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .keys-empty__copy {
+    max-width: 620px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  /* Design specifies Sora, not loaded in the app; Montserrat is the existing
+     display face. */
+  .keys-empty__title {
+    margin: 0;
+    font-family: Sora, var(--gx-font-display);
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 29px;
+    letter-spacing: -0.4px;
+    color: var(--gx-ink);
+  }
+
+  .keys-empty__desc {
+    margin: 0;
+    font-size: 14px;
+    line-height: 21px;
+    color: var(--gx-muted);
+  }
+
+  .keys-empty__add {
+    height: 44px;
+    padding: 0 22px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #fff;
+    background: var(--gx-org-primary-500);
+  }
+
+  .keys-empty__add:hover {
+    background: var(--gx-org-primary-500-hover);
+  }
+
+  .keys-empty__add:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 3px;
+  }
+
+  .keys-empty__placeholders {
+    align-self: stretch;
+    display: flex;
+    gap: 14px;
+    padding-top: 26px;
+  }
+
+  .keys-empty__ph {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 120px;
+    box-sizing: border-box;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid var(--gx-line);
+    opacity: 0.5;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .keys-empty__ph-head {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .keys-empty__ph-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: var(--gx-fill-soft);
+    flex-shrink: 0;
+  }
+
+  .keys-empty__ph-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .keys-empty__ph-title {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--gx-line);
+  }
+
+  .keys-empty__ph-meta {
+    height: 6px;
+    width: 88px;
+    border-radius: 999px;
+    background: var(--gx-fill-soft);
+  }
+
+  .keys-empty__ph-status {
+    height: 7px;
+    border-radius: 999px;
+    background: var(--gx-fill-soft);
+  }
+
+  .keys-note {
+    align-self: stretch;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--gx-dim);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .keys-empty {
+      box-shadow: none;
+    }
+
+    .keys-empty__icon {
+      background: rgba(46, 139, 104, 0.2);
+      color: #5fd3b0;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .keys-empty {
+      padding: 32px 20px 24px;
+    }
+
+    .keys-empty__placeholders {
+      display: none;
+    }
   }
 
   /* ---- ".toolbar-row" ---- */

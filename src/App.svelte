@@ -29,13 +29,39 @@ SPDX-License-Identifier: Apache-2.0
     NOTIFICATIONS_STREAM_TOAST_ID,
     toast,
   } from "$lib/components/Toaster.svelte";
+  import {
+    onboarding,
+    OnboardingTour,
+    SetupGuide,
+  } from "$lib/features/onboarding/index.js";
   import { _ } from "svelte-i18n";
+  import { clearReturnTo, consumeReturnTo } from "$lib/utils/returnTo.js";
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
 
   const authState = getAuthState();
   const notifState = getNotificationsState();
+
+  // First-launch tour + Setup guide for the workspace's first Super Admin.
+  onboarding.init();
+
+  // Tour Step 2 points at "Control Hub" in the profile menu, which lives in the
+  // expanded sidebar (the drawer on phones): open it for that step, then put
+  // the sidebar back the way it was.
+  let sidebarBeforeTour: boolean | null = null;
+  $effect(() => {
+    const needsSidebar = onboarding.currentStep === "controlHub";
+    untrack(() => {
+      if (needsSidebar && sidebarCollapsed) {
+        sidebarBeforeTour = sidebarCollapsed;
+        sidebarCollapsed = false;
+      } else if (!needsSidebar && sidebarBeforeTour !== null) {
+        sidebarCollapsed = sidebarBeforeTour;
+        sidebarBeforeTour = null;
+      }
+    });
+  });
 
   $effect(() => {
     const uid = authState.user?.id;
@@ -165,11 +191,18 @@ SPDX-License-Identifier: Apache-2.0
   });
 
   async function handleLogout() {
+    clearReturnTo();
     await logout();
   }
 
   function handleLoginSuccess() {
-    // Auth state is already updated by setAuth
+    // Auth state is already updated by setAuth. The login screen renders at the
+    // page the user asked for, so they are already there — unless their session
+    // expired, which sent them to "/" and saved the page to come back to.
+    const returnTo = consumeReturnTo();
+    if (returnTo && returnTo !== window.location.pathname + window.location.search + window.location.hash) {
+      navigate(returnTo, { replace: true });
+    }
   }
 
   onDestroy(() => {
@@ -265,6 +298,11 @@ SPDX-License-Identifier: Apache-2.0
         <MainAreaRoutes />
       </div>
     </main>
+
+    {#if onboarding.guideVisible}
+      <SetupGuide />
+    {/if}
+    <OnboardingTour />
   {/if}
 </Router>
 

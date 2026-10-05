@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { components } from '../types/api.js';
+import { rememberReturnTo } from '../utils/returnTo.js';
 
 type User = components['schemas']['User'];
 
@@ -162,8 +163,9 @@ export async function handleUnauthorized(): Promise<string | null> {
     return getAccessTokenFn?.() ?? null;
   }
 
-  // Refresh failed, clear auth and redirect to login
+  // Refresh failed, clear auth and redirect to login — then back to this page.
   clearAuthFn?.();
+  rememberReturnTo();
   window.location.href = '/';
   return null;
 }
@@ -210,6 +212,8 @@ export async function request<T>(
     }
     // Refresh failed, clear auth and redirect to login
     clearAuthFn?.();
+    // Back to this page once the user signs in again.
+    rememberReturnTo();
     // Redirect to root path - app will show Login component when not authenticated
     window.location.href = '/';
     // Throw error to prevent further execution (though redirect will happen)

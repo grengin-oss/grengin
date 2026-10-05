@@ -43,6 +43,33 @@ export const aiEngines = new Map<string, AIEngineDetail>()
 export const departments = new Map<string, Department>()
 export const projects = new Map<string, Project>()
 
+/**
+ * The last user who signed in through an SSO provider (Google, Microsoft,
+ * Keycloak). Each SSO sign-in is a brand-new workspace creator: a Super Admin
+ * created before every fixture user, so the app's first-launch tour (ENGG-447)
+ * treats them as the first Super Admin on a first login. Email/password login
+ * clears it and signs in as the demo admin, as before.
+ */
+export const ssoSession: {
+  creator: (User & { is_super_admin: boolean; status: string; roles: string[]; provider: string }) | null
+} = {
+  creator: null,
+}
+
+/**
+ * Empty-workspace mode. A Microsoft (azure) SSO sign-in starts a brand-new,
+ * empty workspace: no chats, projects, files, departments, keys, teammates,
+ * analytics or audit history (see lib/emptyWorkspace.ts). Anything added during
+ * that session — a key, a user, a chat — sticks until the next sign-in.
+ * Any other sign-in brings the sample data back.
+ */
+export const workspace: { empty: boolean; users: Record<string, unknown>[]; roleIds: string[] } = {
+  empty: false,
+  users: [],
+  /** Custom roles created in the empty workspace. */
+  roleIds: [],
+}
+
 export let userSettings: UserSettings = {
   models: {
     tool_models: {
@@ -257,4 +284,41 @@ export const seedData = () => {
   ]
 
   seedProjects.forEach((p) => projects.set(p.id, p))
+}
+
+/** Drop every in-memory record and seed the sample data again. */
+export const resetStores = () => {
+  conversations.clear()
+  messages.clear()
+  files.clear()
+  aiEngines.clear()
+  departments.clear()
+  projects.clear()
+  seedData()
+}
+
+/**
+ * A fresh workspace: nothing but the engine registry, and no engine holds a
+ * key yet.
+ */
+export const emptyStores = () => {
+  resetStores()
+  conversations.clear()
+  messages.clear()
+  files.clear()
+  departments.clear()
+  projects.clear()
+  for (const [key, engine] of aiEngines) {
+    aiEngines.set(key, {
+      ...engine,
+      is_enabled: false,
+      is_default: false,
+      api_key_configured: false,
+      api_key_status: 'not_configured',
+      api_key_preview: null,
+      api_key_last_validated_at: null,
+      whitelisted_models: [],
+      default_model: null,
+    } as AIEngineDetail)
+  }
 }

@@ -1592,6 +1592,12 @@
         "added": "{name}이(가) 추가되었습니다",
         "failed": "사용자 지정 엔진을 추가하지 못했습니다"
       }
+    },
+    "noKeys": {
+      "title": "아직 연결된 AI 엔진이 없습니다",
+      "description": "OpenAI, Anthropic 등 사용 중인 공급자의 키를 추가하세요. 팀의 프롬프트가 이 키를 통해 전달됩니다.",
+      "addKey": "API 키 추가",
+      "securityNote": "API 키는 저장 시 암호화되며 저장 후에는 다시 표시되지 않습니다."
     }
   },
   "adminOverview": {

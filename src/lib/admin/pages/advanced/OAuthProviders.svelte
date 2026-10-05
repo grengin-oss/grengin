@@ -832,7 +832,7 @@ SPDX-License-Identifier: Apache-2.0
     </div>
   {:else}
     <!-- ".cards-list" — default -->
-    <div class="cards-list">
+    <div class="cards-list" data-tour="sso-providers">
       {#each providers as provider (provider.id)}
         {@const configured = isConfigured(provider)}
         {@const unrestricted = !provider.allowed_domains?.length}

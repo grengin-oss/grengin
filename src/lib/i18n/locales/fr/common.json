@@ -26,5 +26,69 @@
     "openMenu": "Ouvrir le menu",
     "closeMenu": "Fermer le menu",
     "notifications": "Notifications"
+  },
+  "onboarding": {
+    "tour": {
+      "stepOf": "Étape {current} sur {total}",
+      "skip": "Passer la visite",
+      "back": "Retour",
+      "welcome": {
+        "title": "Voici votre écran de discussion",
+        "body": "Tout commence ici — discutez avec les modèles de votre équipe, ou rendez-vous dans l'Espace de gestion pour terminer la configuration de votre espace de travail. Voyons l'essentiel, environ 2 minutes.",
+        "cta": "C'est parti"
+      },
+      "controlHub": {
+        "title": "Rendez-vous dans l'Espace de gestion",
+        "body": "Cliquez sur votre nom en bas à gauche, puis sélectionnez Espace de gestion. C'est là que vous connectez des modèles d'IA, ajoutez des départements, invitez votre équipe et configurez la connexion.",
+        "cta": "M'y emmener"
+      },
+      "apiKey": {
+        "title": "Ajoutez votre première clé API",
+        "body": "Cliquez ici pour connecter un fournisseur comme OpenAI ou Anthropic. Collez la clé générée depuis son tableau de bord — nous la chiffrons au repos.",
+        "cta": "Cliquer pour continuer"
+      },
+      "invite": {
+        "title": "Inviter des utilisateurs",
+        "body": "Ajoutez des personnes par e-mail pour les faire entrer dans votre espace de travail. Cette étape est facultative — passez-la si vous explorez seul pour l'instant.",
+        "skip": "Passer pour le moment",
+        "cta": "Continuer"
+      },
+      "signIn": {
+        "title": "Choisissez comment votre équipe se connecte",
+        "body": "Par défaut, le proxy Grengin gère la connexion pour vous — rien à configurer. Si vous préférez utiliser votre propre application OAuth, basculez ici et ajoutez votre ID client et votre secret.",
+        "cta": "Compris, continuer"
+      },
+      "prompt": {
+        "title": "Envoyez votre premier prompt",
+        "body": "Tapez n'importe quoi ici — une question, une tâche, un document à résumer, puis envoyez. Votre espace de travail est prêt — c'est la dernière étape.",
+        "cta": "Terminer la visite"
+      }
+    },
+    "guide": {
+      "label": "Guide de configuration",
+      "showChecklist": "Afficher la liste de configuration",
+      "hideChecklist": "Masquer la liste de configuration",
+      "close": "Masquer le guide de configuration",
+      "title": "Terminez la configuration",
+      "twoLeft": "Encore 2 petites choses, et tout est prêt.",
+      "oneLeft": "Encore 1 petite chose, et tout est prêt.",
+      "progress": "Progression",
+      "done": "Terminé",
+      "apiKey": {
+        "title": "Ajouter une clé API",
+        "description": "Connectez un fournisseur dans Moteurs IA pour que votre équipe puisse commencer à discuter.",
+        "done": "Clé {provider} connectée dans Moteurs IA.",
+        "doneGeneric": "Clé API connectée dans Moteurs IA.",
+        "action": "Aller à Moteurs IA"
+      },
+      "teammate": {
+        "title": "Inviter un collègue",
+        "description": "Ajoutez quelqu'un d'autre que vous à votre espace de travail.",
+        "done": "Un collègue a rejoint votre espace de travail.",
+        "action": "Aller à l'Espace de gestion"
+      },
+      "resume": "Reprendre la visite guidée",
+      "later": "Me le rappeler plus tard"
+    }
   }
 }

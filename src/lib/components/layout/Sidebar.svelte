@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0
   import { PROMPTS_FEATURE_ENABLED } from "../../config/features.js";
   import { getNotificationsState } from "../../features/notifications/index.js";
   import AlertsPopover from "../../features/notifications/AlertsPopover.svelte";
+  import { onboarding } from "../../features/onboarding/onboardingState.svelte.js";
   import SidebarSearchModal from "./SidebarSearchModal.svelte";
 
   interface Props {
@@ -38,6 +39,10 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   let showUserMenu = $state(false);
+  // Onboarding tour Step 2 holds the menu open to point at "Control Hub".
+  let userMenuOpen = $derived(
+    showUserMenu || onboarding.currentStep === "controlHub",
+  );
   let userMenuElement: HTMLElement;
   let userCollapsed = $state(false);
   let showSearchModal = $state(false);
@@ -459,8 +464,11 @@ SPDX-License-Identifier: Apache-2.0
     {:else}
       <Link
         to="/admin"
-        class="us-item"
+        class={onboarding.currentStep === "controlHub"
+          ? "us-item us-item--tour"
+          : "us-item"}
         onclick={handleUserMenuNavigate}
+        data-tour="control-hub"
         role="menuitem"
         aria-label={$_("sidebar.admin")}
         title={$_("sidebar.admin")}
@@ -872,7 +880,8 @@ SPDX-License-Identifier: Apache-2.0
   <div
     class="sidebar-footer"
     class:sidebar-footer--rail={isCollapsed}
-    class:expanded={showUserMenu}
+    class:expanded={userMenuOpen}
+    data-tour="user-menu"
     bind:this={userMenuElement}
   >
     {#if !isCollapsed}
@@ -880,7 +889,7 @@ SPDX-License-Identifier: Apache-2.0
         class="us-menu"
         role="menu"
         aria-label={$_("sidebar.userMenu") || "User menu"}
-        aria-hidden={!showUserMenu}
+        aria-hidden={!userMenuOpen}
         onkeydown={handleUserMenuKeydown}
       >
         {@render userMenuItems()}
@@ -892,7 +901,7 @@ SPDX-License-Identifier: Apache-2.0
       class:user-row--rail={isCollapsed}
       onclick={toggleUserMenu}
       aria-label={$_("sidebar.userMenu")}
-      aria-expanded={showUserMenu}
+      aria-expanded={userMenuOpen}
       title={user?.name || $_("sidebar.userMenu")}
     >
       <span class="user-info">
@@ -928,7 +937,7 @@ SPDX-License-Identifier: Apache-2.0
 
 <!-- The 60px rail is too narrow to hold the 272px menu and the shell clips its
      overflow, so there the same menu is anchored beside the rail instead. -->
-{#if isCollapsed && showUserMenu}
+{#if isCollapsed && userMenuOpen}
   <div class="us-menu us-menu--rail" bind:this={railMenuElement}>
     <div
       class="us-menu__inner"
@@ -1990,6 +1999,19 @@ SPDX-License-Identifier: Apache-2.0
     background: var(--gx-fill-soft);
     transform: none;
     box-shadow: none;
+  }
+
+  /* Onboarding tour Step 2 — Figma "menu-item-control-hub". */
+  .us-menu :global(.us-item--tour),
+  .us-menu :global(.us-item--tour:hover) {
+    background: rgba(82, 217, 155, 0.37);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .us-menu :global(.us-item--tour),
+    .us-menu :global(.us-item--tour:hover) {
+      background: rgba(82, 217, 155, 0.22);
+    }
   }
 
   .us-menu :global(.us-item:focus-visible) {

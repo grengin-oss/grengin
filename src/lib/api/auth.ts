@@ -3,6 +3,7 @@
 
 import type { components } from '../types/api.js';
 import { API_BASE, ApiError, request, parseErrorDetail } from './client.js';
+import { rememberReturnTo } from '../utils/returnTo.js';
 
 type User = components['schemas']['User'];
 
@@ -51,6 +52,8 @@ export async function initiateOAuth(provider: string, redirectUri?: string): Pro
 
   // Store provider in sessionStorage so callback can retrieve it
   sessionStorage.setItem('oauth_provider', provider);
+  // The login screen renders at the page the user asked for; come back to it.
+  rememberReturnTo();
 
   const query = params.toString();
   const url = `${API_BASE}/auth/${provider}${query ? `?${query}` : ''}`;

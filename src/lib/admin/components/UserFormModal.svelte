@@ -247,6 +247,7 @@ SPDX-License-Identifier: Apache-2.0
 
 <Modal
   {isOpen}
+  variant="organization"
   title={isCreate
     ? $_("admin.users.createNewUser")
     : $_("admin.users.editUser")}
@@ -579,7 +580,7 @@ SPDX-License-Identifier: Apache-2.0
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn" onclick={onClose}>
+        <button type="button" class="btn-secondary" onclick={onClose}>
           {$_("common.cancel")}
         </button>
         <button
@@ -605,6 +606,7 @@ SPDX-License-Identifier: Apache-2.0
 
 <Modal
   isOpen={showRemoveRoleConfirm}
+  variant="organization"
   title={$_("admin.users.confirmRemoveRoleTitle")}
   onclose={cancelRemoveAssignment}
   descriptionId="remove-role-modal-desc"
@@ -617,7 +619,7 @@ SPDX-License-Identifier: Apache-2.0
         })}
       </p>
       <div class="modal-actions">
-        <button class="btn" type="button" onclick={cancelRemoveAssignment}>
+        <button class="btn-secondary" type="button" onclick={cancelRemoveAssignment}>
           {$_("common.cancel")}
         </button>
         <button
@@ -635,416 +637,414 @@ SPDX-License-Identifier: Apache-2.0
 </Modal>
 
 <style>
+  /* app.css gives every button backdrop-filter: blur(); on the flat
+     Organization surfaces that repaints the 1px hairlines behind them, so
+     switch it off (as DepartmentFormModal does). */
+  button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* Organization design (organization.html #createUsersModal / .edit-modal),
+     shared with DepartmentFormModal: 424px card, 24px rhythm, 16px between
+     fields, 37px fields. The Modal shell paints the card, title and close. */
   .user-form {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xl);
+    gap: 16px;
+    font-family: var(--gx-font);
   }
 
   .form-group {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 6px;
+    margin: 0;
   }
 
   .form-group label,
   .form-label {
+    display: flex;
+    align-items: center;
+    gap: 2px;
     font-weight: 600;
-    color: var(--text-primary);
-    font-size: 0.9375rem;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
   }
 
   .required {
-    color: var(--brand-red);
+    color: var(--gx-org-danger);
+  }
+
+  .form-group input,
+  .role-search-input {
+    width: 100%;
+    height: 37px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    padding: 10px 14px;
+    font-family: inherit;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 100%;
+    color: var(--gx-slate-900);
+    transition: box-shadow 120ms ease;
+  }
+
+  .form-group input::placeholder,
+  .role-search-input::placeholder {
+    color: var(--gx-slate-400);
+  }
+
+  .form-group input:focus,
+  .role-search-input:focus {
+    outline: none;
+    box-shadow: inset 0 0 0 1px var(--gx-org-brand-alt);
   }
 
   .form-group input.error {
-    border-color: var(--brand-red);
+    box-shadow: inset 0 0 0 1px var(--gx-org-danger);
+  }
+
+  .form-group input:disabled {
+    background: var(--gx-org-field-bg);
+    color: var(--gx-slate-500);
+    cursor: not-allowed;
   }
 
   .error-text {
-    color: var(--brand-red);
-    font-size: 0.8125rem;
+    font-size: 12px;
+    line-height: 130%;
+    color: var(--gx-org-danger);
+  }
+
+  /* ----- Actions ----- */
+  .form-actions,
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
   }
 
   .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-md);
-    padding-top: var(--space-lg);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 8px;
   }
 
-  .remove-role-confirm {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-    padding: var(--space-md) 0;
-  }
-
-  .remove-role-warning {
-    color: var(--brand-red);
+  .btn-secondary,
+  .btn-primary,
+  .btn-danger {
+    height: 35px;
+    border: 0;
+    border-radius: 8px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
     font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background-color 120ms ease;
   }
 
-  .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-md);
+  .btn-secondary {
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    color: var(--gx-slate-500);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--gx-org-track);
+    transform: none;
+  }
+
+  .btn-primary {
+    background: var(--gx-org-brand);
+    color: #fff;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--gx-org-brand-hover);
+    transform: none;
   }
 
   .btn-danger {
-    background: var(--brand-red);
-    color: white;
-    border: none;
-    padding: var(--space-xs) var(--space-md);
-    border-radius: var(--radius-md);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s ease;
+    background: var(--gx-org-danger);
+    color: #fff;
   }
 
-  .btn-danger:hover {
-    background: color-mix(in oklab, var(--brand-red) 90%, black);
+  .btn-danger:hover:not(:disabled) {
+    background: var(--gx-org-danger-hover);
   }
 
-  .roles-group {
-    gap: var(--space-sm);
+  .btn-secondary:disabled,
+  .btn-primary:disabled,
+  .btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
+  /* ----- Remove-role confirmation ----- */
+  .remove-role-confirm {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    font-family: var(--gx-font);
+  }
+
+  .remove-role-warning {
+    margin: 0;
+    font-size: 14px;
+    line-height: 150%;
+    color: var(--gx-slate-500);
+  }
+
+  /* ----- Roles (edit mode) ----- */
   .roles-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-md);
+    gap: 12px;
   }
 
-  .btn-role-toggle {
+  .btn-role-toggle,
+  .role-search-close,
+  .input-clear-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: var(--gx-org-track);
+    color: var(--gx-slate-500);
     cursor: pointer;
-    transition: color 0.2s ease;
-    padding: var(--space-xs);
+    transition: background-color 120ms ease;
   }
 
-  .btn-role-toggle:hover {
-    color: var(--text-primary);
+  .btn-role-toggle:hover,
+  .role-search-close:hover,
+  .input-clear-btn:hover {
+    background: var(--gx-hair);
   }
 
-  .btn-role-toggle svg {
-    width: 18px;
-    height: 18px;
+  .btn-role-toggle svg,
+  .role-search-close svg,
+  .input-clear-btn svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
   }
 
-  .roles-applied {
+  .roles-applied,
+  .roles-selector,
+  .department-search-results {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 6px;
   }
 
-  .roles-empty {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
+  .roles-empty,
+  .department-search-loading,
+  .department-search-empty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--gx-slate-500);
   }
 
   .roles-loading {
     display: flex;
-    align-items: center;
     justify-content: center;
-    padding: var(--space-sm) 0;
+    padding: 8px 0;
   }
 
-  .role-chip {
+  .role-chip,
+  .role-option,
+  .department-search-result {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-md);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-md);
-    background: var(--surface-subtle);
-    border: 1px solid var(--surface-border);
+    gap: 12px;
+    min-height: 37px;
+    padding: 6px 8px 6px 14px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    transition: background-color 120ms ease;
+  }
+
+  .role-option:hover,
+  .department-search-result:hover {
+    background: var(--gx-org-row-hover);
   }
 
   .role-chip-meta {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: 6px;
+    min-width: 0;
   }
 
-  .role-chip-name {
+  .role-chip-name,
+  .role-name,
+  .department-search-name {
+    font-size: 13px;
     font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .role-chip-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
+    color: var(--gx-slate-900);
   }
 
   .role-chip-badge {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    padding: 0 var(--space-xs);
-    border-radius: var(--radius-md);
-    background: rgba(var(--brand-green-rgb), 0.12);
-    border: 1px solid color-mix(in oklab, var(--brand-green) 60%, transparent);
-    font-size: 0.6875rem;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: var(--gx-org-brand-tint);
+    font-size: 11px;
     font-weight: 600;
-    color: var(--brand-green-accent);
+    color: var(--gx-org-brand);
+  }
+
+  .role-chip-actions,
+  .role-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .btn-role-add,
+  .btn-role-scope,
+  .btn-remove-role,
+  .btn-department-select {
+    height: 26px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gx-org-brand-alt);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+
+  .btn-role-add:hover:not(:disabled),
+  .btn-role-scope:hover:not(:disabled),
+  .btn-department-select:hover {
+    background: var(--gx-org-brand-alt-tint);
+    color: var(--gx-org-brand);
   }
 
   .btn-remove-role {
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
-    cursor: pointer;
-    transition: color 0.2s ease;
+    color: var(--gx-org-danger);
   }
 
   .btn-remove-role:hover {
-    color: var(--text-primary);
+    background: var(--gx-org-danger-bg);
+  }
+
+  .btn-role-add:disabled,
+  .btn-role-scope:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .btn-add-role {
-    align-self: flex-end;
-    border: 1px solid var(--surface-border);
-    background: var(--surface-card);
-    color: var(--text-primary);
-    padding: var(--space-xs) var(--space-md);
-    border-radius: var(--radius-md);
-    font-size: 0.8125rem;
+    align-self: flex-start;
+    height: 30px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    font-family: inherit;
+    font-size: 12px;
     font-weight: 600;
+    color: var(--gx-slate-900);
     cursor: pointer;
-    transition: all 0.2s ease;
-    padding: var(--space-xs) var(--space-md);
+    transition: background-color 120ms ease;
   }
 
   .btn-add-role:hover {
-    background: var(--surface-subtle);
-  }
-
-  .role-search {
-    position: relative;
+    background: var(--gx-org-track);
   }
 
   .role-search-panel {
-    background: var(--surface-card-interactive);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--surface-border);
-    padding: var(--space-sm);
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 8px;
+    padding: 8px;
+    border-radius: 10px;
+    background: var(--gx-org-field-bg);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
   }
 
-  .role-search-input {
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    padding-right: 2rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--surface-border);
-    background: var(--surface-card);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-  }
-
-  .role-search-close {
-    position: absolute;
-    top: 50%;
-    right: var(--space-sm);
-    transform: translateY(-50%);
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: color 0.2s ease;
-    padding: var(--space-xs);
-  }
-
-  .role-search-close:hover {
-    color: var(--text-primary);
-  }
-
-  .role-search-close svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .department-search {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
+  .role-search,
   .input-with-clear {
     position: relative;
     display: flex;
     align-items: center;
   }
 
+  .role-search-input,
   .input-with-clear input {
-    width: 100%;
-    padding-right: 2rem;
+    padding-inline-end: 40px;
   }
 
+  .role-search-close,
   .input-clear-btn {
     position: absolute;
-    right: var(--space-sm);
+    inset-inline-end: 8px;
     top: 50%;
     transform: translateY(-50%);
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: color 0.2s ease;
-    padding: var(--space-xs);
   }
 
-  .input-clear-btn:hover {
-    color: var(--text-primary);
+  .roles-selector,
+  .department-search-results {
+    max-height: 220px;
+    overflow-y: auto;
   }
 
-  .input-clear-btn svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .department-search-loading,
-  .department-search-empty {
+  /* ----- Department search ----- */
+  .department-search {
     display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
+    flex-direction: column;
+    gap: 8px;
   }
 
   .department-search-results {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    max-height: 200px;
-    overflow-y: auto;
-  }
-
-  .department-search-result {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-md);
-    background: var(--surface-subtle);
-    border: 1px solid var(--surface-border);
-    transition: background 0.2s ease, border-color 0.2s ease;
   }
 
   .department-search-info {
     display: flex;
     flex-direction: column;
-    gap: 0.1rem;
-  }
-
-  .department-search-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary);
+    gap: 2px;
+    min-width: 0;
   }
 
   .department-search-description {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
+    font-size: 12px;
+    color: var(--gx-slate-500);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .btn-department-select {
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: color 0.2s ease;
-  }
-
-  .btn-department-select:hover {
-    color: var(--text-primary);
-  }
-
-  .roles-selector {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    max-height: 220px;
-    overflow-y: auto;
-  }
-
-  .role-option {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-md);
-    background: var(--surface-subtle);
-    border: 1px solid var(--surface-border);
-  }
-
-  .role-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .role-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-  }
-
-  .btn-role-add,
-  .btn-role-scope {
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: color 0.2s ease;
-  }
-
-  .btn-role-add:disabled,
-  .btn-role-scope:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .btn-role-add:hover,
-  .btn-role-scope:hover {
-    color: var(--text-primary);
-  }
-
+  /* ----- Keyboard focus ----- */
   .btn-role-toggle:focus-visible,
   .btn-remove-role:focus-visible,
   .btn-add-role:focus-visible,
@@ -1053,16 +1053,10 @@ SPDX-License-Identifier: Apache-2.0
   .btn-department-select:focus-visible,
   .btn-role-add:focus-visible,
   .btn-role-scope:focus-visible,
-  .form-actions .btn:focus-visible,
-  .form-actions .btn-primary:focus-visible,
+  .btn-secondary:focus-visible,
+  .btn-primary:focus-visible,
   .btn-danger:focus-visible {
-    outline: 2px solid var(--brand);
+    outline: 2px solid var(--gx-org-brand-alt);
     outline-offset: 2px;
   }
-
-  .form-group input:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-  }
-
 </style>

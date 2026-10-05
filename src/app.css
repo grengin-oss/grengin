@@ -426,6 +426,14 @@
   --gx-ac-dept-bg: rgb(236, 253, 245);
   /* Also the "Built-in" tag ink on the Skills page. */
   --gx-ac-dept-fg: rgb(4, 120, 87);
+  /* Access Control permissions matrix (node 1772:15028). */
+  --gx-ac-mx-note-bg: rgb(237, 244, 255);
+  --gx-ac-mx-note-ring: rgb(207, 224, 255);
+  --gx-ac-mx-note-fg: rgb(46, 103, 209);
+  --gx-ac-mx-head-fg: rgb(93, 101, 117);
+  --gx-ac-mx-ink: rgb(22, 27, 38);
+  --gx-ac-mx-none: rgb(152, 162, 179);
+  --gx-ac-mx-scope-ring: rgb(215, 215, 215);
   --gx-ac-card-avatar-bg: rgb(220, 229, 244);
   --gx-ac-card-avatar-fg: rgb(17, 41, 70);
   --gx-ac-modal-scrim: rgba(15, 23, 42, 0.45);
@@ -814,6 +822,13 @@
     --gx-ac-system-fg: #93aeea;
     --gx-ac-dept-bg: rgba(4, 120, 87, 0.22);
     --gx-ac-dept-fg: #5fd6ab;
+    --gx-ac-mx-note-bg: rgba(46, 103, 209, 0.16);
+    --gx-ac-mx-note-ring: rgba(112, 155, 218, 0.32);
+    --gx-ac-mx-note-fg: #9cc0f5;
+    --gx-ac-mx-head-fg: #a8b1bd;
+    --gx-ac-mx-ink: #f1f4f8;
+    --gx-ac-mx-none: #6b7585;
+    --gx-ac-mx-scope-ring: rgba(255, 255, 255, 0.18);
     --gx-ac-card-avatar-bg: rgba(112, 155, 218, 0.24);
     --gx-ac-card-avatar-fg: #cfe0f7;
     --gx-ac-modal-scrim: rgba(0, 0, 0, 0.62);
