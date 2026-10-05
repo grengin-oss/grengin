@@ -50,27 +50,37 @@ jobs:
           fi
           echo "commit=${BACKEND_COMMIT}" >> "${GITHUB_OUTPUT}"
 
-      - name: Checkout pinned backend
-        uses: actions/checkout@v4
-        with:
-          repository: grengin-oss/grengin-api
-          ref: ${{ steps.backend.outputs.commit }}
-          path: .release-work/grengin-api
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build static backend binaries
+      - name: Extract verified published backend binaries
+        env:
+          IMAGE_REF: ghcr.io/grengin-oss/grengin-api:${{ env.RELEASE_TAG }}
         shell: bash
         run: |
-          docker buildx build \
-            --platform "${{ matrix.platform }}" \
-            --file release/backend-binaries.Dockerfile \
-            --provenance=false \
-            --cache-from "type=gha,scope=grengin-backend-${{ matrix.architecture }}" \
-            --cache-to "type=gha,mode=max,scope=grengin-backend-${{ matrix.architecture }}" \
-            --output "type=local,dest=${RUNNER_TEMP}/rootfs" \
-            .release-work/grengin-api
+          RELEASE_VERSION="${RELEASE_TAG#v}"
+          PROJECT_VERSION="$(jq -r '.version' package.json)"
+          if [[ "${RELEASE_VERSION}" != "${PROJECT_VERSION}" ]]; then
+            echo "Release ${RELEASE_VERSION} does not match package.json ${PROJECT_VERSION}" >&2
+            exit 1
+          fi
+
+          docker pull --platform "${{ matrix.platform }}" "${IMAGE_REF}"
+          IMAGE_REVISION="$(docker image inspect \
+            --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' \
+            "${IMAGE_REF}")"
+          if [[ "${IMAGE_REVISION}" != "${{ steps.backend.outputs.commit }}" ]]; then
+            echo "Backend image revision ${IMAGE_REVISION} does not match pinned commit ${{ steps.backend.outputs.commit }}" >&2
+            exit 1
+          fi
+
+          mkdir -p "${RUNNER_TEMP}/rootfs/usr/local/bin"
+          CONTAINER_ID="$(docker create "${IMAGE_REF}")"
+          trap 'docker rm -f "${CONTAINER_ID}" >/dev/null 2>&1 || true' EXIT
+          docker cp "${CONTAINER_ID}:/usr/local/bin/app" \
+            "${RUNNER_TEMP}/rootfs/usr/local/bin/grengin-api"
+          docker cp "${CONTAINER_ID}:/usr/local/bin/sqlx-mcp" \
+            "${RUNNER_TEMP}/rootfs/usr/local/bin/sqlx-mcp"
+          chmod 0755 \
+            "${RUNNER_TEMP}/rootfs/usr/local/bin/grengin-api" \
+            "${RUNNER_TEMP}/rootfs/usr/local/bin/sqlx-mcp"
           tar -C "${RUNNER_TEMP}/rootfs" -czf \
             "${RUNNER_TEMP}/grengin-backend-${{ matrix.architecture }}.tar.gz" .
 
