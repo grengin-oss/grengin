@@ -21,10 +21,17 @@ export function groupPermissionsByDomain(permissions: Permission[]): PermissionG
   return { permissionsByDomain, domainOrder };
 }
 
+// Words that stay fully upper-case in domain labels ("ai_platform" → "AI Platform").
+const DOMAIN_ACRONYMS = new Set(["ai", "mcp", "sso", "api", "llm"]);
+
 export function formatDomain(domain: string): string {
   return domain
     .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((word) =>
+      DOMAIN_ACRONYMS.has(word.toLowerCase())
+        ? word.toUpperCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+    )
     .join(" ");
 }
 

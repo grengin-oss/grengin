@@ -630,7 +630,13 @@
         "scopeableBadge": "Scopeable",
         "scopeableBadgeTitle": "Can be scoped to departments",
         "globalBadge": "Global",
-        "domainCount": "{count} permissions"
+        "domainCount": "{count} permissions",
+        "matrixNote": "The matrix shows which permissions are granted to each role. Manage role assignments from the Roles page.",
+        "matrixGranted": "Granted",
+        "matrixNotGranted": "Not granted",
+        "matrixCellLabel": "{role}: {permission}",
+        "matrixLoadingRoles": "Loading roles…",
+        "matrixNoRoles": "No roles have been created yet, so there is nothing to compare."
       },
       "roleCount": "{count} roles",
       "permissionCount": "{count} permissions",
@@ -646,7 +652,8 @@
       "morePermissions": "+ {count} more",
       "usersStatLabel": "Users",
       "showLess": "Show less",
-      "footerSummary": "{count} permissions selected across {categories} categories"
+      "footerSummary": "{count} permissions selected across {categories} categories",
+      "viewMatrix": "Matrix"
     },
     "mcpServers": {
       "title": "MCP Servers",
@@ -1403,6 +1410,46 @@
           "newVersion": "Grengin is back, now running v{version}."
         }
       }
+    },
+    "permissionDescriptions": {
+      "ai_platform": {
+        "manage": "Configure AI engines and models",
+        "view": "View AI engine configurations"
+      },
+      "analytics": {
+        "view": "View usage analytics and reports"
+      },
+      "audit_logs": {
+        "view": "View system audit trail"
+      },
+      "budget": {
+        "view": "View budget allocations and usage",
+        "allocate": "Allocate and adjust department budgets"
+      },
+      "departments": {
+        "view": "View department structure and members",
+        "manage": "Create, edit, and manage departments"
+      },
+      "mcp_servers": {
+        "manage": "Manage MCP server configurations",
+        "admin": "Manage MCP server settings and deployments",
+        "delegate": "Delegate MCP server access to departments"
+      },
+      "roles": {
+        "view": "View roles and their permissions",
+        "manage": "Create, edit, and delete roles",
+        "assign": "Assign roles to users"
+      },
+      "skills": {
+        "view": "View available skills"
+      },
+      "sso_providers": {
+        "view": "View SSO provider configurations"
+      },
+      "users": {
+        "view": "View users and their roles",
+        "manage": "Invite, edit, and deactivate users"
+      }
     }
   },
   "permissions": {
@@ -1684,6 +1731,12 @@
         "added": "{name} added successfully",
         "failed": "Failed to add the custom engine"
       }
+    },
+    "noKeys": {
+      "title": "No AI engines connected yet",
+      "description": "Add a key from OpenAI, Anthropic or any provider you use — your team's prompts route through it.",
+      "addKey": "Add API key",
+      "securityNote": "API keys are encrypted at rest and never shown again after saving."
     }
   },
   "adminOverview": {

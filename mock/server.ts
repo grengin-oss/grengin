@@ -4,6 +4,7 @@
 import express from 'express'
 import cors from 'cors'
 import { seedData } from './lib/store.js'
+import { emptyWorkspace } from './lib/emptyWorkspace.js'
 import authRoutes from './routes/auth.js'
 import chatRoutes from './routes/chat.js'
 import filesRoutes from './routes/files.js'
@@ -31,6 +32,9 @@ const app = express()
 app.use(cors())
 app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ limit: '50mb', extended: true }))
+
+// Microsoft sign-in: answer as a brand-new, empty workspace
+app.use(emptyWorkspace)
 
 // Mount routes
 app.use(authRoutes)

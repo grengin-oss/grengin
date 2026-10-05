@@ -1592,6 +1592,12 @@
         "added": "{name} adicionado com sucesso",
         "failed": "Falha ao adicionar o motor personalizado"
       }
+    },
+    "noKeys": {
+      "title": "Nenhum motor de IA conectado ainda",
+      "description": "Adicione uma chave da OpenAI, Anthropic ou de qualquer provedor que você use — os prompts da sua equipe passam por ela.",
+      "addKey": "Adicionar chave de API",
+      "securityNote": "As chaves de API são criptografadas em repouso e nunca mais são exibidas depois de salvas."
     }
   },
   "adminOverview": {

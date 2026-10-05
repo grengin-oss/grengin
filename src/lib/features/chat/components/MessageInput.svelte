@@ -1130,7 +1130,7 @@ SPDX-License-Identifier: Apache-2.0
        .image-mode-banner). Banner visibility is derived from the model that is
        really selected, so the composer can never advertise a mode the request
        will not use. -->
-  <div class="composer-wrap">
+  <div class="composer-wrap" data-tour="composer">
     {#if imageModelSelected}
       <div class="image-mode-banner">
         <span class="image-mode-banner__left">

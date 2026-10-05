@@ -26,5 +26,69 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "notifications": "Notifications"
+  },
+  "onboarding": {
+    "tour": {
+      "stepOf": "Step {current} of {total}",
+      "skip": "Skip tour",
+      "back": "Back",
+      "welcome": {
+        "title": "This is your chat screen",
+        "body": "Everything starts here — chat with your team's models, or head into Control Hub to finish setting up your workspace. Let's walk through the essentials, about 2 minutes.",
+        "cta": "Let's go"
+      },
+      "controlHub": {
+        "title": "Head into Control Hub",
+        "body": "Click your name in the bottom-left corner, then select Control Hub. It's where you'll connect AI models, add departments, invite your team and set up sign-in.",
+        "cta": "Take me there"
+      },
+      "apiKey": {
+        "title": "Add your first API key",
+        "body": "Click here to connect a provider like OpenAI or Anthropic. Paste in the key you generated from their dashboard — we encrypt it at rest.",
+        "cta": "Click to continue"
+      },
+      "invite": {
+        "title": "Invite Users",
+        "body": "Add people by email to bring them into your workspace. This is optional — skip it if you're exploring solo for now.",
+        "skip": "Skip for now",
+        "cta": "Continue"
+      },
+      "signIn": {
+        "title": "Choose how your team signs in",
+        "body": "By default, the Grengin proxy handles sign-in for you — nothing to set up. If you'd rather use your own OAuth app, switch here and add your client ID and secret.",
+        "cta": "Got it, continue"
+      },
+      "prompt": {
+        "title": "Send your first prompt",
+        "body": "Type anything here — a question, a task, a document to summarize and hit send. Your workspace is set up — this is the last step.",
+        "cta": "Finish tour"
+      }
+    },
+    "guide": {
+      "label": "Setup guide",
+      "showChecklist": "Show setup checklist",
+      "hideChecklist": "Hide setup checklist",
+      "close": "Hide setup guide",
+      "title": "Finish setting up",
+      "twoLeft": "2 quick things, then you're all set.",
+      "oneLeft": "1 quick thing left, then you're all set.",
+      "progress": "Progress",
+      "done": "Done",
+      "apiKey": {
+        "title": "Add an API key",
+        "description": "Connect a provider in AI Engines so your team can start chatting.",
+        "done": "{provider} key connected in AI Engines.",
+        "doneGeneric": "API key connected in AI Engines.",
+        "action": "Go to AI Engines"
+      },
+      "teammate": {
+        "title": "Invite a teammate",
+        "description": "Add someone besides yourself to your workspace.",
+        "done": "A teammate has joined your workspace.",
+        "action": "Go to Control Hub"
+      },
+      "resume": "Resume guided tour",
+      "later": "Remind me later"
+    }
   }
 }

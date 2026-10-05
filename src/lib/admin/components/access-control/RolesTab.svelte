@@ -109,10 +109,14 @@ SPDX-License-Identifier: Apache-2.0
     null,
   );
 
-  async function loadRoleUsers(roleId: string, page = 1) {
+  /**
+   * Loads one API page of a role's users. `append` keeps the rows already shown
+   * — ".show-more" grows the list in place rather than paging it — and a failed
+   * append leaves those rows alone instead of wiping them.
+   */
+  async function loadRoleUsers(roleId: string, page = 1, append = false) {
     if (roleUsersLoading[roleId]) return;
     roleUsersLoading = { ...roleUsersLoading, [roleId]: true };
-    roleUsersPage = { ...roleUsersPage, [roleId]: page };
     try {
       const offset = (page - 1) * PAGE_SIZE;
       const response = await getUsers({
@@ -122,19 +126,55 @@ SPDX-License-Identifier: Apache-2.0
         sort: "updated_at",
         ascending: false,
       });
-      roleUsers = { ...roleUsers, [roleId]: response.users };
+      const prev = append ? (roleUsers[roleId] ?? []) : [];
+      const seen = new Set(prev.map((u) => u.id));
+      roleUsers = {
+        ...roleUsers,
+        [roleId]: [...prev, ...response.users.filter((u) => !seen.has(u.id))],
+      };
       roleUsersTotal = { ...roleUsersTotal, [roleId]: response.total };
+      roleUsersPage = { ...roleUsersPage, [roleId]: page };
     } catch (err) {
       const msg =
         err instanceof ApiError
           ? getLocalizedError(err, "description", $_)
           : (err as Error).message;
       toast.error(msg || $_("admin.accessControl.failedToLoadUsers"));
-      roleUsers = { ...roleUsers, [roleId]: [] };
-      roleUsersTotal = { ...roleUsersTotal, [roleId]: 0 };
+      if (!append) {
+        roleUsers = { ...roleUsers, [roleId]: [] };
+        roleUsersTotal = { ...roleUsersTotal, [roleId]: 0 };
+      }
     } finally {
       roleUsersLoading = { ...roleUsersLoading, [roleId]: false };
     }
+  }
+
+  /**
+   * After a mutation, refetch as many pages as were showing so the list keeps
+   * its length (offsets shift when a user is added or removed, so it restarts
+   * from the first page rather than patching one page in place).
+   */
+  async function reloadRoleUsers(roleId: string) {
+    const pages = roleUsersPage[roleId] ?? 1;
+    await loadRoleUsers(roleId, 1);
+    for (let page = 2; page <= pages; page += 1) {
+      const loaded = (roleUsers[roleId] ?? []).length;
+      if (loaded >= (roleUsersTotal[roleId] ?? 0)) break;
+      await loadRoleUsers(roleId, page, true);
+    }
+  }
+
+  function showMoreUsers(roleId: string) {
+    loadRoleUsers(roleId, (roleUsersPage[roleId] ?? 1) + 1, true);
+  }
+
+  /** Collapses a grown list back to its first page — no refetch needed. */
+  function showFewerUsers(roleId: string) {
+    roleUsers = {
+      ...roleUsers,
+      [roleId]: (roleUsers[roleId] ?? []).slice(0, PAGE_SIZE),
+    };
+    roleUsersPage = { ...roleUsersPage, [roleId]: 1 };
   }
 
   function roleInitials(name: string): string {
@@ -142,6 +182,12 @@ SPDX-License-Identifier: Apache-2.0
     if (parts.length === 0) return "?";
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  /** ".role-card" avatars use the name's first two letters ("SU", "HR"). */
+  function roleCardInitials(name: string): string {
+    const compact = name.trim().replace(/\s+/g, "");
+    return compact ? compact.slice(0, 2).toUpperCase() : "?";
   }
 
   /**
@@ -173,8 +219,13 @@ SPDX-License-Identifier: Apache-2.0
     }
   });
 
-  /** ".role-card__tags" — the domains a role touches, deduped and ordered. */
+  /**
+   * ".role-card__tags" — the domains a role touches, deduped and ordered. The
+   * row is a single 21px line: up to three tags fit, so three show in full and
+   * anything longer shows two plus a "+N more" count.
+   */
   const GRID_TAG_LIMIT = 2;
+  const GRID_TAG_MAX = 3;
   function roleDomains(role: Role): string[] {
     return Object.keys(getRolePermissionsByDomain(role));
   }
@@ -184,7 +235,7 @@ SPDX-License-Identifier: Apache-2.0
    * with a "+ N MORE" chip. Here that chip is a real toggle so the rest is
    * reachable, and it collapses again.
    */
-  const PERM_CARD_LIMIT = 4;
+  const PERM_CARD_LIMIT = 5;
   let expandedPermCards = $state<Record<string, boolean>>({});
 
   function togglePermCards(roleId: string) {
@@ -192,11 +243,6 @@ SPDX-License-Identifier: Apache-2.0
       ...expandedPermCards,
       [roleId]: !(expandedPermCards[roleId] ?? false),
     };
-  }
-
-  function getRoleTotalPages(roleId: string): number {
-    const total = roleUsersTotal[roleId] ?? 0;
-    return Math.max(1, Math.ceil(total / PAGE_SIZE));
   }
 
   function getRolePermissionsByDomain(role: Role): Record<string, string[]> {
@@ -354,8 +400,7 @@ SPDX-License-Identifier: Apache-2.0
       await rolesApi.addRoleToUser(user.id, { role_id: roleId });
       toast.success($_("admin.accessControl.userAdded"));
       resetAddUserSearch();
-      const currentPage = roleUsersPage[roleId] ?? 1;
-      await loadRoleUsers(roleId, currentPage);
+      await reloadRoleUsers(roleId);
       onRolesChange();
     } catch (err) {
       addingUserId = null;
@@ -393,8 +438,7 @@ SPDX-License-Identifier: Apache-2.0
         ),
       );
       userToRemove = null;
-      const currentPage = roleUsersPage[roleId] ?? 1;
-      await loadRoleUsers(roleId, currentPage);
+      await reloadRoleUsers(roleId);
       toast.success($_("admin.accessControl.userRemoved"));
       onRolesChange();
     } catch (err) {
@@ -420,9 +464,7 @@ SPDX-License-Identifier: Apache-2.0
   async function handleDepartmentScopingUpdate() {
     const context = departmentScopingContext;
     if (!context) return;
-    const roleId = context.role.id;
-    const currentPage = roleUsersPage[roleId] ?? 1;
-    await loadRoleUsers(roleId, currentPage);
+    await reloadRoleUsers(context.role.id);
     onRolesChange();
   }
 
@@ -492,11 +534,15 @@ SPDX-License-Identifier: Apache-2.0
   }
 </script>
 
-{#snippet roleBadge(role: Role)}
+<!-- The list and the grid draw the same badge in different palettes:
+     ".badge--system/--custom" on a role row, "*-grid" on a role card. -->
+{#snippet roleBadge(role: Role, grid = false)}
   <span
     class="badge"
-    class:badge--system={role.is_system}
-    class:badge--custom={!role.is_system}
+    class:badge--system={role.is_system && !grid}
+    class:badge--custom={!role.is_system && !grid}
+    class:badge--system-grid={role.is_system && grid}
+    class:badge--custom-grid={!role.is_system && grid}
   >
     {role.is_system
       ? $_("admin.accessControl.systemRoleLabel")
@@ -521,17 +567,9 @@ SPDX-License-Identifier: Apache-2.0
       title={$_("admin.accessControl.addUser")}
       aria-label={$_("admin.accessControl.addUser")}
     >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 16 16"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        aria-hidden="true"
-      >
-        <path d="M8 3.5v9M3.5 8h9" />
+      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+        <rect x="1" y="6" width="12" height="2" rx=".8" fill="currentColor" />
+        <rect x="6" y="1" width="2" height="12" rx=".8" fill="currentColor" />
       </svg>
     </button>
   {/if}
@@ -551,16 +589,18 @@ SPDX-License-Identifier: Apache-2.0
       aria-label={$_("admin.accessControl.editRole")}
     >
       <svg
-        width="16"
-        height="16"
-        viewBox="0 0 16 16"
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
         fill="none"
         stroke="currentColor"
-        stroke-width="1.5"
+        stroke-width="1.1"
+        stroke-linecap="round"
+        stroke-linejoin="round"
         aria-hidden="true"
       >
         <path
-          d="M11.5 2.5a1.5 1.5 0 0 1 2.12 2.12L5 11.25v2.25h2.25l6.62-6.62a1.5 1.5 0 0 0-2.12-2.12L5.25 11"
+          d="M7 12.3h5.3M9.6 1.9a1.2 1.2 0 0 1 1.7 1.7L4.1 10.8l-2.3.6.6-2.3z"
         />
       </svg>
     </button>
@@ -577,24 +617,25 @@ SPDX-License-Identifier: Apache-2.0
       aria-label={$_("admin.accessControl.deleteRole")}
     >
       <svg
-        width="16"
-        height="16"
-        viewBox="0 0 16 16"
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
         fill="none"
         stroke="currentColor"
-        stroke-width="1.5"
+        stroke-width="1.1"
+        stroke-linecap="round"
+        stroke-linejoin="round"
         aria-hidden="true"
       >
         <path
-          d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1m2 0v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4h10z"
+          d="M1.8 3.5h10.4M11 3.5v8.2a1.2 1.2 0 0 1-1.2 1.2H4.2A1.2 1.2 0 0 1 3 11.7V3.5M4.7 3.5V2.3a1.2 1.2 0 0 1 1.2-1.1h2.2a1.2 1.2 0 0 1 1.2 1.1v1.2"
         />
-        <path d="M6 7v4M10 7v4" />
       </svg>
     </button>
   {/if}
 {/snippet}
 
-<!-- ".users-section" — the add-user search, the rows, and real pagination. -->
+<!-- ".users-section" — the add-user search, the rows, and "Show N more". -->
 {#snippet usersSection(role: Role)}
   <div class="users-section">
     <span class="section-label">{$_("admin.accessControl.usersWithRole")}</span>
@@ -704,7 +745,7 @@ SPDX-License-Identifier: Apache-2.0
             <span class="avatar-round" aria-hidden="true"
               >{roleInitials(user.name || user.email || "?")}</span
             >
-            <div class="user-row-mini__text">
+            <div class="user-row-mini__details">
               <div class="user-row-mini__name">
                 {user.name || user.email}
                 {#if user.status && user.status !== "active"}
@@ -741,45 +782,37 @@ SPDX-License-Identifier: Apache-2.0
       {/each}
 
       <!--
-        The design shows a single "Show N more" link, but this list is genuinely
-        paginated by the API, so both directions stay reachable.
+        ".show-more" — grows the list a page at a time from the API (the label
+        counts what the next page will add), and folds back once it has grown.
       -->
-      {#if (roleUsersTotal[role.id] ?? 0) > PAGE_SIZE}
-        <div class="users-pagination">
-          <button
-            class="link-btn"
-            type="button"
-            onclick={(e) => {
-              e.stopPropagation();
-              loadRoleUsers(role.id, (roleUsersPage[role.id] ?? 1) - 1);
-            }}
-            disabled={(roleUsersPage[role.id] ?? 1) <= 1 ||
-              roleUsersLoading[role.id]}
-          >
-            {$_("admin.common.previous")}
-          </button>
-          <span class="pagination-info">
-            {$_("admin.common.pageInfo", {
-              values: {
-                current: roleUsersPage[role.id] ?? 1,
-                total: getRoleTotalPages(role.id),
-                count: roleUsersTotal[role.id] ?? 0,
-              },
-            })}
-          </span>
-          <button
-            class="link-btn"
-            type="button"
-            onclick={(e) => {
-              e.stopPropagation();
-              loadRoleUsers(role.id, (roleUsersPage[role.id] ?? 1) + 1);
-            }}
-            disabled={(roleUsersPage[role.id] ?? 1) >=
-              getRoleTotalPages(role.id) || roleUsersLoading[role.id]}
-          >
-            {$_("admin.common.next")}
-          </button>
-        </div>
+      {@const loadedCount = (roleUsers[role.id] ?? []).length}
+      {@const remaining = (roleUsersTotal[role.id] ?? 0) - loadedCount}
+      {#if remaining > 0}
+        <button
+          class="show-more"
+          type="button"
+          onclick={(e) => {
+            e.stopPropagation();
+            showMoreUsers(role.id);
+          }}
+          disabled={roleUsersLoading[role.id]}
+          aria-busy={roleUsersLoading[role.id] ?? false}
+        >
+          {$_("admin.accessControl.showMoreUsers", {
+            values: { count: Math.min(remaining, PAGE_SIZE) },
+          })}
+        </button>
+      {:else if loadedCount > PAGE_SIZE}
+        <button
+          class="show-more"
+          type="button"
+          onclick={(e) => {
+            e.stopPropagation();
+            showFewerUsers(role.id);
+          }}
+        >
+          {$_("admin.accessControl.showLess")}
+        </button>
       {/if}
     {/if}
   </div>
@@ -802,9 +835,13 @@ SPDX-License-Identifier: Apache-2.0
       <div class="perm-row-wrap">
         {#each shown as [domain, actions] (domain)}
           <div class="perm-card">
-            <span class="perm-card__cat">{formatDomain(domain)}</span>
+            <span class="perm-card__cat">{formatDomain(domain)} :</span>
             <span class="perm-card__actions">
-              {actions.map((action) => formatAction(action)).join("  ")}
+              {#each actions as action}
+                <span class="perm-act"
+                  ><i aria-hidden="true"></i>{formatAction(action)}</span
+                >
+              {/each}
             </span>
           </div>
         {/each}
@@ -860,7 +897,8 @@ SPDX-License-Identifier: Apache-2.0
                   d="M4 6l4 4 4-4"
                   stroke="currentColor"
                   stroke-width="1.4"
-                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                 />
               </svg>
             </button>
@@ -873,19 +911,21 @@ SPDX-License-Identifier: Apache-2.0
             {@render roleBadge(role)}
           </div>
           <div class="role-panel__right">
-            <div class="stat">
-              <span class="stat__value">{role.user_count ?? 0}</span>
-              <span class="stat__label"
-                >{$_("admin.accessControl.usersStatLabel")}</span
-              >
+            <div class="stat-pair">
+              <div class="stat">
+                <span class="stat__value">{role.user_count ?? 0}</span>
+                <span class="stat__label"
+                  >{$_("admin.accessControl.usersStatLabel")}</span
+                >
+              </div>
+              <div class="stat">
+                <span class="stat__value">{role.permissions.length}</span>
+                <span class="stat__label"
+                  >{$_("admin.accessControl.permissionsLabel")}</span
+                >
+              </div>
             </div>
-            <div class="stat">
-              <span class="stat__value">{role.permissions.length}</span>
-              <span class="stat__label"
-                >{$_("admin.accessControl.permissionsLabel")}</span
-              >
-            </div>
-            {@render roleControls(role)}
+            <div class="icon-btns">{@render roleControls(role)}</div>
           </div>
         </div>
 
@@ -941,14 +981,14 @@ SPDX-License-Identifier: Apache-2.0
             <div class="role-card__top">
               <div class="role-card__title-row">
                 <div class="role-card__title-left">
-                  <span
-                    class="avatar-round"
-                    data-tint={roleTint(role.id)}
-                    aria-hidden="true">{roleInitials(role.name)}</span
+                  <span class="avatar-round" aria-hidden="true"
+                    >{roleCardInitials(role.name)}</span
                   >
-                  <span class="role-card__name">{role.name}</span>
+                  <span class="role-card__name" title={role.name}
+                    >{role.name}</span
+                  >
                 </div>
-                {@render roleBadge(role)}
+                {@render roleBadge(role, true)}
               </div>
               <!--
                 Figma 355:29939 — a caption under the title. The design's own
@@ -974,18 +1014,24 @@ SPDX-License-Identifier: Apache-2.0
                   >
                 </div>
               </div>
-              <div class="role-card__tags">
-                {#each domains.slice(0, GRID_TAG_LIMIT) as domain (domain)}
-                  <span class="tag-green">{formatDomain(domain)}</span>
-                {/each}
-                {#if domains.length > GRID_TAG_LIMIT}
-                  <span class="tag-more"
-                    >{$_("admin.accessControl.morePermissions", {
-                      values: { count: domains.length - GRID_TAG_LIMIT },
-                    })}</span
-                  >
-                {/if}
-              </div>
+              {#if domains.length > 0}
+                {@const shownTags =
+                  domains.length <= GRID_TAG_MAX
+                    ? domains
+                    : domains.slice(0, GRID_TAG_LIMIT)}
+                <div class="role-card__tags">
+                  {#each shownTags as domain (domain)}
+                    <span class="tag-green">{formatDomain(domain)}</span>
+                  {/each}
+                  {#if domains.length > shownTags.length}
+                    <span class="tag-more"
+                      >{$_("admin.accessControl.morePermissions", {
+                        values: { count: domains.length - shownTags.length },
+                      })}</span
+                    >
+                  {/if}
+                </div>
+              {/if}
             </div>
             <div class="role-card__footer">
               {#if (role.user_count ?? 0) === 0}
@@ -1133,6 +1179,7 @@ SPDX-License-Identifier: Apache-2.0
      that set their own box-shadow (.icon-btn, .perm-card-more) already replace
      it and only need the blur cleared. */
   .link-btn,
+  .show-more,
   .chev-btn,
   .search-close-btn,
   .search-result-item {
@@ -1141,6 +1188,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .link-btn,
+  .show-more,
   .chev-btn,
   .search-close-btn,
   .search-result-item,
@@ -1209,6 +1257,18 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-ac-system-fg);
   }
 
+  /* Role-card palette (design ".badge--*-grid"): Primary/50 behind Primary/500
+     or the secondary green. */
+  .badge--system-grid {
+    background: var(--gx-ring-soft);
+    color: var(--gx-org-primary-500);
+  }
+
+  .badge--custom-grid {
+    background: var(--gx-ring-soft);
+    color: var(--gx-org-brand-alt);
+  }
+
   .stat {
     display: flex;
     flex-direction: column;
@@ -1232,8 +1292,7 @@ SPDX-License-Identifier: Apache-2.0
 
   .stat__label {
     font-family: var(--gx-font);
-    /* Figma type style "UI/XSmall Semi": Inter SemiBold 10. */
-    font-weight: 600;
+    font-weight: 400;
     font-size: 10px;
     line-height: 100%;
     letter-spacing: 0.5px;
@@ -1244,6 +1303,7 @@ SPDX-License-Identifier: Apache-2.0
 
   .section-label {
     font-family: var(--gx-font);
+    display: block;
     font-weight: 700;
     font-size: 11px;
     line-height: 100%;
@@ -1264,7 +1324,7 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     flex-direction: column;
     gap: 12px;
-    align-items: flex-start;
+    align-items: stretch;
     align-self: stretch;
     width: 100%;
     min-width: 0;
@@ -1284,7 +1344,10 @@ SPDX-License-Identifier: Apache-2.0
     min-width: 0;
   }
 
+  /* A closed panel is the design's ".role-row-collapsed": 16px padding round a
+     34px head = 66px. */
   .role-panel__head {
+    min-height: 34px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1312,6 +1375,7 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-slate-400);
     flex-shrink: 0;
     cursor: pointer;
+    box-sizing: border-box;
     /* Closed is the rotated state, so the glyph points at the row it opens. */
     transform: rotate(-90deg);
     transition: transform 150ms ease;
@@ -1345,28 +1409,56 @@ SPDX-License-Identifier: Apache-2.0
     min-width: 0;
   }
 
+  /* The second column is three 30px buttons + two 8px gaps, so the counts line
+     up row to row even where a role offers fewer controls. */
   .role-panel__right {
-    display: flex;
-    gap: 24px;
+    display: grid;
+    grid-template-columns: auto 106px;
+    column-gap: 32px;
+    justify-items: end;
     align-items: center;
-    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  .stat-pair {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }
+
+  .stat-pair .stat {
+    width: 80px;
+  }
+
+  .stat-pair .stat__label {
+    font-size: 11px;
+    color: var(--gx-slate-500);
+    text-transform: none;
+    letter-spacing: 0.5px;
+  }
+
+  .icon-btns {
+    display: flex;
+    gap: 8px;
+    align-items: center;
   }
 
   .icon-btn {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
+    box-sizing: border-box;
     /* app.css gives every bare <button> 0.625rem/1.25rem of padding, and with
        the global border-box that leaves this 32px square no content width at
        all — the glyph gets crushed to nothing. */
     padding: 0;
     border: none;
     border-radius: 8px;
-    background: transparent;
-    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-org-primary-100);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--gx-slate-500);
+    color: var(--gx-an-sub);
     cursor: pointer;
     flex-shrink: 0;
     transition:
@@ -1375,12 +1467,11 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .icon-btn:hover {
-    background: var(--gx-org-track);
-    color: var(--gx-slate-900);
+    background: var(--gx-page);
   }
 
+  /* The bin keeps a red hint on hover so the destructive control reads as one. */
   .icon-btn--danger:hover {
-    background: var(--gx-danger-soft);
     color: var(--gx-danger);
   }
 
@@ -1392,8 +1483,8 @@ SPDX-License-Identifier: Apache-2.0
   /* Without an explicit size these collapse to width:0 as flex items and the
      button renders empty. */
   .icon-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     display: block;
     flex-shrink: 0;
   }
@@ -1419,6 +1510,7 @@ SPDX-License-Identifier: Apache-2.0
 
   /* ---- ".user-row-mini" ---- */
   .user-row-mini {
+    height: 45px;
     border-radius: 8px;
     background: var(--gx-page);
     box-shadow: inset 0 0 0 1px var(--gx-hair);
@@ -1436,12 +1528,24 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     gap: 12px;
     align-items: center;
+    align-self: stretch;
     min-width: 0;
   }
 
-  .user-row-mini__text {
+  .user-row-mini .avatar-round {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    line-height: 100%;
+    background: var(--gx-rule-cool);
+    color: var(--gx-slate-900);
+  }
+
+  .user-row-mini__details {
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    align-self: stretch;
     gap: 3px;
     min-width: 0;
   }
@@ -1521,18 +1625,32 @@ SPDX-License-Identifier: Apache-2.0
     border-radius: 4px;
   }
 
-  .users-pagination {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    align-self: stretch;
-    padding-top: 2px;
+  .show-more {
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-family: var(--gx-font);
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    color: var(--gx-ac-link);
+    white-space: nowrap;
+    cursor: pointer;
   }
 
-  .pagination-info {
-    font-family: var(--gx-font);
-    font-size: 12px;
-    color: var(--gx-slate-500);
+  .show-more:hover:not(:disabled) {
+    text-decoration: underline;
+  }
+
+  .show-more:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+
+  .show-more:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 
   /* ---- add-user search ---- */
@@ -1685,29 +1803,62 @@ SPDX-License-Identifier: Apache-2.0
     align-self: stretch;
   }
 
+  /* ".perm-card" — one 37px chip: the domain, then each action as a dot + name. */
   .perm-card {
+    height: 37px;
+    box-sizing: border-box;
     border-radius: 8px;
-    background: var(--gx-page);
-    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    background: var(--gx-org-track);
+    box-shadow: inset 0 0 0 1px var(--gx-org-track);
     display: flex;
-    flex-direction: column;
     gap: 6px;
     padding: 12px;
-    align-items: flex-start;
+    align-items: center;
     flex-shrink: 0;
   }
 
+  /* The design's copy is set in capitals ("AI PLATFORM :"); formatDomain gives
+     title case, so the transform supplies them. */
   .perm-card__cat {
     font-family: var(--gx-font);
     font-weight: 700;
     font-size: 11px;
-    letter-spacing: 0.5px;
-    color: var(--gx-slate-400);
+    line-height: 100%;
+    color: var(--gx-org-primary-500);
     text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .perm-card__actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .perm-act {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    font-family: var(--gx-font);
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 100%;
+    color: var(--gx-org-slate-350);
+    white-space: nowrap;
+  }
+
+  .perm-act i {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
   }
 
   /* ".perm-card-more" — a real toggle, sized to sit in the card row. */
   .perm-card-more {
+    height: 37px;
+    box-sizing: border-box;
     border: none;
     border-radius: 8px;
     background: var(--gx-page);
@@ -1718,8 +1869,9 @@ SPDX-License-Identifier: Apache-2.0
     font-family: var(--gx-font);
     font-weight: 700;
     font-size: 11px;
-    letter-spacing: 0.5px;
+    line-height: 100%;
     text-transform: uppercase;
+    white-space: nowrap;
     color: var(--gx-slate-400);
     flex-shrink: 0;
     cursor: pointer;
@@ -1738,19 +1890,11 @@ SPDX-License-Identifier: Apache-2.0
     outline-offset: 2px;
   }
 
-  .perm-card__actions {
-    font-family: var(--gx-font);
-    font-weight: 600;
-    font-size: 13px;
-    color: var(--gx-ac-link);
-    white-space: pre-wrap;
-  }
-
   /* ---- ".roles-grid-wrap": card view ---- */
   .roles-grid-wrap {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 28px;
     align-items: flex-start;
     align-self: stretch;
     width: 100%;
@@ -1813,16 +1957,13 @@ SPDX-License-Identifier: Apache-2.0
     align-self: flex-start;
   }
 
-  /* The mockup fakes its rows with three hard-coded ".roles-grid" divs of three
-     cards each. With a live role list the count is arbitrary, and a wrapping
-     flex row makes `flex-grow` stretch a lone card on the last line across the
-     full width. auto-fit keeps every card one column wide however many there
-     are, leaving the short last row part-empty instead. */
+  /* auto-fill keeps every card one column wide however many roles there are,
+     leaving a short last row part-empty rather than stretching a lone card. */
   .roles-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 24px;
-    align-items: stretch;
+    align-items: start;
     align-self: stretch;
     width: 100%;
     min-width: 0;
@@ -1831,16 +1972,14 @@ SPDX-License-Identifier: Apache-2.0
   .role-card {
     border-radius: 16px;
     background: var(--gx-card);
-    /* Figma: border 1px inside Primary/50 (#EFF4FC) = --gx-ring-soft, which also
+    /* Figma: 1px inside ring in Primary/50 (#EFF4FC) = --gx-ring-soft, which also
        has a dark-mode value; the literal hex would stay light-only. */
-    border: 1px solid var(--gx-ring-soft);
+    box-shadow: inset 0 0 0 1px var(--gx-ring-soft);
     display: flex;
     flex-direction: column;
     padding: 20px;
     justify-content: space-between;
-    transition:
-      border-color 120ms ease,
-      box-shadow 120ms ease;
+    transition: box-shadow 120ms ease;
     align-items: flex-start;
     min-width: 0;
     box-sizing: border-box;
@@ -1856,11 +1995,12 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .role-card__title-row {
+    height: 28px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     align-self: stretch;
-    gap: 10px;
+    gap: 8px;
   }
 
   .role-card__title-left {
@@ -1870,10 +2010,20 @@ SPDX-License-Identifier: Apache-2.0
     min-width: 0;
   }
 
+  .role-card__title-left .avatar-round {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    line-height: 100%;
+    background: var(--gx-ac-card-avatar-bg);
+    color: var(--gx-ac-card-avatar-fg);
+  }
+
   .role-card__name {
     font-family: var(--gx-font);
     font-weight: 700;
     font-size: 16px;
+    line-height: 100%;
     color: var(--gx-ac-card-avatar-fg);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1886,7 +2036,7 @@ SPDX-License-Identifier: Apache-2.0
     font-family: var(--gx-font);
     font-weight: 400;
     font-size: 12px;
-    line-height: 15px;
+    line-height: 100%;
     color: var(--gx-ac-link-soft);
     align-self: stretch;
     overflow: hidden;
@@ -1903,21 +2053,34 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-ac-card-avatar-fg);
   }
 
+  .role-card__stats .stat__label {
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: var(--gx-org-slate-350);
+    text-transform: none;
+  }
+
+  /* One line: whatever does not fit is clipped, never wrapped onto a second. */
   .role-card__tags {
+    height: 21px;
     display: flex;
     gap: 6px;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    align-self: stretch;
+    min-width: 0;
   }
 
   .tag-green {
     border-radius: 6px;
-    /* Figma: Secondary/50 #F1F8F4 = --gx-org-brand-alt-tint. */
-    background: var(--gx-org-brand-alt-tint);
+    background: var(--gx-ac-green-bg);
     padding: 4px 8px;
     font-family: var(--gx-font);
     font-weight: 600;
     font-size: 11px;
+    line-height: 100%;
     color: var(--gx-org-brand-alt);
     white-space: nowrap;
   }
@@ -1926,17 +2089,20 @@ SPDX-License-Identifier: Apache-2.0
     font-family: var(--gx-font);
     font-weight: 600;
     font-size: 11px;
-    color: var(--gx-ac-link-soft);
+    line-height: 100%;
+    color: var(--gx-org-primary-500);
     white-space: nowrap;
   }
 
   .role-card:hover {
-    border-color: var(--gx-org-primary-100);
-    box-shadow: 0 4px 12px 0 rgba(15, 23, 42, 0.08);
+    box-shadow:
+      inset 0 0 0 1px var(--gx-org-primary-100),
+      0 4px 12px 0 rgba(15, 23, 42, 0.08);
   }
 
   .role-card__footer {
-    min-height: 36px;
+    min-height: 28px;
+    box-sizing: border-box;
     border-top: 1px solid var(--gx-ring-soft);
     display: flex;
     justify-content: space-between;
@@ -1946,6 +2112,10 @@ SPDX-License-Identifier: Apache-2.0
     padding-top: 12px;
     margin-top: 12px;
     flex-wrap: wrap;
+  }
+
+  .role-card__footer .link-btn:not(:disabled) {
+    color: var(--gx-org-primary-500);
   }
 
   /* ".avatars-stack" — overlapping faces, each ringed in the card colour so the
@@ -1959,18 +2129,15 @@ SPDX-License-Identifier: Apache-2.0
     width: 24px;
     height: 24px;
     font-size: 9px;
+    line-height: 100%;
     background: var(--gx-org-primary-500);
-    color: #fff;
+    color: var(--gx-card);
     box-shadow: inset 0 0 0 1.5px var(--gx-card);
     margin-inline-start: -6px;
   }
 
   .avatars-stack .avatar-round:first-child {
     margin-inline-start: 0;
-  }
-
-  .avatars-stack .avatar-round--overflow {
-    background: var(--gx-slate-400);
   }
 
   .sr-only {
@@ -1989,6 +2156,7 @@ SPDX-License-Identifier: Apache-2.0
     font-family: var(--gx-font);
     font-weight: 400;
     font-size: 12px;
+    line-height: 100%;
     color: var(--gx-org-slate-350);
   }
 
@@ -2069,12 +2237,13 @@ SPDX-License-Identifier: Apache-2.0
     }
 
     .role-panel__right {
-      gap: 16px;
+      column-gap: 16px;
       width: 100%;
-      justify-content: flex-start;
+      justify-content: space-between;
     }
 
     .user-row-mini {
+      height: auto;
       flex-direction: column;
       align-items: flex-start;
       gap: 10px;

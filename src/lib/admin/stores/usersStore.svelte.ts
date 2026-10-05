@@ -6,6 +6,7 @@ import type { User } from '../types.js';
 import { getUsers, getScopedUsers, createUser, updateUser, updateUserStatus } from '../../api/admin/users.js';
 import type { CreateUserData, GetUsersParams } from '../../api/admin/users.js';
 import { permissionsStore } from '../../features/auth/index.js';
+import { onboarding } from '../../features/onboarding/onboardingState.svelte.js';
 
 interface UsersFilters {
   search: string;
@@ -199,6 +200,8 @@ function createUsersStore() {
       try {
         const created = await createUser(userData);
         await updateUsersInBackground();
+        // A teammate completes half of the Setup guide (ENGG-447).
+        void onboarding.refreshSetupStatus();
         return created;
       } catch (err: any) {
         error = err;

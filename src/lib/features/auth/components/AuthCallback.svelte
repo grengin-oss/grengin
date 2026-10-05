@@ -4,6 +4,7 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
+  import { consumeReturnTo } from "$lib/utils/returnTo.js";
   import { onMount } from 'svelte';
   import { setAuth, ApiError, handleOAuthCallback } from '../index.js';
   import type { LoginResponse } from '../index.js';
@@ -154,8 +155,7 @@ SPDX-License-Identifier: Apache-2.0
    * Redirect to return URL after successful authentication
    */
   function redirectAfterSuccess(): void {
-    const returnUrl = readSessionStorage('auth_return_url') || '/';
-    removeSessionStorageItem('auth_return_url');
+    const returnUrl = consumeReturnTo() || '/';
     
     setTimeout(() => {
       window.location.href = returnUrl;
@@ -198,11 +198,11 @@ SPDX-License-Identifier: Apache-2.0
         if (!response?.accessToken || !response?.user) throw new Error('setup_sign_in_failed');
         setAuth(response.accessToken, response.refreshToken || '', response.user);
         cleanupSessionStorage();
-        removeSessionStorageItem('auth_return_url');
+        const returnUrl = consumeReturnTo();
         status = 'success';
         if (managedSetup) onSetupComplete?.();
         else {
-          window.location.replace('/');
+          window.location.replace(returnUrl || '/');
         }
       } catch {
         cleanupSessionStorage();

@@ -58,7 +58,8 @@ SPDX-License-Identifier: Apache-2.0
   // ".layout-toggles" — the design keeps a separate list/grid choice per tab.
   type ViewMode = "list" | "grid";
   let rolesView = $state<ViewMode>("list");
-  let permissionsView = $state<ViewMode>("list");
+  // The Permissions tab opens on the role × permission matrix ("grid").
+  let permissionsView = $state<ViewMode>("grid");
   const currentView = $derived(
     currentTab === "roles" ? rolesView : permissionsView,
   );
@@ -135,6 +136,10 @@ SPDX-License-Identifier: Apache-2.0
     ) {
       fetchPermissions();
     }
+    // The permissions matrix has a column per role.
+    if (currentTab === "permissions" && !rolesFetched && !rolesLoading) {
+      fetchRoles();
+    }
   });
 
   $effect(() => {
@@ -192,7 +197,11 @@ SPDX-License-Identifier: Apache-2.0
     />
 
     <div class="right-actions">
-      <span class="count-label">{countLabel}</span>
+      <span
+        class="count-label"
+        class:count-label--permissions={currentTab === "permissions"}
+        >{countLabel}</span
+      >
       <div
         class="layout-toggles"
         role="group"
@@ -248,7 +257,12 @@ SPDX-License-Identifier: Apache-2.0
               stroke-width="1.1"
             />
           </svg>
-          <span>{$_("admin.accessControl.viewGrid")}</span>
+          <!-- On Permissions the second layout is the role matrix, not cards. -->
+          <span
+            >{currentTab === "permissions"
+              ? $_("admin.accessControl.viewMatrix")
+              : $_("admin.accessControl.viewGrid")}</span
+          >
         </button>
         <button
           class="view-toggle"
@@ -307,6 +321,8 @@ SPDX-License-Identifier: Apache-2.0
     <PermissionsTab
       {permissions}
       loading={permissionsLoading}
+      {roles}
+      {rolesLoading}
       view={permissionsView}
     />
   </div>
@@ -389,6 +405,10 @@ SPDX-License-Identifier: Apache-2.0
     line-height: 100%;
     color: var(--gx-slate-500);
     white-space: nowrap;
+  }
+
+  .count-label--permissions {
+    color: var(--gx-an-sub);
   }
 
   /* Same segmented control as the Roles/Permissions tabs: identical track and

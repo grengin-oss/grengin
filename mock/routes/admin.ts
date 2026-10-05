@@ -6,6 +6,7 @@ import { requireAuth } from '../lib/middleware.js'
 import {
   aiEngines,
   departments,
+  ssoSession,
   type AIEngineDetail,
   type AIEngineModelsResponse,
   type Department,
@@ -30,9 +31,16 @@ router.get('/admin/users', requireAuth, (req, res) => {
   // Handle sorting via query params
   const { sort, ascending } = req.query
   let result = { ...usersListExample }
+  if (ssoSession.creator) {
+    result = {
+      ...result,
+      users: [ssoSession.creator, ...result.users] as typeof result.users,
+      total: result.total + 1,
+    }
+  }
   
   if (sort && ['name', 'email', 'created_at'].includes(sort as string)) {
-    const users = [...usersListExample.users]
+    const users = [...result.users]
     const isAscending = ascending === 'true' || ascending === undefined
     users.sort((a, b) => {
       let aVal: string | number
@@ -56,7 +64,7 @@ router.get('/admin/users', requireAuth, (req, res) => {
       return 0
     })
     
-    result = { ...usersListExample, users }
+    result = { ...result, users }
   }
   
   // RolesTab lists the users of one role, paginated — so role_id/limit/offset

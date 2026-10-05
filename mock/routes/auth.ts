@@ -5,6 +5,57 @@ import { Router } from 'express'
 import { faker } from '@faker-js/faker'
 import loginExample from '../examples/auth/login.response.json' with { type: 'json' }
 import { requireAuth } from '../lib/middleware.js'
+import { emptyStores, resetStores, ssoSession, workspace } from '../lib/store.js'
+
+/** Microsoft sign-in opens a brand-new empty workspace; any other sign-in the sample one. */
+function enterWorkspace(provider: string | null) {
+  if (provider === 'azure') {
+    workspace.empty = true
+    workspace.users = []
+    workspace.roleIds = []
+    emptyStores()
+  } else if (workspace.empty) {
+    workspace.empty = false
+    workspace.users = []
+    workspace.roleIds = []
+    resetStores()
+  }
+}
+
+/** Fixed ids for the returning SSO admins (one per provider). */
+const RETURNING_SSO_IDS: Record<string, string> = {
+  google: '550e8400-e29b-41d4-a716-446655440101',
+  keycloak: '550e8400-e29b-41d4-a716-446655440102',
+}
+
+/**
+ * Microsoft (azure): a brand-new workspace creator on every sign-in — new id,
+ * the earliest Super Admin, an empty workspace — so the first-launch tour
+ * (ENGG-447) runs each time.
+ * Google / Keycloak: the same existing Super Admin every time, added after the
+ * workspace was created. They land in the sample workspace with all its data,
+ * and — not being the first Super Admin — never see the tour or Setup guide.
+ */
+function ssoUser(provider: string) {
+  const newWorkspace = provider === 'azure'
+  const label = provider.charAt(0).toUpperCase() + provider.slice(1)
+  return {
+    id: newWorkspace ? faker.string.uuid() : RETURNING_SSO_IDS[provider] ?? faker.string.uuid(),
+    sub: newWorkspace ? `${provider}|${faker.string.alphanumeric(20)}` : `${provider}|demo-user`,
+    email: `${provider}-demo@grengin.com`,
+    name: `${label} Demo User`,
+    picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}Demo`,
+    hd: 'grengin.com',
+    is_super_admin: true,
+    status: 'active',
+    roles: ['Super Admin'],
+    provider,
+    // Microsoft: earlier than every fixture user, so this sign-in owns the
+    // workspace. Others: after the demo admin who created it (2024-01-01).
+    created_at: newWorkspace ? '2023-12-31T00:00:00Z' : '2024-02-01T00:00:00Z',
+    updated_at: new Date().toISOString(),
+  }
+}
 
 const router = Router()
 
@@ -19,6 +70,8 @@ router.post('/auth/login', (req, res) => {
 
   // Accept demo credentials
   if (email === 'admin@grengin.com' && password === 'Demo123456!@') {
+    ssoSession.creator = null
+    enterWorkspace(null)
     return res.json({
       requires_mfa: loginExample.requires_mfa,
       accessToken: loginExample.accessToken,
@@ -170,17 +223,9 @@ router.get('/auth/:provider/callback', (req, res) => {
     })
   }
 
-  const user = {
-    id: faker.string.uuid(),
-    sub: `${provider}|${faker.string.alphanumeric(20)}`,
-    email: `${provider}-demo@grengin.com`,
-    name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Demo User`,
-    picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}Demo`,
-    hd: 'grengin.com',
-    is_super_admin: false,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: new Date().toISOString(),
-  }
+  const user = ssoUser(provider)
+  ssoSession.creator = provider === 'azure' ? user : null
+  enterWorkspace(provider)
 
   res.json({
     requires_mfa: false,
@@ -211,17 +256,9 @@ router.post('/auth/:provider/callback', (req, res) => {
     })
   }
 
-  const user = {
-    id: faker.string.uuid(),
-    sub: `${provider}|${faker.string.alphanumeric(20)}`,
-    email: `${provider}-demo@grengin.com`,
-    name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Demo User`,
-    picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}Demo`,
-    hd: 'grengin.com',
-    is_super_admin: false,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: new Date().toISOString(),
-  }
+  const user = ssoUser(provider)
+  ssoSession.creator = provider === 'azure' ? user : null
+  enterWorkspace(provider)
 
   res.json({
     requires_mfa: false,

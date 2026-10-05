@@ -26,5 +26,69 @@
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
     "notifications": "Notificaciones"
+  },
+  "onboarding": {
+    "tour": {
+      "stepOf": "Paso {current} de {total}",
+      "skip": "Omitir recorrido",
+      "back": "Atrás",
+      "welcome": {
+        "title": "Esta es tu pantalla de chat",
+        "body": "Todo empieza aquí: chatea con los modelos de tu equipo o ve al Panel de Control para terminar de configurar tu espacio de trabajo. Repasemos lo esencial, unos 2 minutos.",
+        "cta": "Vamos"
+      },
+      "controlHub": {
+        "title": "Entra en el Panel de Control",
+        "body": "Haz clic en tu nombre en la esquina inferior izquierda y selecciona Panel de Control. Ahí conectarás modelos de IA, añadirás departamentos, invitarás a tu equipo y configurarás el inicio de sesión.",
+        "cta": "Llévame allí"
+      },
+      "apiKey": {
+        "title": "Añade tu primera clave de API",
+        "body": "Haz clic aquí para conectar un proveedor como OpenAI o Anthropic. Pega la clave que generaste en su panel: la ciframos en reposo.",
+        "cta": "Clic para continuar"
+      },
+      "invite": {
+        "title": "Invitar usuarios",
+        "body": "Añade personas por correo electrónico para incorporarlas a tu espacio de trabajo. Es opcional: omítelo si por ahora exploras en solitario.",
+        "skip": "Omitir por ahora",
+        "cta": "Continuar"
+      },
+      "signIn": {
+        "title": "Elige cómo inicia sesión tu equipo",
+        "body": "De forma predeterminada, el proxy de Grengin gestiona el inicio de sesión por ti: no hay nada que configurar. Si prefieres usar tu propia app OAuth, cámbialo aquí y añade tu ID de cliente y tu secreto.",
+        "cta": "Entendido, continuar"
+      },
+      "prompt": {
+        "title": "Envía tu primer prompt",
+        "body": "Escribe lo que quieras aquí (una pregunta, una tarea, un documento para resumir) y pulsa enviar. Tu espacio de trabajo está listo: este es el último paso.",
+        "cta": "Finalizar recorrido"
+      }
+    },
+    "guide": {
+      "label": "Guía de configuración",
+      "showChecklist": "Mostrar lista de configuración",
+      "hideChecklist": "Ocultar lista de configuración",
+      "close": "Ocultar guía de configuración",
+      "title": "Termina la configuración",
+      "twoLeft": "Solo 2 cosas rápidas y listo.",
+      "oneLeft": "Solo 1 cosa rápida más y listo.",
+      "progress": "Progreso",
+      "done": "Hecho",
+      "apiKey": {
+        "title": "Añadir una clave de API",
+        "description": "Conecta un proveedor en Motores de IA para que tu equipo pueda empezar a chatear.",
+        "done": "Clave de {provider} conectada en Motores de IA.",
+        "doneGeneric": "Clave de API conectada en Motores de IA.",
+        "action": "Ir a Motores de IA"
+      },
+      "teammate": {
+        "title": "Invitar a un compañero",
+        "description": "Añade a alguien más a tu espacio de trabajo.",
+        "done": "Un compañero se ha unido a tu espacio de trabajo.",
+        "action": "Ir al Panel de Control"
+      },
+      "resume": "Reanudar recorrido guiado",
+      "later": "Recordármelo más tarde"
+    }
   }
 }
