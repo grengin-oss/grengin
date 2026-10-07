@@ -1961,21 +1961,6 @@ SPDX-License-Identifier: Apache-2.0
     margin: 0;
     letter-spacing: -0.03em;
     line-height: 1.2;
-    background: linear-gradient(
-      135deg,
-      var(--text-primary) 30%,
-      rgba(255, 255, 255, 0.7) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  @media (prefers-color-scheme: light) {
-    .project-name {
-      background: none;
-      -webkit-text-fill-color: initial;
-    }
   }
 
   .project-desc {

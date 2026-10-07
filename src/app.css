@@ -252,6 +252,8 @@
   --gx-sticker-disc: rgb(245, 246, 244);
   /* suggestion-card title ink, a hair lighter than --gx-slate-900 */
   --gx-card-title-ink: rgb(28, 41, 56);
+  /* Sidebar section labels (PROJECTS / PINNED / RECENT). */
+  --gx-sidebar-section-ink: #1c2938;
   /* faint blue-tinted card ring (suggestion cards, round 2) */
   /* Also the analytics table head fill. */
   --gx-ring-soft: rgb(239, 244, 252);
@@ -653,6 +655,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    --gx-sidebar-section-ink: #d9d9e0;
     --gx-ink: #f3f5f4;
     --gx-muted: #b3bdb8;
     --gx-dim: #7c8a84;

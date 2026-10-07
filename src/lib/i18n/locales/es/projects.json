@@ -116,6 +116,14 @@
     "removeMemberError": "Error al eliminar miembro",
     "chatsCount": "Cantidad de chats",
     "teamVisibility": "Visibilidad de equipo",
-    "privateVisibility": "Visibilidad privada"
+    "privateVisibility": "Visibilidad privada",
+    "viewModeLabel": "Modo de vista",
+    "viewGrid": "Cuadrícula",
+    "viewList": "Lista",
+    "colProject": "Proyecto",
+    "colCategory": "Categoría",
+    "colVisibility": "Visibilidad",
+    "colUpdated": "Última actualización",
+    "colActions": "Acciones"
   }
 }

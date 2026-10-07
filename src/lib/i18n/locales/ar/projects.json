@@ -116,6 +116,14 @@
     "removeMemberError": "فشلت إزالة العضو",
     "chatsCount": "عدد المحادثات",
     "teamVisibility": "مرئي للفريق",
-    "privateVisibility": "مرئي بشكل خاص"
+    "privateVisibility": "مرئي بشكل خاص",
+    "viewModeLabel": "طريقة العرض",
+    "viewGrid": "شبكة",
+    "viewList": "قائمة",
+    "colProject": "المشروع",
+    "colCategory": "الفئة",
+    "colVisibility": "الظهور",
+    "colUpdated": "آخر تحديث",
+    "colActions": "الإجراءات"
   }
 }

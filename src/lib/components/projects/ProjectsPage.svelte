@@ -4,57 +4,121 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
-  import { navigate } from 'svelte-routing';
-  import { _ } from 'svelte-i18n';
-  import { listProjects, deleteProject, shareProject } from '../../api/projectsApi';
-  import type { Project, ProjectCategory } from '../../types/project';
-  import { toast } from '../Toaster.svelte';
-  import CreateProjectModal from './CreateProjectModal.svelte';
-  import DeleteConfirmDialog from '../DeleteConfirmDialog.svelte';
-  import { setPageTitle } from '../../utils/pageTitle';
+  import { navigate } from "svelte-routing";
+  import { _ } from "svelte-i18n";
+  import {
+    listProjects,
+    deleteProject,
+    shareProject,
+  } from "../../api/projectsApi";
+  import type { Project, ProjectCategory } from "../../types/project";
+  import { toast } from "../Toaster.svelte";
+  import CreateProjectModal from "./CreateProjectModal.svelte";
+  import DeleteConfirmDialog from "../DeleteConfirmDialog.svelte";
+  import { setPageTitle } from "../../utils/pageTitle";
 
   $effect(() => {
-    setPageTitle($_('sidebar.projects'));
+    setPageTitle($_("sidebar.projects"));
   });
 
   let projects = $state<Project[]>([]);
   let loading = $state(true);
-  let searchQuery = $state('');
+  let searchQuery = $state("");
   let showCreateModal = $state(false);
   let editingProject = $state<Project | null>(null);
   let showDeleteConfirm = $state(false);
   let projectToDelete = $state<Project | null>(null);
   let deleting = $state(false);
 
+  // Grid / list layout, remembered per browser so the page reopens as left.
+  type ProjectsView = "grid" | "list";
+  const VIEW_STORAGE_KEY = "grengin:projectsView";
+  function readStoredView(): ProjectsView {
+    try {
+      return localStorage.getItem(VIEW_STORAGE_KEY) === "list"
+        ? "list"
+        : "grid";
+    } catch {
+      return "grid";
+    }
+  }
+  let view = $state<ProjectsView>(readStoredView());
+  function setView(next: ProjectsView) {
+    view = next;
+    try {
+      localStorage.setItem(VIEW_STORAGE_KEY, next);
+    } catch {
+      /* storage blocked — the choice just won't persist */
+    }
+  }
+
   let filteredProjects = $derived(
     searchQuery.trim()
-      ? projects.filter((p) =>
-          p.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
-          p.description.toLowerCase().includes(searchQuery.trim().toLowerCase())
+      ? projects.filter(
+          (p) =>
+            p.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+            p.description
+              .toLowerCase()
+              .includes(searchQuery.trim().toLowerCase()),
         )
-      : projects
+      : projects,
   );
 
   const categoryEmoji: Record<ProjectCategory, string> = {
-    research: '🔍',
-    planning: '📋',
-    code: '{ }',
-    meetings: '📅',
-    onboarding: '💼',
-    brainstorms: '🧠',
-    writing: '✏️',
-    design: '🎨',
+    research: "🔍",
+    planning: "📋",
+    code: "{ }",
+    meetings: "📅",
+    onboarding: "💼",
+    brainstorms: "🧠",
+    writing: "✏️",
+    design: "🎨",
   };
 
-  const categoryColors: Record<ProjectCategory, { bg: string, text: string, border: string }> = {
-    research: { bg: 'rgba(59, 130, 246, 0.12)', text: '#3b82f6', border: 'rgba(59, 130, 246, 0.25)' },
-    planning: { bg: 'rgba(249, 115, 22, 0.12)', text: '#f97316', border: 'rgba(249, 115, 22, 0.25)' },
-    code: { bg: 'rgba(139, 92, 246, 0.12)', text: '#8b5cf6', border: 'rgba(139, 92, 246, 0.25)' },
-    meetings: { bg: 'rgba(16, 185, 129, 0.12)', text: '#10b981', border: 'rgba(16, 185, 129, 0.25)' },
-    onboarding: { bg: 'rgba(99, 102, 241, 0.12)', text: '#6366f1', border: 'rgba(99, 102, 241, 0.25)' },
-    brainstorms: { bg: 'rgba(236, 72, 153, 0.12)', text: '#ec4899', border: 'rgba(236, 72, 153, 0.25)' },
-    writing: { bg: 'rgba(234, 179, 8, 0.12)', text: '#eab308', border: 'rgba(234, 179, 8, 0.25)' },
-    design: { bg: 'rgba(6, 182, 212, 0.12)', text: '#06b6d4', border: 'rgba(6, 182, 212, 0.25)' },
+  const categoryColors: Record<
+    ProjectCategory,
+    { bg: string; text: string; border: string }
+  > = {
+    research: {
+      bg: "rgba(59, 130, 246, 0.12)",
+      text: "#3b82f6",
+      border: "rgba(59, 130, 246, 0.25)",
+    },
+    planning: {
+      bg: "rgba(249, 115, 22, 0.12)",
+      text: "#f97316",
+      border: "rgba(249, 115, 22, 0.25)",
+    },
+    code: {
+      bg: "rgba(139, 92, 246, 0.12)",
+      text: "#8b5cf6",
+      border: "rgba(139, 92, 246, 0.25)",
+    },
+    meetings: {
+      bg: "rgba(16, 185, 129, 0.12)",
+      text: "#10b981",
+      border: "rgba(16, 185, 129, 0.25)",
+    },
+    onboarding: {
+      bg: "rgba(99, 102, 241, 0.12)",
+      text: "#6366f1",
+      border: "rgba(99, 102, 241, 0.25)",
+    },
+    brainstorms: {
+      bg: "rgba(236, 72, 153, 0.12)",
+      text: "#ec4899",
+      border: "rgba(236, 72, 153, 0.25)",
+    },
+    writing: {
+      bg: "rgba(234, 179, 8, 0.12)",
+      text: "#eab308",
+      border: "rgba(234, 179, 8, 0.25)",
+    },
+    design: {
+      bg: "rgba(6, 182, 212, 0.12)",
+      text: "#06b6d4",
+      border: "rgba(6, 182, 212, 0.25)",
+    },
   };
 
   async function fetchProjects() {
@@ -63,7 +127,7 @@ SPDX-License-Identifier: Apache-2.0
       const response = await listProjects();
       projects = response.projects;
     } catch {
-      console.error('Failed to fetch projects');
+      console.error("Failed to fetch projects");
     } finally {
       loading = false;
     }
@@ -93,12 +157,16 @@ SPDX-License-Identifier: Apache-2.0
     deleting = true;
     try {
       await deleteProject(projectToDelete.id);
-      toast.success($_('sidebar.projectDeleted', { values: { name: projectToDelete.name } }));
+      toast.success(
+        $_("sidebar.projectDeleted", {
+          values: { name: projectToDelete.name },
+        }),
+      );
       projects = projects.filter((p) => p.id !== projectToDelete!.id);
       showDeleteConfirm = false;
       projectToDelete = null;
     } catch {
-      toast.error($_('sidebar.deleteProjectError'));
+      toast.error($_("sidebar.deleteProjectError"));
     } finally {
       deleting = false;
     }
@@ -108,9 +176,9 @@ SPDX-License-Identifier: Apache-2.0
     try {
       const { shareUrl } = await shareProject(project.id);
       await navigator.clipboard.writeText(shareUrl);
-      toast.success($_('sidebar.shareLinkCopied'));
+      toast.success($_("sidebar.shareLinkCopied"));
     } catch {
-      toast.error($_('sidebar.shareProjectError'));
+      toast.error($_("sidebar.shareProjectError"));
     }
   }
 
@@ -122,13 +190,13 @@ SPDX-License-Identifier: Apache-2.0
      answers "Invalid Date" for both, which is what a user saw whenever a
      field did not reach the UI. */
   function formatDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return '\u2014';
+    if (!dateStr) return "\u2014";
     const parsed = new Date(dateStr);
-    if (Number.isNaN(parsed.getTime())) return '\u2014';
+    if (Number.isNaN(parsed.getTime())) return "\u2014";
     return parsed.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   }
 
@@ -140,39 +208,93 @@ SPDX-License-Identifier: Apache-2.0
 <div class="projects-page">
   <div class="page-header">
     <div class="header-left">
-      <h1 class="page-title">{$_('sidebar.allProjects')}</h1>
+      <h1 class="page-title">{$_("sidebar.allProjects")}</h1>
       {#if projects.length > 0}
         <span class="project-total">{projects.length}</span>
       {/if}
     </div>
-    <button class="new-project-btn" onclick={openCreateModal}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="12" y1="5" x2="12" y2="19"/>
-        <line x1="5" y1="12" x2="19" y2="12"/>
+    <button class="new-project-btn" type="button" onclick={openCreateModal}>
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.6" />
       </svg>
-      {$_('sidebar.newProject')}
+      <span>{$_("sidebar.newProject")}</span>
     </button>
   </div>
 
-  {#if projects.length > 3}
-    <div class="search-bar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon" aria-hidden="true">
-        <circle cx="11" cy="11" r="8"/>
-        <path d="m21 21-4.35-4.35"/>
-      </svg>
-      <input
-        type="text"
-        class="search-input"
-        placeholder={$_('sidebar.searchPlaceholder')}
-        bind:value={searchQuery}
-      />
-      {#if searchQuery}
-        <button class="clear-search" onclick={() => searchQuery = ''} aria-label={$_('sidebar.clearSearch')}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12"/>
+  {#if !loading && projects.length > 0}
+    <div class="projects-toolbar">
+      {#if projects.length > 3}
+        <div class="search-bar">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="search-icon"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
           </svg>
-        </button>
+          <input
+            type="text"
+            class="search-input"
+            placeholder={$_("sidebar.searchPlaceholder")}
+            bind:value={searchQuery}
+          />
+          {#if searchQuery}
+            <button
+              class="clear-search"
+              onclick={() => (searchQuery = "")}
+              aria-label={$_("sidebar.clearSearch")}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          {/if}
+        </div>
       {/if}
+
+      <div
+        class="view-switcher"
+        role="group"
+        aria-label={$_("projects.viewModeLabel")}
+      >
+        <button
+          class="view-opt"
+          type="button"
+          aria-pressed={view === "grid"}
+          onclick={() => setView("grid")}
+        >
+          <span aria-hidden="true">⊞</span>
+          {$_("projects.viewGrid")}
+        </button>
+        <button
+          class="view-opt"
+          type="button"
+          aria-pressed={view === "list"}
+          onclick={() => setView("list")}
+        >
+          <span aria-hidden="true">☰</span>
+          {$_("projects.viewList")}
+        </button>
+      </div>
     </div>
   {/if}
 
@@ -180,15 +302,23 @@ SPDX-License-Identifier: Apache-2.0
     {#if loading}
       <div class="loading-state">
         <div class="loading-spinner"></div>
-        <span>{$_('sidebar.loadingProjects')}</span>
+        <span>{$_("sidebar.loadingProjects")}</span>
       </div>
     {:else if filteredProjects.length === 0 && searchQuery}
       <div class="empty-state">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="m21 21-4.35-4.35"/>
+        <svg
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          class="empty-icon"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
         </svg>
-        <p>{$_('sidebar.noChatsFound')}</p>
+        <p>{$_("sidebar.noChatsFound")}</p>
       </div>
     {:else if projects.length === 0}
       <div class="glass-empty-card">
@@ -206,99 +336,412 @@ SPDX-License-Identifier: Apache-2.0
             d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
           />
         </svg>
-        <h3 class="empty-title">{$_('sidebar.noProjectsYet')}</h3>
-        <p class="empty-description">{$_('projects.emptyStateDesc')}</p>
+        <h3 class="empty-title">{$_("sidebar.noProjectsYet")}</h3>
+        <p class="empty-description">{$_("projects.emptyStateDesc")}</p>
         <button class="empty-create-btn premium-btn" onclick={openCreateModal}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          {$_('sidebar.createProject')}
+          {$_("sidebar.createProject")}
         </button>
+      </div>
+    {:else if view === "list"}
+      <!-- List view: the Control Hub table pattern (AI Engines / Connectors) —
+           one bordered card, a tinted header row, hairline-separated rows. -->
+      <div class="projects-table">
+        <div class="pt-head" aria-hidden="true">
+          <span class="pt-label">{$_("projects.colProject")}</span>
+          <span class="pt-label pt-col-category"
+            >{$_("projects.colCategory")}</span
+          >
+          <span class="pt-label pt-col-updated"
+            >{$_("projects.colUpdated")}</span
+          >
+          <span class="pt-label pt-col-chats">{$_("projects.tabChats")}</span>
+          <span class="pt-label pt-col-visibility"
+            >{$_("projects.colVisibility")}</span
+          >
+          <span class="pt-label pt-col-actions"
+            >{$_("projects.colActions")}</span
+          >
+        </div>
+        <ul class="pt-rows">
+          {#each filteredProjects as project (project.id)}
+            {@const colors = categoryColors[project.category]}
+            <li class="pt-row">
+              <button
+                class="pt-open"
+                type="button"
+                onclick={() => openProject(project)}
+              >
+                <span class="pt-project">
+                  <span
+                    class="card-emoji pt-emoji"
+                    style:--emoji-bg={colors?.bg || "var(--btn-tertiary)"}
+                    style:--emoji-color={colors?.text || "inherit"}
+                    aria-hidden="true"
+                    >{categoryEmoji[project.category] || "📁"}</span
+                  >
+                  <span class="pt-text">
+                    <span class="pt-name" title={project.name}
+                      >{project.name}</span
+                    >
+                    {#if project.description}
+                      <span class="pt-desc">{project.description}</span>
+                    {:else}
+                      <span class="pt-desc pt-desc--empty"
+                        >{$_("sidebar.projectDescriptionPlaceholder") ||
+                          "No description"}</span
+                      >
+                    {/if}
+                  </span>
+                </span>
+                <span class="pt-col-category">
+                  <span
+                    class="card-badge"
+                    style:--badge-bg={colors?.bg}
+                    style:--badge-text={colors?.text}
+                    style:--badge-border={colors?.border}
+                  >
+                    {$_(
+                      `sidebar.cat${project.category.charAt(0).toUpperCase() + project.category.slice(1)}`,
+                    )}
+                  </span>
+                </span>
+                <span class="pt-cell pt-col-updated"
+                  >{formatDate(project.updatedAt)}</span
+                >
+                <span class="pt-cell pt-col-chats">
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                    />
+                  </svg>
+                  {project.chatCount ?? 0}
+                </span>
+                <span
+                  class="pt-cell pt-col-visibility"
+                  class:pt-team={project.visibility === "team"}
+                >
+                  {#if project.visibility === "team"}
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                    </svg>
+                    {$_("projects.team")}
+                  {:else}
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    {$_("projects.private")}
+                  {/if}
+                </span>
+              </button>
+              <span class="pt-actions pt-col-actions">
+                <button
+                  class="action-btn"
+                  type="button"
+                  onclick={() => openEditModal(project)}
+                  title={$_("sidebar.editProject")}
+                  aria-label={$_("sidebar.editProject")}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M4 17.25V21h3.75L17.81 10.94l-3.75-3.75L4 17.25z"
+                    />
+                    <path
+                      d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="action-btn"
+                  type="button"
+                  onclick={() => handleShare(project)}
+                  title={$_("sidebar.share")}
+                  aria-label={$_("sidebar.share")}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="18" cy="5" r="3" /><circle
+                      cx="6"
+                      cy="12"
+                      r="3"
+                    /><circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                </button>
+                <button
+                  class="action-btn action-btn--danger"
+                  type="button"
+                  onclick={() => confirmDelete(project)}
+                  title={$_("sidebar.delete")}
+                  aria-label={$_("sidebar.delete")}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <polyline points="3,6 5,6 21,6" />
+                    <path
+                      d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"
+                    />
+                  </svg>
+                </button>
+              </span>
+            </li>
+          {/each}
+        </ul>
       </div>
     {:else}
       {#each filteredProjects as project (project.id)}
         {@const colors = categoryColors[project.category]}
-        <div class="project-card">
-          <button class="card-main" onclick={() => openProject(project)}>
+        <div
+          class="project-card"
+          style:--cat-bg={colors?.bg || "var(--gx-fill-soft)"}
+          style:--cat-text={colors?.text || "var(--gx-org-primary-500)"}
+          style:--cat-border={colors?.border || "var(--gx-hair)"}
+        >
+          <button
+            class="card-main"
+            type="button"
+            onclick={() => openProject(project)}
+          >
             <div class="card-header">
-              <div 
+              <span
                 class="card-emoji"
-                style:--emoji-bg={colors?.bg || 'var(--btn-tertiary)'}
-                style:--emoji-color={colors?.text || 'inherit'}
+                style:--emoji-bg={colors?.bg || "var(--btn-tertiary)"}
+                style:--emoji-color={colors?.text || "inherit"}
+                aria-hidden="true"
               >
-                {categoryEmoji[project.category] || '📁'}
-              </div>
-              
-              <span 
-                class="card-badge"
-                style:--badge-bg={colors?.bg}
-                style:--badge-text={colors?.text}
-                style:--badge-border={colors?.border}
-              >
-                {$_(`sidebar.cat${project.category.charAt(0).toUpperCase() + project.category.slice(1)}`)}
+                {categoryEmoji[project.category] || "📁"}
               </span>
             </div>
-            
+
             <div class="card-body">
               <h3 class="card-title" title={project.name}>{project.name}</h3>
               {#if project.description}
                 <p class="card-description">{project.description}</p>
               {:else}
-                <p class="card-description card-description--empty">{$_('sidebar.projectDescriptionPlaceholder') || 'No description'}</p>
+                <p class="card-description card-description--empty">
+                  {$_("sidebar.projectDescriptionPlaceholder") ||
+                    "No description"}
+                </p>
               {/if}
             </div>
 
-            <div class="card-footer">
-              <span class="card-date">{formatDate(project.updatedAt)}</span>
-              
-              <div class="card-meta">
-                {#if project.chatCount > 0}
-                  <span class="meta-indicator" title={$_('projects.chatsCount')}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    <span class="indicator-count">{project.chatCount}</span>
-                  </span>
-                {/if}
-                
-                {#if project.visibility === 'team'}
-                  <span class="meta-indicator meta-indicator--team" title={$_('projects.teamVisibility')}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                      <circle cx="9" cy="7" r="4"/>
-                    </svg>
-                  </span>
+            <div class="card-tags">
+              <span
+                class="card-badge"
+                style:--badge-bg={colors?.bg}
+                style:--badge-text={colors?.text}
+                style:--badge-border={colors?.border}
+              >
+                {$_(
+                  `sidebar.cat${project.category.charAt(0).toUpperCase() + project.category.slice(1)}`,
+                )}
+              </span>
+              <span
+                class="card-chip"
+                class:card-chip--team={project.visibility === "team"}
+              >
+                {#if project.visibility === "team"}
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                  </svg>
+                  {$_("projects.team")}
                 {:else}
-                  <span class="meta-indicator meta-indicator--private" title={$_('projects.privateVisibility')}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                  </span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  {$_("projects.private")}
                 {/if}
-              </div>
+              </span>
+            </div>
+
+            <div class="card-footer">
+              <span class="card-date">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+                {formatDate(project.updatedAt)}
+              </span>
+              <span class="card-footer-end">
+                <span class="card-chats" title={$_("projects.tabChats")}>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                    />
+                  </svg>
+                  {project.chatCount ?? 0}
+                </span>
+                <svg
+                  class="card-open"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </span>
             </div>
           </button>
-          
+
           <div class="card-actions-wrapper">
-            <button class="action-btn" onclick={() => openEditModal(project)} title={$_('sidebar.editProject')} aria-label={$_('sidebar.editProject')}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 17.25V21h3.75L17.81 10.94l-3.75-3.75L4 17.25z"/>
-                <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
+            <button
+              class="action-btn"
+              onclick={() => openEditModal(project)}
+              title={$_("sidebar.editProject")}
+              aria-label={$_("sidebar.editProject")}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M4 17.25V21h3.75L17.81 10.94l-3.75-3.75L4 17.25z" />
+                <path
+                  d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"
+                />
               </svg>
             </button>
-            <button class="action-btn" onclick={() => handleShare(project)} title={$_('sidebar.share')} aria-label={$_('sidebar.share')}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            <button
+              class="action-btn"
+              onclick={() => handleShare(project)}
+              title={$_("sidebar.share")}
+              aria-label={$_("sidebar.share")}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="18" cy="5" r="3" /><circle
+                  cx="6"
+                  cy="12"
+                  r="3"
+                /><circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
               </svg>
             </button>
-            <button class="action-btn action-btn--danger" onclick={() => confirmDelete(project)} title={$_('sidebar.delete')} aria-label={$_('sidebar.delete')}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3,6 5,6 21,6"/>
-                <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+            <button
+              class="action-btn action-btn--danger"
+              onclick={() => confirmDelete(project)}
+              title={$_("sidebar.delete")}
+              aria-label={$_("sidebar.delete")}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="3,6 5,6 21,6" />
+                <path
+                  d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"
+                />
               </svg>
             </button>
           </div>
@@ -310,19 +753,22 @@ SPDX-License-Identifier: Apache-2.0
 
 <CreateProjectModal
   isOpen={showCreateModal}
-  onclose={() => { showCreateModal = false; editingProject = null; }}
+  onclose={() => {
+    showCreateModal = false;
+    editingProject = null;
+  }}
   onCreated={handleProjectCreated}
   editProject={editingProject}
 />
 
 {#if showDeleteConfirm}
   <DeleteConfirmDialog
-    title={$_('sidebar.deleteProject')}
+    title={$_("sidebar.deleteProject")}
     subtitle={projectToDelete?.name}
-    message={$_('sidebar.deleteProjectConfirm')}
-    confirmLabel={$_('sidebar.delete')}
-    busyLabel={$_('sidebar.deleting')}
-    cancelLabel={$_('sidebar.cancel')}
+    message={$_("sidebar.deleteProjectConfirm")}
+    confirmLabel={$_("sidebar.delete")}
+    busyLabel={$_("sidebar.deleting")}
+    cancelLabel={$_("sidebar.cancel")}
     isBusy={deleting}
     onCancel={() => {
       showDeleteConfirm = false;
@@ -334,31 +780,17 @@ SPDX-License-Identifier: Apache-2.0
 
 <style>
   .projects-page {
-    max-width: 1040px;
-    margin: 0 auto;
-    padding: var(--space-2xl) var(--space-xl);
-    height: 100%;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 32px;
+    font-family: var(--gx-font);
   }
 
   .page-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: var(--space-2xl);
-    border-bottom: 1px solid var(--glass-stroke-dark);
-    padding-bottom: var(--space-lg);
-    position: relative;
-  }
-
-  .page-header::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 80px;
-    height: 1px;
-    background: linear-gradient(90deg, var(--brand), transparent);
+    margin-bottom: var(--space-xl);
   }
 
   .header-left {
@@ -368,16 +800,12 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .page-title {
-    font-family: 'Outfit', sans-serif;
+    font-family: "Outfit", sans-serif;
     font-size: 2.1rem;
     font-weight: 800;
     color: var(--text-primary);
     margin: 0;
     letter-spacing: -0.035em;
-    background: linear-gradient(135deg, var(--text-primary) 30%, rgba(255, 255, 255, 0.7) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
   }
 
   .project-total {
@@ -396,42 +824,121 @@ SPDX-License-Identifier: Apache-2.0
     box-shadow: 0 0 12px rgba(var(--brand-rgb), 0.1);
   }
 
+  /* Same 37px primary action as the Control Hub headers (".cta-btn"). */
   .new-project-btn {
+    height: 37px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--space-sm);
-    padding: 0.75rem 1.6rem;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 10px 16px;
     border: none;
-    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-green-accent) 100%);
-    color: white;
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
+    border-radius: 8px;
+    background: var(--gx-org-primary-500);
+    color: #fff;
+    font-family: inherit;
     font-weight: 600;
+    font-size: 14px;
+    line-height: 100%;
+    white-space: nowrap;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 
-      0 4px 15px rgba(var(--brand-rgb), 0.2), 
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: background-color 120ms ease;
   }
 
   .new-project-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-      0 8px 24px rgba(var(--brand-rgb), 0.35),
-      inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    filter: brightness(1.08);
+    background: var(--gx-ac-cta-hover);
+    transform: none;
+    box-shadow: none;
+    filter: none;
   }
 
   .new-project-btn:active {
-    transform: translateY(0);
+    transform: none;
+  }
+
+  .new-project-btn:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
+  }
+
+  .new-project-btn svg {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  /* Search (when shown) on the left, the grid / list switcher on the right. */
+  .projects-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-bottom: var(--space-2xl);
   }
 
   .search-bar {
     position: relative;
     display: flex;
     align-items: center;
-    margin-bottom: var(--space-2xl);
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* Same control as the Control Hub's grid / list switchers (AI Engines). */
+  .view-switcher {
+    height: 37px;
+    border-radius: 12px;
+    background: var(--gx-rule-cool);
+    display: flex;
+    gap: 2px;
+    padding: 4px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  .view-opt {
+    border: 0;
+    border-radius: 8px;
+    padding: 7px 10px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    font: inherit;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 100%;
+    color: var(--gx-an-sub);
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease,
+      box-shadow 120ms ease;
+  }
+
+  .view-opt:hover {
+    transform: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  .view-opt[aria-pressed="true"] {
+    background: var(--gx-card);
+    font-weight: 600;
+    color: var(--gx-org-primary-500);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  .view-opt:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 1px;
   }
 
   .search-icon {
@@ -540,21 +1047,6 @@ SPDX-License-Identifier: Apache-2.0
     flex-shrink: 0;
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   .empty-title {
     margin: 0;
     font-family: var(--gx-font);
@@ -612,38 +1104,35 @@ SPDX-License-Identifier: Apache-2.0
     outline-offset: 2px;
   }
 
-  /* ===== ".project-card" =====
-     Brought onto the --gx-* card language the rest of the redesign uses: a
-     flat surface with a hairline ring, a 12px corner and a restrained hover.
-     The old treatment — a blurred glass fill, a gradient bar across the top
-     and a translate-and-scale lift — predated the design system and matched
-     nothing else in the app. The --gx-* tokens carry their own dark values, so
-     the hand-written light-scheme overrides are gone too. */
+  /* ===== ".project-card" (grid view) =====
+     Flat --gx-* card: an even hairline border, a 14px corner and a restrained
+     hover (border tint, soft shadow, 1px lift). Tile and actions share the top
+     row; name and description below; category + visibility as tags; date and
+     chat count in the footer. */
   .project-card {
     position: relative;
     display: flex;
     flex-direction: column;
-    border-radius: 12px;
-    background: var(--gx-card);
-    overflow: hidden;
-    min-height: 186px;
     height: 100%;
-    /* Same treatment ".mcp-card" uses for a connected server: a real border so
-       the leading edge can thicken, and the same edge colour it uses. One
-       colour across every card — the category is already carried by the tile
-       and the badge, so repeating it on the edge made the grid read as eight
-       competing accents. */
     border: 1px solid var(--gx-hair);
-    border-inline-start-width: 4px;
-    border-inline-start-color: var(--gx-mcp-edge-ok);
+    border-radius: 14px;
+    /* A soft wash of the category colour across the top of the card. */
+    background: linear-gradient(180deg, var(--cat-bg) 0%, transparent 96px),
+      var(--gx-card);
+    overflow: hidden;
     transition:
-      border-color 140ms ease,
-      box-shadow 140ms ease;
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms ease;
   }
 
   .project-card:hover,
   .project-card:focus-within {
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    border-color: color-mix(in oklch, var(--cat-text) 45%, var(--gx-hair));
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 10px 28px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
   }
 
   .card-main {
@@ -651,20 +1140,22 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 20px;
+    gap: 14px;
+    height: 100%;
+    min-width: 0;
+    padding: 18px;
     border: none;
     border-radius: 0;
     background: transparent;
-    cursor: pointer;
-    text-align: start;
-    min-width: 0;
     color: inherit;
+    text-align: start;
+    /* The global button style is nowrap, which cut the description off on
+       one line instead of letting it wrap to its two-line clamp. */
+    white-space: normal;
+    cursor: pointer;
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    height: 100%;
   }
 
   .card-main:hover,
@@ -677,13 +1168,25 @@ SPDX-License-Identifier: Apache-2.0
   .card-main:focus-visible {
     outline: 2px solid var(--gx-org-primary-500);
     outline-offset: -2px;
+    border-radius: 14px;
   }
 
+  /* The top row holds the tile; the actions are laid over its right side. */
   .card-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    min-height: 44px;
+  }
+
+  .project-card .card-emoji {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 21px;
+    background: var(--gx-card);
+    box-shadow:
+      inset 0 0 0 1px var(--cat-border),
+      0 1px 2px rgba(15, 23, 42, 0.05);
   }
 
   /* The category's colour lives on the tile and the badge — the two places it
@@ -702,6 +1205,52 @@ SPDX-License-Identifier: Apache-2.0
     line-height: 1;
   }
 
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .card-title {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    color: var(--gx-org-ink);
+  }
+
+  .card-description {
+    margin: 0;
+    min-height: calc(13px * 1.5 * 2);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--gx-slate-500);
+  }
+
+  .card-description--empty {
+    font-style: italic;
+    color: var(--gx-slate-400);
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+
   .card-badge {
     flex-shrink: 0;
     display: inline-flex;
@@ -717,40 +1266,23 @@ SPDX-License-Identifier: Apache-2.0
     white-space: nowrap;
   }
 
-  .card-body {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-  }
-
-  .card-title {
-    margin: 0;
-    font-weight: 700;
-    font-size: 15px;
-    line-height: 1.3;
-    color: var(--gx-org-ink);
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .card-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 6px;
+    background: var(--gx-fill-soft);
+    color: var(--gx-slate-500);
+    font-weight: 500;
+    font-size: 11.5px;
+    line-height: 100%;
     white-space: nowrap;
   }
 
-  .card-description {
-    margin: 0;
-    font-weight: 400;
-    font-size: 13px;
-    line-height: 1.45;
-    color: var(--gx-slate-500);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .card-description--empty {
-    font-style: italic;
-    color: var(--gx-slate-400);
+  .card-chip--team {
+    background: color-mix(in oklch, var(--gx-tx-chip-icon-fg) 10%, transparent);
+    color: var(--gx-tx-chip-icon-fg);
   }
 
   .card-footer {
@@ -762,7 +1294,11 @@ SPDX-License-Identifier: Apache-2.0
     border-top: 1px solid var(--gx-hair);
   }
 
-  .card-date {
+  .card-date,
+  .card-chats {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-weight: 500;
     font-size: 12px;
     line-height: 100%;
@@ -770,53 +1306,44 @@ SPDX-License-Identifier: Apache-2.0
     white-space: nowrap;
   }
 
-  .card-meta {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
+  .card-chats {
+    font-variant-numeric: tabular-nums;
+    color: var(--gx-slate-500);
   }
 
-  .meta-indicator {
+  .card-footer-end {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 12px;
+  }
+
+  /* "Open" cue: slides and takes the primary colour on hover. */
+  .card-open {
     color: var(--gx-slate-400);
+    transition:
+      transform 160ms ease,
+      color 160ms ease;
   }
 
-  .meta-indicator--team {
-    color: var(--gx-tx-chip-icon-fg);
+  .project-card:hover .card-open,
+  .project-card:focus-within .card-open {
+    color: var(--gx-org-primary-500);
+    transform: translateX(3px);
   }
 
-  .indicator-count {
-    font-weight: 600;
-    font-size: 12px;
-    line-height: 100%;
-  }
-
-  /* The row actions were revealed on hover alone, so a keyboard user could
-     never reach edit, share or delete. They now also appear on focus-within,
-     and stay reachable because only their opacity is animated. */
+  /* Edit / share / delete: always visible, as quiet icons on the top row. */
   .card-actions-wrapper {
     position: absolute;
-    top: 10px;
-    inset-inline-end: 10px;
+    top: 24px;
+    inset-inline-end: 16px;
     display: flex;
+    align-items: center;
     gap: 2px;
-    padding: 3px;
-    border-radius: 8px;
+    padding: 2px;
+    border-radius: 9px;
     background: var(--gx-card);
-    box-shadow:
-      inset 0 0 0 1px var(--gx-hair),
-      0 4px 12px rgba(0, 0, 0, 0.08);
-    opacity: 0;
-    transition: opacity 140ms ease;
-    z-index: 10;
-  }
-
-  .project-card:hover .card-actions-wrapper,
-  .project-card:focus-within .card-actions-wrapper {
-    opacity: 1;
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    z-index: 1;
   }
 
   .action-btn {
@@ -855,18 +1382,176 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-org-danger);
   }
 
+  /* ===== List view: ".projects-table" =====
+     Mirrors the Control Hub tables (".engines-table"): one card with a hairline
+     ring, a tinted header row, 60px rows split by hairlines. The row's columns
+     live on the shared grid template so the header lines up with every row. */
+  .projects-table {
+    grid-column: 1 / -1;
+    --pt-cols: minmax(0, 1fr) 128px 132px 72px 104px 104px;
+    border: 1px solid var(--gx-hair-strong);
+    border-radius: 12px;
+    background: var(--gx-card);
+    overflow: hidden;
+  }
 
+  .pt-head,
+  .pt-row {
+    display: grid;
+    grid-template-columns: var(--pt-cols);
+    column-gap: 16px;
+    align-items: center;
+    padding: 0 18px;
+  }
 
+  .pt-head {
+    min-height: 30px;
+    background: color-mix(
+      in oklch,
+      var(--gx-org-primary-500) 8%,
+      var(--gx-card)
+    );
+  }
 
+  .pt-label {
+    font-weight: 700;
+    font-size: 10px;
+    line-height: 14px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gx-an-sub);
+    white-space: nowrap;
+  }
 
+  .pt-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
 
+  .pt-row {
+    min-height: 60px;
+    border-top: 1px solid var(--gx-hair);
+    transition: background-color 120ms ease;
+  }
 
+  .pt-row:hover,
+  .pt-row:focus-within {
+    background: var(--gx-row-hover);
+  }
 
+  /* The clickable part of the row spans every column but the actions, and
+     shares the row's grid so its cells sit under the header labels. */
+  .pt-open {
+    grid-column: 1 / 6;
+    display: grid;
+    grid-template-columns: subgrid;
+    align-items: center;
+    min-width: 0;
+    padding: 10px 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
 
+  .pt-open:hover,
+  .pt-open:active {
+    transform: none;
+    box-shadow: none;
+    background: none;
+  }
 
+  .pt-open:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: -2px;
+    border-radius: 6px;
+  }
+
+  .pt-project {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .pt-emoji {
+    width: 36px;
+    height: 36px;
+    font-size: 17px;
+  }
+
+  .pt-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .pt-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.3;
+    color: var(--gx-org-ink);
+  }
+
+  .pt-desc {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--gx-slate-500);
+  }
+
+  .pt-desc--empty {
+    font-style: italic;
+    color: var(--gx-slate-400);
+  }
+
+  .pt-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--gx-slate-500);
+    white-space: nowrap;
+  }
+
+  .pt-col-chats {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pt-team {
+    color: var(--gx-tx-chip-icon-fg);
+  }
+
+  .pt-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2px;
+  }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   @media (max-width: 768px) {
@@ -885,16 +1570,35 @@ SPDX-License-Identifier: Apache-2.0
       justify-content: center;
     }
 
-    .card-actions-wrapper {
-      opacity: 1;
-      transform: translateY(0);
-      position: static;
-      margin-top: var(--space-sm);
-      width: 100%;
-      justify-content: flex-end;
-      background: transparent;
-      border: none;
-      padding: 0;
+    /* One card per row: no neighbour to line up with, so drop the reserved
+       second description line. */
+    .card-description {
+      min-height: 0;
+    }
+
+    /* Phones: the table keeps the project and its actions only. */
+    .projects-table {
+      --pt-cols: minmax(0, 1fr) auto;
+    }
+
+    .pt-head {
+      display: none;
+    }
+
+    .pt-row {
+      padding: 0 12px;
+    }
+
+    .pt-open {
+      grid-column: 1 / 2;
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pt-open .pt-col-category,
+    .pt-open .pt-col-updated,
+    .pt-open .pt-col-chats,
+    .pt-open .pt-col-visibility {
+      display: none;
     }
   }
 </style>
