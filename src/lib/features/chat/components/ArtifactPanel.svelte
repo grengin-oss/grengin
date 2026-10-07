@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
   import { tick } from "svelte";
   import { renderMarkdown, copyToClipboard } from "../../../utils/markdown";
+  import { escapeHtml } from "../../../utils/html";
   import { getArtifact } from "../../../api/artifactsApi";
   import { _ } from "svelte-i18n";
   import SaveToProjectModal from "./SaveToProjectModal.svelte";
@@ -148,6 +149,59 @@ SPDX-License-Identifier: Apache-2.0
   function handleReload() {
     iframeKey++;
   }
+
+  function markdownDocument(bodyHtml: string, pageTitle: string): string {
+    return `<!doctype html><html><head><meta charset="utf-8"><title>${pageTitle}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { color-scheme: light dark; --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --soft: #f6f8fa; --line: #d1d9e0; --link: #0969da; }
+  @media (prefers-color-scheme: dark) { :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --soft: #161b22; --line: #3d444d; --link: #4493f8; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 40px 24px 64px; }
+  h1, h2 { border-bottom: 1px solid var(--line); padding-bottom: .3em; }
+  a { color: var(--link); }
+  code { background: var(--soft); padding: .15em .35em; border-radius: 6px; font-size: .9em; }
+  pre { background: var(--soft); padding: 16px; border-radius: 8px; overflow: auto; }
+  pre code { background: none; padding: 0; }
+  blockquote { margin: 0; padding: 0 1em; color: var(--muted); border-left: 4px solid var(--line); }
+  table { border-collapse: collapse; display: block; overflow: auto; }
+  th, td { border: 1px solid var(--line); padding: 6px 13px; }
+  tr:nth-child(2n) { background: var(--soft); }
+  img { max-width: 100%; }
+</style></head><body><main>${bodyHtml}</main></body></html>`;
+  }
+
+  /**
+   * Opens the finished artifact in a new browser tab.
+   *
+   * A blob: URL inherits this app's origin, so artifact HTML loaded into it
+   * directly could read the auth tokens in localStorage. The new tab is
+   * therefore only a shell around a sandboxed iframe (no allow-same-origin),
+   * which gives the artifact an opaque origin of its own.
+   */
+  function handleOpenInNewTab() {
+    if (isStreaming || code.length === 0) return;
+    const isMarkdown = type === "markdown";
+    const pageTitle = escapeHtml(title || (isMarkdown ? "Markdown Document" : "HTML Artifact"));
+    const content = isMarkdown ? markdownDocument(renderMarkdown(code), pageTitle) : code;
+    const sandbox = isMarkdown
+      ? "allow-popups allow-popups-to-escape-sandbox"
+      : "allow-scripts allow-popups allow-forms allow-modals";
+    const page = `<!doctype html><html><head><meta charset="utf-8"><title>${pageTitle}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html, body { margin: 0; height: 100%; } iframe { display: block; width: 100%; height: 100%; border: 0; }</style>
+</head><body><iframe title="${pageTitle}" sandbox="${sandbox}" srcdoc="${escapeHtml(content)}"></iframe></body></html>`;
+
+    const url = URL.createObjectURL(new Blob([page], { type: "text/html" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.click();
+    // The new tab has loaded its document by then; reloading it afterwards
+    // would need the panel's button again.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
 </script>
 
 <div class="artifact-panel">
@@ -224,6 +278,28 @@ SPDX-License-Identifier: Apache-2.0
           </svg>
         </button>
       {/if}
+      <button
+        class="header-btn"
+        onclick={handleOpenInNewTab}
+        title="Open in new tab"
+        aria-label="Open in new tab"
+        disabled={isStreaming || code.length === 0}
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+          <polyline points="15 3 21 3 21 9" />
+          <line x1="10" y1="14" x2="21" y2="3" />
+        </svg>
+      </button>
       <button
         class="header-btn"
         onclick={handleDownload}

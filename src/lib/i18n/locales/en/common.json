@@ -16,6 +16,15 @@
       "message": "You do not have permission to view this page.",
       "back": "Back to chat",
       "iconAlt": "Access denied"
+    },
+    "notFound": {
+      "eyebrow": "Error 404",
+      "title": "Page not found",
+      "message": "The page you're looking for doesn't exist, was moved, or the link may be out of date.",
+      "requestedUrl": "Requested URL",
+      "back": "Back to chat",
+      "backAdmin": "Back to Control Hub",
+      "goBack": "Go back"
     }
   },
   "components": {

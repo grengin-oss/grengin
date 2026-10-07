@@ -16,6 +16,15 @@
       "message": "Vous n'avez pas la permission d'accéder à cette page.",
       "back": "Retour au chat",
       "iconAlt": "Accès refusé"
+    },
+    "notFound": {
+      "eyebrow": "Erreur 404",
+      "title": "Page introuvable",
+      "message": "La page que vous recherchez n'existe pas, a été déplacée ou le lien n'est plus à jour.",
+      "requestedUrl": "URL demandée",
+      "back": "Retour au chat",
+      "backAdmin": "Retour à l'Espace de gestion",
+      "goBack": "Revenir en arrière"
     }
   },
   "components": {

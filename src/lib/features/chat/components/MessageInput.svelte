@@ -580,6 +580,74 @@ SPDX-License-Identifier: Apache-2.0
     onModelSelect?.(provider, model);
     modelQuery = "";
     closeMenus();
+    modelChipEl?.focus();
+  }
+
+  // ---- model picker keyboard support ----
+  let modelChipEl = $state<HTMLButtonElement | null>(null);
+  let modelPickerEl = $state<HTMLDivElement | null>(null);
+  let modelSearchEl = $state<HTMLInputElement | null>(null);
+
+  // Opening the picker puts the caret in its search box, so a keyboard user
+  // can type to filter or arrow straight into the list. Skipped on touch
+  // screens, where focusing would pop the on-screen keyboard over the list.
+  $effect(() => {
+    if (openMenu !== "model") return;
+    if (window.matchMedia("(pointer: coarse)").matches) return;
+    tick().then(() => modelSearchEl?.focus());
+  });
+
+  /** Every row the arrow keys can land on, in on-screen order. */
+  function modelPickerItems(): HTMLElement[] {
+    if (!modelPickerEl) return [];
+    return Array.from(
+      modelPickerEl.querySelectorAll<HTMLElement>(
+        ".model-picker__list button:not(:disabled), .model-picker__footer",
+      ),
+    );
+  }
+
+  function handleModelPickerKeydown(event: KeyboardEvent) {
+    const items = modelPickerItems();
+    const active = document.activeElement as HTMLElement | null;
+    const inSearch = active === modelSearchEl;
+    const index = active ? items.indexOf(active) : -1;
+
+    const focusItem = (i: number) => {
+      const target = items[i];
+      if (!target) return;
+      target.focus();
+      target.scrollIntoView({ block: "nearest" });
+    };
+
+    switch (event.key) {
+      case "ArrowDown":
+        event.preventDefault();
+        if (inSearch || index === -1) focusItem(0);
+        else if (index < items.length - 1) focusItem(index + 1);
+        break;
+      case "ArrowUp":
+        event.preventDefault();
+        if (index > 0) focusItem(index - 1);
+        else modelSearchEl?.focus();
+        break;
+      case "Home":
+      case "End":
+        // In the search box these move the caret, as usual.
+        if (inSearch) return;
+        event.preventDefault();
+        focusItem(event.key === "Home" ? 0 : items.length - 1);
+        break;
+      case "Enter":
+        // Enter on a focused row is a native button click; in the search box
+        // it picks the top match.
+        if (inSearch && modelQueryTerm && modelSearchResults.length > 0) {
+          event.preventDefault();
+          const top = modelSearchResults[0];
+          selectModel(top.provider, top.model);
+        }
+        break;
+    }
   }
 
   // Expose focus method for external callers
@@ -922,7 +990,15 @@ SPDX-License-Identifier: Apache-2.0
   function handleMenuKeydown(event: KeyboardEvent) {
     if (event.key === "Escape" && openMenu) {
       event.stopPropagation();
+      // Return focus to the chip that opened the menu, not to the page.
+      const chip =
+        openMenu === "model"
+          ? modelChipEl
+          : (event.target as HTMLElement | null)
+              ?.closest(".dropdown-anchor")
+              ?.querySelector<HTMLElement>(":scope > button");
       closeMenus();
+      chip?.focus();
     }
   }
 
@@ -1535,6 +1611,7 @@ SPDX-License-Identifier: Apache-2.0
                 e.stopPropagation();
                 toggleMenu("model");
               }}
+              bind:this={modelChipEl}
               title={$_("chat.messageInput.selectModel")}
               aria-label={$_("chat.messageInput.selectModel")}
               aria-expanded={openMenu === "model"}
@@ -1589,7 +1666,13 @@ SPDX-License-Identifier: Apache-2.0
             </button>
 
             {#if openMenu === "model"}
-              <div class="dropdown-panel model-picker">
+              <div
+                class="dropdown-panel model-picker"
+                role="dialog"
+                aria-label={$_("chat.messageInput.selectModel")}
+                bind:this={modelPickerEl}
+                onkeydown={handleModelPickerKeydown}
+              >
                 <div class="model-search">
                   <svg
                     width="14"
@@ -1607,6 +1690,7 @@ SPDX-License-Identifier: Apache-2.0
                     class="model-search__input"
                     type="text"
                     bind:value={modelQuery}
+                    bind:this={modelSearchEl}
                     placeholder={$_("chat.messageInput.searchModels")}
                     aria-label={$_("chat.messageInput.searchModels")}
                     autocomplete="off"
@@ -3031,8 +3115,18 @@ SPDX-License-Identifier: Apache-2.0
     transition: background-color 120ms ease;
   }
 
-  .model-row:hover {
+  .model-row:hover,
+  .model-row:focus-visible {
     background: var(--gx-cx-row-hover);
+  }
+
+  /* Keyboard focus in the model picker (arrow keys move it row to row). */
+  .model-row:focus-visible,
+  .model-brand-row:focus-visible,
+  .model-legacy-link:focus-visible,
+  .model-picker__footer:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: -2px;
   }
 
   .model-row--selected {
@@ -3076,7 +3170,8 @@ SPDX-License-Identifier: Apache-2.0
     transition: background-color 120ms ease;
   }
 
-  .model-brand-row:hover {
+  .model-brand-row:hover,
+  .model-brand-row:focus-visible {
     background: var(--gx-cx-row-hover);
   }
 

@@ -183,6 +183,15 @@ SPDX-License-Identifier: Apache-2.0
     onClose();
   }
 
+  // Same behaviour as the sidebar's "New chat" button.
+  function startNewChat() {
+    navigate("/");
+    onClose();
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("focusChatInput"));
+    }, 50);
+  }
+
   function clearSearch() {
     query = "";
     activeIndex = 0;
@@ -301,16 +310,66 @@ SPDX-License-Identifier: Apache-2.0
           onscroll={syncThumb}
         >
           {#if loading && items.length === 0}
-            <div class="empty-state">
+            <div class="empty-state" role="status">
               <div class="search-spinner"></div>
               <p>{$_("sidebar.loadingChats")}</p>
             </div>
           {:else if items.length === 0}
-            <div class="empty-state">
-              <h2>
-                {$_("sidebar.noMatchesFor", { values: { query: query.trim() } })}
-              </h2>
-              <p>{$_("sidebar.tryShorterWord")}</p>
+            <div class="empty-state" role="status">
+              <div class="empty-icon" aria-hidden="true">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  {#if query.trim()}
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M20 20l-3.5-3.5" />
+                    <path d="M8.5 8.5l5 5M13.5 8.5l-5 5" />
+                  {:else}
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  {/if}
+                </svg>
+              </div>
+              {#if query.trim()}
+                <h2>
+                  {$_("sidebar.noMatchesFor", { values: { query: query.trim() } })}
+                </h2>
+                <p>{$_("sidebar.tryShorterWord")}</p>
+              {:else}
+                <h2>{$_("sidebar.noChatsYet")}</h2>
+              {/if}
+              <div class="empty-actions">
+                {#if query.trim()}
+                  <button type="button" class="empty-btn" onclick={clearSearch}>
+                    {$_("sidebar.clearSearch")}
+                  </button>
+                {/if}
+                <button
+                  type="button"
+                  class="empty-btn empty-btn--primary"
+                  onclick={startNewChat}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  {$_("sidebar.newChat")}
+                </button>
+              </div>
             </div>
           {:else}
             {#each items as item, i (item.type + "-" + item.id)}
@@ -637,30 +696,103 @@ SPDX-License-Identifier: Apache-2.0
 
   /* ---------- empty / loading ---------- */
   .empty-state {
-    padding: 24px 12px;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 240px;
+    padding: 32px 24px;
+    text-align: center;
+  }
+
+  .empty-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 10px;
+    border-radius: 16px;
+    background: var(--gx-fill-soft);
+    color: var(--gx-dim);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
   }
 
   .empty-state h2 {
-    margin: 0 0 4px;
-    font-size: 13px;
-    font-weight: 500;
+    margin: 0;
+    max-width: 100%;
+    font-size: 15px;
+    font-weight: 600;
     line-height: 1.4;
-    letter-spacing: normal;
-    color: var(--gx-dim);
+    letter-spacing: -0.01em;
+    color: var(--gx-ink);
+    overflow-wrap: anywhere;
   }
 
   .empty-state p {
     margin: 0;
+    max-width: 36ch;
     font-size: 13px;
-    font-weight: 500;
-    line-height: 1.4;
-    color: var(--gx-dim);
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--gx-muted);
+  }
+
+  .empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  /* app.css paints every bare <button> as a glass pill; reset that here. */
+  .empty-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid var(--gx-hair-strong);
+    border-radius: 8px;
+    background: var(--gx-card);
+    color: var(--gx-ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: background-color 120ms ease, border-color 120ms ease;
+  }
+
+  .empty-btn:hover {
+    background: var(--gx-fill-soft);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .empty-btn--primary {
+    border-color: transparent;
+    background: var(--gx-org-brand);
+    color: #fff;
+  }
+
+  .empty-btn--primary:hover {
+    background: var(--gx-org-brand-hover);
+  }
+
+  .empty-btn:focus-visible {
+    outline: 2px solid var(--gx-blue);
+    outline-offset: 2px;
   }
 
   .search-spinner {
-    width: 16px;
-    height: 16px;
-    margin: 0 0 8px;
+    width: 20px;
+    height: 20px;
+    margin: 0 0 6px;
     border: 2px solid var(--gx-line);
     border-top-color: var(--gx-blue);
     border-radius: 50%;

@@ -16,6 +16,15 @@
       "message": "Você não tem permissão para ver esta página.",
       "back": "Voltar ao chat",
       "iconAlt": "Acesso negado"
+    },
+    "notFound": {
+      "eyebrow": "Erro 404",
+      "title": "Página não encontrada",
+      "message": "A página que você procura não existe, foi movida ou o link pode estar desatualizado.",
+      "requestedUrl": "URL solicitada",
+      "back": "Voltar ao chat",
+      "backAdmin": "Voltar ao Painel de Controle",
+      "goBack": "Voltar"
     }
   },
   "components": {

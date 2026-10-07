@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { _ } from 'svelte-i18n';
+  import { escapeHtml } from '../../utils/html';
   import Modal from '$lib/admin/components/Modal.svelte';
   import { getUsers } from '../../api/admin/users';
   import type { User } from '../../admin/types';
@@ -102,7 +103,7 @@ SPDX-License-Identifier: Apache-2.0
   {#snippet children()}
     <div class="add-member">
       <p class="hint">
-        {@html $_('projects.addMembersHint', { values: { name: projectName } })}
+        {@html $_('projects.addMembersHint', { values: { name: escapeHtml(projectName) } })}
       </p>
 
       <div class="field">

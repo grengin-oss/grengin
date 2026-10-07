@@ -25,6 +25,7 @@ SPDX-License-Identifier: Apache-2.0
     PromptEffectiveness,
     AuditLogs,
     SystemMetrics,
+    NotFound,
       } from './admin-chunk';
 </script>
 
@@ -125,3 +126,9 @@ SPDX-License-Identifier: Apache-2.0
 <Route path="/mcp/oauth/callback">
   <McpOAuthCallback />
 </Route>
+<!-- Bare /admin renders nothing here: App redirects it to the first admin page
+     the user may open, and without this route the catch-all below would flash
+     a 404 while permissions load. -->
+<Route path="/admin" />
+<!-- Catch-all: the router ranks it below every concrete path above. -->
+<Route path="*"><NotFound admin /></Route>

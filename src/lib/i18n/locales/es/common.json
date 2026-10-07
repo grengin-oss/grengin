@@ -16,6 +16,15 @@
       "message": "No tiene permiso para ver esta página.",
       "back": "Volver al chat",
       "iconAlt": "Acceso denegado"
+    },
+    "notFound": {
+      "eyebrow": "Código de error 404",
+      "title": "Página no encontrada",
+      "message": "La página que busca no existe, se movió o el enlace puede estar desactualizado.",
+      "requestedUrl": "URL solicitada",
+      "back": "Volver al chat",
+      "backAdmin": "Volver al Panel de Control",
+      "goBack": "Volver atrás"
     }
   },
   "components": {

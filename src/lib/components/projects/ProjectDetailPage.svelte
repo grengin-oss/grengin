@@ -40,6 +40,7 @@ SPDX-License-Identifier: Apache-2.0
   import { toast } from "../Toaster.svelte";
   import { setCrumbLeaf } from "../layout/index.js";
   import { setPageTitle } from "../../utils/pageTitle";
+  import { escapeHtml } from "../../utils/html";
 
   let { id } = $props<{ id: string }>();
 
@@ -1687,7 +1688,7 @@ SPDX-License-Identifier: Apache-2.0
       </div>
       <h3 class="confirm-title">{$_('projects.confirmRemoveMember')}</h3>
       <p class="confirm-desc">
-        {@html $_('projects.confirmRemoveMemberDesc', { values: { name: confirmRemoveMember.name || confirmRemoveMember.email } })}
+        {@html $_('projects.confirmRemoveMemberDesc', { values: { name: escapeHtml(confirmRemoveMember.name || confirmRemoveMember.email) } })}
       </p>
       <div class="confirm-actions">
         <button class="confirm-cancel-btn" onclick={cancelRemoveMember}>{$_('projects.cancel')}</button>
@@ -1709,7 +1710,7 @@ SPDX-License-Identifier: Apache-2.0
       </div>
       <h3 class="confirm-title">{$_('projects.confirmRemoveSource')}</h3>
       <p class="confirm-desc">
-        {@html $_('projects.confirmRemoveSourceDesc', { values: { name: confirmDeleteSource.fileName } })}
+        {@html $_('projects.confirmRemoveSourceDesc', { values: { name: escapeHtml(confirmDeleteSource.fileName) } })}
       </p>
       <div class="confirm-actions">
         <button class="confirm-cancel-btn" onclick={cancelDeleteSource}>{$_('projects.cancel')}</button>
@@ -1731,7 +1732,7 @@ SPDX-License-Identifier: Apache-2.0
       </div>
       <h3 class="confirm-title">{$_('projects.confirmRemoveChat')}</h3>
       <p class="confirm-desc">
-        {@html $_('projects.confirmRemoveChatDesc', { values: { title: confirmRemoveChat.title } })}
+        {@html $_('projects.confirmRemoveChatDesc', { values: { title: escapeHtml(confirmRemoveChat.title) } })}
       </p>
       <div class="confirm-actions">
         <button class="confirm-cancel-btn" onclick={cancelRemoveChat}>{$_('projects.cancel')}</button>
@@ -1966,6 +1967,7 @@ SPDX-License-Identifier: Apache-2.0
       rgba(255, 255, 255, 0.7) 100%
     );
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 

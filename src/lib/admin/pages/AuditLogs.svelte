@@ -26,11 +26,67 @@ SPDX-License-Identifier: Apache-2.0
   import type { AuditLog } from "../types.js";
 
   const ROWS_PER_PAGE_OPTIONS = [20, 50, 100];
+  const DEFAULT_LIMIT = ROWS_PER_PAGE_OPTIONS[0];
 
-  let searchQuery = $state("");
-  let filterAction = $state("");
-  let filterStartDate = $state("");
-  let filterEndDate = $state("");
+  /* The URL is the source of truth for filters and paging, so a reload, a
+     shared link or a return visit opens the same view. The store is a
+     module singleton, and on its own it would keep filtering while these
+     inputs reset to empty on remount. */
+  const QUERY_KEYS = {
+    userId: "user",
+    action: "action",
+    startDate: "from",
+    endDate: "to",
+    page: "page",
+    limit: "limit",
+  } as const;
+  const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+  function readQueryFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const date = (key: string) => {
+      const value = params.get(key) ?? "";
+      return ISO_DATE.test(value) ? value : "";
+    };
+    const page = Number(params.get(QUERY_KEYS.page));
+    const limit = Number(params.get(QUERY_KEYS.limit));
+    return {
+      filters: {
+        userId: (params.get(QUERY_KEYS.userId) ?? "").trim(),
+        action: (params.get(QUERY_KEYS.action) ?? "").trim(),
+        startDate: date(QUERY_KEYS.startDate),
+        endDate: date(QUERY_KEYS.endDate),
+      },
+      page: Number.isInteger(page) && page > 0 ? page : 1,
+      limit: ROWS_PER_PAGE_OPTIONS.includes(limit) ? limit : DEFAULT_LIMIT,
+    };
+  }
+
+  function writeQueryToUrl() {
+    const url = new URL(window.location.href);
+    const set = (key: string, value: string | number, fallback: string | number) => {
+      if (value && value !== fallback) url.searchParams.set(key, String(value));
+      else url.searchParams.delete(key);
+    };
+    const { filters, page, limit } = auditLogsStore;
+    set(QUERY_KEYS.userId, filters.userId, "");
+    set(QUERY_KEYS.action, filters.action, "");
+    set(QUERY_KEYS.startDate, filters.startDate, "");
+    set(QUERY_KEYS.endDate, filters.endDate, "");
+    set(QUERY_KEYS.page, page, 1);
+    set(QUERY_KEYS.limit, limit, DEFAULT_LIMIT);
+    if (url.toString() !== window.location.href) {
+      history.replaceState(history.state, "", url.toString());
+    }
+  }
+
+  const initialQuery = readQueryFromUrl();
+  let urlSyncReady = false;
+
+  let searchQuery = $state(initialQuery.filters.userId);
+  let filterAction = $state(initialQuery.filters.action);
+  let filterStartDate = $state(initialQuery.filters.startDate);
+  let filterEndDate = $state(initialQuery.filters.endDate);
   let debounceTimeout: number | null = null;
   let isExporting = $state(false);
   let expandedRowId = $state<string | null>(null);
@@ -41,12 +97,31 @@ SPDX-License-Identifier: Apache-2.0
   let copiedTimeout: number | null = null;
 
   onMount(() => {
-    auditLogsStore.fetchLogs();
+    auditLogsStore.load(initialQuery);
+    urlSyncReady = true;
     auditLogsStore.fetchActionTypes();
     return () => {
       if (debounceTimeout) clearTimeout(debounceTimeout);
       if (copiedTimeout) clearTimeout(copiedTimeout);
     };
+  });
+
+  // Mirror filters and paging into the URL whenever they change.
+  $effect(() => {
+    const { userId, action, startDate, endDate } = auditLogsStore.filters;
+    void [userId, action, startDate, endDate, auditLogsStore.page, auditLogsStore.limit];
+    if (urlSyncReady) writeQueryToUrl();
+  });
+
+  // A stale link (or a smaller result set) can point past the last page.
+  $effect(() => {
+    if (
+      !auditLogsStore.isLoading &&
+      auditLogsStore.total > 0 &&
+      auditLogsStore.page > totalPages
+    ) {
+      auditLogsStore.setPage(totalPages);
+    }
   });
 
   // Handle errors with toast
@@ -508,6 +583,11 @@ SPDX-License-Identifier: Apache-2.0
             onchange={applyFilters}
           >
             <option value="">{$_("admin.auditLogs.allActions")}</option>
+            <!-- Keeps an action restored from the URL selectable before the
+                 action list loads (or if it is no longer listed). -->
+            {#if filterAction && !auditLogsStore.actionTypes.includes(filterAction)}
+              <option value={filterAction}>{getLocalizedAction(filterAction)}</option>
+            {/if}
             {#each auditLogsStore.actionTypes as action (action)}
               <option value={action}>{getLocalizedAction(action)}</option>
             {/each}

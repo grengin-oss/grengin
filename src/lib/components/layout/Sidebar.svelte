@@ -942,6 +942,7 @@ SPDX-License-Identifier: Apache-2.0
     <div
       class="us-menu__inner"
       role="menu"
+      tabindex="-1"
       aria-label={$_("sidebar.userMenu") || "User menu"}
       onkeydown={handleUserMenuKeydown}
     >
