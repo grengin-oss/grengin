@@ -1669,6 +1669,7 @@ SPDX-License-Identifier: Apache-2.0
               <div
                 class="dropdown-panel model-picker"
                 role="dialog"
+                tabindex="-1"
                 aria-label={$_("chat.messageInput.selectModel")}
                 bind:this={modelPickerEl}
                 onkeydown={handleModelPickerKeydown}
