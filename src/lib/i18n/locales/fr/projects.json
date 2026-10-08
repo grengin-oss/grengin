@@ -116,6 +116,14 @@
     "removeMemberError": "Echec de la suppression du membre",
     "chatsCount": "Nombre de discussions",
     "teamVisibility": "Visibilite equipe",
-    "privateVisibility": "Visibilite privee"
+    "privateVisibility": "Visibilite privee",
+    "viewModeLabel": "Mode d’affichage",
+    "viewGrid": "Grille",
+    "viewList": "Liste",
+    "colProject": "Projet",
+    "colCategory": "Catégorie",
+    "colVisibility": "Visibilité",
+    "colUpdated": "Dernière mise à jour",
+    "colActions": "Opérations"
   }
 }

@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { Route } from 'svelte-routing';
-  import { Chat, AlertsPage, Forbidden, UserSettings, McpOAuthCallback, ProjectsPage, ProjectDetailPage } from './user-chunk';
+  import { Chat, AlertsPage, Forbidden, NotFound, UserSettings, McpOAuthCallback, ProjectsPage, ProjectDetailPage } from './user-chunk';
 </script>
 
 <Route path="/"><Chat /></Route>
@@ -17,3 +17,5 @@ SPDX-License-Identifier: Apache-2.0
 <Route path="/settings"><UserSettings /></Route>
 <Route path="/forbidden"><Forbidden /></Route>
 <Route path="/mcp/oauth/callback"><McpOAuthCallback /></Route>
+<!-- Catch-all: the router ranks it below every concrete path above. -->
+<Route path="*"><NotFound /></Route>

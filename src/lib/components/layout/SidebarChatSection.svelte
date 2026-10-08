@@ -934,7 +934,7 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     gap: 6px;
     align-items: center;
-    color: inherit;
+    color: var(--gx-sidebar-section-ink);
   }
 
   .section-header__left--tight {
@@ -1060,7 +1060,7 @@ SPDX-License-Identifier: Apache-2.0
     align-items: center;
     gap: 6px;
     align-self: stretch;
-    color: var(--gx-dim);
+    color: var(--gx-sidebar-section-ink);
   }
 
   /* The box has to match the glyph it holds (14px): at 12px the svg was

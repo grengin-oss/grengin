@@ -92,6 +92,14 @@ function createAuditLogsStore() {
     fetchLogs,
     fetchActionTypes,
 
+    /** Apply a whole query at once (e.g. restored from the URL) and fetch once. */
+    async load(query: { filters: AuditLogsFilters; page: number; limit: number }) {
+      filters = { ...query.filters };
+      page = query.page;
+      limit = query.limit;
+      return fetchLogs();
+    },
+
     async setFilters(newFilters: Partial<AuditLogsFilters>) {
       Object.assign(filters, newFilters);
       page = 1; // Reset to first page when filters change

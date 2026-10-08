@@ -9,5 +9,6 @@ export { default as SidebarProjectsSection } from '$lib/components/projects/Side
 export { default as ProjectsPage } from '$lib/components/projects/ProjectsPage.svelte';
 export { default as ProjectDetailPage } from '$lib/components/projects/ProjectDetailPage.svelte';
 export { default as Forbidden } from '$lib/components/Forbidden.svelte';
+export { default as NotFound } from '$lib/components/NotFound.svelte';
 export { default as UserSettings } from '$lib/pages/UserSettings.svelte';
 export { default as McpOAuthCallback } from '$lib/admin/pages/McpOAuthCallback.svelte';

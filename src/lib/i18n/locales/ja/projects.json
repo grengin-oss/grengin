@@ -116,6 +116,14 @@
     "removeMemberError": "メンバーの削除に失敗しました",
     "chatsCount": "チャット数",
     "teamVisibility": "チーム公開",
-    "privateVisibility": "プライベート"
+    "privateVisibility": "プライベート",
+    "viewModeLabel": "表示モード",
+    "viewGrid": "グリッド",
+    "viewList": "リスト",
+    "colProject": "プロジェクト",
+    "colCategory": "カテゴリ",
+    "colVisibility": "公開範囲",
+    "colUpdated": "最終更新日",
+    "colActions": "操作"
   }
 }

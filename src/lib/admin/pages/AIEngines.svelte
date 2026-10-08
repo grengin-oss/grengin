@@ -1176,7 +1176,8 @@ SPDX-License-Identifier: Apache-2.0
 
     <!-- ".status-filters" — hidden for now: the page lists connected engines
          only. Restore this row (and `filter`'s "all" default) to bring back
-         the All / Connected / Needs attention pills.
+         the All / Connected / Needs attention pills; their styles were removed
+         with it — recover them from commit 2c179f2.
     <div
       class="status-filters"
       role="group"
@@ -2868,79 +2869,6 @@ SPDX-License-Identifier: Apache-2.0
   .view-opt:focus-visible {
     outline: 2px solid var(--gx-org-primary-500);
     outline-offset: 1px;
-  }
-
-  /* ---- ".status-filters" ---- */
-  .status-filters {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    align-self: stretch;
-    flex-wrap: wrap;
-    flex-shrink: 0;
-  }
-
-  .status-pill {
-    border-radius: 999px;
-    background: color-mix(
-      in oklch,
-      var(--gx-org-primary-500) 10%,
-      var(--gx-card)
-    );
-    box-shadow: inset 0 0 0 1px var(--gx-org-primary-500);
-    display: flex;
-    gap: 5px;
-    align-items: center;
-    padding: 7px 13px;
-    font-weight: 600;
-    font-size: 11px;
-    line-height: 100%;
-    color: var(--gx-org-primary-500);
-    white-space: nowrap;
-    transition:
-      background-color 120ms ease,
-      color 120ms ease;
-  }
-
-  .status-pill:hover {
-    background: color-mix(
-      in oklch,
-      var(--gx-org-primary-500) 18%,
-      var(--gx-card)
-    );
-  }
-
-  .status-pill[aria-pressed="true"] {
-    background: var(--gx-org-primary-500);
-    color: #fff;
-  }
-
-  .status-pill:focus-visible {
-    outline: 2px solid var(--gx-org-primary-500);
-    outline-offset: 2px;
-  }
-
-  /* "Needs attention" carries the amber the rest of the app uses for a warning
-     rather than the page blue, so the one pill that means "something here is
-     unfinished" reads as such at a glance. --gx-amber is rgb(184, 134, 43) in
-     light and lifts to #e0b566 in dark. */
-  .status-pill--warn {
-    background: color-mix(in oklch, var(--gx-amber) 10%, var(--gx-card));
-    box-shadow: inset 0 0 0 1px var(--gx-amber);
-    color: var(--gx-amber);
-  }
-
-  .status-pill--warn:hover {
-    background: color-mix(in oklch, var(--gx-amber) 18%, var(--gx-card));
-  }
-
-  .status-pill--warn[aria-pressed="true"] {
-    background: var(--gx-amber);
-    color: #fff;
-  }
-
-  .status-pill--warn:focus-visible {
-    outline-color: var(--gx-amber);
   }
 
   /* ---- brand marks (".eng-mark", ".grid-card-mark", ".bp-card-mark") ----

@@ -365,21 +365,17 @@ SPDX-License-Identifier: Apache-2.0
     border: none;
     padding: 0;
     cursor: pointer;
-    color: var(--gx-dim);
-    transition: color 120ms ease;
+    color: var(--gx-sidebar-section-ink);
+    transition: opacity 120ms ease;
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
 
   .projects-title-btn:hover {
-    color: var(--gx-muted);
+    opacity: 0.75;
     transform: none;
     box-shadow: none;
-  }
-
-  .projects-title-btn.active {
-    color: var(--gx-blue);
   }
 
   .projects-title-btn:focus-visible {

@@ -132,6 +132,7 @@ SPDX-License-Identifier: Apache-2.0
   let wideViewportCollapsed = false;
 
   function handleResize() {
+    viewportIsMobile = isMobile();
     const compact = isCompactViewport();
     /* Only act when the viewport actually crosses the boundary, so a user who
        expands the rail on a tablet doesn't get it slammed shut on every
@@ -186,6 +187,7 @@ SPDX-License-Identifier: Apache-2.0
     initAuth();
     permissionsStore.init();
     wasCompactViewport = isCompactViewport();
+    viewportIsMobile = isMobile();
     sidebarCollapsed = wasCompactViewport;
     window.addEventListener("resize", handleResize);
   });
@@ -237,6 +239,54 @@ SPDX-License-Identifier: Apache-2.0
     rememberSidebarPreference(sidebarCollapsed);
   }
 
+  // ---- mobile drawer (phones: the sidebar overlays the page) ----
+  let viewportIsMobile = $state(false);
+  const drawerOpen = $derived(viewportIsMobile && !sidebarCollapsed);
+  let focusBeforeDrawer: HTMLElement | null = null;
+
+  function closeDrawer() {
+    sidebarCollapsed = true;
+    rememberSidebarPreference(true);
+  }
+
+  // Opening moves focus into the drawer; closing hands it back to whatever
+  // opened it (normally the menu button) if focus was left inside the drawer.
+  $effect(() => {
+    const open = drawerOpen;
+    untrack(() => {
+      const sidebar = document.getElementById("app-sidebar");
+      if (open) {
+        focusBeforeDrawer = document.activeElement as HTMLElement | null;
+        requestAnimationFrame(() => {
+          sidebar
+            ?.querySelector<HTMLElement>(
+              'button:not([disabled]), a[href], input, [tabindex]:not([tabindex="-1"])',
+            )
+            ?.focus();
+        });
+      } else if (focusBeforeDrawer) {
+        const active = document.activeElement;
+        if (!active || active === document.body || sidebar?.contains(active)) {
+          focusBeforeDrawer.focus();
+        }
+        focusBeforeDrawer = null;
+      }
+    });
+  });
+
+  function handleDrawerKeydown(event: KeyboardEvent) {
+    if (event.key !== "Escape" || !drawerOpen || event.defaultPrevented) return;
+    // Let an open dialog, or a menu/list inside the drawer (e.g. the user
+    // menu), handle its own Escape first — one press closes one layer.
+    if (document.querySelector('[aria-modal="true"]')) return;
+    const layer = (event.target as HTMLElement | null)?.closest(
+      '[role="menu"], [role="listbox"], [role="dialog"]',
+    );
+    if (layer && layer.getAttribute("aria-hidden") !== "true") return;
+    event.preventDefault();
+    closeDrawer();
+  }
+
   function handleMainContentClick(event: Event) {
     const target = event.target as HTMLElement;
     const isInteractiveElement =
@@ -253,6 +303,8 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 </script>
+
+<svelte:window onkeydown={handleDrawerKeydown} />
 
 <Toaster />
 <Router>
@@ -289,7 +341,12 @@ SPDX-License-Identifier: Apache-2.0
       ></div>
     {/if}
 
-    <main class="main-content" class:collapsed={sidebarCollapsed}>
+    <main
+      class="main-content"
+      class:collapsed={sidebarCollapsed}
+      class:drawer-open={drawerOpen}
+      inert={drawerOpen}
+    >
       <MobileHeader {sidebarCollapsed} onToggleMenu={toggleSidebarFromMain} />
 
       <!-- <TopBar user={authState.user} onlogout={handleLogout} /> -->
@@ -410,6 +467,20 @@ SPDX-License-Identifier: Apache-2.0
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-y: contain;
+    }
+  }
+
+  /* While the drawer is open the page behind it must not scroll: the main
+     pane is the app's scroll container on phones, and the overlay itself must
+     not hand touch scrolls through to it. */
+  .main-content.drawer-open .main-content-body {
+    overflow: hidden;
+  }
+
+  @media (max-width: 768px) {
+    .mobile-overlay {
+      overscroll-behavior: contain;
+      touch-action: none;
     }
   }
 

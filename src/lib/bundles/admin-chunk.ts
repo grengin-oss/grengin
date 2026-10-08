@@ -17,3 +17,4 @@ export { default as PromptLibrary } from '$lib/admin/pages/PromptLibrary.svelte'
 export { default as PromptEffectiveness } from '$lib/admin/pages/PromptEffectiveness.svelte';
 export { default as AuditLogs } from '$lib/admin/pages/AuditLogs.svelte';
 export { default as SystemMetrics } from '$lib/admin/pages/SystemMetrics.svelte';
+export { default as NotFound } from '$lib/components/NotFound.svelte';

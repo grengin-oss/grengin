@@ -44,8 +44,11 @@ SPDX-License-Identifier: Apache-2.0
 
 <div class="mobile-header">
   <button
+    type="button"
     class="mobile-menu-btn"
     onclick={onToggleMenu}
+    aria-expanded={!sidebarCollapsed}
+    aria-controls="app-sidebar"
     aria-label={sidebarCollapsed ? $_('app.openMenu') : $_('app.closeMenu')}
     title={sidebarCollapsed ? $_('app.openMenu') : $_('app.closeMenu')}
   >

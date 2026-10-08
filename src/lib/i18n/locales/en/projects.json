@@ -116,6 +116,14 @@
     "removeMemberError": "Failed to remove member",
     "chatsCount": "Chats count",
     "teamVisibility": "Team visibility",
-    "privateVisibility": "Private visibility"
+    "privateVisibility": "Private visibility",
+    "viewModeLabel": "View mode",
+    "viewGrid": "Grid",
+    "viewList": "List",
+    "colProject": "Project",
+    "colCategory": "Category",
+    "colVisibility": "Visibility",
+    "colUpdated": "Last updated",
+    "colActions": "Actions"
   }
 }

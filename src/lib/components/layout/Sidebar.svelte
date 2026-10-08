@@ -308,9 +308,16 @@ SPDX-License-Identifier: Apache-2.0
     collapseSidebarOnMobile();
   }
 
+  let userMenuTrigger = $state.raw<HTMLButtonElement | undefined>(undefined);
+
   function handleUserMenuKeydown(event: KeyboardEvent) {
     if (event.key === "Escape") {
+      // One Escape closes one layer: don't let it also close the mobile drawer.
+      event.stopPropagation();
       closeUserMenu();
+      // The menu stays in the DOM (aria-hidden) once closed, so focus would
+      // otherwise be stranded on a hidden item. Hand it back to the trigger.
+      userMenuTrigger?.focus();
       return;
     }
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
@@ -520,6 +527,7 @@ SPDX-License-Identifier: Apache-2.0
 {/snippet}
 
 <aside
+  id="app-sidebar"
   class="sidebar"
   class:collapsed={isCollapsed}
   class:admin={isAdminView}
@@ -899,6 +907,7 @@ SPDX-License-Identifier: Apache-2.0
     <button
       class="user-row"
       class:user-row--rail={isCollapsed}
+      bind:this={userMenuTrigger}
       onclick={toggleUserMenu}
       aria-label={$_("sidebar.userMenu")}
       aria-expanded={userMenuOpen}
@@ -942,6 +951,7 @@ SPDX-License-Identifier: Apache-2.0
     <div
       class="us-menu__inner"
       role="menu"
+      tabindex="-1"
       aria-label={$_("sidebar.userMenu") || "User menu"}
       onkeydown={handleUserMenuKeydown}
     >
