@@ -8,7 +8,22 @@
     "never": "Never",
     "loading": "Loading...",
     "clear": "Clear",
-    "select": "Select"
+    "select": "Select",
+    "addMembers": {
+      "subtitle": "to {name}",
+      "searchPlaceholder": "Search by name, email, or department…",
+      "columnName": "Name",
+      "columnEmail": "Email",
+      "selected": "{count} selected",
+      "submit": "Add {count, plural, one {# Member} other {# Members}}",
+      "submitNone": "Add Members",
+      "adding": "Adding…",
+      "loading": "Loading people…",
+      "empty": "No people found",
+      "noMatch": "No people match “{query}”",
+      "alreadyMember": "Member",
+      "loadError": "Failed to load people"
+    }
   },
   "errors": {
     "forbidden": {

@@ -214,6 +214,7 @@ SPDX-License-Identifier: Apache-2.0
   {#if showAddMember}
     <AddMemberModal
       departmentId={department.id}
+      departmentName={department.name}
       onclose={() => showAddMember = false}
       onSuccess={handleMemberAdded}
     />

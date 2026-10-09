@@ -59,9 +59,9 @@ SPDX-License-Identifier: Apache-2.0
   let sources = $state<ProjectSource[]>([]);
   let chats = $state<ProjectChat[]>([]);
   let loading = $state(true);
-  let activeTab = $state<"chats" | "sources" | "tools" | "instructions" | "members" | "activity">(
-    "chats",
-  );
+  let activeTab = $state<
+    "chats" | "sources" | "tools" | "instructions" | "members" | "activity"
+  >("chats");
 
   let instructions = $state("");
   let savingInstructions = $state(false);
@@ -109,9 +109,9 @@ SPDX-License-Identifier: Apache-2.0
     try {
       const { shareUrl } = await shareProject(project.id);
       await navigator.clipboard.writeText(shareUrl);
-      toast.success($_('sidebar.shareLinkCopied'));
+      toast.success($_("sidebar.shareLinkCopied"));
     } catch {
-      toast.error($_('sidebar.shareProjectError'));
+      toast.error($_("sidebar.shareProjectError"));
     } finally {
       sharing = false;
     }
@@ -229,7 +229,11 @@ SPDX-License-Identifier: Apache-2.0
       }
       mcpServers[index].enabled = newEnabled;
     } catch {
-      toast.error(newEnabled ? $_('projects.enableServerError') : $_('projects.disableServerError'));
+      toast.error(
+        newEnabled
+          ? $_("projects.enableServerError")
+          : $_("projects.disableServerError"),
+      );
     } finally {
       togglingServerId = null;
     }
@@ -240,11 +244,11 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   let uploadedSources = $derived(
-    sources.filter((s) => s.origin !== 'artifact'),
+    sources.filter((s) => s.origin !== "artifact"),
   );
 
   let artifactSourceIds = $derived(
-    new Set(sources.filter((s) => s.origin === 'artifact').map((s) => s.id)),
+    new Set(sources.filter((s) => s.origin === "artifact").map((s) => s.id)),
   );
 
   let dedupedArtifacts = $derived(
@@ -252,7 +256,7 @@ SPDX-License-Identifier: Apache-2.0
   );
 
   let allArtifactItems = $derived([
-    ...sources.filter((s) => s.origin === 'artifact'),
+    ...sources.filter((s) => s.origin === "artifact"),
     ...dedupedArtifacts,
   ]);
 
@@ -274,7 +278,14 @@ SPDX-License-Identifier: Apache-2.0
 
   interface ActivityEvent {
     id: string;
-    type: 'chat_created' | 'chat_updated' | 'source_uploaded' | 'artifact_added' | 'project_created' | 'project_updated' | 'instructions_updated';
+    type:
+      | "chat_created"
+      | "chat_updated"
+      | "source_uploaded"
+      | "artifact_added"
+      | "project_created"
+      | "project_updated"
+      | "instructions_updated";
     title: string;
     description: string;
     timestamp: string;
@@ -287,31 +298,35 @@ SPDX-License-Identifier: Apache-2.0
     // Project creation
     if (project) {
       events.push({
-        id: 'proj_created',
-        type: 'project_created',
-        title: $_('projects.actProjectCreated'),
-        description: $_('projects.actProjectCreatedDesc', { values: { name: project.name } }),
+        id: "proj_created",
+        type: "project_created",
+        title: $_("projects.actProjectCreated"),
+        description: $_("projects.actProjectCreatedDesc", {
+          values: { name: project.name },
+        }),
         timestamp: project.createdAt,
-        icon: '🚀',
+        icon: "🚀",
       });
       if (project.createdAt !== project.updatedAt) {
         events.push({
-          id: 'proj_updated',
-          type: 'project_updated',
-          title: $_('projects.actProjectUpdated'),
-          description: $_('projects.actProjectUpdatedDesc'),
+          id: "proj_updated",
+          type: "project_updated",
+          title: $_("projects.actProjectUpdated"),
+          description: $_("projects.actProjectUpdatedDesc"),
           timestamp: project.updatedAt,
-          icon: '✏️',
+          icon: "✏️",
         });
       }
       if (instructions.trim().length > 0) {
         events.push({
-          id: 'instructions_set',
-          type: 'instructions_updated',
-          title: $_('projects.actInstructionsConfigured'),
-          description: $_('projects.actInstructionsDesc', { values: { count: instructions.length } }),
+          id: "instructions_set",
+          type: "instructions_updated",
+          title: $_("projects.actInstructionsConfigured"),
+          description: $_("projects.actInstructionsDesc", {
+            values: { count: instructions.length },
+          }),
           timestamp: project.updatedAt,
-          icon: '📝',
+          icon: "📝",
         });
       }
     }
@@ -320,49 +335,54 @@ SPDX-License-Identifier: Apache-2.0
     for (const chat of chats) {
       events.push({
         id: `chat_created_${chat.id}`,
-        type: 'chat_created',
-        title: $_('projects.actChatStarted'),
+        type: "chat_created",
+        title: $_("projects.actChatStarted"),
         description: chat.title,
         timestamp: chat.createdAt,
-        icon: '💬',
+        icon: "💬",
       });
       if (chat.createdAt !== chat.updatedAt) {
         events.push({
           id: `chat_updated_${chat.id}`,
-          type: 'chat_updated',
-          title: $_('projects.actChatActivity', { values: { count: chat.messageCount } }),
+          type: "chat_updated",
+          title: $_("projects.actChatActivity", {
+            values: { count: chat.messageCount },
+          }),
           description: chat.lastMessage,
           timestamp: chat.updatedAt,
-          icon: '🔄',
+          icon: "🔄",
         });
       }
     }
 
     // Source events
     for (const source of sources) {
-      if (source.origin === 'artifact') {
+      if (source.origin === "artifact") {
         events.push({
           id: `source_${source.id}`,
-          type: 'artifact_added',
-          title: $_('projects.actArtifactContributed'),
+          type: "artifact_added",
+          title: $_("projects.actArtifactContributed"),
           description: source.fileName,
           timestamp: source.uploadedAt,
-          icon: '💾',
+          icon: "💾",
         });
       } else {
         events.push({
           id: `source_${source.id}`,
-          type: 'source_uploaded',
-          title: $_('projects.actSourceUploaded'),
+          type: "source_uploaded",
+          title: $_("projects.actSourceUploaded"),
           description: source.fileName,
           timestamp: source.uploadedAt,
-          icon: '📎',
+          icon: "📎",
         });
       }
     }
 
     // Sort newest first
-    events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    events.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
     return events;
   });
 
@@ -389,7 +409,9 @@ SPDX-License-Identifier: Apache-2.0
       try {
         const response = await searchProjectMembers(id, q);
         const memberIds = new Set(members.map((m) => m.userId));
-        memberSearchResults = response.users.filter((u) => !memberIds.has(u.id));
+        memberSearchResults = response.users.filter(
+          (u) => !memberIds.has(u.id),
+        );
       } catch {
         memberSearchResults = [];
       } finally {
@@ -414,9 +436,13 @@ SPDX-License-Identifier: Apache-2.0
     try {
       await removeProjectMember(id, member.userId);
       members = members.filter((m) => m.id !== member.id);
-      toast.success($_('projects.memberRemoved', { values: { name: member.name || member.email } }));
+      toast.success(
+        $_("projects.memberRemoved", {
+          values: { name: member.name || member.email },
+        }),
+      );
     } catch {
-      toast.error($_('projects.memberRemoveError'));
+      toast.error($_("projects.memberRemoveError"));
     } finally {
       removingMemberId = null;
     }
@@ -448,7 +474,7 @@ SPDX-License-Identifier: Apache-2.0
       sources = proj.sources || [];
       chats = proj.chats || [];
     } catch {
-      toast.error($_('projects.loadProjectError'));
+      toast.error($_("projects.loadProjectError"));
     } finally {
       loading = false;
     }
@@ -458,10 +484,10 @@ SPDX-License-Identifier: Apache-2.0
     savingInstructions = true;
     try {
       await updateProjectInstructions(id, instructions);
-      toast.success($_('projects.instructionsSaved'));
+      toast.success($_("projects.instructionsSaved"));
       instructionsChanged = false;
     } catch {
-      toast.error($_('projects.instructionsSaveError'));
+      toast.error($_("projects.instructionsSaveError"));
     } finally {
       savingInstructions = false;
     }
@@ -479,9 +505,11 @@ SPDX-License-Identifier: Apache-2.0
         const source = await uploadProjectSource(id, file);
         sources = [...sources, source];
       }
-      toast.success($_('projects.filesUploaded', { values: { count: files.length } }));
+      toast.success(
+        $_("projects.filesUploaded", { values: { count: files.length } }),
+      );
     } catch {
-      toast.error($_('projects.fileUploadError'));
+      toast.error($_("projects.fileUploadError"));
     } finally {
       uploading = false;
     }
@@ -504,9 +532,9 @@ SPDX-License-Identifier: Apache-2.0
       await deleteProjectSource(id, source.id);
       sources = sources.filter((s) => s.id !== source.id);
       artifacts = artifacts.filter((a) => a.id !== source.id);
-      toast.success($_('projects.fileRemoved'));
+      toast.success($_("projects.fileRemoved"));
     } catch {
-      toast.error($_('projects.fileRemoveError'));
+      toast.error($_("projects.fileRemoveError"));
     } finally {
       deletingSourceId = null;
     }
@@ -528,9 +556,9 @@ SPDX-License-Identifier: Apache-2.0
     try {
       await unlinkProjectFromConversation(chat.id, id);
       chats = chats.filter((c) => c.id !== chat.id);
-      toast.success($_('projects.chatRemoved'));
+      toast.success($_("projects.chatRemoved"));
     } catch {
-      toast.error($_('projects.chatRemoveError'));
+      toast.error($_("projects.chatRemoveError"));
     } finally {
       removingChatId = null;
     }
@@ -570,6 +598,11 @@ SPDX-License-Identifier: Apache-2.0
       month: "short",
       day: "numeric",
     });
+  }
+
+  /** The meta labels read "Created:" etc.; as stacked stat labels the colon goes. */
+  function statLabel(label: string): string {
+    return label.replace(/\s*[:：]\s*$/, "");
   }
 
   function formatTime(dateStr: string | null | undefined): string {
@@ -614,13 +647,14 @@ SPDX-License-Identifier: Apache-2.0
   {#if loading}
     <div class="loading-state">
       <div class="loading-spinner"></div>
-      <span>{$_('projects.loadingProject')}</span>
+      <span>{$_("projects.loadingProject")}</span>
     </div>
   {:else if project}
     <!-- Back Button -->
     <div class="navigation-header">
       <button
-        class="back-btn pill pill--interactive pill--sm"
+        class="back-btn"
+        type="button"
         onclick={() => navigate("/projects")}
       >
         <svg
@@ -634,96 +668,142 @@ SPDX-License-Identifier: Apache-2.0
         >
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
-        <span>{$_('projects.backToProjects')}</span>
+        <span>{$_("projects.backToProjects")}</span>
       </button>
     </div>
 
     <!-- Header Panel -->
-    <div class="project-header glass glass--elev1">
-      <div
-        class="header-glow"
-        style:background={categoryColors[project.category]?.text}
-      ></div>
+    <div
+      class="project-header"
+      style:--cat-bg={categoryColors[project.category]?.bg ||
+        "var(--gx-fill-soft)"}
+      style:--cat-text={categoryColors[project.category]?.text ||
+        "var(--gx-org-primary-500)"}
+      style:--cat-border={categoryColors[project.category]?.text
+        ? `color-mix(in oklch, ${categoryColors[project.category].text} 30%, transparent)`
+        : "var(--gx-hair)"}
+    >
       <div class="project-info">
         <div class="project-icon-wrapper">
-          <div
-            class="project-icon"
-            style:background={categoryColors[project.category]?.bg}
-            style:color={categoryColors[project.category]?.text}
-          >
+          <div class="project-icon" aria-hidden="true">
             {categoryEmoji[project.category] || "📁"}
           </div>
         </div>
         <div class="project-meta">
           <div class="meta-badges">
-            <span
-              class="tag tag--primary"
-              style:--tag-color={categoryColors[project.category]?.text}
-            >
-              {project.category}
+            <span class="category-badge">
+              {$_(
+                `sidebar.cat${project.category.charAt(0).toUpperCase() + project.category.slice(1)}`,
+              )}
             </span>
-            {#if project.visibility === "team"}
-              <span class="tag">
+            <span
+              class="visibility-chip"
+              class:visibility-chip--team={project.visibility === "team"}
+            >
+              {#if project.visibility === "team"}
                 <svg
-                  width="10"
-                  height="10"
+                  width="12"
+                  height="12"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="2.5"
+                  stroke-width="2"
+                  aria-hidden="true"
                 >
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                   <circle cx="9" cy="7" r="4" />
                 </svg>
-                {$_('projects.team')}
-              </span>
-            {:else}
-              <span class="tag">
+                {$_("projects.team")}
+              {:else}
                 <svg
-                  width="10"
-                  height="10"
+                  width="12"
+                  height="12"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="2.5"
+                  stroke-width="2"
+                  aria-hidden="true"
                 >
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
-                {$_('projects.private')}
-              </span>
-            {/if}
+                {$_("projects.private")}
+              {/if}
+            </span>
           </div>
           <div class="project-name-row">
             <h1 class="project-name">{project.name}</h1>
             <div class="header-actions">
-              <button class="header-action-btn" onclick={openEditModal} title={$_('sidebar.editProject')}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M4 17.25V21h3.75L17.81 10.94l-3.75-3.75L4 17.25z"/>
-                  <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
+              <button
+                class="header-action-btn"
+                type="button"
+                onclick={openEditModal}
+                title={$_("sidebar.editProject")}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M4 17.25V21h3.75L17.81 10.94l-3.75-3.75L4 17.25z" />
+                  <path
+                    d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"
+                  />
                 </svg>
-                {$_('projects.edit')}
+                {$_("projects.edit")}
               </button>
-              <button class="header-action-btn" onclick={() => showMembersModal = true} title={$_('projects.addMembers')}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <line x1="19" y1="8" x2="19" y2="14"/>
-                  <line x1="22" y1="11" x2="16" y2="11"/>
+              <button
+                class="header-action-btn"
+                type="button"
+                onclick={() => (showMembersModal = true)}
+                title={$_("projects.addMembers")}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <line x1="19" y1="8" x2="19" y2="14" />
+                  <line x1="22" y1="11" x2="16" y2="11" />
                 </svg>
-                {$_('projects.members')}
+                {$_("projects.members")}
               </button>
-              <button class="header-action-btn" onclick={handleShare} disabled={sharing} title={$_('sidebar.share')}>
+              <button
+                class="header-action-btn"
+                type="button"
+                onclick={handleShare}
+                disabled={sharing}
+                title={$_("sidebar.share")}
+              >
                 {#if sharing}
                   <div class="loading-spinner tiny"></div>
                 {:else}
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="18" cy="5" r="3" /><circle
+                      cx="6"
+                      cy="12"
+                      r="3"
+                    /><circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                   </svg>
                 {/if}
-                {$_('projects.share')}
+                {$_("projects.share")}
               </button>
             </div>
           </div>
@@ -731,32 +811,34 @@ SPDX-License-Identifier: Apache-2.0
             <p class="project-desc">{project.description}</p>
           {/if}
 
-          <div class="project-metadata-bar">
-            <div class="metadata-item">
-              <span class="metadata-label">{$_('projects.metaCreated')}</span>
-              <span class="metadata-value">{formatDate(project.createdAt)} {formatTime(project.createdAt)}</span>
+          <dl class="project-stats">
+            <div class="stat">
+              <dt>{statLabel($_("projects.metaCreated"))}</dt>
+              <dd>
+                {formatDate(project.createdAt)}
+                <span class="stat-sub">{formatTime(project.createdAt)}</span>
+              </dd>
             </div>
-            <div class="metadata-divider"></div>
-            <div class="metadata-item">
-              <span class="metadata-label">{$_('projects.metaLastActivity')}</span>
-              <span class="metadata-value">{formatDate(project.updatedAt)} {formatTime(project.updatedAt)}</span>
+            <div class="stat">
+              <dt>{statLabel($_("projects.metaLastActivity"))}</dt>
+              <dd>
+                {formatDate(project.updatedAt)}
+                <span class="stat-sub">{formatTime(project.updatedAt)}</span>
+              </dd>
             </div>
-            <div class="metadata-divider"></div>
-            <div class="metadata-item">
-              <span class="metadata-label">{$_('projects.metaChats')}</span>
-              <span class="metadata-value">{chats.length}</span>
+            <div class="stat">
+              <dt>{statLabel($_("projects.metaChats"))}</dt>
+              <dd>{chats.length}</dd>
             </div>
-            <div class="metadata-divider"></div>
-            <div class="metadata-item">
-              <span class="metadata-label">{$_('projects.metaSources')}</span>
-              <span class="metadata-value">{uploadedSources.length + allArtifactItems.length}</span>
+            <div class="stat">
+              <dt>{statLabel($_("projects.metaSources"))}</dt>
+              <dd>{uploadedSources.length + allArtifactItems.length}</dd>
             </div>
-            <div class="metadata-divider"></div>
-            <div class="metadata-item">
-              <span class="metadata-label">{$_('projects.metaMembers')}</span>
-              <span class="metadata-value">{members.length}</span>
+            <div class="stat">
+              <dt>{statLabel($_("projects.metaMembers"))}</dt>
+              <dd>{members.length}</dd>
             </div>
-          </div>
+          </dl>
         </div>
       </div>
     </div>
@@ -765,17 +847,24 @@ SPDX-License-Identifier: Apache-2.0
     <div class="project-chat-input-wrapper">
       <MessageInput
         onSend={(message) => {
-          const mcpParam = selectedMcpServers.length > 0 ? `&mcpServers=${encodeURIComponent(selectedMcpServers.join(','))}` : '';
-          navigate(`/?projectId=${id}&message=${encodeURIComponent(message)}&model=${encodeURIComponent(selectedModel)}&provider=${encodeURIComponent(selectedProvider)}&webSearch=${webSearchEnabled}${mcpParam}`);
+          const mcpParam =
+            selectedMcpServers.length > 0
+              ? `&mcpServers=${encodeURIComponent(selectedMcpServers.join(","))}`
+              : "";
+          navigate(
+            `/?projectId=${id}&message=${encodeURIComponent(message)}&model=${encodeURIComponent(selectedModel)}&provider=${encodeURIComponent(selectedProvider)}&webSearch=${webSearchEnabled}${mcpParam}`,
+          );
         }}
-        placeholder={$_('chat.messageInput.placeholderWithModel', { values: { model: selectedModel } })}
+        placeholder={$_("chat.messageInput.placeholderWithModel", {
+          values: { model: selectedModel },
+        })}
         {selectedModel}
         {selectedProvider}
         {mcpServers}
         {selectedMcpServers}
         loadingMcpServers={loadingTools}
         {webSearchEnabled}
-        onWebSearchToggle={() => webSearchEnabled = !webSearchEnabled}
+        onWebSearchToggle={() => (webSearchEnabled = !webSearchEnabled)}
         onMcpToggle={toggleMcpServer}
         onRemoveModel={handleRemoveModel}
         onModelSelect={selectModel}
@@ -787,10 +876,12 @@ SPDX-License-Identifier: Apache-2.0
 
     <!-- Tabs Segmented Control -->
     <div class="tabs-container">
-      <div class="pill-group">
+      <div class="ptabs" role="tablist" aria-label={project.name}>
         <button
-          class="pill-group__item"
-          class:pill-group__item--active={activeTab === "chats"}
+          class="ptab"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "chats"}
           onclick={() => (activeTab = "chats")}
         >
           <svg
@@ -805,14 +896,16 @@ SPDX-License-Identifier: Apache-2.0
               d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
             />
           </svg>
-          <span>{$_('projects.tabChats')}</span>
+          <span>{$_("projects.tabChats")}</span>
           {#if chats.length > 0}
             <span class="badge-count">{chats.length}</span>
           {/if}
         </button>
         <button
-          class="pill-group__item"
-          class:pill-group__item--active={activeTab === "sources"}
+          class="ptab"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "sources"}
           onclick={() => (activeTab = "sources")}
         >
           <svg
@@ -828,14 +921,18 @@ SPDX-License-Identifier: Apache-2.0
             />
             <polyline points="14 2 14 8 20 8" />
           </svg>
-          <span>{$_('projects.tabSources')}</span>
+          <span>{$_("projects.tabSources")}</span>
           {#if sources.length + artifacts.length > 0}
-            <span class="badge-count">{uploadedSources.length + allArtifactItems.length}</span>
+            <span class="badge-count"
+              >{uploadedSources.length + allArtifactItems.length}</span
+            >
           {/if}
         </button>
         <button
-          class="pill-group__item"
-          class:pill-group__item--active={activeTab === "tools"}
+          class="ptab"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "tools"}
           onclick={() => (activeTab = "tools")}
         >
           <svg
@@ -850,11 +947,13 @@ SPDX-License-Identifier: Apache-2.0
               d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
             />
           </svg>
-          <span>{$_('projects.tabTools')}</span>
+          <span>{$_("projects.tabTools")}</span>
         </button>
         <button
-          class="pill-group__item"
-          class:pill-group__item--active={activeTab === "instructions"}
+          class="ptab"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "instructions"}
           onclick={() => (activeTab = "instructions")}
         >
           <svg
@@ -870,11 +969,13 @@ SPDX-License-Identifier: Apache-2.0
             />
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
           </svg>
-          <span>{$_('projects.tabInstructions')}</span>
+          <span>{$_("projects.tabInstructions")}</span>
         </button>
         <button
-          class="pill-group__item"
-          class:pill-group__item--active={activeTab === "members"}
+          class="ptab"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "members"}
           onclick={() => (activeTab = "members")}
         >
           <svg
@@ -890,14 +991,16 @@ SPDX-License-Identifier: Apache-2.0
             <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
-          <span>{$_('projects.tabMembers')}</span>
+          <span>{$_("projects.tabMembers")}</span>
           {#if members.length > 0}
             <span class="badge-count">{members.length}</span>
           {/if}
         </button>
         <button
-          class="pill-group__item"
-          class:pill-group__item--active={activeTab === "activity"}
+          class="ptab"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "activity"}
           onclick={() => (activeTab = "activity")}
         >
           <svg
@@ -911,7 +1014,7 @@ SPDX-License-Identifier: Apache-2.0
             <circle cx="12" cy="12" r="10" />
             <polyline points="12 6 12 12 16 14" />
           </svg>
-          <span>{$_('projects.tabActivity')}</span>
+          <span>{$_("projects.tabActivity")}</span>
         </button>
       </div>
     </div>
@@ -937,7 +1040,7 @@ SPDX-License-Identifier: Apache-2.0
               <input
                 type="text"
                 class="search-input"
-                placeholder={$_('projects.searchProjectChats')}
+                placeholder={$_("projects.searchProjectChats")}
                 bind:value={searchChats}
               />
             </div>
@@ -945,11 +1048,27 @@ SPDX-License-Identifier: Apache-2.0
 
           {#if chats.length > 0}
             <div class="chats-header-actions">
-              <button class="new-chat-action-btn btn-primary" onclick={startNewChat}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              <button
+                class="new-chat-action-btn"
+                type="button"
+                onclick={startNewChat}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" /><line
+                    x1="5"
+                    y1="12"
+                    x2="19"
+                    y2="12"
+                  />
                 </svg>
-                {$_('projects.newChat')}
+                {$_("projects.newChat")}
               </button>
             </div>
           {/if}
@@ -970,9 +1089,9 @@ SPDX-License-Identifier: Apache-2.0
                   d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
                 />
               </svg>
-              <h3 class="empty-title">{$_('projects.noChatsYet')}</h3>
+              <h3 class="empty-title">{$_("projects.noChatsYet")}</h3>
               <p class="empty-description">
-                {$_('projects.noChatsDesc')}
+                {$_("projects.noChatsDesc")}
               </p>
               <button
                 class="empty-action-btn btn-primary"
@@ -993,22 +1112,29 @@ SPDX-License-Identifier: Apache-2.0
                     y2="12"
                   />
                 </svg>
-                {$_('projects.startChat')}
+                {$_("projects.startChat")}
               </button>
             </div>
           {:else if filteredChats.length === 0}
-            <div class="empty-search-info glass">
-              <p>{$_('projects.noChatsMatch')}</p>
+            <div class="empty-search-info">
+              <p>{$_("projects.noChatsMatch")}</p>
             </div>
           {:else}
             <div class="chat-list">
               {#each filteredChats as chat (chat.id)}
-                <div class="chat-card glass" onclick={() => openChat(chat)} onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openChat(chat); } }} role="button" tabindex="0">
-                  <div
-                    class="chat-card-icon"
-                    style:background-color="rgba(var(--brand-rgb), 0.08)"
-                    style:color="var(--brand)"
-                  >
+                <div
+                  class="chat-card"
+                  onclick={() => openChat(chat)}
+                  onkeydown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openChat(chat);
+                    }
+                  }}
+                  role="button"
+                  tabindex="0"
+                >
+                  <div class="chat-card-icon" aria-hidden="true">
                     <svg
                       width="18"
                       height="18"
@@ -1036,14 +1162,19 @@ SPDX-License-Identifier: Apache-2.0
                       >
                     </div>
                     <span class="chat-card-count pill pill--xs pill--primary"
-                      >{$_('projects.msgCount', { values: { count: chat.messageCount } })}</span
+                      >{$_("projects.msgCount", {
+                        values: { count: chat.messageCount },
+                      })}</span
                     >
                   </div>
                   <button
                     class="source-delete-btn"
-                    onclick={(e) => { e.stopPropagation(); requestRemoveChat(chat); }}
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      requestRemoveChat(chat);
+                    }}
                     disabled={removingChatId === chat.id}
-                    title={$_('projects.removeChatTitle')}
+                    title={$_("projects.removeChatTitle")}
                   >
                     {#if removingChatId === chat.id}
                       <div class="loading-spinner tiny"></div>
@@ -1081,7 +1212,7 @@ SPDX-License-Identifier: Apache-2.0
       {:else if activeTab === "sources"}
         <div class="sources-section">
           <div
-            class="upload-zone-wrapper glass"
+            class="upload-zone-wrapper"
             class:drag-over={dragOver}
             class:uploading
             ondrop={handleDrop}
@@ -1092,7 +1223,8 @@ SPDX-License-Identifier: Apache-2.0
           >
             {#if uploading}
               <div class="loading-spinner small"></div>
-              <span class="uploading-text">{$_('projects.uploadingFiles')}</span>
+              <span class="uploading-text">{$_("projects.uploadingFiles")}</span
+              >
             {:else}
               <div class="upload-icon-container">
                 <svg
@@ -1109,14 +1241,12 @@ SPDX-License-Identifier: Apache-2.0
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
               </div>
-              <span class="upload-text">{$_('projects.dragDropFiles')}</span>
-              <span class="upload-hint"
-                >{$_('projects.uploadHint')}</span
-              >
+              <span class="upload-text">{$_("projects.dragDropFiles")}</span>
+              <span class="upload-hint">{$_("projects.uploadHint")}</span>
               <label
                 class="browse-btn-label pill pill--primary pill--interactive"
               >
-                {$_('projects.browseFiles')}
+                {$_("projects.browseFiles")}
                 <input
                   type="file"
                   multiple
@@ -1130,7 +1260,7 @@ SPDX-License-Identifier: Apache-2.0
           {#if uploadedSources.length > 0 || allArtifactItems.length > 0}
             <div class="source-list">
               {#each uploadedSources as source (source.id)}
-                <div class="source-card glass">
+                <div class="source-card">
                   <div class="source-icon-badge">
                     <span class="source-icon"
                       >{getFileIcon(source.fileType)}</span
@@ -1139,13 +1269,17 @@ SPDX-License-Identifier: Apache-2.0
                   <div class="source-info">
                     <span class="source-name">{source.fileName}</span>
                     <div class="source-meta">
-                      <span class="origin-tag tag uploaded-tag">{$_('projects.uploaded')}</span>
+                      <span class="origin-tag tag uploaded-tag"
+                        >{$_("projects.uploaded")}</span
+                      >
                       <span class="size-tag tag"
                         >{formatFileSize(source.fileSize)}</span
                       >
                       <span class="bullet">&middot;</span>
                       <span class="upload-date"
-                        >{$_('projects.uploadedOn', { values: { date: formatDate(source.uploadedAt) } })}</span
+                        >{$_("projects.uploadedOn", {
+                          values: { date: formatDate(source.uploadedAt) },
+                        })}</span
                       >
                     </div>
                   </div>
@@ -1153,7 +1287,7 @@ SPDX-License-Identifier: Apache-2.0
                     class="source-delete-btn"
                     onclick={() => requestDeleteSource(source)}
                     disabled={deletingSourceId === source.id}
-                    title={$_('projects.removeFile')}
+                    title={$_("projects.removeFile")}
                   >
                     {#if deletingSourceId === source.id}
                       <div class="loading-spinner tiny"></div>
@@ -1174,24 +1308,43 @@ SPDX-License-Identifier: Apache-2.0
               {/each}
 
               {#each allArtifactItems as artifact (artifact.id)}
-                <div class="source-card glass">
+                <div class="source-card">
                   <div class="source-icon-badge">
-                    <span class="source-icon">{getFileIcon(artifact.fileType)}</span>
+                    <span class="source-icon"
+                      >{getFileIcon(artifact.fileType)}</span
+                    >
                   </div>
                   <div class="source-info">
                     <span class="source-name">{artifact.fileName}</span>
                     <div class="source-meta">
-                      <span class="origin-tag tag artifact-tag">{$_('projects.artifact')}</span>
-                      <span class="size-tag tag">{formatFileSize(artifact.fileSize)}</span>
+                      <span class="origin-tag tag artifact-tag"
+                        >{$_("projects.artifact")}</span
+                      >
+                      <span class="size-tag tag"
+                        >{formatFileSize(artifact.fileSize)}</span
+                      >
                       <span class="bullet">&middot;</span>
-                      <span class="upload-date">{$_('projects.contributedOn', { values: { date: formatDate(artifact.uploadedAt) } })}</span>
+                      <span class="upload-date"
+                        >{$_("projects.contributedOn", {
+                          values: { date: formatDate(artifact.uploadedAt) },
+                        })}</span
+                      >
                     </div>
                   </div>
                   <button
                     class="source-delete-btn"
-                    onclick={() => requestDeleteSource({ id: artifact.id, projectId: artifact.projectId, fileName: artifact.fileName, fileType: artifact.fileType, fileSize: artifact.fileSize, origin: 'artifact' as const, uploadedAt: artifact.uploadedAt })}
+                    onclick={() =>
+                      requestDeleteSource({
+                        id: artifact.id,
+                        projectId: artifact.projectId,
+                        fileName: artifact.fileName,
+                        fileType: artifact.fileType,
+                        fileSize: artifact.fileSize,
+                        origin: "artifact" as const,
+                        uploadedAt: artifact.uploadedAt,
+                      })}
                     disabled={deletingSourceId === artifact.id}
-                    title={$_('projects.removeArtifact')}
+                    title={$_("projects.removeArtifact")}
                   >
                     {#if deletingSourceId === artifact.id}
                       <div class="loading-spinner tiny"></div>
@@ -1212,7 +1365,7 @@ SPDX-License-Identifier: Apache-2.0
               {/each}
             </div>
           {:else}
-            <div class="empty-sources-info glass">
+            <div class="empty-sources-info">
               <svg
                 width="24"
                 height="24"
@@ -1227,7 +1380,7 @@ SPDX-License-Identifier: Apache-2.0
                 <polyline points="14 2 14 8 20 8" />
               </svg>
               <p>
-                {$_('projects.emptySourcesDesc')}
+                {$_("projects.emptySourcesDesc")}
               </p>
             </div>
           {/if}
@@ -1236,7 +1389,7 @@ SPDX-License-Identifier: Apache-2.0
         <!-- TOOLS TAB -->
       {:else if activeTab === "tools"}
         <div class="tools-section">
-          <div class="tools-desc-wrapper glass">
+          <div class="tools-desc-wrapper">
             <svg
               width="18"
               height="18"
@@ -1253,13 +1406,13 @@ SPDX-License-Identifier: Apache-2.0
                 y2="12"
               /><line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
-            <span>{$_('projects.mcpDesc')}</span>
+            <span>{$_("projects.mcpDesc")}</span>
           </div>
 
           {#if loadingTools}
             <div class="loading-state compact">
               <div class="loading-spinner small"></div>
-              <span>{$_('projects.loadingTools')}</span>
+              <span>{$_("projects.loadingTools")}</span>
             </div>
           {:else if mcpServers.length === 0}
             <div class="glass-empty-card">
@@ -1276,15 +1429,15 @@ SPDX-License-Identifier: Apache-2.0
                   d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
                 />
               </svg>
-              <h3 class="empty-title">{$_('projects.noMcpServers')}</h3>
+              <h3 class="empty-title">{$_("projects.noMcpServers")}</h3>
               <p class="empty-description">
-                {$_('projects.noMcpServersDesc')}
+                {$_("projects.noMcpServersDesc")}
               </p>
             </div>
           {:else}
             <div class="server-list">
               {#each mcpServers as server, i (server.id)}
-                <div class="server-card glass" class:enabled={server.enabled}>
+                <div class="server-card" class:enabled={server.enabled}>
                   <div class="server-header">
                     <button
                       class="server-main"
@@ -1338,13 +1491,15 @@ SPDX-License-Identifier: Apache-2.0
                           ></span>
                           <span class="status-text"
                             >{server.connected
-                              ? $_('projects.connected')
-                              : $_('projects.disconnected')}</span
+                              ? $_("projects.connected")
+                              : $_("projects.disconnected")}</span
                           >
                           {#if server.tools.length > 0}
                             <span class="bullet">&middot;</span>
                             <span class="tools-count"
-                              >{$_('projects.toolCount', { values: { count: server.tools.length } })}</span
+                              >{$_("projects.toolCount", {
+                                values: { count: server.tools.length },
+                              })}</span
                             >
                           {/if}
                           <span class="bullet">&middot;</span>
@@ -1372,8 +1527,8 @@ SPDX-License-Identifier: Apache-2.0
                         onclick={() => toggleServer(i)}
                         disabled={togglingServerId === server.id}
                         title={server.enabled
-                          ? $_('projects.disableServer')
-                          : $_('projects.enableServer')}
+                          ? $_("projects.disableServer")
+                          : $_("projects.enableServer")}
                       >
                         {#if togglingServerId === server.id}
                           <div class="loading-spinner tiny"></div>
@@ -1428,14 +1583,14 @@ SPDX-License-Identifier: Apache-2.0
         <!-- INSTRUCTIONS TAB -->
       {:else if activeTab === "instructions"}
         <div class="instructions-section">
-          <div class="instructions-card glass">
+          <div class="instructions-card">
             <p class="instructions-info-text">
-              {$_('projects.instructionsInfo')}
+              {$_("projects.instructionsInfo")}
             </p>
             <div class="editor-wrapper">
               <textarea
                 class="instructions-editor-textarea"
-                placeholder={$_('projects.instructionsPlaceholder')}
+                placeholder={$_("projects.instructionsPlaceholder")}
                 bind:value={instructions}
                 oninput={handleInstructionsInput}
                 rows="11"
@@ -1446,7 +1601,9 @@ SPDX-License-Identifier: Apache-2.0
                 class="char-count-badge tag"
                 class:warn={instructions.length > 4500}
               >
-                {$_('projects.charCount', { values: { count: instructions.length, max: 5000 } })}
+                {$_("projects.charCount", {
+                  values: { count: instructions.length, max: 5000 },
+                })}
               </span>
               <button
                 class="save-instructions-btn btn-primary"
@@ -1457,7 +1614,7 @@ SPDX-License-Identifier: Apache-2.0
               >
                 {#if savingInstructions}
                   <div class="loading-spinner tiny"></div>
-                  <span>{$_('projects.saving')}</span>
+                  <span>{$_("projects.saving")}</span>
                 {:else}
                   <svg
                     width="14"
@@ -1473,7 +1630,7 @@ SPDX-License-Identifier: Apache-2.0
                     <polyline points="17 21 17 13 7 13 7 21" />
                     <polyline points="7 3 7 8 15 8" />
                   </svg>
-                  <span>{$_('projects.saveInstructions')}</span>
+                  <span>{$_("projects.saveInstructions")}</span>
                 {/if}
               </button>
             </div>
@@ -1484,24 +1641,40 @@ SPDX-License-Identifier: Apache-2.0
       {:else if activeTab === "members"}
         <div class="members-section">
           <!-- Add member search -->
-          <div class="member-search-wrapper glass">
+          <div class="member-search-wrapper">
             <div class="member-search-header">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="info-icon">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <line x1="19" y1="8" x2="19" y2="14"/>
-                <line x1="22" y1="11" x2="16" y2="11"/>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                class="info-icon"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <line x1="19" y1="8" x2="19" y2="14" />
+                <line x1="22" y1="11" x2="16" y2="11" />
               </svg>
-              <span>{$_('projects.searchAddMembers')}</span>
+              <span>{$_("projects.searchAddMembers")}</span>
             </div>
             <div class="member-search-bar">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="search-icon">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                class="search-icon"
+              >
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
               </svg>
               <input
                 type="text"
                 class="search-input"
-                placeholder={$_('projects.searchByNameEmail')}
+                placeholder={$_("projects.searchByNameEmail")}
                 bind:value={memberSearchQuery}
                 oninput={handleMemberSearchInput}
                 autocomplete="off"
@@ -1509,9 +1682,11 @@ SPDX-License-Identifier: Apache-2.0
             </div>
 
             {#if searchingMembers}
-              <div class="member-search-status">{$_('projects.searching')}</div>
+              <div class="member-search-status">{$_("projects.searching")}</div>
             {:else if memberSearchQuery.trim() && memberSearchResults.length === 0}
-              <div class="member-search-status">{$_('projects.noMatchingUsers')}</div>
+              <div class="member-search-status">
+                {$_("projects.noMatchingUsers")}
+              </div>
             {:else if memberSearchResults.length > 0}
               <div class="member-search-results">
                 {#each memberSearchResults as user (user.id)}
@@ -1520,11 +1695,17 @@ SPDX-License-Identifier: Apache-2.0
                       {#if user.picture}
                         <img src={user.picture} alt="" class="avatar-img" />
                       {:else}
-                        <span class="avatar-initials">{(user.name || user.email).charAt(0).toUpperCase()}</span>
+                        <span class="avatar-initials"
+                          >{(user.name || user.email)
+                            .charAt(0)
+                            .toUpperCase()}</span
+                        >
                       {/if}
                     </div>
                     <div class="member-result-info">
-                      <span class="member-result-name">{user.name || user.email}</span>
+                      <span class="member-result-name"
+                        >{user.name || user.email}</span
+                      >
                       {#if user.name}
                         <span class="member-result-email">{user.email}</span>
                       {/if}
@@ -1533,14 +1714,26 @@ SPDX-License-Identifier: Apache-2.0
                       class="member-add-btn"
                       onclick={() => {
                         showMembersModal = true;
-                        memberSearchQuery = '';
+                        memberSearchQuery = "";
                         memberSearchResults = [];
                       }}
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                      >
+                        <line x1="12" y1="5" x2="12" y2="19" /><line
+                          x1="5"
+                          y1="12"
+                          x2="19"
+                          y2="12"
+                        />
                       </svg>
-                      {$_('projects.add')}
+                      {$_("projects.add")}
                     </button>
                   </div>
                 {/each}
@@ -1552,59 +1745,92 @@ SPDX-License-Identifier: Apache-2.0
           {#if loadingMembers}
             <div class="loading-state compact">
               <div class="loading-spinner small"></div>
-              <span>{$_('projects.loadingMembers')}</span>
+              <span>{$_("projects.loadingMembers")}</span>
             </div>
           {:else if members.length === 0}
             <div class="glass-empty-card">
               <div class="empty-icon-large">👥</div>
-              <h3 class="empty-title">{$_('projects.noMembersYet')}</h3>
-              <p class="empty-description">{$_('projects.noMembersDesc')}</p>
+              <h3 class="empty-title">{$_("projects.noMembersYet")}</h3>
+              <p class="empty-description">{$_("projects.noMembersDesc")}</p>
               <button
                 class="empty-action-btn btn-primary"
-                onclick={() => showMembersModal = true}
+                onclick={() => (showMembersModal = true)}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" /><line
+                    x1="5"
+                    y1="12"
+                    x2="19"
+                    y2="12"
+                  />
                 </svg>
-                {$_('projects.addMembers')}
+                {$_("projects.addMembers")}
               </button>
             </div>
           {:else}
             <div class="member-list">
               {#each members as member (member.id)}
-                <div class="member-card glass">
+                <div class="member-card">
                   <div class="member-avatar">
                     {#if member.picture}
                       <img src={member.picture} alt="" class="avatar-img" />
                     {:else}
-                      <span class="avatar-initials">{(member.name || member.email).charAt(0).toUpperCase()}</span>
+                      <span class="avatar-initials"
+                        >{(member.name || member.email)
+                          .charAt(0)
+                          .toUpperCase()}</span
+                      >
                     {/if}
                   </div>
                   <div class="member-info">
-                    <span class="member-name">{member.name || member.email}</span>
+                    <span class="member-name"
+                      >{member.name || member.email}</span
+                    >
                     <div class="member-meta">
                       {#if member.name}
                         <span class="member-email">{member.email}</span>
                         <span class="bullet">&middot;</span>
                       {/if}
-                      <span class="member-role-tag tag" class:owner-tag={member.role === 'owner'} class:member-tag={member.role !== 'owner'}>
+                      <span
+                        class="member-role-tag tag"
+                        class:owner-tag={member.role === "owner"}
+                        class:member-tag={member.role !== "owner"}
+                      >
                         {member.role}
                       </span>
                       <span class="bullet">&middot;</span>
-                      <span class="member-joined">{$_('projects.joinedOn', { values: { date: formatDate(member.joinedAt) } })}</span>
+                      <span class="member-joined"
+                        >{$_("projects.joinedOn", {
+                          values: { date: formatDate(member.joinedAt) },
+                        })}</span
+                      >
                     </div>
                   </div>
-                  {#if member.role !== 'owner'}
+                  {#if member.role !== "owner"}
                     <button
                       class="source-delete-btn"
                       onclick={() => requestRemoveMember(member)}
                       disabled={removingMemberId === member.id}
-                      title={$_('projects.removeMember')}
+                      title={$_("projects.removeMember")}
                     >
                       {#if removingMemberId === member.id}
                         <div class="loading-spinner tiny"></div>
                       {:else}
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                        >
                           <path d="M18 6L6 18M6 6l12 12" />
                         </svg>
                       {/if}
@@ -1622,8 +1848,8 @@ SPDX-License-Identifier: Apache-2.0
           {#if activities.length === 0}
             <div class="glass-empty-card">
               <div class="empty-icon-large">📋</div>
-              <h3 class="empty-title">{$_('projects.noActivityYet')}</h3>
-              <p class="empty-description">{$_('projects.noActivityDesc')}</p>
+              <h3 class="empty-title">{$_("projects.noActivityYet")}</h3>
+              <p class="empty-description">{$_("projects.noActivityDesc")}</p>
             </div>
           {:else}
             <div class="activity-timeline">
@@ -1633,10 +1859,14 @@ SPDX-License-Identifier: Apache-2.0
                     <span class="timeline-icon">{event.icon}</span>
                     <div class="timeline-line"></div>
                   </div>
-                  <div class="timeline-content glass">
+                  <div class="timeline-content">
                     <div class="timeline-header">
                       <span class="timeline-title">{event.title}</span>
-                      <span class="timeline-time">{formatDate(event.timestamp)} · {formatTime(event.timestamp)}</span>
+                      <span class="timeline-time"
+                        >{formatDate(event.timestamp)} · {formatTime(
+                          event.timestamp,
+                        )}</span
+                      >
                     </div>
                     <p class="timeline-description">{event.description}</p>
                   </div>
@@ -1649,10 +1879,11 @@ SPDX-License-Identifier: Apache-2.0
     </div>
   {:else}
     <div class="glass-empty-card">
-      <h3 class="empty-title">{$_('projects.projectNotFound')}</h3>
+      <h3 class="empty-title">{$_("projects.projectNotFound")}</h3>
       <button
         class="empty-action-btn btn-primary"
-        onclick={() => navigate("/projects")}>{$_('projects.backToProjects')}</button
+        onclick={() => navigate("/projects")}
+        >{$_("projects.backToProjects")}</button
       >
     </div>
   {/if}
@@ -1661,7 +1892,7 @@ SPDX-License-Identifier: Apache-2.0
 {#if showEditModal && project}
   <CreateProjectModal
     isOpen={showEditModal}
-    onclose={() => showEditModal = false}
+    onclose={() => (showEditModal = false)}
     onCreated={handleProjectUpdated}
     editProject={project}
   />
@@ -1672,71 +1903,151 @@ SPDX-License-Identifier: Apache-2.0
     isOpen={showMembersModal}
     projectId={project.id}
     projectName={project.name}
-    onclose={() => { showMembersModal = false; fetchMembers(); }}
+    existingMemberIds={new Set(members.map((m) => m.userId))}
+    onclose={() => {
+      showMembersModal = false;
+      fetchMembers();
+    }}
   />
 {/if}
 
 {#if confirmRemoveMember}
-  <div class="confirm-overlay" onclick={(e) => { if (e.target === e.currentTarget) cancelRemoveMember(); }} onkeydown={(e) => { if (e.key === 'Escape') cancelRemoveMember(); }} role="dialog" aria-modal="true" tabindex="-1">
+  <div
+    class="confirm-overlay"
+    onclick={(e) => {
+      if (e.target === e.currentTarget) cancelRemoveMember();
+    }}
+    onkeydown={(e) => {
+      if (e.key === "Escape") cancelRemoveMember();
+    }}
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+  >
     <div class="confirm-dialog glass glass--elev1">
       <div class="confirm-icon-wrapper">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="8" x2="12" y2="12" />
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
       </div>
-      <h3 class="confirm-title">{$_('projects.confirmRemoveMember')}</h3>
+      <h3 class="confirm-title">{$_("projects.confirmRemoveMember")}</h3>
       <p class="confirm-desc">
-        {@html $_('projects.confirmRemoveMemberDesc', { values: { name: escapeHtml(confirmRemoveMember.name || confirmRemoveMember.email) } })}
+        {@html $_("projects.confirmRemoveMemberDesc", {
+          values: {
+            name: escapeHtml(
+              confirmRemoveMember.name || confirmRemoveMember.email,
+            ),
+          },
+        })}
       </p>
       <div class="confirm-actions">
-        <button class="confirm-cancel-btn" onclick={cancelRemoveMember}>{$_('projects.cancel')}</button>
-        <button class="confirm-remove-btn" onclick={confirmAndRemoveMember}>{$_('projects.remove')}</button>
+        <button class="confirm-cancel-btn" onclick={cancelRemoveMember}
+          >{$_("projects.cancel")}</button
+        >
+        <button class="confirm-remove-btn" onclick={confirmAndRemoveMember}
+          >{$_("projects.remove")}</button
+        >
       </div>
     </div>
   </div>
 {/if}
 
 {#if confirmDeleteSource}
-  <div class="confirm-overlay" onclick={(e) => { if (e.target === e.currentTarget) cancelDeleteSource(); }} onkeydown={(e) => { if (e.key === 'Escape') cancelDeleteSource(); }} role="dialog" aria-modal="true" tabindex="-1">
+  <div
+    class="confirm-overlay"
+    onclick={(e) => {
+      if (e.target === e.currentTarget) cancelDeleteSource();
+    }}
+    onkeydown={(e) => {
+      if (e.key === "Escape") cancelDeleteSource();
+    }}
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+  >
     <div class="confirm-dialog glass glass--elev1">
       <div class="confirm-icon-wrapper">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="8" x2="12" y2="12" />
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
       </div>
-      <h3 class="confirm-title">{$_('projects.confirmRemoveSource')}</h3>
+      <h3 class="confirm-title">{$_("projects.confirmRemoveSource")}</h3>
       <p class="confirm-desc">
-        {@html $_('projects.confirmRemoveSourceDesc', { values: { name: escapeHtml(confirmDeleteSource.fileName) } })}
+        {@html $_("projects.confirmRemoveSourceDesc", {
+          values: { name: escapeHtml(confirmDeleteSource.fileName) },
+        })}
       </p>
       <div class="confirm-actions">
-        <button class="confirm-cancel-btn" onclick={cancelDeleteSource}>{$_('projects.cancel')}</button>
-        <button class="confirm-remove-btn" onclick={confirmAndDeleteSource}>{$_('projects.remove')}</button>
+        <button class="confirm-cancel-btn" onclick={cancelDeleteSource}
+          >{$_("projects.cancel")}</button
+        >
+        <button class="confirm-remove-btn" onclick={confirmAndDeleteSource}
+          >{$_("projects.remove")}</button
+        >
       </div>
     </div>
   </div>
 {/if}
 
 {#if confirmRemoveChat}
-  <div class="confirm-overlay" onclick={(e) => { if (e.target === e.currentTarget) cancelRemoveChat(); }} onkeydown={(e) => { if (e.key === 'Escape') cancelRemoveChat(); }} role="dialog" aria-modal="true" tabindex="-1">
+  <div
+    class="confirm-overlay"
+    onclick={(e) => {
+      if (e.target === e.currentTarget) cancelRemoveChat();
+    }}
+    onkeydown={(e) => {
+      if (e.key === "Escape") cancelRemoveChat();
+    }}
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+  >
     <div class="confirm-dialog glass glass--elev1">
       <div class="confirm-icon-wrapper">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="8" x2="12" y2="12" />
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
       </div>
-      <h3 class="confirm-title">{$_('projects.confirmRemoveChat')}</h3>
+      <h3 class="confirm-title">{$_("projects.confirmRemoveChat")}</h3>
       <p class="confirm-desc">
-        {@html $_('projects.confirmRemoveChatDesc', { values: { title: escapeHtml(confirmRemoveChat.title) } })}
+        {@html $_("projects.confirmRemoveChatDesc", {
+          values: { title: escapeHtml(confirmRemoveChat.title) },
+        })}
       </p>
       <div class="confirm-actions">
-        <button class="confirm-cancel-btn" onclick={cancelRemoveChat}>{$_('projects.cancel')}</button>
-        <button class="confirm-remove-btn" onclick={confirmAndRemoveChat}>{$_('projects.remove')}</button>
+        <button class="confirm-cancel-btn" onclick={cancelRemoveChat}
+          >{$_("projects.cancel")}</button
+        >
+        <button class="confirm-remove-btn" onclick={confirmAndRemoveChat}
+          >{$_("projects.remove")}</button
+        >
       </div>
     </div>
   </div>
@@ -1744,12 +2055,10 @@ SPDX-License-Identifier: Apache-2.0
 
 <style>
   .project-detail {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: var(--space-xl) var(--space-lg);
-    height: 100%;
-    overflow-y: auto;
-    scrollbar-gutter: stable;
+    display: flex;
+    flex-direction: column;
+    padding: 32px;
+    font-family: var(--gx-font);
   }
 
   .loading-state {
@@ -1789,66 +2098,67 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
-  /* Navigation Back button */
+  /* Back link: a quiet text link, not a pill. */
   .navigation-header {
-    margin-bottom: var(--space-lg);
+    margin-bottom: 16px;
   }
 
   .back-btn {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-xs);
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 6px;
+    padding: 4px 2px;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: var(--gx-slate-500);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 120ms ease;
   }
 
   .back-btn:hover {
-    color: var(--text-primary);
-    transform: translateX(-3px);
+    color: var(--gx-org-ink);
+    background: none;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .back-btn:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
+    border-radius: 6px;
   }
 
   .back-icon {
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 160ms ease;
   }
 
   .back-btn:hover .back-icon {
     transform: translateX(-2px);
   }
 
-  /* Project Header Panel */
+  /* ===== Header =====
+     The grid card's language at page scale: hairline border, 16px corner and a
+     soft wash of the category colour across the top. */
   .project-header {
     position: relative;
-    padding: var(--space-xl) var(--space-2xl);
-    border-radius: var(--radius-lg);
-    margin-bottom: var(--space-xl);
-    overflow: hidden;
-  }
-
-  .header-glow {
-    position: absolute;
-    top: -100px;
-    right: 15%;
-    width: 220px;
-    height: 220px;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.08;
-    pointer-events: none;
-  }
-
-  @media (prefers-color-scheme: light) {
-    .header-glow {
-      opacity: 0.05;
-    }
+    margin-bottom: 20px;
+    padding: 24px 28px 20px;
+    border: 1px solid var(--gx-hair);
+    border-radius: 16px;
+    background: linear-gradient(180deg, var(--cat-bg) 0%, transparent 120px),
+      var(--gx-card);
   }
 
   .project-info {
-    position: relative;
     display: flex;
-    align-items: center;
-    gap: var(--space-xl);
-    z-index: 1;
+    align-items: flex-start;
+    gap: 20px;
   }
 
   .project-icon-wrapper {
@@ -1856,15 +2166,19 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .project-icon {
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-md);
-    font-size: 1.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    border-radius: 14px;
+    background: var(--gx-card);
+    color: var(--cat-text);
+    font-size: 26px;
+    line-height: 1;
+    box-shadow:
+      inset 0 0 0 1px var(--cat-border),
+      0 1px 2px rgba(15, 23, 42, 0.05);
   }
 
   .project-meta {
@@ -1874,67 +2188,96 @@ SPDX-License-Identifier: Apache-2.0
 
   .meta-badges {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-xs);
+    gap: 6px;
+    margin-bottom: 8px;
   }
 
-  .meta-badges .tag--primary {
-    text-transform: uppercase;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    background: rgba(var(--brand-rgb), 0.1);
-    border-color: rgba(var(--brand-rgb), 0.2);
-    color: var(--tag-color, var(--brand));
-  }
-
-  .meta-badges .tag {
+  .category-badge,
+  .visibility-chip {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2xs);
-    font-size: 0.72rem;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
     font-weight: 600;
+    line-height: 100%;
+    white-space: nowrap;
+  }
+
+  .category-badge {
+    background: var(--cat-bg);
+    box-shadow: inset 0 0 0 1px var(--cat-border);
+    color: var(--cat-text);
+  }
+
+  .visibility-chip {
+    background: var(--gx-fill-soft);
+    color: var(--gx-slate-500);
+    font-weight: 500;
+  }
+
+  .visibility-chip--team {
+    background: color-mix(in oklch, var(--gx-tx-chip-icon-fg) 10%, transparent);
+    color: var(--gx-tx-chip-icon-fg);
   }
 
   .project-name-row {
     display: flex;
     align-items: center;
-    gap: var(--space-lg);
     justify-content: space-between;
+    gap: 16px;
   }
 
   .header-actions {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 8px;
     flex-shrink: 0;
   }
 
+  /* Secondary actions: outlined, 34px — the primary (New Chat) is the filled
+     Control Hub button. */
   .header-action-btn {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-xs);
-    padding: 0.4rem 0.85rem;
-    border: 1px solid var(--glass-stroke-dark);
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--text-secondary);
-    font-size: 0.75rem;
+    gap: 6px;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--gx-hair-strong);
+    border-radius: 8px;
+    background: var(--gx-card);
+    color: var(--gx-org-ink);
+    font: inherit;
+    font-size: 13px;
     font-weight: 600;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all 0.2s ease;
+    line-height: 100%;
     white-space: nowrap;
+    cursor: pointer;
     box-shadow: none;
     backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease;
+  }
+
+  .header-action-btn svg {
+    color: var(--gx-slate-500);
   }
 
   .header-action-btn:hover:not(:disabled) {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
+    background: var(--gx-fill-soft);
+    border-color: var(--gx-hair-strong);
     transform: none;
     box-shadow: none;
+  }
+
+  .header-action-btn:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
   }
 
   .header-action-btn:disabled {
@@ -1942,95 +2285,89 @@ SPDX-License-Identifier: Apache-2.0
     cursor: not-allowed;
   }
 
-  @media (prefers-color-scheme: light) {
-    .header-action-btn {
-      background: rgba(0, 0, 0, 0.03);
-      border-color: rgba(0, 0, 0, 0.1);
-    }
-    .header-action-btn:hover:not(:disabled) {
-      background: rgba(0, 0, 0, 0.06);
-      border-color: rgba(0, 0, 0, 0.15);
-    }
-  }
-
   .project-name {
-    font-family: "Outfit", sans-serif;
-    font-size: 1.85rem;
-    font-weight: 800;
-    color: var(--text-primary);
     margin: 0;
-    letter-spacing: -0.03em;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-family: "Outfit", sans-serif;
+    font-size: 28px;
+    font-weight: 800;
     line-height: 1.2;
+    letter-spacing: -0.025em;
+    color: var(--gx-org-ink);
   }
 
   .project-desc {
-    margin: var(--space-xs) 0 0;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    line-height: 1.4;
-    opacity: 0.8;
+    margin: 6px 0 0;
+    max-width: 72ch;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--gx-slate-500);
   }
 
-  /* Segmented Control / Tabs Container */
+  /* ===== Tabs: the Control Hub segmented control ===== */
   .tabs-container {
     display: flex;
-    justify-content: flex-start;
-    margin-bottom: var(--space-xl);
+    margin-bottom: 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
-  .pill-group {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--glass-stroke-dark);
-    padding: var(--space-2xs);
-    border-radius: var(--radius-lg);
-    display: flex;
-    gap: 4px;
-    width: 100%;
-    max-width: 640px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  .tabs-container::-webkit-scrollbar {
+    display: none;
   }
 
-  .pill-group__item {
-    flex: 1;
+  .ptabs {
     display: flex;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--gx-rule-cool);
+    flex-shrink: 0;
+  }
+
+  .ptab {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--space-xs);
-    padding: 0.625rem var(--space-md);
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-md);
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    cursor: pointer;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
     box-shadow: none;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: var(--gx-an-sub);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 100%;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease,
+      box-shadow 120ms ease;
   }
 
-  .pill-group__item:hover {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.04);
+  .ptab:hover {
+    color: var(--gx-org-ink);
+    background: none;
+    transform: none;
+    box-shadow: none;
   }
 
-  .pill-group__item--active {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow:
-      0 2px 8px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  .ptab[aria-selected="true"] {
+    background: var(--gx-card);
+    color: var(--gx-org-primary-500);
+    font-weight: 600;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   }
 
-  @media (prefers-color-scheme: light) {
-    .pill-group {
-      background: rgba(0, 0, 0, 0.02);
-    }
-    .pill-group__item--active {
-      background: white;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    }
+  .ptab:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 1px;
   }
 
   .badge-count {
@@ -2040,12 +2377,17 @@ SPDX-License-Identifier: Apache-2.0
     min-width: 18px;
     height: 18px;
     padding: 0 5px;
-    border-radius: var(--radius-full);
-    background: rgba(var(--brand-rgb), 0.12);
-    color: var(--brand);
-    font-size: 0.65rem;
-    font-weight: 800;
-    border: 1px solid rgba(var(--brand-rgb), 0.2);
+    border-radius: 999px;
+    background: var(--gx-fill-soft);
+    color: var(--gx-slate-500);
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ptab[aria-selected="true"] .badge-count {
+    background: color-mix(in oklch, var(--gx-org-primary-500) 12%, transparent);
+    color: var(--gx-org-primary-500);
   }
 
   .tab-content {
@@ -2108,12 +2450,34 @@ SPDX-License-Identifier: Apache-2.0
   .new-chat-action-btn {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-xs);
-    padding: 0.5rem 1rem;
-    font-size: 0.8125rem;
+    gap: 8px;
+    height: 37px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--gx-org-primary-500);
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
     font-weight: 600;
-    border-radius: var(--radius-md);
+    line-height: 100%;
+    white-space: nowrap;
     cursor: pointer;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: background-color 120ms ease;
+  }
+
+  .new-chat-action-btn:hover {
+    background: var(--gx-ac-cta-hover);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .new-chat-action-btn:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
   }
 
   .empty-search-info {
@@ -2130,46 +2494,57 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-slate-500);
   }
 
-  /* Chats list visual */
+  /* ===== Chats list: one bordered list with hairline-separated rows ===== */
   .chat-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    border: 1px solid var(--gx-hair-strong);
+    border-radius: 12px;
+    background: var(--gx-card);
+    overflow: hidden;
   }
 
   .chat-card {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
+    gap: 14px;
     width: 100%;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--glass-stroke-dark);
-    cursor: pointer;
-    text-align: left;
+    min-height: 64px;
+    padding: 12px 16px;
+    border: 0;
+    border-top: 1px solid var(--gx-hair);
+    border-radius: 0;
+    background: var(--gx-card);
     color: inherit;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: start;
+    cursor: pointer;
+    transition: background-color 120ms ease;
   }
 
-  .chat-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.03);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 8px 24px rgba(0, 0, 0, 0.2);
+  .chat-card:first-child {
+    border-top: 0;
+  }
+
+  .chat-card:hover,
+  .chat-card:focus-visible {
+    background: var(--gx-row-hover);
+  }
+
+  .chat-card:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: -2px;
   }
 
   .chat-card-icon {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-sm);
     flex-shrink: 0;
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    background: color-mix(in oklch, var(--gx-org-primary-500) 10%, transparent);
+    color: var(--gx-org-primary-500);
   }
 
   .chat-card-body {
@@ -2181,54 +2556,62 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .chat-card-title {
-    font-size: 0.9375rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--gx-org-ink);
   }
 
   .chat-card-preview {
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-    opacity: 0.8;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--gx-slate-500);
   }
 
   .chat-card-meta {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 4px;
+    gap: 5px;
     flex-shrink: 0;
   }
 
   .meta-row {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    font-size: 0.72rem;
-    color: var(--text-secondary);
-    opacity: 0.6;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--gx-slate-400);
+    font-variant-numeric: tabular-nums;
   }
 
   .chat-card-count.pill {
-    padding: 2px 7px;
-    font-weight: 700;
+    padding: 3px 8px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--gx-fill-soft);
+    box-shadow: none;
+    color: var(--gx-slate-500);
+    font-size: 11px;
+    font-weight: 600;
   }
 
   .chat-card-arrow {
-    color: var(--text-secondary);
-    opacity: 0.4;
-    transition: all 0.25s ease;
     flex-shrink: 0;
+    color: var(--gx-slate-400);
+    transition:
+      transform 160ms ease,
+      color 160ms ease;
   }
 
   .chat-card:hover .chat-card-arrow {
-    opacity: 0.85;
+    color: var(--gx-org-primary-500);
     transform: translateX(3px);
   }
 
@@ -2395,28 +2778,42 @@ SPDX-License-Identifier: Apache-2.0
     opacity: 0.5;
   }
 
+  /* Row remove / delete: a quiet icon that turns red on hover. */
   .source-delete-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--gx-slate-400);
+    cursor: pointer;
     box-shadow: none;
     backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .source-delete-btn svg {
+    stroke-width: 2;
   }
 
   .source-delete-btn:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    background: var(--gx-org-danger-bg);
+    color: var(--gx-org-danger);
+    transform: none;
     box-shadow: none;
+  }
+
+  .source-delete-btn:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 1px;
   }
 
   .source-delete-btn:disabled {
@@ -2873,21 +3270,6 @@ SPDX-License-Identifier: Apache-2.0
     margin: 24px 0;
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   /* One tile for all three icon shapes the panels use: a stroked glyph, an
      emoji, or nothing. Sizing here overrides the SVG's own width/height. */
   .empty-icon,
@@ -2966,38 +3348,95 @@ SPDX-License-Identifier: Apache-2.0
     margin-bottom: var(--space-lg);
   }
 
-  .project-metadata-bar {
+  /* ===== Stats: label above value, split by hairlines ===== */
+  .project-stats {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-md);
-    margin-top: var(--space-md);
-    padding-top: var(--space-md);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    font-size: 0.8rem;
-    color: var(--text-secondary);
+    gap: 0;
+    margin: 18px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--gx-hair);
   }
 
-  .metadata-item {
+  .stat {
     display: flex;
-    align-items: center;
-    gap: var(--space-xs);
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 20px;
+    border-inline-start: 1px solid var(--gx-hair);
   }
 
-  .metadata-label {
-    font-weight: 500;
-    opacity: 0.6;
+  .stat:first-child {
+    padding-inline-start: 0;
+    border-inline-start: 0;
   }
 
-  .metadata-value {
-    color: var(--text-primary);
+  .stat dt {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gx-an-sub);
+  }
+
+  .stat dd {
+    margin: 0;
+    font-size: 14px;
     font-weight: 600;
+    line-height: 1.3;
+    color: var(--gx-org-ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 
-  .metadata-divider {
-    width: 1px;
-    height: 12px;
-    background: rgba(255, 255, 255, 0.15);
+  .stat-sub {
+    font-weight: 500;
+    color: var(--gx-slate-400);
+  }
+
+  /* ===== Tab content cards: flat --gx-* surfaces (were frosted glass) ===== */
+  .source-card,
+  .server-card,
+  .member-card,
+  .timeline-content,
+  .instructions-card,
+  .member-search-wrapper,
+  .tools-desc-wrapper,
+  .empty-sources-info {
+    background: var(--gx-card);
+    border: 1px solid var(--gx-hair);
+    border-radius: 12px;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .source-card:hover,
+  .member-card:hover,
+  .server-card:hover {
+    background: var(--gx-row-hover);
+    border-color: var(--gx-hair-strong);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .upload-zone-wrapper {
+    background: var(--gx-card);
+    border: 2px dashed var(--gx-hair-strong);
+    border-radius: 14px;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .upload-zone-wrapper:hover {
+    border-color: color-mix(
+      in oklch,
+      var(--gx-org-primary-500) 45%,
+      var(--gx-hair-strong)
+    );
+    background: var(--gx-row-hover);
   }
 
   /* Activity Timeline */
@@ -3049,7 +3488,11 @@ SPDX-License-Identifier: Apache-2.0
   .timeline-line {
     width: 2px;
     flex: 1;
-    background: linear-gradient(to bottom, var(--glass-stroke-dark), transparent);
+    background: linear-gradient(
+      to bottom,
+      var(--glass-stroke-dark),
+      transparent
+    );
     margin-top: 4px;
   }
 
@@ -3357,13 +3800,23 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
   .confirm-icon-wrapper {
@@ -3434,51 +3887,48 @@ SPDX-License-Identifier: Apache-2.0
 
   /* Responsive styling */
   @media (max-width: 768px) {
-    .metadata-divider {
-      display: none;
-    }
-
-    .project-metadata-bar {
-      gap: var(--space-xs) var(--space-md);
-    }
-
     .project-detail {
       padding: var(--space-md);
     }
 
     .project-header {
-      padding: var(--space-lg);
+      padding: 18px;
     }
 
     .project-info {
       flex-direction: column;
       align-items: flex-start;
-      gap: var(--space-md);
+      gap: 14px;
     }
 
-    .pill-group {
-      max-width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+    .project-name-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
     }
 
-    .pill-group__item {
-      padding: 0.5rem var(--space-sm);
-      white-space: nowrap;
+    .project-name {
+      font-size: 24px;
+    }
+
+    .header-actions {
+      flex-wrap: wrap;
+    }
+
+    /* Stats wrap two per line; drop the dividers that would start each line. */
+    .project-stats {
+      gap: 14px 0;
+    }
+
+    .stat {
+      flex: 1 1 45%;
+      padding: 0;
+      border-inline-start: 0;
     }
 
     .chat-card {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--space-sm);
-      padding: var(--space-md);
-    }
-
-    .chat-card-meta {
-      flex-direction: row;
-      justify-content: space-between;
-      width: 100%;
-      align-items: center;
+      gap: 12px;
+      padding: 12px;
     }
 
     .chat-card-arrow {

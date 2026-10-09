@@ -8,7 +8,22 @@
     "never": "Jamais",
     "loading": "Chargement...",
     "clear": "Effacer",
-    "select": "Sélectionner"
+    "select": "Sélectionner",
+    "addMembers": {
+      "subtitle": "à {name}",
+      "searchPlaceholder": "Rechercher par nom, e-mail ou département…",
+      "columnName": "Nom",
+      "columnEmail": "E-mail",
+      "selected": "{count} sélectionné(s)",
+      "submit": "Ajouter {count, plural, one {# membre} other {# membres}}",
+      "submitNone": "Ajouter des membres",
+      "adding": "Ajout…",
+      "loading": "Chargement des personnes…",
+      "empty": "Aucune personne trouvée",
+      "noMatch": "Aucune personne ne correspond à « {query} »",
+      "alreadyMember": "Membre",
+      "loadError": "Impossible de charger les personnes"
+    }
   },
   "errors": {
     "forbidden": {
