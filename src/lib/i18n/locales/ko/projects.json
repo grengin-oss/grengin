@@ -124,6 +124,7 @@
     "colCategory": "카테고리",
     "colVisibility": "공개 범위",
     "colUpdated": "마지막 업데이트",
-    "colActions": "작업"
+    "colActions": "작업",
+    "addedManyToProject": "{count}명의 멤버를 {project}에 추가했습니다"
   }
 }

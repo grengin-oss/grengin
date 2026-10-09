@@ -124,6 +124,7 @@
     "colCategory": "الفئة",
     "colVisibility": "الظهور",
     "colUpdated": "آخر تحديث",
-    "colActions": "الإجراءات"
+    "colActions": "الإجراءات",
+    "addedManyToProject": "تمت إضافة {count} أعضاء إلى {project}"
   }
 }

@@ -49,6 +49,10 @@ SPDX-License-Identifier: Apache-2.0
      * rule, a 32px-gutter header and body, and a hairline-topped footer whose
      * actions sit right. "mcp-tool" is the wider of the two and carries a
      * subtitle under its title.
+     * "add-members" is the 640px people picker from organization.html
+     * (.am-modal) — a 5px gradient rule, a display-face title with a
+     * subtitle, the search bar stacked into the header (via `headerExtra`), a
+     * gutter-only scrolling body and a hairline-topped footer.
      */
     variant?:
       | "default"
@@ -63,7 +67,8 @@ SPDX-License-Identifier: Apache-2.0
       | "ai-custom"
       | "delete-department"
       | "mcp-access"
-      | "mcp-tool";
+      | "mcp-tool"
+      | "add-members";
     /** Pinned footer bar, outside the scrolling body (access-control design). */
     footer?: any;
     /** Second line under the title (ai-engines design: ".cfg-subtitle"). */
@@ -305,6 +310,7 @@ SPDX-License-Identifier: Apache-2.0
       class:modal-backdrop--dd={variant === "delete-department"}
       class:modal-backdrop--mcpd={variant === "mcp-access" ||
         variant === "mcp-tool"}
+      class:modal-backdrop--am={variant === "add-members"}
       data-modal-id={modalId}
       onclick={handleBackdropClick}
       onkeydown={(e) => e.key === "Enter" && handleBackdropClick(e as any)}
@@ -329,6 +335,7 @@ SPDX-License-Identifier: Apache-2.0
         class:modal-content--mcpd={variant === "mcp-access" ||
           variant === "mcp-tool"}
         class:modal-content--mcpd-wide={variant === "mcp-tool"}
+        class:modal-content--am={variant === "add-members"}
       >
         {#snippet headingRow()}
           <div class="modal-header-left">
@@ -1107,6 +1114,143 @@ SPDX-License-Identifier: Apache-2.0
     background: none;
     box-shadow: none;
     flex-shrink: 0;
+  }
+
+  /* ===== "add-members" variant (organization.html .am-modal) =====
+     640px people picker. The search bar rides in the header (headerExtra) so
+     only the people table scrolls. Selectors are doubled for the same reason
+     as the variants around it — the base .modal-content rules come later. */
+  .modal-backdrop.modal-backdrop--am {
+    background: var(--gx-ac-modal-scrim);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 16px;
+  }
+
+  .modal-content.modal-content--am {
+    position: relative;
+    width: 640px;
+    max-width: calc(100vw - 32px);
+    max-height: min(700px, calc(100vh - 32px));
+    overflow: hidden;
+    border: none;
+    border-radius: 18px;
+    background: var(--gx-card);
+    box-shadow:
+      0 0 0 1px rgba(16, 24, 20, 0.0392),
+      0 40px 90px -24px rgba(16, 24, 20, 0.451);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--gx-font);
+  }
+
+  .modal-content.modal-content--am .modal-header {
+    position: relative;
+    padding: 24px 26px 16px;
+    border: none;
+    flex-shrink: 0;
+  }
+
+  .modal-content.modal-content--am .modal-header.modal-header--stacked {
+    gap: 18px;
+  }
+
+  .modal-content.modal-content--am .modal-header-row {
+    align-items: flex-start;
+  }
+
+  .modal-content.modal-content--am .modal-header::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 5px;
+    background: linear-gradient(
+      90deg,
+      rgb(74, 125, 212) 0%,
+      rgb(46, 168, 117) 100%
+    );
+  }
+
+  .modal-content.modal-content--am .modal-heading {
+    gap: 3px;
+  }
+
+  .modal-content.modal-content--am .modal-title {
+    font-family: var(--gx-font-display);
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 26px;
+    letter-spacing: -0.01em;
+    color: var(--gx-org-ink);
+  }
+
+  .modal-content.modal-content--am .modal-subtitle {
+    font-size: 13.5px;
+    line-height: 19px;
+    color: var(--gx-slate-500);
+  }
+
+  .modal-content.modal-content--am .modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    color: var(--gx-slate-500);
+    flex-shrink: 0;
+    transition: background-color 120ms ease;
+  }
+
+  .modal-content.modal-content--am .modal-close:hover {
+    background: var(--gx-hover-soft);
+    color: var(--gx-slate-500);
+  }
+
+  .modal-content.modal-content--am .modal-close:focus-visible {
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-hair);
+    outline: 2px solid var(--gx-org-brand);
+    outline-offset: 2px;
+  }
+
+  .modal-content.modal-content--am .modal-close svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .modal-content.modal-content--am .modal-body {
+    padding: 0 26px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .modal-content.modal-content--am .modal-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px 26px 22px;
+    border: none;
+    border-top: 1px solid var(--gx-hair);
+    background: var(--gx-card);
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 640px) {
+    .modal-content.modal-content--am .modal-header {
+      padding: 22px 18px 14px;
+    }
+
+    .modal-content.modal-content--am .modal-body {
+      padding: 0 18px;
+    }
+
+    .modal-content.modal-content--am .modal-footer {
+      padding: 14px 18px 18px;
+    }
   }
 
   /* ===== "delete-department" variant (organization.html .delete-modal) =====

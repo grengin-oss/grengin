@@ -124,6 +124,7 @@
     "colCategory": "カテゴリ",
     "colVisibility": "公開範囲",
     "colUpdated": "最終更新日",
-    "colActions": "操作"
+    "colActions": "操作",
+    "addedManyToProject": "{count} 人のメンバーを {project} に追加しました"
   }
 }

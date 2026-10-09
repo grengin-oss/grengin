@@ -8,7 +8,22 @@
     "never": "أبدًا",
     "loading": "جارٍ التحميل...",
     "clear": "مسح",
-    "select": "اختيار"
+    "select": "اختيار",
+    "addMembers": {
+      "subtitle": "إلى {name}",
+      "searchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني أو القسم…",
+      "columnName": "الاسم",
+      "columnEmail": "البريد الإلكتروني",
+      "selected": "{count} محدد",
+      "submit": "إضافة {count} {count, plural, one {عضو} other {أعضاء}}",
+      "submitNone": "إضافة أعضاء",
+      "adding": "جارٍ الإضافة…",
+      "loading": "جارٍ تحميل الأشخاص…",
+      "empty": "لم يتم العثور على أشخاص",
+      "noMatch": "لا يوجد أشخاص يطابقون “{query}”",
+      "alreadyMember": "عضو",
+      "loadError": "فشل تحميل الأشخاص"
+    }
   },
   "errors": {
     "forbidden": {

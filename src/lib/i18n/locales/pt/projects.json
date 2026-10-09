@@ -124,6 +124,7 @@
     "colCategory": "Categoria",
     "colVisibility": "Visibilidade",
     "colUpdated": "Última atualização",
-    "colActions": "Ações"
+    "colActions": "Ações",
+    "addedManyToProject": "{count} membros adicionados a {project}"
   }
 }
