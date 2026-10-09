@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0
   selection. Used by department member management and project members.
 -->
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { tick, untrack } from "svelte";
   import { _ } from "svelte-i18n";
   import Modal from "$lib/admin/components/Modal.svelte";
@@ -28,6 +29,8 @@ SPDX-License-Identifier: Apache-2.0
     onsubmit: (users: User[]) => Promise<void>;
     /** Users already in the target — shown, but not selectable. */
     existingIds?: ReadonlySet<string>;
+    /** Extra field above the search bar (e.g. the project role picker). */
+    beforeSearch?: Snippet;
   }
 
   let {
@@ -37,6 +40,7 @@ SPDX-License-Identifier: Apache-2.0
     onclose,
     onsubmit,
     existingIds,
+    beforeSearch,
   }: Props = $props();
 
   const PAGE_SIZE = 25;
@@ -172,6 +176,9 @@ SPDX-License-Identifier: Apache-2.0
 
 <Modal {isOpen} {title} {subtitle} {onclose} variant="add-members">
   {#snippet headerExtra()}
+    {#if beforeSearch}
+      <div class="am-before-search">{@render beforeSearch()}</div>
+    {/if}
     <label class="am-search">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <circle cx="7.3" cy="7.3" r="4.8" stroke="currentColor" stroke-width="1.5" />
@@ -273,6 +280,10 @@ SPDX-License-Identifier: Apache-2.0
 </Modal>
 
 <style>
+  .am-before-search {
+    margin-bottom: 14px;
+  }
+
   .am-search {
     height: 42px;
     box-sizing: border-box;

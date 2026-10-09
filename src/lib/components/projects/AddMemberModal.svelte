@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
   import MemberPickerModal from '../MemberPickerModal.svelte';
   import type { User } from '../../admin/types';
   import { addProjectMember } from '../../api/projectsApi';
+  import type { ProjectRole } from '../../types/project';
   import { ApiError } from '../../api/client';
   import { toast } from '../Toaster.svelte';
 
@@ -22,9 +23,16 @@ SPDX-License-Identifier: Apache-2.0
 
   let { isOpen = $bindable(), projectId, projectName, existingMemberIds, onclose }: Props = $props();
 
+  let role = $state<ProjectRole>('member');
+
+  // Each open starts back on "member", as the old modal did.
+  $effect(() => {
+    if (isOpen) role = 'member';
+  });
+
   async function handleAdd(users: User[]) {
     const results = await Promise.allSettled(
-      users.map((user) => addProjectMember(projectId, { userId: user.id, role: 'member' })),
+      users.map((user) => addProjectMember(projectId, { userId: user.id, role })),
     );
 
     const added = users.filter((_, i) => results[i].status === 'fulfilled');
@@ -71,4 +79,66 @@ SPDX-License-Identifier: Apache-2.0
   existingIds={existingMemberIds}
   {onclose}
   onsubmit={handleAdd}
-/>
+>
+  {#snippet beforeSearch()}
+    <div class="field">
+      <span class="field-label">{$_('projects.role')}</span>
+      <div class="role-toggle">
+        <button
+          type="button"
+          class="role-btn"
+          class:active={role === 'member'}
+          onclick={() => (role = 'member')}
+        >
+          {$_('projects.roleMember')}
+        </button>
+        <button
+          type="button"
+          class="role-btn"
+          class:active={role === 'owner'}
+          onclick={() => (role = 'owner')}
+        >
+          {$_('projects.roleOwner')}
+        </button>
+      </div>
+    </div>
+  {/snippet}
+</MemberPickerModal>
+
+<style>
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .field-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .role-toggle {
+    display: flex;
+    gap: var(--space-xs);
+  }
+
+  .role-btn {
+    padding: 6px 16px;
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .role-btn.active {
+    border-color: var(--brand);
+    background: rgb(var(--brand-rgb) / 0.1);
+    color: var(--brand);
+    font-weight: 600;
+  }
+</style>

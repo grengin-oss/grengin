@@ -118,9 +118,10 @@ export async function searchProjectMembers(projectId: string, query: string, lim
 }
 
 export async function addProjectMember(projectId: string, payload: AddMemberPayload): Promise<void> {
+  // The backend's AddMemberRequest is snake_case and requires `user_id`.
   await request<void>(`/projects/${projectId}/members`, {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ user_id: payload.userId, role: payload.role }),
   });
 }
 

@@ -290,9 +290,9 @@ router.post('/projects/:id/members', requireAuth, (req, res) => {
   if (!project) {
     return res.status(404).json({ detail: 'Project not found' })
   }
-  const { userId, role } = req.body ?? {}
+  const { user_id: userId, role } = req.body ?? {}
   if (!userId) {
-    return res.status(400).json({ detail: 'userId is required' })
+    return res.status(400).json({ detail: 'user_id is required' })
   }
   if (role && role !== 'member' && role !== 'owner') {
     return res.status(400).json({ detail: 'Invalid role' })
