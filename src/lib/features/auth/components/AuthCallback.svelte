@@ -13,12 +13,6 @@ SPDX-License-Identifier: Apache-2.0
   import { getLocalizedError } from '../../../utils/errorLocalization';
   import { API_BASE } from '../../../api/client.js';
 
-  import { MANAGED_CLOUD, managedCallbackInput, type ManagedProvider } from '../../../managed-setup';
-
-  let { managedSetup = false, creatorProvider, onSetupComplete }: {
-    managedSetup?: boolean; creatorProvider?: ManagedProvider; onSetupComplete?: () => void;
-  } = $props();
-
   // UI State
   type CallbackStatus = 'processing' | 'success' | 'error';
   let status = $state<CallbackStatus>('processing');
@@ -187,29 +181,6 @@ SPDX-License-Identifier: Apache-2.0
 
   // Initialize OAuth callback processing on component mount
   onMount(async () => {
-    if (MANAGED_CLOUD) {
-      // Strict managed branch: no code flow, raw URL tokens, /me, or query/hash/error logging.
-      const callbackUrl = new URL(window.location.href);
-      window.history.replaceState(null, '', window.location.pathname);
-      try {
-        if (managedSetup && !creatorProvider) throw new Error('setup_sign_in_failed');
-        const input = managedCallbackInput(callbackUrl, managedSetup ? creatorProvider : undefined);
-        const response = await handleOAuthCallback(input.provider, null, input.state, input.assertion);
-        if (!response?.accessToken || !response?.user) throw new Error('setup_sign_in_failed');
-        setAuth(response.accessToken, response.refreshToken || '', response.user);
-        cleanupSessionStorage();
-        const returnUrl = consumeReturnTo();
-        status = 'success';
-        if (managedSetup) onSetupComplete?.();
-        else {
-          window.location.replace(returnUrl || '/');
-        }
-      } catch {
-        cleanupSessionStorage();
-        status = 'error';
-      }
-      return;
-    }
     try {
       await processOAuthCallback();
       cleanupSessionStorage();
@@ -291,12 +262,7 @@ SPDX-License-Identifier: Apache-2.0
           </div>
           <div class="status-text">
             <h2>{$_('auth.signInFailed')}</h2>
-            {#if MANAGED_CLOUD}
-              <p class="status-submessage">Sign-in could not be completed. Start a new sign-in to try again.</p>
-              <a href="/">Return to setup</a>
-            {:else}
-              <p class="status-submessage">{$_('auth.redirectingToLogin')}</p>
-            {/if}
+            <p class="status-submessage">{$_('auth.redirectingToLogin')}</p>
           </div>
         </div>
       </div>
