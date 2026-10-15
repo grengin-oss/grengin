@@ -1191,7 +1191,24 @@
         "admin_department_prompt_deleted": "Prompt Département Supprimé",
         "admin_audit_logs_redacted_for_user": "Journaux d'Audit Censurés pour l'Utilisateur",
         "admin_domain_reconfigured": "Domaine Reconfiguré",
-        "admin_binaries_updated": "Application mise à jour"
+        "admin_binaries_updated": "Application mise à jour",
+        "project_created": "Projet créé",
+        "project_updated": "Projet mis à jour",
+        "project_deleted": "Projet supprimé",
+        "project_shared": "Projet partagé",
+        "project_member_added": "Membre du projet ajouté",
+        "project_member_removed": "Membre du projet retiré",
+        "project_artifact_added": "Artefact de projet ajouté",
+        "project_source_removed": "Source du projet supprimée",
+        "project_linked_to_conversation": "Projet lié à la conversation",
+        "project_unlinked_from_conversation": "Projet dissocié de la conversation",
+        "skill_linked_to_conversation": "Compétence liée à la conversation",
+        "mutation_put_me_metadata": "Métadonnées du profil mises à jour",
+        "mutation_post_admin_sso_providers": "Fournisseur SSO créé",
+        "mutation_post_admin_ai_engines_engine_key_validate": "Clé du moteur IA validée",
+        "mutation_post_admin_provider_plugins_provider_key_enable": "Plugin de fournisseur activé",
+        "mutation_post_admin_provider_plugins_provider_key_test": "Plugin de fournisseur testé",
+        "mutation_post_projects_id_mcp_servers": "Serveur MCP du projet ajouté"
       }
     },
     "maintenance": {

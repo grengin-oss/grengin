@@ -1191,7 +1191,24 @@
         "admin_department_prompt_deleted": "部門プロンプトを削除",
         "admin_audit_logs_redacted_for_user": "ユーザーのオーディットログを編集",
         "admin_domain_reconfigured": "ドメインを再構成",
-        "admin_binaries_updated": "アプリケーションを更新"
+        "admin_binaries_updated": "アプリケーションを更新",
+        "project_created": "プロジェクトを作成しました",
+        "project_updated": "プロジェクトを更新しました",
+        "project_deleted": "プロジェクトを削除しました",
+        "project_shared": "プロジェクトを共有しました",
+        "project_member_added": "プロジェクトメンバーを追加しました",
+        "project_member_removed": "プロジェクトメンバーを削除しました",
+        "project_artifact_added": "プロジェクトのアーティファクトを追加しました",
+        "project_source_removed": "プロジェクトのソースを削除しました",
+        "project_linked_to_conversation": "プロジェクトを会話にリンクしました",
+        "project_unlinked_from_conversation": "プロジェクトを会話からリンク解除しました",
+        "skill_linked_to_conversation": "スキルを会話にリンクしました",
+        "mutation_put_me_metadata": "プロフィールのメタデータを更新しました",
+        "mutation_post_admin_sso_providers": "SSOプロバイダーを作成しました",
+        "mutation_post_admin_ai_engines_engine_key_validate": "AIエンジンキーを検証しました",
+        "mutation_post_admin_provider_plugins_provider_key_enable": "プロバイダープラグインを有効化しました",
+        "mutation_post_admin_provider_plugins_provider_key_test": "プロバイダープラグインをテストしました",
+        "mutation_post_projects_id_mcp_servers": "プロジェクトのMCPサーバーを追加しました"
       }
     },
     "maintenance": {
