@@ -53,6 +53,7 @@ SPDX-License-Identifier: Apache-2.0
   import WebSearch from "./WebSearch.svelte";
   import ToolCallTimeline from "./ToolCallTimeline.svelte";
   import McpOAuthPrompt from "./McpOAuthPrompt.svelte";
+  import MessageVersions from "./MessageVersions.svelte";
   import {
     extractMessageArtifacts,
     stripArtifactTags,
@@ -64,6 +65,21 @@ SPDX-License-Identifier: Apache-2.0
       files?: Array<{ id: string; name?: string; type?: string }>;
     };
     onEdit?: (id: string, newContent: string) => void;
+    /** Regenerate this assistant answer (ENGG-459); given the assistant message id. */
+    onRegenerate?: (id: string) => void;
+    /** "Edit prompt" on an interrupted answer; given the assistant message id. */
+    onEditPrompt?: (id: string) => void;
+    /** Switch to a sibling version by its message id (ENGG-459). */
+    onSwitchVersion?: (messageId: string) => void;
+    /** When this equals the message id, open its in-place editor (e.g. "Edit prompt"). */
+    openEditFor?: string | null;
+    /** Called once the editor has been opened for `openEditFor`, so the parent can clear it. */
+    onEditOpened?: () => void;
+    /**
+     * An answer is streaming somewhere in the conversation. While true, Edit,
+     * Regenerate and version switching are disabled so nothing changes mid-flight.
+     */
+    isBusy?: boolean;
     selectedModelInfo?: ProviderInfo;
     providers?: ProviderInfo[];
     onMcpAuthConnected?: (serverId: string) => void;
@@ -78,6 +94,12 @@ SPDX-License-Identifier: Apache-2.0
   let {
     message,
     onEdit,
+    onRegenerate,
+    onEditPrompt,
+    onSwitchVersion,
+    openEditFor = null,
+    onEditOpened,
+    isBusy = false,
     selectedModelInfo,
     providers,
     onMcpAuthConnected,
@@ -89,7 +111,7 @@ SPDX-License-Identifier: Apache-2.0
   let editContent = $state(message.content);
   let showActions = $state(false);
   let messageContainer: HTMLDivElement;
-  let editTextarea: HTMLTextAreaElement | undefined;
+  let editTextarea = $state<HTMLTextAreaElement | undefined>(undefined);
 
   // TTS state
   let ttsState = $state<TTSState>({
@@ -341,8 +363,38 @@ SPDX-License-Identifier: Apache-2.0
     }
   });
 
+  // A message has sibling versions worth a switcher only when the backend
+  // reports more than one (ENGG-459).
+  const hasVersions = $derived(
+    !!message.versions && message.versions.total > 1,
+  );
+
+  // The answer was stopped by the user before it finished — shown as the
+  // "response was interrupted" banner. `cancelled` covers the live stream;
+  // `stopReason` makes it survive a reload (from GET /chat/{id}).
+  const isInterrupted = $derived(
+    !message.isStreaming &&
+      !message.error &&
+      (!!message.cancelled || message.stopReason === "user_cancelled"),
+  );
+
+  // Open the in-place editor when the parent asks (e.g. the banner's "Edit
+  // prompt"), then let it clear the one-shot signal.
+  $effect(() => {
+    if (
+      openEditFor &&
+      openEditFor === message.id &&
+      message.role === "user" &&
+      !isEditing &&
+      !isBusy
+    ) {
+      startEdit();
+      queueMicrotask(() => onEditOpened?.());
+    }
+  });
+
   function startEdit() {
-    if (message.role !== "user" || message.isStreaming) return;
+    if (message.role !== "user" || message.isStreaming || isBusy) return;
     isEditing = true;
     editContent = message.content;
     tick().then(() => {
@@ -1064,6 +1116,31 @@ SPDX-License-Identifier: Apache-2.0
           {/if}
         </svg>
       </button>
+      <!-- Regenerate Button — branches a new version of this answer (ENGG-459) -->
+      {#if onRegenerate}
+        <button
+          class="action-btn"
+          onclick={() => onRegenerate?.(message.id)}
+          disabled={isBusy}
+          aria-label={$_("chat.message.regenerate")}
+          title={$_("chat.message.regenerate")}
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
+      {/if}
       <!-- HTML Preview Button (opens side panel) -->
     </div>
   {/if}
@@ -1208,6 +1285,18 @@ SPDX-License-Identifier: Apache-2.0
       {@render attachmentGrid(assistantOtherFiles)}
     {/if}
   </div>
+
+  <!-- Version switcher — sits under the answer once it has siblings (ENGG-459). -->
+  {#if !message.isStreaming && hasVersions && onSwitchVersion && message.versions}
+    <div class="msg-versions-row msg-versions-row--assistant">
+      <MessageVersions
+        versions={message.versions}
+        messageId={message.id}
+        disabled={isBusy}
+        onSwitch={(id) => onSwitchVersion?.(id)}
+      />
+    </div>
+  {/if}
 {/snippet}
 
 <div
@@ -1260,37 +1349,11 @@ SPDX-License-Identifier: Apache-2.0
     {/if}
 
     {#if message.role === "user"}
-      <!-- Edit mode UI hidden for now
-      {#if isEditing}
-        <div class="edit-container">
-          <textarea
-            bind:this={editTextarea}
-            bind:value={editContent}
-            class="edit-textarea"
-            oninput={(e) => {
-              const target = e.target as HTMLTextAreaElement;
-              target.style.height = 'auto';
-              target.style.height = target.scrollHeight + 'px';
-            }}
-            onkeydown={(e) => {
-              if (e.key === 'Escape') cancelEdit();
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                saveEdit();
-              }
-            }}
-          ></textarea>
-          <div class="edit-actions">
-            <button class="btn-save" onclick={saveEdit}>Save</button>
-            <button class="btn-cancel" onclick={cancelEdit}>Cancel</button>
-          </div>
-        </div>
-      {:else}
-      -->
       <!--
-          Attachments sit ABOVE the bubble, not inside it (design ".msg-stack--user"
-          for a lone image, ".thread-aligner" for everything else).
-        -->
+        Attachments sit ABOVE the bubble, not inside it (design ".msg-stack--user"
+        for a lone image, ".thread-aligner" for everything else). They stay put
+        while editing — an edit only swaps the text (ENGG-459).
+      -->
       {#if useImageCard && soleImageFile}
         <div class="msg-stack msg-stack--user">
           {#if fileLoadingStates.get(soleImageFile.id)}
@@ -1308,53 +1371,130 @@ SPDX-License-Identifier: Apache-2.0
       {:else if useAttachmentGrid}
         {@render attachmentGrid(attachedFiles)}
       {/if}
-      <div
-        class="user-message"
-        class:user-message--image={isImageTurn}
-        class:user-message--sent={useAttachmentGrid}
-        class:user-message--wide={useImageCard}
-      >
-        {#if !message.isStreaming}
-          <div class="message-actions">
+
+      {#if isEditing}
+        <!--
+          In-place edit box (ENGG-459). Esc cancels, Ctrl/Cmd+Enter saves;
+          Save streams a fresh answer and branches a new version of this message.
+        -->
+        <div class="edit-container">
+          <textarea
+            bind:this={editTextarea}
+            bind:value={editContent}
+            class="edit-textarea"
+            aria-label={$_("chat.message.editMessage")}
+            oninput={(e) => {
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = "auto";
+              target.style.height = target.scrollHeight + "px";
+            }}
+            onkeydown={(e) => {
+              if (e.key === "Escape") cancelEdit();
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                saveEdit();
+              }
+            }}
+          ></textarea>
+          <div class="edit-actions">
             <button
-              class="action-btn user-copy-btn"
-              class:success={copySuccess}
-              onclick={copyMessageContent}
-              title={$_("chat.message.copyContent")}
+              type="button"
+              class="edit-btn edit-btn--cancel"
+              onclick={cancelEdit}
             >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                {#if copySuccess}
-                  <polyline points="20,6 9,17 4,12"></polyline>
-                {:else}
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path
-                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-                  ></path>
-                {/if}
-              </svg>
+              {$_("chat.message.cancel")}
             </button>
-            <!-- Edit button hidden for now
-              <button class="action-btn" onclick={startEdit} title="Edit message">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            <button
+              type="button"
+              class="edit-btn edit-btn--save"
+              onclick={saveEdit}
+              disabled={!editContent.trim()}
+            >
+              {$_("chat.message.save")}
+            </button>
+          </div>
+        </div>
+      {:else}
+        <div
+          class="user-message"
+          class:user-message--image={isImageTurn}
+          class:user-message--sent={useAttachmentGrid}
+          class:user-message--wide={useImageCard}
+        >
+          {#if !message.isStreaming}
+            <div class="message-actions">
+              <button
+                class="action-btn user-copy-btn"
+                class:success={copySuccess}
+                onclick={copyMessageContent}
+                title={$_("chat.message.copyContent")}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  {#if copySuccess}
+                    <polyline points="20,6 9,17 4,12"></polyline>
+                  {:else}
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"
+                    ></rect>
+                    <path
+                      d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                    ></path>
+                  {/if}
                 </svg>
               </button>
-              -->
+              <!-- Edit button — opens the in-place editor (ENGG-459) -->
+              {#if onEdit}
+                <button
+                  class="action-btn user-copy-btn"
+                  onclick={startEdit}
+                  disabled={isBusy}
+                  aria-label={$_("chat.message.editMessage")}
+                  title={$_("chat.message.editMessage")}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                    ></path>
+                    <path
+                      d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                    ></path>
+                  </svg>
+                </button>
+              {/if}
+            </div>
+          {/if}
+          <div class="message-body">
+            <p>{message.content}</p>
           </div>
-        {/if}
-        <div class="message-body">
-          <p>{message.content}</p>
         </div>
-      </div>
-      <!-- {/if} end of edit mode conditional -->
+      {/if}
+
+      <!-- Version switcher under the user bubble (ENGG-459). -->
+      {#if !message.isStreaming && hasVersions && onSwitchVersion && message.versions}
+        <div class="msg-versions-row msg-versions-row--user">
+          <MessageVersions
+            versions={message.versions}
+            messageId={message.id}
+            disabled={isBusy}
+            onSwitch={(id) => onSwitchVersion?.(id)}
+          />
+        </div>
+      {/if}
     <!--
       `showThinking` belongs in this gate: without it an assistant turn that is
       streaming but has produced nothing yet renders as a bare avatar and no
@@ -1417,8 +1557,55 @@ SPDX-License-Identifier: Apache-2.0
       </div>
     {/if}
 
-    {#if message.cancelled && !message.error}
-      <div class="cancelled-note">{$_("chat.message.responseStopped")}</div>
+    {#if isInterrupted}
+      <!--
+        Claude-style "response was interrupted" banner. Shows under the (possibly
+        partial) answer, with the same recovery actions: edit the prompt that
+        produced it, or try the answer again (regenerate).
+      -->
+      <div class="interrupted-banner">
+        <span class="interrupted-banner__lead">
+          <svg
+            class="interrupted-banner__icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>{$_("chat.message.responseInterrupted")}</span>
+        </span>
+        {#if onEditPrompt || onRegenerate}
+          <span class="interrupted-banner__actions">
+            {#if onEditPrompt}
+              <button
+                type="button"
+                class="interrupted-banner__btn"
+                onclick={() => onEditPrompt?.(message.id)}
+                disabled={isBusy}
+              >
+                {$_("chat.message.editPrompt")}
+              </button>
+            {/if}
+            {#if onRegenerate}
+              <button
+                type="button"
+                class="interrupted-banner__btn"
+                onclick={() => onRegenerate?.(message.id)}
+                disabled={isBusy}
+              >
+                {$_("chat.message.tryAgain")}
+              </button>
+            {/if}
+          </span>
+        {/if}
+      </div>
     {/if}
 
     {#if message.error}
@@ -2478,11 +2665,66 @@ SPDX-License-Identifier: Apache-2.0
     margin-top: var(--space-md);
   }
 
-  .cancelled-note {
-    margin-top: var(--space-sm);
-    color: var(--text-secondary);
+  /* "Response was interrupted" banner (Claude-style): a neutral bordered row
+     with the notice on the start edge and the recovery actions on the end. */
+  .interrupted-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-md, 0.75rem);
+    background: var(--btn-secondary);
     font-size: 0.8125rem;
-    font-style: italic;
+    color: var(--text-secondary);
+  }
+
+  .interrupted-banner__lead {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .interrupted-banner__icon {
+    flex-shrink: 0;
+    color: var(--text-tertiary, var(--text-secondary));
+  }
+
+  .interrupted-banner__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .interrupted-banner__btn {
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: var(--radius-sm, 0.5rem);
+    background: var(--gx-card, transparent);
+    color: var(--text-primary);
+    font-family: var(--gx-font, inherit);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .interrupted-banner__btn:hover:not(:disabled) {
+    border-color: var(--brand);
+    color: var(--brand);
+  }
+
+  .interrupted-banner__btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  .interrupted-banner__btn:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 
   .error-message {
@@ -2924,5 +3166,105 @@ SPDX-License-Identifier: Apache-2.0
     .tool-calls-container {
       max-width: 95%;
     }
+  }
+
+  /* ---- in-place message editor (ENGG-459) ----
+     Sits where the user bubble was: right-aligned, same measure, but on a
+     neutral surface because it is an input, not the sent green bubble. */
+  .edit-container {
+    width: fit-content;
+    min-width: min(320px, 100%);
+    max-width: min(480px, 100%);
+    margin-inline-start: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .edit-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 2.75rem;
+    max-height: 60vh;
+    padding: 14px 18px;
+    border: 1px solid var(--glass-stroke-dark);
+    border-radius: 12px;
+    background: var(--input-bg, var(--btn-secondary));
+    color: var(--text-primary);
+    font-family: var(--gx-font-display);
+    font-size: 14px;
+    line-height: 1.6;
+    resize: none;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .edit-textarea:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand) 25%, transparent);
+  }
+
+  .edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+  }
+
+  .edit-btn {
+    padding: 0.375rem 0.875rem;
+    border-radius: var(--radius-sm, 0.5rem);
+    font-family: var(--gx-font, inherit);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .edit-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  .edit-btn--cancel {
+    background: var(--btn-secondary);
+    border: 1px solid var(--glass-stroke-dark);
+    color: var(--text-secondary);
+  }
+
+  .edit-btn--cancel:hover {
+    background: var(--btn-tertiary, var(--btn-secondary));
+    color: var(--text-primary);
+  }
+
+  .edit-btn--save {
+    background: var(--brand);
+    border: 1px solid var(--brand);
+    color: #fff;
+  }
+
+  .edit-btn--save:hover:not(:disabled) {
+    filter: brightness(1.05);
+  }
+
+  .edit-btn--save:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  /* ---- version switcher row (ENGG-459) ----
+     Follows the message's own alignment: user turns sit at the end, assistant
+     turns at the start, so the `‹ 1 / 2 ›` lands under its message. */
+  .msg-versions-row {
+    display: flex;
+  }
+
+  .msg-versions-row--user {
+    justify-content: flex-end;
+  }
+
+  .msg-versions-row--assistant {
+    justify-content: flex-start;
   }
 </style>

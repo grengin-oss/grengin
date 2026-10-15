@@ -24,10 +24,14 @@ SPDX-License-Identifier: Apache-2.0
   } from "../../../types/chat";
   import {
     sendMessage,
+    editMessageStream,
+    regenerateMessageStream,
+    switchBranch,
     cancelMessageStream,
     getConversation,
     getChatMcpServers,
     type UploadedFile,
+    type ChatStreamCallbacks,
   } from "../../../api/chatApi";
   import type { ProviderInfo, ModelInfo } from "../../../api/models";
   import { getModels, isImageModel, findModel } from "../../../api/models";
@@ -110,6 +114,10 @@ SPDX-License-Identifier: Apache-2.0
     typeof window !== "undefined" &&
       new URLSearchParams(window.location.search).has("chatId"),
   );
+  // A version switch is in flight. Unlike `isLoadingConversation`, this does NOT
+  // tear the view down — it only disables the switchers to block double-clicks
+  // while the branch call resolves (ENGG-459).
+  let isSwitchingVersion = $state(false);
   let messagesContainer = $state<HTMLDivElement | undefined>(undefined);
   let messageInput = $state<MessageInput | undefined>(undefined);
   let currentStreamingMessage = $state<ChatMessageType | null>(null);
@@ -608,6 +616,49 @@ SPDX-License-Identifier: Apache-2.0
     };
     messages = [...messages, userMessage];
 
+    const userTempId = userMessage.id;
+
+    // Disables switching conversation while initializing new conversation
+    window.dispatchEvent(new CustomEvent("initializingConversation"));
+
+    await runAssistantStream({
+      promptText: content,
+      // Swap the temporary user id for the server's id once it streams back on
+      // message_start, so the message can be edited right away (ENGG-459).
+      onUserMessageId: (realId) => {
+        if (!realId || realId === userTempId) return;
+        messages = messages.map((m) =>
+          m.id === userTempId ? { ...m, id: realId } : m,
+        );
+      },
+      invoke: (callbacks) =>
+        sendMessage({
+          message: content,
+          conversationId: conversationId || undefined,
+          provider: selectedProvider,
+          modelName: selectedModel,
+          uploadedFiles,
+          webSearch,
+          selectedMcpServers,
+          ...callbacks,
+        }),
+    });
+  }
+
+  /**
+   * Drive one streaming assistant turn end to end: create the pending assistant
+   * bubble, wire every SSE callback into the message list, run `params.invoke`
+   * (a send, edit or regenerate) and tidy up. Shared by send, edit and
+   * regenerate so they behave identically (ENGG-459). When `reloadOnDone` is
+   * set, the conversation is re-fetched after the stream so new version metadata
+   * and any downstream changes are reflected.
+   */
+  async function runAssistantStream(params: {
+    promptText: string;
+    invoke: (callbacks: ChatStreamCallbacks) => Promise<void>;
+    onUserMessageId?: (userMessageId: string) => void;
+    reloadOnDone?: boolean;
+  }) {
     // Prepare streaming message
     let pendingStreamingMessage: ChatMessageType | null = {
       id: crypto.randomUUID(),
@@ -634,18 +685,8 @@ SPDX-License-Identifier: Apache-2.0
     // Update ui with a copy of the pending streaming message
     currentStreamingMessage = { ...pendingStreamingMessage };
 
-    // Disables switching conversation while initializing new conversation
-    window.dispatchEvent(new CustomEvent("initializingConversation"));
-
     try {
-      await sendMessage({
-        message: content,
-        conversationId: conversationId || undefined,
-        provider: selectedProvider,
-        modelName: selectedModel,
-        uploadedFiles: uploadedFiles,
-        webSearch: webSearch,
-        selectedMcpServers,
+      await params.invoke({
         signal: generation.controller.signal,
 
         onConversationInitialized: ({ newConversationId }) => {
@@ -667,8 +708,9 @@ SPDX-License-Identifier: Apache-2.0
           // Refresh chats list
           window.dispatchEvent(new CustomEvent("refreshChatHistory"));
         },
-        onStreamingStart: (messageId) => {
+        onStreamingStart: (messageId, userMessageId) => {
           markGenerationStarted(generation, messageId);
+          if (userMessageId) params.onUserMessageId?.(userMessageId);
           if (pendingStreamingMessage) {
             messageAddedToArray = true;
             pendingStreamingMessage = {
@@ -872,7 +914,7 @@ SPDX-License-Identifier: Apache-2.0
             // previous one — each result is appended.
             const generatedFile = {
               id: image.file_id,
-              name: generatedImageName(content, generatedImageIndex),
+              name: generatedImageName(params.promptText, generatedImageIndex),
               type: image.content_type || "image/png",
               size: 0,
             };
@@ -934,6 +976,17 @@ SPDX-License-Identifier: Apache-2.0
             pendingStreamingMessage = {
               ...pendingStreamingMessage,
               cancelled: true,
+            };
+          }
+        },
+        onResponseStopped: (stopReason) => {
+          if (pendingStreamingMessage) {
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              stopReason,
+              cancelled:
+                stopReason === "user_cancelled" ||
+                pendingStreamingMessage.cancelled,
             };
           }
         },
@@ -1033,6 +1086,19 @@ SPDX-License-Identifier: Apache-2.0
           }
         },
       });
+
+      // After an edit or regenerate, re-fetch the conversation so the new
+      // version metadata (and anything downstream) is reflected (ENGG-459).
+      // Skipped when the turn errored or was stopped — the server adds no new
+      // version in those cases, so a reload would only churn the view.
+      if (
+        params.reloadOnDone &&
+        !error &&
+        !generation.controller.signal.aborted &&
+        conversationId
+      ) {
+        await reloadConversation(conversationId);
+      }
     } catch (err) {
       // Convert all errors to ApiError for consistent handling
       const apiError =
@@ -1062,10 +1128,134 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
-  function handleEditMessage(id: string, newContent: string) {
-    messages = messages.map((msg) =>
-      msg.id === id ? { ...msg, content: newContent } : msg,
-    );
+  /**
+   * Edit a user message (ENGG-459): show the new text at once, drop the turns
+   * below it, and stream a fresh answer through the edit endpoint. The backend
+   * keeps the old text as an earlier version; `reloadOnDone` pulls the new
+   * version metadata back in once the answer finishes.
+   */
+  async function handleEditMessage(id: string, newContent: string) {
+    if (isLoading || !conversationId) return;
+    const index = messages.findIndex((m) => m.id === id);
+    if (index < 0 || messages[index].role !== "user") return;
+
+    error = null;
+    isLoading = true;
+    autoScrollEnabled = true;
+
+    // Optimistically apply the edit and truncate everything after it; the new
+    // answer streams into a fresh assistant bubble below.
+    const edited = { ...messages[index], content: newContent };
+    messages = [...messages.slice(0, index), edited];
+
+    await runAssistantStream({
+      promptText: newContent,
+      reloadOnDone: true,
+      invoke: (callbacks) =>
+        editMessageStream(conversationId!, id, {
+          message: newContent,
+          provider: selectedProvider,
+          modelName: selectedModel,
+          // Keep the message's attachments on the edited version.
+          uploadedFiles: (edited.files as UploadedFile[] | undefined) ?? [],
+          webSearch: webSearchEnabled,
+          selectedMcpServers,
+          ...callbacks,
+        }),
+    });
+  }
+
+  /**
+   * Regenerate an assistant answer (ENGG-459): re-send the user message that
+   * produced it through the edit endpoint, which branches a new answer version
+   * using the currently selected model.
+   */
+  async function handleRegenerate(assistantId: string) {
+    if (isLoading || !conversationId) return;
+    const index = messages.findIndex((m) => m.id === assistantId);
+    if (index < 0) return;
+
+    // Walk back to the user message this answer replied to (not necessarily the
+    // immediately preceding one).
+    let userIndex = index - 1;
+    while (userIndex >= 0 && messages[userIndex].role !== "user") userIndex--;
+    if (userIndex < 0) return;
+    const userMessage = messages[userIndex];
+
+    error = null;
+    isLoading = true;
+    autoScrollEnabled = true;
+
+    // Drop the existing answer (and anything after the user turn) before the
+    // new one streams in.
+    messages = messages.slice(0, userIndex + 1);
+
+    await runAssistantStream({
+      promptText: userMessage.content,
+      reloadOnDone: true,
+      invoke: (callbacks) =>
+        regenerateMessageStream(conversationId!, userMessage.id, {
+          message: userMessage.content,
+          provider: selectedProvider,
+          modelName: selectedModel,
+          uploadedFiles: (userMessage.files as UploadedFile[] | undefined) ?? [],
+          webSearch: webSearchEnabled,
+          selectedMcpServers,
+          ...callbacks,
+        }),
+    });
+  }
+
+  /**
+   * Switch a message to another of its versions (ENGG-459). The server records
+   * the choice and returns the conversation with that version shown; we render
+   * exactly what it returns, so everything below the switcher follows.
+   */
+  async function handleSwitchVersion(messageId: string) {
+    if (isLoading || isSwitchingVersion || !conversationId) return;
+    try {
+      // NOTE: deliberately NOT `isLoadingConversation` — that flag swaps the
+      // whole view out for the loading container, which unmounts and rebuilds
+      // every message (re-rendering markdown, re-fetching images) and reads as a
+      // full-page flash. A switch only needs to swap `messages` in place; the
+      // keyed {#each} then reuses the DOM for unchanged turns.
+      isSwitchingVersion = true;
+      error = null;
+      const conversation = await switchBranch(conversationId, messageId);
+      conversationTitle = conversation.title || null;
+      messages = mapServerMessages(conversation);
+      // The shown version can expose a different artifact set — reset the panel
+      // and re-prime the stream so it reflects the version now on screen.
+      showArtifactPanel = false;
+      restoreArtifactStream(conversationId);
+    } catch (err) {
+      error =
+        err instanceof ApiError
+          ? err
+          : new ApiError(500, $_("chat.errors.failedToLoadConversation"));
+    } finally {
+      isSwitchingVersion = false;
+    }
+  }
+
+  /**
+   * A one-shot signal carrying the id of a user message whose in-place editor
+   * should open. Used by the interrupted-response banner's "Edit prompt" action
+   * to edit the prompt that produced the stopped answer; ChatMessage opens its
+   * editor when this matches, then clears it.
+   */
+  let promptEditRequest = $state<string | null>(null);
+
+  // "Edit prompt" on an interrupted answer: open the editor on the user message
+  // that produced it.
+  function handleEditPrompt(assistantId: string) {
+    if (isLoading) return;
+    const index = messages.findIndex((m) => m.id === assistantId);
+    if (index < 0) return;
+    let userIndex = index - 1;
+    while (userIndex >= 0 && messages[userIndex].role !== "user") userIndex--;
+    if (userIndex < 0) return;
+    promptEditRequest = messages[userIndex].id;
   }
 
   function handleMcpAuthStatusChange(
@@ -1125,8 +1315,12 @@ SPDX-License-Identifier: Apache-2.0
     const msgIndex = messages.findIndex((m) => m.id === assistantMessageId);
     if (msgIndex <= 0) return;
 
-    const userMessage = messages[msgIndex - 1];
-    if (userMessage?.role !== "user") return;
+    // Walk back to the user turn this answer replied to — it is not always the
+    // immediately preceding entry once edits/versions are in play (ENGG-459).
+    let userIndex = msgIndex - 1;
+    while (userIndex >= 0 && messages[userIndex].role !== "user") userIndex--;
+    if (userIndex < 0) return;
+    const userMessage = messages[userIndex];
 
     let generatedImageIndex = 0;
 
@@ -1351,6 +1545,17 @@ SPDX-License-Identifier: Apache-2.0
             };
           }
         },
+        onResponseStopped: (stopReason) => {
+          if (pendingStreamingMessage) {
+            pendingStreamingMessage = {
+              ...pendingStreamingMessage,
+              stopReason,
+              cancelled:
+                stopReason === "user_cancelled" ||
+                pendingStreamingMessage.cancelled,
+            };
+          }
+        },
         onDone: async (_data) => {
           if (pendingStreamingMessage) {
             let updatedMergedWebSearch = null;
@@ -1540,6 +1745,88 @@ SPDX-License-Identifier: Apache-2.0
     };
   }
 
+  /**
+   * Map a server conversation's messages into the client's ChatMessageType
+   * shape. Shared by the initial load, version switching and the post-edit /
+   * regenerate reload, so all three render a conversation identically — now
+   * including per-message `versions` for the switcher (ENGG-459).
+   */
+  function mapServerMessages(conversation: any): ChatMessageType[] {
+    return (conversation.messages || []).map((msg: any) => {
+      const toolResults = msg.tool_results || msg.tools_results || [];
+      const toolCalls = msg.tool_calls || [];
+
+      // Reconstruct pending MCP OAuth requests from persisted tool_results.
+      // The backend stores OAuth-required failures as tool_results with
+      // status === 'error' and an authorization_url in the output payload.
+      const mcpAuthRequests: McpAuthRequest[] = [];
+      const seenServerIds = new Set<string>();
+      for (const tr of toolResults) {
+        const out = tr?.output;
+        const authUrl = out?.authorization_url;
+        const serverId = out?.server_id;
+        if (
+          tr?.status === "error" &&
+          authUrl &&
+          serverId &&
+          !seenServerIds.has(serverId)
+        ) {
+          seenServerIds.add(serverId);
+          const matchingCall = toolCalls.find(
+            (tc: any) => tc.tool_id === tr.tool_id,
+          );
+          mcpAuthRequests.push({
+            server_id: serverId,
+            server_name: out.server_name || serverId,
+            tool_name: matchingCall?.tool_name || tr.tool_name || "",
+            authorization_url: authUrl,
+            scopes: out.scopes,
+            status: "pending",
+          });
+        }
+      }
+
+      return {
+        id: msg.id,
+        role: msg.role,
+        content: msg.parts.text || "",
+        timestamp: msg.created_at || new Date().toISOString(),
+        model: msg.model,
+        usage: msg.usage,
+        files: msg.parts.files || [],
+        toolCalls,
+        toolsResults: toolResults,
+        mergedWebSearch: mergeWebSearchResults(
+          toolCalls,
+          toolResults,
+          "completed",
+        ),
+        mcpAuthRequests:
+          mcpAuthRequests.length > 0 ? mcpAuthRequests : undefined,
+        // Server-declared artifacts (metadata only — content fetched by id).
+        artifacts: msg.parts.artifacts || [],
+        // Version metadata that drives the `< 1 / 2 >` switcher (ENGG-459).
+        versions: msg.versions || undefined,
+        // Why the turn stopped early, persisted across reloads so the
+        // "response was interrupted" banner survives a refresh.
+        stopReason: msg.stop_reason || undefined,
+        cancelled: msg.stop_reason === "user_cancelled" || undefined,
+      };
+    });
+  }
+
+  /**
+   * Re-fetch a conversation and re-render it. Used after an edit or regenerate
+   * stream finishes, so the freshly branched version metadata (and any turns
+   * the server recomputed) replace the optimistic view (ENGG-459).
+   */
+  async function reloadConversation(chatId: string) {
+    const conversation = await getConversation(chatId);
+    conversationTitle = conversation.title || null;
+    messages = mapServerMessages(conversation);
+    restoreArtifactStream(chatId);
+  }
+
   async function loadConversationFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get("chatId");
@@ -1556,62 +1843,8 @@ SPDX-License-Identifier: Apache-2.0
         // Reflect the conversation's title in the browser tab.
         conversationTitle = conversation.title || null;
 
-        // Convert messages to ChatMessageType format
-        messages = (conversation.messages || []).map((msg: any) => {
-          const toolResults = msg.tool_results || msg.tools_results || [];
-          const toolCalls = msg.tool_calls || [];
-
-          // Reconstruct pending MCP OAuth requests from persisted tool_results.
-          // The backend stores OAuth-required failures as tool_results with
-          // status === 'error' and an authorization_url in the output payload.
-          const mcpAuthRequests: McpAuthRequest[] = [];
-          const seenServerIds = new Set<string>();
-          for (const tr of toolResults) {
-            const out = tr?.output;
-            const authUrl = out?.authorization_url;
-            const serverId = out?.server_id;
-            if (
-              tr?.status === "error" &&
-              authUrl &&
-              serverId &&
-              !seenServerIds.has(serverId)
-            ) {
-              seenServerIds.add(serverId);
-              const matchingCall = toolCalls.find(
-                (tc: any) => tc.tool_id === tr.tool_id,
-              );
-              mcpAuthRequests.push({
-                server_id: serverId,
-                server_name: out.server_name || serverId,
-                tool_name: matchingCall?.tool_name || tr.tool_name || "",
-                authorization_url: authUrl,
-                scopes: out.scopes,
-                status: "pending",
-              });
-            }
-          }
-
-          return {
-            id: msg.id,
-            role: msg.role,
-            content: msg.parts.text || "",
-            timestamp: msg.created_at || new Date().toISOString(),
-            model: msg.model,
-            usage: msg.usage,
-            files: msg.parts.files || [],
-            toolCalls,
-            toolsResults: toolResults,
-            mergedWebSearch: mergeWebSearchResults(
-              toolCalls,
-              toolResults,
-              "completed",
-            ),
-            mcpAuthRequests:
-              mcpAuthRequests.length > 0 ? mcpAuthRequests : undefined,
-            // Server-declared artifacts (metadata only — content fetched by id).
-            artifacts: msg.parts.artifacts || [],
-          };
-        });
+        // Convert server messages to the client's ChatMessageType shape.
+        messages = mapServerMessages(conversation);
         restoreArtifactStream(chatId);
 
         // Web search enabled
@@ -1996,6 +2229,16 @@ SPDX-License-Identifier: Apache-2.0
             <ChatMessage
               {message}
               onEdit={handleEditMessage}
+              onRegenerate={message.role === "assistant"
+                ? handleRegenerate
+                : undefined}
+              onEditPrompt={message.role === "assistant"
+                ? handleEditPrompt
+                : undefined}
+              onSwitchVersion={handleSwitchVersion}
+              openEditFor={promptEditRequest}
+              onEditOpened={() => (promptEditRequest = null)}
+              isBusy={isLoading || isSwitchingVersion}
               {selectedModelInfo}
               {providers}
               onMcpAuthConnected={(serverId) =>
@@ -2263,7 +2506,7 @@ SPDX-License-Identifier: Apache-2.0
     background: conic-gradient(
       from 90deg at 50% 50%,
       rgb(79, 114, 210) 0deg,
-      rgb(76, 169, 122) 126deg,
+      rgb(96, 150, 228) 126deg,
       rgb(147, 174, 234) 252deg,
       rgb(79, 114, 210) 360deg
     );
@@ -2333,7 +2576,7 @@ SPDX-License-Identifier: Apache-2.0
     font-size: 26px;
     line-height: 100%;
     text-align: center;
-    background: linear-gradient(90deg, #3F5CB8 0%, #3D8C64 100%);
+    background: linear-gradient(90deg, #3F5CB8 0%, #4A86D6 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;

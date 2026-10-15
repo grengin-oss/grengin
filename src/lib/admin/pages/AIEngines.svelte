@@ -2475,8 +2475,8 @@ SPDX-License-Identifier: Apache-2.0
     width: 56px;
     height: 56px;
     border-radius: 16px;
-    background: #e7f3ef;
-    color: #2e8b68;
+    background: #e9f1fb;
+    color: #427ac6;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2609,8 +2609,8 @@ SPDX-License-Identifier: Apache-2.0
     }
 
     .keys-empty__icon {
-      background: rgba(46, 139, 104, 0.2);
-      color: #5fd3b0;
+      background: rgba(66, 122, 198, 0.2);
+      color: #7fb0f0;
     }
   }
 

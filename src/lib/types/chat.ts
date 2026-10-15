@@ -44,6 +44,19 @@ export interface MessageArtifact {
   content_type?: string;
 }
 
+/**
+ * Version metadata for a message that has sibling versions (ENGG-459). The
+ * backend attaches it to any message that editing or regenerating has branched:
+ * `current` is the 0-based index of the shown version, `total` the count, and
+ * `message_ids` the ordered ids of every version. To switch, send one of
+ * `message_ids` to `PUT /chat/{chatId}/branch` (see `switchBranch`).
+ */
+export interface MessageVersions {
+  current: number;
+  total: number;
+  message_ids: string[];
+}
+
 export interface ChatMessage {
   id: string;
   role: MessageRole;
@@ -61,6 +74,12 @@ export interface ChatMessage {
   /** Server-declared artifacts attached to this message (from parts.artifacts). */
   artifacts?: MessageArtifact[];
   /**
+   * Sibling versions of this message, present once an edit or regenerate has
+   * branched it (ENGG-459). Drives the `< 1 / 2 >` switcher; absent or
+   * `total <= 1` means a single version, so no switcher is shown.
+   */
+  versions?: MessageVersions;
+  /**
    * Extended-thinking text accumulated from `thinking_delta` stream events.
    * Present only while/after a model that exposes its reasoning has streamed;
    * it is never persisted by the client, so a reloaded conversation has none.
@@ -68,6 +87,14 @@ export interface ChatMessage {
   thinking?: string;
   /** The user stopped this response before it finished. */
   cancelled?: boolean;
+  /**
+   * Why the turn ended early, as the backend reports it (`stop_reason` on a
+   * MessageResponse, or the `response_stopped` stream event): `user_cancelled`,
+   * `user_edited`, `provider_error`, `network_error`, `server_error`. Drives the
+   * "response was interrupted" banner, and unlike `cancelled` it survives a
+   * reload because it comes back from GET /chat/{id}.
+   */
+  stopReason?: string;
 }
 
 export interface StreamEvent {

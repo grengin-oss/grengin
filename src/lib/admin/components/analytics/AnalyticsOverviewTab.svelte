@@ -677,99 +677,99 @@ SPDX-License-Identifier: Apache-2.0
       <!-- ".chart-tabs-row": metric tabs on the left, the Aggregated bucket
            picker pinned to the right (design: usage-analytics-overview.html). -->
       <div class="chart-tabs-row">
-      <div
-        class="chart-tabs"
-        role="tablist"
-        aria-label={$_("analytics.charts.title")}
-      >
-        {#each CHART_CONFIGS as config (config.id)}
-          <button
-            type="button"
-            class="chart-tab"
-            class:chart-tab--active={activeChart === config.id}
-            class:chart-tab--inactive={activeChart !== config.id}
-            role="tab"
-            aria-selected={activeChart === config.id}
-            onclick={() => (activeChart = config.id)}
-          >
-            {#if config.id === "multi-metric"}
-              <svg
-                width="14"
-                height="13"
-                viewBox="0 0 14 13"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M1 9.5L4.5 5.5L7 7.5L13 1.5"
-                  stroke="currentColor"
-                  stroke-width="1.3"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            {:else if config.id === "usage-growth"}
-              <svg
-                width="14"
-                height="13"
-                viewBox="0 0 14 13"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M2.25 11.5V7M7 11.5V2.5M11.75 11.5V5"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                />
-              </svg>
-            {:else if config.id === "api-reliability"}
-              <svg
-                width="11"
-                height="13"
-                viewBox="0 0 11 13"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M5.5 1L10 2.6v4.1c0 2.6-1.8 4.4-4.5 5.3C2.8 11.1 1 9.3 1 6.7V2.6L5.5 1Z"
-                  stroke="currentColor"
-                  stroke-width="1"
-                />
-                <path
-                  d="M3.6 6.5l1.5 1.5 2.4-2.8"
-                  stroke="currentColor"
-                  stroke-width="1"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            {:else}
-              <svg
-                width="9"
-                height="13"
-                viewBox="0 0 9 13"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M4.5 1v11"
-                  stroke="currentColor"
-                  stroke-width="1"
-                  stroke-linecap="round"
-                />
-                <path
-                  d="M7 3.4C6.3 2.6 5.5 2.2 4.4 2.2 3 2.2 2 2.9 2 4.1c0 1.3 1.2 1.7 2.6 2 1.5.3 2.6.8 2.6 2.1 0 1.3-1.1 2-2.6 2-1.2 0-2.1-.4-2.8-1.3"
-                  stroke="currentColor"
-                  stroke-width="1"
-                  stroke-linecap="round"
-                />
-              </svg>
-            {/if}
-            {config.tabLabel}
-          </button>
-        {/each}
-      </div>
+        <div
+          class="chart-tabs"
+          role="tablist"
+          aria-label={$_("analytics.charts.title")}
+        >
+          {#each CHART_CONFIGS as config (config.id)}
+            <button
+              type="button"
+              class="chart-tab"
+              class:chart-tab--active={activeChart === config.id}
+              class:chart-tab--inactive={activeChart !== config.id}
+              role="tab"
+              aria-selected={activeChart === config.id}
+              onclick={() => (activeChart = config.id)}
+            >
+              {#if config.id === "multi-metric"}
+                <svg
+                  width="14"
+                  height="13"
+                  viewBox="0 0 14 13"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M1 9.5L4.5 5.5L7 7.5L13 1.5"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              {:else if config.id === "usage-growth"}
+                <svg
+                  width="14"
+                  height="13"
+                  viewBox="0 0 14 13"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M2.25 11.5V7M7 11.5V2.5M11.75 11.5V5"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              {:else if config.id === "api-reliability"}
+                <svg
+                  width="11"
+                  height="13"
+                  viewBox="0 0 11 13"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M5.5 1L10 2.6v4.1c0 2.6-1.8 4.4-4.5 5.3C2.8 11.1 1 9.3 1 6.7V2.6L5.5 1Z"
+                    stroke="currentColor"
+                    stroke-width="1"
+                  />
+                  <path
+                    d="M3.6 6.5l1.5 1.5 2.4-2.8"
+                    stroke="currentColor"
+                    stroke-width="1"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              {:else}
+                <svg
+                  width="9"
+                  height="13"
+                  viewBox="0 0 9 13"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4.5 1v11"
+                    stroke="currentColor"
+                    stroke-width="1"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M7 3.4C6.3 2.6 5.5 2.2 4.4 2.2 3 2.2 2 2.9 2 4.1c0 1.3 1.2 1.7 2.6 2 1.5.3 2.6.8 2.6 2.1 0 1.3-1.1 2-2.6 2-1.2 0-2.1-.4-2.8-1.3"
+                    stroke="currentColor"
+                    stroke-width="1"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              {/if}
+              {config.tabLabel}
+            </button>
+          {/each}
+        </div>
 
         <AnalyticsGranularityPicker
           {granularity}
@@ -1205,7 +1205,7 @@ SPDX-License-Identifier: Apache-2.0
     background: var(--gx-an-blue-tint);
     box-shadow: none;
     padding-inline-start: 6px;
-    color: var(--gx-an-blue);
+    color: var(--gx-an-blue-label);
   }
 
   .chart-tab--active:hover {
@@ -1381,6 +1381,7 @@ SPDX-License-Identifier: Apache-2.0
     line-height: 100%;
     letter-spacing: 0%;
     color: var(--gx-an-sub);
+    text-transform: uppercase;
   }
 
   .model-row {

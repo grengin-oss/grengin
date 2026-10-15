@@ -6,8 +6,10 @@ import { rememberReturnTo } from '../utils/returnTo.js';
 
 type User = components['schemas']['User'];
 
-// Always use /api - proxied by Vite dev server locally, Cloudflare Pages Function in production
-const defaultApiBase = 'https://grengin-test-production.up.railway.app';
+// Fall back to /api on the same origin that serves the web app: proxied by the
+// Vite dev server locally, by a Cloudflare Pages Function or the self-hosted
+// server in production. Set VITE_API_BASE at build time to target another origin.
+const defaultApiBase = '/api';
 const rawApiBase = import.meta.env?.VITE_API_BASE;
 
 const normalizeBase = (base: string): string => {

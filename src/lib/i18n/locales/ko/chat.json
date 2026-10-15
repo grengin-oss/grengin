@@ -120,7 +120,19 @@
       "creatingImage": "이미지 생성 중…",
       "copyImage": "이미지 복사",
       "downloadFile": "파일 다운로드",
-      "responseStopped": "응답이 중지됨"
+      "responseStopped": "응답이 중지됨",
+      "responseInterrupted": "응답이 중단되었습니다.",
+      "editPrompt": "메시지 편집",
+      "tryAgain": "다시 시도",
+      "edit": "편집",
+      "editMessage": "메시지 편집",
+      "save": "저장",
+      "cancel": "취소",
+      "regenerate": "재생성",
+      "previousVersion": "이전 버전",
+      "nextVersion": "다음 버전",
+      "versionsLabel": "메시지 버전",
+      "versionCounter": "{current} / {total}"
     },
     "toolCalls": {
       "searching": "웹 검색 중",

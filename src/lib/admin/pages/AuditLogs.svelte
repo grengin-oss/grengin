@@ -280,7 +280,11 @@ SPDX-License-Identifier: Apache-2.0
   ): string {
     if (!action) return "";
 
-    const key = `admin.auditLogs.actions.${action}`;
+    // Some actions arrive as dotted/hyphenated route ids
+    // (e.g. "mutation.post.admin.sso-providers"). svelte-i18n reads dots as
+    // nested paths, so collapse separators into one flat key segment that the
+    // translation entries below can match.
+    const key = `admin.auditLogs.actions.${action.replace(/[.-]/g, "_")}`;
 
     // Get translated text with parameter substitution (same pattern as getLocalizedError)
     const translated = translate(key, { values: {} });
@@ -306,9 +310,11 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   /**
-   * ".action-badge" — the design draws two treatments, a blue one and a violet
-   * one. Destructive events keep the third, red, treatment the old table had:
-   * a deletion is the one row an auditor must be able to spot at a glance.
+   * ".action-badge" — the design colours a badge by the kind of event it is:
+   * violet for admin-plane and file events, amber for authentication/session,
+   * green for conversation lifecycle, blue for messaging and everything else.
+   * Destructive events keep the red treatment: a deletion is the one row an
+   * auditor must be able to spot at a glance, so it wins over every other rule.
    */
   function getActionBadgeClass(action: string): string {
     if (
@@ -319,9 +325,21 @@ SPDX-License-Identifier: Apache-2.0
     ) {
       return "action-badge--red";
     }
-    return action.startsWith("admin_")
-      ? "action-badge--purple"
-      : "action-badge--blue";
+    if (action.startsWith("admin_") || action.includes("file")) {
+      return "action-badge--purple";
+    }
+    if (
+      action.includes("login") ||
+      action.includes("logout") ||
+      action.includes("auth") ||
+      action.includes("session")
+    ) {
+      return "action-badge--amber";
+    }
+    if (action.includes("conversation")) {
+      return "action-badge--green";
+    }
+    return "action-badge--blue";
   }
 
   /** Conversation traffic gets the design's bubble glyph, records its page glyph. */
@@ -1782,6 +1800,16 @@ SPDX-License-Identifier: Apache-2.0
   .action-badge--purple {
     background: var(--gx-al-violet-bg);
     color: var(--gx-cx-img-accent);
+  }
+
+  .action-badge--green {
+    background: var(--gx-an-mint);
+    color: var(--gx-an-success);
+  }
+
+  .action-badge--amber {
+    background: var(--gx-al-amber-bg);
+    color: var(--gx-al-amber-fg);
   }
 
   .action-badge--red {

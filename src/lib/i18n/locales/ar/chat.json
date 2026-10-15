@@ -120,7 +120,19 @@
       "creatingImage": "جارٍ إنشاء الصورة…",
       "copyImage": "نسخ الصورة",
       "downloadFile": "تنزيل الملف",
-      "responseStopped": "تم إيقاف الرد"
+      "responseStopped": "تم إيقاف الرد",
+      "responseInterrupted": "تمت مقاطعة الرد.",
+      "editPrompt": "تعديل الرسالة",
+      "tryAgain": "إعادة المحاولة",
+      "edit": "تعديل",
+      "editMessage": "تعديل الرسالة",
+      "save": "حفظ",
+      "cancel": "إلغاء",
+      "regenerate": "إعادة التوليد",
+      "previousVersion": "النسخة السابقة",
+      "nextVersion": "النسخة التالية",
+      "versionsLabel": "نسخ الرسالة",
+      "versionCounter": "{current} / {total}"
     },
     "toolCalls": {
       "searching": "جارٍ البحث على الويب",

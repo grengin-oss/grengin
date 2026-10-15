@@ -1578,7 +1578,7 @@ SPDX-License-Identifier: Apache-2.0
     --oa-icon-ring: rgb(220, 229, 244);
     --oa-icon-fg: rgb(55, 65, 81);
     /* ".toggle--on" / ".toggle--off" and the labels that track them. */
-    --oa-toggle-on: rgb(45, 144, 107);
+    --oa-toggle-on: rgb(66, 122, 198);
     --oa-toggle-off: rgb(156, 163, 176);
     /* The delete control — a tinted square at rest, not on hover. */
     --oa-del-bg: rgb(253, 236, 239);
@@ -1613,7 +1613,7 @@ SPDX-License-Identifier: Apache-2.0
       --oa-muted: var(--gx-slate-400);
       --oa-icon-ring: var(--gx-hair);
       --oa-icon-fg: var(--gx-slate-600);
-      --oa-toggle-on: rgb(52, 180, 96);
+      --oa-toggle-on: rgb(112, 155, 218);
       --oa-toggle-off: var(--gx-slate-500);
       --oa-del-bg: rgba(229, 72, 77, 0.18);
       --oa-del-fg: #f08a83;

@@ -1283,7 +1283,24 @@
         "admin_department_prompt_deleted": "Department Prompt Deleted",
         "admin_audit_logs_redacted_for_user": "Audit Logs Redacted for User",
         "admin_domain_reconfigured": "Domain Reconfigured",
-        "admin_binaries_updated": "Application Updated"
+        "admin_binaries_updated": "Application Updated",
+        "project_created": "Project Created",
+        "project_updated": "Project Updated",
+        "project_deleted": "Project Deleted",
+        "project_shared": "Project Shared",
+        "project_member_added": "Project Member Added",
+        "project_member_removed": "Project Member Removed",
+        "project_artifact_added": "Project Artifact Added",
+        "project_source_removed": "Project Source Removed",
+        "project_linked_to_conversation": "Project Linked to Conversation",
+        "project_unlinked_from_conversation": "Project Unlinked from Conversation",
+        "skill_linked_to_conversation": "Skill Linked to Conversation",
+        "mutation_put_me_metadata": "Profile Metadata Updated",
+        "mutation_post_admin_sso_providers": "SSO Provider Created",
+        "mutation_post_admin_ai_engines_engine_key_validate": "AI Engine Key Validated",
+        "mutation_post_admin_provider_plugins_provider_key_enable": "Provider Plugin Enabled",
+        "mutation_post_admin_provider_plugins_provider_key_test": "Provider Plugin Tested",
+        "mutation_post_projects_id_mcp_servers": "Project MCP Server Added"
       }
     },
     "maintenance": {

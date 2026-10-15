@@ -477,17 +477,17 @@ SPDX-License-Identifier: Apache-2.0
     --tour-surface: #fff;
     --tour-ink: var(--gx-ink);
     --tour-muted: var(--gx-muted);
-    --tour-label: #0e7c66;
-    --tour-primary: #0e7c66;
-    --tour-primary-hover: #0b6857;
+    --tour-label: #3359b2;
+    --tour-primary: #427ac6;
+    --tour-primary-hover: #366bb3;
     --tour-secondary-bg: #fff;
     --tour-secondary-ring: #e2e8f0;
     --tour-secondary-ink: #0f172a;
     --tour-secondary-hover: #f8fafc;
     --tour-dot: #d9dfdc;
     --tour-scrim: rgba(0, 0, 0, 0.37);
-    --tour-glow: 0 0 18px 4px rgba(56, 185, 150, 0.4);
-    --tour-ring: rgba(56, 185, 150, 0.9);
+    --tour-glow: 0 0 18px 4px rgba(64, 121, 197, 0.4);
+    --tour-ring: rgba(64, 121, 197, 0.9);
     --tour-shadow: 0 22px 52px -10px rgba(7, 17, 13, 0.26);
     --tour-modal-shadow: 0 24px 64px -12px rgba(9, 11, 18, 0.38);
   }
@@ -495,9 +495,9 @@ SPDX-License-Identifier: Apache-2.0
   @media (prefers-color-scheme: dark) {
     .tour {
       --tour-surface: #171a21;
-      --tour-label: #5fd3b0;
-      --tour-primary: #12906f;
-      --tour-primary-hover: #15a07c;
+      --tour-label: #7fb0f0;
+      --tour-primary: #4a7dd4;
+      --tour-primary-hover: #6092e0;
       --tour-secondary-bg: rgba(255, 255, 255, 0.04);
       --tour-secondary-ring: rgba(255, 255, 255, 0.16);
       --tour-secondary-ink: var(--gx-ink);
@@ -633,7 +633,7 @@ SPDX-License-Identifier: Apache-2.0
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: #2e8b68;
+    background: #427ac6;
     color: #fff;
     display: flex;
     align-items: center;

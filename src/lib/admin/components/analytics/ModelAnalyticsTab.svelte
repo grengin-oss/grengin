@@ -222,11 +222,12 @@ SPDX-License-Identifier: Apache-2.0
   .table-header > span {
     flex: 1;
     min-width: 0;
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 700;
+    font-size: 11px;
     line-height: 100%;
     letter-spacing: 0%;
     color: var(--gx-an-sub);
+    text-transform: uppercase;
   }
 
   .model-row {

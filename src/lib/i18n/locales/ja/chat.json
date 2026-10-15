@@ -120,7 +120,19 @@
       "creatingImage": "画像を作成中…",
       "copyImage": "画像をコピー",
       "downloadFile": "ファイルをダウンロード",
-      "responseStopped": "応答を停止しました"
+      "responseStopped": "応答を停止しました",
+      "responseInterrupted": "応答が中断されました。",
+      "editPrompt": "メッセージを編集",
+      "tryAgain": "再試行",
+      "edit": "編集",
+      "editMessage": "メッセージを編集",
+      "save": "保存",
+      "cancel": "キャンセル",
+      "regenerate": "再生成",
+      "previousVersion": "前のバージョン",
+      "nextVersion": "次のバージョン",
+      "versionsLabel": "メッセージのバージョン",
+      "versionCounter": "{current} / {total}"
     },
     "toolCalls": {
       "searching": "ウェブを検索中",

@@ -3121,7 +3121,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .tool-item-icon {
-    color: var(--brand-teal);
+    color: var(--brand);
     flex-shrink: 0;
     margin-top: 2px;
   }

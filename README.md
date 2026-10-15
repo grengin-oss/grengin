@@ -15,6 +15,7 @@
   <a href="https://grengin.com">Website</a> |
   <a href="https://grengin.com/docs">Documentation</a> |
   <a href="https://grengin.com/aws">Deploy on AWS</a> |
+  <a href="https://grengin.com/changelog">Changelog</a> |
   <a href="https://github.com/grengin-oss/grengin/releases">Releases</a> |
   <a href="LICENSE">License</a>
 </p>
@@ -61,7 +62,9 @@ x86_64 and AWS Graviton instances:
 
 Stable releases are available from the
 [GitHub Releases page](https://github.com/grengin-oss/grengin/releases). Every
-release records the exact frontend and backend commits used to build it.
+release records the exact frontend and backend commits used to build it. See the
+[changelog](https://grengin.com/changelog) for a summary of what changed in each
+release.
 
 Install the latest stable Linux release with:
 
@@ -127,7 +130,7 @@ and is included at a pinned commit in every complete release bundle.
 - Usage analytics and system metrics
 - MCP server registration, tool synchronization, OAuth, and access policies
 - Audit log filtering and export
-- Branding and authentication settings
+- Authentication settings
 
 ### Security
 
