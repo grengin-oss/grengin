@@ -1300,7 +1300,8 @@
         "mutation_post_admin_ai_engines_engine_key_validate": "AI Engine Key Validated",
         "mutation_post_admin_provider_plugins_provider_key_enable": "Provider Plugin Enabled",
         "mutation_post_admin_provider_plugins_provider_key_test": "Provider Plugin Tested",
-        "mutation_post_projects_id_mcp_servers": "Project MCP Server Added"
+        "mutation_post_projects_id_mcp_servers": "Project MCP Server Added",
+        "mutation_put_chat_chat_id_branch": "Conversation Branch Switched"
       }
     },
     "maintenance": {
