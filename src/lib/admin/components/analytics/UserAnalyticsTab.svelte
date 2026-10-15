@@ -128,7 +128,8 @@ SPDX-License-Identifier: Apache-2.0
 
   /** Same wording as the By Model tab: ms under a second, seconds above it. */
   function formatLatency(ms: number | null | undefined): string {
-    if (ms === null || ms === undefined || Number.isNaN(ms) || ms <= 0) return "—";
+    if (ms === null || ms === undefined || Number.isNaN(ms) || ms <= 0)
+      return "—";
     return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`;
   }
 
@@ -427,7 +428,9 @@ SPDX-License-Identifier: Apache-2.0
                 {@render sortCaret("email")}
               </button>
             </span>
-            <span role="columnheader">{$_("userAnalytics.table.department")}</span>
+            <span role="columnheader"
+              >{$_("userAnalytics.table.department")}</span
+            >
             <span
               class="num"
               role="columnheader"
@@ -518,10 +521,10 @@ SPDX-License-Identifier: Apache-2.0
             {#each users as user (user.user_id)}
               <div class="user-row" role="row">
                 <div role="cell">
-                  <span class="user-avatar" aria-hidden="true"
-                    >{initials(user)}</span
+                  <span
+                    class="user-name"
+                    title={user.user_name || user.user_email}
                   >
-                  <span class="user-name" title={user.user_name || user.user_email}>
                     {user.user_name || user.user_email}
                   </span>
                 </div>
@@ -531,7 +534,9 @@ SPDX-License-Identifier: Apache-2.0
                   >
                 </div>
                 <div role="cell">
-                  <span class="table-value--muted" title={user.department || "-"}
+                  <span
+                    class="table-value--muted"
+                    title={user.department || "-"}
                     >{user.department || "-"}</span
                   >
                 </div>
@@ -880,11 +885,12 @@ SPDX-License-Identifier: Apache-2.0
     min-width: 0;
     display: flex;
     align-items: center;
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 700;
+    font-size: 11px;
     line-height: 100%;
     letter-spacing: 0%;
     color: var(--gx-an-sub);
+    text-transform: uppercase;
   }
 
   /* Counts, cost and latency read right-aligned, as in the design. */
@@ -908,12 +914,13 @@ SPDX-License-Identifier: Apache-2.0
     align-items: center;
     justify-content: flex-start;
     font-family: inherit;
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 700;
+    font-size: 11px;
     line-height: 100%;
     letter-spacing: 0%;
     color: var(--gx-an-sub);
     cursor: pointer;
+    text-transform: uppercase;
   }
 
   .sort-btn:hover {

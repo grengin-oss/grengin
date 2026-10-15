@@ -207,16 +207,16 @@
   --gx-amber-soft: rgb(251, 241, 222);
   --gx-amber-dot: rgb(199, 154, 46);
   --gx-green-dot: rgb(46, 158, 108);
-  --gx-avatar: rgb(46, 107, 79);
+  --gx-avatar: rgb(46, 92, 148);
   --gx-slate: rgb(107, 127, 154);
 
   /* control-hub navigation */
   --gx-nav-text: rgb(74, 97, 129);
   /* Also the Distributed segment on the organization budget bars. */
   --gx-nav-accent: rgb(64, 121, 197);
-  --gx-nav-active-bg: rgb(227, 251, 242);
-  --gx-nav-active-bg-hover: rgb(217, 247, 235);
-  --gx-nav-active-fg: rgb(45, 144, 107);
+  --gx-nav-active-bg: rgb(220, 229, 244);
+  --gx-nav-active-bg-hover: rgb(208, 220, 240);
+  --gx-nav-active-fg: rgb(66, 122, 198);
   --gx-category: rgb(148, 163, 184);
   --gx-module-bg: rgba(239, 244, 252, 1);
   --gx-module-bg-hover: rgb(230, 240, 254);
@@ -259,10 +259,10 @@
   --gx-ring-soft: rgb(239, 244, 252);
   /* composer "Tools" chip's selected-count badge */
   --gx-tools-badge: rgb(74, 125, 212);
-  --gx-teal: rgb(13, 148, 136);
-  --gx-teal-soft: rgb(204, 251, 241);
-  --gx-send: rgb(37, 117, 87);
-  --gx-send-hover: rgb(31, 100, 74);
+  --gx-teal: rgb(64, 121, 197);
+  --gx-teal-soft: rgb(224, 236, 251);
+  --gx-send: rgb(45, 95, 164);
+  --gx-send-hover: rgb(37, 80, 140);
   --gx-hover-soft: rgb(241, 245, 249);
   --gx-ok-bg: rgb(240, 253, 249);
   --gx-ok-line: rgb(187, 247, 208);
@@ -272,15 +272,15 @@
 
   /* organization / control-hub content pages (Figma: Organization 241:23324
      Teams view + 247:24146 Users view) */
-  --gx-org-brand: rgb(0, 108, 82);
-  --gx-org-brand-hover: rgb(0, 92, 70);
-  --gx-org-brand-alt: rgb(43, 145, 107);
-  --gx-org-brand-alt-hover: rgb(37, 128, 94);
-  --gx-org-brand-tint: rgb(230, 244, 240);
+  --gx-org-brand: rgb(66, 122, 198);
+  --gx-org-brand-hover: rgb(54, 107, 179);
+  --gx-org-brand-alt: rgb(66, 122, 198);
+  --gx-org-brand-alt-hover: rgb(54, 107, 179);
+  --gx-org-brand-tint: rgb(234, 242, 253);
   /* chat empty-state suggestion-card icon tile (Figma 159:15193, round 2) */
-  --gx-org-brand-alt-tint: rgb(241, 248, 244);
-  --gx-org-sel: rgb(235, 245, 240);
-  --gx-org-sel-hover: rgb(228, 241, 235);
+  --gx-org-brand-alt-tint: rgb(240, 245, 253);
+  --gx-org-sel: rgb(237, 243, 252);
+  --gx-org-sel-hover: rgb(229, 238, 251);
   --gx-org-ink: rgb(14, 24, 40);
   --gx-org-slate-800: rgb(30, 41, 59);
   /* Also the attachment file-size ink in the transcript. */
@@ -361,8 +361,8 @@
       rgb(45, 77, 161) 48.56%,
       rgb(36, 59, 132) 100%);
   --gx-ch-banner-sub: rgb(168, 184, 216);
-  --gx-ch-connect-bg: rgb(0, 147, 106);
-  --gx-ch-connect-bg-hover: rgb(0, 130, 94);
+  --gx-ch-connect-border: rgba(255, 255, 255, 0.4);
+  --gx-ch-connect-hover: rgba(255, 255, 255, 0.12);
   --gx-ch-chevron-bg: rgb(233, 236, 239);
   --gx-ch-card-hover-ring: rgb(203, 213, 225);
   --gx-ch-card-hover-shadow: 0 4px 12px 0 rgba(15, 23, 42, 0.05);
@@ -613,6 +613,9 @@
      --gx-org-danger (the destructive badge) / --gx-hover-soft. Only the violet
      badge's fill is a shade no token carried. */
   --gx-al-violet-bg: rgb(243, 238, 254);
+  /* Amber action badge (login / session events). */
+  --gx-al-amber-bg: rgb(254, 243, 199);
+  --gx-al-amber-fg: rgb(185, 121, 26);
 
   /* ===== Chart data-table dialog (usage-analytics-overview.html .vdt) =====
      The 680px dialog every "View Data Table" button opens. It reuses
@@ -675,9 +678,9 @@
 
     --gx-nav-text: #aebdd2;
     --gx-nav-accent: #7fb0f0;
-    --gx-nav-active-bg: rgba(45, 144, 107, 0.22);
-    --gx-nav-active-bg-hover: rgba(45, 144, 107, 0.3);
-    --gx-nav-active-fg: #5fd3a3;
+    --gx-nav-active-bg: rgba(64, 121, 197, 0.22);
+    --gx-nav-active-bg-hover: rgba(64, 121, 197, 0.3);
+    --gx-nav-active-fg: #7fb0f0;
     --gx-category: #7c8a99;
     --gx-module-bg: rgba(64, 121, 197, 0.18);
     --gx-module-bg-hover: rgba(64, 121, 197, 0.26);
@@ -706,22 +709,23 @@
     --gx-card-title-ink: var(--gx-slate-900);
     --gx-ring-soft: rgba(255, 255, 255, 0.04);
     --gx-tools-badge: rgb(88, 138, 224);
-    --gx-teal: #3fd0bd;
-    --gx-teal-soft: rgba(13, 148, 136, 0.22);
-    --gx-send-hover: rgb(46, 138, 104);
+    --gx-teal: #7fb0f0;
+    --gx-teal-soft: rgba(64, 121, 197, 0.22);
+    --gx-send: rgb(74, 125, 212);
+    --gx-send-hover: rgb(96, 146, 224);
     --gx-hover-soft: rgba(255, 255, 255, 0.06);
     --gx-ok-bg: rgba(34, 197, 94, 0.12);
     --gx-ok-line: rgba(34, 197, 94, 0.32);
     --gx-ok-text: #6ee7a4;
 
-    --gx-org-brand: #2B916B;
-    --gx-org-brand-hover: #66cba6;
-    --gx-org-brand-alt: #2B916B;
-    --gx-org-brand-alt-hover: #66cba6;
-    --gx-org-brand-tint: rgba(45, 144, 107, 0.22);
-    --gx-org-brand-alt-tint: rgba(45, 144, 107, 0.18);
-    --gx-org-sel: rgba(45, 144, 107, 0.18);
-    --gx-org-sel-hover: rgba(45, 144, 107, 0.26);
+    --gx-org-brand: #709BDA;
+    --gx-org-brand-hover: #86ACE3;
+    --gx-org-brand-alt: #709BDA;
+    --gx-org-brand-alt-hover: #86ACE3;
+    --gx-org-brand-tint: rgba(66, 122, 198, 0.22);
+    --gx-org-brand-alt-tint: rgba(66, 122, 198, 0.18);
+    --gx-org-sel: rgba(66, 122, 198, 0.18);
+    --gx-org-sel-hover: rgba(66, 122, 198, 0.26);
     --gx-org-ink: #f1f4f8;
     --gx-org-slate-800: #d3d9e1;
     --gx-org-slate-350: #8d9aab;
@@ -768,8 +772,8 @@
         rgb(33, 58, 122) 48.56%,
         rgb(26, 44, 100) 100%);
     --gx-ch-banner-sub: rgb(178, 192, 220);
-    --gx-ch-connect-bg: rgb(0, 160, 115);
-    --gx-ch-connect-bg-hover: rgb(0, 176, 127);
+    --gx-ch-connect-border: rgba(255, 255, 255, 0.4);
+    --gx-ch-connect-hover: rgba(255, 255, 255, 0.12);
     --gx-ch-chevron-bg: rgba(255, 255, 255, 0.1);
     --gx-ch-card-hover-ring: rgba(255, 255, 255, 0.18);
     --gx-ch-card-hover-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.35);
@@ -941,6 +945,8 @@
     --gx-pr-modal-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.55);
     --gx-pr-danger-ring: rgba(239, 68, 68, 0.38);
     --gx-al-violet-bg: rgba(110, 79, 201, 0.24);
+    --gx-al-amber-bg: rgba(185, 121, 26, 0.22);
+    --gx-al-amber-fg: #e0b566;
     --gx-alr-tab-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
     --gx-alr-tint-ring: rgba(66, 122, 198, 0.38);
     --gx-alr-warn-bg: rgba(217, 119, 6, 0.12);

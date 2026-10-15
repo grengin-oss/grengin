@@ -194,8 +194,8 @@ SPDX-License-Identifier: Apache-2.0
     --us-mint: rgb(238, 251, 246);
     --us-mint-fg: rgb(46, 168, 117);
 
-    --us-ok: var(--gx-org-brand-alt); /* #2B916B */
-    --us-ok-tint: var(--gx-org-brand-alt-tint); /* #F1F8F4 */
+    --us-ok: rgb(45, 144, 107); /* success green */
+    --us-ok-tint: rgb(241, 248, 244); /* success green tint */
     --us-warn: var(--gx-an-amber); /* rgb(217,119,6) */
     --us-warn-bg: var(--gx-amber-soft); /* rgb(251,241,222) */
     --us-danger: var(--gx-org-danger); /* rgb(220,38,38) */

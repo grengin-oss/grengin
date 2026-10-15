@@ -619,7 +619,8 @@ SPDX-License-Identifier: Apache-2.0
   .overview-page :global(.report-btn) {
     min-height: 38px;
     border-radius: 8px;
-    background: var(--gx-ch-connect-bg);
+    background: transparent;
+    border: 1px solid var(--gx-ch-connect-border);
     display: flex;
     gap: 8px;
     padding: 7px 19px;
@@ -636,7 +637,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .overview-page :global(.report-btn:hover) {
-    background: var(--gx-ch-connect-bg-hover);
+    background: var(--gx-ch-connect-hover);
     color: #fff;
   }
 
@@ -711,7 +712,7 @@ SPDX-License-Identifier: Apache-2.0
 
   .stat-title {
     font-weight: 500;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 100%;
     color: var(--gx-an-sub);
     white-space: nowrap;
@@ -872,7 +873,7 @@ SPDX-License-Identifier: Apache-2.0
     flex: 1;
     min-width: 0;
     font-weight: 600;
-    font-size: 11px;
+    font-size: 14px;
     line-height: 100%;
     text-transform: uppercase;
     color: var(--gx-an-sub);

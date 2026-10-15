@@ -6,16 +6,21 @@ import type { StreamEvent, ConversationDetail, ConversationList, BudgetWarningMe
 import { API_BASE, request, ApiError, parseErrorDetail, handleUnauthorized } from './client';
 import { getAccessToken } from '../features/auth';
 
-export interface SendMessageOptions {
-  message: string;
-  conversationId?: string;
-  provider?: string;
-  modelName?: string;
-  uploadedFiles?: UploadedFile[];
-  webSearch?: boolean;
-  selectedMcpServers?: string[];
+/**
+ * The callbacks and abort signal shared by every streaming chat request —
+ * sending a new message, editing one, or regenerating an answer. They all speak
+ * the same SSE protocol (see `streamChat`), so they share this callback set;
+ * only the URL, HTTP method and request body differ.
+ */
+export interface ChatStreamCallbacks {
   onConversationInitialized?: (data: {newConversationId: string}) => void;
-  onStreamingStart?: (messageId: string) => void;
+  /**
+   * The assistant turn has started. `messageId` is the new assistant message id;
+   * `userMessageId`, when the backend sends it on `message_start`, is the server
+   * id of the user message that triggered this turn — the client swaps its
+   * temporary id for this so the message can be edited immediately (ENGG-459).
+   */
+  onStreamingStart?: (messageId: string, userMessageId?: string) => void;
   onResponseDelta?: (token: string) => void;
   /** Extended-thinking text, streamed before (and between) the visible answer. */
   onThinkingDelta?: (token: string) => void;
@@ -31,11 +36,33 @@ export interface SendMessageOptions {
    * aborted the request. `onDone` still follows, as it does on the wire.
    */
   onCancelled?: () => void;
+  /**
+   * The turn was stopped, with the reason the backend gives on the
+   * `response_stopped` event (`user_cancelled`, `provider_error`, …). Fires
+   * alongside `onCancelled` for a user stop; use it to persist the reason.
+   */
+  onResponseStopped?: (stopReason: string) => void;
   onDone?: (data: any) => void;
   onError?: (error: ApiError | Error) => void;
   /** Aborts the stream request locally; prefer `cancelMessageStream()` once a message id is known. */
   signal?: AbortSignal;
 }
+
+/** The parts of a `ChatInput` body the UI supplies for a send/edit/regenerate. */
+export interface ChatStreamInput {
+  message: string;
+  provider?: string;
+  modelName?: string;
+  uploadedFiles?: UploadedFile[];
+  webSearch?: boolean;
+  selectedMcpServers?: string[];
+}
+
+export interface SendMessageOptions extends ChatStreamCallbacks, ChatStreamInput {
+  conversationId?: string;
+}
+
+export type EditMessageOptions = ChatStreamCallbacks & ChatStreamInput;
 
 export interface UploadedFile {
   id: string;
@@ -103,10 +130,40 @@ export async function cancelMessageStream(messageId: string): Promise<void> {
 }
 
 /**
- * Send a message and handle streaming response
+ * Shape a `ChatInput` request body from the UI's send/edit options. Send,
+ * edit and regenerate all post this same body — only the URL and method differ.
  */
-export async function sendMessage(options: SendMessageOptions): Promise<void> {
-  const { message, conversationId, provider, modelName, uploadedFiles, webSearch, selectedMcpServers, onResponseDelta, onBudgetWarning, onThinkingDelta, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onArtifact, onImageGenerated, onMcpAuthRequired, onCancelled, onDone, onError, signal } = options;
+function buildChatInput(input: ChatStreamInput) {
+  return {
+    provider: input.provider || 'openai',
+    model_name: input.modelName || 'gpt-5.2',
+    config: {},
+    web_search: input.webSearch || false,
+    selected_tools: [] as string[],
+    selected_mcp_servers: input.selectedMcpServers || [],
+    messages: [{
+      role: 'user',
+      content: input.message,
+      files: input.uploadedFiles || [],
+    }],
+  };
+}
+
+/**
+ * Open an SSE chat stream and dispatch its events to the given callbacks. This
+ * is the one SSE parser; `sendMessage`, `editMessageStream` and
+ * `regenerateMessageStream` all funnel through it, passing their own URL,
+ * method and body (ticket: "pass the URL and method as parameters instead of
+ * copying the SSE parser"). It keeps the raw `fetch()` + one-shot 401 retry
+ * (the CLAUDE.md streaming exception), since `request()` cannot stream.
+ */
+async function streamChat(
+  url: string,
+  method: string,
+  body: unknown,
+  options: ChatStreamCallbacks,
+): Promise<void> {
+  const { onResponseDelta, onBudgetWarning, onThinkingDelta, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onArtifact, onImageGenerated, onMcpAuthRequired, onCancelled, onResponseStopped, onDone, onError, signal } = options;
 
   try {
     const token = getAccessToken();
@@ -123,27 +180,10 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
       });
     }
 
-    // Build the correct API URL
-    const streamUrl = conversationId 
-      ? `${API_BASE}/chat/stream/${conversationId}`
-      : `${API_BASE}/chat/stream`;
-    
-    const requestBody = JSON.stringify({
-      provider: provider || 'openai',
-      model_name: modelName || 'gpt-5.2',
-      config: {},
-      web_search: webSearch || false,
-      selected_tools: [],
-      selected_mcp_servers: selectedMcpServers || [],
-      messages: [{
-        role: 'user',
-        content: message,
-        files: uploadedFiles || [],
-      }],
-    });
+    const requestBody = JSON.stringify(body);
 
-    let response = await fetch(streamUrl, {
-      method: 'POST',
+    let response = await fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
@@ -170,8 +210,8 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
       }
 
       // Retry the streaming request with new token
-      response = await fetch(streamUrl, {
-        method: 'POST',
+      response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${newToken}`,
@@ -236,7 +276,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
               onConversationInitialized?.({newConversationId: data.id});
               break;
             case 'message_start':
-              onStreamingStart?.(data.message_id);
+              onStreamingStart?.(data.message_id, data.user_message_id);
               break;
             case 'budget_warning':
               onBudgetWarning?.(data);
@@ -393,6 +433,15 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
             case 'cancelled':
               onCancelled?.();
               break;
+            // The turn was stopped — carries the reason (`stop_reason`). For a
+            // user stop it follows `cancelled`; for a mid-stream failure it
+            // follows `ai_error`. `stream_finished` is the usage summary that
+            // closes a stopped turn, handled like `message_end`.
+            case 'response_stopped':
+              if (data?.stop_reason) onResponseStopped?.(data.stop_reason);
+              break;
+            case 'stream_finished':
+              break;
             case 'done':
               onDone?.(data);
               break;
@@ -449,6 +498,59 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
       onError?.(apiError);
     }
   }
+}
+
+/**
+ * Send a message and handle the streaming response. New conversations post to
+ * `/chat/stream`; an existing one continues at `/chat/stream/{conversationId}`.
+ */
+export async function sendMessage(options: SendMessageOptions): Promise<void> {
+  const url = options.conversationId
+    ? `${API_BASE}/chat/stream/${options.conversationId}`
+    : `${API_BASE}/chat/stream`;
+  return streamChat(url, 'POST', buildChatInput(options), options);
+}
+
+/**
+ * Edit a user message and stream a fresh answer (ENGG-459). The backend keeps
+ * the previous text as an earlier version and shows the new one once its reply
+ * finishes. `messageId` is the user message being edited; `options.message`
+ * carries the new text. Streams exactly like `sendMessage`.
+ */
+export async function editMessageStream(
+  chatId: string,
+  messageId: string,
+  options: EditMessageOptions,
+): Promise<void> {
+  const url = `${API_BASE}/chat/${encodeURIComponent(chatId)}/message/${encodeURIComponent(messageId)}/stream`;
+  return streamChat(url, 'PATCH', buildChatInput(options), options);
+}
+
+/**
+ * Regenerate an answer by re-sending the user message that produced it, which
+ * branches a new answer version (ENGG-459). It is the same edit/stream endpoint
+ * and body as `editMessageStream` — `userMessageId` is the preceding user
+ * message and `options.message` is its unchanged text. Kept as its own function
+ * so a dedicated regenerate endpoint can replace just this URL later.
+ */
+export async function regenerateMessageStream(
+  chatId: string,
+  userMessageId: string,
+  options: EditMessageOptions,
+): Promise<void> {
+  return editMessageStream(chatId, userMessageId, options);
+}
+
+/**
+ * Switch the conversation to another version of a message (ENGG-459). `messageId`
+ * is one of a message's `versions.message_ids`; the server records the choice
+ * (so it survives reload) and returns the conversation with that version shown.
+ */
+export async function switchBranch(chatId: string, messageId: string): Promise<ConversationDetail> {
+  return request<ConversationDetail>(`/chat/${encodeURIComponent(chatId)}/branch`, {
+    method: 'PUT',
+    body: JSON.stringify({ message_id: messageId }),
+  });
 }
 
 /**

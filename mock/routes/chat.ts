@@ -17,6 +17,95 @@ function getMessageNumber(conversationId: string): number {
   return count
 }
 
+// ── Message versions (ENGG-459) ──────────────────────────────────────────────
+// A compact mock of the backend's edit/regenerate versioning. A "version group"
+// holds the (user, assistant) pairs that editing or regenerating a turn created,
+// which one is currently shown, and where the pair sits in the shown list. The
+// branch endpoint finds a group from any of its user-message ids.
+interface VersionGroup {
+  ids: string[] // user message id per version, in creation order
+  current: number // index currently shown
+  pairs: Map<string, { user: Message; assistant: Message }>
+  baseIndex: number // position of the pair within the shown message list
+}
+// conversationId -> (user message id -> its group)
+const userIdToGroup = new Map<string, Map<string, VersionGroup>>()
+
+function groupForUser(convId: string, userId: string): VersionGroup | undefined {
+  return userIdToGroup.get(convId)?.get(userId)
+}
+
+function registerVersion(convId: string, userId: string, group: VersionGroup) {
+  let m = userIdToGroup.get(convId)
+  if (!m) {
+    m = new Map()
+    userIdToGroup.set(convId, m)
+  }
+  m.set(userId, group)
+}
+
+// The `versions` block the API attaches to a user message that has siblings.
+function versionsFor(convId: string, userId: string) {
+  const g = groupForUser(convId, userId)
+  if (!g || g.ids.length <= 1) return undefined
+  // `current` is 1-based, matching the real backend (ENGG-459).
+  return { current: g.current + 1, total: g.ids.length, message_ids: [...g.ids] }
+}
+
+// Build the GET/branch conversation payload. Shared so a version switch returns
+// exactly the shape a fresh load would, now including per-message `versions`.
+function buildConversationResponse(conversation: Conversation, conversationMessages: Message[]) {
+  return {
+    archived: conversation.archived || false,
+    archivedAt: conversation.archived_at || null,
+    createdAt: conversation.created_at,
+    id: conversation.id,
+    lastMessageAt: conversation.updated_at || conversation.created_at,
+    messages: conversationMessages.map(msg => ({
+      cost: msg.usage?.input_tokens ? 0.001 : 0.1,
+      created_at: msg.created_at,
+      id: msg.id,
+      model: msg.model || 'claude-sonnet-4-5',
+      model_params: msg.model_params || null,
+      parts: {
+        files: msg.parts?.files || [],
+        text: msg.parts?.text || '',
+      },
+      request_id: msg.request_id || null,
+      role: msg.role,
+      tool_calls: msg.tool_calls || [],
+      tools_results: msg.tool_results || [],
+      updated_at: msg.updated_at,
+      usage: msg.usage || { inputTokens: 100, outputTokens: 50, totalTokens: 150 },
+      // Version metadata drives the `< 1 / 2 >` switcher (ENGG-459).
+      versions: versionsFor(conversation.id, msg.id) || null,
+      // Why the turn stopped early; drives the "response was interrupted" banner.
+      stop_reason: (msg as any).stop_reason || null,
+    })),
+    model: 'claude-sonnet-4-5',
+    title: conversation.title,
+    totalCost: conversationMessages.reduce((sum, msg) => sum + (msg.usage?.input_tokens ? 0.001 : 0.1), 0),
+    totalTokens: conversationMessages.reduce((sum, msg) => sum + ((msg.usage?.input_tokens || 0) + (msg.usage?.output_tokens || 0)), 0),
+    updatedAt: conversation.updated_at,
+  }
+}
+
+// Stream an assistant answer over SSE, honouring a mid-flight cancel. Returns the
+// text actually sent (the full text, or the prefix streamed before a cancel).
+async function streamAssistantAnswer(res: any, assistantMsgId: string, responseText: string): Promise<{ cancelled: boolean; sent: string }> {
+  let sent = ''
+  const isCancelled = () => cancelledStreams.has(assistantMsgId)
+  for (const chunk of responseText.split(' ')) {
+    if (isCancelled()) break
+    sent += chunk + ' '
+    res.write(`event: delta\ndata: ${JSON.stringify({ text: chunk + ' ' })}\n\n`)
+    await new Promise(resolve => setTimeout(resolve, 22))
+  }
+  const cancelled = isCancelled()
+  if (cancelled) cancelledStreams.delete(assistantMsgId)
+  return { cancelled, sent }
+}
+
 // MCP Servers
 router.get('/mcp-servers', requireAuth, (_req, res) => {
   res.json({
@@ -142,42 +231,7 @@ router.get('/chat/:chatId', requireAuth, (req, res) => {
   }
 
   const conversationMessages = messages.get(req.params.chatId) || []
-
-  const response = {
-    archived: conversation.archived || false,
-    archivedAt: conversation.archived_at || null,
-    createdAt: conversation.created_at,
-    id: conversation.id,
-    lastMessageAt: conversation.updated_at || conversation.created_at,
-    messages: conversationMessages.map(msg => ({
-      cost: msg.usage?.input_tokens ? 0.001 : 0.1,
-      createdAt: msg.created_at,
-      id: msg.id,
-      model: msg.model || "claude-sonnet-4-5",
-      modelParams: msg.model_params || null,
-      parts: {
-        files: msg.parts?.files || [],
-        text: msg.parts?.text || ''
-      },
-      requestId: msg.request_id || null,
-      role: msg.role,
-      toolCalls: msg.tool_calls || [],
-      toolsResults: msg.tool_results || [],
-      updatedAt: msg.updated_at,
-      usage: msg.usage || {
-        inputTokens: 100,
-        outputTokens: 50,
-        totalTokens: 150
-      }
-    })),
-    model: "claude-sonnet-4-5",
-    title: conversation.title,
-    totalCost: conversationMessages.reduce((sum, msg) => sum + (msg.usage?.input_tokens ? 0.001 : 0.1), 0),
-    totalTokens: conversationMessages.reduce((sum, msg) => sum + ((msg.usage?.input_tokens || 0) + (msg.usage?.output_tokens || 0)), 0),
-    updatedAt: conversation.updated_at
-  }
-
-  res.json(response)
+  res.json(buildConversationResponse(conversation, conversationMessages))
 })
 
 router.put('/chat/:chatId', requireAuth, (req, res) => {
@@ -313,8 +367,10 @@ router.post(['/chat/stream', '/chat/stream/:conversationId'], requireAuth, async
     res.write(`event: conversation\ndata: ${JSON.stringify({ id: conversationId })}\n\n`)
   }
 
-  // Send message_start event
-  res.write(`event: message_start\ndata: ${JSON.stringify({ message_id: assistantMsgId })}\n\n`)
+  // Send message_start event. `user_message_id` lets the client swap the
+  // temporary id it assigned the sent message for the server's, so it can be
+  // edited straight away (ENGG-459).
+  res.write(`event: message_start\ndata: ${JSON.stringify({ message_id: assistantMsgId, user_message_id: userMsgId })}\n\n`)
 
   let sentText = ''
   const isCancelled = () => cancelledStreams.has(assistantMsgId)
@@ -356,7 +412,9 @@ router.post(['/chat/stream', '/chat/stream/:conversationId'], requireAuth, async
   if (isCancelled()) {
     cancelledStreams.delete(assistantMsgId)
     assistantMsg.parts = { text: sentText }
+    ;(assistantMsg as any).stop_reason = 'user_cancelled'
     res.write(`event: cancelled\ndata: ${JSON.stringify({ message_id: assistantMsgId })}\n\n`)
+    res.write(`event: response_stopped\ndata: ${JSON.stringify({ message_id: assistantMsgId, stop_reason: 'user_cancelled' })}\n\n`)
   }
 
   // Send done event
@@ -367,6 +425,117 @@ router.post(['/chat/stream', '/chat/stream/:conversationId'], requireAuth, async
   })}\n\n`)
 
   res.end()
+})
+
+// Edit a user message (or regenerate an answer) and stream a fresh reply,
+// branching a new version of the turn (ENGG-459). The client PATCHes the user
+// message id; regenerate re-sends the same text, edit sends new text. Both land
+// here and create a new (user, assistant) version pair.
+router.patch('/chat/:chatId/message/:messageId/stream', requireAuth, async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.setHeader('X-Accel-Buffering', 'no')
+
+  const { chatId, messageId } = req.params
+  const conversation = conversations.get(chatId)
+  const list = messages.get(chatId)
+  if (!conversation || !list) {
+    return res.status(404).json({ detail: 'Conversation not found' })
+  }
+
+  const idx = list.findIndex(m => m.id === messageId && m.role === 'user')
+  if (idx < 0) {
+    // The real API 404s when the id is not an editable user message.
+    return res.status(404).json({ detail: 'Message not found or not editable' })
+  }
+
+  const reqMessages = req.body?.messages
+  const newText: string = reqMessages?.[reqMessages.length - 1]?.content ?? list[idx].parts?.text ?? ''
+  const modelName: string = req.body?.model_name || list[idx + 1]?.model || 'gpt-5.1'
+
+  // Find or open the version group anchored at this user turn.
+  let group = groupForUser(chatId, messageId)
+  if (!group) {
+    const oldUser = list[idx]
+    const oldAssistant = list[idx + 1]
+    group = { ids: [oldUser.id], current: 0, pairs: new Map(), baseIndex: idx }
+    group.pairs.set(oldUser.id, { user: oldUser, assistant: oldAssistant })
+    registerVersion(chatId, oldUser.id, group)
+  }
+
+  // Build the new version: a fresh user message plus a fresh answer.
+  const newUser: Message = {
+    id: faker.string.uuid(),
+    conversation_id: chatId,
+    role: 'user',
+    parts: { text: newText, files: list[idx].parts?.files || [] },
+    created_at: new Date().toISOString(),
+  }
+  const responseText = getMockResponse(newText.toLowerCase(), group.ids.length + 1)
+  const newAssistant: Message = {
+    id: faker.string.uuid(),
+    conversation_id: chatId,
+    role: 'assistant',
+    model: modelName,
+    parts: { text: responseText },
+    created_at: new Date().toISOString(),
+    usage: { input_tokens: Math.floor(newText.length / 4), output_tokens: Math.floor(responseText.length / 4) },
+  }
+
+  group.ids.push(newUser.id)
+  group.current = group.ids.length - 1
+  group.pairs.set(newUser.id, { user: newUser, assistant: newAssistant })
+  registerVersion(chatId, newUser.id, group)
+
+  // Show the new version: editing truncates the turns after it.
+  const shown = [...list.slice(0, group.baseIndex), newUser, newAssistant]
+  messages.set(chatId, shown)
+  conversation.updated_at = new Date().toISOString()
+
+  res.write(`event: conversation\ndata: ${JSON.stringify({ id: chatId, is_new: false, title: conversation.title })}\n\n`)
+  res.write(`event: message_start\ndata: ${JSON.stringify({ message_id: newAssistant.id, user_message_id: newUser.id })}\n\n`)
+
+  const { cancelled, sent } = await streamAssistantAnswer(res, newAssistant.id, responseText)
+  if (cancelled) {
+    newAssistant.parts = { text: sent }
+    ;(newAssistant as any).stop_reason = 'user_cancelled'
+    res.write(`event: cancelled\ndata: ${JSON.stringify({ message_id: newAssistant.id })}\n\n`)
+    res.write(`event: response_stopped\ndata: ${JSON.stringify({ message_id: newAssistant.id, stop_reason: 'user_cancelled' })}\n\n`)
+  }
+
+  res.write(`event: done\ndata: ${JSON.stringify({
+    conversation_id: chatId,
+    user_message_id: newUser.id,
+    assistant_message_id: newAssistant.id,
+  })}\n\n`)
+  res.end()
+})
+
+// Switch a conversation to another version of a message (ENGG-459). The body's
+// message_id is one of a group's version ids; we mark it current, rebuild the
+// shown list, and return the conversation as a fresh load would.
+router.put('/chat/:chatId/branch', requireAuth, (req, res) => {
+  const { chatId } = req.params
+  const conversation = conversations.get(chatId)
+  const list = messages.get(chatId)
+  if (!conversation || !list) {
+    return res.status(404).json({ detail: 'Conversation not found' })
+  }
+
+  const targetId: string = req.body?.message_id
+  const group = targetId ? groupForUser(chatId, targetId) : undefined
+  const pair = group?.pairs.get(targetId)
+  if (!group || !pair) {
+    return res.status(404).json({ detail: 'Message version not found' })
+  }
+
+  group.current = group.ids.indexOf(targetId)
+  const shown = [...list.slice(0, group.baseIndex), pair.user, pair.assistant]
+  messages.set(chatId, shown)
+  conversation.updated_at = new Date().toISOString()
+
+  res.json(buildConversationResponse(conversation, shown))
 })
 
 // Simulate the image-generation path of the chat stream. Emits the same events

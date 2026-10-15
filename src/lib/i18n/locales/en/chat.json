@@ -130,7 +130,19 @@
       "creatingImage": "Creating image…",
       "copyImage": "Copy image",
       "downloadFile": "Download file",
-      "responseStopped": "Response stopped"
+      "responseStopped": "Response stopped",
+      "responseInterrupted": "The response was interrupted.",
+      "editPrompt": "Edit prompt",
+      "tryAgain": "Try again",
+      "edit": "Edit",
+      "editMessage": "Edit message",
+      "save": "Save",
+      "cancel": "Cancel",
+      "regenerate": "Regenerate",
+      "previousVersion": "Previous version",
+      "nextVersion": "Next version",
+      "versionsLabel": "Message versions",
+      "versionCounter": "{current} / {total}"
     },
     "toolCalls": {
       "searching": "Searching the web",

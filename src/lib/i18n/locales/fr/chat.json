@@ -120,7 +120,19 @@
       "creatingImage": "Création de l'image…",
       "copyImage": "Copier l'image",
       "downloadFile": "Télécharger le fichier",
-      "responseStopped": "Réponse interrompue"
+      "responseStopped": "Réponse interrompue",
+      "responseInterrupted": "La réponse a été interrompue.",
+      "editPrompt": "Modifier le message",
+      "tryAgain": "Réessayer",
+      "edit": "Modifier",
+      "editMessage": "Modifier le message",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "regenerate": "Régénérer",
+      "previousVersion": "Version précédente",
+      "nextVersion": "Version suivante",
+      "versionsLabel": "Versions du message",
+      "versionCounter": "{current} / {total}"
     },
     "toolCalls": {
       "searching": "Recherche sur le web",

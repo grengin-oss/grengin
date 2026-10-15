@@ -525,7 +525,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .assigned-global {
-    color: var(--brand-green-accent);
+    color: var(--brand);
   }
 
   .assigned-remove {

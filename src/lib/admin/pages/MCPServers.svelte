@@ -2535,7 +2535,8 @@ SPDX-License-Identifier: Apache-2.0
   .icon-btn--ok {
     --icon-btn-bg: var(--gx-mcp-act-ok-bg);
     --icon-btn-ring: var(--gx-mcp-act-ok-ring);
-    --icon-btn-fg: var(--gx-org-brand-alt);
+    /* Success/"connection OK" keeps its green, per the design's status palette. */
+    --icon-btn-fg: rgb(45, 144, 107);
   }
 
   /* Access control — #3B67BD0A / #3B67BD20 / #427AC6 */
