@@ -1208,7 +1208,8 @@
         "mutation_post_admin_ai_engines_engine_key_validate": "Clave del motor de IA validada",
         "mutation_post_admin_provider_plugins_provider_key_enable": "Complemento de proveedor habilitado",
         "mutation_post_admin_provider_plugins_provider_key_test": "Complemento de proveedor probado",
-        "mutation_post_projects_id_mcp_servers": "Servidor MCP del proyecto añadido"
+        "mutation_post_projects_id_mcp_servers": "Servidor MCP del proyecto añadido",
+        "mutation_put_chat_chat_id_branch": "Rama de Conversación Cambiada"
       }
     },
     "maintenance": {
