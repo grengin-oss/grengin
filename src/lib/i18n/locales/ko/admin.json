@@ -1191,7 +1191,24 @@
         "admin_department_prompt_deleted": "부서 프롬프트 삭제됨",
         "admin_audit_logs_redacted_for_user": "사용자를 위해 감사 로그가 일부 가려짐",
         "admin_domain_reconfigured": "도메인 재구성됨",
-        "admin_binaries_updated": "애플리케이션 업데이트됨"
+        "admin_binaries_updated": "애플리케이션 업데이트됨",
+        "project_created": "프로젝트 생성됨",
+        "project_updated": "프로젝트 업데이트됨",
+        "project_deleted": "프로젝트 삭제됨",
+        "project_shared": "프로젝트 공유됨",
+        "project_member_added": "프로젝트 멤버 추가됨",
+        "project_member_removed": "프로젝트 멤버 제거됨",
+        "project_artifact_added": "프로젝트 아티팩트 추가됨",
+        "project_source_removed": "프로젝트 소스 제거됨",
+        "project_linked_to_conversation": "프로젝트가 대화에 연결됨",
+        "project_unlinked_from_conversation": "프로젝트가 대화에서 연결 해제됨",
+        "skill_linked_to_conversation": "스킬이 대화에 연결됨",
+        "mutation_put_me_metadata": "프로필 메타데이터 업데이트됨",
+        "mutation_post_admin_sso_providers": "SSO 공급자 생성됨",
+        "mutation_post_admin_ai_engines_engine_key_validate": "AI 엔진 키 검증됨",
+        "mutation_post_admin_provider_plugins_provider_key_enable": "공급자 플러그인 활성화됨",
+        "mutation_post_admin_provider_plugins_provider_key_test": "공급자 플러그인 테스트됨",
+        "mutation_post_projects_id_mcp_servers": "프로젝트 MCP 서버 추가됨"
       }
     },
     "maintenance": {

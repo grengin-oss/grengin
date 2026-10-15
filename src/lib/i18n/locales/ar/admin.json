@@ -1191,7 +1191,24 @@
         "admin_department_prompt_deleted": "تم حذف مطالبة القسم",
         "admin_audit_logs_redacted_for_user": "تم تعديل سجلات التدقيق للمستخدم",
         "admin_domain_reconfigured": "تمت إعادة تكوين النطاق",
-        "admin_binaries_updated": "تم تحديث التطبيق"
+        "admin_binaries_updated": "تم تحديث التطبيق",
+        "project_created": "تم إنشاء المشروع",
+        "project_updated": "تم تحديث المشروع",
+        "project_deleted": "تم حذف المشروع",
+        "project_shared": "تمت مشاركة المشروع",
+        "project_member_added": "تمت إضافة عضو إلى المشروع",
+        "project_member_removed": "تمت إزالة عضو من المشروع",
+        "project_artifact_added": "تمت إضافة عنصر إلى المشروع",
+        "project_source_removed": "تمت إزالة مصدر المشروع",
+        "project_linked_to_conversation": "تم ربط المشروع بالمحادثة",
+        "project_unlinked_from_conversation": "تم إلغاء ربط المشروع بالمحادثة",
+        "skill_linked_to_conversation": "تم ربط المهارة بالمحادثة",
+        "mutation_put_me_metadata": "تم تحديث بيانات الملف الشخصي",
+        "mutation_post_admin_sso_providers": "تم إنشاء موفّر الدخول الموحّد",
+        "mutation_post_admin_ai_engines_engine_key_validate": "تم التحقق من مفتاح محرك الذكاء الاصطناعي",
+        "mutation_post_admin_provider_plugins_provider_key_enable": "تم تفعيل مكوّن الموفّر",
+        "mutation_post_admin_provider_plugins_provider_key_test": "تم اختبار مكوّن الموفّر",
+        "mutation_post_projects_id_mcp_servers": "تمت إضافة خادم MCP للمشروع"
       }
     },
     "maintenance": {

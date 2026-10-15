@@ -1106,7 +1106,24 @@
         "admin_department_prompt_deleted": "Prompt do departamento excluído",
         "admin_audit_logs_redacted_for_user": "Logs de auditoria ocultados para o usuário",
         "admin_domain_reconfigured": "Domínio reconfigurado",
-        "admin_binaries_updated": "Aplicativo atualizado"
+        "admin_binaries_updated": "Aplicativo atualizado",
+        "project_created": "Projeto criado",
+        "project_updated": "Projeto atualizado",
+        "project_deleted": "Projeto excluído",
+        "project_shared": "Projeto compartilhado",
+        "project_member_added": "Membro do projeto adicionado",
+        "project_member_removed": "Membro do projeto removido",
+        "project_artifact_added": "Artefato do projeto adicionado",
+        "project_source_removed": "Fonte do projeto removida",
+        "project_linked_to_conversation": "Projeto vinculado à conversa",
+        "project_unlinked_from_conversation": "Projeto desvinculado da conversa",
+        "skill_linked_to_conversation": "Habilidade vinculada à conversa",
+        "mutation_put_me_metadata": "Metadados do perfil atualizados",
+        "mutation_post_admin_sso_providers": "Provedor SSO criado",
+        "mutation_post_admin_ai_engines_engine_key_validate": "Chave do mecanismo de IA validada",
+        "mutation_post_admin_provider_plugins_provider_key_enable": "Plugin do provedor ativado",
+        "mutation_post_admin_provider_plugins_provider_key_test": "Plugin do provedor testado",
+        "mutation_post_projects_id_mcp_servers": "Servidor MCP do projeto adicionado"
       }
     },
     "promptEffectiveness": {
