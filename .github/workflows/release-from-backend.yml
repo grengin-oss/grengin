@@ -63,4 +63,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.release.outputs.version }}
-        run: gh workflow run release.yml --ref "$RELEASE_TAG" -f version="$RELEASE_TAG" -f publish=true
+        run: |
+          set -euo pipefail
+          runs="$(gh run list --workflow release.yml --branch "$RELEASE_TAG" --limit 100 --json status)"
+          if jq -e 'any(.[]; .status != "completed")' <<< "$runs" >/dev/null; then
+            echo "A release build for $RELEASE_TAG is already running."
+            exit 0
+          fi
+          gh workflow run release.yml --ref "$RELEASE_TAG" -f version="$RELEASE_TAG" -f publish=true
