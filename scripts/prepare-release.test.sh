@@ -53,7 +53,7 @@ bash scripts/prepare-release.sh v0.9.4
 [[ "$(jq -r .version package.json)" == 0.9.4 ]]
 [[ "$(<release/backend-commit.txt)" == "$revision" ]]
 [[ "$(<release/backend-image.txt)" == "ghcr.io/grengin-oss/grengin-api@$digest" ]]
-rg -q 'publish=true' "$GITHUB_OUTPUT"
+grep -q '^publish=true$' "$GITHUB_OUTPUT"
 test -f release/notes/v0.9.4.md
 echo 'PASS: version, revision, digest and notes are prepared from the image'
 git add .
@@ -83,5 +83,5 @@ cp "$temporary/distribution.saved" "$temporary/distribution.json"
 printf '[{"tagName":"v0.9.4"}]\n' > "$temporary/releases.json"
 bash scripts/prepare-release.sh
 git diff --exit-code
-tail -1 "$GITHUB_OUTPUT" | rg -q '^publish=false$'
+tail -1 "$GITHUB_OUTPUT" | grep -q '^publish=false$'
 echo 'PASS: an existing release is skipped without changing its metadata'
