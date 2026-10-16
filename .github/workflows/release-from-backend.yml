@@ -1,0 +1,66 @@
+name: Release from backend
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Backend image version (empty uses latest)
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: release-from-backend
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Test release preparation
+        run: bash scripts/prepare-release.test.sh
+
+      - name: Resolve and pin the published backend
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: bash scripts/prepare-release.sh "$REQUESTED_VERSION"
+
+      - name: Commit release metadata and create tag
+        if: steps.release.outputs.publish == 'true'
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if ! git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            git add package.json release/backend-commit.txt release/backend-image.txt release/notes/
+            if ! git diff --cached --quiet; then
+              git commit -m "release: Grengin $RELEASE_TAG"
+              git push origin HEAD:main
+            fi
+            git tag "$RELEASE_TAG"
+            git push origin "$RELEASE_TAG"
+          fi
+
+      # Tags pushed by GITHUB_TOKEN do not trigger another push workflow.
+      - name: Start the release build
+        if: steps.release.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release.outputs.version }}
+        run: gh workflow run release.yml --ref "$RELEASE_TAG" -f version="$RELEASE_TAG" -f publish=true

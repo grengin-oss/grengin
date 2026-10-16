@@ -30,6 +30,11 @@ if [[ ! -f "${BACKEND_PIN_FILE}" ]]; then
 fi
 
 BACKEND_COMMIT="$(tr -d '[:space:]' < "${BACKEND_PIN_FILE}")"
+BACKEND_IMAGE="ghcr.io/grengin-oss/grengin-api:v${RELEASE_VERSION}"
+if [[ -f "${REPOSITORY_ROOT}/release/backend-image.txt" ]]; then
+  BACKEND_IMAGE="$(tr -d '[:space:]' < "${REPOSITORY_ROOT}/release/backend-image.txt")"
+  [[ "$BACKEND_IMAGE" =~ ^ghcr.io/grengin-oss/grengin-api@sha256:[a-f0-9]{64}$ ]]
+fi
 if [[ ! "${BACKEND_COMMIT}" =~ ^[0-9a-f]{40}$ ]]; then
   echo "Backend pin must be a full 40-character commit SHA." >&2
   exit 1
@@ -125,6 +130,7 @@ cat > "${SOURCE_ROOT}/RELEASE-MANIFEST.json" <<EOF
   "backend": {
     "repository": "https://github.com/grengin-oss/grengin-api",
     "version": "${BACKEND_VERSION}",
+    "image": "${BACKEND_IMAGE}",
     "commit": "${BACKEND_COMMIT}",
     "source_path": "backend"
   }
@@ -161,6 +167,7 @@ create_linux_bundle() {
   "backend": {
     "repository": "https://github.com/grengin-oss/grengin-api",
     "version": "${BACKEND_VERSION}",
+    "image": "${BACKEND_IMAGE}",
     "commit": "${BACKEND_COMMIT}",
     "api_path": "bin/grengin-api",
     "sqlx_mcp_path": "bin/sqlx-mcp"
