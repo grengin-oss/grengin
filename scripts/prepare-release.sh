@@ -12,7 +12,7 @@ if [[ -n "$requested" && ! "$requested" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   exit 1
 fi
 
-for command in docker gh jq python3 git; do
+for command in docker gh jq python3 git curl; do
   command -v "$command" >/dev/null
 done
 git diff --quiet
@@ -50,6 +50,9 @@ if jq -e --arg tag "$tag" 'any(.[]; .tagName == $tag)' <<< "$releases" >/dev/nul
   output publish false
   exit 0
 fi
+
+distribution="$(curl --fail --silent --show-error --max-time 30 "https://meta.grengin.com/distributions/grengin-api/$version/index.json")"
+jq -e --arg version "$version" '.formatVersion == "1.0" and .grenginApiVersion == $version and (.authProviders.providers | length > 0) and (.aiProviders.providers | length > 0)' <<< "$distribution" >/dev/null
 
 current="$(jq -er .version package.json)"
 python3 -c 'import sys; parse=lambda s:tuple(map(int,s.split("."))); sys.exit(0 if parse(sys.argv[1]) >= parse(sys.argv[2]) else "Refusing to release an older backend version")' "$version" "$current"

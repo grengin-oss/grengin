@@ -38,7 +38,13 @@ case "$1" in
   *) exit 1 ;;
 esac
 SH
-chmod +x "$temporary/bin/docker" "$temporary/bin/gh"
+cat > "$temporary/bin/curl" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+cat "$FIXTURE_DIR/distribution.json"
+SH
+chmod +x "$temporary/bin/docker" "$temporary/bin/gh" "$temporary/bin/curl"
+printf '{"formatVersion":"1.0","grenginApiVersion":"0.9.4","authProviders":{"providers":[{}]},"aiProviders":{"providers":[{}]}}\n' > "$temporary/distribution.json"
 jq -n --arg digest "$digest" '{digest:$digest,manifests:[{platform:{os:"linux",architecture:"amd64"}},{platform:{os:"linux",architecture:"arm64"}}]}' > "$temporary/manifest.json"
 jq -n --arg revision "$revision" '{"linux/amd64":{config:{Labels:{"org.opencontainers.image.revision":$revision}}},"linux/arm64":{config:{Labels:{"org.opencontainers.image.revision":$revision}}}}' > "$temporary/config.json"
 printf '[]\n' > "$temporary/releases.json"
@@ -70,6 +76,10 @@ cp "$temporary/config.json" "$temporary/config.saved"
 jq '.["linux/arm64"].config.Labels["org.opencontainers.image.revision"] = "2222222222222222222222222222222222222222"' "$temporary/config.saved" > "$temporary/config.json"
 expect_failure v0.9.4 'different architecture revisions are rejected'
 cp "$temporary/config.saved" "$temporary/config.json"
+cp "$temporary/distribution.json" "$temporary/distribution.saved"
+jq '.grenginApiVersion = "0.9.3"' "$temporary/distribution.saved" > "$temporary/distribution.json"
+expect_failure v0.9.4 'a catalog for a different backend version is rejected'
+cp "$temporary/distribution.saved" "$temporary/distribution.json"
 printf '[{"tagName":"v0.9.4"}]\n' > "$temporary/releases.json"
 bash scripts/prepare-release.sh
 git diff --exit-code
