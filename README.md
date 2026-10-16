@@ -90,6 +90,16 @@ is pinned in [`release/backend-commit.txt`](release/backend-commit.txt), so a
 release never depends on a moving branch. Source and Linux archives also carry
 the applicable Apache 2.0 license and attribution notices.
 
+The **Release from backend** workflow checks GHCR hourly. When a new stable
+backend version appears, it reads the version from that image's exact Cargo
+source revision, pins both Linux architectures to the image digest, and runs
+the complete release build and checks. Existing releases are never replaced.
+To start a release immediately:
+
+```bash
+gh workflow run release-from-backend.yml -f version=v0.9.4
+```
+
 ## Architecture
 
 ```text

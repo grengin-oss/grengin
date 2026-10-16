@@ -7,9 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Product version to preview (for example, v0.9.3)
+        description: Product version matching the checked-out package.json
         required: true
-        default: v0.9.3
+      publish:
+        description: Publish the prepared tag after all release checks pass
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -51,10 +55,9 @@ jobs:
           echo "commit=${BACKEND_COMMIT}" >> "${GITHUB_OUTPUT}"
 
       - name: Extract verified published backend binaries
-        env:
-          IMAGE_REF: ghcr.io/grengin-oss/grengin-api:${{ env.RELEASE_TAG }}
         shell: bash
         run: |
+          set -euo pipefail
           RELEASE_VERSION="${RELEASE_TAG#v}"
           PROJECT_VERSION="$(jq -r '.version' package.json)"
           if [[ "${RELEASE_VERSION}" != "${PROJECT_VERSION}" ]]; then
@@ -62,6 +65,11 @@ jobs:
             exit 1
           fi
 
+          IMAGE_REF="ghcr.io/grengin-oss/grengin-api:${RELEASE_TAG}"
+          if [[ -f release/backend-image.txt ]]; then
+            IMAGE_REF="$(tr -d '[:space:]' < release/backend-image.txt)"
+            [[ "$IMAGE_REF" =~ ^ghcr.io/grengin-oss/grengin-api@sha256:[a-f0-9]{64}$ ]]
+          fi
           docker pull --platform "${{ matrix.platform }}" "${IMAGE_REF}"
           IMAGE_REVISION="$(docker image inspect \
             --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' \
@@ -81,6 +89,7 @@ jobs:
           chmod 0755 \
             "${RUNNER_TEMP}/rootfs/usr/local/bin/grengin-api" \
             "${RUNNER_TEMP}/rootfs/usr/local/bin/sqlx-mcp"
+          "${RUNNER_TEMP}/rootfs/usr/local/bin/sqlx-mcp" --help >/dev/null
           tar -C "${RUNNER_TEMP}/rootfs" -czf \
             "${RUNNER_TEMP}/grengin-backend-${{ matrix.architecture }}.tar.gz" .
 
@@ -182,7 +191,7 @@ jobs:
           retention-days: 14
 
       - name: Create GitHub Release
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || inputs.publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -191,6 +200,7 @@ jobs:
             RELEASE_NOTES_ARGS+=(--notes-file "release/notes/${RELEASE_TAG}.md")
           fi
           gh release create "${RELEASE_TAG}" \
+            --verify-tag \
             --title "Grengin ${RELEASE_TAG}" \
             --generate-notes \
             "${RELEASE_NOTES_ARGS[@]}" \
