@@ -5,12 +5,13 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { tick } from "svelte";
-  import { renderMarkdown, copyToClipboard } from "../../../utils/markdown";
+  import { renderMarkdown, highlightCode, copyToClipboard } from "../../../utils/markdown";
+  import { renderMermaidDiagrams } from "../../../utils/mermaid";
   import { escapeHtml } from "../../../utils/html";
   import { getArtifact } from "../../../api/artifactsApi";
   import { _ } from "svelte-i18n";
   import SaveToProjectModal from "./SaveToProjectModal.svelte";
-  import type { ArtifactItem } from "../artifacts";
+  import { classifyArtifact, type ArtifactItem } from "../artifacts";
 
   interface Props {
     /** All artifacts to show. More than one renders a tab bar to switch between
@@ -31,7 +32,8 @@ SPDX-License-Identifier: Apache-2.0
   let current = $derived<ArtifactItem>(artifacts[clampedIndex] ?? EMPTY);
   let artifactId = $derived(current.id);
   let title = $derived(current.title ?? "");
-  let type = $derived<"html" | "markdown">(current.type);
+  let type = $derived<"html" | "markdown" | "code">(current.type);
+  let language = $derived(current.language);
   // Streaming state follows the ACTIVE artifact — so a finished artifact stays
   // downloadable even while another one is still streaming in another tab.
   let isStreaming = $derived(current.streaming ?? false);
@@ -57,6 +59,11 @@ SPDX-License-Identifier: Apache-2.0
   });
 
   let renderedMarkdown = $state("");
+  let markdownPreviewEl = $state<HTMLDivElement | undefined>(undefined);
+  // Syntax-highlighted source for `code` artifacts. Highlighting is async (it may
+  // lazy-load a language), so it's computed in an effect into this state. Skipped
+  // while streaming — the plain-text view carries the typing cursor.
+  let highlightedCode = $state("");
   let copySuccess = $state(false);
   let showSaveToProject = $state(false);
   let toastMessage = $state("");
@@ -75,13 +82,57 @@ SPDX-License-Identifier: Apache-2.0
     }
   });
 
+  $effect(() => {
+    // Highlight a finished code artifact (async; may lazy-load the language).
+    if (type === "code" && !isStreaming && code.length > 0) {
+      const src = code;
+      const lang = language;
+      highlightCode(src, lang).then((html) => {
+        // Guard against a race where the active artifact changed mid-highlight.
+        if (src === code) highlightedCode = html;
+      });
+    } else {
+      highlightedCode = "";
+    }
+  });
+
   let activeView = $state<"code" | "preview">("code");
   let codeContainer: HTMLPreElement | undefined = $state(undefined);
   let iframeKey = $state(0);
 
   $effect(() => {
-    if (!isStreaming && code.length > 0) {
+    // A code artifact has no live preview — it only shows its highlighted source,
+    // so keep it on the code view. HTML/markdown jump to their rendered preview
+    // once they finish streaming.
+    if (type === "code") {
+      activeView = "code";
+    } else if (!isStreaming && code.length > 0) {
       activeView = "preview";
+    }
+  });
+
+  // Match the app's theme detection (a `dark` class on <html>, else the OS
+  // preference) so Mermaid diagrams render in a matching palette.
+  function isDarkTheme(): boolean {
+    return (
+      document.documentElement.classList.contains("dark") ||
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    );
+  }
+
+  // Upgrade ```mermaid fences in the markdown preview into rendered diagrams.
+  // Runs whenever the rendered HTML changes and the preview is on screen; the
+  // mermaid library is imported lazily and only when a diagram is present.
+  $effect(() => {
+    renderedMarkdown; // track re-renders
+    if (
+      type === "markdown" &&
+      activeView === "preview" &&
+      markdownPreviewEl &&
+      renderedMarkdown.length > 0
+    ) {
+      const el = markdownPreviewEl;
+      tick().then(() => renderMermaidDiagrams(el, isDarkTheme()));
     }
   });
 
@@ -114,23 +165,42 @@ SPDX-License-Identifier: Apache-2.0
       // id (ENGG-387: download must not be blocked on a missing id).
       let downloadContent = code;
       let downloadType = type;
+      let downloadLang = language;
       let downloadTitle = title;
       if (artifactId) {
         try {
           const artifact = await getArtifact(artifactId);
           downloadContent = artifact.content;
-          downloadType = artifact.content_type === "text/markdown" ? "markdown" : "html";
           downloadTitle = artifact.title || title;
+          const kind = classifyArtifact(artifact.content_type, downloadTitle);
+          downloadType = kind.type;
+          downloadLang = kind.language;
         } catch {
           // Backend fetch failed — fall through to the in-memory content.
         }
       }
-      const isMarkdown = downloadType === "markdown";
-      const ext = isMarkdown ? "md" : "html";
-      const mimeType = isMarkdown ? "text/markdown" : "text/html";
-      const fileName =
-        (downloadTitle || title).replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "-").toLowerCase() ||
-        "artifact";
+
+      let fileName: string;
+      let ext: string;
+      let mimeType: string;
+      if (downloadType === "code") {
+        // Keep the real filename and extension (e.g. .java) — the title is a
+        // filename here, not a display name.
+        const dot = (downloadTitle || "").lastIndexOf(".");
+        const base = dot > 0 ? downloadTitle.slice(0, dot) : downloadTitle;
+        const titleExt = dot > 0 ? downloadTitle.slice(dot + 1).toLowerCase() : "";
+        fileName =
+          base.replace(/[^a-zA-Z0-9._-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "code";
+        ext = titleExt || downloadLang || "txt";
+        mimeType = "text/plain";
+      } else {
+        const isMarkdown = downloadType === "markdown";
+        ext = isMarkdown ? "md" : "html";
+        mimeType = isMarkdown ? "text/markdown" : "text/html";
+        fileName =
+          (downloadTitle || title).replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "-").toLowerCase() ||
+          "artifact";
+      }
       const blob = new Blob([downloadContent], { type: mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -179,12 +249,32 @@ SPDX-License-Identifier: Apache-2.0
    * therefore only a shell around a sandboxed iframe (no allow-same-origin),
    * which gives the artifact an opaque origin of its own.
    */
+  function codeDocument(source: string, pageTitle: string): string {
+    // Preformatted source page — a code artifact is never executed as HTML.
+    return `<!doctype html><html><head><meta charset="utf-8"><title>${pageTitle}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { color-scheme: light dark; --fg: #1f2328; --bg: #ffffff; }
+  @media (prefers-color-scheme: dark) { :root { --fg: #e6edf3; --bg: #0d1117; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); }
+  pre { margin: 0; padding: 20px; overflow: auto; tab-size: 2;
+    font: 13px/1.6 "SF Mono", Monaco, Menlo, "Ubuntu Mono", monospace; }
+</style></head><body><pre>${escapeHtml(source)}</pre></body></html>`;
+  }
+
   function handleOpenInNewTab() {
     if (isStreaming || code.length === 0) return;
     const isMarkdown = type === "markdown";
-    const pageTitle = escapeHtml(title || (isMarkdown ? "Markdown Document" : "HTML Artifact"));
-    const content = isMarkdown ? markdownDocument(renderMarkdown(code), pageTitle) : code;
-    const sandbox = isMarkdown
+    const isCode = type === "code";
+    const pageTitle = escapeHtml(
+      title || (isMarkdown ? "Markdown Document" : isCode ? "Code" : "HTML Artifact"),
+    );
+    const content = isMarkdown
+      ? markdownDocument(renderMarkdown(code), pageTitle)
+      : isCode
+        ? codeDocument(code, pageTitle)
+        : code;
+    const sandbox = isMarkdown || isCode
       ? "allow-popups allow-popups-to-escape-sandbox"
       : "allow-scripts allow-popups allow-forms allow-modals";
     const page = `<!doctype html><html><head><meta charset="utf-8"><title>${pageTitle}</title>
@@ -212,8 +302,8 @@ SPDX-License-Identifier: Apache-2.0
           class="toggle-btn"
           class:active={activeView === "preview"}
           onclick={() => (activeView = "preview")}
-          disabled={isStreaming}
-          title="Preview"
+          disabled={isStreaming || type === "code"}
+          title={type === "code" ? "Code artifacts have no preview" : "Preview"}
         >
           <svg
             width="16"
@@ -303,7 +393,7 @@ SPDX-License-Identifier: Apache-2.0
       <button
         class="header-btn"
         onclick={handleDownload}
-        title="Download as .{type === 'markdown' ? 'md' : 'html'}"
+        title="Download as .{type === 'markdown' ? 'md' : type === 'code' ? (language ?? 'txt') : 'html'}"
         disabled={isStreaming || isDownloading || (code.length === 0 && !artifactId)}
       >
         <svg
@@ -420,11 +510,15 @@ SPDX-License-Identifier: Apache-2.0
         <span>Loading artifact…</span>
       </div>
     {:else if activeView === "code"}
-      <pre class="code-view" bind:this={codeContainer}><code
-          >{code}{#if isStreaming}<span class="cursor-blink">|</span>{/if}</code
-        ></pre>
+      {#if type === "code" && highlightedCode}
+        <pre class="code-view" bind:this={codeContainer}><code class="hljs">{@html highlightedCode}</code></pre>
+      {:else}
+        <pre class="code-view" bind:this={codeContainer}><code
+            >{code}{#if isStreaming}<span class="cursor-blink">|</span>{/if}</code
+          ></pre>
+      {/if}
     {:else if type === "markdown"}
-      <div class="markdown-preview">{@html renderedMarkdown}</div>
+      <div class="markdown-preview" bind:this={markdownPreviewEl}>{@html renderedMarkdown}</div>
     {:else}
       {#key iframeKey}
         <iframe
@@ -829,6 +923,27 @@ SPDX-License-Identifier: Apache-2.0
   .markdown-preview :global(pre code) {
     background: transparent;
     padding: 0;
+  }
+
+  /* Rendered Mermaid diagram — centred, scrollable if wider than the panel. */
+  .markdown-preview :global(.mermaid-diagram) {
+    display: flex;
+    justify-content: center;
+    margin: 1em 0;
+    overflow-x: auto;
+  }
+
+  .markdown-preview :global(.mermaid-diagram svg) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* An unrenderable diagram falls back to its source. */
+  .markdown-preview :global(.mermaid-error) {
+    width: 100%;
+    color: var(--text-secondary, #aaa);
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 
   .markdown-preview :global(blockquote) {

@@ -1,5 +1,6 @@
 {
   "chat": {
+    "scrollToLatest": "Ir para o mais recente",
     "emptyState": {
       "title": "Iniciar uma conversa",
       "description": "Envie uma mensagem para começar a conversar com o assistente de IA!",
@@ -25,6 +26,8 @@
     "errors": {
       "somethingWentWrong": "Algo deu errado",
       "dismissError": "Descartar erro",
+      "retry": "Tentar novamente",
+      "reconnecting": "Reconectando…",
       "failedToLoadModels": "Falha ao carregar modelos",
       "failedToLoadConnectors": "Falha ao carregar conectores",
       "failedToLoadConversation": "Falha ao carregar conversa",

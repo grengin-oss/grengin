@@ -1566,6 +1566,7 @@
       "noUsageLabel": "لا يوجد استخدام مسجل هذا الأسبوع"
     },
     "card": {
+      "apiKey": "مفتاح API",
       "defaultModel": "النموذج الافتراضي",
       "whitelist": "قائمة السماح",
       "whitelistCount": "{count} نماذج",

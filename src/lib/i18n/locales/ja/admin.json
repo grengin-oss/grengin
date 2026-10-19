@@ -1566,6 +1566,7 @@
       "noUsageLabel": "今週の利用実績はありません"
     },
     "card": {
+      "apiKey": "APIキー",
       "defaultModel": "既定モデル",
       "whitelist": "許可リスト",
       "whitelistCount": "{count} モデル",

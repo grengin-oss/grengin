@@ -7,6 +7,7 @@ import { seedData } from './lib/store.js'
 import { emptyWorkspace } from './lib/emptyWorkspace.js'
 import authRoutes from './routes/auth.js'
 import chatRoutes from './routes/chat.js'
+import artifactsRoutes from './routes/artifacts.js'
 import filesRoutes from './routes/files.js'
 import settingsRoutes from './routes/settings.js'
 import userRoutes from './routes/user.js'
@@ -39,6 +40,7 @@ app.use(emptyWorkspace)
 // Mount routes
 app.use(authRoutes)
 app.use(chatRoutes)
+app.use(artifactsRoutes)
 app.use(filesRoutes)
 app.use(settingsRoutes)
 app.use(userRoutes)

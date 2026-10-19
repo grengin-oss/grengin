@@ -1658,7 +1658,8 @@
       "noUsageLabel": "No usage recorded this week"
     },
     "card": {
-      "defaultModel": "Default Model",
+      "apiKey": "API Key",
+      "defaultModel": "Default model",
       "whitelist": "Whitelist",
       "whitelistCount": "{count} models",
       "notSet": "Not set",

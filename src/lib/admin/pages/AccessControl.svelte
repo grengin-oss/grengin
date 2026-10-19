@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from "svelte-i18n";
   import PageHeader from "../components/PageHeader.svelte";
   import AdminTabs from "../components/AdminTabs.svelte";
+  import GridIcon from "../../components/icons/GridIcon.svelte";
+  import ListIcon from "../../components/icons/ListIcon.svelte";
   import PermissionsTab from "../components/access-control/PermissionsTab.svelte";
   import RolesTab from "../components/access-control/RolesTab.svelte";
   import {
@@ -213,50 +215,7 @@ SPDX-License-Identifier: Apache-2.0
           aria-pressed={currentView === "grid"}
           onclick={() => setView("grid")}
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            aria-hidden="true"
-          >
-            <rect
-              x="1.75"
-              y="1.75"
-              width="4.5"
-              height="4.5"
-              rx="1"
-              stroke="currentColor"
-              stroke-width="1.1"
-            />
-            <rect
-              x="7.75"
-              y="1.75"
-              width="4.5"
-              height="4.5"
-              rx="1"
-              stroke="currentColor"
-              stroke-width="1.1"
-            />
-            <rect
-              x="1.75"
-              y="7.75"
-              width="4.5"
-              height="4.5"
-              rx="1"
-              stroke="currentColor"
-              stroke-width="1.1"
-            />
-            <rect
-              x="7.75"
-              y="7.75"
-              width="4.5"
-              height="4.5"
-              rx="1"
-              stroke="currentColor"
-              stroke-width="1.1"
-            />
-          </svg>
+          <GridIcon />
           <!-- On Permissions the second layout is the role matrix, not cards. -->
           <span
             >{currentTab === "permissions"
@@ -270,19 +229,7 @@ SPDX-License-Identifier: Apache-2.0
           aria-pressed={currentView === "list"}
           onclick={() => setView("list")}
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M1.75 3h10.5M1.75 7h10.5M1.75 11h10.5"
-              stroke="currentColor"
-              stroke-width="1.1"
-            />
-          </svg>
+          <ListIcon />
           <span>{$_("admin.accessControl.viewList")}</span>
         </button>
       </div>
@@ -447,18 +394,13 @@ SPDX-License-Identifier: Apache-2.0
       color 120ms ease;
   }
 
-  .view-toggle svg {
-    display: block;
-    flex-shrink: 0;
-  }
-
   /* Active pill matches the tabs exactly, including the ink: both read
      --admin-tab-active-fg, declared once on .tabs-container below, so there is a
      single source for the blue. The icon inherits it via currentColor. */
   .view-toggle[aria-pressed="true"] {
     background: var(--gx-card);
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.0314);
-    color: var(--admin-tab-active-fg);
+    color: var(--gx-org-primary-500);
   }
 
   .view-toggle:focus-visible {
