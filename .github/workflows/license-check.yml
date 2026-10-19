@@ -2,6 +2,9 @@
 # allow list. Extend the list deliberately, one identifier at a time, after
 # checking what pulled it in (npx license-checker-rseidelsohn --production
 # --summary shows the breakdown).
+#
+# EPL-2.0: elkjs (mermaid's graph-layout engine, used unmodified). Weak,
+# file-level copyleft — the same class as MPL-2.0, which is already allowed.
 
 name: License check
 
@@ -28,4 +31,4 @@ jobs:
           pnpm dlx license-checker-rseidelsohn
           --production
           --excludePrivatePackages
-          --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;CC0-1.0;Unlicense;BlueOak-1.0.0;MPL-2.0;Python-2.0;CC-BY-4.0"
+          --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;CC0-1.0;Unlicense;BlueOak-1.0.0;MPL-2.0;EPL-2.0;Python-2.0;CC-BY-4.0"
