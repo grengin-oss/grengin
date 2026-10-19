@@ -2525,7 +2525,11 @@ SPDX-License-Identifier: Apache-2.0
         </div>
       </div>
 
-      <MessageScrollNavigator {messages} scrollContainer={messagesContainer} />
+      <!-- The navigator's tick rail sits on the right edge; hide it while the
+           artifact panel occupies that half so the two don't overlap. -->
+      {#if !showArtifactPanel}
+        <MessageScrollNavigator {messages} scrollContainer={messagesContainer} />
+      {/if}
 
       <div class="input-container">
         {#if showScrollToBottom}
