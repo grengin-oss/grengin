@@ -604,13 +604,17 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   /* ── Multi-artifact tabs ── */
+  /* Theme-aware tabs: every colour comes from a token with light+dark variants.
+     The old hardcoded white-on-translucent-white values vanished in light mode
+     (active and hover text were #fff on a near-white surface). The hierarchy is
+     bar (subtle) → hover (card) → active (raised card + shadow + brand index). */
   .artifact-tabs {
     display: flex;
     gap: 6px;
     padding: 8px 12px;
     overflow-x: auto;
-    border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
-    background: rgba(var(--glass-tint, 255, 255, 255), 0.03);
+    border-bottom: 1px solid var(--surface-border);
+    background: var(--surface-subtle);
     flex-shrink: 0;
     scrollbar-width: thin;
   }
@@ -625,10 +629,10 @@ SPDX-License-Identifier: Apache-2.0
     align-items: center;
     gap: 7px;
     padding: 5px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--surface-border);
     border-radius: 8px;
     background: transparent;
-    color: #aaa;
+    color: var(--text-secondary);
     font-size: 12px;
     text-align: left;
     cursor: pointer;
@@ -643,7 +647,8 @@ SPDX-License-Identifier: Apache-2.0
     width: 16px;
     height: 16px;
     border-radius: 5px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--btn-tertiary);
+    color: var(--text-secondary);
     font-size: 10px;
     font-weight: 600;
     line-height: 1;
@@ -658,20 +663,20 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .artifact-tab:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.16);
+    color: var(--text-primary);
+    background: var(--surface-card);
+    border-color: var(--surface-border);
   }
 
   .artifact-tab.active {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.22);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    color: var(--text-primary);
+    background: var(--surface-card-interactive);
+    border-color: var(--surface-border);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
   }
 
   .artifact-tab.active .artifact-tab-index {
-    background: rgba(255, 255, 255, 0.28);
+    background: var(--brand, #4079c5);
     color: #fff;
   }
 
