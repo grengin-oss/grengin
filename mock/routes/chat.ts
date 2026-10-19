@@ -70,6 +70,8 @@ function buildConversationResponse(conversation: Conversation, conversationMessa
       parts: {
         files: msg.parts?.files || [],
         text: msg.parts?.text || '',
+        // Server-declared artifact metadata the panel fetches by id (ENGG-387).
+        artifacts: (msg.parts as any)?.artifacts || [],
       },
       request_id: msg.request_id || null,
       role: msg.role,

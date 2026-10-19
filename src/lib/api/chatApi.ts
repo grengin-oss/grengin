@@ -476,24 +476,22 @@ async function streamChat(
       onDone?.({});
       return;
     }
-    // Convert all errors to ApiError for consistent handling
+    // A server-sent ApiError is a real failure; surface it as-is.
     if (error instanceof ApiError) {
       onError?.(error);
-    } else if (error instanceof Error) {
-      // Convert generic errors to ApiError
-      const apiError = new ApiError(500, error.message);
-      onError?.(apiError);
     } else {
-      // Fallback for unknown error types
-      const apiError = new ApiError(500, {
+      // Anything else thrown here is the transport dropping mid-stream (the fetch
+      // or the reader rejected without a server response). Tag it so the caller
+      // can distinguish a recoverable interruption and auto-reconnect.
+      const apiError = new ApiError(0, {
         type: 'rich',
-        code: 500,
-        description: 'Failed to send message',
-        solution: 'Unable to send your message. Please check your connection and try again',
+        code: 0,
+        description: 'The connection was interrupted before the response finished.',
+        solution: 'Reconnecting… you can also retry.',
         description_key: 'error.request.send_message_failed.description',
         solution_key: 'error.request.send_message_failed.solution',
         params: {},
-        external_code: null,
+        external_code: 'stream_interrupted',
       });
       onError?.(apiError);
     }

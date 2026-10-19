@@ -8,6 +8,8 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from "svelte-i18n";
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
   import AdminEmptyState from "../components/AdminEmptyState.svelte";
+  import GridIcon from "../../components/icons/GridIcon.svelte";
+  import ListIcon from "../../components/icons/ListIcon.svelte";
   import { toast } from "../../components/Toaster.svelte";
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
@@ -454,46 +456,7 @@ SPDX-License-Identifier: Apache-2.0
             aria-pressed={layout === "grid"}
             onclick={() => (layout = "grid")}
           >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-              aria-hidden="true"
-              ><rect
-                x="1.75"
-                y="1.75"
-                width="4.5"
-                height="4.5"
-                rx="1"
-                stroke="currentColor"
-                stroke-width="1.4"
-              /><rect
-                x="7.75"
-                y="1.75"
-                width="4.5"
-                height="4.5"
-                rx="1"
-                stroke="currentColor"
-                stroke-width="1.4"
-              /><rect
-                x="1.75"
-                y="7.75"
-                width="4.5"
-                height="4.5"
-                rx="1"
-                stroke="currentColor"
-                stroke-width="1.4"
-              /><rect
-                x="7.75"
-                y="7.75"
-                width="4.5"
-                height="4.5"
-                rx="1"
-                stroke="currentColor"
-                stroke-width="1.4"
-              /></svg
-            >
+            <GridIcon />
             {$_("admin.promptEffectiveness.viewGrid")}
           </button>
           <button
@@ -502,18 +465,7 @@ SPDX-License-Identifier: Apache-2.0
             aria-pressed={layout === "list"}
             onclick={() => (layout = "list")}
           >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-              aria-hidden="true"
-              ><path
-                d="M1.75 3.5h10.5M1.75 7h10.5M1.75 10.5h10.5"
-                stroke="currentColor"
-                stroke-width="1.4"
-              /></svg
-            >
+            <ListIcon />
             {$_("admin.promptEffectiveness.viewList")}
           </button>
         </div>
@@ -1975,11 +1927,6 @@ SPDX-License-Identifier: Apache-2.0
       background-color 120ms ease,
       color 120ms ease,
       box-shadow 120ms ease;
-  }
-
-  .grid-toggle svg {
-    display: block;
-    color: currentColor;
   }
 
   .grid-toggle[aria-pressed="true"] {

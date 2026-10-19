@@ -8,6 +8,8 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from "svelte-i18n";
   import AdminEmptyState from "../components/AdminEmptyState.svelte";
   import AdminPanelCard from "../components/AdminPanelCard.svelte";
+  import GridIcon from "../../components/icons/GridIcon.svelte";
+  import ListIcon from "../../components/icons/ListIcon.svelte";
   import PageHeader from "../components/PageHeader.svelte";
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
   import Modal from "../components/Modal.svelte";
@@ -67,7 +69,7 @@ SPDX-License-Identifier: Apache-2.0
   // For now the page lists connected engines only; the status-filter pills
   // are commented out below. Restore "all" as the default when they come back.
   let filter = $state<EngineFilter>("connected");
-  let view = $state<EngineView>("list");
+  let view = $state<EngineView>("grid");
   let modelQuery = $state("");
 
   // ---- "Browse Providers" dialog (.bp-modal) ----
@@ -1013,7 +1015,16 @@ SPDX-License-Identifier: Apache-2.0
          tour (ENGG-447) points at it. -->
     <section class="keys-empty" aria-labelledby="keys-empty-title">
       <span class="keys-empty__icon" aria-hidden="true">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <circle cx="7.5" cy="15.5" r="4.5" />
           <path d="M10.7 12.3L20 3M16 7l3 3M14 9l2 2" />
         </svg>
@@ -1031,7 +1042,16 @@ SPDX-License-Identifier: Apache-2.0
           data-tour="add-api-key"
           onclick={openBrowse}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
             <path d="M12 5v14M5 12h14" />
           </svg>
           {$_("aiEngines.noKeys.addKey")}
@@ -1043,7 +1063,8 @@ SPDX-License-Identifier: Apache-2.0
             <div class="keys-empty__ph-head">
               <span class="keys-empty__ph-mark"></span>
               <span class="keys-empty__ph-lines">
-                <span class="keys-empty__ph-title" style:width="{width}px"></span>
+                <span class="keys-empty__ph-title" style:width="{width}px"
+                ></span>
                 <span class="keys-empty__ph-meta"></span>
               </span>
             </div>
@@ -1053,7 +1074,17 @@ SPDX-License-Identifier: Apache-2.0
       </div>
     </section>
     <p class="keys-note">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
         <path d="M12 3l8 3v6c0 4.5-3.2 7.7-8 9-4.8-1.3-8-4.5-8-9V6z" />
         <path d="M8.8 12.2l2.2 2.2 4.2-4.4" />
       </svg>
@@ -1159,7 +1190,7 @@ SPDX-License-Identifier: Apache-2.0
           aria-pressed={view === "grid"}
           onclick={() => (view = "grid")}
         >
-          <span aria-hidden="true">⊞</span>
+          <GridIcon />
           {$_("aiEngines.view.grid")}
         </button>
         <button
@@ -1168,7 +1199,7 @@ SPDX-License-Identifier: Apache-2.0
           aria-pressed={view === "list"}
           onclick={() => (view = "list")}
         >
-          <span aria-hidden="true">☰</span>
+          <ListIcon />
           {$_("aiEngines.view.list")}
         </button>
       </div>
@@ -1336,6 +1367,7 @@ SPDX-License-Identifier: Apache-2.0
                 <span
                   class="grid-card-mark"
                   class:grid-card-mark--muted={!connected}
+                  data-engine={engine.engine_key.toLowerCase()}
                 >
                   {@render markContent(engine)}
                 </span>
@@ -1371,6 +1403,14 @@ SPDX-License-Identifier: Apache-2.0
             </div>
             <div class="grid-card-status">{@render statusCell(engine)}</div>
             <div class="grid-card-details">
+              <div class="grid-detail-row">
+                <span class="grid-detail-key">
+                  {$_("aiEngines.card.apiKey", { default: "API Key" })}
+                </span>
+                <span class="grid-detail-val">
+                  {engine.api_key_preview || ""}
+                </span>
+              </div>
               <div class="grid-detail-row">
                 <span class="grid-detail-key">
                   {$_("aiEngines.card.defaultModel")}
@@ -2325,8 +2365,7 @@ SPDX-License-Identifier: Apache-2.0
           id="ai-engine-custom-plugin"
           spellcheck="false"
           bind:value={customForm.plugin_json}
-          aria-describedby="ai-engine-custom-plugin-hint"
-        ></textarea>
+          aria-describedby="ai-engine-custom-plugin-hint"></textarea>
       </div>
     </div>
 
@@ -2917,15 +2956,22 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .grid-card-mark {
-    width: 40px;
-    height: 40px;
-    font-size: 15px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
   }
 
   .grid-card-mark :global(svg),
   .grid-card-mark .mark-img {
     width: 24px;
     height: 24px;
+  }
+
+  .grid-card-mark[data-engine="anthropic"] {
+    background: #c86245;
+    color: #ffffff;
   }
 
   .bp-card-mark {
@@ -2942,76 +2988,82 @@ SPDX-License-Identifier: Apache-2.0
 
   /* ---- shared status dot/label and the row toggle ---- */
   .eng-status-dot {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    background: var(--gx-org-brand-alt);
+    background: #2f855a;
     flex-shrink: 0;
   }
 
   .eng-status-dot--muted {
-    background: var(--gx-org-slate-350);
+    background: var(--gx-org-slate-350, #94a3b8);
   }
 
   .eng-status-dot--danger {
-    background: var(--gx-ae-bad);
+    background: var(--gx-ae-bad, #ef4444);
   }
 
   .eng-status-dot--warn {
-    background: var(--gx-org-warn);
+    background: var(--gx-org-warn, #f59e0b);
   }
 
   .eng-status-label {
     font-weight: 600;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 100%;
-    color: var(--gx-org-brand-alt);
+    color: #2f855a;
     white-space: nowrap;
   }
 
   .eng-status-label--muted {
-    color: var(--gx-org-slate-350);
+    color: var(--gx-org-slate-350, #64748b);
   }
 
   .eng-status-label--danger {
-    color: var(--gx-ae-bad);
+    color: var(--gx-ae-bad, #ef4444);
   }
 
   .eng-status-label--warn {
-    color: var(--gx-org-warn);
+    color: var(--gx-org-warn, #d97706);
   }
 
   .eng-toggle {
-    width: 36px;
-    height: 20px;
+    width: 44px;
+    height: 24px;
     border-radius: 999px;
-    background: var(--gx-ring-soft);
+    background: var(--gx-ring-soft, #e2e8f0);
     display: flex;
     padding: 2px;
     justify-content: flex-start;
     align-items: center;
     flex-shrink: 0;
     box-sizing: border-box;
-    transition:
-      background-color 160ms ease,
-      justify-content 160ms ease;
+    border: none;
+    cursor: pointer;
+    transition: background-color 160ms ease;
+  }
+
+  .eng-toggle:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
   }
 
   .eng-toggle--on {
-    background: var(--gx-org-brand-alt);
+    background: #36845b;
     justify-content: flex-end;
   }
 
   .eng-toggle:focus-visible {
-    outline: 2px solid var(--gx-org-primary-500);
+    outline: 2px solid #36845b;
     outline-offset: 2px;
   }
 
   .eng-toggle-knob {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
     flex-shrink: 0;
   }
 
@@ -3199,41 +3251,49 @@ SPDX-License-Identifier: Apache-2.0
   .engines-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
+    gap: 20px;
     align-self: stretch;
   }
 
   .grid-card {
-    border-radius: 14px;
+    border-radius: 18px;
     background: var(--gx-card);
+    border: 1px solid var(--gx-hair, #e2e8f0);
     box-shadow:
-      inset 0 0 0 1px var(--gx-ring-soft),
-      var(--gx-ae-card-shadow);
+      0 1px 3px rgba(0, 0, 0, 0.04),
+      0 1px 2px rgba(0, 0, 0, 0.02);
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 24px;
+    padding: 24px 24px 22px 24px;
     min-width: 0;
+    transition:
+      box-shadow 160ms ease,
+      border-color 160ms ease;
+  }
+
+  .grid-card:hover {
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.06),
+      0 1px 3px rgba(0, 0, 0, 0.03);
   }
 
   .grid-card-header {
     display: flex;
-    gap: 12px;
     justify-content: space-between;
     align-items: center;
   }
 
   .grid-card-brand {
     display: flex;
-    gap: 12px;
+    gap: 14px;
     align-items: center;
     min-width: 0;
   }
 
   .grid-card-name {
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 100%;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 1.2;
     color: var(--gx-org-ink);
     white-space: nowrap;
     overflow: hidden;
@@ -3242,36 +3302,44 @@ SPDX-License-Identifier: Apache-2.0
 
   .grid-card-status {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     align-items: center;
+    margin-top: 14px;
   }
 
   .grid-card-details {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    margin-top: 12px;
   }
 
   .grid-detail-row {
     display: flex;
-    gap: 8px;
     justify-content: space-between;
     align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gx-hair, #f1f5f9);
+    gap: 12px;
+  }
+
+  .grid-detail-row:last-child {
+    border-bottom: none;
+    padding-bottom: 2px;
   }
 
   .grid-detail-key {
-    font-weight: 500;
-    font-size: 12px;
+    font-weight: 400;
+    font-size: 14px;
     line-height: 100%;
-    color: var(--gx-org-slate-350);
+    color: var(--gx-org-slate-350, #64748b);
     flex-shrink: 0;
   }
 
   .grid-detail-val {
-    font-weight: 400;
-    font-size: 12px;
+    font-weight: 500;
+    font-size: 14px;
     line-height: 100%;
-    color: var(--gx-an-sub);
+    color: var(--gx-org-ink, #1e293b);
     min-width: 0;
     white-space: nowrap;
     overflow: hidden;
@@ -3279,34 +3347,42 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .grid-detail-val--accent {
-    font-weight: 600;
-    color: var(--gx-org-primary-500);
+    font-weight: 500;
+    color: #2563eb;
   }
 
   .grid-card-footer {
-    margin-top: auto;
+    margin-top: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .grid-configure-btn {
     width: 100%;
-    height: 38px;
-    border-radius: 8px;
-    box-shadow: inset 0 0 0 1px var(--gx-ring-soft);
+    background: transparent;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600;
-    font-size: 13px;
-    color: var(--gx-an-sub);
-    transition: background-color 120ms ease;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--gx-org-ink, #0f172a);
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition:
+      opacity 120ms ease,
+      background-color 120ms ease;
   }
 
   .grid-configure-btn:hover {
-    background: var(--gx-page);
+    opacity: 0.8;
+    background: rgba(0, 0, 0, 0.03);
   }
 
   .grid-configure-btn:focus-visible {
-    outline: 2px solid var(--gx-org-primary-500);
+    outline: 2px solid #2563eb;
     outline-offset: 2px;
   }
   /* ===== Configure dialog (".cfg-modal" body) ===== */

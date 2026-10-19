@@ -1,5 +1,6 @@
 {
   "chat": {
+    "scrollToLatest": "最新にスクロール",
     "emptyState": {
       "title": "会話を開始",
       "description": "メッセージを送信してAIアシスタントとのチャットを始めましょう！",
@@ -25,6 +26,8 @@
     "errors": {
       "somethingWentWrong": "問題が発生しました",
       "dismissError": "エラーを閉じる",
+      "retry": "再試行",
+      "reconnecting": "再接続中…",
       "failedToLoadModels": "モデルの読み込みに失敗しました",
       "failedToLoadConnectors": "コネクタの読み込みに失敗しました",
       "failedToLoadConversation": "会話の読み込みに失敗しました",

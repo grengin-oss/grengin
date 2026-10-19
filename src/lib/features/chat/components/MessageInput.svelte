@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
     isSelectableChatModel,
   } from "../../../api/models";
   import { uploadDocument, type UploadedFile } from "../../../api/chatApi";
+  import { loadDraft, saveDraft, clearDraft } from "../../../utils/drafts";
   import type { MCPServer } from "../../../admin/types.js";
   import { _ } from "svelte-i18n";
   import { navigate } from "svelte-routing";
@@ -113,6 +114,24 @@ SPDX-License-Identifier: Apache-2.0
   let textarea: HTMLTextAreaElement;
   let fileInput: HTMLInputElement;
   let message = $state("");
+
+  // Per-conversation draft persistence. One effect handles both directions:
+  // when the conversation changes it loads that conversation's draft (without
+  // first saving the old text under the new key); otherwise it saves keystrokes.
+  let lastDraftKey: string | undefined;
+  $effect(() => {
+    const key = conversationId ?? "new";
+    // Read `message` unconditionally so the effect re-runs on every keystroke,
+    // not only when the conversation changes.
+    const text = message;
+    if (key !== lastDraftKey) {
+      // Conversation switched: load its draft without saving the old text here.
+      lastDraftKey = key;
+      message = loadDraft(conversationId);
+      return;
+    }
+    saveDraft(conversationId, text);
+  });
   let attachedFiles = $state<File[]>([]);
   let uploadingFiles = $state<Set<string>>(new Set());
   let uploadedFileResults = $state<Map<string, UploadedFile>>(new Map());
@@ -562,6 +581,7 @@ SPDX-License-Identifier: Apache-2.0
         webSearchEnabled,
       );
       message = "";
+      clearDraft(conversationId);
       Object.keys(videoPosters).forEach(releaseVideoPoster);
       videoPosters = {};
       videoDurations = {};

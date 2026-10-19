@@ -8,6 +8,8 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from "svelte-i18n";
   import PageHeader from "../components/PageHeader.svelte";
   import Modal from "../components/Modal.svelte";
+  import GridIcon from "../../components/icons/GridIcon.svelte";
+  import ListIcon from "../../components/icons/ListIcon.svelte";
   import ServerAccessPanel from "../components/mcp/ServerAccessPanel.svelte";
   import ToolAccessPanel from "../components/mcp/ToolAccessPanel.svelte";
   import OAuthConfigSection from "../components/mcp/OAuthConfigSection.svelte";
@@ -1169,50 +1171,7 @@ SPDX-License-Identifier: Apache-2.0
           aria-pressed={viewMode === "grid"}
           onclick={() => (viewMode = "grid")}
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            aria-hidden="true"
-          >
-            <rect
-              x="1.75"
-              y="1.75"
-              width="4.5"
-              height="4.5"
-              rx="1"
-              stroke="currentColor"
-              stroke-width="1.4"
-            />
-            <rect
-              x="7.75"
-              y="1.75"
-              width="4.5"
-              height="4.5"
-              rx="1"
-              stroke="currentColor"
-              stroke-width="1.4"
-            />
-            <rect
-              x="1.75"
-              y="7.75"
-              width="4.5"
-              height="4.5"
-              rx="1"
-              stroke="currentColor"
-              stroke-width="1.4"
-            />
-            <rect
-              x="7.75"
-              y="7.75"
-              width="4.5"
-              height="4.5"
-              rx="1"
-              stroke="currentColor"
-              stroke-width="1.4"
-            />
-          </svg>
+          <GridIcon />
           <span>{$_("admin.mcpServers.viewGrid")}</span>
         </button>
         <button
@@ -1221,19 +1180,7 @@ SPDX-License-Identifier: Apache-2.0
           aria-pressed={viewMode === "list"}
           onclick={() => (viewMode = "list")}
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M1.75 3.5h10.5M1.75 7h10.5M1.75 10.5h10.5"
-              stroke="currentColor"
-              stroke-width="1.4"
-            />
-          </svg>
+          <ListIcon />
           <span>{$_("admin.mcpServers.viewList")}</span>
         </button>
       </div>
@@ -2276,11 +2223,6 @@ SPDX-License-Identifier: Apache-2.0
       background-color 120ms ease,
       color 120ms ease,
       box-shadow 120ms ease;
-  }
-
-  .grid-toggle svg {
-    display: block;
-    flex-shrink: 0;
   }
 
   .grid-toggle[aria-pressed="true"] {

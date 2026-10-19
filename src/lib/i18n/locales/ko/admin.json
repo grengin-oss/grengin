@@ -1566,6 +1566,7 @@
       "noUsageLabel": "이번 주 사용 기록 없음"
     },
     "card": {
+      "apiKey": "API 키",
       "defaultModel": "기본 모델",
       "whitelist": "허용 목록",
       "whitelistCount": "모델 {count}개",

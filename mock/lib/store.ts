@@ -39,6 +39,12 @@ export interface Project {
 export const conversations = new Map<string, Conversation>()
 export const messages = new Map<string, Message[]>()
 export const files = new Map<string, UserFile>()
+/** Persisted artifact content, served by GET /artifacts/:id (ENGG-387). */
+export const artifacts = new Map<string, {
+  id: string; title: string; content_type: string; content: string;
+  conversation_id: string; message_id: string; file_id: string;
+  created_at: string; updated_at: string;
+}>()
 export const aiEngines = new Map<string, AIEngineDetail>()
 export const departments = new Map<string, Department>()
 export const projects = new Map<string, Project>()
@@ -91,6 +97,92 @@ export const setUserSettings = (settings: UserSettings) => {
 }
 
 // Seed data
+/**
+ * A showcase conversation whose assistant turn produces one artifact of each
+ * render kind, for exercising the artifact panel locally (code in several
+ * languages, a titleless code artifact that must auto-detect, a live HTML page,
+ * and a Mermaid diagram). Open it at `/?chatId=<SHOWCASE_CHAT_ID>`.
+ */
+export const SHOWCASE_CHAT_ID = 'a1b2c3d4-0000-4000-8000-000000000abc'
+
+function seedArtifactShowcase() {
+  const convId = SHOWCASE_CHAT_ID
+  const userMsgId = 'a1b2c3d4-0000-4000-8000-0000000000u1'
+  const asstMsgId = 'a1b2c3d4-0000-4000-8000-0000000000a1'
+  const now = new Date().toISOString()
+
+  const defs: Array<{ title: string; content_type: string; content: string }> = [
+    {
+      title: 'ProductRepository.java',
+      content_type: 'application/javascript',
+      content:
+        'import java.util.Map;\nimport java.util.Optional;\nimport java.util.concurrent.ConcurrentHashMap;\n\npublic class ProductRepository {\n    private final Map<Long, Product> store = new ConcurrentHashMap<>();\n\n    public Product save(Product product) {\n        if (product == null) throw new IllegalArgumentException("null");\n        store.put(product.getId(), product);\n        return product;\n    }\n\n    public Optional<Product> findById(Long id) {\n        return Optional.ofNullable(store.get(id));\n    }\n}\n',
+    },
+    {
+      // No file extension in the title -> must auto-detect (Python).
+      title: 'CSV Column Row Counter',
+      content_type: 'application/javascript',
+      content:
+        '#!/usr/bin/env python3\nimport csv, sys\n\ndef count_rows(path):\n    with open(path, newline="") as f:\n        return sum(1 for _ in csv.reader(f))\n\nif __name__ == "__main__":\n    print(f"rows: {count_rows(sys.argv[1])}")\n',
+    },
+    {
+      title: 'result.ts',
+      content_type: 'application/javascript',
+      content:
+        'export type Result<T, E> =\n  | { ok: true; value: T }\n  | { ok: false; error: E };\n\nexport const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });\nexport const err = <E>(error: E): Result<never, E> => ({ ok: false, error });\n',
+    },
+    {
+      title: 'card-grid.css',
+      content_type: 'application/javascript',
+      content:
+        ':root { --gap: 16px; }\n.grid {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));\n  gap: var(--gap);\n}\n@media (prefers-color-scheme: dark) {\n  .card { background: #161b22; color: #e6edf3; }\n}\n',
+    },
+    {
+      title: 'landing.html',
+      content_type: 'text/html',
+      content:
+        '<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:system-ui;margin:0;display:grid;place-items:center;height:100vh;background:#4079c5;color:#fff}h1{font-size:40px}</style></head><body><div><h1>Grengin</h1><p>Rendered HTML artifact (live page).</p></div></body></html>',
+    },
+    {
+      title: 'Login Flow Diagram',
+      content_type: 'text/markdown',
+      content:
+        '# User Login Flow\n\n```mermaid\nflowchart TD\n    A([Start]) --> B[Enter credentials]\n    B --> C{Valid?}\n    C -->|Yes| D[Dashboard]\n    C -->|No| E[Error]\n    E --> B\n```\n',
+    },
+  ]
+
+  const metas = defs.map((d, i) => {
+    const id = `a1b2c3d4-0000-4000-8000-00000000art${i}`
+    const fileId = `a1b2c3d4-0000-4000-8000-0000000fil${i}`
+    artifacts.set(id, {
+      id, title: d.title, content_type: d.content_type, content: d.content,
+      conversation_id: convId, message_id: asstMsgId, file_id: fileId,
+      created_at: now, updated_at: now,
+    })
+    return { id, file_id: fileId, title: d.title, content_type: d.content_type }
+  })
+
+  conversations.set(convId, {
+    id: convId, title: 'Artifact Showcase', archived: false,
+    created_at: now, updated_at: now,
+  } as Conversation)
+
+  messages.set(convId, [
+    {
+      id: userMsgId, conversation_id: convId, role: 'user', model: 'claude-opus-4-8',
+      parts: { text: 'Show me one artifact of each kind.', files: [] },
+      created_at: now, updated_at: now,
+      usage: { input_tokens: 0, output_tokens: 0 },
+    } as Message,
+    {
+      id: asstMsgId, conversation_id: convId, role: 'assistant', model: 'claude-opus-4-8',
+      parts: { text: 'Here is one artifact of each supported kind — code (Java, Python, TypeScript, CSS), a live HTML page, and a Mermaid diagram.', files: [], artifacts: metas } as any,
+      created_at: now, updated_at: now,
+      usage: { input_tokens: 40, output_tokens: 120 },
+    } as Message,
+  ])
+}
+
 export const seedData = () => {
   // Seed conversations
   chatListExample.conversations.forEach((conv) => {
@@ -102,6 +194,8 @@ export const seedData = () => {
       messages.set(conv.id, [])
     }
   })
+
+  seedArtifactShowcase()
 
   // Seed file data
   const file1Id = faker.string.uuid()

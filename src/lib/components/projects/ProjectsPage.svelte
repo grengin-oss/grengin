@@ -13,6 +13,8 @@ SPDX-License-Identifier: Apache-2.0
   } from "../../api/projectsApi";
   import type { Project, ProjectCategory } from "../../types/project";
   import { toast } from "../Toaster.svelte";
+  import GridIcon from "../icons/GridIcon.svelte";
+  import ListIcon from "../icons/ListIcon.svelte";
   import CreateProjectModal from "./CreateProjectModal.svelte";
   import DeleteConfirmDialog from "../DeleteConfirmDialog.svelte";
   import { setPageTitle } from "../../utils/pageTitle";
@@ -282,7 +284,7 @@ SPDX-License-Identifier: Apache-2.0
           aria-pressed={view === "grid"}
           onclick={() => setView("grid")}
         >
-          <span aria-hidden="true">⊞</span>
+          <GridIcon />
           {$_("projects.viewGrid")}
         </button>
         <button
@@ -291,7 +293,7 @@ SPDX-License-Identifier: Apache-2.0
           aria-pressed={view === "list"}
           onclick={() => setView("list")}
         >
-          <span aria-hidden="true">☰</span>
+          <ListIcon />
           {$_("projects.viewList")}
         </button>
       </div>

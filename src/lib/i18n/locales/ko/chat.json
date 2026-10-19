@@ -1,5 +1,6 @@
 {
   "chat": {
+    "scrollToLatest": "최신으로 스크롤",
     "emptyState": {
       "title": "대화 시작",
       "description": "AI 어시스턴트와 채팅을 시작하려면 메시지를 보내세요!",
@@ -25,6 +26,8 @@
     "errors": {
       "somethingWentWrong": "문제가 발생했습니다",
       "dismissError": "오류 닫기",
+      "retry": "다시 시도",
+      "reconnecting": "다시 연결 중…",
       "failedToLoadModels": "모델 로드 실패",
       "failedToLoadConnectors": "커넥터를 불러오지 못했습니다",
       "failedToLoadConversation": "대화 로드 실패",

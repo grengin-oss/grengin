@@ -1566,6 +1566,7 @@
       "noUsageLabel": "Sin uso registrado esta semana"
     },
     "card": {
+      "apiKey": "Clave API",
       "defaultModel": "Modelo predeterminado",
       "whitelist": "Lista blanca",
       "whitelistCount": "{count} modelos",

@@ -64,7 +64,11 @@ SPDX-License-Identifier: Apache-2.0
 
   function writeQueryToUrl() {
     const url = new URL(window.location.href);
-    const set = (key: string, value: string | number, fallback: string | number) => {
+    const set = (
+      key: string,
+      value: string | number,
+      fallback: string | number,
+    ) => {
       if (value && value !== fallback) url.searchParams.set(key, String(value));
       else url.searchParams.delete(key);
     };
@@ -109,7 +113,14 @@ SPDX-License-Identifier: Apache-2.0
   // Mirror filters and paging into the URL whenever they change.
   $effect(() => {
     const { userId, action, startDate, endDate } = auditLogsStore.filters;
-    void [userId, action, startDate, endDate, auditLogsStore.page, auditLogsStore.limit];
+    void [
+      userId,
+      action,
+      startDate,
+      endDate,
+      auditLogsStore.page,
+      auditLogsStore.limit,
+    ];
     if (urlSyncReady) writeQueryToUrl();
   });
 
@@ -604,7 +615,9 @@ SPDX-License-Identifier: Apache-2.0
             <!-- Keeps an action restored from the URL selectable before the
                  action list loads (or if it is no longer listed). -->
             {#if filterAction && !auditLogsStore.actionTypes.includes(filterAction)}
-              <option value={filterAction}>{getLocalizedAction(filterAction)}</option>
+              <option value={filterAction}
+                >{getLocalizedAction(filterAction)}</option
+              >
             {/if}
             {#each auditLogsStore.actionTypes as action (action)}
               <option value={action}>{getLocalizedAction(action)}</option>
@@ -841,7 +854,7 @@ SPDX-License-Identifier: Apache-2.0
             <div class="col-action">
               <span
                 class="action-badge {getActionBadgeClass(log.action)}"
-                title={log.action}
+                title={getLocalizedAction(log.action)}
               >
                 {#if isMessageAction(log.action)}
                   <svg

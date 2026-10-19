@@ -49,6 +49,7 @@
     "dompurify": "^3.4.17",
     "highlight.js": "^11.11.1",
     "marked": "^17.0.1",
+    "mermaid": "^12.2.0",
     "svelte-i18n": "^4.0.1",
     "svelte-routing": "^2.13.0"
   }

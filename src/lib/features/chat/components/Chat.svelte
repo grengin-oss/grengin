@@ -106,6 +106,14 @@ SPDX-License-Identifier: Apache-2.0
   let isLoading = $state(false);
   let isTyping = $state(false);
   let error = $state<ApiError | null>(null);
+  // Mid-stream connection drops auto-reconnect once before falling back to a
+  // manual Retry. `streamRetryCount` resets on every fresh user send; the flag
+  // marks that the current turn died from a transport interruption (not a server
+  // error or a user cancel), which is the only case we auto-retry.
+  const MAX_STREAM_AUTO_RETRIES = 1;
+  let streamRetryCount = 0;
+  let turnInterrupted = false;
+  let autoReconnecting = $state(false);
   let conversationId = $state<string | null>(null);
   // Title of the open conversation — mirrored into the browser tab title.
   let conversationTitle = $state<string | null>(null);
@@ -122,6 +130,15 @@ SPDX-License-Identifier: Apache-2.0
   let messageInput = $state<MessageInput | undefined>(undefined);
   let currentStreamingMessage = $state<ChatMessageType | null>(null);
   let autoScrollEnabled = true;
+  // Controls the floating "jump to latest" button — shown when the reader has
+  // scrolled meaningfully up from the bottom of the transcript.
+  let showScrollToBottom = $state(false);
+  // While a click-to-bottom smooth scroll is animating, keep the button hidden
+  // so it doesn't flicker back on as the scroll passes through the "scrolled up"
+  // zone. Holds a timestamp (ms) until which the button stays suppressed.
+  let suppressScrollBtnUntil = 0;
+  // Tears down the in-flight "pin to bottom while a conversation settles" run.
+  let stopPinToBottom: (() => void) | null = null;
 
   /*
    * The generation the Stop button acts on. The server cancels by assistant
@@ -535,24 +552,102 @@ SPDX-License-Identifier: Apache-2.0
     if (messagesContainer) {
       messagesContainer.scrollTo({
         top: messagesContainer.scrollHeight,
-        behavior: smooth ? "auto" : "auto",
+        behavior: smooth ? "smooth" : "auto",
       });
     }
   }
 
+  /**
+   * Land a freshly opened conversation at the bottom and keep it there while it
+   * settles. A long chat keeps growing after first paint — markdown renders
+   * async, code highlights, images and artifact cards arrive late — so a single
+   * scroll lands partway up. This re-pins to the bottom on every size change for
+   * a short window, then stops so it never fights the reader's own scrolling.
+   */
+  function scrollToBottomReliably(settleMs = 1500) {
+    if (!messagesContainer) return;
+    const container = messagesContainer;
+    const inner = container.querySelector(".messages-inner") as HTMLElement | null;
+
+    // Cancel any pin still running from a previous conversation load.
+    stopPinToBottom?.();
+
+    const prevBehavior = container.style.scrollBehavior;
+    container.style.scrollBehavior = "auto";
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    // Instant re-pin on each size change — the opening jump should land at the
+    // bottom immediately, not animate, as late content grows the transcript.
+    const jump = () => {
+      container.scrollTop = container.scrollHeight;
+    };
+
+    const observer = new ResizeObserver(() => jump());
+
+    const stop = () => {
+      observer.disconnect();
+      container.removeEventListener("wheel", stop);
+      container.removeEventListener("touchmove", stop);
+      if (timer) clearTimeout(timer);
+      container.style.scrollBehavior = prevBehavior;
+      if (stopPinToBottom === stop) stopPinToBottom = null;
+    };
+
+    jump();
+    requestAnimationFrame(() => {
+      void container.offsetHeight;
+      jump();
+    });
+    if (inner) observer.observe(inner);
+    // The reader taking over (wheel/touch) cancels the auto-pin immediately.
+    container.addEventListener("wheel", stop, { passive: true });
+    container.addEventListener("touchmove", stop, { passive: true });
+    timer = setTimeout(stop, settleMs);
+    stopPinToBottom = stop;
+    showScrollToBottom = false;
+  }
+
+  function handleScrollToBottomClick() {
+    const container = messagesContainer;
+    if (!container) return;
+    autoScrollEnabled = true;
+    showScrollToBottom = false;
+    suppressScrollBtnUntil = Date.now() + 1400;
+    stopPinToBottom?.();
+    const toBottom = () =>
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+    toBottom();
+    // Follow-up passes catch late-growing content (lazy images, async rendering)
+    // so the smooth jump still finishes at the true bottom. Each is a no-op once
+    // we're already there, so settled content just scrolls once.
+    [300, 650, 1100].forEach((delay) =>
+      setTimeout(() => {
+        const dist =
+          container.scrollHeight - container.scrollTop - container.clientHeight;
+        if (dist > 4 && dist < 2000) toBottom();
+      }, delay),
+    );
+  }
+
   // Handle manual scrolling to detect if user wants to stop auto-scroll
   function handleScroll() {
-    if (!messagesContainer || isTyping) return;
+    if (!messagesContainer) return;
 
-    // Check if user is near the bottom (within 100px)
-    const isNearBottom =
+    const distanceFromBottom =
       messagesContainer.scrollHeight -
-        messagesContainer.scrollTop -
-        messagesContainer.clientHeight <
-      80;
-    if (!isNearBottom) {
-      autoScrollEnabled = false;
-    }
+      messagesContainer.scrollTop -
+      messagesContainer.clientHeight;
+
+    // Reveal the jump-to-latest button once the reader is well above the bottom,
+    // but stay hidden while a click-to-bottom scroll is still animating.
+    showScrollToBottom =
+      Date.now() >= suppressScrollBtnUntil && distanceFromBottom > 240;
+
+    if (isTyping) return;
+
+    // Near the bottom: resume following new content. Away from it: stop, so the
+    // transcript doesn't yank the reader down while they're reading history.
+    autoScrollEnabled = distanceFromBottom < 80;
   }
 
   // Scroll to show the top of the streaming message
@@ -597,6 +692,7 @@ SPDX-License-Identifier: Apache-2.0
     if (isLoading) return;
 
     error = null;
+    streamRetryCount = 0; // a fresh send starts a new auto-reconnect budget
     isLoading = true;
     autoScrollEnabled = true; // Reset auto-scroll when starting new message
 
@@ -679,6 +775,7 @@ SPDX-License-Identifier: Apache-2.0
     let generatedImageIndex = 0;
     const artifactStream = startArtifactStream();
     const generation = beginGeneration();
+    turnInterrupted = false;
     isTyping = true;
     scrollToBottom();
 
@@ -1062,6 +1159,12 @@ SPDX-License-Identifier: Apache-2.0
                     : String(errorMessage),
                 );
 
+          // A transport interruption (tagged in chatApi) is recoverable — mark
+          // it so the finally block can auto-reconnect once.
+          if (apiError.externalCode === "stream_interrupted") {
+            turnInterrupted = true;
+          }
+
           error = apiError;
           if (pendingStreamingMessage) {
             // Update the error in the message
@@ -1121,6 +1224,24 @@ SPDX-License-Identifier: Apache-2.0
       isLoading = false;
       currentStreamingMessage = null;
       pendingStreamingMessage = null;
+
+      // A dropped connection auto-reconnects once; after that the error banner's
+      // Retry is the manual fallback. Deferred so this turn's cleanup settles
+      // first (and never fires for a user-cancelled stream).
+      if (
+        turnInterrupted &&
+        streamRetryCount < MAX_STREAM_AUTO_RETRIES &&
+        !generation.controller.signal.aborted &&
+        conversationId
+      ) {
+        streamRetryCount++;
+        turnInterrupted = false;
+        autoReconnecting = true;
+        setTimeout(() => {
+          autoReconnecting = false;
+          if (!isLoading) void handleRetryLastTurn();
+        }, 800);
+      }
 
       // Refocus input after exception
       await tick();
@@ -1204,6 +1325,50 @@ SPDX-License-Identifier: Apache-2.0
           ...callbacks,
         }),
     });
+  }
+
+  /**
+   * Re-run the last turn after a failure or a dropped connection — the Retry
+   * affordance and the auto-reconnect both land here. With a live conversation
+   * it regenerates the last answer; a turn that died before the conversation was
+   * created is re-sent from scratch.
+   */
+  async function handleRetryLastTurn() {
+    if (isLoading) return;
+    let i = messages.length - 1;
+    while (i >= 0 && messages[i].role !== "user") i--;
+    if (i < 0) return;
+    const userMessage = messages[i];
+
+    error = null;
+    if (conversationId) {
+      isLoading = true;
+      autoScrollEnabled = true;
+      // Drop the failed answer (and anything after the user turn) before retrying.
+      messages = messages.slice(0, i + 1);
+      await runAssistantStream({
+        promptText: userMessage.content,
+        reloadOnDone: true,
+        invoke: (callbacks) =>
+          regenerateMessageStream(conversationId!, userMessage.id, {
+            message: userMessage.content,
+            provider: selectedProvider,
+            modelName: selectedModel,
+            uploadedFiles: (userMessage.files as UploadedFile[] | undefined) ?? [],
+            webSearch: webSearchEnabled,
+            selectedMcpServers,
+            ...callbacks,
+          }),
+      });
+    } else {
+      // The turn never reached conversation creation — re-send it.
+      messages = messages.slice(0, i);
+      await handleSendMessage(
+        userMessage.content,
+        userMessage.files as UploadedFile[] | undefined,
+        webSearchEnabled,
+      );
+    }
   }
 
   /**
@@ -1900,19 +2065,12 @@ SPDX-License-Identifier: Apache-2.0
         // Wait for Svelte to finish updating the DOM with the new messages.
         await tick();
 
-        if (messagesContainer) {
-          // Save the original scroll behavior (likely 'smooth' from CSS).
-          // We'll temporarily change it to 'auto' to prevent smooth scrolling animation.
-          const container = messagesContainer;
-          const originalScrollBehavior = container.style.scrollBehavior;
-          container.style.scrollBehavior = "auto";
-
-          requestAnimationFrame(() => {
-            void container.offsetHeight;
-            container.scrollTop = container.scrollHeight;
-            container.style.scrollBehavior = originalScrollBehavior;
-          });
-        }
+        // Open at the latest message. A long conversation keeps growing after
+        // this first paint, so pin to the bottom until it settles rather than
+        // scrolling once (which lands partway up on large chats).
+        autoScrollEnabled = true;
+        showScrollToBottom = false;
+        scrollToBottomReliably();
 
         // Focus the input field
         messageInput?.focus();
@@ -2033,6 +2191,7 @@ SPDX-License-Identifier: Apache-2.0
         handleConversationTitleChanged,
       );
       history.pushState = originalPushState;
+      stopPinToBottom?.();
     };
   });
 </script>
@@ -2313,6 +2472,35 @@ SPDX-License-Identifier: Apache-2.0
                   </span>
                 {/if}
               </div>
+              {#if error.externalCode !== "budget_warning"}
+                <button
+                  class="retry-btn"
+                  onclick={handleRetryLastTurn}
+                  disabled={isLoading || autoReconnecting}
+                  title={$_("chat.errors.retry")}
+                >
+                  {#if autoReconnecting}
+                    <span class="retry-spinner" aria-hidden="true"></span>
+                    <span>{$_("chat.errors.reconnecting")}</span>
+                  {:else}
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                      <polyline points="21 3 21 9 15 9" />
+                    </svg>
+                    <span>{$_("chat.errors.retry")}</span>
+                  {/if}
+                </button>
+              {/if}
               <button
                 class="dismiss-btn"
                 onclick={() => (error = null)}
@@ -2340,6 +2528,29 @@ SPDX-License-Identifier: Apache-2.0
       <MessageScrollNavigator {messages} scrollContainer={messagesContainer} />
 
       <div class="input-container">
+        {#if showScrollToBottom}
+          <button
+            class="scroll-to-bottom-btn"
+            onclick={handleScrollToBottomClick}
+            title={$_("chat.scrollToLatest")}
+            aria-label={$_("chat.scrollToLatest")}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <polyline points="19 12 12 19 5 12"></polyline>
+            </svg>
+          </button>
+        {/if}
         <MessageInput
           bind:this={messageInput}
           onSend={handleSendMessage}
@@ -2857,6 +3068,48 @@ SPDX-License-Identifier: Apache-2.0
     line-height: 1.5;
   }
 
+  .retry-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.4rem 0.75rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 8px;
+    color: #ef4444;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .retry-btn:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+
+  .retry-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .retry-spinner {
+    width: 13px;
+    height: 13px;
+    border: 2px solid rgba(239, 68, 68, 0.3);
+    border-top-color: #ef4444;
+    border-radius: 50%;
+    animation: retrySpin 0.7s linear infinite;
+  }
+
+  @keyframes retrySpin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   .dismiss-btn {
     padding: 0.5rem;
     background: transparent;
@@ -2896,6 +3149,57 @@ SPDX-License-Identifier: Apache-2.0
     position: relative;
     width: 100%;
     box-sizing: border-box;
+  }
+
+  /* Floating "jump to latest" control — sits just above the composer, centred
+     over the transcript column (so it follows the artifact-panel split). */
+  .scroll-to-bottom-btn {
+    position: absolute;
+    top: -34px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--surface-border);
+    background: var(--surface-card, var(--gx-page));
+    color: var(--text-primary);
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    transition:
+      transform 0.15s ease,
+      background 0.15s ease;
+    animation: scrollBtnIn 0.18s ease both;
+  }
+
+  /* The global `svg { max-width: 100% }` collapses the icon to 0 width inside
+     this flex button, so clear that cap and pin an explicit size. */
+  .scroll-to-bottom-btn svg {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    max-width: none;
+    flex-shrink: 0;
+  }
+
+  .scroll-to-bottom-btn:hover {
+    background: var(--btn-tertiary);
+    transform: translateX(-50%) translateY(-2px);
+  }
+
+  @keyframes scrollBtnIn {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
   }
 
   /* The composer itself keeps the design's fixed measure. */

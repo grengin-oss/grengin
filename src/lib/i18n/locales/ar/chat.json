@@ -1,5 +1,6 @@
 {
   "chat": {
+    "scrollToLatest": "التمرير إلى الأحدث",
     "emptyState": {
       "title": "ابدأ محادثة",
       "description": "أرسل رسالة للبدء في الدردشة مع مساعد الذكاء الاصطناعي!",
@@ -25,6 +26,8 @@
     "errors": {
       "somethingWentWrong": "حدث خطأ ما",
       "dismissError": "إغلاق الخطأ",
+      "retry": "إعادة المحاولة",
+      "reconnecting": "جارٍ إعادة الاتصال…",
       "failedToLoadModels": "تعذر تحميل النماذج",
       "failedToLoadConnectors": "تعذر تحميل الموصلات",
       "failedToLoadConversation": "تعذر تحميل المحادثة",

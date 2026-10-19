@@ -1,5 +1,6 @@
 {
   "chat": {
+    "scrollToLatest": "Scroll to latest",
     "skills": {
       "label": "Skills",
       "tooltip": "Attach skills to this conversation",
@@ -35,6 +36,8 @@
     "errors": {
       "somethingWentWrong": "Something went wrong",
       "dismissError": "Dismiss error",
+      "retry": "Retry",
+      "reconnecting": "Reconnecting…",
       "failedToLoadModels": "Failed to load models",
       "failedToLoadConnectors": "Failed to load connectors",
       "failedToLoadConversation": "Failed to load conversation",
