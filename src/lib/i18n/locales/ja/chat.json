@@ -1,6 +1,27 @@
 {
   "chat": {
     "scrollToLatest": "最新にスクロール",
+    "usage": {
+      "title": "使用状況とコンテキスト",
+      "modelMemory": "モデルメモリ",
+      "contextWindow": "コンテキストウィンドウ",
+      "budget": "予算",
+      "resets": "{date} にリセット",
+      "thisChat": "このチャット",
+      "tokens": "トークン",
+      "remaining": "残り容量",
+      "used": "使用済み",
+      "capacity": "総容量",
+      "sessionCost": "セッション費用",
+      "totalTokens": "合計トークン数",
+      "optimal": "最適",
+      "fillingUp": "容量増加中",
+      "nearLimit": "上限間近",
+      "optimalDesc": "コンテキストウィンドウはAIのアクティブな作業メモリです。このチャットには十分な空き容量があります。",
+      "warningDesc": "コンテキストメモリが75%以上使用されています。制限内に収めるため過去のメッセージが要約される場合があります。",
+      "criticalDesc": "コンテキストが上限に近づいています。回答品質を維持しメッセージの切り詰めを防ぐため、新しいチャットを開始してください。",
+      "unspecifiedDesc": "このモデルには固定のコンテキストウィンドウ上限が設定されていません。トークン数と費用は上記で追跡されます。"
+    },
     "emptyState": {
       "title": "会話を開始",
       "description": "メッセージを送信してAIアシスタントとのチャットを始めましょう！",

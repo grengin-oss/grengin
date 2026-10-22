@@ -185,6 +185,43 @@ SPDX-License-Identifier: Apache-2.0
 
   let renderedContent = $state("");
   let isRenderingMarkdown = $state(false);
+
+  // ── Viewport-gated body rendering ──────────────────────────────────────────
+  // A long transcript shouldn't pay the markdown + highlight.js cost for every
+  // message. Off-screen message bodies skip that work and reserve their measured
+  // height with a placeholder; the full body renders only when the message is
+  // near the viewport (or while it is streaming). The `.message` element itself
+  // always stays in the DOM, so the scroll logic and the message navigator —
+  // which look messages up by index — keep working untouched.
+  let bodyNear = $state(false);
+  let measuredBodyH = $state(0);
+  let cachedBodyH = $state(0);
+  // What the last full render was built from — lets a message that scrolls back
+  // into view reuse its HTML instead of re-parsing identical markdown.
+  let lastRenderedSource = "";
+  const bodyRenderFull = $derived(bodyNear || !!message.isStreaming);
+
+  // Keep the reserved placeholder height in step with the live body height.
+  $effect(() => {
+    if (bodyRenderFull && measuredBodyH > 0) cachedBodyH = measuredBodyH;
+  });
+
+  onMount(() => {
+    if (!messageContainer) return;
+    // Observe against the SCROLL container, not the viewport: the transcript
+    // scroller clips off-screen messages, so a viewport-rooted margin never sees
+    // them. Rooting on the scroller makes the margin a real pre-render buffer
+    // above and below the visible area, so scrolling never reveals a placeholder.
+    const root = messageContainer.closest(".messages-container");
+    const io = new IntersectionObserver(
+      (entries) => {
+        bodyNear = entries.some((e) => e.isIntersecting);
+      },
+      { root, rootMargin: "1400px 0px 1400px 0px" },
+    );
+    io.observe(messageContainer);
+    return () => io.disconnect();
+  });
   // Every artifact belonging to this message, taken ONLY from the backend's
   // structured `parts.artifacts` metadata (ENGG-387). The client never parses
   // <artifact> tags or code fences to *derive* artifacts — content is fetched
@@ -286,8 +323,14 @@ SPDX-License-Identifier: Apache-2.0
 
   // Async markdown rendering with copy button addition
   $effect(() => {
+    // Skip the expensive markdown + highlight pass while the body is off-screen;
+    // it runs once the message scrolls near (bodyRenderFull flips true).
+    if (!bodyRenderFull) return;
     const contentToRender =
       message.role === "assistant" ? displayContent : message.content;
+    // Already rendered this exact content — don't re-parse on a scroll-in.
+    if (contentToRender === lastRenderedSource && renderedContent) return;
+    lastRenderedSource = contentToRender;
     const render = async () => {
       if (message.role === "assistant") {
         isRenderingMarkdown = true;
@@ -1144,7 +1187,11 @@ SPDX-License-Identifier: Apache-2.0
       <!-- HTML Preview Button (opens side panel) -->
     </div>
   {/if}
-  <div class="message-body">
+  <div
+    class="message-body"
+    bind:offsetHeight={measuredBodyH}
+    style:min-height={bodyRenderFull ? undefined : (cachedBodyH || 160) + "px"}
+  >
     {#if showThinking}
       <!--
         The live progress row, in the shape Claude Code uses: an animated glyph,
@@ -1213,7 +1260,7 @@ SPDX-License-Identifier: Apache-2.0
       {/if}
     {/if}
 
-    {@html renderedContent}
+    {#if bodyRenderFull}{@html renderedContent}{/if}
 
     {#if hasPreviewableContent}
       {#each artifactContents as artifact, i}

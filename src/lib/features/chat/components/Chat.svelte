@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0
   import TypingIndicator from "./TypingIndicator.svelte";
   import ArtifactPanel from "./ArtifactPanel.svelte";
   import MessageScrollNavigator from "./MessageScrollNavigator.svelte";
+  import UsageMeter from "./UsageMeter.svelte";
   import { streamedToItems, type ArtifactItem, type StreamedArtifact } from "../artifacts";
   import type {
     MergedToolResult,
@@ -117,6 +118,18 @@ SPDX-License-Identifier: Apache-2.0
   let conversationId = $state<string | null>(null);
   // Title of the open conversation — mirrored into the browser tab title.
   let conversationTitle = $state<string | null>(null);
+
+  // Live usage meter: this conversation's running cost/tokens, refreshed after
+  // each turn. There is no per-user budget API, so the meter shows spend plus
+  // context-window usage (tokens vs. the model's window) rather than a budget.
+  let conversationCost = $state(0);
+  let conversationTokens = $state(0);
+
+  // Seed the running per-conversation totals from a freshly fetched conversation.
+  function applyConversationTotals(conv: { total_cost?: number; total_tokens?: number } | null) {
+    conversationCost = conv?.total_cost ?? 0;
+    conversationTokens = conv?.total_tokens ?? 0;
+  }
   // Track if we're still loading the initial conversation
   let isLoadingConversation = $state(
     typeof window !== "undefined" &&
@@ -395,6 +408,13 @@ SPDX-License-Identifier: Apache-2.0
     isImageModel(findModel(providers, selectedModel)?.model),
   );
 
+  // Context window of the selected model, from the registry. Lets the usage meter
+  // show a real progress bar (this chat's tokens vs. the window) without a budget
+  // API — the backend doesn't implement /me/budget, so this is the always-on bar.
+  let contextWindow = $derived(
+    findModel(providers, selectedModel)?.model?.context_window ?? 0,
+  );
+
   // Browser-tab title. Reflects the open conversation's title, falling back to
   // the app name when no conversation is selected. Updates reactively on rename.
   $effect(() => {
@@ -564,7 +584,7 @@ SPDX-License-Identifier: Apache-2.0
    * scroll lands partway up. This re-pins to the bottom on every size change for
    * a short window, then stops so it never fights the reader's own scrolling.
    */
-  function scrollToBottomReliably(settleMs = 1500) {
+  function scrollToBottomReliably(maxMs = 4000) {
     if (!messagesContainer) return;
     const container = messagesContainer;
     const inner = container.querySelector(".messages-inner") as HTMLElement | null;
@@ -575,23 +595,36 @@ SPDX-License-Identifier: Apache-2.0
     const prevBehavior = container.style.scrollBehavior;
     container.style.scrollBehavior = "auto";
 
-    let timer: ReturnType<typeof setTimeout> | null = null;
+    let stableTimer: ReturnType<typeof setTimeout> | null = null;
+    let hardTimer: ReturnType<typeof setTimeout> | null = null;
     // Instant re-pin on each size change — the opening jump should land at the
     // bottom immediately, not animate, as late content grows the transcript.
     const jump = () => {
       container.scrollTop = container.scrollHeight;
     };
 
-    const observer = new ResizeObserver(() => jump());
+    // Release only after the height has been STABLE for a beat. With virtualized
+    // message bodies, the bottom renders progressively, so a fixed timer races
+    // the content; instead keep re-pinning until growth stops (or a hard cap).
+    const armStable = () => {
+      if (stableTimer) clearTimeout(stableTimer);
+      stableTimer = setTimeout(stop, 500);
+    };
 
-    const stop = () => {
+    const observer = new ResizeObserver(() => {
+      jump();
+      armStable();
+    });
+
+    function stop() {
       observer.disconnect();
       container.removeEventListener("wheel", stop);
       container.removeEventListener("touchmove", stop);
-      if (timer) clearTimeout(timer);
+      if (stableTimer) clearTimeout(stableTimer);
+      if (hardTimer) clearTimeout(hardTimer);
       container.style.scrollBehavior = prevBehavior;
       if (stopPinToBottom === stop) stopPinToBottom = null;
-    };
+    }
 
     jump();
     requestAnimationFrame(() => {
@@ -602,7 +635,8 @@ SPDX-License-Identifier: Apache-2.0
     // The reader taking over (wheel/touch) cancels the auto-pin immediately.
     container.addEventListener("wheel", stop, { passive: true });
     container.addEventListener("touchmove", stop, { passive: true });
-    timer = setTimeout(stop, settleMs);
+    armStable();
+    hardTimer = setTimeout(stop, maxMs);
     stopPinToBottom = stop;
     showScrollToBottom = false;
   }
@@ -1087,7 +1121,16 @@ SPDX-License-Identifier: Apache-2.0
             };
           }
         },
-        onDone: async (_data) => {
+        onDone: async (data) => {
+          // Live usage meter: fold this turn's spend into the running total so
+          // the meter updates without waiting for a reload.
+          const u = data as
+            | { cost?: number; total_tokens?: number; usage?: { total_tokens?: number } }
+            | undefined;
+          const turnCost = u?.cost;
+          const turnTokens = u?.usage?.total_tokens ?? u?.total_tokens;
+          if (typeof turnCost === "number") conversationCost += turnCost;
+          if (typeof turnTokens === "number") conversationTokens += turnTokens;
           if (pendingStreamingMessage) {
             let updatedMergedWebSearch = null;
             if (pendingStreamingMessage.mergedWebSearch) {
@@ -1389,6 +1432,7 @@ SPDX-License-Identifier: Apache-2.0
       const conversation = await switchBranch(conversationId, messageId);
       conversationTitle = conversation.title || null;
       messages = mapServerMessages(conversation);
+      applyConversationTotals(conversation);
       // The shown version can expose a different artifact set — reset the panel
       // and re-prime the stream so it reflects the version now on screen.
       showArtifactPanel = false;
@@ -1721,7 +1765,16 @@ SPDX-License-Identifier: Apache-2.0
             };
           }
         },
-        onDone: async (_data) => {
+        onDone: async (data) => {
+          // Live usage meter: fold this turn's spend into the running total so
+          // the meter updates without waiting for a reload.
+          const u = data as
+            | { cost?: number; total_tokens?: number; usage?: { total_tokens?: number } }
+            | undefined;
+          const turnCost = u?.cost;
+          const turnTokens = u?.usage?.total_tokens ?? u?.total_tokens;
+          if (typeof turnCost === "number") conversationCost += turnCost;
+          if (typeof turnTokens === "number") conversationTokens += turnTokens;
           if (pendingStreamingMessage) {
             let updatedMergedWebSearch = null;
             if (pendingStreamingMessage.mergedWebSearch) {
@@ -1989,6 +2042,7 @@ SPDX-License-Identifier: Apache-2.0
     const conversation = await getConversation(chatId);
     conversationTitle = conversation.title || null;
     messages = mapServerMessages(conversation);
+    applyConversationTotals(conversation);
     restoreArtifactStream(chatId);
   }
 
@@ -2010,6 +2064,7 @@ SPDX-License-Identifier: Apache-2.0
 
         // Convert server messages to the client's ChatMessageType shape.
         messages = mapServerMessages(conversation);
+        applyConversationTotals(conversation);
         restoreArtifactStream(chatId);
 
         // Web search enabled
@@ -2080,6 +2135,8 @@ SPDX-License-Identifier: Apache-2.0
       conversationId = null;
       conversationTitle = null;
       messages = [];
+      conversationCost = 0;
+      conversationTokens = 0;
       error = null;
       isLoadingConversation = false;
       showArtifactPanel = false;
@@ -2585,7 +2642,18 @@ SPDX-License-Identifier: Apache-2.0
           {conversationId}
           bind:pendingSkillIds
         />
-        <p class="ai-disclaimer">{$_("chat.emptyState.aiDisclaimer")}</p>
+        <div class="composer-meta-bar">
+          <div class="meta-spacer" aria-hidden="true"></div>
+          <p class="ai-disclaimer">{$_("chat.emptyState.aiDisclaimer")}</p>
+          <div class="usage-slot">
+            <UsageMeter
+              {conversationCost}
+              {conversationTokens}
+              {contextWindow}
+              modelName={findModel(providers, selectedModel)?.model?.name ?? selectedModel}
+            />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2948,13 +3016,18 @@ SPDX-License-Identifier: Apache-2.0
 
   .input-container .ai-disclaimer {
     margin: 0;
-    width: min(720px, 100%);
+    width: auto;
+    max-width: 680px;
     font-family: var(--gx-font-display);
     font-weight: 400;
     font-size: 11px;
     line-height: 14px;
     text-align: center;
     color: var(--gx-slate-400);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 12px;
   }
 
   .error-banner--centered {
@@ -3154,6 +3227,53 @@ SPDX-License-Identifier: Apache-2.0
     width: 100%;
     box-sizing: border-box;
   }
+
+  /* Meta bar below the composer: aligns the usage meter directly with the right edge
+     of the composer box, while keeping the AI disclaimer centered. */
+  .composer-meta-bar {
+    width: min(1048px, 100%);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    position: relative;
+    min-height: 28px;
+    margin-top: 4px;
+    padding: 0 4px;
+    box-sizing: border-box;
+  }
+
+  .meta-spacer {
+    min-width: 0;
+  }
+
+  .usage-slot {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    z-index: 20;
+    min-width: 0;
+  }
+
+  @media (max-width: 768px) {
+    .composer-meta-bar {
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 6px;
+      min-height: auto;
+      margin-top: 2px;
+    }
+
+    .meta-spacer {
+      display: none;
+    }
+
+    .usage-slot {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+
 
   /* Floating "jump to latest" control — sits just above the composer, centred
      over the transcript column (so it follows the artifact-panel split). */

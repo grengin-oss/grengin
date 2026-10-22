@@ -1,6 +1,27 @@
 {
   "chat": {
     "scrollToLatest": "Scroll to latest",
+    "usage": {
+      "title": "Context & Usage",
+      "modelMemory": "Model Memory",
+      "contextWindow": "Context Window",
+      "budget": "Budget",
+      "resets": "Resets {date}",
+      "thisChat": "This chat",
+      "tokens": "tokens",
+      "remaining": "Remaining",
+      "used": "Used",
+      "capacity": "Total Capacity",
+      "sessionCost": "Session Cost",
+      "totalTokens": "Total Tokens",
+      "optimal": "Optimal",
+      "fillingUp": "Filling up",
+      "nearLimit": "Near limit",
+      "optimalDesc": "The context window is the model's active working memory. This conversation has plenty of room for discussion.",
+      "warningDesc": "Context memory is 75%+ full. The AI may begin summarizing earlier messages to stay within limits.",
+      "criticalDesc": "Context is almost full. To maintain peak reasoning quality and avoid message truncation, start a new chat.",
+      "unspecifiedDesc": "This model does not report a fixed context window limit. Total tokens and session spend are tracked above."
+    },
     "skills": {
       "label": "Skills",
       "tooltip": "Attach skills to this conversation",

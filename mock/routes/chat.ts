@@ -4,7 +4,7 @@
 import { Router } from 'express'
 import { faker } from '@faker-js/faker'
 import { requireAuth } from '../lib/middleware.js'
-import { conversations, messages, files, type Conversation, type Message, type UserFile } from '../lib/store.js'
+import { conversations, messages, files, usageState, type Conversation, type Message, type UserFile } from '../lib/store.js'
 
 const router = Router()
 
@@ -88,6 +88,9 @@ function buildConversationResponse(conversation: Conversation, conversationMessa
     title: conversation.title,
     totalCost: conversationMessages.reduce((sum, msg) => sum + (msg.usage?.input_tokens ? 0.001 : 0.1), 0),
     totalTokens: conversationMessages.reduce((sum, msg) => sum + ((msg.usage?.input_tokens || 0) + (msg.usage?.output_tokens || 0)), 0),
+    // Spec-shaped (snake_case) totals, matching the real backend's ConversationDetail.
+    total_cost: conversationMessages.reduce((sum, msg) => sum + (msg.usage?.input_tokens ? 0.001 : 0.1), 0),
+    total_tokens: conversationMessages.reduce((sum, msg) => sum + ((msg.usage?.input_tokens || 0) + (msg.usage?.output_tokens || 0)), 0),
     updatedAt: conversation.updated_at,
   }
 }
@@ -420,11 +423,20 @@ router.post(['/chat/stream', '/chat/stream/:conversationId'], requireAuth, async
   }
 
   // Send done event
-  res.write(`event: done\ndata: ${JSON.stringify({
-    conversation_id: conversationId,
-    user_message_id: userMsgId,
-    assistant_message_id: assistantMsgId
-  })}\n\n`)
+  {
+    // Mock per-turn usage: derived from the streamed text length so the live
+    // meter has something to add, and bump the running budget spend.
+    const turnTokens = Math.max(1, Math.round(sentText.length / 4))
+    const turnCost = Math.round(turnTokens * 0.000002 * 10000) / 10000
+    usageState.spend = Math.round((usageState.spend + turnCost + 2) * 100) / 100
+    res.write(`event: done\ndata: ${JSON.stringify({
+      conversation_id: conversationId,
+      user_message_id: userMsgId,
+      assistant_message_id: assistantMsgId,
+      cost: turnCost,
+      usage: { total_tokens: turnTokens },
+    })}\n\n`)
+  }
 
   res.end()
 })

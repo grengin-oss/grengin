@@ -59,6 +59,7 @@ const ALLOWED_IDENTICAL_VALUES = new Set([
   // Unavoidable cognates (identical in EN + FR/ES/PT with no natural alternative)
   "No",
   "Tokens",
+  "tokens",
   "Total",
   "Error",
   "Pagination",
