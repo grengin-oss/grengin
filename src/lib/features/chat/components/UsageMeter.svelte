@@ -188,9 +188,6 @@ SPDX-License-Identifier: Apache-2.0
             </div>
             <div class="pop-title-wrap">
               <h4 class="pop-title">{$_("chat.usage.title")}</h4>
-              {#if modelName}
-                <span class="pop-subtitle" title={modelName}>{modelName}</span>
-              {/if}
             </div>
           </div>
           <button
@@ -532,16 +529,6 @@ SPDX-License-Identifier: Apache-2.0
     line-height: 1.2;
     color: var(--text-primary, #0f172a);
     letter-spacing: -0.01em;
-  }
-
-  .pop-subtitle {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-secondary, #64748b);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-top: 1px;
   }
 
   .pop-close-btn {
