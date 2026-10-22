@@ -1,6 +1,27 @@
 {
   "chat": {
     "scrollToLatest": "Aller au plus récent",
+    "usage": {
+      "title": "Contexte et utilisation",
+      "modelMemory": "Mémoire du modèle",
+      "contextWindow": "Fenêtre de contexte",
+      "budget": "Budget",
+      "resets": "Réinitialisation le {date}",
+      "thisChat": "Ce chat",
+      "tokens": "jetons",
+      "remaining": "Restant",
+      "used": "Utilisé",
+      "capacity": "Capacité totale",
+      "sessionCost": "Coût de la session",
+      "totalTokens": "Total des jetons",
+      "optimal": "Idéal",
+      "fillingUp": "Se remplit",
+      "nearLimit": "Presque plein",
+      "optimalDesc": "La fenêtre de contexte est la mémoire active du modèle. Cette conversation a amplement d'espace.",
+      "warningDesc": "La mémoire de contexte est pleine à plus de 75 %. L'IA peut commencer à résumer les messages précédents.",
+      "criticalDesc": "Le contexte est presque plein. Pour conserver une qualité de réponse optimale, démarrez une nouvelle conversation.",
+      "unspecifiedDesc": "Ce modèle n'indique pas de limite de contexte fixe. La dépense et les jetons sont suivis ci-dessus."
+    },
     "emptyState": {
       "title": "Démarrer une conversation",
       "description": "Envoyez un message pour commencer à discuter avec l'assistant IA !",

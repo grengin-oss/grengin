@@ -39,6 +39,8 @@ export interface Project {
 export const conversations = new Map<string, Conversation>()
 export const messages = new Map<string, Message[]>()
 export const files = new Map<string, UserFile>()
+/** Running mock spend, so /me/budget rises as the user chats (live usage meter). */
+export const usageState = { spend: 0 }
 /** Persisted artifact content, served by GET /artifacts/:id (ENGG-387). */
 export const artifacts = new Map<string, {
   id: string; title: string; content_type: string; content: string;

@@ -10,6 +10,8 @@
           "key": "gpt-5",
           "name": "GPT 5",
           "engine": "openai",
+          "context_window": 400000,
+          "max_output_tokens": 128000,
           "supports_streaming": true,
           "supports_tools": true,
           "supports_vision": true,
