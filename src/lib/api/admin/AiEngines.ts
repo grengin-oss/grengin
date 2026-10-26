@@ -15,6 +15,33 @@ export async function getAIEngines(): Promise<AIEngine[]> {
   return response;
 }
 
+export async function getAIProviderSuggestions(): Promise<AIEngine[]> {
+  const response = await request<{
+    providers: Array<{ id: string; name: string; icon?: string | null; icon_dark?: string | null }>;
+  }>('/discovery/ai-providers', { method: 'GET' });
+  return response.providers.map((provider) => ({
+    engine_key: provider.id,
+    display_name: provider.name,
+    icon: provider.icon ?? undefined,
+    icon_dark: provider.icon_dark ?? undefined,
+    is_enabled: false,
+    api_key_configured: false,
+    api_key_status: 'not_configured',
+  }));
+}
+
+export async function saveAIEngineKey(
+  engineKey: string,
+  apiKey: string,
+  installed: boolean,
+): Promise<AIEngine> {
+  if (installed) return updateAIEngine(engineKey, { api_key: apiKey });
+  return request<AIEngine>('/admin/ai-engines', {
+    method: 'POST',
+    body: JSON.stringify({ engine_key: engineKey, api_key: apiKey }),
+  });
+}
+
 export async function getAIEngine(engineKey: string): Promise<AIEngine> {
   const response = await request<AIEngine>(`/admin/ai-engines/${engineKey}`, {
     method: 'GET',

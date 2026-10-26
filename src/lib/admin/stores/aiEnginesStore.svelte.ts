@@ -10,6 +10,8 @@ import type {
 } from '../types.js';
 import {
   getAIEngines,
+  getAIProviderSuggestions,
+  saveAIEngineKey,
   updateAIEngine,
   validateAIEngineKey,
   getAIEngineModels,
@@ -20,12 +22,15 @@ import { getBranding, updateBranding } from '../../api/admin/branding.js';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import { onboarding } from '../../features/onboarding/onboardingState.svelte.js';
+import { mergeProviderSuggestions } from '../providerSuggestions.js';
 
 type ApiKeyStatus = 'valid' | 'in_valid' | 'not_validated' | 'not_configured';
 type ApiKeyMode = 'cta' | 'add' | 'view' | 'update';
 
 function createAIEnginesStore() {
   let engines = $state<AIEngine[]>([]);
+  let providerSuggestions = $state<AIEngine[]>([]);
+  let catalogError = $state<string | null>(null);
   let isLoading = $state(false);
   let error = $state<any | null>(null);
   let defaultEngineKey = $state<string | undefined>(undefined);
@@ -80,17 +85,23 @@ function createAIEnginesStore() {
   async function fetch() {
     isLoading = true;
     error = null;
+    catalogError = null;
 
     try {
       // Fetch engines and branding settings in parallel
-      const [enginesData, branding] = await Promise.all([
+      const [enginesData, branding, suggestions] = await Promise.all([
         getAIEngines(),
         getBranding(),
+        getAIProviderSuggestions().catch((err: unknown) => {
+          catalogError = err instanceof Error ? err.message : String(err);
+          return [];
+        }),
       ]);
 
       // Store default engine key from branding settings
       defaultEngineKey = branding.settings?.default_engine;
       engines = enginesData;
+      providerSuggestions = suggestions;
     } catch (err: any) {
       error = err;
       throw err;
@@ -361,9 +372,11 @@ function createAIEnginesStore() {
 
     apiKeyLoading = true;
     try {
-      await updateAIEngine(selectedEngine.engine_key, {
-        api_key: trimmedKey,
-      });
+      await saveAIEngineKey(
+        selectedEngine.engine_key,
+        trimmedKey,
+        engines.some((engine) => engine.engine_key === selectedEngine?.engine_key),
+      );
       apiKeyStatus = 'not_validated';
       apiKeyMessage = getStatusMessage('not_validated');
       apiKeyMode = 'view';
@@ -452,6 +465,8 @@ function createAIEnginesStore() {
 
   function reset() {
     engines = [];
+    providerSuggestions = [];
+    catalogError = null;
     isLoading = false;
     error = null;
     defaultEngineKey = undefined;
@@ -478,6 +493,12 @@ function createAIEnginesStore() {
     // State getters
     get engines() {
       return engines;
+    },
+    get suggestedEngines() {
+      return mergeProviderSuggestions(engines, providerSuggestions);
+    },
+    get catalogError() {
+      return catalogError;
     },
     get isLoading() {
       return isLoading;
