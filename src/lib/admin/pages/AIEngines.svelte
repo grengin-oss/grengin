@@ -238,7 +238,7 @@ SPDX-License-Identifier: Apache-2.0
 
   /** Providers you have not connected yet — what ".bp-modal" offers to add. */
   const availableProviders = $derived(
-    store.engines.filter((engine) => !isConnected(engine)),
+    store.suggestedEngines.filter((engine) => !isConnected(engine)),
   );
 
   const browseMatches = $derived.by(() => {
@@ -989,7 +989,7 @@ SPDX-License-Identifier: Apache-2.0
     <AdminPanelCard>
       <LoadingSpinner text={$_("aiEngines.loading")} />
     </AdminPanelCard>
-  {:else if store.engines.length === 0}
+  {:else if store.suggestedEngines.length === 0}
     <AdminPanelCard>
       <AdminEmptyState
         title={$_("aiEngines.emptyTitle")}
@@ -2160,8 +2160,13 @@ SPDX-License-Identifier: Apache-2.0
   {/snippet}
 
   {#snippet children()}
+    {#if store.catalogError}
+      <p class="bp-empty" role="alert">{store.catalogError}</p>
+    {/if}
     {#if availableProviders.length === 0}
-      <p class="bp-empty">{$_("aiEngines.browse.allConnected")}</p>
+      {#if !store.catalogError}
+        <p class="bp-empty">{$_("aiEngines.browse.allConnected")}</p>
+      {/if}
     {:else}
       <div
         class="bp-tabs"
