@@ -228,7 +228,12 @@ SPDX-License-Identifier: Apache-2.0
 
   const visibleEngines = $derived.by(() =>
     searchedEngines.filter((engine) => {
-      if (filter === "connected") return isHealthy(engine);
+      // "Your Engines" lists every engine the user has configured a key for —
+      // matching the "N of 18 connected" stat — even when it is still disabled
+      // or its key is unvalidated (e.g. a key just added, is_enabled: false,
+      // not_validated). Such an engine renders in a disabled state with the
+      // enable toggle active, so the user can turn it on from here.
+      if (filter === "connected") return isConnected(engine);
       // Hidden for now along with their pills: engines that need attention
       // (no key, invalid or unvalidated key, disabled) and the "All" view.
       // if (filter === "attention") return !isHealthy(engine);
