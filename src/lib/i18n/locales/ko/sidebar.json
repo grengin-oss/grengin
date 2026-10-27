@@ -1,6 +1,11 @@
 {
   "sidebar": {
     "newChat": "새 채팅",
+    "cmdActionsGroup": "작업",
+    "cmdModelsGroup": "모델",
+    "cmdGoProjects": "프로젝트로 이동",
+    "cmdGoSettings": "설정 열기",
+    "cmdToggleWebSearch": "웹 검색 전환",
     "users": "사용자",
     "adminPanel": "관리 센터",
     "backToChat": "채팅으로 돌아가기",

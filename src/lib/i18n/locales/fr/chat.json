@@ -60,6 +60,10 @@
     },
     "messageInput": {
       "placeholder": "Demander n'importe quoi",
+      "commandsLabel": "Commandes",
+      "mentionsLabel": "Mentions",
+      "noMatches": "Aucun résultat",
+      "webSearch": "Recherche web",
       "placeholderWithModel": "Message à {model}",
       "recordingPlaceholder": "En cours d'écoute... Parlez maintenant",
       "addContent": "Ajouter du contenu",

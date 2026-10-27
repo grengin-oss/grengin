@@ -60,6 +60,10 @@
     },
     "messageInput": {
       "placeholder": "何でも聞いてください",
+      "commandsLabel": "コマンド",
+      "mentionsLabel": "メンション",
+      "noMatches": "一致するものがありません",
+      "webSearch": "ウェブ検索",
       "placeholderWithModel": "{model}にメッセージ",
       "recordingPlaceholder": "聞いています... 今話してください",
       "addContent": "コンテンツを追加",

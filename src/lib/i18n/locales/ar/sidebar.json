@@ -1,6 +1,11 @@
 {
   "sidebar": {
     "newChat": "محادثة جديدة",
+    "cmdActionsGroup": "الإجراءات",
+    "cmdModelsGroup": "النماذج",
+    "cmdGoProjects": "الانتقال إلى المشاريع",
+    "cmdGoSettings": "فتح الإعدادات",
+    "cmdToggleWebSearch": "تبديل البحث على الويب",
     "users": "المستخدمون",
     "adminPanel": "مركز التحكم",
     "backToChat": "العودة إلى الدردشة",
