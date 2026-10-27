@@ -1,6 +1,11 @@
 {
   "sidebar": {
     "newChat": "新しいチャット",
+    "cmdActionsGroup": "アクション",
+    "cmdModelsGroup": "モデル",
+    "cmdGoProjects": "プロジェクトへ移動",
+    "cmdGoSettings": "設定を開く",
+    "cmdToggleWebSearch": "ウェブ検索を切り替え",
     "users": "ユーザー",
     "adminPanel": "管理センター",
     "backToChat": "チャットに戻る",

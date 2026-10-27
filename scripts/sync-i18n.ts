@@ -71,6 +71,8 @@ const ALLOWED_IDENTICAL_VALUES = new Set([
   "Pause",
   "Notifications",
   "Maintenance",
+  "Actions",
+  "Mentions",
   // Brand / example values that are intentionally identical across locales
   "Let's Encrypt",
   "chat.example.com",

@@ -60,6 +60,10 @@
     },
     "messageInput": {
       "placeholder": "اسأل أي شيء",
+      "commandsLabel": "الأوامر",
+      "mentionsLabel": "الإشارات",
+      "noMatches": "لا توجد نتائج",
+      "webSearch": "البحث على الويب",
       "placeholderWithModel": "رسالة إلى {model}",
       "recordingPlaceholder": "جارٍ الاستماع... تحدث الآن",
       "addContent": "إضافة محتوى",

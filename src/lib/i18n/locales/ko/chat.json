@@ -60,6 +60,10 @@
     },
     "messageInput": {
       "placeholder": "무엇이든 물어보세요",
+      "commandsLabel": "명령어",
+      "mentionsLabel": "멘션",
+      "noMatches": "일치하는 항목 없음",
+      "webSearch": "웹 검색",
       "placeholderWithModel": "{model}에 메시지",
       "recordingPlaceholder": "듣는 중... 지금 말하세요",
       "addContent": "콘텐츠 추가",
