@@ -36,6 +36,7 @@ SPDX-License-Identifier: Apache-2.0
   } from "$lib/features/onboarding/index.js";
   import { _ } from "svelte-i18n";
   import { clearReturnTo, consumeReturnTo } from "$lib/utils/returnTo.js";
+  import { handleGlobalShortcut } from "$lib/features/shortcuts/shortcuts.svelte.js";
 
   let sidebarCollapsed = $state(false);
   let currentPath = $state(window.location.pathname);
@@ -287,6 +288,13 @@ SPDX-License-Identifier: Apache-2.0
     closeDrawer();
   }
 
+  // App-global shortcuts run first (Cmd+K palette, "/" focus composer), then
+  // the drawer's Escape handling. Neither stops an event the other claimed.
+  function handleWindowKeydown(event: KeyboardEvent) {
+    handleGlobalShortcut(event);
+    handleDrawerKeydown(event);
+  }
+
   function handleMainContentClick(event: Event) {
     const target = event.target as HTMLElement;
     const isInteractiveElement =
@@ -304,7 +312,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 </script>
 
-<svelte:window onkeydown={handleDrawerKeydown} />
+<svelte:window onkeydown={handleWindowKeydown} />
 
 <Toaster />
 <Router>

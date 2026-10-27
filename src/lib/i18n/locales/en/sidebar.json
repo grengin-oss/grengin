@@ -1,6 +1,11 @@
 {
   "sidebar": {
     "newChat": "New chat",
+    "cmdActionsGroup": "Actions",
+    "cmdModelsGroup": "Models",
+    "cmdGoProjects": "Go to Projects",
+    "cmdGoSettings": "Open Settings",
+    "cmdToggleWebSearch": "Toggle web search",
     "skills": "Skills",
     "users": "Users",
     "adminPanel": "Control Hub",

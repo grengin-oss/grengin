@@ -24,6 +24,13 @@ SPDX-License-Identifier: Apache-2.0
   import { navigate } from "svelte-routing";
   import { permissionsStore } from "../../auth/index.js";
   import SkillPicker from "./SkillPicker.svelte";
+  import ComposerSuggestions from "./ComposerSuggestions.svelte";
+  import {
+    detectTrigger,
+    type TriggerKind,
+    type ComposerSuggestion,
+  } from "../composerTriggers";
+  import type { SkillCatalogEntry } from "../../../types/skill.js";
   import {
     providerIconSvg,
     providerIconUrl,
@@ -418,13 +425,196 @@ SPDX-License-Identifier: Apache-2.0
 
   function handleInput() {
     autoResize();
+    updateTriggerState();
+  }
+
+  // ===== Inline "/" command & "@" mention menu =====
+  // SkillPicker (always mounted) owns the skill catalog and link/unlink side
+  // effects; the inline menu reads its published `skillCatalog` and calls its
+  // `toggleById`, so there is one source of truth for skills.
+  let skillPicker = $state<{ toggleById: (id: string) => void } | undefined>(
+    undefined,
+  );
+  let skillCatalog = $state<SkillCatalogEntry[]>([]);
+
+  let suggestOpen = $state(false);
+  let suggestKind = $state<TriggerKind | null>(null);
+  let suggestQuery = $state("");
+  let suggestStart = $state(0); // index of the trigger char in `message`
+  let suggestActive = $state(0);
+
+  function closeSuggest() {
+    suggestOpen = false;
+    suggestKind = null;
+    suggestQuery = "";
+    suggestActive = 0;
+  }
+
+  // Re-evaluate the trigger token under the caret after each input event.
+  function updateTriggerState() {
+    if (!textarea) {
+      closeSuggest();
+      return;
+    }
+    const caret = textarea.selectionStart ?? message.length;
+    const match = detectTrigger(message, caret);
+    if (!match) {
+      closeSuggest();
+      return;
+    }
+    suggestKind = match.kind;
+    suggestQuery = match.query;
+    suggestStart = match.start;
+    suggestActive = 0;
+    suggestOpen = true;
+  }
+
+  const suggestLabel = $derived(
+    suggestKind === "mention"
+      ? $_("chat.messageInput.mentionsLabel")
+      : $_("chat.messageInput.commandsLabel"),
+  );
+
+  // Composer actions offered by the "/" menu, alongside skills.
+  const slashActions = $derived<ComposerSuggestion[]>([
+    {
+      id: "action:web-search",
+      title: $_("chat.messageInput.webSearch"),
+      icon: "🌐",
+      selected: webSearchEnabled,
+    },
+    {
+      id: "action:attach",
+      title: $_("chat.messageInput.addPhotosAndFiles"),
+      icon: "📎",
+    },
+  ]);
+
+  const suggestItems = $derived.by<ComposerSuggestion[]>(() => {
+    if (!suggestOpen || !suggestKind) return [];
+    const q = suggestQuery.toLowerCase();
+
+    const skillRows: ComposerSuggestion[] = skillCatalog
+      .filter((s) => `${s.name} ${s.description ?? ""}`.toLowerCase().includes(q))
+      .map((s) => ({
+        id: `skill:${s.id}`,
+        title: s.name,
+        subtitle: s.description,
+        icon: s.avatar,
+        selected: s.selected,
+      }));
+
+    if (suggestKind === "slash") {
+      const actionRows = slashActions.filter((a) =>
+        a.title.toLowerCase().includes(q),
+      );
+      return [...actionRows, ...skillRows];
+    }
+
+    // "@" mention: MCP servers first, then skills.
+    const mcpRows: ComposerSuggestion[] = (mcpServers ?? [])
+      .filter((srv) => (srv.name ?? "").toLowerCase().includes(q))
+      .map((srv) => ({
+        id: `mcp:${srv.id}`,
+        title: srv.name ?? srv.id,
+        icon: "🔌",
+        selected: selectedMcpServers.includes(srv.id),
+      }));
+    return [...mcpRows, ...skillRows];
+  });
+
+  // Strip the "/query" or "@query" token from the composer — a command is an
+  // instruction, not literal text to send.
+  function removeTriggerText() {
+    const caret = textarea?.selectionStart ?? message.length;
+    const before = message.slice(0, suggestStart);
+    const after = message.slice(caret);
+    message = before + after;
+    tick().then(() => {
+      textarea?.focus();
+      textarea?.setSelectionRange(before.length, before.length);
+      autoResize();
+    });
+  }
+
+  function applySuggestion(item: ComposerSuggestion) {
+    removeTriggerText();
+    if (item.id.startsWith("skill:")) {
+      skillPicker?.toggleById(item.id.slice("skill:".length));
+    } else if (item.id.startsWith("mcp:")) {
+      onMcpToggle?.(item.id.slice("mcp:".length));
+    } else if (item.id === "action:web-search") {
+      onWebSearchToggle?.();
+    } else if (item.id === "action:attach") {
+      fileInput?.click();
+    }
+    closeSuggest();
   }
 
   function handleKeyDown(event: KeyboardEvent) {
-    if (event.key === "Enter" && !event.shiftKey) {
+    // The inline "/" / "@" menu claims navigation keys while it's open.
+    if (suggestOpen) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeSuggest();
+        return;
+      }
+      if (suggestItems.length > 0) {
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          suggestActive = (suggestActive + 1) % suggestItems.length;
+          return;
+        }
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          suggestActive =
+            (suggestActive - 1 + suggestItems.length) % suggestItems.length;
+          return;
+        }
+        if (event.key === "Enter" || event.key === "Tab") {
+          event.preventDefault();
+          applySuggestion(suggestItems[suggestActive]);
+          return;
+        }
+      }
+    }
+
+    // Esc stops an in-flight generation (only while one can be stopped). Handled
+    // here, where the composer has focus during a stream, so it never clashes
+    // with the app-wide Escape that closes menus and drawers.
+    if (event.key === "Escape" && canStop && onStop && !stopping) {
+      event.preventDefault();
+      onStop();
+      return;
+    }
+
+    // Enter and Cmd/Ctrl+Enter both send; Shift+Enter inserts a newline.
+    const isSend =
+      (event.key === "Enter" && !event.shiftKey) ||
+      ((event.metaKey || event.ctrlKey) && event.key === "Enter");
+    if (isSend) {
       event.preventDefault();
       handleSend();
     }
+  }
+
+  // Pasting an image (screenshot, copied picture) attaches it as a file instead
+  // of dropping a data URL into the text. Non-image clipboard content (plain
+  // text) falls through to the browser's default paste.
+  function handlePaste(event: ClipboardEvent) {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+    const images: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === "file" && item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) images.push(file);
+      }
+    }
+    if (images.length === 0) return;
+    event.preventDefault();
+    addFiles(images);
   }
 
   let isUploading = $derived(uploadingFiles.size > 0);
@@ -1541,6 +1731,8 @@ SPDX-License-Identifier: Apache-2.0
           bind:value={message}
           oninput={handleInput}
           onkeydown={handleKeyDown}
+          onpaste={handlePaste}
+          onblur={() => closeSuggest()}
           placeholder={currentPlaceholder}
           {disabled}
           rows="1"
@@ -1548,6 +1740,17 @@ SPDX-License-Identifier: Apache-2.0
           class:recording={isRecording}
           aria-label={$_("chat.messageInput.messageInput")}
         ></textarea>
+
+        <!-- Inline "/" command & "@" mention menu, anchored above the stack -->
+        <ComposerSuggestions
+          open={suggestOpen}
+          items={suggestItems}
+          activeIndex={suggestActive}
+          label={suggestLabel}
+          emptyLabel={$_("chat.messageInput.noMatches")}
+          onhover={(i) => (suggestActive = i)}
+          onselect={applySuggestion}
+        />
       </div>
 
       <!-- Floating Bottom Bar -->
@@ -1900,9 +2103,11 @@ SPDX-License-Identifier: Apache-2.0
                   >{$_("chat.skills.label")}</span
                 >
                 <SkillPicker
+                  bind:this={skillPicker}
                   {conversationId}
                   bind:pendingSkillIds
                   bind:selectedCount={activeSkillCount}
+                  bind:catalog={skillCatalog}
                 />
               </div>
 
@@ -2487,6 +2692,8 @@ SPDX-License-Identifier: Apache-2.0
     flex-direction: column;
     gap: 10px;
     min-width: 0;
+    /* Anchor for the inline "/" and "@" suggestion popover. */
+    position: relative;
   }
 
   .input-container-main:focus-within {

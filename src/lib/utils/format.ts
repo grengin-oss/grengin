@@ -151,11 +151,13 @@ export function formatRelativeDay(
  * Short "time ago" stamp for a row that is already dated by its group header,
  * as drawn under every timestamp in audit-logs.html ("12 min ago",
  * "2 hours ago"). Wording comes from Intl.RelativeTimeFormat, so no i18n keys
- * are needed.
+ * are needed. Pass `style: 'long'` for the spelled-out form the chat action row
+ * uses ("1 hour ago" instead of "1 hr. ago").
  */
 export function formatRelativeTime(
   date: Date | string | null | undefined,
-  fallback: string = ''
+  fallback: string = '',
+  style: Intl.RelativeTimeFormatStyle = 'short'
 ): string {
   if (!date || (typeof date === 'string' && !date.trim())) {
     return fallback;
@@ -192,12 +194,12 @@ export function formatRelativeTime(
   try {
     return new Intl.RelativeTimeFormat(currentLocale, {
       numeric: 'auto',
-      style: 'short',
+      style,
     }).format(value, unit);
   } catch {
     return new Intl.RelativeTimeFormat(undefined, {
       numeric: 'auto',
-      style: 'short',
+      style,
     }).format(value, unit);
   }
 }

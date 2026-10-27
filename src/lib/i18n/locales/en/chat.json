@@ -70,6 +70,10 @@
     },
     "messageInput": {
       "placeholder": "Ask anything",
+      "commandsLabel": "Commands",
+      "mentionsLabel": "Mentions",
+      "noMatches": "No matches",
+      "webSearch": "Web search",
       "placeholderWithModel": "Message {model}",
       "recordingPlaceholder": "Listening... Speak now",
       "addContent": "Add content",

@@ -29,6 +29,7 @@ SPDX-License-Identifier: Apache-2.0
   import {
     isArtifactsSkill,
     type SkillResponse,
+    type SkillCatalogEntry,
   } from "../../../types/skill.js";
   import { ApiError } from "../../../api/client.js";
   import { toast } from "../../../components/Toaster.svelte";
@@ -40,12 +41,15 @@ SPDX-License-Identifier: Apache-2.0
     pendingSkillIds?: string[];
     /** How many skills are currently on — read by the Tools chip's badge. Bindable. */
     selectedCount?: number;
+    /** Render-ready catalog (with on/off state) for the composer's inline "/" menu. Bindable. */
+    catalog?: SkillCatalogEntry[];
   }
 
   let {
     conversationId = null,
     pendingSkillIds = $bindable([]),
     selectedCount = $bindable(0),
+    catalog = $bindable([]),
   }: Props = $props();
 
   let loading = $state(false);
@@ -60,6 +64,25 @@ SPDX-License-Identifier: Apache-2.0
   $effect(() => {
     selectedCount = selectedIds.length;
   });
+
+  // Publish a flattened catalog upward for the composer's inline "/" menu, kept
+  // in sync with the loaded skills and the current selection.
+  $effect(() => {
+    catalog = available.map((skill) => ({
+      id: skill.id,
+      name: skill.name,
+      description: skill.description ?? undefined,
+      avatar: skill.avatar ?? "✨",
+      selected: selectedIds.includes(skill.id),
+    }));
+  });
+
+  // Imperative entry point for the inline "/" menu: toggle a skill by id,
+  // reusing the same link/unlink + staging logic as the Tools menu rows.
+  export function toggleById(id: string) {
+    const skill = available.find((s) => s.id === id);
+    if (skill) void toggle(skill);
+  }
 
   /*
    * The built-in "artifacts" skill is deliberately absent from this menu: it
