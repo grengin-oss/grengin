@@ -6,17 +6,29 @@ import type { HealthResponse } from '../lib/store.js'
 
 const router = Router()
 
-router.get('/health', (req, res) => {
-  const response: HealthResponse = {
+// Distribution version the frontend builds the meta URLs from (e.g. the Browse
+// dialog's categories.json). Matches the published grengin-api distribution.
+const GRENGIN_API_VERSION = '0.9.5'
+
+function healthResponse(): HealthResponse {
+  return {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     services: {
       database: 'up',
       redis: 'up',
     },
-    version: '1.1.0',
+    version: GRENGIN_API_VERSION,
   }
-  res.json(response)
+}
+
+// The frontend's getHealthStatus() reads the API root, not /health.
+router.get('/', (req, res) => {
+  res.json(healthResponse())
+})
+
+router.get('/health', (req, res) => {
+  res.json(healthResponse())
 })
 
 export default router

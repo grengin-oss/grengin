@@ -1,0 +1,825 @@
+{
+  "aiProviders": {
+    "catalogVersion": "1.0.0",
+    "providers": [
+      {
+        "defaultVersion": "1.9",
+        "description": "Reference manifest for hosted or self-hosted OpenAI-compatible HTTP/SSE APIs.",
+        "icon": "https://meta.grengin.com/ai-providers/openai/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/openai/icon-dark.svg",
+        "id": "openai",
+        "name": "OpenAI",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "9b301cc36206bde4abb768b5c9222a88ea372730a5a6e9b3358556be14d1a52e",
+            "version": "1.9"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "e1f0ebcfe991ccc9fb96caf2c84d097d80cb34baf777e540d61c5d3cc83b6d32",
+            "version": "1.8"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "6a39522d9dc2d9a8f83df1dcccc393a40c2559a27d0c39e4a247487288f2e770",
+            "version": "1.7"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "ff0a87ef43168be54aa00e47c42dff7a44d3c7aee3fe96ac8120f289eaf62198",
+            "version": "1.6"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "4ddfd48f69b7203d5b77c533dade9581469b8333a308aff4b52c6bb24ed6809c",
+            "version": "1.5"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "020a2d1e55afa601c0046f96922dbf0d1a46925b8740e82c9d762b010408290d",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "fffe3afe6fba654c280345cb1b9717b7a788fd4bbde5c50525faa39c025e0e0e",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "ded430ec71f53227fd5a7e376118e80c49e0a689e30b020f3daba2f0b343698e",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "0cc342ff2bcb65fa64f0c43e6e5c9aee5d89573d746dc0c50f6acd56721a16a3",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.6",
+        "description": null,
+        "icon": "https://meta.grengin.com/ai-providers/anthropic/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/anthropic/icon-dark.svg",
+        "id": "anthropic",
+        "name": "Anthropic",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "66962fb543560804da2b469053746d122d66f2df8ea5ff548a5be4a49553a5b1",
+            "version": "1.6"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "3ae5d4a2105a047e83b3273f179d888a9c63b651c6fce3fd7d03acf941ffb77d",
+            "version": "1.5"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "f7730b003c298164412dd6005272e0a082668f9e27b68ddb6e28eb1c4db0c06d",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "3428f675d0da29e0a0c2d7b6c6468256ce8bc7b7524f276ea5bf7eb7da7f08b3",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "7178c592ec8b580507d23ca3ef8dd2f881bb5bff94ebcd5d930e6abbb6119d16",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "263666a44c5bc2a6612982d0467396020f4a6187018a18ea14cd6061d7954320",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.4",
+        "description": "Reference manifest for hosted or self-hosted OpenAI-compatible HTTP/SSE APIs.",
+        "icon": "https://meta.grengin.com/ai-providers/mistral/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/mistral/icon-dark.svg",
+        "id": "mistral",
+        "name": "Mistral AI",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "faae5526a31f750684d7d549b674927ecbf01207b8392d09645f8814adf82dd5",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "ea7be48745c77d816e7855847b28cbf20a730df0753e599ff5a644c49ebe97ff",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "4d26903975989c70f7a0b857deff82b1d337bbdf1c640b89e07ad65bffa777f4",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "3d2f009d0a0adf90bc6dadae65c45cdaab9b8a9f60b95e6271861a7864634a34",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.5",
+        "description": "Reference manifest for hosted or self-hosted OpenAI-compatible HTTP/SSE APIs.",
+        "icon": "https://meta.grengin.com/ai-providers/gemini/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/gemini/icon-dark.svg",
+        "id": "gemini",
+        "name": "Gemini",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "31483a04824d64a9ddba1fc35ca8e1d0492c4c8cd8913114556e42c9d64a54d0",
+            "version": "1.5"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "74f84856a5bfcd4064c51135559c0bad9fd4f59405082208fc0e3bb8d971956b",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "a5c064b7d696e15effcfa24dc4db55fc28283dbe7ec2863641fbf8e56018298d",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "b339314d19579d5f97a6eec74a3beafc51962915009465316a202f1fef2bcffb",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "1a0e636827dccd2c52e853b89b71d94517582a11aee0ecd4d22784bc228cdf14",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.7",
+        "description": "Live-tested OpenAI-compatible endpoint (llm-plugin live_providers.rs).",
+        "icon": "https://meta.grengin.com/ai-providers/deepseek/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/deepseek/icon-dark.svg",
+        "id": "deepseek",
+        "name": "DeepSeek",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "73c870e0e40771d90f1adc1f68a90fa0c1b15d8987bcab43f7e02cd4379d564c",
+            "version": "1.7"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "12388ef9ba178983b9a3484ce56dc8db307d8503fcf6ed09a750d33897356e2f",
+            "version": "1.6"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "724a8807c0fb49dd45699ec743c1e1605df68089bf02c77b20d750a43e703727",
+            "version": "1.5"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "7271e97a002d595a23fbce0c63149a14dcc77e9b79fda5a069812d36579ebf5c",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "dc30f65fc03a25c0a7512cf54cb4dc0d43a622deb39ff04b0ad4e712be58345b",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "6655671345bc5725b59f638782b292923a6a78ae7377f83d69e2eac4b3ff22e7",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "4ed00b1429490f2f544e9d12d8ec9f2352c18499b4514819dca60cd43dd57b98",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.2",
+        "description": "Not live-tested in this environment (no MOONSHOT/KIMI API key available) \u2014 endpoint follows Moonshot AI's documented OpenAI-compatible surface.",
+        "icon": "https://meta.grengin.com/ai-providers/kimi/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/kimi/icon-dark.svg",
+        "id": "kimi",
+        "name": "Kimi",
+        "status": "untested",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "80aac99b168d3407e385bc22582dc5c85f6d60ea6d30c729dd4130603fa1e34b",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "fd27ff7bebd86f66aaaacc545eff47189692b5dda2cb3be42ee15f9e709f0604",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.6",
+        "description": "Live-tested and passing.",
+        "icon": "https://meta.grengin.com/ai-providers/openrouter/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/openrouter/icon-dark.svg",
+        "id": "openrouter",
+        "name": "OpenRouter",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "daf9c70edff33426ac4b1ccafa04093b5733da2efe8a6a2df7cd1f41f2630a41",
+            "version": "1.6"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "927af6ef0c1dbb10d312c641be717dbf22d1257f7a6c792b081569bf88c8a5c2",
+            "version": "1.5"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "c852dc96c585c8cf8af12e6b592c2163fae6b9ae6dd77ee0efd31fb0c5a2b2a5",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "db8f5c8fc829e5b7f888d71f87f1ba1b0f374e2b4bb59e21d9b818036bef5116",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "26e9212646c1d862730e9590e49203fe7ef31d8191800a18c6040bd006a23b47",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "b621233f97f539bcce2368cd8fade3437a801e213672fbc5f978d8112714613d",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.4",
+        "description": "Groq chat completions with Compound native web-search events and citations.",
+        "icon": "https://meta.grengin.com/ai-providers/groq/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/groq/icon-dark.svg",
+        "id": "groq",
+        "name": "Groq",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "3c624b59440222081cb425ef48d24a2416b2d83eb43124a91022aca7604f3335",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "d1a62185b549ff6330919bf6a835d499984df9de9be5eeeb6f52c09c834971a8",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "ea231babf3f2dc775e9198e2fa5de1e06c81e88585f53ed031de3cd1f56b46a4",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "320dcb5af0f0233357828dedfc86b10cf4716ffe7f04bcc69d65ece6f6e577dd",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.3",
+        "description": "Already referenced in llm-plugin live smoke tests.",
+        "icon": "https://meta.grengin.com/ai-providers/cerebras/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/cerebras/icon-dark.svg",
+        "id": "cerebras",
+        "name": "Cerebras",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "8bcaa5a5177e66241150067c4a0864ebfbd39326e5e60149c0d9804bd1813712",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "6ec9ccad59e5088d7d19f546601f8184a531bf42e354c75fb1900e2c2eaf4d05",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "2e2aa83201d5728525876f2c254692be630a3020b9752d246a753868d56252a2",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.6",
+        "description": "Not live-tested in this environment (no GLM/ZHIPU API key available) \u2014 base URL is Z.ai's international OpenAI-compatible surface; verify before shipping.",
+        "icon": "https://meta.grengin.com/ai-providers/glm/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/glm/icon-dark.svg",
+        "id": "glm",
+        "name": "GLM",
+        "status": "untested",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "4d65ef06cb5e9e8cc8f130e9cee4acfe9686f90dc10411d3b4bf5fe74264346f",
+            "version": "1.6"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "8ad8ba95f7746df0d089f3915059dcd668127674045d8427fd5e9ebbf6622da0",
+            "version": "1.5"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "c674040439b2d70d58566fc8faa83e7b617e7ca0d7fea86c394dc8dbfab9cc4f",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "dca69e8ae0b23ed9bd452a89ccbb03686e6aaf26a70ec4d22752a48c163b9cc1",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "fd4c169ef60d6ff79478d618c9dc73093fbfb6a5e33eafe08c1051686d69d9e1",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "ae1ed4cece2adb06b042c311fea2c8593dd3262f127f0e18444364bca84efb41",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.4",
+        "description": "Live-tested via Bedrock's OpenAI-compatible surface (region-specific endpoint; override baseUrl for other regions).",
+        "icon": "https://meta.grengin.com/ai-providers/bedrock/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/bedrock/icon-dark.svg",
+        "id": "bedrock",
+        "name": "AWS Bedrock",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "fa3b6571bb3b8f77ff886a0b3eda87bc0e449f99c7b94ec9c0c5617d8d4448a3",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "3c28870620bdb3cc45056e87770e3c248784b54f6302142bfe38b3d05312421a",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "92d389f921136209483b5445f757b52907883d5cd453409c33ecf4782a5abf6e",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "a5fa9f14822ecfcb92936fb1e3de4be16602e080654ba98dbf1a1e11c1dba108",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.5",
+        "description": "Auth confirmed reachable; requires your own Azure resource name and deployment \u2014 baseUrl must be overridden per account, there is no shared default.",
+        "icon": "https://meta.grengin.com/ai-providers/azure-openai/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/azure-openai/icon-dark.svg",
+        "id": "azure-openai",
+        "name": "Azure OpenAI",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "1ef05166a2d94aef9681e25b539ca56adda2a42268098889058958f64dac4d1c",
+            "version": "1.5"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "81c5d0aa54e62f97545f86f9f32740ca64337aeb61fba4fbd89b0703360cfe69",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "2b8a497e89adb59cfc93f76e1eb8aaf936fee6078ed804301c075f533014547e",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "08a13f785088fce9fd352993d053a3e933f6b5cd764790ca4a1b033442c03224",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "9700108d70b036a4483e5d3f73195750287c37fa6eaa755771479579a8add66b",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.6",
+        "description": "Verified 2026-08-20: Alibaba Cloud DashScope / Model Studio's OpenAI-compatible /chat/completions endpoint, international (Singapore) region.",
+        "icon": "https://meta.grengin.com/ai-providers/qwen/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/qwen/icon-dark.svg",
+        "id": "qwen",
+        "name": "Qwen",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "cbfcf9be14ec6562bb9940af60e9be6548ed1770e7dc385230f94833f241f0f4",
+            "version": "1.6"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "3223bd1ce07734ee282e74faed50a66b27df7f80bab57c99aa53b7e87c5cdef3",
+            "version": "1.5"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "1d36b67f9e59f9c66db5053bca7e7871d3cda8f972caa124f26fbaca1150c238",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "271900f48f78e3d0ab9b3cc6d7776aa7c15bf5291525e5e78fa8540d8864c072",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "16570df4f098df78d87a7f73f7c96f4082621c8aae076e4618dc87f14c0a8f3f",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "2f0a876a9973ad03bf1b7dc3ec1a8e4193b370679424f4057c42a7f7fe01e809",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.3",
+        "description": "Verified 2026-08-20: MiniMax's official OpenAI-compatible /v1/chat/completions endpoint (platform.minimax.io). International endpoint only \u2014 mainland China uses a separate api.minimaxi.com key.",
+        "icon": "https://meta.grengin.com/ai-providers/minimax/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/minimax/icon-dark.svg",
+        "id": "minimax",
+        "name": "MiniMax",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "d6a4c35811b996443024b2ce18d7eee630be85f7caf5fc2d926546155202e85d",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "0c4778f8cdb45100812c9b6d95a71b424e47a109482db5ca037727b01fd9f6ff",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "a59ecb515e1aaee608d92b7c5646c5f1883cf4f454b6f8dd86118fb3bf9c9ee3",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.4",
+        "description": "Verified 2026-08-20: xAI's OpenAI-compatible /v1/chat/completions endpoint (docs.x.ai).",
+        "icon": "https://meta.grengin.com/ai-providers/xai/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/xai/icon-dark.svg",
+        "id": "xai",
+        "name": "xAI",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "5fa521e9c4edd88dd6bb8bd9aae62b26d6526f7b6f4a20fa5fcb778a52cb331a",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "c74ce3d7d6d2c8509492c4c75fa5415808a6a71aee5191531a5e484ae8af987c",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "debd060a3299c661cdc7ec146afcecf9eede45c1aefb7080ed4a88ad6fb5aaa6",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "ad2c7763c83c02e84bb0bdea138f5ed3b7d1f8729f7261788fb15a6b924ab790",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.4",
+        "description": "Sarvam chat completions using the provider's subscription-key authentication.",
+        "icon": "https://meta.grengin.com/ai-providers/sarvam/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/sarvam/icon-dark.svg",
+        "id": "sarvam",
+        "name": "Sarvam AI",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "4d2613a914313ea5fcee47ef3a4714966f6a2e9b5bc6a5c59d3f80498a9fdf76",
+            "version": "1.4"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "64bc0ff5067bd234d83cc0047b30d7b1162abbdc87f28e3f35e5839826f79163",
+            "version": "1.3"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "ce601cf0da3b93369355bba2e565b7aa47e8558cae75786243d840017d9f19d0",
+            "version": "1.2"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "fc60fbe39c82fe5215a58c99e30ae49c01d7f5cacd53bab64b77937bec66b0d1",
+            "version": "1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.1",
+        "description": "OpenAI-compatible inference for Tinker models and custom sampler checkpoints.",
+        "icon": "https://meta.grengin.com/ai-providers/tinker/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/tinker/icon-dark.svg",
+        "id": "tinker",
+        "name": "Tinker",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "f1efe4a67c853623c9a7165f28c95c0c345de99285d05b358d73eceae212e170",
+            "version": "1.1"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "f565bd10530cc1ee40306dd15463b7ed264dd44d0222ee891c85cf861fcfe168",
+            "version": "1.0"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.1",
+        "description": "Verified 2026-09-14: Sakana AI's OpenAI-compatible /v1/chat/completions endpoint (api.sakana.ai). Fugu is a multi-agent orchestration system with always-on reasoning; reasoning content streams as reasoning_content.",
+        "icon": "https://meta.grengin.com/ai-providers/sakana/icon.svg",
+        "iconDark": "https://meta.grengin.com/ai-providers/sakana/icon-dark.svg",
+        "id": "sakana",
+        "name": "Sakana AI",
+        "status": "active",
+        "versions": [
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "035bfdc42bff25f3567ff4302f205f22c8e6679458659644530b43d98baa2377",
+            "version": "1.1"
+          },
+          {
+            "manifestVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "57396d5345fb86edd811d93bad6651617be244fc4937cf1ba59754138bcac4d8",
+            "version": "1.0"
+          }
+        ]
+      }
+    ]
+  },
+  "authProviders": {
+    "catalogVersion": "1.3.0",
+    "providers": [
+      {
+        "defaultVersion": "1.0.2",
+        "description": "OpenID Connect authentication through an Auth0 tenant.",
+        "icon": "https://meta.grengin.com/auth-providers/auth0/icon.svg",
+        "iconDark": null,
+        "id": "auth0",
+        "name": "Auth0",
+        "status": "stable",
+        "versions": [
+          {
+            "configurationVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "5d999e644596642218466f2f27a767a44d2485d676944f6fa93101b316c97962",
+            "version": "1.0.2"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.0.1",
+        "description": "OpenID Connect authentication through a Keycloak realm.",
+        "icon": "https://meta.grengin.com/auth-providers/keycloak/icon.svg",
+        "iconDark": null,
+        "id": "keycloak",
+        "name": "Keycloak",
+        "status": "stable",
+        "versions": [
+          {
+            "configurationVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "5fa3b695f4f6a420ed2d54054033878c2d506a603e2e03ee46b3d94bbfedf45c",
+            "version": "1.0.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.0.1",
+        "description": "OpenID Connect authentication through an Okta custom authorization server.",
+        "icon": "https://meta.grengin.com/auth-providers/okta/icon.svg",
+        "iconDark": null,
+        "id": "okta",
+        "name": "Okta",
+        "status": "stable",
+        "versions": [
+          {
+            "configurationVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "be2900351ef4e675653a69ca5f51a198de7b6037606b8eafad7d29d5895eb29c",
+            "version": "1.0.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.0.1",
+        "description": "OpenID Connect authentication for Google and Google Workspace accounts.",
+        "icon": "https://meta.grengin.com/auth-providers/google/icon.svg",
+        "iconDark": null,
+        "id": "google",
+        "name": "Google",
+        "status": "stable",
+        "versions": [
+          {
+            "configurationVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "092b4b41cbe7fe5c3968776367321491e6befe1b7b1f028e36ade42b19ce97fb",
+            "version": "1.0.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.0.0",
+        "description": "OpenID Connect authentication for LinkedIn members.",
+        "icon": "https://meta.grengin.com/auth-providers/linkedin/icon.svg",
+        "iconDark": null,
+        "id": "linkedin",
+        "name": "LinkedIn",
+        "status": "stable",
+        "versions": [
+          {
+            "configurationVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "7aa18e847e5f6c4d936cddd0fd32ccb74cd595a6f761cf2fdb263d844fc1f351",
+            "version": "1.0.0"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.1.1",
+        "description": "Sign in with Apple for Grengin web clients.",
+        "icon": "https://meta.grengin.com/auth-providers/apple/icon.svg",
+        "iconDark": null,
+        "id": "apple",
+        "name": "Apple",
+        "status": "preview",
+        "versions": [
+          {
+            "configurationVersion": "1.1",
+            "schemaVersion": "1.0",
+            "sha256": "d87da0dbef5f769fcec2a7ee35ae64d3f03fbd5dcff149bf0e93020d7ad5a516",
+            "version": "1.1.1"
+          }
+        ]
+      },
+      {
+        "defaultVersion": "1.0.1",
+        "description": "Single-tenant OpenID Connect authentication through Microsoft Entra ID.",
+        "icon": "https://meta.grengin.com/auth-providers/azure/icon.svg",
+        "iconDark": null,
+        "id": "azure",
+        "name": "Microsoft Entra ID",
+        "status": "stable",
+        "versions": [
+          {
+            "configurationVersion": "1.0",
+            "schemaVersion": "1.0",
+            "sha256": "7373466d75faa0c46067bd1bfe99a41263e9a3d7ddd691af331b959877b78e25",
+            "version": "1.0.1"
+          }
+        ]
+      }
+    ]
+  },
+  "catalogCommit": "be6e6169406d7ed4ea119ae0a531b70e4dee0c6f",
+  "formatVersion": "1.0",
+  "grenginApiCommit": "2e574faf1ed7e6c8f08b6adcedcaffd4647511c8",
+  "grenginApiVersion": "0.9.5"
+}

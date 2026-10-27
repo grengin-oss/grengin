@@ -6,115 +6,107 @@
  * .bp-modal), which groups the engines you have not connected yet under
  * headings and offers the same headings as filter tabs.
  *
- * `GET /admin/ai-engines` carries no category field, so the grouping lives
- * here as a lookup on `engine_key`. Anything the registry adds that is not
- * listed falls into `other`, so a new backend engine still shows up — it just
- * lands in the last group instead of a named one.
+ * The grouping is published per distribution version at
+ *   https://meta.grengin.com/distributions/grengin-api/<version>/categories.json
+ * and loaded at runtime (see `aiEnginesStore`). The version comes from the
+ * backend health check. The JSON carries:
+ *   - `categories`: the ordered list of groups, each with an `id`, a display
+ *     `label` and a `description`.
+ *   - `providers`: a map of `engine_key` -> category `id`.
+ *
+ * Any engine the map does not mention falls into the synthetic `other` group,
+ * so a new backend engine still shows up — it just lands in the last group
+ * instead of a named one. When the file cannot be loaded at all, every provider
+ * falls into `other` and the modal shows a single ungrouped bucket.
  */
 
-export type ProviderCategory =
-  | 'major'
-  | 'aggregators'
-  | 'regional'
-  | 'voice'
-  | 'image'
-  | 'embeddings'
-  | 'other';
+/** One group as published in categories.json. */
+export interface ProviderCategoryDef {
+  id: string;
+  label: string;
+  description: string;
+}
 
-/** Render order of the groups and of the tab strip. */
-export const PROVIDER_CATEGORY_ORDER: ProviderCategory[] = [
-  'major',
-  'aggregators',
-  'regional',
-  'voice',
-  'image',
-  'embeddings',
-  'other',
-];
+/** The shape of the published categories.json document. */
+export interface ProviderCategoriesData {
+  categories: ProviderCategoryDef[];
+  /** `engine_key` (lowercase) -> category `id`. */
+  providers: Record<string, string>;
+  formatVersion?: string;
+  grenginApiVersion?: string;
+}
 
-const CATEGORY_BY_ENGINE_KEY: Record<string, ProviderCategory> = {
-  // Major providers — first-party frontier labs and the hyperscaler gateways.
-  openai: 'major',
-  anthropic: 'major',
-  google: 'major',
-  gemini: 'major',
-  'google-vertex': 'major',
-  vertex: 'major',
-  vertexai: 'major',
-  azure: 'major',
-  'azure-openai': 'major',
-  bedrock: 'major',
-  'aws-bedrock': 'major',
-  watsonx: 'major',
-  'ibm-watsonx': 'major',
-  meta: 'major',
-  xai: 'major',
-  grok: 'major',
+/**
+ * Base host that serves the per-version distribution metadata. Defaults to the
+ * public meta host; override with VITE_META_BASE (e.g. point it at the mock
+ * server in development, which serves these files with CORS enabled).
+ */
+const rawMetaBase = import.meta.env?.VITE_META_BASE;
+export const META_BASE = (
+  rawMetaBase && rawMetaBase.trim() ? rawMetaBase.trim() : 'https://meta.grengin.com'
+).replace(/\/$/, '');
 
-  // Aggregators — one key, many upstream models.
-  openrouter: 'aggregators',
-  together: 'aggregators',
-  togetherai: 'aggregators',
-  fireworks: 'aggregators',
-  replicate: 'aggregators',
-  anyscale: 'aggregators',
-  groq: 'aggregators',
-  cerebras: 'aggregators',
-  perplexity: 'aggregators',
-  deepinfra: 'aggregators',
-  novita: 'aggregators',
-  hyperbolic: 'aggregators',
+/** Synthetic bucket for engines the published map does not categorize. */
+export const OTHER_CATEGORY_ID = 'other';
 
-  // Regional labs.
-  mistral: 'regional',
-  'mistral-ai': 'regional',
-  deepseek: 'regional',
-  qwen: 'regional',
-  alibaba: 'regional',
-  dashscope: 'regional',
-  glm: 'regional',
-  zhipu: 'regional',
-  kimi: 'regional',
-  moonshot: 'regional',
-  baichuan: 'regional',
-  yi: 'regional',
-  'zero-one': 'regional',
-  sarvam: 'regional',
-  krutrim: 'regional',
-  aleph: 'regional',
-  'aleph-alpha': 'regional',
+/** URL of the categories document for a given distribution version. */
+export function categoriesUrl(version: string): string {
+  const v = encodeURIComponent(version.trim());
+  return `${META_BASE}/distributions/grengin-api/${v}/categories.json`;
+}
 
-  // Voice & audio.
-  elevenlabs: 'voice',
-  deepgram: 'voice',
-  assemblyai: 'voice',
-  playht: 'voice',
-  cartesia: 'voice',
-  whisper: 'voice',
-  speechmatics: 'voice',
+/**
+ * Fetch the published categories for a distribution version. This is a public,
+ * unauthenticated static file on a different origin than the API, so it uses a
+ * plain `fetch()` rather than the authenticated `request()` helper. Throws on a
+ * network error or a non-OK response; callers fall back to the `other` bucket.
+ */
+export async function fetchProviderCategories(
+  version: string,
+): Promise<ProviderCategoriesData> {
+  const res = await fetch(categoriesUrl(version), {
+    headers: { Accept: 'application/json' },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load provider categories (${res.status})`);
+  }
+  const data = (await res.json()) as ProviderCategoriesData;
+  if (!data || !Array.isArray(data.categories) || !data.providers) {
+    throw new Error('Malformed provider categories document');
+  }
+  return data;
+}
 
-  // Image & video.
-  stability: 'image',
-  'stability-ai': 'image',
-  midjourney: 'image',
-  leonardo: 'image',
-  runway: 'image',
-  luma: 'image',
-  ideogram: 'image',
-  'black-forest-labs': 'image',
-  flux: 'image',
-  recraft: 'image',
+/**
+ * The category an engine belongs to, as the published map says; falls back to
+ * `other` for anything unlisted or when no document is loaded.
+ */
+export function categoryForEngine(
+  data: ProviderCategoriesData | null,
+  engineKey: string,
+): string {
+  if (!data) return OTHER_CATEGORY_ID;
+  return data.providers[engineKey.trim().toLowerCase()] ?? OTHER_CATEGORY_ID;
+}
 
-  // Embeddings & search.
-  cohere: 'embeddings',
-  voyage: 'embeddings',
-  voyageai: 'embeddings',
-  jina: 'embeddings',
-  nomic: 'embeddings',
-  exa: 'embeddings',
-};
+/**
+ * Render order of the groups: the published order, with the synthetic `other`
+ * bucket appended last. The caller filters this to the groups that actually
+ * have engines.
+ */
+export function categoryOrder(data: ProviderCategoriesData | null): string[] {
+  const ids = data?.categories.map((c) => c.id) ?? [];
+  return [...ids, OTHER_CATEGORY_ID];
+}
 
-/** The group an engine belongs to; `other` for anything unlisted. */
-export function providerCategory(engineKey: string): ProviderCategory {
-  return CATEGORY_BY_ENGINE_KEY[engineKey.trim().toLowerCase()] ?? 'other';
+/**
+ * The published label for a category `id`, or `null` when it is the synthetic
+ * `other` bucket or no document is loaded — the caller supplies a localized
+ * fallback for those.
+ */
+export function categoryLabel(
+  data: ProviderCategoriesData | null,
+  id: string,
+): string | null {
+  return data?.categories.find((c) => c.id === id)?.label ?? null;
 }
