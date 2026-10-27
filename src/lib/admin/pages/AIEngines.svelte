@@ -24,9 +24,9 @@ SPDX-License-Identifier: Apache-2.0
   } from "../../utils/providerIcon.js";
   import type { AIEngine, AIEngineModel } from "../types.js";
   import {
-    PROVIDER_CATEGORY_ORDER,
-    providerCategory,
-    type ProviderCategory,
+    categoryForEngine,
+    categoryOrder,
+    categoryLabel as categoryLabelFor,
   } from "../providerCategories.js";
   import { aiEnginesStore } from "../stores/index.js";
   import { permissionsStore } from "../../features/auth/index.js";
@@ -74,7 +74,8 @@ SPDX-License-Identifier: Apache-2.0
 
   // ---- "Browse Providers" dialog (.bp-modal) ----
   let browseQuery = $state("");
-  let browseCategory = $state<ProviderCategory | "all">("all");
+  // "all", a published category id, or OTHER_CATEGORY_ID for the fallback group.
+  let browseCategory = $state<string>("all");
   /** Categories the reader expanded past their preview row. */
   let expandedGroups = $state<Record<string, boolean>>({});
 
@@ -241,12 +242,20 @@ SPDX-License-Identifier: Apache-2.0
     store.suggestedEngines.filter((engine) => !isConnected(engine)),
   );
 
+  /** Grouping published by the backend; `null` → a single "Other" bucket. */
+  const categoriesData = $derived(store.providerCategoriesData);
+  /** The category id an engine belongs to, per the published map. */
+  const engineCategory = (engine: AIEngine): string =>
+    categoryForEngine(categoriesData, engine.engine_key);
+  /** Render order of the groups, filtered later to those with engines. */
+  const categoryIdOrder = $derived(categoryOrder(categoriesData));
+
   const browseMatches = $derived.by(() => {
     const q = browseQuery.trim().toLowerCase();
     return availableProviders.filter((engine) => {
       if (
         browseCategory !== "all" &&
-        providerCategory(engine.engine_key) !== browseCategory
+        engineCategory(engine) !== browseCategory
       ) {
         return false;
       }
@@ -256,16 +265,16 @@ SPDX-License-Identifier: Apache-2.0
 
   /** Every category that has at least one provider, with its engines. */
   const browseGroups = $derived.by(() => {
-    const buckets = new Map<ProviderCategory, AIEngine[]>();
+    const buckets = new Map<string, AIEngine[]>();
     for (const engine of browseMatches) {
-      const key = providerCategory(engine.engine_key);
+      const key = engineCategory(engine);
       const bucket = buckets.get(key);
       if (bucket) bucket.push(engine);
       else buckets.set(key, [engine]);
     }
-    return PROVIDER_CATEGORY_ORDER.filter((key) => buckets.has(key)).map(
-      (key) => ({ key, engines: buckets.get(key) as AIEngine[] }),
-    );
+    return categoryIdOrder
+      .filter((key) => buckets.has(key))
+      .map((key) => ({ key, engines: buckets.get(key) as AIEngine[] }));
   });
 
   /** Tab strip counts — computed before the tab filter, over the search only. */
@@ -276,14 +285,14 @@ SPDX-License-Identifier: Apache-2.0
     for (const engine of availableProviders) {
       if (!matchesQuery(engine, q)) continue;
       total += 1;
-      const key = providerCategory(engine.engine_key);
+      const key = engineCategory(engine);
       counts[key] = (counts[key] ?? 0) + 1;
     }
     return { counts, total };
   });
 
   const browseTabs = $derived(
-    PROVIDER_CATEGORY_ORDER.filter((key) => browseTabCounts.counts[key] > 0),
+    categoryIdOrder.filter((key) => browseTabCounts.counts[key] > 0),
   );
 
   /** Models the catalog knows about for this provider, else its whitelist. */
@@ -296,8 +305,16 @@ SPDX-License-Identifier: Apache-2.0
     );
   }
 
-  function categoryLabel(key: ProviderCategory): string {
-    return $_("aiEngines.browse.categories." + key);
+  /**
+   * The group heading: the label the backend publishes for a category, with a
+   * localized fallback for the synthetic "Other" bucket (and for any id the
+   * document does not define).
+   */
+  function categoryLabel(key: string): string {
+    return (
+      categoryLabelFor(categoriesData, key) ??
+      $_("aiEngines.browse.categories.other")
+    );
   }
 
   const allModels = $derived(store.availableModels?.models ?? []);
@@ -653,7 +670,7 @@ SPDX-License-Identifier: Apache-2.0
     store.openBrowseModal();
   }
 
-  function toggleGroup(key: ProviderCategory) {
+  function toggleGroup(key: string) {
     expandedGroups = { ...expandedGroups, [key]: !expandedGroups[key] };
   }
 

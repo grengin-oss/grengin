@@ -1,0 +1,51 @@
+{
+  "categories": [
+    {
+      "description": "Leading foundation-model labs at the front of general-purpose capability.",
+      "id": "frontier",
+      "label": "Frontier Labs"
+    },
+    {
+      "description": "Enterprise cloud gateways that host and bill for third-party models.",
+      "id": "cloud",
+      "label": "Cloud Platforms"
+    },
+    {
+      "description": "Multi-provider routers giving access to many models through one API.",
+      "id": "aggregator",
+      "label": "Aggregators"
+    },
+    {
+      "description": "Specialized hardware providers optimized for high-speed inference of open models.",
+      "id": "fast-inference",
+      "label": "Fast Inference"
+    },
+    {
+      "description": "Independent and regional AI labs outside the other categories.",
+      "id": "independent",
+      "label": "Independent Labs"
+    }
+  ],
+  "formatVersion": "1.0",
+  "grenginApiVersion": "0.9.5",
+  "providers": {
+    "anthropic": "frontier",
+    "azure-openai": "cloud",
+    "bedrock": "cloud",
+    "cerebras": "fast-inference",
+    "deepseek": "independent",
+    "gemini": "frontier",
+    "glm": "independent",
+    "groq": "fast-inference",
+    "kimi": "independent",
+    "minimax": "independent",
+    "mistral": "frontier",
+    "openai": "frontier",
+    "openrouter": "aggregator",
+    "qwen": "independent",
+    "sakana": "independent",
+    "sarvam": "independent",
+    "tinker": "independent",
+    "xai": "frontier"
+  }
+}
