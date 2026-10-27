@@ -37,6 +37,10 @@ SPDX-License-Identifier: Apache-2.0
   import type { ProviderInfo, ModelInfo } from "../../../api/models";
   import { getModels, isImageModel, findModel } from "../../../api/models";
   import {
+    APP_EVENTS,
+    type SelectModelDetail,
+  } from "../../shortcuts/shortcuts.svelte.js";
+  import {
     persistLastUsedModel,
     resolveDefaultModel,
   } from "../modelPreferences";
@@ -143,6 +147,17 @@ SPDX-License-Identifier: Apache-2.0
   let messageInput = $state<MessageInput | undefined>(undefined);
   let currentStreamingMessage = $state<ChatMessageType | null>(null);
   let autoScrollEnabled = true;
+
+  // The most recent assistant turn in the transcript (ENGG-510). Its action row
+  // is pinned open on every screen size, and when a new answer finishes the open
+  // row moves to it. Streaming turns still count — the row stays hidden while
+  // streaming, so pinning the id early costs nothing.
+  const lastAssistantId = $derived(
+    messages.reduce<string | null>(
+      (last, m) => (m.role === "assistant" ? m.id : last),
+      null,
+    ),
+  );
   // Controls the floating "jump to latest" button — shown when the reader has
   // scrolled meaningfully up from the bottom of the transcript.
   let showScrollToBottom = $state(false);
@@ -1344,14 +1359,37 @@ SPDX-License-Identifier: Apache-2.0
     let userIndex = index - 1;
     while (userIndex >= 0 && messages[userIndex].role !== "user") userIndex--;
     if (userIndex < 0) return;
+
+    await regenerateUserTurn(userIndex);
+  }
+
+  /**
+   * Regenerate the answer to a user message directly from its own action row
+   * (ENGG-510, "Regenerate" button under a user bubble). Resolves the user turn
+   * by id, then shares the same branch-and-restream path as the assistant-side
+   * Regenerate.
+   */
+  async function handleRegenerateFromUser(userId: string) {
+    if (isLoading || !conversationId) return;
+    const index = messages.findIndex((m) => m.id === userId);
+    if (index < 0 || messages[index].role !== "user") return;
+    await regenerateUserTurn(index);
+  }
+
+  /**
+   * Shared core for both regenerate entry points: branch a fresh answer off the
+   * user turn at `userIndex` using the currently selected model, dropping the
+   * existing answer (and anything after the user turn) before the new one
+   * streams in.
+   */
+  async function regenerateUserTurn(userIndex: number) {
     const userMessage = messages[userIndex];
+    if (!userMessage) return;
 
     error = null;
     isLoading = true;
     autoScrollEnabled = true;
 
-    // Drop the existing answer (and anything after the user turn) before the
-    // new one streams in.
     messages = messages.slice(0, userIndex + 1);
 
     await runAssistantStream({
@@ -2196,6 +2234,23 @@ SPDX-License-Identifier: Apache-2.0
     messageInput?.focus();
   }
 
+  // Command palette → switch the active model. The palette knows only the
+  // registry keys, so resolve them against the loaded providers here.
+  function handleCommandSelectModel(event: Event) {
+    const detail = (event as CustomEvent<SelectModelDetail>).detail;
+    if (!detail?.model) return;
+    const provider =
+      providers.find((p) => p.key === detail.provider) ??
+      providers.find((p) => p.models?.some((m) => m.key === detail.model));
+    const model = provider?.models?.find((m) => m.key === detail.model);
+    if (provider && model) selectModel(provider, model);
+  }
+
+  // Command palette → flip the composer's web-search toggle.
+  function handleCommandToggleWebSearch() {
+    webSearchEnabled = !webSearchEnabled;
+  }
+
   // Keep the tab title fresh when the open conversation is renamed or gets its
   // server-generated title (dispatched by the sidebar).
   function handleConversationTitleChanged(event: Event) {
@@ -2227,6 +2282,13 @@ SPDX-License-Identifier: Apache-2.0
     // Listen for focus chat input event (from Sidebar "New Chat" button)
     window.addEventListener("focusChatInput", handleFocusChatInput);
 
+    // Command palette actions targeting the active chat.
+    window.addEventListener(APP_EVENTS.selectModel, handleCommandSelectModel);
+    window.addEventListener(
+      APP_EVENTS.toggleWebSearch,
+      handleCommandToggleWebSearch,
+    );
+
     // Keep the browser-tab title in sync with sidebar renames / auto-titles.
     window.addEventListener(
       "conversationTitleChanged",
@@ -2243,6 +2305,14 @@ SPDX-License-Identifier: Apache-2.0
     return () => {
       window.removeEventListener("popstate", handleUrlChange);
       window.removeEventListener("focusChatInput", handleFocusChatInput);
+      window.removeEventListener(
+        APP_EVENTS.selectModel,
+        handleCommandSelectModel,
+      );
+      window.removeEventListener(
+        APP_EVENTS.toggleWebSearch,
+        handleCommandToggleWebSearch,
+      );
       window.removeEventListener(
         "conversationTitleChanged",
         handleConversationTitleChanged,
@@ -2444,10 +2514,12 @@ SPDX-License-Identifier: Apache-2.0
             <!-- Chat message -->
             <ChatMessage
               {message}
+              isLastAssistant={message.role === "assistant" &&
+                message.id === lastAssistantId}
               onEdit={handleEditMessage}
               onRegenerate={message.role === "assistant"
                 ? handleRegenerate
-                : undefined}
+                : handleRegenerateFromUser}
               onEditPrompt={message.role === "assistant"
                 ? handleEditPrompt
                 : undefined}

@@ -48,6 +48,7 @@ SPDX-License-Identifier: Apache-2.0
     type TTSState,
   } from "../../../utils/tts";
   import { downloadFile } from "../../../api/fileApi";
+  import { formatRelativeTime } from "../../../utils/format";
   import { _ } from "svelte-i18n";
   import { get } from "svelte/store";
   import WebSearch from "./WebSearch.svelte";
@@ -80,6 +81,12 @@ SPDX-License-Identifier: Apache-2.0
      * Regenerate and version switching are disabled so nothing changes mid-flight.
      */
     isBusy?: boolean;
+    /**
+     * This is the most recent assistant turn (ENGG-510). Its action row is
+     * pinned open on every screen size; every other message reveals its row on
+     * hover (desktop) or always/long-press (mobile).
+     */
+    isLastAssistant?: boolean;
     selectedModelInfo?: ProviderInfo;
     providers?: ProviderInfo[];
     onMcpAuthConnected?: (serverId: string) => void;
@@ -100,6 +107,7 @@ SPDX-License-Identifier: Apache-2.0
     openEditFor = null,
     onEditOpened,
     isBusy = false,
+    isLastAssistant = false,
     selectedModelInfo,
     providers,
     onMcpAuthConnected,
@@ -109,9 +117,21 @@ SPDX-License-Identifier: Apache-2.0
   }: Props = $props();
   let isEditing = $state(false);
   let editContent = $state(message.content);
+  // On touch devices, the user bubble's action row is revealed by a long-press
+  // (ENGG-510) and this flag drives it; on desktop the row follows hover/focus
+  // via CSS and this stays false.
   let showActions = $state(false);
   let messageContainer: HTMLDivElement;
   let editTextarea = $state<HTMLTextAreaElement | undefined>(undefined);
+
+  /**
+   * The action row's relative timestamp (ENGG-510), e.g. "1 hour ago". Long
+   * style to match Figma ("1 hour ago", not "1 hr. ago"). Computed once per
+   * render from the message's stored ISO timestamp.
+   */
+  const relativeTimestamp = $derived(
+    formatRelativeTime(message.timestamp, "", "long"),
+  );
 
   // TTS state
   let ttsState = $state<TTSState>({
@@ -351,29 +371,51 @@ SPDX-License-Identifier: Apache-2.0
     render();
   });
 
-  // Toggle actions visibility on tap (for touch devices)
-  function handleMessageTap(e: MouseEvent) {
-    // Don't toggle if clicking on action buttons or links
-    const target = e.target as HTMLElement;
-    if (
-      target.closest(".message-actions") ||
-      target.closest("a") ||
-      target.closest("button")
-    ) {
-      return;
+  // ── Mobile long-press (ENGG-510) ──────────────────────────────────────────
+  // On touch devices a user message reveals its action row by long-press, not by
+  // tap. We arm a timer on touchstart and fire it after the hold threshold; a
+  // scroll (touchmove) or an early release cancels it. The press itself is
+  // suppressed from the browser's text-selection and context menu on the bubble
+  // (see `-webkit-touch-callout`/`user-select` in CSS and `oncontextmenu`).
+  const LONG_PRESS_MS = 450;
+  let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  let longPressFired = false;
+
+  function clearLongPress() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
     }
-    showActions = !showActions;
   }
 
-  function handleMessageKeydown(e: KeyboardEvent) {
-    if (e.target !== e.currentTarget) return;
-    if (e.key === "Enter" || e.key === " ") {
+  function handleUserTouchStart() {
+    if (message.role !== "user" || isEditing) return;
+    longPressFired = false;
+    clearLongPress();
+    longPressTimer = setTimeout(() => {
+      longPressFired = true;
+      showActions = true;
+    }, LONG_PRESS_MS);
+  }
+
+  function handleUserTouchMove() {
+    clearLongPress();
+  }
+
+  function handleUserTouchEnd() {
+    clearLongPress();
+  }
+
+  // After a long-press has opened the row, swallow the context menu it would
+  // otherwise raise on the same gesture.
+  function handleUserContextMenu(e: Event) {
+    if (longPressFired) {
       e.preventDefault();
-      showActions = !showActions;
+      longPressFired = false;
     }
   }
 
-  // Close actions when clicking outside (for touch devices)
+  // Close the long-press row when the pointer goes down outside this message.
   function handleClickOutside(e: MouseEvent) {
     if (messageContainer && !messageContainer.contains(e.target as Node)) {
       showActions = false;
@@ -1067,126 +1109,244 @@ SPDX-License-Identifier: Apache-2.0
 {/snippet}
 
 <!--
-  Shared assistant content — the actions rail and the rendered markdown/
-  artifacts. Rendered as a snippet because a generated-image turn wraps the same
-  body in a caption bubble under the ".msg-stack" image card.
+  ENGG-510 action row — sits directly BELOW the bubble (not over it), left under
+  an AI answer and right under a user message. Copy / Read aloud / Regenerate for
+  the AI; Copy / Edit / Regenerate for the user; both ending in a relative
+  timestamp. The row reserves its height always and only fades in, so revealing
+  it on hover never shifts the layout.
+
+  Visibility is driven entirely by the modifier classes + CSS:
+    --always             last AI answer: pinned open on every screen size
+    --reveal-hover       desktop: show on message hover / keyboard focus
+    --reveal-mobile-*    mobile: AI = always, user = long-press (.actions-visible)
 -->
-{#snippet assistantInner()}
-  {#if !message.isStreaming}
-    <div class="message-actions" class:tts-active={isActive}>
-      <!-- TTS Toggle Button -->
-      {#if speechSynthesisSupported}
-        <button
-          class="action-btn"
-          onclick={handleTTSToggle}
-          aria-label={isSpeaking
-            ? $_("chat.message.pause")
-            : isPaused
-              ? $_("chat.message.resume")
-              : $_("chat.message.listen")}
-          title={isSpeaking
-            ? $_("chat.message.pause")
-            : isPaused
-              ? $_("chat.message.resume")
-              : $_("chat.message.listen")}
-        >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            {#if isSpeaking}
-              <!-- Pause icon -->
-              <rect x="6" y="4" width="4" height="16"></rect>
-              <rect x="14" y="4" width="4" height="16"></rect>
-            {:else if isPaused}
-              <!-- Play icon -->
-              <polygon points="5,3 19,12 5,21"></polygon>
-            {:else}
-              <!-- Speaker icon -->
-              <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"></polygon>
-              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-            {/if}
-          </svg>
-        </button>
-        <!-- Stop Button (only shown when active) -->
-        {#if isActive}
-          <button
-            class="action-btn"
-            onclick={handleTTSStop}
-            aria-label={$_("chat.message.stop")}
-            title={$_("chat.message.stop")}
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-            </svg>
-          </button>
+{#snippet assistantActionRow()}
+  <div
+    class="msg-action-row msg-action-row--assistant"
+    class:msg-action-row--always={isLastAssistant}
+    class:msg-action-row--reveal-hover={!isLastAssistant}
+    class:msg-action-row--reveal-mobile-always={!isLastAssistant}
+    class:tts-active={isActive}
+  >
+    <!-- Copy -->
+    <button
+      class="action-btn"
+      class:success={copySuccess}
+      onclick={copyMessageContent}
+      aria-label={$_("chat.message.copyContent")}
+      title={$_("chat.message.copyContent")}
+    >
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        {#if copySuccess}
+          <polyline points="20,6 9,17 4,12"></polyline>
+        {:else}
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+          ></path>
         {/if}
-      {/if}
-      <!-- Copy Button -->
+      </svg>
+    </button>
+    <!-- Read aloud (TTS) -->
+    {#if speechSynthesisSupported}
       <button
         class="action-btn"
-        class:success={copySuccess}
-        onclick={copyMessageContent}
-        aria-label={$_("chat.message.copyContent")}
-        title={$_("chat.message.copyContent")}
+        onclick={handleTTSToggle}
+        aria-label={isSpeaking
+          ? $_("chat.message.pause")
+          : isPaused
+            ? $_("chat.message.resume")
+            : $_("chat.message.listen")}
+        title={isSpeaking
+          ? $_("chat.message.pause")
+          : isPaused
+            ? $_("chat.message.resume")
+            : $_("chat.message.listen")}
       >
         <svg
-          width="12"
-          height="12"
+          width="15"
+          height="15"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           stroke-width="2"
+          aria-hidden="true"
         >
-          {#if copySuccess}
-            <polyline points="20,6 9,17 4,12"></polyline>
+          {#if isSpeaking}
+            <!-- Pause icon -->
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          {:else if isPaused}
+            <!-- Play icon -->
+            <polygon points="5,3 19,12 5,21"></polygon>
           {:else}
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-            ></path>
+            <!-- Speaker icon -->
+            <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
           {/if}
         </svg>
       </button>
-      <!-- Regenerate Button — branches a new version of this answer (ENGG-459) -->
-      {#if onRegenerate}
+      <!-- Stop (only while speaking) -->
+      {#if isActive}
         <button
           class="action-btn"
-          onclick={() => onRegenerate?.(message.id)}
-          disabled={isBusy}
-          aria-label={$_("chat.message.regenerate")}
-          title={$_("chat.message.regenerate")}
+          onclick={handleTTSStop}
+          aria-label={$_("chat.message.stop")}
+          title={$_("chat.message.stop")}
         >
           <svg
-            width="12"
-            height="12"
+            width="15"
+            height="15"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            aria-hidden="true"
           >
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <polyline points="1 20 1 14 7 14"></polyline>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            <rect x="4" y="4" width="16" height="16" rx="2"></rect>
           </svg>
         </button>
       {/if}
-      <!-- HTML Preview Button (opens side panel) -->
-    </div>
-  {/if}
+    {/if}
+    <!-- Regenerate — branches a new version of this answer (ENGG-459) -->
+    {#if onRegenerate}
+      <button
+        class="action-btn"
+        onclick={() => onRegenerate?.(message.id)}
+        disabled={isBusy}
+        aria-label={$_("chat.message.regenerate")}
+        title={$_("chat.message.regenerate")}
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path
+            d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+          ></path>
+        </svg>
+      </button>
+    {/if}
+    {#if relativeTimestamp}
+      <span class="msg-action-row__time">{relativeTimestamp}</span>
+    {/if}
+  </div>
+{/snippet}
+
+{#snippet userActionRow()}
+  <div
+    class="msg-action-row msg-action-row--user msg-action-row--reveal-hover msg-action-row--reveal-mobile-press"
+  >
+    <!-- Copy -->
+    <button
+      class="action-btn"
+      class:success={copySuccess}
+      onclick={copyMessageContent}
+      aria-label={$_("chat.message.copyContent")}
+      title={$_("chat.message.copyContent")}
+    >
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        {#if copySuccess}
+          <polyline points="20,6 9,17 4,12"></polyline>
+        {:else}
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+          ></path>
+        {/if}
+      </svg>
+    </button>
+    <!-- Edit — opens the in-place editor (ENGG-459) -->
+    {#if onEdit}
+      <button
+        class="action-btn"
+        onclick={startEdit}
+        disabled={isBusy}
+        aria-label={$_("chat.message.editMessage")}
+        title={$_("chat.message.editMessage")}
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+          ></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+          ></path>
+        </svg>
+      </button>
+    {/if}
+    <!-- Regenerate — re-run the answer to this prompt (ENGG-510) -->
+    {#if onRegenerate}
+      <button
+        class="action-btn"
+        onclick={() => onRegenerate?.(message.id)}
+        disabled={isBusy}
+        aria-label={$_("chat.message.regenerate")}
+        title={$_("chat.message.regenerate")}
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path
+            d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+          ></path>
+        </svg>
+      </button>
+    {/if}
+    {#if relativeTimestamp}
+      <span class="msg-action-row__time">{relativeTimestamp}</span>
+    {/if}
+  </div>
+{/snippet}
+
+<!--
+  Shared assistant content — the rendered markdown / artifacts. Rendered as a
+  snippet because a generated-image turn wraps the same body in a caption bubble
+  under the ".msg-stack" image card.
+-->
+{#snippet assistantInner()}
   <div
     class="message-body"
     bind:offsetHeight={measuredBodyH}
@@ -1357,11 +1517,6 @@ SPDX-License-Identifier: Apache-2.0
     useAttachmentGrid ||
     generatedImages.length > 0}
   bind:this={messageContainer}
-  onclick={handleMessageTap}
-  onkeydown={handleMessageKeydown}
-  role="button"
-  tabindex="-1"
-  aria-pressed={showActions}
 >
   <!--
     Avatar only for assistant messages, and only in the plain-bubble case: a
@@ -1462,73 +1617,38 @@ SPDX-License-Identifier: Apache-2.0
           </div>
         </div>
       {:else}
+        <!--
+          Long-press on touch opens this bubble's action row (ENGG-510). The
+          handlers arm/cancel the press timer; the CSS on `.user-message` blocks
+          the browser's own callout/selection so the hold reads as a reveal, and
+          `oncontextmenu` swallows the menu the same gesture would raise.
+
+          The touch handlers are a touch-only convenience for revealing the
+          action row; every action is independently reachable by hover and
+          keyboard and carries its own aria-label, so the bubble itself needs no
+          interactive role.
+        -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
           class="user-message"
           class:user-message--image={isImageTurn}
           class:user-message--sent={useAttachmentGrid}
           class:user-message--wide={useImageCard}
+          ontouchstart={handleUserTouchStart}
+          ontouchmove={handleUserTouchMove}
+          ontouchend={handleUserTouchEnd}
+          ontouchcancel={handleUserTouchEnd}
+          oncontextmenu={handleUserContextMenu}
         >
-          {#if !message.isStreaming}
-            <div class="message-actions">
-              <button
-                class="action-btn user-copy-btn"
-                class:success={copySuccess}
-                onclick={copyMessageContent}
-                title={$_("chat.message.copyContent")}
-              >
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  {#if copySuccess}
-                    <polyline points="20,6 9,17 4,12"></polyline>
-                  {:else}
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"
-                    ></rect>
-                    <path
-                      d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-                    ></path>
-                  {/if}
-                </svg>
-              </button>
-              <!-- Edit button — opens the in-place editor (ENGG-459) -->
-              {#if onEdit}
-                <button
-                  class="action-btn user-copy-btn"
-                  onclick={startEdit}
-                  disabled={isBusy}
-                  aria-label={$_("chat.message.editMessage")}
-                  title={$_("chat.message.editMessage")}
-                >
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                    ></path>
-                    <path
-                      d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                    ></path>
-                  </svg>
-                </button>
-              {/if}
-            </div>
-          {/if}
           <div class="message-body">
             <p>{message.content}</p>
           </div>
         </div>
+      {/if}
+
+      <!-- Action row under the user bubble (ENGG-510). -->
+      {#if !isEditing && !message.isStreaming}
+        {@render userActionRow()}
       {/if}
 
       <!-- Version switcher under the user bubble (ENGG-459). -->
@@ -1578,6 +1698,9 @@ SPDX-License-Identifier: Apache-2.0
             <div class="assistant-message">
               {@render assistantInner()}
             </div>
+            {#if !message.isStreaming}
+              {@render assistantActionRow()}
+            {/if}
           {/if}
         </div>
       {:else}
@@ -1587,6 +1710,9 @@ SPDX-License-Identifier: Apache-2.0
         >
           {@render assistantInner()}
         </div>
+        {#if !message.isStreaming}
+          {@render assistantActionRow()}
+        {/if}
       {/if}
     {/if}
 
@@ -1889,10 +2015,8 @@ SPDX-License-Identifier: Apache-2.0
      phrase — rather than a card. It carries the whole "working" state, so it
      must not look like content.
 
-     It is sized to its text and sits at the start edge deliberately:
-     ".message-actions" is absolutely positioned over the TOP END of this same
-     message (z-index 10), so a full-width row would put its click target under
-     the TTS/copy rail and swallow the clicks. */
+     It is sized to its text and sits at the start edge so the click target of
+     an expandable reasoning block is only as wide as the line itself. */
   .thinking-row {
     width: fit-content;
     max-width: 100%;
@@ -2130,6 +2254,18 @@ SPDX-License-Identifier: Apache-2.0
 
   .user-message p:empty {
     display: none;
+  }
+
+  /* Touch devices: suppress the long-press callout and text-selection on the
+     user bubble so the long-press reads as "reveal actions" (ENGG-510) rather
+     than the browser's selection/context menu. Selection is handed back once the
+     row is open (see `.actions-visible .user-message` in the mobile block). */
+  @media (hover: none), (pointer: coarse) {
+    .user-message {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
   }
 
   /* ".msg-bubble-sent" — the user turn that carries an attachment grid drops the
@@ -2786,112 +2922,132 @@ SPDX-License-Identifier: Apache-2.0
     font-size: 0.875rem;
   }
 
-  .message-actions {
-    position: absolute;
-    top: var(--space-sm);
-    inset-inline-end: var(--space-md);
-    z-index: 10;
+  /* ==========================================================================
+     ENGG-510 — action row below the bubble
+     A left-aligned (AI) / right-aligned (user) row of ghost icon buttons plus a
+     relative timestamp, sitting directly under the message bubble. It always
+     reserves its height and only fades its opacity, so revealing it on hover
+     never shifts the surrounding layout.
+     ========================================================================== */
+  .msg-action-row {
     display: flex;
     flex-direction: row;
-    gap: 0.375rem;
+    align-items: center;
+    gap: 2px;
+    /* Reserve the row height up front so hover reveal is pure opacity. */
+    min-height: 30px;
+    margin-top: 2px;
     opacity: 0;
-    transform: scale(0.9);
-    transition: all 0.2s ease;
+    transition: opacity 0.16s ease;
     pointer-events: none;
   }
 
-  /* Desktop: show on hover */
-  .user-message:hover .message-actions,
-  .assistant-message:hover .message-actions {
+  .msg-action-row--assistant {
+    align-self: flex-start;
+    justify-content: flex-start;
+    /* Line the copy icon up with the bubble's text, past its 12px inset. */
+    padding-inline-start: 4px;
+  }
+
+  .msg-action-row--user {
+    align-self: flex-end;
+    justify-content: flex-end;
+    padding-inline-end: 2px;
+  }
+
+  /* Last AI answer: pinned open everywhere. */
+  .msg-action-row--always,
+  /* Read-aloud running: keep the row up so Stop stays reachable. */
+  .msg-action-row.tts-active {
     opacity: 1;
-    transform: scale(1);
     pointer-events: auto;
   }
 
-  /* Keyboard: show on focus-within */
-  .user-message .message-actions:focus-within,
-  .assistant-message .message-actions:focus-within {
-    opacity: 1;
-    transform: scale(1);
-    pointer-events: auto;
+  /* Desktop: reveal on hover of the whole message, and on keyboard focus into
+     the row (the buttons stay in the tab order while hidden, since we fade with
+     opacity, not visibility). */
+  @media (hover: hover) and (pointer: fine) {
+    .message:hover .msg-action-row--reveal-hover,
+    .msg-action-row--reveal-hover:focus-within {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
 
-  /* Mobile: show on tap via actions-visible class */
-  .message.actions-visible .user-message .message-actions,
-  .message.actions-visible .assistant-message .message-actions {
-    opacity: 1;
-    transform: scale(1);
-    pointer-events: auto;
+  /* Mobile: AI rows are always shown; user rows appear on long-press, which
+     toggles `.actions-visible` on the message. */
+  @media (hover: none), (pointer: coarse) {
+    .msg-action-row--reveal-mobile-always {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .message.actions-visible .msg-action-row--reveal-mobile-press {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
 
-  /* Action button - glass style */
+  /* Relative timestamp — Figma "Caption" muted grey, e.g. "1 hour ago". */
+  .msg-action-row__time {
+    margin-inline-start: 6px;
+    font-family: var(--gx-font);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    color: var(--gx-slate-400, #9ca3b0);
+    white-space: nowrap;
+  }
+
+  /* Ghost icon button — no chrome at rest, a soft wash on hover/focus.
+     The global `button` rule in app.css paints every button with a glass
+     backdrop-blur and an edge-glow box-shadow; we null both out here (and in
+     the hover/active states) so these read as bare icons, matching the Figma
+     action row rather than the glass button chips. */
   .action-btn {
-    background: var(--btn-secondary);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid var(--glass-stroke-dark);
-    border-radius: 0.375rem;
-    padding: 0.375rem;
-    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-radius: 7px;
+    padding: 5px;
+    color: var(--gx-slate-400, #6b7281);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   .action-btn:focus-visible {
     outline: 2px solid var(--brand);
-    outline-offset: 2px;
+    outline-offset: 1px;
   }
 
   .action-btn:hover:not(:disabled) {
-    background: var(--brand);
-    color: white;
-    border-color: var(--brand);
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: var(--btn-secondary, rgba(107, 114, 129, 0.12));
+    color: var(--text-primary);
+    /* Override the global button:hover lift + glass shadow. */
+    box-shadow: none;
+    transform: none;
   }
 
   .action-btn:active:not(:disabled) {
-    transform: scale(0.95);
+    transform: scale(0.92);
+    box-shadow: none;
   }
 
-  /* User bubble copy button needs stronger contrast than the bubble fill */
-  .user-message .action-btn.user-copy-btn {
-    background: rgba(17, 24, 39, 0.45);
-    border-color: rgba(255, 255, 255, 0.35);
-    color: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  .action-btn:disabled {
+    opacity: 0.45;
+    cursor: default;
   }
 
-  .user-message .action-btn.user-copy-btn:hover:not(:disabled) {
-    background: rgba(17, 24, 39, 0.62);
-    border-color: rgba(255, 255, 255, 0.52);
-    color: white;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
-  }
-
-  /* Success state for action buttons */
+  /* Copy confirmation — brief green tick. */
   .action-btn.success {
-    background: rgba(var(--brand-green-rgb), 0.2);
     color: var(--brand-green);
-    border-color: color-mix(in oklab, var(--brand-green) 25%, transparent);
-  }
-
-  .user-message .action-btn.user-copy-btn.success {
-    background: rgba(var(--brand-green-rgb, 34, 197, 94), 0.32);
-    border-color: rgba(var(--brand-green-rgb, 34, 197, 94), 0.65);
-    color: #f0fdf4;
-  }
-
-  /* TTS active state - always visible when speaking */
-  .message-actions.tts-active {
-    opacity: 1;
-    transform: scale(1);
   }
 
   /* Copy button for code blocks */
@@ -2933,33 +3089,20 @@ SPDX-License-Identifier: Apache-2.0
     .message {
       max-width: 92%;
       gap: var(--space-sm);
-      /* Add cursor pointer to indicate tappability */
-      cursor: pointer;
     }
 
     .message-avatar {
       display: none;
     }
 
-    /* On mobile, disable hover and only show via tap (actions-visible class) */
-    .user-message:hover .message-actions,
-    .assistant-message:hover .message-actions {
-      opacity: 0;
-      transform: scale(0.9);
-    }
-
-    .message.actions-visible .user-message .message-actions,
-    .message.actions-visible .assistant-message .message-actions {
-      opacity: 1;
-      transform: scale(1);
+    /* A long-pressed user row must not be swallowed by the touch-select guard. */
+    .message.actions-visible .user-message {
+      -webkit-user-select: text;
+      user-select: text;
     }
 
     :global(.copy-code-btn span) {
       display: none;
-    }
-
-    .action-btn {
-      padding: 0.25rem;
     }
   }
 
@@ -2967,10 +3110,6 @@ SPDX-License-Identifier: Apache-2.0
     .message {
       max-width: 95%;
       gap: var(--space-xs);
-    }
-
-    .action-btn {
-      padding: 0.2rem;
     }
   }
 

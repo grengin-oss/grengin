@@ -38,6 +38,20 @@ export const toKebabCase = (value: string): string =>
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
 
+/**
+ * A compact, render-ready skill row for the composer's inline "/" command menu.
+ * SkillPicker owns the real catalog and link/unlink side effects; it publishes
+ * this flattened view (with the current on/off state) so the inline menu can
+ * list and toggle skills without duplicating that logic.
+ */
+export interface SkillCatalogEntry {
+  id: string;
+  name: string;
+  description?: string;
+  avatar: string;
+  selected: boolean;
+}
+
 /* ------------------------------------------------------------------ *
  * File import (Import File flow)                                      *
  * ------------------------------------------------------------------ */

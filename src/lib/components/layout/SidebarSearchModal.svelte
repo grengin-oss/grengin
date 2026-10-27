@@ -9,6 +9,13 @@ SPDX-License-Identifier: Apache-2.0
   import { tick } from "svelte";
   import { listConversations } from "../../api/chatApi.js";
   import { listProjects } from "../../api/projectsApi";
+  import {
+    getModels,
+    isSelectableChatModel,
+    isImageModel,
+  } from "../../api/models";
+  import { persistLastUsedModel } from "../../features/chat/modelPreferences";
+  import { APP_EVENTS } from "../../features/shortcuts/shortcuts.svelte.js";
 
   interface Props {
     open: boolean;
@@ -19,9 +26,14 @@ SPDX-License-Identifier: Apache-2.0
 
   type SearchResult = {
     id: string;
-    type: "chat" | "project";
+    type: "chat" | "project" | "model" | "action";
     title: string;
     group: string;
+    /** Model rows carry the registry keys to switch to. */
+    model?: string;
+    provider?: string;
+    /** Action rows carry what to run when chosen. */
+    run?: () => void;
   };
 
   let query = $state("");
@@ -31,6 +43,100 @@ SPDX-License-Identifier: Apache-2.0
   let loading = $state(false);
   let activeIndex = $state(0);
   let projectsCache: any[] = [];
+  let providersCache: any[] = [];
+
+  // Models and actions turn this search box into a command palette: both only
+  // appear once the user types, so an empty palette still opens to recent chats.
+  async function ensureModels() {
+    if (providersCache.length) return;
+    try {
+      const res = await getModels();
+      providersCache = res.providers ?? [];
+    } catch {
+      providersCache = [];
+    }
+  }
+
+  function buildModelItems(ql: string): SearchResult[] {
+    if (!ql) return [];
+    const group = $_("sidebar.cmdModelsGroup");
+    const out: SearchResult[] = [];
+    for (const provider of providersCache) {
+      for (const model of provider.models ?? []) {
+        if (!isSelectableChatModel(model) || isImageModel(model)) continue;
+        const hay =
+          `${model.name ?? ""} ${model.key ?? ""} ${provider.name ?? ""}`.toLowerCase();
+        if (!hay.includes(ql)) continue;
+        out.push({
+          id: `${provider.key}/${model.key}`,
+          type: "model",
+          title: model.name || model.key,
+          group,
+          model: model.key,
+          provider: provider.key,
+        });
+      }
+    }
+    return out;
+  }
+
+  function buildActionItems(ql: string): SearchResult[] {
+    if (!ql) return [];
+    const group = $_("sidebar.cmdActionsGroup");
+    const defs = [
+      {
+        id: "new-chat",
+        title: $_("sidebar.newChat"),
+        keywords: "new chat compose message",
+        run: startNewChat,
+      },
+      {
+        id: "projects",
+        title: $_("sidebar.cmdGoProjects"),
+        keywords: "projects",
+        run: () => {
+          navigate("/projects");
+          onClose();
+        },
+      },
+      {
+        id: "settings",
+        title: $_("sidebar.cmdGoSettings"),
+        keywords: "settings preferences account",
+        run: () => {
+          navigate("/settings");
+          onClose();
+        },
+      },
+      {
+        id: "web-search",
+        title: $_("sidebar.cmdToggleWebSearch"),
+        keywords: "web search internet browse",
+        run: () => {
+          window.dispatchEvent(new CustomEvent(APP_EVENTS.toggleWebSearch));
+          onClose();
+        },
+      },
+      {
+        id: "toggle-sidebar",
+        title: $_("sidebar.toggleSidebar"),
+        keywords: "sidebar collapse expand",
+        run: () => {
+          window.dispatchEvent(new CustomEvent(APP_EVENTS.toggleSidebar));
+          onClose();
+        },
+      },
+    ];
+    return defs
+      .filter((a) => `${a.title} ${a.keywords}`.toLowerCase().includes(ql))
+      .map((a) => ({
+        id: a.id,
+        type: "action" as const,
+        title: a.title,
+        group,
+        run: a.run,
+      }));
+  }
 
   function relativeLabel(ts?: string): string {
     if (!ts) return $_("sidebar.older");
@@ -55,6 +161,7 @@ SPDX-License-Identifier: Apache-2.0
         projectsCache.length
           ? Promise.resolve({ projects: projectsCache })
           : listProjects(),
+        ensureModels(),
       ]);
 
       projectsCache = (projRes as any)?.projects ?? [];
@@ -88,9 +195,13 @@ SPDX-License-Identifier: Apache-2.0
         const i = title.toLowerCase().indexOf(ql);
         return i === -1 ? Number.MAX_SAFE_INTEGER : i;
       };
-      items = ql
+      const sorted = ql
         ? merged.sort((a, b) => matchAt(a.title) - matchAt(b.title))
         : merged;
+
+      // Actions and models lead the list when the user is typing — a command
+      // palette answers "do X" / "switch to model Y" before "find chat Z".
+      items = [...buildActionItems(ql), ...buildModelItems(ql), ...sorted];
 
       activeIndex = 0;
     } catch {
@@ -175,6 +286,24 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   function selectResult(result: SearchResult) {
+    if (result.type === "action") {
+      // The action owns closing (toggles close after firing; navigation too).
+      result.run?.();
+      return;
+    }
+    if (result.type === "model") {
+      if (result.model && result.provider) {
+        // Persist for future new chats, and update any live composer now.
+        persistLastUsedModel(result.model, result.provider);
+        window.dispatchEvent(
+          new CustomEvent(APP_EVENTS.selectModel, {
+            detail: { model: result.model, provider: result.provider },
+          }),
+        );
+      }
+      onClose();
+      return;
+    }
     navigate(
       result.type === "chat"
         ? `/?chatId=${result.id}`
@@ -398,6 +527,38 @@ SPDX-License-Identifier: Apache-2.0
                       stroke-width="2"
                       stroke-linejoin="round"
                     />
+                  </svg>
+                {:else if item.type === "model"}
+                  <svg
+                    class="row-icon"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3zM18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9L18 15z"
+                    />
+                  </svg>
+                {:else if item.type === "action"}
+                  <svg
+                    class="row-icon"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
                   </svg>
                 {:else}
                   <svg

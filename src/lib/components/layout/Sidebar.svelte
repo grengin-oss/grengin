@@ -14,6 +14,10 @@ SPDX-License-Identifier: Apache-2.0
   import { getNotificationsState } from "../../features/notifications/index.js";
   import AlertsPopover from "../../features/notifications/AlertsPopover.svelte";
   import { onboarding } from "../../features/onboarding/onboardingState.svelte.js";
+  import {
+    SHORTCUT_EVENTS,
+    APP_EVENTS,
+  } from "../../features/shortcuts/shortcuts.svelte.js";
   import SidebarSearchModal from "./SidebarSearchModal.svelte";
 
   interface Props {
@@ -50,6 +54,28 @@ SPDX-License-Identifier: Apache-2.0
   function openSearchModal() {
     showSearchModal = true;
   }
+
+  // The command palette is toggled app-wide via a window event dispatched by
+  // the global shortcut handler (Cmd/Ctrl+K). The Sidebar owns the modal, so it
+  // listens here rather than binding the key itself.
+  $effect(() => {
+    const togglePalette = () => {
+      showSearchModal = !showSearchModal;
+    };
+    const toggleFromCommand = () => toggleSidebar();
+    window.addEventListener(
+      SHORTCUT_EVENTS.toggleCommandPalette,
+      togglePalette,
+    );
+    window.addEventListener(APP_EVENTS.toggleSidebar, toggleFromCommand);
+    return () => {
+      window.removeEventListener(
+        SHORTCUT_EVENTS.toggleCommandPalette,
+        togglePalette,
+      );
+      window.removeEventListener(APP_EVENTS.toggleSidebar, toggleFromCommand);
+    };
+  });
 
   const notifState = getNotificationsState();
   let showAlertsPopover = $state(false);
@@ -402,11 +428,6 @@ SPDX-License-Identifier: Apache-2.0
   onkeydown={(e) => {
     if (e.key === "Escape" && showUserMenu) {
       closeUserMenu();
-    }
-    // Cmd/Ctrl+K toggles the search palette from anywhere in the app.
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-      e.preventDefault();
-      showSearchModal = !showSearchModal;
     }
   }}
 />
