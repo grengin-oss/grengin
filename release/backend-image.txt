@@ -1,1 +1,1 @@
-ghcr.io/grengin-oss/grengin-api@sha256:daea3dc391b86d00a00df8180e1dbf8b014fae446f140a41d901f0e6af4c2856
+ghcr.io/grengin-oss/grengin-api@sha256:52e0eab6f97a41bbd0743a150dbd6ee4e442515535b5a06b1bc85fdce885c6df
