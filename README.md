@@ -98,7 +98,7 @@ is published on the CDN. Existing releases are never replaced.
 To start a release immediately:
 
 ```bash
-gh workflow run release-from-backend.yml -f version=v0.9.4
+gh workflow run release-from-backend.yml -f version=v0.9.6
 ```
 
 ## Architecture
