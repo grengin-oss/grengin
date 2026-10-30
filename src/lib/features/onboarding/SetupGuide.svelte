@@ -11,6 +11,10 @@ SPDX-License-Identifier: Apache-2.0
   the first Super Admin has no API key or no teammate yet. On pages whose
   header already has actions at the top-right it sits just before them, so it
   never covers a button; with no room there it drops below them.
+
+  The pill can be dragged anywhere on screen; from then on it stays where it
+  was dropped (until the page reloads) and the panel opens toward the side
+  with room.
 -->
 <script lang="ts">
   import { onMount, tick } from "svelte";
@@ -26,6 +30,18 @@ SPDX-License-Identifier: Apache-2.0
     right: 24,
     left: null,
   });
+  /** Dropped somewhere by the user: stop following the page header. */
+  let dragged = $state(false);
+  let dragging = $state(false);
+  let panelUp = $state(false);
+  let panelStart = $state(false);
+  let drag: { id: number; x: number; y: number; left: number; top: number } | null = null;
+  let suppressClick = false;
+
+  const EDGE = 8;
+  const DRAG_THRESHOLD = 4;
+  const PANEL_WIDTH = 414;
+  const PANEL_HEIGHT = 440;
 
   const done = $derived(
     (onboarding.apiKeyConnected ? 1 : 0) + (onboarding.teammateAdded ? 1 : 0),
@@ -54,6 +70,13 @@ SPDX-License-Identifier: Apache-2.0
 
   function place() {
     if (!pill) return;
+    if (dragged) {
+      // Keep the dropped position, pulled back on screen after a resize.
+      const r = pill.getBoundingClientRect();
+      moveTo(r.left, r.top);
+      orientPanel();
+      return;
+    }
     const rtl = document.documentElement.dir === "rtl";
     const vw = document.documentElement.clientWidth;
     const vh = window.innerHeight;
@@ -99,6 +122,71 @@ SPDX-License-Identifier: Apache-2.0
       }
       pos = { top: Math.max(4, Math.round(top)), left: Math.max(m, Math.round(left)), right: null };
     }
+  }
+
+  /** Put the pill's top-left corner at (left, top), kept inside the viewport. */
+  function moveTo(left: number, top: number) {
+    if (!pill) return;
+    const vw = document.documentElement.clientWidth;
+    const vh = window.innerHeight;
+    const maxLeft = Math.max(EDGE, vw - pill.offsetWidth - EDGE);
+    const maxTop = Math.max(EDGE, vh - pill.offsetHeight - EDGE);
+    pos = {
+      top: Math.round(Math.min(Math.max(top, EDGE), maxTop)),
+      left: Math.round(Math.min(Math.max(left, EDGE), maxLeft)),
+      right: null,
+    };
+  }
+
+  /** Open the panel upward / start-aligned when the pill sits where it wouldn't fit. */
+  function orientPanel() {
+    if (!pill || !dragged) {
+      panelUp = panelStart = false;
+      return;
+    }
+    const rtl = document.documentElement.dir === "rtl";
+    const vw = document.documentElement.clientWidth;
+    const r = pill.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom;
+    panelUp = below < PANEL_HEIGHT && r.top > below;
+    panelStart = rtl ? r.left + PANEL_WIDTH > vw - EDGE : r.right - PANEL_WIDTH < EDGE;
+  }
+
+  function onPillPointerDown(event: PointerEvent) {
+    if (!pill || event.button !== 0 || (event.target as Element).closest(".guide-close")) return;
+    const r = pill.getBoundingClientRect();
+    drag = { id: event.pointerId, x: event.clientX, y: event.clientY, left: r.left, top: r.top };
+  }
+
+  function onPillPointerMove(event: PointerEvent) {
+    if (!drag || event.pointerId !== drag.id || !pill) return;
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    if (!dragging) {
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      dragging = dragged = true;
+      pill.setPointerCapture(event.pointerId);
+    }
+    moveTo(drag.left + dx, drag.top + dy);
+  }
+
+  function onPillPointerUp(event: PointerEvent) {
+    if (!drag || event.pointerId !== drag.id) return;
+    if (dragging) {
+      // The pointerup on the toggle would otherwise click it open/closed.
+      suppressClick = true;
+      dragging = false;
+      if (pill?.hasPointerCapture(event.pointerId)) pill.releasePointerCapture(event.pointerId);
+      tick().then(orientPanel);
+    }
+    drag = null;
+  }
+
+  function onPillClickCapture(event: MouseEvent) {
+    if (!suppressClick) return;
+    suppressClick = false;
+    event.preventDefault();
+    event.stopPropagation();
   }
 
   function sidebarOffset(): number {
@@ -163,6 +251,9 @@ SPDX-License-Identifier: Apache-2.0
   bind:this={root}
   class="guide"
   class:is-open={open}
+  class:is-dragging={dragging}
+  class:panel-up={panelUp}
+  class:panel-start={panelStart}
   role="region"
   aria-label={$_("onboarding.guide.label")}
   style:top="{pos.top}px"
@@ -170,7 +261,17 @@ SPDX-License-Identifier: Apache-2.0
   style:left={pos.left === null ? null : `${pos.left}px`}
   onkeydown={onKeydown}
 >
-  <div class="guide-pill" bind:this={pill}>
+  <!-- Drag handle; its buttons keep their own keyboard access. -->
+  <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+  <div
+    class="guide-pill"
+    bind:this={pill}
+    onpointerdown={onPillPointerDown}
+    onpointermove={onPillPointerMove}
+    onpointerup={onPillPointerUp}
+    onpointercancel={onPillPointerUp}
+    onclickcapture={onPillClickCapture}
+  >
     <button
       bind:this={toggle}
       class="guide-toggle"
@@ -329,10 +430,17 @@ SPDX-License-Identifier: Apache-2.0
     --guide-shadow: 0 4px 14px 0 rgba(15, 23, 42, 0.07);
     --guide-panel-shadow: 0 18px 46px -8px rgba(15, 23, 42, 0.14);
 
+    /* Same level as the sidebar but later in the DOM, so a pill dragged over
+       it stays on top; #modal-portal (1000, after #app) still covers it. */
     position: fixed;
-    z-index: 900;
+    z-index: 1000;
     font-family: var(--gx-font);
     color: var(--guide-ink);
+  }
+
+  /* Phones: the open drawer sidebar goes over the guide. */
+  :global(.main-content.drawer-open) ~ .guide {
+    z-index: 900;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -370,6 +478,14 @@ SPDX-License-Identifier: Apache-2.0
     background: var(--guide-surface);
     border-radius: 28px;
     box-shadow: inset 0 0 0 1px var(--guide-ring), var(--guide-shadow);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .is-dragging .guide-pill,
+  .is-dragging .guide-toggle {
+    cursor: grabbing;
   }
 
   .guide-toggle {
@@ -486,6 +602,16 @@ SPDX-License-Identifier: Apache-2.0
     border-radius: 20px;
     box-shadow: inset 0 0 0 1px var(--guide-ring), var(--guide-panel-shadow);
     overflow: hidden;
+  }
+
+  .panel-up .guide-panel {
+    top: auto;
+    bottom: calc(100% + 16px);
+  }
+
+  .panel-start .guide-panel {
+    inset-inline-start: 0;
+    inset-inline-end: auto;
   }
 
   .guide-content {
