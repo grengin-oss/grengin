@@ -221,6 +221,13 @@
       "loadError": "Impossible de charger les projets",
       "saved": "Artefact enregistré dans « {name} »",
       "saveError": "Impossible d'enregistrer l'artefact"
+    },
+    "connectCard": {
+      "accountingHeading": "Connectez votre outil de comptabilité",
+      "accountingNote": "Choisissez celui que votre entreprise utilise. Votre administrateur a autorisé ces trois outils.",
+      "footerNote": "Lecture seule. Vous seul voyez votre connexion, et vous pouvez la déconnecter à tout moment.",
+      "elseLabel": "Nous utilisons autre chose",
+      "connectedAskAgain": "Connecté. Posez à nouveau votre question."
     }
   }
 }

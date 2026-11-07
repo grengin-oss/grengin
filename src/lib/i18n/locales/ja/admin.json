@@ -691,6 +691,46 @@
         "defaultAccess": "既定のアクセス: {value}",
         "usersConnected": "{count} 人のユーザーが接続済み",
         "syncedAgo": "{time}に同期"
+      },
+      "firstRun": {
+        "heading": "チームが毎日使うツールを接続",
+        "subheading": "それぞれ約2分。各自が自分のアカウントを接続します。",
+        "step1": {
+          "title": "メールとカレンダー",
+          "desc": "スレッドを要約し、顧客の発言を探し、次の会議を準備します。",
+          "primary": "Gmailとカレンダーを接続",
+          "secondary": "Outlookを使用中"
+        },
+        "step2": {
+          "title": "ファイル",
+          "desc": "探さなくても、提案書や契約書、スプレッドシートについて尋ねられます。",
+          "primary": "Google Driveを接続",
+          "secondary": "OneDriveを使用中"
+        },
+        "step3": {
+          "title": "顧客とお金",
+          "desc": "CRMから通話を準備し、期日を過ぎた請求書を確認します。",
+          "primary": "HubSpotを接続",
+          "secondary": "会計ツールを選ぶ"
+        },
+        "lock": "許可するまではすべて読み取り専用です。コネクターの呼び出しはすべて監査ログに記録されます。",
+        "skip": "スキップしてすべてのツールを見る",
+        "asksTitle": "接続すればチームが聞けること",
+        "asksSub": "小規模チームからの実際の質問、ツールごとに1つ。",
+        "ask1": {
+          "kicker": "Gmail",
+          "q": "「今月Acmeが更新について言ったことをすべて要約して」"
+        },
+        "ask2": {
+          "kicker": "Google Drive",
+          "q": "「昨年のLumen向け提案書をAcme向けの下書きにして」"
+        },
+        "ask3": {
+          "kicker": "QuickBooks",
+          "q": "「30日以上期日を過ぎた請求書はどれで、金額はいくらか」"
+        },
+        "elseText": "リストにないツールや、開発者が作ったサーバーがありますか？MCPに対応していれば何でも動きます。",
+        "elseBtn": "独自のサーバーを追加"
       }
     },
     "mcpOAuth": {
@@ -1376,6 +1416,90 @@
         "view": "ユーザーとそのロールを表示",
         "manage": "ユーザーを招待・編集・無効化"
       }
+    },
+    "connectors": {
+      "title": "コネクタ",
+      "subtitle": "チームがすでに使っているツールを接続します。各自が自分のアカウントを接続し、誰が何を使えるかはあなたが決めます。",
+      "browse": "コネクタを探す",
+      "count": "{count} 件のコネクタ",
+      "searchPlaceholder": "ツール名や必要なものを検索: 請求書、レビュー、ファイル",
+      "searchLabel": "コネクタを検索",
+      "allConnected": "カタログ内のすべてが接続済みです。",
+      "categoryLabel": "カテゴリ",
+      "allTools": "すべてのツール",
+      "showing": "{total} 件中 {shown} 件のコネクタを表示",
+      "noMatch": "「{query}」に一致するコネクタはありません。",
+      "showLess": "表示を減らす",
+      "showMore": "+ さらに {count} 件表示",
+      "elseTitle": "ほかにお探しですか?",
+      "elseSub": "一覧にないツール用に独自の MCP サーバーを追加するか、追加をリクエストしてください。カスタムサーバーにも上記と同じアクセスルールが適用されます。",
+      "requestTool": "ツールをリクエスト",
+      "requestThanks": "ありがとうございます。追加されたらお知らせします。",
+      "addOwnServer": "独自のサーバーを追加",
+      "add": "追加",
+      "adding": "追加中…",
+      "connect": "接続",
+      "connectedAccount": "アカウントを接続しました",
+      "notCompleted": "接続が完了しませんでした。もう一度お試しください。",
+      "added": "追加しました。利用できるユーザーを変更するまで、管理者のみが使用できます。",
+      "addFailed": "コネクタを追加できませんでした。もう一度お試しください。",
+      "callback": {
+        "invalidLink": "このサインインリンクは無効です。もう一度接続を開始してください。",
+        "notStarted": "このサインインはこのブラウザで開始されていません。もう一度接続を開始してください。",
+        "expired": "このサインインの有効期限が切れました。もう一度接続を開始してください。",
+        "mismatch": "このサインインは接続リクエストと一致しません。もう一度接続を開始してください。",
+        "confirmFailed": "接続を確認できませんでした。もう一度お試しください。"
+      },
+      "categories": {
+        "email-calendar": "メールとカレンダー",
+        "files": "ファイル",
+        "chat": "チャット",
+        "customers": "顧客",
+        "money": "お金",
+        "marketing": "マーケティング",
+        "website": "ウェブサイト",
+        "developer": "開発者"
+      }
+    },
+    "connectorOverview": {
+      "allConnectors": "すべてのコネクタ",
+      "loading": "コネクタを読み込んでいます…",
+      "retry": "再試行",
+      "loadError": "このコネクタを読み込めませんでした。",
+      "saveFailed": "変更を保存できませんでした。",
+      "connectedBy": "{total}人中{connected}人が接続済み",
+      "turnOffForEveryone": "全員に対して無効にする",
+      "turnOnForEveryone": "全員に対して有効にする",
+      "connectMyAccount": "自分のアカウントを接続",
+      "tryAsking": "質問してみる",
+      "promptCopied": "プロンプトをクリップボードにコピーしました",
+      "capabilitiesTitle": "Grengin でできること",
+      "capabilitiesIntro": "読み取りは常に有効です。何かを変更する操作は許可するまで無効で、各操作はチャットで確認されます。",
+      "alwaysOn": "常に有効",
+      "allowed": "許可",
+      "off": "無効",
+      "readingName": "検索と読み取り",
+      "readingDesc": "質問した本人のデータのみ。",
+      "whoCanUse": "使用できるユーザー",
+      "whoCanUseIntro": "各ユーザーは常に自分のアカウントを接続します。ここでは誰にその選択肢を与えるかだけを決めます。",
+      "everyone": "全員",
+      "everyoneDesc": "ワークスペースの{count}人全員",
+      "someTeams": "一部のチーム",
+      "someTeamsDesc": "部門を選択",
+      "adminsOnly": "管理者のみ",
+      "adminsOnlyDesc": "ワークスペースの管理者のみ",
+      "advanced": "詳細設定",
+      "advancedDesc": "このコネクタの{count}個のツール、ツールごとのルール、サーバーアドレス、ログ。",
+      "backToOverview": "概要に戻る",
+      "people": "ユーザー",
+      "remindOthers": "他の{count}人にリマインド",
+      "stateConnected": "接続済み",
+      "stateNeedsReconnect": "再接続が必要",
+      "stateNotConnected": "未接続",
+      "stateUnavailable": "利用不可",
+      "peopleFoot": "{connected}人が接続済み。{notConnected}人はまだ接続していません。",
+      "saving": "保存中…",
+      "whoCanUseOffNote": "全員に対して無効です。有効にすると、使用できるユーザーを選べます。"
     }
   },
   "permissions": {

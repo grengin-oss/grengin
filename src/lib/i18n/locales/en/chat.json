@@ -221,6 +221,13 @@
       "loadError": "Failed to load projects",
       "saved": "Artifact saved to \"{name}\"",
       "saveError": "Failed to save artifact"
+    },
+    "connectCard": {
+      "accountingHeading": "Connect your accounting tool",
+      "accountingNote": "Pick the one your company uses. Your admin has allowed these three.",
+      "footerNote": "Read only. Only you can see your connection, and you can disconnect it any time.",
+      "elseLabel": "We use something else",
+      "connectedAskAgain": "Connected — ask your question again."
     }
   }
 }

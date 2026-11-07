@@ -1,0 +1,221 @@
+{
+  "schemaVersion": "1.0",
+  "key": "gmail",
+  "version": "1.0.0",
+  "display_name": "Gmail",
+  "icon": "https://meta.grengin.com/connectors/icons/gmail.svg",
+  "description": "Google's hosted Gmail MCP server (preview). Search and read mail, write drafts, and manage labels, trash and spam. It cannot send mail.",
+  "category": "email-calendar",
+  "job": "Find and read emails, write drafts and sort your Gmail inbox",
+  "suite": "google",
+  "keywords": [
+    "email",
+    "inbox",
+    "mail",
+    "draft",
+    "follow up",
+    "labels",
+    "spam",
+    "customer emails"
+  ],
+  "sign_in": "oauth_per_user",
+  "status": "planned",
+  "protocols": [
+    {
+      "name": "mcp",
+      "transport": "streamable_http",
+      "versions": [
+        "2025-11-25",
+        "2025-06-18",
+        "2025-03-26",
+        "2024-11-05"
+      ]
+    }
+  ],
+  "capabilities": {
+    "read": [
+      {
+        "label": "Search and read emails",
+        "tools": [
+          "search_threads",
+          "get_thread",
+          "get_message"
+        ]
+      },
+      {
+        "label": "See your drafts",
+        "tools": [
+          "list_drafts",
+          "get_draft"
+        ]
+      },
+      {
+        "label": "See your labels",
+        "tools": [
+          "list_labels"
+        ]
+      }
+    ],
+    "write": [
+      {
+        "label": "Write email drafts (does not send)",
+        "tools": [
+          "create_draft"
+        ]
+      },
+      {
+        "label": "Add or remove labels on emails",
+        "tools": [
+          "label_thread",
+          "unlabel_thread",
+          "label_message",
+          "unlabel_message",
+          "update_message_labels"
+        ]
+      },
+      {
+        "label": "Create new labels",
+        "tools": [
+          "create_label"
+        ]
+      },
+      {
+        "label": "Move emails to trash or spam",
+        "tools": [
+          "trash_thread",
+          "trash_message",
+          "mark_thread_spam",
+          "mark_message_spam",
+          "apply_sensitive_thread_label",
+          "apply_sensitive_message_label"
+        ]
+      },
+      {
+        "label": "Restore emails from trash or spam",
+        "tools": [
+          "untrash_thread",
+          "untrash_message",
+          "unmark_thread_spam",
+          "unmark_message_spam"
+        ]
+      }
+    ]
+  },
+  "example_prompts": [
+    "Summarize the unread emails I got today",
+    "Find emails from our accountant about last quarter's taxes and list what they need from me",
+    "Draft a reply to the latest email about the office lease asking for the signed copy"
+  ],
+  "tools": [
+    {
+      "name": "create_draft",
+      "description": "Creates a new draft email in the authenticated user's Gmail account. Returns a Draft object with the `id`, `threadId`, and `viewUrl` fields populated."
+    },
+    {
+      "name": "list_drafts",
+      "description": "Lists draft emails from the authenticated user's Gmail account, optionally filtered by a query string. An empty JSON object `{}` represents zero matching items, not an error."
+    },
+    {
+      "name": "get_draft",
+      "description": "Retrieves a specific draft email from the authenticated user's Gmail account by ID, including its `viewUrl` for viewing and editing in the Gmail Web UI."
+    },
+    {
+      "name": "get_thread",
+      "description": "Retrieves a specific email thread from the authenticated user's Gmail account, including its `viewUrl` and a list of its messages (each with their own `viewUrl`)."
+    },
+    {
+      "name": "get_message",
+      "description": "Retrieves a specific email message from the authenticated user's Gmail account by its unique message ID, including its `viewUrl`."
+    },
+    {
+      "name": "search_threads",
+      "description": "Lists email threads from the authenticated user's Gmail account. This tool can filter threads based on a query string and supports pagination."
+    },
+    {
+      "name": "label_thread",
+      "description": "Adds labels to an entire thread in the authenticated user's Gmail account. This operation affects all messages currently in the thread and any future messages added to it."
+    },
+    {
+      "name": "unlabel_thread",
+      "description": "Removes labels from an entire thread in the authenticated user's Gmail account. This operation affects all messages currently in the thread."
+    },
+    {
+      "name": "apply_sensitive_thread_label",
+      "description": "Prefer `trash_thread` or `mark_thread_spam` instead. Adds a sensitive label (Trash or Spam) to a single thread in the authenticated user's Gmail account."
+    },
+    {
+      "name": "trash_thread",
+      "description": "Moves an entire thread to the Trash in the authenticated user's Gmail account. This operation affects all messages currently in the thread."
+    },
+    {
+      "name": "untrash_thread",
+      "description": "Removes an entire thread from the Trash in the authenticated user's Gmail account."
+    },
+    {
+      "name": "mark_thread_spam",
+      "description": "Marks an entire thread as Spam in the authenticated user's Gmail account. This operation affects all messages currently in the thread."
+    },
+    {
+      "name": "unmark_thread_spam",
+      "description": "Unmarks an entire thread as Spam in the authenticated user's Gmail account."
+    },
+    {
+      "name": "list_labels",
+      "description": "Lists all labels available in the authenticated user's Gmail account. Use this tool to discover the `id` of a label before calling `label_thread`, `unlabel_thread`, `label_message`, or `unlabel_message`."
+    },
+    {
+      "name": "label_message",
+      "description": "Adds one or more labels to a specific message in the authenticated user's Gmail account."
+    },
+    {
+      "name": "update_message_labels",
+      "description": "Atomically adds and/or removes labels from a specific message in the authenticated user's Gmail account. Requires at least one of `addLabelIds` or `removeLabelIds` to be provided."
+    },
+    {
+      "name": "unlabel_message",
+      "description": "Removes one or more labels from a specific message in the authenticated user's Gmail account."
+    },
+    {
+      "name": "apply_sensitive_message_label",
+      "description": "Prefer `trash_message` or `mark_message_spam` instead. Adds a sensitive label (Trash or Spam) to a single message in the authenticated user's Gmail account."
+    },
+    {
+      "name": "trash_message",
+      "description": "Moves a specific message to the Trash in the authenticated user's Gmail account."
+    },
+    {
+      "name": "untrash_message",
+      "description": "Removes a specific message from the Trash in the authenticated user's Gmail account."
+    },
+    {
+      "name": "mark_message_spam",
+      "description": "Marks a specific message as Spam in the authenticated user's Gmail account."
+    },
+    {
+      "name": "unmark_message_spam",
+      "description": "Unmarks a specific message as Spam in the authenticated user's Gmail account."
+    },
+    {
+      "name": "create_label",
+      "description": "Creates a new label in the authenticated user's Gmail account. Supports creating nested labels (sub-labels) using a forward slash (e.g., 'Projects/Alpha/Sprint-1')."
+    }
+  ],
+  "connection": {
+    "transport_type": "http",
+    "url": "https://gmailmcp.googleapis.com/mcp/v1",
+    "auth": {
+      "type": "oauth",
+      "provider": "google",
+      "auth_url": "https://accounts.google.com/o/oauth2/v2/auth",
+      "token_url": "https://oauth2.googleapis.com/token",
+      "scopes": [
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/gmail.compose"
+      ],
+      "extra_params": {
+        "access_type": "offline",
+        "prompt": "consent"
+      }
+    }
+  }
+}

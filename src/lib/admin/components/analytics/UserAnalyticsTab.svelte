@@ -965,20 +965,6 @@ SPDX-License-Identifier: Apache-2.0
     gap: 8px;
   }
 
-  .user-avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 12px;
-    background: var(--gx-an-avatar-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--gx-an-avatar-fg);
-    flex-shrink: 0;
-  }
-
   .user-name {
     font-weight: 700;
     font-size: 13px;

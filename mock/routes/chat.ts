@@ -662,6 +662,18 @@ async function handleImageGeneration(opts: {
 function getMockResponse(input: string, messageNum: number): string {
   const msgLabel = `[Mock Response #${messageNum}]`
 
+  // Connect card in chat (ENGG-511): a question that needs an accounting tool
+  // when none is connected is answered with an inline connect card. The sentinel
+  // `[[connect-card:accounting]]` is rendered as the card by ChatMessage.svelte.
+  // Checked first so "invoice"/"overdue" wins over the generic greeting match.
+  if (
+    input.includes('invoice') ||
+    input.includes('overdue') ||
+    (input.includes('paid') && input.includes('who'))
+  ) {
+    return `${msgLabel}\n\nI can answer that once your accounting tool is connected. It takes about a minute, and I will only read invoices and payments; nothing gets changed.\n\n[[connect-card:accounting]]\n\nOr paste the invoice list here and I will work from that.`
+  }
+
   if (input.includes('hello') || input.includes('hi') || input.includes('hey')) {
     return `${msgLabel}\n\nHello! I'm your AI assistant powered by Grengin. How can I help you today? I can assist with business strategy, marketing ideas, data analysis, and much more.`
   }

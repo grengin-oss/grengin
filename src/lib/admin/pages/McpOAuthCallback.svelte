@@ -11,6 +11,13 @@ SPDX-License-Identifier: Apache-2.0
   import { ApiError } from "../../api/client.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
   import { completeMcpOAuth } from "../../api/admin/mcpServers.js";
+  import {
+    completeConnection,
+    getConnection,
+    readConnectorTransaction,
+    clearConnectorTransaction,
+  } from "../../api/admin/connectors.js";
+  import { getUser } from "../../features/auth/state.svelte.js";
 
   type CallbackStatus = "processing" | "success" | "error";
   let status = $state<CallbackStatus>("processing");
@@ -18,7 +25,71 @@ SPDX-License-Identifier: Apache-2.0
   const REDIRECT_DELAY_SUCCESS = 300; // ms
   const REDIRECT_DELAY_ERROR = 3000; // ms
 
+  const CONNECTOR_FIELDS = ["connector_approval", "connection_id", "state"];
+
+  /**
+   * Connector broker return (grengin-api docs/connector-oauth-broker-frontend.md):
+   * the fragment carries connector_approval, connection_id and state. It is
+   * scrubbed from the URL at once; the code is a transient secret and is never
+   * logged or stored. Returns null when this is not a connector return.
+   */
+  function takeConnectorReturn(): URLSearchParams | null {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return null;
+    const params = new URLSearchParams(hash);
+    if (!params.has("connector_approval")) return null;
+    history.replaceState(history.state, "", window.location.pathname + window.location.search);
+    return params;
+  }
+
+  async function completeConnectorReturn(params: URLSearchParams): Promise<void> {
+    const fail = (message: string): never => {
+      clearConnectorTransaction();
+      throw new Error(message);
+    };
+    const keys = [...params.keys()];
+    if (
+      keys.length !== CONNECTOR_FIELDS.length ||
+      !CONNECTOR_FIELDS.every((k) => params.getAll(k).length === 1)
+    ) {
+      fail($_("admin.connectors.callback.invalidLink"));
+    }
+    const code = params.get("connector_approval") ?? "";
+    const connectionId = params.get("connection_id") ?? "";
+    if (!/^[0-9a-f]{64}$/.test(code)) fail($_("admin.connectors.callback.invalidLink"));
+
+    const txn = readConnectorTransaction();
+    if (!txn) fail($_("admin.connectors.callback.notStarted"));
+    if (Date.now() > txn!.expires_at) fail($_("admin.connectors.callback.expired"));
+    if (
+      txn!.connection_id !== connectionId ||
+      txn!.state !== params.get("state") ||
+      txn!.user_id !== (getUser()?.id ?? "")
+    ) {
+      fail($_("admin.connectors.callback.mismatch"));
+    }
+
+    try {
+      await completeConnection(connectionId, code);
+    } catch (err) {
+      // A 503 may still have committed on the broker; status reconciles it.
+      if (!(err instanceof ApiError && err.status === 503)) {
+        clearConnectorTransaction();
+        throw err;
+      }
+    }
+    const conn = await getConnection(connectionId);
+    clearConnectorTransaction();
+    if (conn.status !== "connected") throw new Error($_("admin.connectors.callback.confirmFailed"));
+  }
+
   async function processCallback(): Promise<void> {
+    const connectorParams = takeConnectorReturn();
+    if (connectorParams) {
+      await completeConnectorReturn(connectorParams);
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
     const errorDescription = params.get("error_description");
@@ -52,7 +123,7 @@ SPDX-License-Identifier: Apache-2.0
     }
     
     // Fallback to default paths
-    return origin === 'user' ? '/settings' : '/admin/connectors';
+    return origin === 'user' ? '/settings' : '/admin/mcp-servers';
   }
 
   function redirectAfterSuccess(): void {

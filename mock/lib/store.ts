@@ -48,6 +48,13 @@ export const artifacts = new Map<string, {
   created_at: string; updated_at: string;
 }>()
 export const aiEngines = new Map<string, AIEngineDetail>()
+/**
+ * Users created via POST /admin/users in a normal (non-empty) session. The user
+ * list is seeded from a static fixture, so new users are kept here and merged
+ * into GET /admin/users (and the per-user routes) to survive a list refresh.
+ * Empty-workspace sessions persist through `workspace.users` instead.
+ */
+export const createdUsers: Record<string, unknown>[] = []
 export const departments = new Map<string, Department>()
 export const projects = new Map<string, Project>()
 

@@ -628,6 +628,8 @@ SPDX-License-Identifier: Apache-2.0
             </div>
             {#if treeScroll.v.visible}
               <div class="tree-scrollbar tree-scrollbar--v" aria-hidden="true">
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <!-- Decorative drag thumb; the scrollbar is aria-hidden and the tree scrolls natively. -->
                 <div
                   class="tree-scrollbar__thumb"
                   style="top: {treeScroll.v.offset}px; height: {treeScroll.v.size}px"
@@ -641,6 +643,8 @@ SPDX-License-Identifier: Apache-2.0
         <div class="tree-footer-block">
           {#if treeScroll.h.visible}
             <div class="tree-scrollbar tree-scrollbar--h" aria-hidden="true">
+              <!-- svelte-ignore a11y_no_static_element_interactions -->
+              <!-- Decorative drag thumb; the scrollbar is aria-hidden and the tree scrolls natively. -->
               <div
                 class="tree-scrollbar__thumb"
                 style="left: {treeScroll.h.offset}px; width: {treeScroll.h.size}px"

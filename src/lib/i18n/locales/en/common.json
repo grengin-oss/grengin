@@ -114,5 +114,20 @@
       "resume": "Resume guided tour",
       "later": "Remind me later"
     }
+  },
+  "connectors": {
+    "connecting": "Connecting…",
+    "connected": "Connected",
+    "errors": {
+      "loadFailed": "Could not load {url} ({status})",
+      "popupBlocked": "The sign-in window was blocked. Allow pop-ups and try again.",
+      "noVersion": "This connector has no published version yet.",
+      "manifestMismatch": "The published connector does not match the catalog.",
+      "unknown": "Unknown connector",
+      "notAdded": "An admin needs to add this connector before you can connect.",
+      "revocationPending": "The previous connection is still being cleaned up. Try again in a moment.",
+      "noConnection": "No connection to disconnect",
+      "connectFailed": "Could not connect. Try again."
+    }
   }
 }
