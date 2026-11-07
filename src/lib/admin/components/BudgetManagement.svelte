@@ -4,6 +4,7 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
+  import { untrack } from "svelte";
   import type { Department, BudgetPeriod, BudgetOverview, ActionOnExceed } from "../types.js";
   import { departmentsStore } from "../stores/index.js";
   import { toast } from "../../components/Toaster.svelte";
@@ -23,9 +24,11 @@ SPDX-License-Identifier: Apache-2.0
   let { department, canEditBudget = true }: Props = $props();
   
   let isEditingBudget = $state(false);
-  let budgetAmount = $state(department.budget_allocated);
-  let budgetPeriod = $state<BudgetPeriod>(department.budget_period);
-  let actionOnExceed = $state<ActionOnExceed>(department.action_on_exceed || 'warn');
+  let budgetAmount = $state(untrack(() => department.budget_allocated));
+  let budgetPeriod = $state<BudgetPeriod>(untrack(() => department.budget_period));
+  let actionOnExceed = $state<ActionOnExceed>(
+    untrack(() => department.action_on_exceed || 'warn'),
+  );
   let isSubmitting = $state(false);
   let budgetOverview = $state<BudgetOverview | null>(null);
   let isLoadingOverview = $state(false);

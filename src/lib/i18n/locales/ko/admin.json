@@ -691,6 +691,46 @@
         "defaultAccess": "기본 액세스: {value}",
         "usersConnected": "사용자 {count}명 연결됨",
         "syncedAgo": "{time} 동기화됨"
+      },
+      "firstRun": {
+        "heading": "팀이 매일 사용하는 도구를 연결하세요",
+        "subheading": "각각 약 2분입니다. 모두 각자 자신의 계정을 연결합니다.",
+        "step1": {
+          "title": "메일과 캘린더",
+          "desc": "스레드를 요약하고, 고객이 한 말을 찾고, 다음 회의를 준비하세요.",
+          "primary": "Gmail과 캘린더 연결",
+          "secondary": "Outlook을 사용해요"
+        },
+        "step2": {
+          "title": "파일",
+          "desc": "제안서, 계약서, 스프레드시트를 찾지 않고도 물어보세요.",
+          "primary": "Google Drive 연결",
+          "secondary": "OneDrive를 사용해요"
+        },
+        "step3": {
+          "title": "고객과 비용",
+          "desc": "CRM에서 통화를 준비하고, 연체된 청구서를 확인하세요.",
+          "primary": "HubSpot 연결",
+          "secondary": "회계 도구 선택"
+        },
+        "lock": "추가로 허용하기 전까지는 모두 읽기 전용입니다. 모든 커넥터 호출은 감사 로그에 남습니다.",
+        "skip": "건너뛰고 모든 도구 둘러보기",
+        "asksTitle": "연결하고 나면 팀이 물어볼 수 있는 것",
+        "asksSub": "소규모 팀에서 나온 실제 질문, 도구당 하나씩.",
+        "ask1": {
+          "kicker": "Gmail",
+          "q": "“이번 달 Acme가 갱신에 대해 말한 내용을 모두 요약해 줘”"
+        },
+        "ask2": {
+          "kicker": "Google Drive",
+          "q": "“지난해 Lumen 제안서를 Acme용 초안으로 만들어 줘”"
+        },
+        "ask3": {
+          "kicker": "QuickBooks",
+          "q": "“30일 이상 연체된 청구서는 어느 것이고, 금액은 얼마야?”"
+        },
+        "elseText": "목록에 없는 도구나 개발자가 만든 서버가 있나요? MCP를 지원하는 것이라면 무엇이든 작동합니다.",
+        "elseBtn": "직접 서버 추가"
       }
     },
     "mcpOAuth": {
@@ -1376,6 +1416,90 @@
         "view": "사용자 및 해당 역할 보기",
         "manage": "사용자 초대, 편집 및 비활성화"
       }
+    },
+    "connectors": {
+      "title": "커넥터",
+      "subtitle": "팀이 이미 사용하는 도구를 연결하세요. 각자 자신의 계정을 연결하고, 누가 무엇을 사용할 수 있는지는 관리자가 정합니다.",
+      "browse": "커넥터 둘러보기",
+      "count": "커넥터 {count}개",
+      "searchPlaceholder": "도구나 필요한 항목 검색: 청구서, 리뷰, 파일",
+      "searchLabel": "커넥터 검색",
+      "allConnected": "카탈로그의 모든 항목이 이미 연결되어 있습니다.",
+      "categoryLabel": "카테고리",
+      "allTools": "모든 도구",
+      "showing": "커넥터 {total}개 중 {shown}개 표시",
+      "noMatch": "“{query}”와(과) 일치하는 커넥터가 없습니다.",
+      "showLess": "간단히 보기",
+      "showMore": "+ {count}개 더 보기",
+      "elseTitle": "다른 도구가 필요하신가요?",
+      "elseSub": "목록에 없는 도구를 위해 자체 MCP 서버를 추가하거나 추가를 요청하세요. 사용자 지정 서버에도 위와 동일한 액세스 규칙이 적용됩니다.",
+      "requestTool": "도구 요청",
+      "requestThanks": "감사합니다. 추가되면 알려 드리겠습니다.",
+      "addOwnServer": "자체 서버 추가",
+      "add": "추가",
+      "adding": "추가 중…",
+      "connect": "연결",
+      "connectedAccount": "계정이 연결되었습니다",
+      "notCompleted": "연결이 완료되지 않았습니다. 다시 시도하세요.",
+      "added": "추가되었습니다. 사용 대상을 변경하기 전까지는 관리자만 사용할 수 있습니다.",
+      "addFailed": "커넥터를 추가할 수 없습니다. 다시 시도하세요.",
+      "callback": {
+        "invalidLink": "유효하지 않은 로그인 링크입니다. 다시 연결을 시작하세요.",
+        "notStarted": "이 로그인은 이 브라우저에서 시작되지 않았습니다. 다시 연결을 시작하세요.",
+        "expired": "로그인이 만료되었습니다. 다시 연결을 시작하세요.",
+        "mismatch": "이 로그인이 연결 요청과 일치하지 않습니다. 다시 연결을 시작하세요.",
+        "confirmFailed": "연결을 확인할 수 없습니다. 다시 시도하세요."
+      },
+      "categories": {
+        "email-calendar": "이메일 및 캘린더",
+        "files": "파일",
+        "chat": "채팅",
+        "customers": "고객",
+        "money": "재무",
+        "marketing": "마케팅",
+        "website": "웹사이트",
+        "developer": "개발자"
+      }
+    },
+    "connectorOverview": {
+      "allConnectors": "모든 커넥터",
+      "loading": "커넥터를 불러오는 중…",
+      "retry": "다시 시도",
+      "loadError": "이 커넥터를 불러올 수 없습니다.",
+      "saveFailed": "변경 사항을 저장할 수 없습니다.",
+      "connectedBy": "{total}명 중 {connected}명이 연결됨",
+      "turnOffForEveryone": "모두에게 끄기",
+      "turnOnForEveryone": "모두에게 켜기",
+      "connectMyAccount": "내 계정 연결",
+      "tryAsking": "이렇게 물어보세요",
+      "promptCopied": "프롬프트를 클립보드에 복사했습니다",
+      "capabilitiesTitle": "Grengin이 할 수 있는 일",
+      "capabilitiesIntro": "읽기는 항상 켜져 있습니다. 무언가를 변경하는 작업은 허용하기 전까지 꺼져 있으며, 각 작업은 채팅에서 확인합니다.",
+      "alwaysOn": "항상 켜짐",
+      "allowed": "허용됨",
+      "off": "꺼짐",
+      "readingName": "검색 및 읽기",
+      "readingDesc": "질문한 사람의 데이터만.",
+      "whoCanUse": "사용할 수 있는 사람",
+      "whoCanUseIntro": "사용자는 항상 자신의 계정을 연결합니다. 여기서는 누구에게 옵션을 제공할지만 결정합니다.",
+      "everyone": "모두",
+      "everyoneDesc": "워크스페이스의 {count}명 전원",
+      "someTeams": "일부 팀",
+      "someTeamsDesc": "부서 선택",
+      "adminsOnly": "관리자만",
+      "adminsOnlyDesc": "워크스페이스 관리자만",
+      "advanced": "고급",
+      "advancedDesc": "이 커넥터의 도구 {count}개, 도구별 규칙, 서버 주소 및 로그.",
+      "backToOverview": "개요로 돌아가기",
+      "people": "사람",
+      "remindOthers": "나머지 {count}명에게 알림",
+      "stateConnected": "연결됨",
+      "stateNeedsReconnect": "다시 연결 필요",
+      "stateNotConnected": "연결 안 됨",
+      "stateUnavailable": "사용 불가",
+      "peopleFoot": "{connected}명 연결됨. {notConnected}명이 아직 연결하지 않았습니다.",
+      "saving": "저장 중…",
+      "whoCanUseOffNote": "모두에게 꺼져 있습니다. 켜면 사용할 수 있는 사람을 선택할 수 있습니다."
     }
   },
   "permissions": {

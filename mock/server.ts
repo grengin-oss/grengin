@@ -24,6 +24,7 @@ import rolePromptsRoutes from './routes/rolePrompts.js'
 import auditLogsRoutes from './routes/auditLogs.js'
 import promptMetricsRoutes from './routes/promptMetrics.js'
 import discoveryRoutes from './routes/discovery.js'
+import connectorsRoutes from './routes/connectors.js'
 
 // Seed initial data
 seedData()
@@ -58,6 +59,7 @@ app.use(rolePromptsRoutes)
 app.use(auditLogsRoutes)
 app.use(promptMetricsRoutes)
 app.use(discoveryRoutes)
+app.use(connectorsRoutes)
 
 // Fallback 404 handler - always returns JSON
 app.use((req, res) => {

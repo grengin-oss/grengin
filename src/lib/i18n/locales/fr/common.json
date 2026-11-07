@@ -114,5 +114,20 @@
       "resume": "Reprendre la visite guidée",
       "later": "Me le rappeler plus tard"
     }
+  },
+  "connectors": {
+    "connecting": "Connexion…",
+    "connected": "Connecté",
+    "errors": {
+      "loadFailed": "Impossible de charger {url} ({status})",
+      "popupBlocked": "La fenêtre de connexion a été bloquée. Autorisez les fenêtres pop-up et réessayez.",
+      "noVersion": "Ce connecteur n'a pas encore de version publiée.",
+      "manifestMismatch": "Le connecteur publié ne correspond pas au catalogue.",
+      "unknown": "Connecteur inconnu",
+      "notAdded": "Un administrateur doit ajouter ce connecteur avant que vous puissiez vous connecter.",
+      "revocationPending": "La connexion précédente est encore en cours de nettoyage. Réessayez dans un instant.",
+      "noConnection": "Aucune connexion à déconnecter",
+      "connectFailed": "Connexion impossible. Réessayez."
+    }
   }
 }

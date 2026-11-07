@@ -1,0 +1,303 @@
+{
+  "schemaVersion": "1.0",
+  "key": "slack",
+  "version": "1.0.0",
+  "display_name": "Slack",
+  "icon": "https://meta.grengin.com/connectors/icons/slack.svg",
+  "description": "Slack's official hosted MCP server (Streamable HTTP, user token): messages, channels, threads, files, canvases, lists, reactions and people.",
+  "category": "chat",
+  "job": "Search, read and send messages in your Slack workspace",
+  "suite": "none",
+  "keywords": [
+    "messages",
+    "channels",
+    "threads",
+    "team chat",
+    "direct messages",
+    "canvases",
+    "files",
+    "task lists"
+  ],
+  "sign_in": "oauth_per_user",
+  "status": "planned",
+  "protocols": [
+    {
+      "name": "mcp",
+      "transport": "streamable_http",
+      "versions": []
+    }
+  ],
+  "capabilities": {
+    "read": [
+      {
+        "label": "Search messages and files",
+        "tools": [
+          "slack_search_public",
+          "slack_search_public_and_private",
+          "slack_read_file"
+        ]
+      },
+      {
+        "label": "Read channels and threads",
+        "tools": [
+          "slack_read_channel",
+          "slack_read_thread"
+        ]
+      },
+      {
+        "label": "Look up people and channels",
+        "tools": [
+          "slack_search_users",
+          "slack_read_user_profile",
+          "slack_search_channels",
+          "slack_list_channel_members",
+          "slack_list_user_channels"
+        ]
+      },
+      {
+        "label": "Read canvases",
+        "tools": [
+          "slack_read_canvas"
+        ]
+      },
+      {
+        "label": "Read lists",
+        "tools": [
+          "slack_read_list"
+        ]
+      },
+      {
+        "label": "See reactions and custom emoji",
+        "tools": [
+          "slack_get_reactions",
+          "slack_search_emojis"
+        ]
+      }
+    ],
+    "write": [
+      {
+        "label": "Send messages",
+        "tools": [
+          "slack_send_message"
+        ]
+      },
+      {
+        "label": "Save message drafts",
+        "tools": [
+          "slack_send_message_draft"
+        ]
+      },
+      {
+        "label": "Schedule messages",
+        "tools": [
+          "slack_schedule_message"
+        ]
+      },
+      {
+        "label": "React to messages",
+        "tools": [
+          "slack_add_reaction"
+        ]
+      },
+      {
+        "label": "Create channels and group DMs",
+        "tools": [
+          "slack_create_conversation"
+        ]
+      },
+      {
+        "label": "Create and edit canvases",
+        "tools": [
+          "slack_create_canvas",
+          "slack_update_canvas"
+        ]
+      },
+      {
+        "label": "Upload and share files",
+        "tools": [
+          "slack_get_file_upload_url",
+          "slack_complete_file_upload"
+        ]
+      },
+      {
+        "label": "Create and edit lists",
+        "tools": [
+          "slack_create_list",
+          "slack_update_list",
+          "slack_add_list_record",
+          "slack_update_list_record"
+        ]
+      },
+      {
+        "label": "Delete list rows",
+        "tools": [
+          "slack_delete_list_record"
+        ]
+      }
+    ]
+  },
+  "example_prompts": [
+    "Summarize what I missed in #general today",
+    "Find the thread where we discussed the launch date",
+    "Draft a message to #design about tomorrow's review"
+  ],
+  "tools": [
+    {
+      "name": "slack_search_public",
+      "description": "Searches for messages, files in public Slack channels ONLY."
+    },
+    {
+      "name": "slack_search_public_and_private",
+      "description": "Searches for messages, files in ALL Slack channels, including public channels, private channels, DMs, and group DMs."
+    },
+    {
+      "name": "slack_search_channels",
+      "description": "Search for Slack channels by name or description."
+    },
+    {
+      "name": "slack_search_users",
+      "description": "Search for Slack users by name, email, or profile attributes (department, role, title)."
+    },
+    {
+      "name": "slack_search_emojis",
+      "description": "Returns the custom emoji available in the workspace, optionally filtered by name."
+    },
+    {
+      "name": "slack_read_channel",
+      "description": "Reads messages from a Slack channel in reverse chronological order (newest first)."
+    },
+    {
+      "name": "slack_read_thread",
+      "description": "Reads messages from a specific Slack thread (parent message + all replies)."
+    },
+    {
+      "name": "slack_read_canvas",
+      "description": "Retrieves the markdown content and section ID mapping of a Slack Canvas document."
+    },
+    {
+      "name": "slack_read_user_profile",
+      "description": "Retrieves detailed profile information for a Slack user: contact info, status, timezone, organization, and role."
+    },
+    {
+      "name": "slack_read_file",
+      "description": "Retrieves the metadata and content of a file shared in Slack (text is returned inline, images rendered; files over 10 MB are rejected)."
+    },
+    {
+      "name": "slack_list_channel_members",
+      "description": "Returns the members of a Slack channel or conversation."
+    },
+    {
+      "name": "slack_list_user_channels",
+      "description": "Lists the channels the authenticated user is a member of, filterable by type, name prefix and workspace; archived channels are included by default."
+    },
+    {
+      "name": "slack_get_reactions",
+      "description": "Retrieves the emoji reactions on a Slack message: emoji name, count and the users who reacted."
+    },
+    {
+      "name": "slack_send_message",
+      "description": "Sends a message to a Slack channel or user. Message uses standard markdown."
+    },
+    {
+      "name": "slack_send_message_draft",
+      "description": "Creates a draft message in a Slack channel. Only one attached draft is allowed per channel."
+    },
+    {
+      "name": "slack_schedule_message",
+      "description": "Schedules a message for future delivery to a Slack channel."
+    },
+    {
+      "name": "slack_add_reaction",
+      "description": "Adds an emoji reaction to a Slack message on behalf of the authenticated user."
+    },
+    {
+      "name": "slack_create_conversation",
+      "description": "Creates a new Slack channel, group DM, or IM conversation on behalf of the authenticated user."
+    },
+    {
+      "name": "slack_create_canvas",
+      "description": "Creates a Slack Canvas document from Markdown content."
+    },
+    {
+      "name": "slack_update_canvas",
+      "description": "Updates an existing Slack Canvas, replacing the whole canvas or a single section by section ID."
+    },
+    {
+      "name": "slack_get_file_upload_url",
+      "description": "Step 1 of a file upload: returns a signed upload URL and file ID; POST the file bytes to the URL, then call slack_complete_file_upload."
+    },
+    {
+      "name": "slack_complete_file_upload",
+      "description": "Step 2 of a file upload: finalizes the file by ID, optionally sharing it to a channel with a message."
+    },
+    {
+      "name": "slack_create_list",
+      "description": "Creates a Slack list with a custom schema of typed columns (text, date, select, user and more)."
+    },
+    {
+      "name": "slack_read_list",
+      "description": "Reads a Slack list: its columns and records (rows)."
+    },
+    {
+      "name": "slack_update_list",
+      "description": "Updates a Slack list's metadata and columns."
+    },
+    {
+      "name": "slack_add_list_record",
+      "description": "Adds a record (row) to a Slack list; columns are addressed by display name or internal key."
+    },
+    {
+      "name": "slack_update_list_record",
+      "description": "Updates a record (row) in a Slack list; columns are addressed by display name or internal key."
+    },
+    {
+      "name": "slack_delete_list_record",
+      "description": "Deletes a record (row) from a Slack list."
+    }
+  ],
+  "connection": {
+    "transport_type": "http",
+    "url": "https://mcp.slack.com/mcp",
+    "auth": {
+      "type": "oauth",
+      "provider": "slack",
+      "auth_url": "https://slack.com/oauth/v2_user/authorize",
+      "token_url": "https://slack.com/api/oauth.v2.user.access",
+      "scopes": [
+        "search:read.public",
+        "search:read.private",
+        "search:read.im",
+        "search:read.mpim",
+        "search:read.files",
+        "search:read.users",
+        "channels:history",
+        "groups:history",
+        "im:history",
+        "mpim:history",
+        "channels:read",
+        "groups:read",
+        "im:read",
+        "mpim:read",
+        "channels:write",
+        "groups:write",
+        "im:write",
+        "mpim:write",
+        "chat:write",
+        "users:read",
+        "users:read.email",
+        "canvases:read",
+        "canvases:write",
+        "files:read",
+        "files:write",
+        "emoji:read",
+        "reactions:read",
+        "reactions:write",
+        "lists:read",
+        "lists:write"
+      ],
+      "extra_params": {
+        "response_type": "code"
+      }
+    }
+  }
+}

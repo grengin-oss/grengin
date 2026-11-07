@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import type { MCPServer } from '../../types.js';
   import { getConnectedUsersCount } from '../../../api/admin/mcpServers.js';
 
@@ -15,7 +15,9 @@ SPDX-License-Identifier: Apache-2.0
 
   let { server }: Props = $props();
 
-  let connectedCount = $state<number>(server.connected_users_count ?? 0);
+  let connectedCount = $state<number>(
+    untrack(() => server.connected_users_count ?? 0),
+  );
   let loading = $state(false);
 
   async function loadCount() {

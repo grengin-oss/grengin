@@ -76,10 +76,18 @@ const ALLOWED_IDENTICAL_VALUES = new Set([
   // Brand / example values that are intentionally identical across locales
   "Let's Encrypt",
   "chat.example.com",
+  // Connector brand names (first-run onboarding kickers) — product names kept
+  // verbatim in every locale.
+  "Gmail",
+  "Google Drive",
+  "QuickBooks",
   // Unavoidable cognate: "Architecture" is identical in EN + FR.
   "Architecture",
   // Unavoidable cognate: "Variables" is identical in EN + ES.
   "Variables:",
+  // Loanwords identical in EN + ES/FR/PT (connector category labels).
+  "Chat",
+  "Marketing",
 ]);
 
 /** Check whether a value is expected to be identical across all locales. */

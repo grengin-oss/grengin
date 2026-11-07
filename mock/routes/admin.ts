@@ -5,8 +5,10 @@ import { Router } from 'express'
 import { requireAuth } from '../lib/middleware.js'
 import {
   aiEngines,
+  createdUsers,
   departments,
   ssoSession,
+  workspace,
   type AIEngineDetail,
   type AIEngineModelsResponse,
   type Department,
@@ -38,7 +40,15 @@ router.get('/admin/users', requireAuth, (req, res) => {
       total: result.total + 1,
     }
   }
-  
+  // Users added this session (POST /admin/users) show up at the top of the list.
+  if (createdUsers.length) {
+    result = {
+      ...result,
+      users: [...createdUsers, ...result.users] as typeof result.users,
+      total: result.total + createdUsers.length,
+    }
+  }
+
   if (sort && ['name', 'email', 'created_at'].includes(sort as string)) {
     const users = [...result.users]
     const isAscending = ascending === 'true' || ascending === undefined
@@ -95,16 +105,31 @@ router.get('/admin/users', requireAuth, (req, res) => {
 })
 
 router.post('/admin/users', requireAuth, (req, res) => {
-  res.status(201).json({
+  const user = {
     id: crypto.randomUUID(),
+    status: 'active',
+    is_super_admin: false,
+    roles: [],
     ...req.body,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-  })
+  }
+  // Empty-workspace sessions persist via the emptyWorkspace middleware; keep
+  // normal-session creations here so they survive a list refresh.
+  if (!workspace.empty) createdUsers.push(user)
+  res.status(201).json(user)
 })
 
+/** A fixture user or one added this session. */
+function findUser(userId: string): Record<string, unknown> | undefined {
+  return (
+    createdUsers.find((u) => u.id === userId) ??
+    usersListExample.users.find((u) => u.id === userId)
+  )
+}
+
 router.get('/admin/users/:userId', requireAuth, (req, res) => {
-  const user = usersListExample.users.find(u => u.id === req.params.userId)
+  const user = findUser(req.params.userId)
   if (!user) {
     return res.status(404).json({ detail: 'User not found' })
   }
@@ -112,19 +137,25 @@ router.get('/admin/users/:userId', requireAuth, (req, res) => {
 })
 
 router.put('/admin/users/:userId', requireAuth, (req, res) => {
-  const user = usersListExample.users.find(u => u.id === req.params.userId)
+  const user = findUser(req.params.userId)
   if (!user) {
     return res.status(404).json({ detail: 'User not found' })
   }
-  res.json({ ...user, ...req.body, updated_at: new Date().toISOString() })
+  const updated = { ...user, ...req.body, updated_at: new Date().toISOString() }
+  // Persist edits to users added this session.
+  const idx = createdUsers.findIndex((u) => u.id === req.params.userId)
+  if (idx !== -1) createdUsers[idx] = updated
+  res.json(updated)
 })
 
 router.delete('/admin/users/:userId', requireAuth, (req, res) => {
+  const idx = createdUsers.findIndex((u) => u.id === req.params.userId)
+  if (idx !== -1) createdUsers.splice(idx, 1)
   res.status(204).send()
 })
 
 router.patch('/admin/users/:userId/status', requireAuth, (req, res) => {
-  const user = usersListExample.users.find(u => u.id === req.params.userId)
+  const user = findUser(req.params.userId)
   if (!user) {
     return res.status(404).json({ detail: 'User not found' })
   }
@@ -132,7 +163,10 @@ router.patch('/admin/users/:userId/status', requireAuth, (req, res) => {
   if (!status || !['active', 'inactive', 'pending'].includes(status)) {
     return res.status(400).json({ detail: 'Invalid status value' })
   }
-  res.json({ ...user, status, updated_at: new Date().toISOString() })
+  const updated = { ...user, status, updated_at: new Date().toISOString() }
+  const idx = createdUsers.findIndex((u) => u.id === req.params.userId)
+  if (idx !== -1) createdUsers[idx] = updated
+  res.json(updated)
 })
 
 router.get('/admin/users/:userId/usage', requireAuth, (req, res) => {
@@ -702,6 +736,72 @@ router.get('/admin/ai-engines', requireAuth, (req, res) => {
   res.json(Array.from(aiEngines.values()))
 })
 
+// Create an engine. Two shapes hit this one endpoint:
+//   • Connect a known provider — { engine_key, api_key } from "Browse Providers".
+//   • Add a custom engine — { display_name, base_url, plugin_config, api_key? }.
+router.post('/admin/ai-engines', requireAuth, (req, res) => {
+  const { engine_key, api_key, display_name, base_url, plugin_config } = req.body ?? {}
+
+  // --- Custom engine (no engine_key, carries display_name) ---
+  if (!engine_key && display_name) {
+    if (!base_url) {
+      return res.status(400).json({ detail: 'base_url is required' })
+    }
+    if (!plugin_config || typeof plugin_config !== 'object') {
+      return res.status(400).json({ detail: 'plugin_config is required' })
+    }
+    const key = String(display_name)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || `custom-${Date.now()}`
+    if (aiEngines.has(key)) {
+      return res.status(409).json({ detail: 'An engine with this name already exists' })
+    }
+    const engine: AIEngineDetail = {
+      engine_key: key,
+      display_name: String(display_name),
+      is_enabled: Boolean(api_key),
+      api_key_configured: Boolean(api_key),
+      api_key_status: api_key ? 'not_validated' : 'not_configured',
+      api_key_preview: api_key ? '...' + String(api_key).slice(-4) : null,
+      api_key_last_validated_at: null,
+      whitelisted_models: [],
+      default_model: null,
+      is_default: false,
+      updated_at: new Date().toISOString(),
+    }
+    aiEngines.set(key, engine)
+    return res.status(201).json(engine)
+  }
+
+  // --- Connect a known provider by key ---
+  if (!engine_key) {
+    return res.status(400).json({ detail: 'engine_key is required' })
+  }
+  if (!api_key) {
+    return res.status(400).json({ detail: 'API key is required' })
+  }
+
+  const existing = aiEngines.get(engine_key)
+  const engine: AIEngineDetail = {
+    engine_key,
+    display_name: existing?.display_name ?? engine_key,
+    ...(existing?.icon ? { icon: existing.icon } : {}),
+    is_enabled: true,
+    api_key_configured: true,
+    api_key_status: 'not_validated',
+    api_key_preview: '...' + String(api_key).slice(-4),
+    api_key_last_validated_at: null,
+    whitelisted_models: existing?.whitelisted_models ?? [],
+    default_model: existing?.default_model ?? null,
+    is_default: existing?.is_default ?? false,
+    updated_at: new Date().toISOString(),
+  }
+  aiEngines.set(engine_key, engine)
+  res.status(201).json(engine)
+})
+
 router.get('/admin/ai-engines/:engineKey', requireAuth, (req, res) => {
   const engine = aiEngines.get(req.params.engineKey)
   if (!engine) {
@@ -871,21 +971,27 @@ router.delete('/admin/ai-engines/:engineKey/api-key', requireAuth, (req, res) =>
 // SSO Providers
 import ssoProvidersExample from '../examples/admin/sso-providers-list.response.json' with { type: 'json' }
 
+// Mutable, in-memory copy of the fixture so create/update/delete persist for the
+// life of the server session (the fixture itself stays untouched).
+const ssoProviders: Record<string, unknown>[] = JSON.parse(JSON.stringify(ssoProvidersExample))
+
 router.get('/admin/sso-providers', requireAuth, (req, res) => {
-  res.json(ssoProvidersExample)
+  res.json(ssoProviders)
 })
 
 router.post('/admin/sso-providers', requireAuth, (req, res) => {
-  res.status(201).json({
+  const provider = {
     id: crypto.randomUUID(),
     ...req.body,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-  })
+  }
+  ssoProviders.push(provider)
+  res.status(201).json(provider)
 })
 
 router.get('/admin/sso-providers/:providerId', requireAuth, (req, res) => {
-  const provider = ssoProvidersExample.find((p: { id: string }) => p.id === req.params.providerId)
+  const provider = ssoProviders.find((p) => p.id === req.params.providerId)
   if (!provider) {
     return res.status(404).json({ detail: 'SSO provider not found' })
   }
@@ -893,14 +999,18 @@ router.get('/admin/sso-providers/:providerId', requireAuth, (req, res) => {
 })
 
 router.put('/admin/sso-providers/:providerId', requireAuth, (req, res) => {
-  const provider = ssoProvidersExample.find((p: { id: string }) => p.id === req.params.providerId)
-  if (!provider) {
+  const idx = ssoProviders.findIndex((p) => p.id === req.params.providerId)
+  if (idx === -1) {
     return res.status(404).json({ detail: 'SSO provider not found' })
   }
-  res.json({ ...provider, ...req.body, updated_at: new Date().toISOString() })
+  const updated = { ...ssoProviders[idx], ...req.body, updated_at: new Date().toISOString() }
+  ssoProviders[idx] = updated
+  res.json(updated)
 })
 
 router.delete('/admin/sso-providers/:providerId', requireAuth, (req, res) => {
+  const idx = ssoProviders.findIndex((p) => p.id === req.params.providerId)
+  if (idx !== -1) ssoProviders.splice(idx, 1)
   res.status(204).send()
 })
 

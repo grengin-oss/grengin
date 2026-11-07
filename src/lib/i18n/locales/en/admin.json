@@ -783,6 +783,46 @@
         "defaultAccess": "Default access: {value}",
         "usersConnected": "{count} users connected",
         "syncedAgo": "synced {time}"
+      },
+      "firstRun": {
+        "heading": "Connect the tools your team uses every day",
+        "subheading": "About 2 minutes each. Everyone connects their own account.",
+        "step1": {
+          "title": "Mail and calendar",
+          "desc": "Summarize a thread, find what a client said, prepare the next meeting.",
+          "primary": "Connect Gmail and Calendar",
+          "secondary": "We use Outlook"
+        },
+        "step2": {
+          "title": "Files",
+          "desc": "Ask about a proposal, a contract or a spreadsheet without hunting for it.",
+          "primary": "Connect Google Drive",
+          "secondary": "We use OneDrive"
+        },
+        "step3": {
+          "title": "Customers and money",
+          "desc": "Prepare a call from your CRM, and see which invoices are overdue.",
+          "primary": "Connect HubSpot",
+          "secondary": "Pick an accounting tool"
+        },
+        "lock": "Everything is read-only until you allow more. Every connector call is in the audit log.",
+        "skip": "Skip and browse all tools",
+        "asksTitle": "What your team could ask once these are connected",
+        "asksSub": "Real questions from small teams, one per tool.",
+        "ask1": {
+          "kicker": "Gmail",
+          "q": "“Summarize everything Acme said about the renewal this month.”"
+        },
+        "ask2": {
+          "kicker": "Google Drive",
+          "q": "“Turn last year’s proposal for Lumen into a draft for Acme.”"
+        },
+        "ask3": {
+          "kicker": "QuickBooks",
+          "q": "“Which invoices are more than 30 days overdue, and for how much?”"
+        },
+        "elseText": "Have a tool that is not in the list, or a server your developer built? Anything that speaks MCP works.",
+        "elseBtn": "Add your own server"
       }
     },
     "mcpOAuth": {
@@ -1468,6 +1508,90 @@
         "view": "View users and their roles",
         "manage": "Invite, edit, and deactivate users"
       }
+    },
+    "connectors": {
+      "title": "Connectors",
+      "subtitle": "Connect the tools your team already uses. Everyone connects their own account, and you decide who can use what.",
+      "browse": "Browse connectors",
+      "count": "{count, plural, one {# connector} other {# connectors}}",
+      "searchPlaceholder": "Search a tool, or what you need: invoices, reviews, a file",
+      "searchLabel": "Search connectors",
+      "allConnected": "Everything in the catalog is already connected.",
+      "categoryLabel": "Category",
+      "allTools": "All tools",
+      "showing": "Showing {shown} of {total} connectors",
+      "noMatch": "No connectors match “{query}”.",
+      "showLess": "Show less",
+      "showMore": "+ Show {count} more",
+      "elseTitle": "Something else?",
+      "elseSub": "Add your own MCP server for a tool that is not listed, or ask us to add one. Custom servers follow the same access rules as everything above.",
+      "requestTool": "Request a tool",
+      "requestThanks": "Thanks. We will let you know when it is added.",
+      "addOwnServer": "Add your own server",
+      "add": "Add",
+      "adding": "Adding…",
+      "connect": "Connect",
+      "connectedAccount": "Connected your account",
+      "notCompleted": "The connection was not completed. Try again.",
+      "added": "Added. Only admins can use it until you change who can use it.",
+      "addFailed": "Could not add the connector. Try again.",
+      "callback": {
+        "invalidLink": "This sign-in link is not valid. Start connecting again.",
+        "notStarted": "This sign-in was not started in this browser. Start connecting again.",
+        "expired": "This sign-in expired. Start connecting again.",
+        "mismatch": "This sign-in does not match your connect request. Start connecting again.",
+        "confirmFailed": "Could not confirm the connection. Try again."
+      },
+      "categories": {
+        "email-calendar": "Email and calendar",
+        "files": "Files",
+        "chat": "Chat",
+        "customers": "Customers",
+        "money": "Money",
+        "marketing": "Marketing",
+        "website": "Website",
+        "developer": "Developer"
+      }
+    },
+    "connectorOverview": {
+      "allConnectors": "All connectors",
+      "loading": "Loading connector…",
+      "retry": "Retry",
+      "loadError": "Couldn't load this connector.",
+      "saveFailed": "Couldn't save that change.",
+      "connectedBy": "Connected by {connected} of {total} people",
+      "turnOffForEveryone": "Turn off for everyone",
+      "turnOnForEveryone": "Turn on for everyone",
+      "connectMyAccount": "Connect my account",
+      "tryAsking": "Try asking",
+      "promptCopied": "Prompt copied to clipboard",
+      "capabilitiesTitle": "What Grengin can do with it",
+      "capabilitiesIntro": "Reading is always on. Anything that changes something is off until you allow it, and people confirm each action in chat.",
+      "alwaysOn": "Always on",
+      "allowed": "Allowed",
+      "off": "Off",
+      "readingName": "Search and read",
+      "readingDesc": "Only the data of the person asking.",
+      "whoCanUse": "Who can use it",
+      "whoCanUseIntro": "People always connect their own account. This only decides who gets the option.",
+      "everyone": "Everyone",
+      "everyoneDesc": "All {count} people in the workspace",
+      "someTeams": "Some teams",
+      "someTeamsDesc": "Pick departments",
+      "adminsOnly": "Admins only",
+      "adminsOnlyDesc": "Only workspace admins",
+      "advanced": "Advanced",
+      "advancedDesc": "The {count} tools behind this connector, per-tool rules, server address and logs.",
+      "backToOverview": "Back to overview",
+      "people": "People",
+      "remindOthers": "Remind the {count} others",
+      "stateConnected": "Connected",
+      "stateNeedsReconnect": "Needs to reconnect",
+      "stateNotConnected": "Not connected",
+      "stateUnavailable": "Unavailable",
+      "peopleFoot": "{connected} connected. {notConnected} people have not connected yet.",
+      "saving": "Saving…",
+      "whoCanUseOffNote": "Turned off for everyone. Turn it on to choose who can use it."
     }
   },
   "permissions": {

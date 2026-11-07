@@ -123,6 +123,8 @@ export interface MCPServer {
   id: string;
   name: string;
   description: string | null;
+  /** Published icon URL (native connector plugins); null for custom servers. */
+  icon: string | null;
   transport_type: string;
   connection_config: Record<string, unknown>;
   client_id: string | null;
@@ -216,6 +218,166 @@ export interface McpBulkToolAccessUpdatePayload {
 export interface McpBulkToolAccessResponse {
   tools: McpToolAccess[];
   updated_count: number;
+}
+
+// ---------------------------------------------------------------------------
+// Connector / MCP-server detail overview (native connector-plugin contract).
+// Shapes mirror the grengin-api Swagger for:
+//   GET /admin/mcp-servers/{server_id}/overview
+//   GET /admin/mcp-servers/{server_id}/people
+//   GET /admin/mcp-servers/{server_id}/executions
+//   PUT /admin/mcp-servers/{server_id}/tools/{tool_id}
+// ---------------------------------------------------------------------------
+
+/** Per-user connection state against a connector. */
+export type McpConnectionState =
+  | 'connected'
+  | 'not_connected'
+  | 'needs_reconnect'
+  | 'unavailable';
+
+/** Per-user authentication method a connector exposes. */
+export type McpAuthenticationMethod =
+  | 'oauth2'
+  | 'api_token'
+  | 'grengin_broker'
+  | 'server_managed'
+  | 'unavailable';
+
+/** State of a tool topic/capability group. */
+export type McpTopicGroupState = 'enabled' | 'disabled' | 'partial';
+
+/**
+ * A single tool as returned inside the server overview. Matches
+ * `McpToolDetail` (src/lib/types/integrations.ts) field-for-field.
+ */
+export interface McpOverviewTool {
+  description: string;
+  enabled: boolean;
+  id: string;
+  inherit_access_from_server: boolean;
+  input_schema: Record<string, unknown>;
+  is_read_only: boolean;
+  last_synced_at: string;
+  name: string;
+  original_name: string;
+  parameters: Record<string, unknown>;
+  server_id: string;
+  server_name: string;
+}
+
+/** Grouping of tools by topic/capability. */
+export interface McpTopicGroup {
+  id: string;
+  name: string;
+  description: string;
+  state: McpTopicGroupState;
+  tool_ids: string[];
+}
+
+/** Catalog/plugin identity + per-user auth metadata for the connector. */
+export interface McpServerIntegration {
+  authentication: McpAuthenticationMethod;
+  per_user_credentials: boolean;
+  plugin_id: string;
+  plugin_version: string;
+  suggested_prompts: string[];
+  supported_authentication: McpAuthenticationMethod[];
+}
+
+/** Seven-day usage summary from recorded tool executions. */
+export interface McpUsageSummary {
+  tool_calls: number;
+  successful_tool_calls: number;
+  failed_tool_calls: number;
+  period_start: string;
+  period_end: string;
+}
+
+/** Access block embedded in the overview (adds server_name over McpServerAccessResponse). */
+export interface McpOverviewAccess {
+  server_id: string;
+  server_name: string;
+  default_access: McpDefaultAccess;
+  rules: McpAccessRule[];
+}
+
+export interface McpServerOverview {
+  server_id: string;
+  name: string;
+  description: string;
+  icon: string;
+  enabled: boolean;
+  default_access: McpDefaultAccess;
+  my_connection_state: McpConnectionState;
+  active_user_count: number;
+  connected_user_count: number;
+  reminders_supported: boolean;
+  write_confirmation_supported: boolean;
+  integration: McpServerIntegration;
+  access: McpOverviewAccess;
+  tools: McpOverviewTool[];
+  topic_groups: McpTopicGroup[];
+  usage: McpUsageSummary;
+}
+
+/**
+ * A workspace member row on the connector People panel.
+ *
+ * NOTE: the /people response body was not included in the supplied Swagger
+ * samples, so these fields are inferred from the doc ("connected/reconnect
+ * states and profile data") and the overview's connection-state vocabulary.
+ * Verify against the real GET /admin/mcp-servers/{id}/people schema.
+ */
+export interface McpServerPerson {
+  user_id: string;
+  user_email: string;
+  name: string | null;
+  avatar_url: string | null;
+  connection_state: McpConnectionState;
+  connected_at: string | null;
+  last_active_at: string | null;
+}
+
+export interface McpServerPeopleResponse {
+  people: McpServerPerson[];
+  limit: number;
+  offset: number;
+  total: number;
+}
+
+/** One audit-log row: a single tool execution. */
+export interface McpExecution {
+  id: string;
+  server_id: string;
+  server_name: string;
+  tool_name: string;
+  user_id: string;
+  user_email: string;
+  conversation_id: string;
+  arguments: Record<string, unknown>;
+  result: Record<string, unknown>;
+  is_error: boolean;
+  duration_ms: number;
+  executed_at: string;
+}
+
+export interface McpExecutionListResponse {
+  executions: McpExecution[];
+  limit: number;
+  offset: number;
+  total: number;
+}
+
+/** PUT /admin/mcp-servers/{server_id}/tools/{tool_id} body. */
+export interface McpToolUpdatePayload {
+  enabled: boolean;
+}
+
+/** Pagination query for the people / executions lists. */
+export interface McpPaginationParams {
+  limit?: number;
+  offset?: number;
 }
 
 export interface AIEngineModel {

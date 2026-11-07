@@ -54,6 +54,7 @@ SPDX-License-Identifier: Apache-2.0
   import { linkSkill } from "../../../api/skills.js";
   import { _ } from "svelte-i18n";
   import { ApiError } from "../../../api/client";
+  import { getUser } from "../../auth/state.svelte.js";
   import { getLocalizedError } from "../../../utils/errorLocalization";
   import {
     setChatTopBar,
@@ -243,7 +244,28 @@ SPDX-License-Identifier: Apache-2.0
   let selectedModelInfo = $state<ProviderInfo | undefined>(undefined);
   let webSearchEnabled = $state(false);
   let mcpServers = $state<MCPServer[]>([]);
-  let selectedMcpServers = $state<string[]>([]);
+  // The Tools dropdown selection is remembered per user in this browser, so it
+  // survives a reload. The backend does not store it on the conversation.
+  function mcpSelectionKey(): string {
+    return `grengin_selected_mcp_servers:${getUser()?.id ?? "anon"}`;
+  }
+  function readSavedMcpSelection(): string[] {
+    try {
+      const saved = JSON.parse(localStorage.getItem(mcpSelectionKey()) ?? "[]");
+      return Array.isArray(saved) ? saved.filter((id) => typeof id === "string") : [];
+    } catch {
+      return [];
+    }
+  }
+  function saveMcpSelection(ids: string[]): void {
+    try {
+      localStorage.setItem(mcpSelectionKey(), JSON.stringify(ids));
+    } catch {
+      /* storage unavailable — selection just won't survive a reload */
+    }
+  }
+
+  let selectedMcpServers = $state<string[]>(readSavedMcpSelection());
   let loadingMcpServers = $state(false);
   let mcpServersError = $state<string | null>(null);
   // Project to link once a new conversation is created (chat started from a project workspace).
@@ -491,6 +513,13 @@ SPDX-License-Identifier: Apache-2.0
     try {
       const response = await getChatMcpServers();
       mcpServers = response.servers;
+      // Drop remembered servers that were removed or are no longer accessible.
+      const available = new Set(response.servers.map((s) => s.id));
+      const kept = selectedMcpServers.filter((id) => available.has(id));
+      if (kept.length !== selectedMcpServers.length) {
+        selectedMcpServers = kept;
+        saveMcpSelection(kept);
+      }
     } catch (error) {
       console.error("Failed to load connectors:", error);
       mcpServersError = $_("chat.errors.failedToLoadConnectors");
@@ -553,6 +582,7 @@ SPDX-License-Identifier: Apache-2.0
     } else {
       selectedMcpServers = [...selectedMcpServers, serverId];
     }
+    saveMcpSelection(selectedMcpServers);
   }
 
   function handleBudgetWarning(data: BudgetWarningMessage) {
@@ -2195,7 +2225,9 @@ SPDX-License-Identifier: Apache-2.0
       webSearchEnabled = urlParams.get("webSearch") === "true";
 
       const mcpServersParam = urlParams.get("mcpServers");
-      selectedMcpServers = mcpServersParam ? mcpServersParam.split(",") : [];
+      selectedMcpServers = mcpServersParam
+        ? mcpServersParam.split(",")
+        : readSavedMcpSelection();
 
       // Chat started from a project workspace: remember it so the new conversation gets linked.
       // Keep projectId in the URL so the association survives a reload before the first message

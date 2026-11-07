@@ -4,7 +4,7 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onMount, tick, untrack } from "svelte";
   import Modal from "../Modal.svelte";
   import type { Permission } from "../../../api/admin/permissions.js";
   import type { Role } from "../../../api/admin/roles.js";
@@ -31,10 +31,10 @@ SPDX-License-Identifier: Apache-2.0
 
   const isEdit = $derived(!!role);
 
-  let name = $state(role?.name ?? "");
+  let name = $state(untrack(() => role?.name ?? ""));
   let roleNameInputEl = $state<HTMLInputElement | null>(null);
   let selectedPermissions = $state<Set<string>>(
-    new Set(role?.permissions ?? []),
+    untrack(() => new Set(role?.permissions ?? [])),
   );
   let saving = $state(false);
   let expandedPermId = $state<string | null>(null);

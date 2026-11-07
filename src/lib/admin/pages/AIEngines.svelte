@@ -3880,6 +3880,9 @@ SPDX-License-Identifier: Apache-2.0
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     cursor: pointer;
+    /* Native option popup renders light (dark-on-white) regardless of theme,
+       matching the global `option` rule in app.css. */
+    color-scheme: light;
   }
 
   .mini-badge {

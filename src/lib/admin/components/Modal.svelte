@@ -241,7 +241,9 @@ SPDX-License-Identifier: Apache-2.0
           if (stack.length > 0) {
             // Find the topmost modal and focus it
             const topModalId = stack[stack.length - 1];
-            const topModalElement = document.querySelector(`[data-modal-id="${topModalId}"]`);
+            const topModalElement = document.querySelector(
+              `[data-modal-id="${topModalId}"]`,
+            );
             if (topModalElement instanceof HTMLElement) {
               topModalElement.focus({ preventScroll: true });
             }
@@ -436,7 +438,11 @@ SPDX-License-Identifier: Apache-2.0
     inset-inline: 0;
     top: 0;
     height: 5px;
-    background: linear-gradient(90deg, rgb(74, 125, 212) 0%, rgb(46, 168, 117) 100%);
+    background: linear-gradient(
+      90deg,
+      rgb(74, 125, 212) 0%,
+      rgb(46, 168, 117) 100%
+    );
   }
 
   .modal-content.modal-content--ac .modal-title {
@@ -710,7 +716,7 @@ SPDX-License-Identifier: Apache-2.0
      family --gx-mcp-modal-shadow already defines (and already flips for dark),
      so reuse it rather than minting two near-identical tokens. */
   .modal-content.modal-content--bp {
-    width: 920px;
+    width: 1020px;
     max-width: 94vw;
     border-radius: 18px;
     box-shadow: var(--gx-mcp-modal-shadow);
@@ -840,7 +846,11 @@ SPDX-License-Identifier: Apache-2.0
     justify-content: flex-end;
     align-items: center;
     padding: 16px 24px;
-    background: color-mix(in oklch, var(--gx-org-primary-500) 5%, var(--gx-card));
+    background: color-mix(
+      in oklch,
+      var(--gx-org-primary-500) 5%,
+      var(--gx-card)
+    );
     box-shadow: inset 0 0 0 1px var(--gx-hair);
     border: none;
     flex-shrink: 0;

@@ -221,6 +221,13 @@
       "loadError": "No se pudieron cargar los proyectos",
       "saved": "Artefacto guardado en «{name}»",
       "saveError": "No se pudo guardar el artefacto"
+    },
+    "connectCard": {
+      "accountingHeading": "Conecta tu herramienta de contabilidad",
+      "accountingNote": "Elige la que usa tu empresa. Tu administrador ha permitido estas tres.",
+      "footerNote": "Solo lectura. Solo tú puedes ver tu conexión y puedes desconectarla en cualquier momento.",
+      "elseLabel": "Usamos otra cosa",
+      "connectedAskAgain": "Conectado. Vuelve a hacer tu pregunta."
     }
   }
 }

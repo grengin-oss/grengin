@@ -691,6 +691,46 @@
         "defaultAccess": "Acesso padrão: {value}",
         "usersConnected": "{count} usuários conectados",
         "syncedAgo": "sincronizado {time}"
+      },
+      "firstRun": {
+        "heading": "Conecte as ferramentas que sua equipe usa todos os dias",
+        "subheading": "Cerca de 2 minutos cada. Cada pessoa conecta a própria conta.",
+        "step1": {
+          "title": "E-mail e calendário",
+          "desc": "Resuma uma conversa, encontre o que um cliente disse, prepare a próxima reunião.",
+          "primary": "Conectar Gmail e Calendar",
+          "secondary": "Usamos o Outlook"
+        },
+        "step2": {
+          "title": "Arquivos",
+          "desc": "Pergunte sobre uma proposta, um contrato ou uma planilha sem ter que caçá-la.",
+          "primary": "Conectar Google Drive",
+          "secondary": "Usamos o OneDrive"
+        },
+        "step3": {
+          "title": "Clientes e finanças",
+          "desc": "Prepare uma ligação a partir do seu CRM e veja quais faturas estão vencidas.",
+          "primary": "Conectar HubSpot",
+          "secondary": "Escolher uma ferramenta de contabilidade"
+        },
+        "lock": "Tudo é somente leitura até você permitir mais. Cada chamada de um conector fica no log de auditoria.",
+        "skip": "Pular e explorar todas as ferramentas",
+        "asksTitle": "O que sua equipe poderia perguntar depois de conectar",
+        "asksSub": "Perguntas reais de equipes pequenas, uma por ferramenta.",
+        "ask1": {
+          "kicker": "Gmail",
+          "q": "“Resuma tudo o que a Acme disse sobre a renovação este mês.”"
+        },
+        "ask2": {
+          "kicker": "Google Drive",
+          "q": "“Transforme a proposta do ano passado para a Lumen em um rascunho para a Acme.”"
+        },
+        "ask3": {
+          "kicker": "QuickBooks",
+          "q": "“Quais faturas estão há mais de 30 dias vencidas, e por quanto?”"
+        },
+        "elseText": "Tem uma ferramenta que não está na lista ou um servidor que seu desenvolvedor criou? Qualquer coisa que fale MCP funciona.",
+        "elseBtn": "Adicionar seu próprio servidor"
       }
     },
     "mcpOAuth": {
@@ -1376,6 +1416,90 @@
         "view": "Ver usuários e suas funções",
         "manage": "Convidar, editar e desativar usuários"
       }
+    },
+    "connectors": {
+      "title": "Conectores",
+      "subtitle": "Conecte as ferramentas que sua equipe já usa. Cada pessoa conecta a própria conta, e você decide quem pode usar o quê.",
+      "browse": "Explorar conectores",
+      "count": "{count, plural, one {# conector} other {# conectores}}",
+      "searchPlaceholder": "Pesquise uma ferramenta ou o que você precisa: faturas, avaliações, um arquivo",
+      "searchLabel": "Pesquisar conectores",
+      "allConnected": "Tudo no catálogo já está conectado.",
+      "categoryLabel": "Categoria",
+      "allTools": "Todas as ferramentas",
+      "showing": "Mostrando {shown} de {total} conectores",
+      "noMatch": "Nenhum conector corresponde a “{query}”.",
+      "showLess": "Mostrar menos",
+      "showMore": "+ Mostrar mais {count}",
+      "elseTitle": "Outra coisa?",
+      "elseSub": "Adicione seu próprio servidor MCP para uma ferramenta que não está na lista ou peça para adicionarmos. Servidores personalizados seguem as mesmas regras de acesso de tudo acima.",
+      "requestTool": "Solicitar uma ferramenta",
+      "requestThanks": "Obrigado. Avisaremos quando for adicionada.",
+      "addOwnServer": "Adicionar seu próprio servidor",
+      "add": "Adicionar",
+      "adding": "Adicionando…",
+      "connect": "Conectar",
+      "connectedAccount": "Sua conta foi conectada",
+      "notCompleted": "A conexão não foi concluída. Tente novamente.",
+      "added": "Adicionado. Somente administradores podem usá-lo até você mudar quem pode usar.",
+      "addFailed": "Não foi possível adicionar o conector. Tente novamente.",
+      "callback": {
+        "invalidLink": "Este link de login não é válido. Comece a conexão novamente.",
+        "notStarted": "Este login não foi iniciado neste navegador. Comece a conexão novamente.",
+        "expired": "Este login expirou. Comece a conexão novamente.",
+        "mismatch": "Este login não corresponde à sua solicitação de conexão. Comece a conexão novamente.",
+        "confirmFailed": "Não foi possível confirmar a conexão. Tente novamente."
+      },
+      "categories": {
+        "email-calendar": "E-mail e agenda",
+        "files": "Arquivos",
+        "chat": "Chat",
+        "customers": "Clientes",
+        "money": "Finanças",
+        "marketing": "Marketing",
+        "website": "Site",
+        "developer": "Desenvolvedores"
+      }
+    },
+    "connectorOverview": {
+      "allConnectors": "Todos os conectores",
+      "loading": "Carregando conector…",
+      "retry": "Tentar novamente",
+      "loadError": "Não foi possível carregar este conector.",
+      "saveFailed": "Não foi possível salvar essa alteração.",
+      "connectedBy": "Conectado por {connected} de {total} pessoas",
+      "turnOffForEveryone": "Desativar para todos",
+      "turnOnForEveryone": "Ativar para todos",
+      "connectMyAccount": "Conectar minha conta",
+      "tryAsking": "Experimente perguntar",
+      "promptCopied": "Sugestão copiada para a área de transferência",
+      "capabilitiesTitle": "O que o Grengin pode fazer com isso",
+      "capabilitiesIntro": "A leitura está sempre ativa. Tudo o que altera algo fica desativado até você permitir, e as pessoas confirmam cada ação no chat.",
+      "alwaysOn": "Sempre ativo",
+      "allowed": "Permitido",
+      "off": "Desativado",
+      "readingName": "Buscar e ler",
+      "readingDesc": "Apenas os dados de quem pergunta.",
+      "whoCanUse": "Quem pode usar",
+      "whoCanUseIntro": "As pessoas sempre conectam a própria conta. Isto só decide quem recebe a opção.",
+      "everyone": "Todos",
+      "everyoneDesc": "Todas as {count} pessoas do espaço de trabalho",
+      "someTeams": "Algumas equipes",
+      "someTeamsDesc": "Escolher departamentos",
+      "adminsOnly": "Apenas administradores",
+      "adminsOnlyDesc": "Apenas os administradores do espaço de trabalho",
+      "advanced": "Avançado",
+      "advancedDesc": "As {count} ferramentas por trás deste conector, regras por ferramenta, endereço do servidor e registros.",
+      "backToOverview": "Voltar à visão geral",
+      "people": "Pessoas",
+      "remindOthers": "Lembrar os outros {count}",
+      "stateConnected": "Conectado",
+      "stateNeedsReconnect": "Precisa reconectar",
+      "stateNotConnected": "Não conectado",
+      "stateUnavailable": "Indisponível",
+      "peopleFoot": "{connected} conectadas. {notConnected} pessoas ainda não se conectaram.",
+      "saving": "Salvando…",
+      "whoCanUseOffNote": "Desativado para todos. Ative-o para escolher quem pode usar."
     }
   },
   "permissions": {

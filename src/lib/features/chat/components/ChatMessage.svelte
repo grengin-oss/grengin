@@ -7,11 +7,13 @@ SPDX-License-Identifier: Apache-2.0
   import type { ChatMessage, McpAuthRequest } from "../../../types/chat";
   import type { ToolResult } from "../../../types/toolCall";
   import { renderMarkdown, copyToClipboard } from "../../../utils/markdown";
+  import ConnectorConnectCard from "./ConnectorConnectCard.svelte";
+  import { iconUrl } from "../../../api/admin/connectors";
   import {
     providerIconSvg,
     providerIconUrl,
   } from "../../../utils/providerIcon";
-  import { onMount, onDestroy, tick } from "svelte";
+  import { onMount, onDestroy, tick, untrack } from "svelte";
   import {
     findModel,
     isImageModel,
@@ -116,7 +118,7 @@ SPDX-License-Identifier: Apache-2.0
     onShowArtifact,
   }: Props = $props();
   let isEditing = $state(false);
-  let editContent = $state(message.content);
+  let editContent = $state(untrack(() => message.content));
   // On touch devices, the user bubble's action row is revealed by a long-press
   // (ENGG-510) and this flag drives it; on desktop the row follows hover/focus
   // via CSS and this stays false.
@@ -252,9 +254,51 @@ SPDX-License-Identifier: Apache-2.0
 
   let hasPreviewableContent = $derived(artifactContents.length > 0);
 
+  // Connect card in chat (ENGG-511). The backend marks a reply that should offer
+  // connectors with `[[connect-card:<kind>]]`; the sentinel is stripped from the
+  // prose and turned into an inline card below the answer.
+  const CONNECT_CARD_RE = /\[\[connect-card:([a-z-]+)\]\]/i;
+  const CONNECT_CARD_PRESETS: Record<
+    string,
+    { headingKey: string; noteKey: string; options: { key: string; label: string; icon: string }[] }
+  > = {
+    accounting: {
+      headingKey: "chat.connectCard.accountingHeading",
+      noteKey: "chat.connectCard.accountingNote",
+      options: [
+        { key: "quickbooks", label: "QuickBooks", icon: "https://meta.grengin.com/connectors/icons/quickbooks.svg" },
+        { key: "xero", label: "Xero", icon: "https://meta.grengin.com/connectors/icons/xero.svg" },
+        { key: "stripe", label: "Stripe", icon: "https://meta.grengin.com/connectors/icons/stripe.svg" },
+      ],
+    },
+  };
+  function parseConnectCard(raw: string) {
+    const m = raw.match(CONNECT_CARD_RE);
+    if (!m) return null;
+    const preset = CONNECT_CARD_PRESETS[m[1].toLowerCase()];
+    if (!preset) return null;
+    return {
+      heading: $_(preset.headingKey),
+      note: $_(preset.noteKey),
+      options: preset.options.map((o) => ({ ...o, icon: iconUrl(o.icon) })),
+    };
+  }
+
   // Strip the server-delimited <artifact> block from the shown text so the chat
   // renders clean prose (the artifact itself is surfaced via its card/panel).
-  let displayContent = $derived(stripArtifactTags(message.content));
+  // Also strip the connect-card sentinel (see connectCard below).
+  let displayContent = $derived(
+    stripArtifactTags(message.content).replace(CONNECT_CARD_RE, "").trimEnd(),
+  );
+
+  // Connect card in chat (ENGG-511): when an answer needs an allowed connector
+  // that isn't connected, the backend marks the reply with
+  // `[[connect-card:<kind>]]` and the answer offers the connectors in place.
+  const connectCard = $derived(
+    message.role === "assistant"
+      ? parseConnectCard(stripArtifactTags(message.content))
+      : null,
+  );
 
   const hasThinking = $derived(!!message.thinking?.trim());
 
@@ -1421,6 +1465,12 @@ SPDX-License-Identifier: Apache-2.0
     {/if}
 
     {#if bodyRenderFull}{@html renderedContent}{/if}
+
+    {#if connectCard && !message.isStreaming}
+      <div class="connect-card-wrap">
+        <ConnectorConnectCard heading={connectCard.heading} note={connectCard.note} options={connectCard.options} />
+      </div>
+    {/if}
 
     {#if hasPreviewableContent}
       {#each artifactContents as artifact, i}
@@ -3113,6 +3163,9 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
+  .connect-card-wrap {
+    margin-top: 0.75rem;
+  }
   .message-body {
     width: 100%;
     overflow-x: auto;

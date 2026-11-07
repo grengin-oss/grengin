@@ -16,6 +16,12 @@ import type {
   McpAuthMode,
   McpOAuthProvider,
   McpOrgConnection,
+  McpServerOverview,
+  McpServerPeopleResponse,
+  McpExecutionListResponse,
+  McpOverviewTool,
+  McpToolUpdatePayload,
+  McpPaginationParams,
 } from '../../admin/types.js';
 
 export type McpAuthorizeConnectionResponse = {
@@ -212,6 +218,72 @@ export async function updateServerToolsAccess(
     method: 'PUT',
     body: JSON.stringify(payload),
   });
+}
+
+/**
+ * GET /admin/mcp-servers/{server_id}/overview
+ * Full connector detail: identity, per-user connection state, usage, tools,
+ * topic groups and access. Requires org-wide `mcp_servers:view`.
+ */
+export async function getMcpServerOverview(
+  serverId: string
+): Promise<McpServerOverview> {
+  return request<McpServerOverview>(
+    `/admin/mcp-servers/${serverId}/overview`,
+    { method: 'GET' }
+  );
+}
+
+/**
+ * GET /admin/mcp-servers/{server_id}/people?limit=&offset=
+ * Paginated workspace roster with per-user connection state.
+ */
+export async function getMcpServerPeople(
+  serverId: string,
+  { limit = 20, offset = 0 }: McpPaginationParams = {}
+): Promise<McpServerPeopleResponse> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+  return request<McpServerPeopleResponse>(
+    `/admin/mcp-servers/${serverId}/people?${params.toString()}`,
+    { method: 'GET' }
+  );
+}
+
+/**
+ * GET /admin/mcp-servers/{server_id}/executions?limit=&offset=
+ * Audit log of recorded tool executions.
+ */
+export async function getMcpServerExecutions(
+  serverId: string,
+  { limit = 20, offset = 0 }: McpPaginationParams = {}
+): Promise<McpExecutionListResponse> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+  return request<McpExecutionListResponse>(
+    `/admin/mcp-servers/${serverId}/executions?${params.toString()}`,
+    { method: 'GET' }
+  );
+}
+
+/**
+ * PUT /admin/mcp-servers/{server_id}/tools/{tool_id}
+ * Enable or disable a single tool. Preserves tool id, description and access
+ * policy; the change is audited server-side. Requires `mcp_servers:admin`.
+ */
+export async function updateMcpServerTool(
+  serverId: string,
+  toolId: string,
+  payload: McpToolUpdatePayload
+): Promise<McpOverviewTool> {
+  return request<McpOverviewTool>(
+    `/admin/mcp-servers/${serverId}/tools/${toolId}`,
+    { method: 'PUT', body: JSON.stringify(payload) }
+  );
 }
 
 export async function getToolAccess(toolId: string): Promise<McpToolAccess> {

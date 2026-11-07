@@ -114,5 +114,20 @@
       "resume": "Retomar tour guiado",
       "later": "Lembrar mais tarde"
     }
+  },
+  "connectors": {
+    "connecting": "Conectando…",
+    "connected": "Conectado",
+    "errors": {
+      "loadFailed": "Não foi possível carregar {url} ({status})",
+      "popupBlocked": "A janela de login foi bloqueada. Permita pop-ups e tente novamente.",
+      "noVersion": "Este conector ainda não tem uma versão publicada.",
+      "manifestMismatch": "O conector publicado não corresponde ao catálogo.",
+      "unknown": "Conector desconhecido",
+      "notAdded": "Um administrador precisa adicionar este conector antes que você possa se conectar.",
+      "revocationPending": "A conexão anterior ainda está sendo removida. Tente novamente em instantes.",
+      "noConnection": "Nenhuma conexão para desconectar",
+      "connectFailed": "Não foi possível conectar. Tente novamente."
+    }
   }
 }

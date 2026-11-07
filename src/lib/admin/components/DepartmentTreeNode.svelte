@@ -4,6 +4,7 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
+  import { untrack } from "svelte";
   import type { Department } from "../types.js";
   import DepartmentTreeNode from "./DepartmentTreeNode.svelte";
   import { formatCurrency } from "$lib/utils/format.js";
@@ -44,7 +45,7 @@ SPDX-License-Identifier: Apache-2.0
     level = 0,
   }: Props = $props();
 
-  let isExpanded = $state(shouldExpandOnInitialRender);
+  let isExpanded = $state(untrack(() => shouldExpandOnInitialRender));
   let isDragOver = $state(false);
   let menuOpen = $state(false);
   const hasChildren = $derived((department.children?.length ?? 0) > 0);

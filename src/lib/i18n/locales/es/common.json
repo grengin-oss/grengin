@@ -114,5 +114,20 @@
       "resume": "Reanudar recorrido guiado",
       "later": "Recordármelo más tarde"
     }
+  },
+  "connectors": {
+    "connecting": "Conectando…",
+    "connected": "Conectado",
+    "errors": {
+      "loadFailed": "No se pudo cargar {url} ({status})",
+      "popupBlocked": "Se bloqueó la ventana de inicio de sesión. Permite las ventanas emergentes e inténtalo de nuevo.",
+      "noVersion": "Este conector aún no tiene una versión publicada.",
+      "manifestMismatch": "El conector publicado no coincide con el catálogo.",
+      "unknown": "Conector desconocido",
+      "notAdded": "Un administrador debe añadir este conector antes de que puedas conectarte.",
+      "revocationPending": "La conexión anterior todavía se está limpiando. Inténtalo de nuevo en un momento.",
+      "noConnection": "No hay ninguna conexión que desconectar",
+      "connectFailed": "No se pudo conectar. Inténtalo de nuevo."
+    }
   }
 }

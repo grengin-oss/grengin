@@ -759,17 +759,18 @@ SPDX-License-Identifier: Apache-2.0
 
   /* ---------------- ".int-card" ---------------- */
   .cards-grid {
-    display: flex;
-    flex-wrap: wrap;
+    /* CSS grid (not flex): equal-width tracks stay the same across every row,
+       so an incomplete last row (e.g. 5 cards = 3 + 2) leaves empty space
+       instead of stretching its cards wider than the rows above. The
+       minmax(300px, 1fr) keeps the mockup's intent — 3-up on wide screens,
+       wrapping to fewer columns as the panel narrows. */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
     align-self: stretch;
   }
 
   .int-card {
-    /* Mockup: "flex: 1 1 0" — cards share one row at equal width. The 300px
-       basis is the mockup's own card width (944px content / 3 - gaps), so >3
-       servers wrap to a new row rather than shrinking to slivers. */
-    flex: 1 1 300px;
     border-radius: 12px;
     background: var(--us-surface);
     box-shadow:

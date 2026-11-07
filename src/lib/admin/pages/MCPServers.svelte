@@ -5,9 +5,14 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
+  import { navigate } from "svelte-routing";
   import { _ } from "svelte-i18n";
   import PageHeader from "../components/PageHeader.svelte";
   import Modal from "../components/Modal.svelte";
+  import ConnectorBrowseModal from "../components/connectors/ConnectorBrowseModal.svelte";
+  import ConnectorIcon from "../components/connectors/ConnectorIcon.svelte";
+  import ConnectorOverview from "../components/connectors/ConnectorOverview.svelte";
+  import LazyRender from "../../components/LazyRender.svelte";
   import GridIcon from "../../components/icons/GridIcon.svelte";
   import ListIcon from "../../components/icons/ListIcon.svelte";
   import ServerAccessPanel from "../components/mcp/ServerAccessPanel.svelte";
@@ -33,6 +38,12 @@ SPDX-License-Identifier: Apache-2.0
     testMcpConnection,
     updateMcpServer,
   } from "../../api/admin/mcpServers.js";
+  import { connectorsStore } from "../stores/connectorsStore.svelte.js";
+  import {
+    addConnector,
+    connectConnector,
+    iconUrl,
+  } from "../../api/admin/connectors.js";
   import { setPageTitle } from "../../utils/pageTitle";
 
   $effect(() => {
@@ -41,6 +52,34 @@ SPDX-License-Identifier: Apache-2.0
 
   let servers = $state<MCPServer[]>([]);
   let isLoading = $state(false);
+
+  // ----- Browse connectors (ENGG-511) -----
+  // The catalog picker lives here too now; it reuses connectorsStore so the
+  // catalog/connection state is shared with the chat connect card.
+  const connectorsCatalog = connectorsStore;
+
+  /** Catalog entry for the open server when it was added from a connector. */
+  const selectedConnector = $derived.by(() => {
+    const key = selectedServer?.connection_config?.grengin_connector_key;
+    return typeof key === "string" ? connectorsCatalog.entryByKey.get(key) : undefined;
+  });
+
+  /**
+   * Icon for a server card: the server's own published `icon` (native connector
+   * plugins) first, then the catalog entry joined by grengin_connector_key
+   * (broker connectors), else empty so ConnectorIcon shows its lettered tile.
+   * iconUrl() routes meta.grengin.com icons through the dev proxy.
+   */
+  function serverIcon(server: MCPServer): string {
+    if (server.icon) return iconUrl(server.icon);
+    const key = server.connection_config?.grengin_connector_key;
+    const entry =
+      typeof key === "string" ? connectorsCatalog.entryByKey.get(key) : undefined;
+    return entry ? iconUrl(entry.icon) : "";
+  }
+  let browseOpen = $state(false);
+  let connectingConnector = $state<string | null>(null);
+  let addingConnector = $state<string | null>(null);
 
   let isModalOpen = $state(false);
   let isConfirmOpen = $state(false);
@@ -55,9 +94,15 @@ SPDX-License-Identifier: Apache-2.0
   let showClientSecret = $state(false);
   let pollInterval: ReturnType<typeof setInterval> | null = null;
   const POLL_INTERVAL_MS = 30_000;
-  let viewMode = $state<"grid" | "list">("list");
+  let viewMode = $state<"grid" | "list">("grid");
   let selectedServer = $state<MCPServer | null>(null);
   let detailTab = $state<"access" | "tools" | "connection">("access");
+  /**
+   * Which detail screen is showing for the open server: the connector
+   * "overview" (default) or the "advanced" Access/Tools/Connection tabs,
+   * reached from the overview's Advanced row.
+   */
+  let detailView = $state<"overview" | "advanced">("overview");
 
   /** ".search-row" — filters both views by name and description. */
   let query = $state("");
@@ -99,6 +144,50 @@ SPDX-License-Identifier: Apache-2.0
   const AUTH_TYPE_OPTIONS: McpAuthType[] = ["none", "api_key", "oauth2"];
   /** The design's Allow/Deny segmented control writes these into default_access. */
   const DEFAULT_ACCESS_OPTIONS = ["allow", "deny"] as const;
+
+  /**
+   * First-run onboarding (connectors-first-run.html), shown in place of the
+   * bare empty card when no servers have been added yet. Static copy keyed to
+   * i18n; every action routes into an existing, working flow (Browse connectors
+   * or Add-your-own-server), so nothing here depends on specific catalog keys.
+   */
+  const firstRunSteps = [
+    {
+      n: 1,
+      title: "admin.mcpServers.firstRun.step1.title",
+      desc: "admin.mcpServers.firstRun.step1.desc",
+      primary: "admin.mcpServers.firstRun.step1.primary",
+      secondary: "admin.mcpServers.firstRun.step1.secondary",
+    },
+    {
+      n: 2,
+      title: "admin.mcpServers.firstRun.step2.title",
+      desc: "admin.mcpServers.firstRun.step2.desc",
+      primary: "admin.mcpServers.firstRun.step2.primary",
+      secondary: "admin.mcpServers.firstRun.step2.secondary",
+    },
+    {
+      n: 3,
+      title: "admin.mcpServers.firstRun.step3.title",
+      desc: "admin.mcpServers.firstRun.step3.desc",
+      primary: "admin.mcpServers.firstRun.step3.primary",
+      secondary: "admin.mcpServers.firstRun.step3.secondary",
+    },
+  ] as const;
+  const firstRunAsks = [
+    {
+      kicker: "admin.mcpServers.firstRun.ask1.kicker",
+      q: "admin.mcpServers.firstRun.ask1.q",
+    },
+    {
+      kicker: "admin.mcpServers.firstRun.ask2.kicker",
+      q: "admin.mcpServers.firstRun.ask2.q",
+    },
+    {
+      kicker: "admin.mcpServers.firstRun.ask3.kicker",
+      q: "admin.mcpServers.firstRun.ask3.q",
+    },
+  ] as const;
 
   const filteredServers = $derived.by(() => {
     const needle = query.trim().toLowerCase();
@@ -142,6 +231,12 @@ SPDX-License-Identifier: Apache-2.0
     try {
       const response = await getMcpServers();
       servers = response.servers;
+      // Keep the open detail view's reference pointing at the fresh object, so
+      // actions that read it (e.g. the overview's enable toggle) use current state.
+      if (selectedServer) {
+        const fresh = servers.find((s) => s.id === selectedServer!.id);
+        if (fresh) selectedServer = fresh;
+      }
       // Drop stale error cards for servers that no longer exist.
       const liveIds = new Set(servers.map((server) => server.id));
       testErrors = Object.fromEntries(
@@ -325,6 +420,7 @@ SPDX-License-Identifier: Apache-2.0
   function openServerDetail(server: MCPServer) {
     selectedServer = server;
     detailTab = "access";
+    detailView = "overview";
     stopPolling();
   }
 
@@ -743,7 +839,46 @@ SPDX-License-Identifier: Apache-2.0
   onMount(() => {
     loadServers();
     startPolling();
+    // Load the connector catalog lazily for the Browse connectors dialog.
+    connectorsCatalog.load();
   });
+
+  function connectorErrorText(err: unknown, fallback: string): string {
+    return err instanceof Error && err.message ? err.message : fallback;
+  }
+
+  /** Connect from the Browse dialog. connectConnector opens its popup before any await. */
+  async function connectFromBrowse(key: string) {
+    connectingConnector = key;
+    try {
+      const conn = await connectConnector(key);
+      if (conn.status === "connected") toast.success($_("admin.connectors.connectedAccount"));
+      else toast.error($_("admin.connectors.notCompleted"));
+    } catch (err) {
+      toast.error(connectorErrorText(err, $_("connectors.errors.connectFailed")));
+    } finally {
+      connectingConnector = null;
+      await connectorsCatalog.refresh();
+    }
+  }
+
+  /** Admin: add a connector (creates its MCP server), like adding an AI engine. */
+  async function addFromBrowse(key: string) {
+    addingConnector = key;
+    try {
+      await addConnector(key);
+      await connectorsCatalog.refresh();
+      // A new connector server appears in this page's own list too.
+      await loadServers();
+      toast.success($_("admin.connectors.added"));
+    } catch (err) {
+      toast.error(
+        connectorErrorText(err, $_("admin.connectors.addFailed")),
+      );
+    } finally {
+      addingConnector = null;
+    }
+  }
 
   onDestroy(() => {
     stopPolling();
@@ -1027,20 +1162,37 @@ SPDX-License-Identifier: Apache-2.0
 {/snippet}
 
 <div class="mcp-servers-container">
-  {#if selectedServer}
-    <!-- ===== Server detail view — mcp-server-detail.html ".main" ===== -->
+  {#if selectedServer && detailView === "overview"}
+    <!-- ===== Connector overview — connector-detail design ===== -->
+    <ConnectorOverview
+      server={selectedServer}
+      displayName={selectedConnector?.display_name}
+      iconSrc={serverIcon(selectedServer)}
+      onBack={closeServerDetail}
+      onAdvanced={() => (detailView = "advanced")}
+      onConnect={() => handleConnect(selectedServer!)}
+      onToggleEnabled={() => toggleServerEnabled(selectedServer!)}
+    />
+  {:else if selectedServer}
+    <!-- ===== Server detail view (Advanced) — mcp-server-detail.html ".main" ===== -->
     <div class="detail-view">
-      <button class="back-link" type="button" onclick={closeServerDetail}>
+      <button class="back-link" type="button" onclick={() => (detailView = "overview")}>
         <span class="back-link__arrow" aria-hidden="true">&#8592;</span>
-        <span>{$_("admin.mcpAccess.backToServers")}</span>
+        <span>{$_("admin.connectorOverview.backToOverview")}</span>
       </button>
 
       <!-- ".server-header" -->
       <div class="server-header">
+        <div class="server-head-main">
+        <ConnectorIcon
+          src={serverIcon(selectedServer)}
+          name={selectedConnector?.display_name ?? selectedServer.name}
+          size={40}
+        />
         <div class="server-identity">
           <div class="title-status">
-            <h2 class="server-name">{selectedServer.name}</h2>
-            <span class="status-pill">
+            <h2 class="server-name">{selectedConnector?.display_name ?? selectedServer.name}</h2>
+            <span class="status-pill" class:status-pill--on={selectedServer.status === "connected"}>
               <span
                 class="status-dot"
                 class:status-dot--on={selectedServer.status === "connected"}
@@ -1055,9 +1207,10 @@ SPDX-License-Identifier: Apache-2.0
               </span>
             </span>
           </div>
-          {#if selectedServer.description}
-            <span class="server-desc">{selectedServer.description}</span>
+          {#if selectedConnector?.description ?? selectedServer.description}
+            <p class="server-desc">{selectedConnector?.description ?? selectedServer.description}</p>
           {/if}
+        </div>
         </div>
       </div>
 
@@ -1110,11 +1263,44 @@ SPDX-License-Identifier: Apache-2.0
     </div>
   {:else}
     <!-- ===== Server list view ===== -->
+    <!-- Connectors title/subtitle (ENGG-511). -->
     <PageHeader
-      title={$_("admin.mcpServers.title")}
-      subtitle={$_("admin.mcpServers.subtitle")}
+      title={$_("admin.connectors.title")}
+      subtitle={$_("admin.connectors.subtitle")}
     >
       {#snippet children()}
+        <!-- On first run the onboarding card already offers a Browse flow, so
+             only "Browse connectors" is hidden here; "Add Server" stays. -->
+        {#if servers.length > 0}
+          <button
+            class="cta-btn"
+            type="button"
+            onclick={() => (browseOpen = true)}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle
+                cx="7.3"
+                cy="7.3"
+                r="4.6"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+              <path
+                d="m13 13-2.9-2.9"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span>{$_("admin.connectors.browse")}</span>
+          </button>
+        {/if}
         <button class="cta-btn" type="button" onclick={openCreateModal}>
           <svg
             width="14"
@@ -1131,7 +1317,9 @@ SPDX-License-Identifier: Apache-2.0
     </PageHeader>
 
     <!-- ".toolbar-row": search and the row count on the left, the list/grid
-         choice on the right. -->
+         choice on the right. Hidden on first run — there is nothing to search
+         or switch views on until a server exists. -->
+    {#if servers.length > 0}
     <div class="toolbar-row">
       <div class="toolbar-left">
         <div class="search-row">
@@ -1185,6 +1373,7 @@ SPDX-License-Identifier: Apache-2.0
         </button>
       </div>
     </div>
+    {/if}
 
     {#if isLoading && servers.length === 0}
       <!-- ".loading-state" -->
@@ -1206,31 +1395,105 @@ SPDX-License-Identifier: Apache-2.0
         </div>
       </div>
     {:else if servers.length === 0}
-      <!-- ".empty-state" — nothing connected yet. -->
-      <div class="empty-state">
-        <div class="empty-card">
-          <span class="empty-icon-bg" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <circle
-                cx="10"
-                cy="10"
-                r="2.3"
-                stroke="currentColor"
-                stroke-width="1.4"
-              />
-              <path
-                d="M10 5v-2M10 17v-2M5 10H3M17 10h-2M6.5 6.5 5 5M15 15l-1.5-1.5M6.5 13.5 5 15M15 5l-1.5 1.5"
-                stroke="currentColor"
-                stroke-width="1.4"
-              />
-            </svg>
-          </span>
-          <div>
-            <div class="empty-title">{$_("admin.mcpServers.emptyTitle")}</div>
-            <div class="empty-desc">{$_("admin.mcpServers.emptyMessage")}</div>
+      <!-- ".first-run" — onboarding shown when no server exists yet, replacing
+           the bare empty card (connectors-first-run.html). Every CTA opens an
+           existing, working flow: Browse connectors, or Add your own server. -->
+      <div class="first-run">
+        <section class="fr-card">
+          <div class="fr-head">
+            <span class="fr-sec-title"
+              >{$_("admin.mcpServers.firstRun.heading")}</span
+            >
+            <span class="fr-sec-sub"
+              >{$_("admin.mcpServers.firstRun.subheading")}</span
+            >
           </div>
-          <button class="empty-add-btn" type="button" onclick={openCreateModal}>
-            + {$_("admin.mcpServers.addServer")}
+          <ol class="fr-steps">
+            {#each firstRunSteps as step (step.n)}
+              <li class="fr-step">
+                <span class="fr-num" aria-hidden="true">{step.n}</span>
+                <div class="fr-text">
+                  <div class="fr-step-title">{$_(step.title)}</div>
+                  <div class="fr-step-desc">{$_(step.desc)}</div>
+                </div>
+                <div class="fr-btns">
+                  <button
+                    class="fr-btn fr-btn--primary"
+                    type="button"
+                    onclick={() => (browseOpen = true)}
+                  >
+                    {$_(step.primary)}
+                  </button>
+                  <button
+                    class="fr-btn fr-btn--ghost"
+                    type="button"
+                    onclick={() => (browseOpen = true)}
+                  >
+                    {$_(step.secondary)}
+                  </button>
+                </div>
+              </li>
+            {/each}
+          </ol>
+          <div class="fr-note">
+            <span class="fr-lock">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+              >
+                <rect
+                  x="3"
+                  y="7"
+                  width="10"
+                  height="7"
+                  rx="1.5"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                />
+                <path
+                  d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                />
+              </svg>
+              <span>{$_("admin.mcpServers.firstRun.lock")}</span>
+            </span>
+            <button
+              class="fr-link"
+              type="button"
+              onclick={() => (browseOpen = true)}
+            >
+              {$_("admin.mcpServers.firstRun.skip")}
+            </button>
+          </div>
+        </section>
+
+        <section class="fr-asks">
+          <div class="fr-head">
+            <span class="fr-sec-title"
+              >{$_("admin.mcpServers.firstRun.asksTitle")}</span
+            >
+            <span class="fr-sec-sub"
+              >{$_("admin.mcpServers.firstRun.asksSub")}</span
+            >
+          </div>
+          <div class="fr-ask-grid">
+            {#each firstRunAsks as ask (ask.kicker)}
+              <div class="fr-ask">
+                <span class="fr-ask-kicker">{$_(ask.kicker)}</span>
+                <span class="fr-ask-q">{$_(ask.q)}</span>
+              </div>
+            {/each}
+          </div>
+        </section>
+
+        <div class="fr-else">
+          <span>{$_("admin.mcpServers.firstRun.elseText")}</span>
+          <button class="fr-else-btn" type="button" onclick={openCreateModal}>
+            {$_("admin.mcpServers.firstRun.elseBtn")}
           </button>
         </div>
       </div>
@@ -1294,6 +1557,7 @@ SPDX-License-Identifier: Apache-2.0
         </div>
 
         {#each filteredServers as server (server.id)}
+          <LazyRender minHeight={94}>
           {#if testErrors[server.id]}
             <div class="list-row list-row--error">
               {@render errorCard(server)}
@@ -1301,12 +1565,22 @@ SPDX-License-Identifier: Apache-2.0
           {:else}
             <div class="list-row">
               <div class="col-name">
-                <span class="row-name">{server.name}</span>
-                {#if server.description}
-                  <span class="row-desc" title={server.description}
-                    >{server.description}</span
+                <ConnectorIcon src={serverIcon(server)} name={server.name} size={28} />
+                <div class="col-name-text">
+                  <button
+                    class="row-name row-name--link"
+                    type="button"
+                    title={server.name}
+                    onclick={() => openServerDetail(server)}
                   >
-                {/if}
+                    {server.name}
+                  </button>
+                  {#if server.description}
+                    <span class="row-desc" title={server.description}
+                      >{server.description}</span
+                    >
+                  {/if}
+                </div>
               </div>
               <div class="col-transport">
                 <span class="chip">{server.transport_type}</span>
@@ -1342,12 +1616,14 @@ SPDX-License-Identifier: Apache-2.0
               </div>
             </div>
           {/if}
+          </LazyRender>
         {/each}
       </div>
     {:else}
       <!-- ===== ".card-grid" ===== -->
       <div class="card-grid">
         {#each filteredServers as server (server.id)}
+          <LazyRender minHeight={190} stretch>
           {#if testErrors[server.id]}
             {@render errorCard(server)}
           {:else}
@@ -1359,9 +1635,17 @@ SPDX-License-Identifier: Apache-2.0
             >
               <div class="mcp-card-body">
                 <div class="mcp-card-head">
-                  <span class="mcp-card-name" title={server.name}
-                    >{server.name}</span
-                  >
+                  <div class="mcp-card-head-main">
+                    <ConnectorIcon src={serverIcon(server)} name={server.name} size={28} />
+                    <button
+                      class="mcp-card-name mcp-card-name--link"
+                      type="button"
+                      title={server.name}
+                      onclick={() => openServerDetail(server)}
+                    >
+                      {server.name}
+                    </button>
+                  </div>
                   {@render enabledToggle(server)}
                 </div>
                 <div class="mcp-status-line">
@@ -1425,6 +1709,7 @@ SPDX-License-Identifier: Apache-2.0
               </div>
             </div>
           {/if}
+          </LazyRender>
         {/each}
       </div>
     {/if}
@@ -2018,6 +2303,29 @@ SPDX-License-Identifier: Apache-2.0
       </div>
     {/snippet}
   </Modal>
+
+  <!-- ===== Browse connectors (catalog picker, catalog picker) ===== -->
+  <ConnectorBrowseModal
+    bind:isOpen={browseOpen}
+    entries={connectorsCatalog.catalog?.catalog ?? []}
+    categories={connectorsCatalog.catalog?.categories ?? []}
+    connectedKeys={connectorsCatalog.connectedKeys}
+    addedKeys={connectorsCatalog.addedKeys}
+    connectingKey={connectingConnector}
+    addingKey={addingConnector}
+    onConnect={connectFromBrowse}
+    onAdd={addFromBrowse}
+    onOpen={(key) => {
+      const server = connectorsCatalog.serverByKey.get(key);
+      if (!server) return;
+      browseOpen = false;
+      openServerDetail(server);
+    }}
+    onAddServer={() => {
+      browseOpen = false;
+      openCreateModal();
+    }}
+  />
 </div>
 
 <style>
@@ -2289,6 +2597,13 @@ SPDX-License-Identifier: Apache-2.0
   /* Column widths, shared by the header and every row. */
   .col-name {
     flex: 1 1 280px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .col-name-text {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -2609,6 +2924,12 @@ SPDX-License-Identifier: Apache-2.0
     align-items: center;
     gap: 8px;
   }
+  .mcp-card-head-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
 
   .mcp-card-name {
     font-weight: 700;
@@ -2618,6 +2939,33 @@ SPDX-License-Identifier: Apache-2.0
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
+  }
+  /* Clickable name: reset the global button styles, keep the title look. */
+  .mcp-card-name--link,
+  .row-name--link {
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--gx-mcp-title);
+    text-align: left;
+    cursor: pointer;
+    max-width: 100%;
+  }
+  .mcp-card-name--link:hover,
+  .row-name--link:hover {
+    color: var(--gx-ac-link, #427ac6);
+    text-decoration: underline;
+  }
+  .mcp-card-name--link:focus-visible,
+  .row-name--link:focus-visible {
+    outline: 2px solid var(--gx-ac-link, #427ac6);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 
   .mcp-status-line {
@@ -2756,6 +3104,283 @@ SPDX-License-Identifier: Apache-2.0
   .empty-add-btn:focus-visible {
     outline: 2px solid var(--gx-org-primary-500);
     outline-offset: 2px;
+  }
+
+  /* ---------------- ".first-run" onboarding (no servers yet) ---------------- */
+  .first-run {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .fr-card {
+    border-radius: 14px;
+    background: var(--gx-card);
+    border: 1px solid var(--gx-ring-soft);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .fr-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px 24px;
+    flex-wrap: wrap;
+  }
+
+  .fr-sec-title {
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.45;
+    letter-spacing: -0.15px;
+    color: var(--gx-mcp-title);
+  }
+
+  .fr-sec-sub {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--gx-mcp-dim);
+  }
+
+  .fr-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .fr-step {
+    border-radius: 12px;
+    background: var(--gx-card);
+    border: 1px solid var(--gx-ring-soft);
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 80px;
+    box-sizing: border-box;
+  }
+
+  .fr-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    background: var(--gx-org-primary-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .fr-text {
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  .fr-step-title {
+    font-weight: 700;
+    font-size: 14.5px;
+    line-height: 1.45;
+    color: var(--gx-mcp-title);
+  }
+
+  .fr-step-desc {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--gx-mcp-dim);
+  }
+
+  .fr-btns {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  .fr-btn {
+    height: 38px;
+    border-radius: 10px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    white-space: nowrap;
+    cursor: pointer;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease;
+  }
+
+  .fr-btn--primary {
+    background: var(--gx-org-primary-500);
+    color: #fff;
+  }
+
+  .fr-btn--primary:hover {
+    background: var(--gx-ac-cta-hover);
+  }
+
+  .fr-btn--ghost {
+    background: var(--gx-card);
+    border-color: var(--gx-ring-soft);
+    color: var(--gx-an-sub);
+  }
+
+  .fr-btn--ghost:hover {
+    background: var(--gx-fill-soft);
+  }
+
+  .fr-note {
+    border-top: 1px solid var(--gx-ring-soft);
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .fr-lock {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--gx-an-sub);
+  }
+
+  .fr-lock svg {
+    flex-shrink: 0;
+  }
+
+  .fr-link {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--gx-org-primary-500);
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    align-self: flex-start;
+  }
+
+  .fr-link:hover {
+    text-decoration: underline;
+  }
+
+  .fr-asks {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .fr-ask-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .fr-ask {
+    border-radius: 14px;
+    background: var(--gx-card);
+    border: 1px solid var(--gx-ring-soft);
+    padding: 17px 18px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .fr-ask-kicker {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.66px;
+    text-transform: uppercase;
+    color: var(--gx-mcp-dim);
+  }
+
+  .fr-ask-q {
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 1.47;
+    color: var(--gx-mcp-title);
+    text-wrap: pretty;
+  }
+
+  .fr-else {
+    border-radius: 14px;
+    background: var(--gx-card);
+    border: 1px dashed var(--gx-mcp-m-cancel-ring);
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .fr-else > span {
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--gx-an-sub);
+  }
+
+  .fr-else-btn {
+    height: 36px;
+    border-radius: 10px;
+    background: var(--gx-ae-callout-bg);
+    border: 1px solid var(--gx-mcp-act-info-ring);
+    padding: 0 15px;
+    font-weight: 600;
+    font-size: 12.5px;
+    line-height: 100%;
+    color: var(--gx-org-primary-500);
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .fr-else-btn:hover {
+    background: var(--gx-mcp-icon-hover);
+  }
+
+  .fr-btn:focus-visible,
+  .fr-link:focus-visible,
+  .fr-else-btn:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 860px) {
+    .fr-ask-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .fr-step {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .fr-btns {
+      width: 100%;
+    }
+
+    .fr-else {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 
   /* ".skel-card" — the first-load placeholder. */
@@ -3523,35 +4148,49 @@ SPDX-License-Identifier: Apache-2.0
     gap: 16px;
   }
 
+  /* Icon + title + description, matched to the Connectors detail header (.cd-head). */
+  .server-head-main {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    min-width: 0;
+  }
+
   .server-identity {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0.35rem;
     min-width: 0;
   }
 
   .title-status {
     display: flex;
-    gap: 12px;
+    gap: 0.6rem;
     align-items: center;
     flex-wrap: wrap;
   }
 
   .server-name {
     margin: 0;
-    font-family: var(--gx-font-display);
     font-weight: 700;
-    font-size: 28px;
+    font-size: 1.4rem;
     line-height: 1.2;
-    color: var(--gx-org-ink);
+    color: var(--gx-ink);
     overflow-wrap: anywhere;
   }
 
   .status-pill {
-    display: flex;
-    gap: 6px;
+    display: inline-flex;
+    gap: 0.35rem;
     align-items: center;
     flex-shrink: 0;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: var(--gx-fill-soft);
+  }
+
+  .status-pill--on {
+    background: rgb(238, 247, 241);
   }
 
   .status-label {
@@ -3570,10 +4209,12 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .server-desc {
+    margin: 0;
     font-weight: 400;
-    font-size: 14px;
+    font-size: 0.92rem;
     line-height: 1.45;
-    color: var(--gx-an-sub);
+    color: var(--gx-muted);
+    max-width: 44rem;
   }
 
   /* ".tabs-switcher" — the segmented pill above the panels. The design sizes

@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0",
+  "catalogVersion": "1.0.0",
+  "categories": [
+    {
+      "id": "email-calendar",
+      "label": "Email and calendar"
+    },
+    {
+      "id": "chat",
+      "label": "Chat"
+    }
+  ],
+  "catalog": [
+    {
+      "key": "gmail",
+      "configuration": "https://meta.grengin.com/connectors/gmail.json",
+      "display_name": "Gmail",
+      "icon": "https://meta.grengin.com/connectors/icons/gmail.svg",
+      "description": "Google's hosted Gmail MCP server (preview). Search and read mail, write drafts, and manage labels, trash and spam. It cannot send mail.",
+      "category": "email-calendar",
+      "job": "Find and read emails, write drafts and sort your Gmail inbox",
+      "suite": "google",
+      "keywords": [
+        "email",
+        "inbox",
+        "mail",
+        "draft",
+        "follow up",
+        "labels",
+        "spam",
+        "customer emails"
+      ],
+      "sign_in": "oauth_per_user",
+      "provider": "google",
+      "status": "planned",
+      "protocols": [
+        {
+          "name": "mcp",
+          "transport": "streamable_http",
+          "versions": [
+            "2025-11-25",
+            "2025-06-18",
+            "2025-03-26",
+            "2024-11-05"
+          ]
+        }
+      ],
+      "latestVersion": "1.0.0",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "schemaVersion": "1.0",
+          "sha256": "e19de1bd41440538f584f6da9f25a9cb257edd9cb9c154de7d01510907c93cf6",
+          "url": "https://meta.grengin.com/connectors/gmail/versions/1.0.0.json"
+        }
+      ]
+    },
+    {
+      "key": "slack",
+      "configuration": "https://meta.grengin.com/connectors/slack.json",
+      "display_name": "Slack",
+      "icon": "https://meta.grengin.com/connectors/icons/slack.svg",
+      "description": "Slack's official hosted MCP server (Streamable HTTP, user token): messages, channels, threads, files, canvases, lists, reactions and people.",
+      "category": "chat",
+      "job": "Search, read and send messages in your Slack workspace",
+      "suite": "none",
+      "keywords": [
+        "messages",
+        "channels",
+        "threads",
+        "team chat",
+        "direct messages",
+        "canvases",
+        "files",
+        "task lists"
+      ],
+      "sign_in": "oauth_per_user",
+      "provider": "slack",
+      "status": "planned",
+      "protocols": [
+        {
+          "name": "mcp",
+          "transport": "streamable_http",
+          "versions": []
+        }
+      ],
+      "latestVersion": "1.0.0",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "schemaVersion": "1.0",
+          "sha256": "1e512af115632489ae8396b838d910630b57648daf025dc78ae57ab5581b8656",
+          "url": "https://meta.grengin.com/connectors/slack/versions/1.0.0.json"
+        }
+      ]
+    }
+  ]
+}

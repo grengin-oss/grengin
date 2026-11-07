@@ -114,5 +114,20 @@
       "resume": "ガイドツアーを再開",
       "later": "後で通知"
     }
+  },
+  "connectors": {
+    "connecting": "接続中…",
+    "connected": "接続済み",
+    "errors": {
+      "loadFailed": "{url} を読み込めませんでした ({status})",
+      "popupBlocked": "サインインウィンドウがブロックされました。ポップアップを許可してもう一度お試しください。",
+      "noVersion": "このコネクタには公開済みのバージョンがまだありません。",
+      "manifestMismatch": "公開されているコネクタがカタログと一致しません。",
+      "unknown": "不明なコネクタ",
+      "notAdded": "接続する前に、管理者がこのコネクタを追加する必要があります。",
+      "revocationPending": "以前の接続をクリーンアップしています。しばらくしてからもう一度お試しください。",
+      "noConnection": "切断する接続がありません",
+      "connectFailed": "接続できませんでした。もう一度お試しください。"
+    }
   }
 }

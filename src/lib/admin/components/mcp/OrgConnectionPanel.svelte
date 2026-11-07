@@ -4,6 +4,7 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { toast } from '../../../components/Toaster.svelte';
   import type { MCPServer, McpOrgConnection } from '../../types.js';
@@ -19,7 +20,9 @@ SPDX-License-Identifier: Apache-2.0
 
   let { server }: Props = $props();
 
-  let connection = $state<McpOrgConnection | null>(server.org_connection ?? null);
+  let connection = $state<McpOrgConnection | null>(
+    untrack(() => server.org_connection ?? null),
+  );
   let loading = $state(false);
   let connecting = $state(false);
   let disconnecting = $state(false);

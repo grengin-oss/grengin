@@ -10,6 +10,7 @@ interface MockMcpServer {
   id: string
   name: string
   description: string | null
+  icon: string | null
   transport_type: string
   connection_config: Record<string, unknown>
   client_id: string | null
@@ -43,6 +44,7 @@ const servers: MockMcpServer[] = [
     id: 'srv-001',
     name: 'slack-mcp-oauth',
     description: 'Slack MCP server via Http using OAuth user token.',
+    icon: 'https://meta.grengin.com/connectors/icons/slack.svg',
     transport_type: 'http',
     connection_config: { oauth: { redirect_url: 'http://localhost:5174/mcp/oauth/callback' } },
     client_id: 'slack-client-id',
@@ -71,6 +73,7 @@ const servers: MockMcpServer[] = [
     id: 'srv-002',
     name: 'Postgres-mcp',
     description: 'SQLx PostgreSQL MCP server for schema discovery and ad-hoc SELECT queries.',
+    icon: null,
     transport_type: 'stdio',
     connection_config: { timeout: 8000, retries: 3, pool_size: 5, ssl: true },
     client_id: null,
@@ -99,6 +102,7 @@ const servers: MockMcpServer[] = [
     id: 'srv-003',
     name: 'supabase-mcp-oauth',
     description: 'Supabase remote MCP (OAuth) — project scoped and read-only access.',
+    icon: null,
     transport_type: 'http',
     connection_config: { oauth: { redirect_url: 'http://localhost:5174/mcp/oauth/callback' } },
     client_id: 'supabase-client-id',
@@ -196,6 +200,7 @@ router.post('/admin/mcp-servers', requireAuth, (req, res) => {
     id: `srv-${String(servers.length + 1).padStart(3, '0')}`,
     name: body.name ?? 'untitled',
     description: body.description ?? null,
+    icon: body.icon ?? null,
     transport_type: body.transport_type ?? 'http',
     connection_config: body.connection_config ?? {},
     client_id: body.client_id || null,
@@ -273,6 +278,19 @@ router.get('/admin/mcp-servers/:id/access', requireAuth, (req, res) => {
   })
 })
 
+router.put('/admin/mcp-servers/:id/access/default', requireAuth, (req, res) => {
+  const server = findServer(req.params.id)
+  if (!server) return res.status(404).json({ detail: 'Not Found' })
+  if (typeof req.body?.default_access === 'string' || req.body?.default_access === null) {
+    server.default_access = req.body.default_access
+  }
+  res.json({
+    server_id: server.id,
+    default_access: server.default_access,
+    rules: accessRules[server.id] ?? [],
+  })
+})
+
 router.get('/admin/mcp-servers/:id/tools/access', requireAuth, (req, res) => {
   res.json(toolAccess[req.params.id] ?? [])
 })
@@ -286,6 +304,181 @@ router.get('/admin/mcp-servers/:id/connection', requireAuth, (req, res) => {
 router.get('/admin/mcp-servers/:id/connections/count', requireAuth, (req, res) => {
   const server = findServer(req.params.id)
   res.json({ count: server?.connected_users_count ?? 0 })
+})
+
+// ---------------------------------------------------------------------------
+// Connector detail / overview (native connector-plugin contract).
+//   GET /admin/mcp-servers/:id/overview
+//   GET /admin/mcp-servers/:id/people
+//   GET /admin/mcp-servers/:id/executions
+//   PUT /admin/mcp-servers/:id/tools/:toolId   (enable/disable one tool)
+// Swagger-shaped stubs derived from the in-memory servers above. Workspace
+// numbers (people, usage) have no real source, so they are deterministic
+// per-server fixtures.
+// ---------------------------------------------------------------------------
+
+type OverviewTool = {
+  id: string
+  server_id: string
+  server_name: string
+  name: string
+  original_name: string
+  description: string
+  enabled: boolean
+  is_read_only: boolean
+  inherit_access_from_server: boolean
+  input_schema: Record<string, unknown>
+  parameters: Record<string, unknown>
+  last_synced_at: string
+}
+
+/** Tool fixtures per server, created lazily and mutated by the PUT endpoint. */
+const overviewTools: Record<string, OverviewTool[]> = {}
+
+function toolsFor(server: MockMcpServer): OverviewTool[] {
+  if (overviewTools[server.id]) return overviewTools[server.id]
+  const names = [
+    ['list_conversations', 'Read the channels and DMs the account can see.'],
+    ['get_conversation_history', 'Read recent messages in a channel or thread.'],
+    ['list_users', 'List members of the workspace.'],
+    ['search_messages', 'Search messages the account can access.'],
+  ]
+  const count = Math.max(1, Math.min(server.tool_count || names.length, names.length))
+  overviewTools[server.id] = names.slice(0, count).map(([name, description], i) => ({
+    id: `${server.id}-tool-${String(i + 1).padStart(2, '0')}`,
+    server_id: server.id,
+    server_name: server.name,
+    name,
+    original_name: name,
+    description,
+    enabled: true,
+    is_read_only: true,
+    inherit_access_from_server: true,
+    input_schema: {},
+    parameters: {},
+    last_synced_at: server.last_synced_at ?? new Date().toISOString(),
+  }))
+  return overviewTools[server.id]
+}
+
+router.get('/admin/mcp-servers/:id/overview', requireAuth, (req, res) => {
+  const server = findServer(req.params.id)
+  if (!server) return res.status(404).json({ detail: 'Not Found' })
+  const tools = toolsFor(server)
+  // Treat the stored count as the workspace size; connected is a subset of it
+  // so "Connected by X of Y" always reads X <= Y.
+  const total = server.connected_users_count ?? 0
+  const connected = Math.round(total * 0.7)
+  const nowIso = new Date().toISOString()
+  const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString()
+  res.json({
+    server_id: server.id,
+    name: server.name,
+    description: server.description ?? '',
+    icon: server.icon ?? '',
+    enabled: server.enabled,
+    default_access: server.default_access ?? 'explicit_only',
+    my_connection_state: server.status === 'connected' ? 'connected' : 'not_connected',
+    active_user_count: total,
+    connected_user_count: connected,
+    reminders_supported: false,
+    write_confirmation_supported: false,
+    integration: {
+      authentication: server.auth_type === 'api_key' ? 'api_token' : server.auth_type === 'oauth2' ? 'oauth2' : 'server_managed',
+      per_user_credentials: server.auth_mode === 'per_user',
+      plugin_id: server.oauth_provider ?? server.name.toLowerCase().replace(/\s+/g, '-'),
+      plugin_version: '1.1.0',
+      suggested_prompts:
+        server.oauth_provider === 'slack'
+          ? ['Catch me up on #general from this week.', 'What did the team decide about the launch?']
+          : [],
+      supported_authentication: [
+        server.auth_type === 'api_key' ? 'api_token' : server.auth_type === 'oauth2' ? 'oauth2' : 'server_managed',
+      ],
+    },
+    access: {
+      server_id: server.id,
+      server_name: server.name,
+      default_access: server.default_access ?? 'explicit_only',
+      rules: accessRules[server.id] ?? [],
+    },
+    tools,
+    topic_groups: [
+      {
+        id: `${server.id}-grp-read`,
+        name: 'Read',
+        description: 'Read-only access to messages and members.',
+        state: 'enabled',
+        tool_ids: tools.map((t) => t.id),
+      },
+    ],
+    usage: {
+      tool_calls: connected * 14,
+      successful_tool_calls: connected * 13,
+      failed_tool_calls: connected,
+      period_start: weekAgo,
+      period_end: nowIso,
+    },
+  })
+})
+
+router.get('/admin/mcp-servers/:id/people', requireAuth, (req, res) => {
+  const server = findServer(req.params.id)
+  if (!server) return res.status(404).json({ detail: 'Not Found' })
+  const limit = Math.max(1, Math.min(Number(req.query.limit) || 20, 100))
+  const offset = Math.max(0, Number(req.query.offset) || 0)
+  const total = server.connected_users_count ?? 0
+  const states = ['connected', 'connected', 'needs_reconnect', 'not_connected'] as const
+  const all = Array.from({ length: total }, (_, i) => ({
+    user_id: `${server.id}-user-${String(i + 1).padStart(3, '0')}`,
+    user_email: `member${i + 1}@example.com`,
+    name: `Member ${i + 1}`,
+    avatar_url: null,
+    connection_state: states[i % states.length],
+    connected_at: i % states.length === 3 ? null : new Date(Date.now() - i * 3_600_000).toISOString(),
+    last_active_at: new Date(Date.now() - i * 1_800_000).toISOString(),
+  }))
+  res.json({ people: all.slice(offset, offset + limit), limit, offset, total })
+})
+
+router.get('/admin/mcp-servers/:id/executions', requireAuth, (req, res) => {
+  const server = findServer(req.params.id)
+  if (!server) return res.status(404).json({ detail: 'Not Found' })
+  const limit = Math.max(1, Math.min(Number(req.query.limit) || 20, 100))
+  const offset = Math.max(0, Number(req.query.offset) || 0)
+  const tools = toolsFor(server)
+  const total = 24
+  const all = Array.from({ length: total }, (_, i) => {
+    const tool = tools[i % tools.length]
+    const isError = i % 7 === 0
+    return {
+      id: `${server.id}-exec-${String(i + 1).padStart(3, '0')}`,
+      server_id: server.id,
+      server_name: server.name,
+      tool_name: tool.name,
+      user_id: `${server.id}-user-${String((i % 5) + 1).padStart(3, '0')}`,
+      user_email: `member${(i % 5) + 1}@example.com`,
+      conversation_id: `conv-${String(i + 1).padStart(4, '0')}`,
+      arguments: {},
+      result: {},
+      is_error: isError,
+      duration_ms: 90 + ((i * 37) % 400),
+      executed_at: new Date(Date.now() - i * 1_200_000).toISOString(),
+    }
+  })
+  res.json({ executions: all.slice(offset, offset + limit), limit, offset, total })
+})
+
+router.put('/admin/mcp-servers/:id/tools/:toolId', requireAuth, (req, res) => {
+  // Preserve the existing bulk access route: PUT /tools/access is handled
+  // elsewhere, not as a per-tool toggle.
+  if (req.params.toolId === 'access') return res.status(404).json({ detail: 'Not Found' })
+  const server = findServer(req.params.id)
+  if (!server) return res.status(404).json({ detail: 'Not Found' })
+  const tool = toolsFor(server).find((t) => t.id === req.params.toolId)
+  if (!tool) return res.status(404).json({ detail: 'Not Found' })
+  if (typeof req.body?.enabled === 'boolean') tool.enabled = req.body.enabled
+  res.json(tool)
 })
 
 export default router
