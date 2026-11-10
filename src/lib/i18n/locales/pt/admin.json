@@ -1458,8 +1458,13 @@
         "money": "Finanças",
         "marketing": "Marketing",
         "website": "Site",
-        "developer": "Desenvolvedores"
-      }
+        "developer": "Desenvolvedores",
+        "productivity": "Produtividade",
+        "support": "Suporte"
+      },
+      "suites": "Pacotes",
+      "suitesSub": "Um único login cobre todos os apps de um pacote. Você ainda pode adicionar apps individuais abaixo.",
+      "oneSignIn": "Um login · {count} apps"
     },
     "connectorOverview": {
       "allConnectors": "Todos os conectores",

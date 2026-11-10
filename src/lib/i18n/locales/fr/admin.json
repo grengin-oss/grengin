@@ -1458,8 +1458,13 @@
         "money": "Finances",
         "marketing": "Marketing",
         "website": "Site web",
-        "developer": "Développeurs"
-      }
+        "developer": "Développeurs",
+        "productivity": "Productivité",
+        "support": "Assistance"
+      },
+      "suites": "Suites d'applications",
+      "suitesSub": "Une seule connexion couvre toutes les applications d'une suite. Vous pouvez toujours ajouter des applications individuelles ci-dessous.",
+      "oneSignIn": "Une connexion · {count} applications"
     },
     "connectorOverview": {
       "allConnectors": "Tous les connecteurs",

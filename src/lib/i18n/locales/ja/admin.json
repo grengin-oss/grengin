@@ -1458,8 +1458,13 @@
         "money": "お金",
         "marketing": "マーケティング",
         "website": "ウェブサイト",
-        "developer": "開発者"
-      }
+        "developer": "開発者",
+        "productivity": "生産性",
+        "support": "サポート"
+      },
+      "suites": "スイート",
+      "suitesSub": "1 回のサインインでスイート内のすべてのアプリを利用できます。個別のアプリも下から追加できます。",
+      "oneSignIn": "1 回のサインイン · {count} 個のアプリ"
     },
     "connectorOverview": {
       "allConnectors": "すべてのコネクタ",

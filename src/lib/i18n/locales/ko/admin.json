@@ -1458,8 +1458,13 @@
         "money": "재무",
         "marketing": "마케팅",
         "website": "웹사이트",
-        "developer": "개발자"
-      }
+        "developer": "개발자",
+        "productivity": "생산성",
+        "support": "지원"
+      },
+      "suites": "제품군",
+      "suitesSub": "한 번의 로그인으로 제품군의 모든 앱을 사용할 수 있습니다. 아래에서 개별 앱도 추가할 수 있습니다.",
+      "oneSignIn": "한 번 로그인 · 앱 {count}개"
     },
     "connectorOverview": {
       "allConnectors": "모든 커넥터",

@@ -4,14 +4,12 @@
 /**
  * Connectors redesign (ENGG-511) API.
  *
- * Two sources, mirroring production:
- *  - The published catalog metadata (`connectors.json` and the per-connector
- *    config files) is static, public and CORS-served from the meta host. It is
- *    fetched with a plain `fetch()` against META_BASE — the same pattern the
- *    provider-categories loader uses — not the authenticated `request()` helper.
- *    In development META_BASE points at the mock server (see .env.mock).
- *  - The signed-in user's own connections come from /connectors through the
- *    authenticated API, so they use `request()`.
+ * Two sources, both through the backend:
+ *  - The catalog is the native connector plugin distribution pinned for this
+ *    backend version (GET /discovery/connector-plugins), including suites that
+ *    combine several apps of one provider behind one sign-in. Icons are served
+ *    from the meta host (META_BASE in development).
+ *  - The signed-in user's own connections come from /connectors.
  */
 
 import { get } from 'svelte/store';
@@ -31,7 +29,7 @@ function t(key: string, values?: Record<string, string | number>): string {
 }
 
 // ---------------------------------------------------------------------------
-// Published catalog metadata (public, CORS, via META_BASE)
+// Catalog (native connector plugins, via backend discovery)
 // ---------------------------------------------------------------------------
 
 export interface ConnectorCategory {
@@ -54,6 +52,8 @@ export interface ConnectorCatalogEntry {
   sign_in: string;
   status: string;
   latestVersion?: string;
+  /** Suites only: the single-app plugins this connector combines behind one sign-in. */
+  members?: string[];
 }
 
 export interface ConnectorCatalog {
@@ -61,30 +61,6 @@ export interface ConnectorCatalog {
   catalogVersion: string;
   categories: ConnectorCategory[];
   catalog: ConnectorCatalogEntry[];
-}
-
-/** One capability group: a plain-language label plus the tools it covers. */
-export interface CapabilityGroup {
-  label: string;
-  tools: string[];
-}
-
-export interface ConnectorTool {
-  name: string;
-  description: string;
-}
-
-/** The full per-connector config document (connectors/<key>.json). */
-export interface ConnectorConfig extends ConnectorCatalogEntry {
-  version: string;
-  capabilities?: {
-    read?: CapabilityGroup[];
-    write?: CapabilityGroup[];
-  };
-  example_prompts?: string[];
-  tools?: ConnectorTool[];
-  protocols?: { name: string; transport: string }[];
-  connection?: Record<string, unknown>;
 }
 
 /**
@@ -98,20 +74,55 @@ export function iconUrl(icon: string): string {
   return icon.replace(/^https?:\/\/meta\.grengin\.com/, META_BASE);
 }
 
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { headers: { Accept: 'application/json' } });
-  if (!res.ok) {
-    throw new Error(t('errors.loadFailed', { url, status: res.status }));
-  }
-  return (await res.json()) as T;
+/** One plugin from GET /discovery/connector-plugins (the catalog pinned for this backend version). */
+interface NativePluginSummary {
+  id: string;
+  name: string;
+  description?: string | null;
+  status: string;
+  icon?: string | null;
+  icon_dark?: string | null;
+  category?: string | null;
+  members?: string[];
+  latest_version: string;
 }
 
+/** Category order in Browse; ids the catalog adds later follow in first-seen order. */
+const CATEGORY_ORDER = ['email-calendar', 'files', 'chat', 'productivity', 'customers', 'support', 'money',
+  'marketing', 'website', 'developer'];
+
+/**
+ * The connector catalog for Browse, from this backend's pinned native plugin
+ * distribution. Suites (entries with `members`) are listed alongside the single
+ * apps they combine.
+ */
 export async function fetchCatalog(): Promise<ConnectorCatalog> {
-  return getJson<ConnectorCatalog>(`${META_BASE}/connectors.json`);
-}
-
-export async function fetchConnectorConfig(key: string): Promise<ConnectorConfig> {
-  return getJson<ConnectorConfig>(`${META_BASE}/connectors/${key}.json`);
+  const listing = await request<{ catalog_version: string; providers: NativePluginSummary[] }>(
+    '/discovery/connector-plugins',
+    { method: 'GET' },
+  );
+  const catalog = listing.providers.map((p): ConnectorCatalogEntry => ({
+    key: p.id,
+    display_name: p.name,
+    icon: p.icon ?? '',
+    description: p.description ?? '',
+    job: p.description ?? '',
+    category: p.category ?? 'other',
+    suite: 'none',
+    keywords: [],
+    sign_in: 'oauth',
+    status: p.status,
+    latestVersion: p.latest_version,
+    members: p.members ?? [],
+  }));
+  const seen = [...new Set(catalog.map((entry) => entry.category))];
+  const ids = [...CATEGORY_ORDER.filter((id) => seen.includes(id)), ...seen.filter((id) => !CATEGORY_ORDER.includes(id))];
+  return {
+    schemaVersion: '1.0',
+    catalogVersion: listing.catalog_version,
+    categories: ids.map((id) => ({ id, label: id })),
+    catalog,
+  };
 }
 
 // ---------------------------------------------------------------------------

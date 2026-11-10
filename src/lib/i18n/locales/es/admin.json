@@ -1458,8 +1458,13 @@
         "money": "Finanzas",
         "marketing": "Marketing",
         "website": "Sitio web",
-        "developer": "Desarrolladores"
-      }
+        "developer": "Desarrolladores",
+        "productivity": "Productividad",
+        "support": "Soporte"
+      },
+      "suites": "Paquetes",
+      "suitesSub": "Un solo inicio de sesión cubre todas las apps de un paquete. También puedes añadir apps sueltas más abajo.",
+      "oneSignIn": "Un inicio de sesión · {count} apps"
     },
     "connectorOverview": {
       "allConnectors": "Todos los conectores",

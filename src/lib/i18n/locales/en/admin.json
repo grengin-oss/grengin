@@ -1550,8 +1550,13 @@
         "money": "Money",
         "marketing": "Marketing",
         "website": "Website",
-        "developer": "Developer"
-      }
+        "developer": "Developer",
+        "productivity": "Productivity",
+        "support": "Support"
+      },
+      "suites": "Suites",
+      "suitesSub": "One sign-in covers every app in a suite. You can still add single apps below.",
+      "oneSignIn": "One sign-in · {count} apps"
     },
     "connectorOverview": {
       "allConnectors": "All connectors",

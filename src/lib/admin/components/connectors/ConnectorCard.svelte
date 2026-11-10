@@ -27,6 +27,8 @@ the connection pill and a Manage/Connect action.
     onOpen: () => void;
     onConnect: () => void;
     onAdd?: () => void;
+    /** Suites: the apps one sign-in covers, shown as a row of small icons. */
+    members?: { key: string; name: string; icon: string }[];
   }
   let {
     entry,
@@ -39,6 +41,7 @@ the connection pill and a Manage/Connect action.
     onOpen,
     onConnect,
     onAdd,
+    members = [],
   }: Props = $props();
 </script>
 
@@ -55,6 +58,16 @@ the connection pill and a Manage/Connect action.
     </div>
   </div>
   <p class="cn-card-job">{entry.job}</p>
+  {#if members.length}
+    <div class="cn-card-members" aria-label={$_("admin.connectors.oneSignIn", { values: { count: members.length } })}>
+      <span class="cn-card-member-icons">
+        {#each members as member (member.key)}
+          <span title={member.name}><ConnectorIcon src={iconUrl(member.icon)} name={member.name} size={18} /></span>
+        {/each}
+      </span>
+      <span class="cn-card-members-label">{$_("admin.connectors.oneSignIn", { values: { count: members.length } })}</span>
+    </div>
+  {/if}
   <div class="cn-card-foot">
     {#if connected}
       <span
@@ -144,6 +157,20 @@ the connection pill and a Manage/Connect action.
     line-height: 17.4px;
     color: rgb(134, 140, 153);
     white-space: nowrap;
+  }
+  .cn-card-members {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .cn-card-member-icons {
+    display: inline-flex;
+    gap: 4px;
+  }
+  .cn-card-members-label {
+    font-size: 12px;
+    color: rgb(134, 140, 153);
   }
   .cn-card-job {
     margin: 0;

@@ -77,12 +77,22 @@ the full catalog is shown (from the MCP Servers page).
     );
   }
 
+  const byKey = $derived(new Map(entries.map((c) => [c.key, c])));
+
+  function membersOf(c: ConnectorCatalogEntry): ConnectorCatalogEntry[] {
+    return (c.members ?? []).map((key) => byKey.get(key)).filter((m): m is ConnectorCatalogEntry => !!m);
+  }
+
+  /** A suite matches when it, or any app it combines, matches the search and category. */
   const filtered = $derived.by(() => {
     const q = query.trim();
-    return entries.filter(
-      (c) => matches(c, q) && (category === 'all' || c.category === category),
+    return entries.filter((c) =>
+      [c, ...membersOf(c)].some((e) => matches(e, q) && (category === 'all' || e.category === category)),
     );
   });
+
+  /** Suites (one sign-in for several apps of one provider) are shown first. */
+  const suites = $derived(filtered.filter((c) => c.members?.length));
 
   /** Category tabs, in catalog order (connectors.html `.cat-row`: always all of them). */
   const tabs = $derived(categories.map((c) => c.id));
@@ -90,7 +100,7 @@ the full catalog is shown (from the MCP Servers page).
   /** Matching entries grouped by category, in catalog order. */
   const groups = $derived.by(() => {
     const buckets = new Map<string, ConnectorCatalogEntry[]>();
-    for (const c of filtered) {
+    for (const c of filtered.filter((entry) => !entry.members?.length)) {
       const arr = buckets.get(c.category) ?? [];
       arr.push(c);
       buckets.set(c.category, arr);
@@ -175,6 +185,31 @@ the full catalog is shown (from the MCP Servers page).
         <p class="bp-empty">{$_("admin.connectors.noMatch", { values: { query: query.trim() } })}</p>
       {:else}
         <div class="bp-groups">
+          {#if suites.length}
+            <div class="bp-group">
+              <div class="bp-group-heading">
+                <span class="bp-category">{$_("admin.connectors.suites")}</span>
+                <span class="bp-count">{suites.length}</span>
+              </div>
+              <p class="bp-suites-sub">{$_("admin.connectors.suitesSub")}</p>
+              <div class="bp-cards">
+                {#each suites as c (c.key)}
+                  <ConnectorCard
+                    entry={c}
+                    connected={connectedKeys.has(c.key)}
+                    connecting={connectingKey === c.key}
+                    added={addedKeys ? addedKeys.has(c.key) : true}
+                    adding={addingKey === c.key}
+                    categoryLabel={categoryLabel(c.category)}
+                    members={membersOf(c).map((m) => ({ key: m.key, name: m.display_name, icon: m.icon }))}
+                    onOpen={() => onOpen?.(c.key)}
+                    onConnect={() => onConnect(c.key)}
+                    onAdd={() => onAdd?.(c.key)}
+                  />
+                {/each}
+              </div>
+            </div>
+          {/if}
           {#each groups as group (group.key)}
             {@const isOpen2 = !!expanded[group.key]}
             {@const shown = isOpen2 ? group.entries : group.entries.slice(0, PREVIEW)}
@@ -234,6 +269,11 @@ the full catalog is shown (from the MCP Servers page).
 </Modal>
 
 <style>
+  .bp-suites-sub {
+    margin: -4px 0 12px;
+    font-size: 13px;
+    color: var(--gx-muted);
+  }
   .bp-icon {
     width: 40px;
     height: 40px;
