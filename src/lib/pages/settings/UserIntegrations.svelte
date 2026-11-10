@@ -12,10 +12,10 @@ SPDX-License-Identifier: Apache-2.0
   import {
     getMcpServers,
     getMcpConnections,
-    authorizeMcpConnection,
     disconnectMcpConnection,
     getMcpTools,
   } from "../../api/integrations.js";
+  import { startMcpAuthorization } from "../../api/mcpAuthorize.js";
   import { ApiError } from "../../api/client.js";
   import { toast } from "../../components/Toaster.svelte";
 
@@ -129,14 +129,18 @@ SPDX-License-Identifier: Apache-2.0
     if (connectingId) return;
     connectingId = server.id;
     try {
-      const response = await authorizeMcpConnection(server.id);
-      if (response?.authorization_url) {
+      const authorization = await startMcpAuthorization(server.id);
+      if (authorization?.connected) {
+        toast.success($_("admin.mcpServers.connected"));
+        connectingId = null;
+        await loadData();
+      } else if (authorization) {
         sessionStorage.setItem("mcp_oauth_origin", "user");
         sessionStorage.setItem(
           "mcp_oauth_redirect_url",
           window.location.pathname + window.location.search,
         );
-        window.location.href = response.authorization_url;
+        window.location.href = authorization.authorizationUrl;
       } else {
         toast.error($_("userIntegrations.failedToGetAuthUrl"));
         connectingId = null;
