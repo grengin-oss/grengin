@@ -127,7 +127,19 @@
       "notAdded": "An admin needs to add this connector before you can connect.",
       "revocationPending": "The previous connection is still being cleaned up. Try again in a moment.",
       "noConnection": "No connection to disconnect",
-      "connectFailed": "Could not connect. Try again."
+      "connectFailed": "Could not connect. Try again.",
+      "needsSettings": "{name} needs a few settings before it can be added."
+    },
+    "settings": {
+      "title": "Set up {name}",
+      "subtitle": "Enter the values this connector needs for your organization.",
+      "invalid": "Enter a valid value for {name}.",
+      "save": "Save",
+      "saving": "Saving…"
+    },
+    "unify": {
+      "done": "Connectors updated to the built-in runtime ({count})",
+      "failed": "Could not update: {names}"
     }
   }
 }

@@ -42,7 +42,12 @@ SPDX-License-Identifier: Apache-2.0
   import {
     addConnector,
     connectConnector,
+    connectorKeyOf,
+    ConnectorSettingsRequired,
     iconUrl,
+    unifyConnectorServers,
+    upgradeLegacyConnector,
+    type ConnectorSetting,
   } from "../../api/admin/connectors.js";
   import { setPageTitle } from "../../utils/pageTitle";
 
@@ -60,24 +65,97 @@ SPDX-License-Identifier: Apache-2.0
 
   /** Catalog entry for the open server when it was added from a connector. */
   const selectedConnector = $derived.by(() => {
-    const key = selectedServer?.connection_config?.grengin_connector_key;
-    return typeof key === "string" ? connectorsCatalog.entryByKey.get(key) : undefined;
+    const key = selectedServer ? connectorKeyOf(selectedServer) : undefined;
+    return key ? connectorsCatalog.entryByKey.get(key) : undefined;
   });
 
   /**
    * Icon for a server card: the server's own published `icon` (native connector
-   * plugins) first, then the catalog entry joined by grengin_connector_key
+   * plugins) first, then the catalog entry joined by connector key
    * (broker connectors), else empty so ConnectorIcon shows its lettered tile.
    * iconUrl() routes meta.grengin.com icons through the dev proxy.
    */
   function serverIcon(server: MCPServer): string {
     if (server.icon) return iconUrl(server.icon);
-    const key = server.connection_config?.grengin_connector_key;
-    const entry =
-      typeof key === "string" ? connectorsCatalog.entryByKey.get(key) : undefined;
+    const key = connectorKeyOf(server);
+    const entry = key ? connectorsCatalog.entryByKey.get(key) : undefined;
     return entry ? iconUrl(entry.icon) : "";
   }
   let browseOpen = $state(false);
+  let unifyAttempted = false;
+
+  // ----- Connector settings prompt (plugins such as Jira need a cloud id) -----
+  type SettingsRequest = {
+    title: string;
+    settings: ConnectorSetting[];
+    submit: (values: Record<string, string>) => Promise<void>;
+  };
+  let settingsRequest = $state<SettingsRequest | null>(null);
+  let settingsValues = $state<Record<string, string>>({});
+  let settingsSaving = $state(false);
+  let settingsError = $state<string | null>(null);
+
+  function askForSettings(request: SettingsRequest) {
+    settingsValues = Object.fromEntries(request.settings.map((s) => [s.name, ""]));
+    settingsError = null;
+    settingsRequest = request;
+  }
+
+  function closeSettings() {
+    if (settingsSaving) return;
+    settingsRequest = null;
+  }
+
+  async function saveSettings() {
+    if (!settingsRequest) return;
+    const values = Object.fromEntries(
+      Object.entries(settingsValues).map(([k, v]) => [k, v.trim()]),
+    );
+    const invalid = settingsRequest.settings.find((s) => {
+      const value = values[s.name] ?? "";
+      return !value || (s.pattern ? !new RegExp(s.pattern, "u").test(value) : false);
+    });
+    if (invalid) {
+      settingsError = $_("connectors.settings.invalid", { values: { name: invalid.name } });
+      return;
+    }
+    settingsSaving = true;
+    try {
+      await settingsRequest.submit(values);
+      settingsRequest = null;
+    } catch (err) {
+      settingsError = connectorErrorText(err, $_("admin.connectors.addFailed"));
+    } finally {
+      settingsSaving = false;
+    }
+  }
+
+  /** Move older connector installs onto the native plugin model (once per visit). */
+  async function unifyConnectors(list: MCPServer[]) {
+    const result = await unifyConnectorServers(list);
+    const changed = result.upgraded.length + result.removed.length + result.renamed.length;
+    if (changed) {
+      toast.success($_("connectors.unify.done", { values: { count: changed } }));
+      await loadServers();
+      await connectorsCatalog.refresh();
+    }
+    if (result.failed.length) {
+      toast.error($_("connectors.unify.failed", { values: { names: result.failed.join(", ") } }));
+    }
+    const pending = result.needsSettings[0];
+    if (pending) {
+      askForSettings({
+        title: pending.error.pluginName,
+        settings: pending.error.settings,
+        submit: async (values) => {
+          await upgradeLegacyConnector(pending.server, values);
+          toast.success($_("connectors.unify.done", { values: { count: 1 } }));
+          await loadServers();
+          await connectorsCatalog.refresh();
+        },
+      });
+    }
+  }
   let connectingConnector = $state<string | null>(null);
   let addingConnector = $state<string | null>(null);
 
@@ -231,6 +309,10 @@ SPDX-License-Identifier: Apache-2.0
     try {
       const response = await getMcpServers();
       servers = response.servers;
+      if (!unifyAttempted) {
+        unifyAttempted = true;
+        queueMicrotask(() => unifyConnectors(response.servers));
+      }
       // Keep the open detail view's reference pointing at the fresh object, so
       // actions that read it (e.g. the overview's enable toggle) use current state.
       if (selectedServer) {
@@ -883,9 +965,22 @@ SPDX-License-Identifier: Apache-2.0
       await loadServers();
       toast.success($_("admin.connectors.added"));
     } catch (err) {
-      toast.error(
-        connectorErrorText(err, $_("admin.connectors.addFailed")),
-      );
+      if (err instanceof ConnectorSettingsRequired) {
+        askForSettings({
+          title: err.pluginName,
+          settings: err.settings,
+          submit: async (values) => {
+            await addConnector(key, "admin_only", values);
+            await connectorsCatalog.refresh();
+            await loadServers();
+            toast.success($_("admin.connectors.added"));
+          },
+        });
+      } else {
+        toast.error(
+          connectorErrorText(err, $_("admin.connectors.addFailed")),
+        );
+      }
     } finally {
       addingConnector = null;
     }
@@ -2309,6 +2404,56 @@ SPDX-License-Identifier: Apache-2.0
             {isDeleting
               ? $_("admin.mcpServers.deleting")
               : $_("admin.mcpServers.actions.delete")}
+          </button>
+        </div>
+      </div>
+    {/snippet}
+  </Modal>
+
+  <!-- ===== Connector settings (plugins that need instance values) ===== -->
+  <Modal
+    variant="mcp-servers"
+    title={$_("connectors.settings.title", { values: { name: settingsRequest?.title ?? "" } })}
+    subtitle={$_("connectors.settings.subtitle")}
+    isOpen={settingsRequest !== null}
+    onclose={closeSettings}
+  >
+    {#snippet children()}
+      <form
+        class="confirm-body"
+        onsubmit={(event) => {
+          event.preventDefault();
+          saveSettings();
+        }}
+      >
+        {#each settingsRequest?.settings ?? [] as setting (setting.name)}
+          <div class="add-field">
+            <label class="add-label" for={`connector-setting-${setting.name}`}>{setting.name}</label>
+            <input
+              id={`connector-setting-${setting.name}`}
+              class="add-input"
+              type="text"
+              autocomplete="off"
+              maxlength={setting.maxLength}
+              placeholder={setting.example ?? ""}
+              bind:value={settingsValues[setting.name]}
+            />
+          </div>
+        {/each}
+        {#if settingsError}
+          <span class="error-text">{settingsError}</span>
+        {/if}
+      </form>
+    {/snippet}
+
+    {#snippet footer()}
+      <div class="add-footer">
+        <div class="add-footer-actions">
+          <button class="btn-add-cancel" type="button" onclick={closeSettings} disabled={settingsSaving}>
+            {$_("common.cancel")}
+          </button>
+          <button class="btn-add-create" type="button" onclick={saveSettings} disabled={settingsSaving}>
+            {settingsSaving ? $_("connectors.settings.saving") : $_("connectors.settings.save")}
           </button>
         </div>
       </div>

@@ -127,7 +127,19 @@
       "notAdded": "Um administrador precisa adicionar este conector antes que você possa se conectar.",
       "revocationPending": "A conexão anterior ainda está sendo removida. Tente novamente em instantes.",
       "noConnection": "Nenhuma conexão para desconectar",
-      "connectFailed": "Não foi possível conectar. Tente novamente."
+      "connectFailed": "Não foi possível conectar. Tente novamente.",
+      "needsSettings": "{name} precisa de algumas configurações antes de ser adicionado."
+    },
+    "settings": {
+      "title": "Configurar {name}",
+      "subtitle": "Informe os valores de que este conector precisa para sua organização.",
+      "invalid": "Informe um valor válido para {name}.",
+      "save": "Salvar",
+      "saving": "Salvando…"
+    },
+    "unify": {
+      "done": "Conectores atualizados para o ambiente integrado ({count})",
+      "failed": "Não foi possível atualizar: {names}"
     }
   }
 }

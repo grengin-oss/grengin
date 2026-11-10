@@ -127,7 +127,19 @@
       "notAdded": "연결하려면 먼저 관리자가 이 커넥터를 추가해야 합니다.",
       "revocationPending": "이전 연결을 정리하는 중입니다. 잠시 후 다시 시도하세요.",
       "noConnection": "해제할 연결이 없습니다",
-      "connectFailed": "연결할 수 없습니다. 다시 시도하세요."
+      "connectFailed": "연결할 수 없습니다. 다시 시도하세요.",
+      "needsSettings": "{name}을(를) 추가하려면 몇 가지 설정이 필요합니다."
+    },
+    "settings": {
+      "title": "{name} 설정",
+      "subtitle": "조직에서 이 커넥터에 필요한 값을 입력하세요.",
+      "invalid": "{name}에 올바른 값을 입력하세요.",
+      "save": "저장",
+      "saving": "저장 중…"
+    },
+    "unify": {
+      "done": "커넥터를 기본 제공 런타임으로 업데이트했습니다({count})",
+      "failed": "업데이트하지 못했습니다: {names}"
     }
   }
 }

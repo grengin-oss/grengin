@@ -17,7 +17,8 @@
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 import { request } from '../client.js';
-import { getMcpServers, syncMcpServerTools } from './mcpServers.js';
+import { deleteMcpServer, getMcpServers, syncMcpServerTools, updateMcpServer } from './mcpServers.js';
+import { startMcpAuthorization } from '../mcpAuthorize.js';
 import { ApiError } from '../client.js';
 import { getMcpServers as getUserMcpServers } from '../integrations.js';
 import type { MCPServer } from '../../admin/types.js';
@@ -327,78 +328,209 @@ export async function connectAndWait(
 
 // ---------------------------------------------------------------------------
 // Adding a connector (admin). Like an AI engine provider, a connector is added
-// once by an admin before anyone connects: its versioned manifest becomes an
-// MCP server (POST /admin/mcp-servers), and the backend returns that server's
-// id. Connecting then sends that id as server_id. Never created implicitly on
-// connect — that would override the admin's access choice.
+// once by an admin before anyone connects. Every connector is installed as its
+// pinned native runtime plugin (GET /discovery/connector-plugins/{key}) through
+// POST /admin/mcp-servers; OAuth plugins sign in through the Grengin broker
+// (`oauth_broker: {}`), so instances register no OAuth client of their own.
+// Never created implicitly on connect — that would override the admin's access
+// choice.
 // ---------------------------------------------------------------------------
-
-/** The versioned manifest, meta.grengin.com/connectors/<key>/versions/<v>.json. */
-export interface ConnectorManifest {
-  key: string;
-  version: string;
-  connection: {
-    transport_type: string;
-    url: string;
-    auth: { type: string; auth_url: string; token_url: string; scopes: string[] };
-  };
-}
 
 export type ConnectorServerAccess = 'admin_only' | 'all_users';
 
-export async function fetchConnectorManifest(
-  key: string,
-  version: string,
-): Promise<ConnectorManifest> {
-  return getJson<ConnectorManifest>(`${META_BASE}/connectors/${key}/versions/${version}.json`);
+/** GET /discovery/connector-plugins/{id}: the plugin pinned for this instance. */
+export interface NativeConnectorPlugin {
+  id: string;
+  version: string;
+  plugin: { id: string; name: string; base_url: string; auth: string; [key: string]: unknown };
+  installation?: {
+    configuration_schema?: {
+      properties?: Record<string, { description?: string; examples?: unknown[]; pattern?: string; maxLength?: number }>;
+      required?: string[];
+    };
+  } | null;
 }
 
-function brokerServerName(entry: ConnectorCatalogEntry): string {
-  return `${entry.display_name} (Grengin broker)`;
+/** One instance setting a plugin needs before it can be installed (e.g. Jira cloud_id). */
+export interface ConnectorSetting {
+  name: string;
+  example?: string;
+  pattern?: string;
+  maxLength?: number;
 }
 
-/** The MCP server an admin added for this connector, if any. */
+/** Thrown when a plugin needs settings the caller did not provide. */
+export class ConnectorSettingsRequired extends Error {
+  constructor(
+    public pluginName: string,
+    public settings: ConnectorSetting[],
+  ) {
+    super(t('errors.needsSettings', { name: pluginName }));
+    this.name = 'ConnectorSettingsRequired';
+  }
+}
+
+const NAME_SUFFIX = / \((?:native plugin|Grengin broker)\)$/;
+
+/** The plain display name, without the suffixes older installs used. */
+export function connectorDisplayName(name: string): string {
+  return name.replace(NAME_SUFFIX, '');
+}
+
+function configOf(server: MCPServer): Record<string, any> {
+  return (server.connection_config ?? {}) as Record<string, any>;
+}
+
+/** The catalog key a server was installed for (native plugin id or older broker key). */
+export function connectorKeyOf(server: MCPServer): string | undefined {
+  const config = configOf(server);
+  const id = config.connector_plugin?.manifest?.id ?? config.grengin_connector_key;
+  return typeof id === 'string' ? id : undefined;
+}
+
+/** An older install that points at a vendor-hosted MCP server instead of the native runtime. */
+export function isLegacyConnectorServer(server: MCPServer): boolean {
+  const config = configOf(server);
+  return typeof config.grengin_connector_key === 'string' && !config.connector_plugin;
+}
+
+/** The MCP server an admin added for this connector, if any (native preferred). */
 export function findConnectorServer(servers: MCPServer[], key: string): MCPServer | undefined {
-  return servers.find((s) => s.connection_config?.grengin_connector_key === key);
+  const matches = servers.filter((s) => connectorKeyOf(s) === key);
+  return matches.find((s) => !isLegacyConnectorServer(s)) ?? matches[0];
 }
 
-/** Admin: add a connector as an MCP server. Returns the existing one if already added. */
+export async function fetchNativePlugin(key: string): Promise<NativeConnectorPlugin> {
+  const plugin = await request<NativeConnectorPlugin>(
+    `/discovery/connector-plugins/${encodeURIComponent(key)}`,
+    { method: 'GET' },
+  );
+  if (plugin.id !== key || plugin.plugin?.id !== key || !plugin.plugin.base_url) {
+    throw new Error(t('errors.manifestMismatch'));
+  }
+  return plugin;
+}
+
+/** Settings the plugin requires, in schema order. */
+export function requiredSettings(plugin: NativeConnectorPlugin): ConnectorSetting[] {
+  const schema = plugin.installation?.configuration_schema;
+  return (schema?.required ?? []).map((name) => {
+    const field = schema?.properties?.[name] ?? {};
+    const example = field.examples?.find((v) => typeof v === 'string') as string | undefined;
+    return { name, example, pattern: field.pattern, maxLength: field.maxLength };
+  });
+}
+
+/** The connection_config for a native install; the manifest is stored verbatim because the broker hashes it. */
+function nativeServerFields(
+  plugin: NativeConnectorPlugin,
+  configuration: Record<string, string>,
+): { name: string; url: string; transport_type: string; connection_config: Record<string, unknown> } {
+  const missing = requiredSettings(plugin).filter((s) => !configuration[s.name]?.trim());
+  if (missing.length) throw new ConnectorSettingsRequired(plugin.plugin.name, missing);
+  return {
+    name: plugin.plugin.name,
+    url: plugin.plugin.base_url,
+    transport_type: 'http',
+    connection_config: {
+      connector_plugin: { manifest: plugin.plugin, configuration },
+      ...(plugin.plugin.auth === 'oauth2' ? { oauth_broker: {} } : {}),
+    },
+  };
+}
+
+/**
+ * Admin: add a connector as its native plugin. Returns the existing server if
+ * already added. Throws ConnectorSettingsRequired when instance settings are
+ * needed; call again with them.
+ */
 export async function addConnector(
   key: string,
   access: ConnectorServerAccess = 'admin_only',
+  configuration: Record<string, string> = {},
 ): Promise<MCPServer> {
-  const [catalog, list] = await Promise.all([fetchCatalog(), getMcpServers()]);
+  const [catalog, list, plugin] = await Promise.all([fetchCatalog(), getMcpServers(), fetchNativePlugin(key)]);
   const existing = findConnectorServer(list.servers, key);
-  if (existing) return existing;
+  if (existing && !isLegacyConnectorServer(existing)) return existing;
+  if (existing) return upgradeLegacyConnector(existing, configuration, plugin);
   const entry = catalog.catalog.find((c) => c.key === key);
-  if (!entry?.latestVersion) throw new Error(t('errors.noVersion'));
-  const manifest = await fetchConnectorManifest(key, entry.latestVersion);
-  if (manifest.key !== key || manifest.version !== entry.latestVersion || !manifest.connection?.url) {
-    throw new Error(t('errors.manifestMismatch'));
-  }
-  const { auth } = manifest.connection;
   return request<MCPServer>('/admin/mcp-servers', {
     method: 'POST',
     body: JSON.stringify({
-      name: brokerServerName(entry),
-      description: entry.description,
-      transport_type: manifest.connection.transport_type,
-      url: manifest.connection.url,
+      ...nativeServerFields(plugin, configuration),
+      description: entry?.description ?? null,
+      icon: entry?.icon || null,
       enabled: true,
       default_access: access,
-      client_id: 'broker-managed',
-      connection_config: {
-        grengin_connector_key: manifest.key,
-        oauth: { auth_url: auth.auth_url, token_url: auth.token_url, scopes: auth.scopes },
-      },
     }),
   });
 }
 
 /**
+ * Admin: switch an older vendor-hosted broker server to its native plugin in
+ * place, keeping its id, access rules and project links. Users reconnect once.
+ */
+export async function upgradeLegacyConnector(
+  server: MCPServer,
+  configuration: Record<string, string> = {},
+  plugin?: NativeConnectorPlugin,
+): Promise<MCPServer> {
+  const key = connectorKeyOf(server);
+  if (!key) throw new Error(t('errors.unknown'));
+  const native = plugin ?? (await fetchNativePlugin(key));
+  return updateMcpServer(server.id, nativeServerFields(native, configuration));
+}
+
+export interface ConnectorCleanup {
+  upgraded: string[];
+  removed: string[];
+  renamed: string[];
+  needsSettings: { server: MCPServer; error: ConnectorSettingsRequired }[];
+  failed: string[];
+}
+
+/**
+ * Admin: bring older connector installs onto one model. A broker server with a
+ * native duplicate is deleted, the rest are upgraded in place, and the
+ * "(native plugin)" / "(Grengin broker)" suffixes are dropped.
+ */
+export async function unifyConnectorServers(servers: MCPServer[]): Promise<ConnectorCleanup> {
+  const result: ConnectorCleanup = { upgraded: [], removed: [], renamed: [], needsSettings: [], failed: [] };
+  const legacy = servers.filter(isLegacyConnectorServer);
+  const removedIds = new Set<string>();
+  for (const server of legacy) {
+    const key = connectorKeyOf(server)!;
+    const native = servers.find((s) => s.id !== server.id && connectorKeyOf(s) === key && !isLegacyConnectorServer(s));
+    try {
+      if (native) {
+        await deleteMcpServer(server.id);
+        removedIds.add(server.id);
+        result.removed.push(connectorDisplayName(server.name));
+      } else {
+        await upgradeLegacyConnector(server);
+        result.upgraded.push(connectorDisplayName(server.name));
+      }
+    } catch (error) {
+      if (error instanceof ConnectorSettingsRequired) result.needsSettings.push({ server, error });
+      else result.failed.push(connectorDisplayName(server.name));
+    }
+  }
+  for (const server of servers) {
+    if (removedIds.has(server.id) || isLegacyConnectorServer(server) || !NAME_SUFFIX.test(server.name)) continue;
+    try {
+      await updateMcpServer(server.id, { name: connectorDisplayName(server.name) });
+      result.renamed.push(connectorDisplayName(server.name));
+    } catch {
+      result.failed.push(server.name);
+    }
+  }
+  return result;
+}
+
+/**
  * The added server's id for this connector. Admins see connection_config on
  * /admin/mcp-servers; other users only get their accessible servers from
- * /mcp-servers, matched by the name the admin step gave it.
+ * /mcp-servers, matched by display name.
  */
 async function connectorServerId(entry: ConnectorCatalogEntry): Promise<string | undefined> {
   try {
@@ -406,14 +538,14 @@ async function connectorServerId(entry: ConnectorCatalogEntry): Promise<string |
   } catch (err) {
     if (!(err instanceof ApiError && err.status === 403)) throw err;
     const { servers } = await getUserMcpServers();
-    return servers.find((s) => s.name === brokerServerName(entry))?.id;
+    return servers.find((s) => connectorDisplayName(s.name) === entry.display_name)?.id;
   }
 }
 
 /**
- * Connect the signed-in user's own account (real /connectors OAuth flow) to the
- * connector's added MCP server. Call from the click handler: the consent popup
- * is opened before the first await.
+ * Connect the signed-in user's own account to the connector's added server and
+ * wait until the broker settles. Call from the click handler: the sign-in
+ * popup is opened before the first await.
  */
 export async function connectConnector(key: string): Promise<ConnectorConnection> {
   const popup = openBlankConsentPopup();
@@ -423,23 +555,46 @@ export async function connectConnector(key: string): Promise<ConnectorConnection
     if (!entry) throw new Error(t('errors.unknown'));
     const serverId = await connectorServerId(entry);
     if (!serverId) throw new Error(t('errors.notAdded'));
-    // A stale attempt (pending, expired, failed…) must be cleared first: the
-    // backend refuses a new start for a different server or version.
-    const mine = findUserConnection(await listConnections(), key);
-    if (mine && mine.status !== 'connected') {
-      const result = await disconnectConnection(mine.id);
-      if (result.revocation_pending) {
-        throw new Error(t('errors.revocationPending'));
-      }
-    } else if (mine?.status === 'connected') {
+    const authorization = await startMcpAuthorization(serverId);
+    if (!authorization) throw new Error(t('errors.connectFailed'));
+    if (authorization.connected) {
       popup?.close();
-      return mine;
+      const mine = findUserConnection(await listConnections(), key);
+      if (mine) return mine;
+      throw new Error(t('errors.connectFailed'));
     }
-    return await connectAndWait(key, entry.latestVersion ?? '1.0.0', { serverId, popup });
+    if (!popup || popup.closed) throw new Error(t('errors.popupBlocked'));
+    const txn = sessionStorage.getItem(TXN_KEY);
+    if (txn) popup.sessionStorage.setItem(TXN_KEY, txn);
+    popup.sessionStorage.setItem('mcp_oauth_origin', 'admin');
+    popup.location.replace(authorization.authorizationUrl);
+    if (!authorization.brokerConnectionId) {
+      throw new Error(t('errors.connectFailed'));
+    }
+    return await waitForConnection(authorization.brokerConnectionId, serverId);
   } catch (err) {
     popup?.close();
     throw err;
   }
+}
+
+async function waitForConnection(id: string, serverId: string): Promise<ConnectorConnection> {
+  const started = Date.now();
+  let delay = 1500;
+  let conn = await getConnection(id);
+  while (!TERMINAL.includes(conn.status) && Date.now() - started < TXN_TTL_MS) {
+    await new Promise((r) => setTimeout(r, delay));
+    delay = Math.min(delay * 1.5, 5000);
+    conn = await getConnection(id);
+  }
+  if (conn.status === 'connected') {
+    try {
+      await syncMcpServerTools(conn.server_id ?? serverId);
+    } catch (err) {
+      if (!(err instanceof ApiError && err.status === 403)) console.warn('sync-tools failed', err);
+    }
+  }
+  return conn;
 }
 
 /** Disconnect the signed-in user's own connection for this connector. */

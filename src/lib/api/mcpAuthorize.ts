@@ -8,7 +8,7 @@ import type { McpAuthorizeResponse } from '../types/integrations.js';
 
 export type McpAuthorization =
   | { connected: true }
-  | { connected: false; authorizationUrl: string };
+  | { connected: false; authorizationUrl: string; brokerConnectionId?: string };
 
 /**
  * Start (or resume) an MCP server sign-in for the current user.
@@ -33,8 +33,9 @@ export async function startMcpAuthorization(serverId: string): Promise<McpAuthor
   if (reply.status === 'connected') return { connected: true };
   const url = reply.authorization_url;
   if (!url) return null;
-  if (reply.broker_connection_id) rememberConnectorTransaction(reply.broker_connection_id, url);
-  return { connected: false, authorizationUrl: url };
+  if (!reply.broker_connection_id) return { connected: false, authorizationUrl: url };
+  rememberConnectorTransaction(reply.broker_connection_id, url);
+  return { connected: false, authorizationUrl: url, brokerConnectionId: reply.broker_connection_id };
 }
 
 async function authorizeOrRestart(serverId: string): Promise<McpAuthorizeResponse | null> {

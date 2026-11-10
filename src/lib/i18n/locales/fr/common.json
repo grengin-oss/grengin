@@ -127,7 +127,19 @@
       "notAdded": "Un administrateur doit ajouter ce connecteur avant que vous puissiez vous connecter.",
       "revocationPending": "La connexion précédente est encore en cours de nettoyage. Réessayez dans un instant.",
       "noConnection": "Aucune connexion à déconnecter",
-      "connectFailed": "Connexion impossible. Réessayez."
+      "connectFailed": "Connexion impossible. Réessayez.",
+      "needsSettings": "{name} a besoin de quelques paramètres avant de pouvoir être ajouté."
+    },
+    "settings": {
+      "title": "Configurer {name}",
+      "subtitle": "Saisissez les valeurs dont ce connecteur a besoin pour votre organisation.",
+      "invalid": "Saisissez une valeur valide pour {name}.",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…"
+    },
+    "unify": {
+      "done": "Connecteurs mis à jour vers l'environnement intégré ({count})",
+      "failed": "Mise à jour impossible : {names}"
     }
   }
 }
