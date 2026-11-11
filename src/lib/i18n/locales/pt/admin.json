@@ -629,7 +629,8 @@
         "connect": "Ligar",
         "edit": "Editar",
         "delete": "Eliminar",
-        "syncTools": "Sincronizar ferramentas"
+        "syncTools": "Sincronizar ferramentas",
+        "details": "Detalhes"
       },
       "connect": "Ligar",
       "addModalTitle": "Adicionar servidor MCP",

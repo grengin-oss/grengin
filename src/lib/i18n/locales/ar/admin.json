@@ -629,7 +629,8 @@
         "connect": "اتصال",
         "edit": "تعديل",
         "delete": "حذف",
-        "syncTools": "مزامنة الأدوات"
+        "syncTools": "مزامنة الأدوات",
+        "details": "التفاصيل"
       },
       "connect": "اتصال",
       "addModalTitle": "إضافة خادم MCP",

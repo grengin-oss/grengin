@@ -629,7 +629,8 @@
         "connect": "Conectar",
         "edit": "Editar",
         "delete": "Eliminar",
-        "syncTools": "Sincronizar herramientas"
+        "syncTools": "Sincronizar herramientas",
+        "details": "Detalles"
       },
       "connect": "Conectar",
       "addModalTitle": "Añadir servidor MCP",

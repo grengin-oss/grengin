@@ -721,7 +721,8 @@
         "connect": "Connect",
         "edit": "Edit",
         "delete": "Delete",
-        "syncTools": "Sync Tools"
+        "syncTools": "Sync Tools",
+        "details": "Details"
       },
       "connect": "Connect",
       "addModalTitle": "Add MCP Server",

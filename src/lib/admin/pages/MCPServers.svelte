@@ -32,9 +32,7 @@ SPDX-License-Identifier: Apache-2.0
   import {
     authorizeMcpConnection,
     createMcpServer,
-    deleteMcpServer,
     getMcpServers,
-    syncMcpServerTools,
     testMcpConnection,
     updateMcpServer,
   } from "../../api/admin/mcpServers.js";
@@ -77,17 +75,24 @@ SPDX-License-Identifier: Apache-2.0
       typeof key === "string" ? connectorsCatalog.entryByKey.get(key) : undefined;
     return entry ? iconUrl(entry.icon) : "";
   }
+
+  /**
+   * A custom (user-added) server: no published plugin `icon` and no catalog
+   * `grengin_connector_key`. Native plugin and broker/catalog connectors are
+   * managed, so only these custom ones expose the Edit action.
+   */
+  function isCustomConnector(server: MCPServer): boolean {
+    if (server.icon) return false;
+    const key = server.connection_config?.grengin_connector_key;
+    return typeof key !== "string";
+  }
   let browseOpen = $state(false);
   let connectingConnector = $state<string | null>(null);
   let addingConnector = $state<string | null>(null);
 
   let isModalOpen = $state(false);
-  let isConfirmOpen = $state(false);
-  let serverToDelete = $state<MCPServer | null>(null);
   let serverToEdit = $state<MCPServer | null>(null);
   let isSubmitting = $state(false);
-  let isDeleting = $state(false);
-  let syncingServerId = $state<string | null>(null);
   let togglingServerId = $state<string | null>(null);
   let connectingServerId = $state<string | null>(null);
   let testingServerId = $state<string | null>(null);
@@ -683,24 +688,6 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
-  async function handleSyncTools(server: MCPServer) {
-    if (syncingServerId) return;
-    syncingServerId = server.id;
-    try {
-      await syncMcpServerTools(server.id);
-      toast.success($_("admin.mcpServers.syncedTools"));
-      await loadServers();
-    } catch (err: any) {
-      const errorMessage =
-        err instanceof ApiError
-          ? getLocalizedError(err, "description", $_)
-          : err.message;
-      toast.error(errorMessage || $_("admin.mcpServers.failedToSyncTools"));
-    } finally {
-      syncingServerId = null;
-    }
-  }
-
   async function toggleServerEnabled(server: MCPServer) {
     if (togglingServerId) return;
     const previousState = server.enabled;
@@ -799,43 +786,6 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
-  function promptDelete(server: MCPServer) {
-    if (isDeleting) return;
-    serverToDelete = server;
-    isConfirmOpen = true;
-  }
-
-  function closeDeleteModal() {
-    isConfirmOpen = false;
-    serverToDelete = null;
-  }
-
-  async function handleDelete() {
-    if (!serverToDelete || isDeleting) return;
-    isDeleting = true;
-    const deletedId = serverToDelete.id;
-    try {
-      await deleteMcpServer(deletedId);
-      toast.success($_("admin.mcpServers.deleted"));
-      clearTestError(deletedId);
-      // Deleting from the detail view has nothing left to show behind it.
-      if (selectedServer?.id === deletedId) {
-        selectedServer = null;
-        startPolling();
-      }
-      closeDeleteModal();
-      await loadServers();
-    } catch (err: any) {
-      const errorMessage =
-        err instanceof ApiError
-          ? getLocalizedError(err, "description", $_)
-          : err.message;
-      toast.error(errorMessage || $_("admin.mcpServers.failedToDelete"));
-    } finally {
-      isDeleting = false;
-    }
-  }
-
   onMount(() => {
     loadServers();
     startPolling();
@@ -890,54 +840,10 @@ SPDX-License-Identifier: Apache-2.0
 <svelte:window onclick={() => (openDropdown = null)} />
 
 <!-- ===== icons, transcribed from mcp-servers.html ===== -->
-{#snippet testIcon()}
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <path
-      d="M12.2992 5.41865C12.5656 6.72608 12.3758 8.08532 11.7613 9.2697C11.1468 10.4541 10.1449 11.392 8.9226 11.9271C7.7003 12.4622 6.3315 12.562 5.04448 12.21C3.75745 11.858 2.63 11.0755 1.85013 9.99282C1.07026 8.91016 0.685122 7.59288 0.758938 6.26063C0.832754 4.92838 1.36106 3.66171 2.25576 2.67184C3.15046 1.68197 4.35747 1.02874 5.67551 0.821086C6.99354 0.613432 8.34292 0.863906 9.49863 1.53074M4.83219 6.00171L6.58219 7.75171L12.4155 1.91838"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-    />
-  </svg>
-{/snippet}
-
-{#snippet scopeIcon()}
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <path
-      d="M5.24841 6.99972L6.41496 8.16643L8.74806 5.83302M11.6644 7.58334C11.6644 10.5001 9.62297 11.9585 7.19654 12.8043C7.06949 12.8474 6.93147 12.8453 6.80575 12.7985C4.37349 11.9585 2.33203 10.5001 2.33203 7.58334V3.49987C2.33203 3.34516 2.39348 3.19678 2.50287 3.08738C2.61225 2.97798 2.76061 2.91652 2.91531 2.91652C4.08186 2.91652 5.54004 2.21649 6.55494 1.3298C6.67851 1.22421 6.8357 1.1662 6.99823 1.1662C7.16076 1.1662 7.31795 1.22421 7.44152 1.3298C8.46225 2.22233 9.91461 2.91652 11.0812 2.91652C11.2358 2.91652 11.3842 2.97798 11.4936 3.08738C11.603 3.19678 11.6644 3.34516 11.6644 3.49987V7.58334Z"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-    />
-  </svg>
-{/snippet}
-
-{#snippet syncIcon()}
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <path
-      d="M1.75 7C1.75 5.60761 2.30312 4.27226 3.28769 3.28769C4.27226 2.30312 5.60761 1.75 7 1.75C8.46769 1.75552 9.87643 2.32821 10.9317 3.34833L12.25 4.66667M9.33333 4.66667H12.25V1.75M12.25 7C12.25 8.39239 11.6969 9.72774 10.7123 10.7123C9.72774 11.6969 8.39239 12.25 7 12.25C5.53231 12.2445 4.12357 11.6718 3.06833 10.6517L1.75 9.33333M1.75 12.25V9.33333H4.66667"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-    />
-  </svg>
-{/snippet}
-
 {#snippet editIcon()}
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
     <path
       d="M7.58521 12.2493H12.2523M12.3538 3.97337C12.6622 3.66504 12.8355 3.24682 12.8356 2.81072C12.8356 2.37462 12.6624 1.95636 12.3541 1.64795C12.0457 1.33955 11.6274 1.16625 11.1913 1.1662C10.7551 1.16614 10.3368 1.33933 10.0284 1.64766L2.24253 9.43445C2.10708 9.56949 2.00691 9.73575 1.95083 9.9186L1.18018 12.4572C1.1651 12.5077 1.16397 12.5613 1.17689 12.6123C1.18981 12.6633 1.2163 12.7099 1.25357 12.7471C1.29083 12.7843 1.33747 12.8108 1.38854 12.8236C1.43961 12.8364 1.4932 12.8352 1.54363 12.8201L4.08311 12.0501C4.26581 11.9945 4.43207 11.895 4.56732 11.7602L12.3538 3.97337Z"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-    />
-  </svg>
-{/snippet}
-
-{#snippet deleteIcon()}
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <path
-      d="M11.0833 3.49972V11.667C11.0833 11.9765 10.9604 12.2733 10.7416 12.4921C10.5228 12.7109 10.2261 12.8338 9.91667 12.8338H4.08333C3.77391 12.8338 3.47717 12.7109 3.25838 12.4921C3.03958 12.2733 2.91667 11.9765 2.91667 11.667V3.49972M1.75 3.49972H12.25M4.66667 3.49972V2.33296C4.66667 2.02351 4.78958 1.72674 5.00838 1.50793C5.22717 1.28912 5.52391 1.1662 5.83333 1.1662H8.16667C8.47609 1.1662 8.77283 1.28912 8.99162 1.50793C9.21042 1.72674 9.33333 2.02351 9.33333 2.33296V3.49972"
       stroke="currentColor"
       stroke-width="1.5"
       stroke-linecap="round"
@@ -969,7 +875,10 @@ SPDX-License-Identifier: Apache-2.0
     class="toggle-switch"
     class:toggle-switch--on={server.enabled}
     class:toggle-switch--off={!server.enabled}
-    onclick={() => toggleServerEnabled(server)}
+    onclick={(e) => {
+      e.stopPropagation();
+      toggleServerEnabled(server);
+    }}
     disabled={togglingServerId === server.id}
     role="switch"
     aria-checked={server.enabled}
@@ -1001,61 +910,17 @@ SPDX-License-Identifier: Apache-2.0
       <span>{$_("admin.mcpServers.connect")}</span>
     </button>
   {/if}
-  <button
-    class="icon-btn icon-btn--ok"
-    type="button"
-    onclick={() => handleTestConnection(server)}
-    disabled={testingServerId === server.id}
-    aria-label={$_("admin.mcpServers.testConnection")}
-    title={$_("admin.mcpServers.testConnection")}
-  >
-    {#if testingServerId === server.id}
-      <span class="btn-spinner" aria-hidden="true"></span>
-    {:else}
-      {@render testIcon()}
-    {/if}
-  </button>
-  <button
-    class="icon-btn icon-btn--info"
-    type="button"
-    onclick={() => openServerDetail(server)}
-    aria-label={$_("admin.mcpAccess.accessControl")}
-    title={$_("admin.mcpAccess.accessControl")}
-  >
-    {@render scopeIcon()}
-  </button>
-  <button
-    class="icon-btn icon-btn--plain"
-    type="button"
-    onclick={() => handleSyncTools(server)}
-    disabled={syncingServerId === server.id}
-    aria-label={$_("admin.mcpServers.actions.syncTools")}
-    title={$_("admin.mcpServers.actions.syncTools")}
-  >
-    {#if syncingServerId === server.id}
-      <span class="btn-spinner" aria-hidden="true"></span>
-    {:else}
-      {@render syncIcon()}
-    {/if}
-  </button>
-  <button
-    class="icon-btn icon-btn--plain"
-    type="button"
-    onclick={() => openEditModal(server)}
-    aria-label={$_("admin.mcpServers.actions.edit")}
-    title={$_("admin.mcpServers.actions.edit")}
-  >
-    {@render editIcon()}
-  </button>
-  <button
-    class="icon-btn icon-btn--danger"
-    type="button"
-    onclick={() => promptDelete(server)}
-    aria-label={$_("admin.mcpServers.actions.delete")}
-    title={$_("admin.mcpServers.actions.delete")}
-  >
-    {@render deleteIcon()}
-  </button>
+  {#if isCustomConnector(server)}
+    <button
+      class="icon-btn icon-btn--plain"
+      type="button"
+      onclick={() => openEditModal(server)}
+      aria-label={$_("admin.mcpServers.actions.edit")}
+      title={$_("admin.mcpServers.actions.edit")}
+    >
+      {@render editIcon()}
+    </button>
+  {/if}
 {/snippet}
 
 <!-- ".error-card" — stands in for the row/card whose last test failed. -->
@@ -1125,24 +990,17 @@ SPDX-License-Identifier: Apache-2.0
             ? $_("admin.mcpServers.testing")
             : $_("admin.mcpServers.retry")}
         </button>
-        <button
-          class="icon-btn icon-btn--plain"
-          type="button"
-          onclick={() => openEditModal(server)}
-          aria-label={$_("admin.mcpServers.actions.edit")}
-          title={$_("admin.mcpServers.actions.edit")}
-        >
-          {@render editIcon()}
-        </button>
-        <button
-          class="icon-btn icon-btn--danger"
-          type="button"
-          onclick={() => promptDelete(server)}
-          aria-label={$_("admin.mcpServers.actions.delete")}
-          title={$_("admin.mcpServers.actions.delete")}
-        >
-          {@render deleteIcon()}
-        </button>
+        {#if isCustomConnector(server)}
+          <button
+            class="icon-btn icon-btn--plain"
+            type="button"
+            onclick={() => openEditModal(server)}
+            aria-label={$_("admin.mcpServers.actions.edit")}
+            title={$_("admin.mcpServers.actions.edit")}
+          >
+            {@render editIcon()}
+          </button>
+        {/if}
       </div>
     </div>
     <div class="error-banner-row">
@@ -1192,16 +1050,24 @@ SPDX-License-Identifier: Apache-2.0
         <div class="server-identity">
           <div class="title-status">
             <h2 class="server-name">{selectedConnector?.display_name ?? selectedServer.name}</h2>
-            <span class="status-pill" class:status-pill--on={selectedServer.status === "connected"}>
+            <span
+              class="status-pill"
+              class:status-pill--on={selectedServer.status === "connected"}
+              class:status-pill--configured={selectedServer.status === "configured"}
+            >
               <span
                 class="status-dot"
                 class:status-dot--on={selectedServer.status === "connected"}
-                class:status-dot--off={selectedServer.status !== "connected"}
+                class:status-dot--configured={selectedServer.status === "configured"}
+                class:status-dot--off={selectedServer.status !== "connected" &&
+                  selectedServer.status !== "configured"}
               ></span>
               <span
                 class="status-label"
                 class:status-label--on={selectedServer.status === "connected"}
-                class:status-label--off={selectedServer.status !== "connected"}
+                class:status-label--configured={selectedServer.status === "configured"}
+                class:status-label--off={selectedServer.status !== "connected" &&
+                  selectedServer.status !== "configured"}
               >
                 {getLocalizedStatus(selectedServer.status)}
               </span>
@@ -1595,12 +1461,16 @@ SPDX-License-Identifier: Apache-2.0
                 <span
                   class="status-dot"
                   class:status-dot--on={server.status === "connected"}
-                  class:status-dot--off={server.status !== "connected"}
+                  class:status-dot--configured={server.status === "configured"}
+                  class:status-dot--off={server.status !== "connected" &&
+                    server.status !== "configured"}
                 ></span>
                 <span
                   class="conn-label"
                   class:conn-label--on={server.status === "connected"}
-                  class:conn-label--off={server.status !== "connected"}
+                  class:conn-label--configured={server.status === "configured"}
+                  class:conn-label--off={server.status !== "connected" &&
+                    server.status !== "configured"}
                 >
                   {getLocalizedStatus(server.status)}
                 </span>
@@ -1612,6 +1482,30 @@ SPDX-License-Identifier: Apache-2.0
                 {server.tool_count}
               </div>
               <div class="col-actions">
+                <button
+                  class="details-pill"
+                  type="button"
+                  onclick={() => openServerDetail(server)}
+                  aria-label={$_("admin.mcpServers.actions.details")}
+                  title={$_("admin.mcpServers.actions.details")}
+                >
+                  <span>{$_("admin.mcpServers.actions.details")}</span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M4.5 2.5 8 6l-3.5 3.5"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
                 {@render serverActions(server)}
               </div>
             </div>
@@ -1628,23 +1522,28 @@ SPDX-License-Identifier: Apache-2.0
             {@render errorCard(server)}
           {:else}
             <div
-              class="mcp-card"
+              class="mcp-card mcp-card--link"
               data-status={server.status === "connected"
                 ? "connected"
                 : "disconnected"}
+              role="button"
+              tabindex="0"
+              aria-label={$_("admin.mcpServers.actions.details")}
+              onclick={() => openServerDetail(server)}
+              onkeydown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openServerDetail(server);
+                }
+              }}
             >
               <div class="mcp-card-body">
                 <div class="mcp-card-head">
                   <div class="mcp-card-head-main">
                     <ConnectorIcon src={serverIcon(server)} name={server.name} size={28} />
-                    <button
-                      class="mcp-card-name mcp-card-name--link"
-                      type="button"
-                      title={server.name}
-                      onclick={() => openServerDetail(server)}
-                    >
+                    <span class="mcp-card-name" title={server.name}>
                       {server.name}
-                    </button>
+                    </span>
                   </div>
                   {@render enabledToggle(server)}
                 </div>
@@ -1652,12 +1551,16 @@ SPDX-License-Identifier: Apache-2.0
                   <span
                     class="status-dot"
                     class:status-dot--on={server.status === "connected"}
-                    class:status-dot--off={server.status !== "connected"}
+                    class:status-dot--configured={server.status === "configured"}
+                    class:status-dot--off={server.status !== "connected" &&
+                      server.status !== "configured"}
                   ></span>
                   <span
                     class="conn-label"
                     class:conn-label--on={server.status === "connected"}
-                    class:conn-label--off={server.status !== "connected"}
+                    class:conn-label--configured={server.status === "configured"}
+                    class:conn-label--off={server.status !== "connected" &&
+                      server.status !== "configured"}
                   >
                     {getLocalizedStatus(server.status)}
                   </span>
@@ -1703,9 +1606,6 @@ SPDX-License-Identifier: Apache-2.0
                       : $_("admin.viewMode.tools")}
                   </span>
                 </div>
-              </div>
-              <div class="mcp-card-footer">
-                {@render serverActions(server)}
               </div>
             </div>
           {/if}
@@ -2246,63 +2146,6 @@ SPDX-License-Identifier: Apache-2.0
     {/snippet}
   </Modal>
 
-  <!-- ===== Delete confirmation ===== -->
-  <Modal
-    variant="mcp-servers"
-    title={$_("admin.mcpServers.deleteTitle")}
-    subtitle={$_("admin.mcpServers.deleteSubtitle")}
-    isOpen={isConfirmOpen}
-    onclose={closeDeleteModal}
-  >
-    {#snippet headerIcon()}
-      <span class="add-header-icon add-header-icon--danger" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path
-            d="M3.5 5h11M6.5 5V2.8h5V5M4.8 5l.7 10.2h7l.7-10.2"
-            stroke="currentColor"
-            stroke-width="1.3"
-            fill="none"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </span>
-    {/snippet}
-
-    {#snippet children()}
-      <div class="confirm-body">
-        <p>
-          {$_("admin.mcpServers.deleteConfirm", {
-            values: { name: serverToDelete?.name ?? "" },
-          })}
-        </p>
-      </div>
-    {/snippet}
-
-    {#snippet footer()}
-      <div class="add-footer">
-        <div class="add-footer-actions">
-          <button
-            class="btn-add-cancel"
-            type="button"
-            onclick={closeDeleteModal}
-            disabled={isDeleting}
-          >
-            {$_("common.cancel")}
-          </button>
-          <button
-            class="btn-add-create btn-add-create--danger"
-            type="button"
-            onclick={handleDelete}
-            disabled={isDeleting}
-          >
-            {isDeleting
-              ? $_("admin.mcpServers.deleting")
-              : $_("admin.mcpServers.actions.delete")}
-          </button>
-        </div>
-      </div>
-    {/snippet}
-  </Modal>
 
   <!-- ===== Browse connectors (catalog picker, catalog picker) ===== -->
   <ConnectorBrowseModal
@@ -2642,20 +2485,20 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-an-sub);
   }
 
-  /* Five 28px icon buttons and their four 6px gaps. Fixed, not growing: a
+  /* The Details pill plus an optional Edit icon. Fixed, not growing: a
      growing cell would be as wide as its own row's content, so the header and
      any row carrying a Connect pill would sit on different column edges. */
   .col-actions {
-    flex: 0 0 164px;
+    flex: 0 0 72px;
     display: flex;
     gap: 6px;
     justify-content: flex-end;
     align-items: center;
   }
 
-  /* Room for the pill on every row of a table where some server can connect. */
+  /* Room for the Connect pill on every row of a table where some server can connect. */
   .list-card--connectable .col-actions {
-    flex-basis: 280px;
+    flex-basis: 128px;
   }
 
   /* A longer translation of "Connect" narrows the pill rather than the row. */
@@ -2751,6 +2594,10 @@ SPDX-License-Identifier: Apache-2.0
     background: var(--gx-org-brand-alt);
   }
 
+  .status-dot--configured {
+    background: var(--gx-ok-dot);
+  }
+
   .status-dot--off {
     background: var(--gx-mcp-red);
   }
@@ -2763,6 +2610,11 @@ SPDX-License-Identifier: Apache-2.0
 
   .conn-label--on {
     color: var(--gx-org-brand-alt);
+  }
+
+  .conn-label--configured {
+    color: var(--gx-ok-text);
+    text-transform: capitalize;
   }
 
   .conn-label--off {
@@ -2788,33 +2640,11 @@ SPDX-License-Identifier: Apache-2.0
       color 120ms ease;
   }
 
-  /* Test connection — #22C55E0A / #22C55E20 / #2B916B */
-  .icon-btn--ok {
-    --icon-btn-bg: var(--gx-mcp-act-ok-bg);
-    --icon-btn-ring: var(--gx-mcp-act-ok-ring);
-    /* Success/"connection OK" keeps its green, per the design's status palette. */
-    --icon-btn-fg: rgb(45, 144, 107);
-  }
-
-  /* Access control — #3B67BD0A / #3B67BD20 / #427AC6 */
-  .icon-btn--info {
-    --icon-btn-bg: var(--gx-mcp-act-info-bg);
-    --icon-btn-ring: var(--gx-mcp-act-info-ring);
-    --icon-btn-fg: var(--gx-org-primary-500);
-  }
-
-  /* Sync tools and Edit — #FFFFFF / #EFF4FC / #6B7281 */
+  /* Edit — #FFFFFF / #EFF4FC / #6B7281 */
   .icon-btn--plain {
     --icon-btn-bg: var(--gx-card);
     --icon-btn-ring: var(--gx-ring-soft);
     --icon-btn-fg: var(--gx-an-sub);
-  }
-
-  /* Delete — #B93A3E0A / #B93A3E20 / #B93A3E */
-  .icon-btn--danger {
-    --icon-btn-bg: var(--gx-mcp-act-danger-bg);
-    --icon-btn-ring: var(--gx-mcp-act-danger-ring);
-    --icon-btn-fg: var(--gx-mcp-red);
   }
 
   /* Hover deepens a chip into its own ring colour, so each action keeps its
@@ -2864,6 +2694,52 @@ SPDX-License-Identifier: Apache-2.0
   .connect-pill svg {
     display: block;
     flex-shrink: 0;
+  }
+
+  /* ".details-pill" — list-view action that opens the connector's detail view:
+     a clean secondary button with a forward chevron. */
+  .details-pill {
+    height: 30px;
+    border-radius: 8px;
+    background: var(--gx-card);
+    box-shadow: inset 0 0 0 1px var(--gx-ring-soft);
+    padding: 0 10px 0 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--gx-org-primary-500);
+    white-space: nowrap;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition:
+      background-color 120ms ease,
+      box-shadow 120ms ease,
+      color 120ms ease;
+  }
+
+  .details-pill svg {
+    display: block;
+    flex-shrink: 0;
+    opacity: 0.75;
+    transition: transform 120ms ease;
+  }
+
+  .details-pill:hover:not(:disabled) {
+    background: var(--gx-mcp-act-info-bg);
+    box-shadow: inset 0 0 0 1px var(--gx-mcp-act-info-ring);
+  }
+
+  .details-pill:hover:not(:disabled) svg {
+    transform: translateX(2px);
+    opacity: 1;
+  }
+
+  .details-pill:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
   }
 
   /* One spinner for every in-flight action button. */
@@ -2941,7 +2817,6 @@ SPDX-License-Identifier: Apache-2.0
     min-width: 0;
   }
   /* Clickable name: reset the global button styles, keep the title look. */
-  .mcp-card-name--link,
   .row-name--link {
     display: block;
     margin: 0;
@@ -2956,16 +2831,34 @@ SPDX-License-Identifier: Apache-2.0
     cursor: pointer;
     max-width: 100%;
   }
-  .mcp-card-name--link:hover,
   .row-name--link:hover {
     color: var(--gx-ac-link, #427ac6);
     text-decoration: underline;
   }
-  .mcp-card-name--link:focus-visible,
   .row-name--link:focus-visible {
     outline: 2px solid var(--gx-ac-link, #427ac6);
     outline-offset: 2px;
     border-radius: 4px;
+  }
+
+  /* The whole grid card opens the connector's detail view. */
+  .mcp-card--link {
+    cursor: pointer;
+    transition:
+      box-shadow 120ms ease,
+      border-color 120ms ease,
+      transform 120ms ease;
+  }
+  .mcp-card--link:hover {
+    box-shadow: var(--gx-mcp-card-shadow-hover, 0 4px 16px rgba(16, 24, 40, 0.1));
+    border-color: var(--gx-mcp-act-info-ring);
+  }
+  .mcp-card--link:hover .mcp-card-name {
+    color: var(--gx-ac-link, #427ac6);
+  }
+  .mcp-card--link:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
   }
 
   .mcp-status-line {
@@ -3027,15 +2920,6 @@ SPDX-License-Identifier: Apache-2.0
   .chip-row {
     display: flex;
     gap: 6px;
-    flex-wrap: wrap;
-  }
-
-  .mcp-card-footer {
-    border-top: 1px solid var(--gx-mcp-edge);
-    padding: 12px 16px;
-    display: flex;
-    gap: 6px;
-    align-items: center;
     flex-wrap: wrap;
   }
 
@@ -3578,11 +3462,6 @@ SPDX-License-Identifier: Apache-2.0
     flex-shrink: 0;
   }
 
-  .add-header-icon--danger {
-    background: var(--gx-mcp-err-bg);
-    color: var(--gx-mcp-red);
-  }
-
   .mcp-form {
     display: flex;
     flex-direction: column;
@@ -4011,29 +3890,12 @@ SPDX-License-Identifier: Apache-2.0
     background: var(--gx-ac-cta-hover);
   }
 
-  .btn-add-create--danger {
-    background: var(--gx-mcp-deny);
-  }
-
-  .btn-add-create--danger:hover:not(:disabled) {
-    background: var(--gx-mcp-red);
-  }
-
   .btn-add-cancel:focus-visible,
   .btn-add-create:focus-visible {
     outline: 2px solid var(--gx-org-primary-500);
     outline-offset: 2px;
   }
 
-  .confirm-body {
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--gx-mcp-m-label);
-  }
-
-  .confirm-body p {
-    margin: 0;
-  }
 
   /* ---------------- narrow viewports ---------------- */
   @media (max-width: 1280px) {
@@ -4193,6 +4055,10 @@ SPDX-License-Identifier: Apache-2.0
     background: rgb(238, 247, 241);
   }
 
+  .status-pill--configured {
+    background: var(--gx-ok-bg);
+  }
+
   .status-label {
     font-weight: 600;
     font-size: 11px;
@@ -4202,6 +4068,10 @@ SPDX-License-Identifier: Apache-2.0
 
   .status-label--on {
     color: var(--gx-org-brand-alt);
+  }
+
+  .status-label--configured {
+    color: var(--gx-ok-text);
   }
 
   .status-label--off {
