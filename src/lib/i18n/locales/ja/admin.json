@@ -629,7 +629,8 @@
         "connect": "接続",
         "edit": "編集",
         "delete": "削除",
-        "syncTools": "ツールを同期"
+        "syncTools": "ツールを同期",
+        "details": "詳細"
       },
       "connect": "接続",
       "addModalTitle": "MCPサーバーを追加",
