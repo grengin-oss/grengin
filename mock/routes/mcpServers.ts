@@ -481,4 +481,79 @@ router.put('/admin/mcp-servers/:id/tools/:toolId', requireAuth, (req, res) => {
   res.json(tool)
 })
 
+// ---------------------------------------------------------------------------
+// Member-facing connector endpoints (no admin scope). These back the
+// Settings → Integrations screen, which lets a team member connect their own
+// account. The catalog (GET /mcp-servers) is served by chat.ts; these add the
+// per-user connection state it pairs with, keyed by the same server ids.
+//   GET  /mcp/connections
+//   GET  /mcp/tools
+//   POST /mcp/connections/:id/authorize
+//   POST /mcp/connections/:id/disconnect
+// ---------------------------------------------------------------------------
+
+type MemberConnection = {
+  account_email: string | null
+  connected: boolean
+  connected_at: string
+  description: string
+  expires_at: string | null
+  scopes: string[]
+  server_id: string
+  server_name: string
+  status: 'connected' | 'expired' | 'error' | 'disconnected'
+}
+
+const daysFromNow = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString()
+
+const memberConnections: MemberConnection[] = [
+  {
+    server_id: 'srv-001',
+    server_name: 'slack-mcp-oauth',
+    description: 'Slack MCP server via Http using OAuth user token.',
+    connected: true,
+    status: 'connected',
+    account_email: 'google-demo@grengin.com',
+    connected_at: minutesAgo(60 * 24 * 3),
+    expires_at: daysFromNow(27),
+    scopes: ['chat:write', 'channels:history', 'users:read'],
+  },
+  {
+    server_id: 'srv-002',
+    server_name: 'Postgres-mcp',
+    description: 'SQLx PostgreSQL MCP server for schema discovery and ad-hoc SELECT queries.',
+    connected: true,
+    status: 'connected',
+    account_email: null,
+    connected_at: minutesAgo(120),
+    expires_at: null,
+    scopes: [],
+  },
+]
+
+router.get('/mcp/connections', requireAuth, (_req, res) => {
+  res.json({ connections: memberConnections })
+})
+
+router.get('/mcp/tools', requireAuth, (req, res) => {
+  const serverId = typeof req.query.server_id === 'string' ? req.query.server_id : null
+  const list = serverId ? servers.filter((s) => s.id === serverId) : servers
+  const tools = list.flatMap((s) => toolsFor(s))
+  res.json({ tools, total: tools.length })
+})
+
+router.post('/mcp/connections/:id/authorize', requireAuth, (req, res) => {
+  res.json({
+    success: true,
+    message: 'Authorization URL generated',
+    authorization_url: `http://localhost:5174/mcp/oauth/callback?server_id=${req.params.id}&status=success`,
+  })
+})
+
+router.post('/mcp/connections/:id/disconnect', requireAuth, (req, res) => {
+  const idx = memberConnections.findIndex((c) => c.server_id === req.params.id)
+  if (idx >= 0) memberConnections.splice(idx, 1)
+  res.json({ success: true, message: 'Disconnected' })
+})
+
 export default router

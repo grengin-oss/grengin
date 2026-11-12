@@ -12,6 +12,16 @@
     }
   },
   "userIntegrations": {
+    "detail": {
+      "back": "Toutes les intégrations",
+      "verified": "Vérifié",
+      "toolsTitle": "Outils",
+      "toolsIntro": "Tout ce que ce connecteur peut faire, exposé sous forme d'outils individuels.",
+      "informationTitle": "Informations",
+      "account": "Compte connecté",
+      "expires": "Expiration de l'accès",
+      "scopes": "Autorisations"
+    },
     "loading": "Chargement des intégrations...",
     "failedToLoad": "Échec du chargement des intégrations",
     "failedToGetAuthUrl": "Échec de l'obtention de l'URL d'autorisation",
