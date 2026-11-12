@@ -44,7 +44,7 @@ router.get('/discovery/connector-plugins', (_req, res) => {
     providers: [
       plugin('gmail', 'Gmail', 'email-calendar'),
       plugin('google-calendar', 'Google Calendar', 'email-calendar'),
-      plugin('google-communication', 'Google Communication', 'email-calendar', ['gmail', 'google-calendar']),
+      plugin('google-basic', 'Google Basic Apps', 'email-calendar', ['gmail', 'google-calendar']),
       plugin('slack', 'Slack', 'chat'),
     ],
   })
