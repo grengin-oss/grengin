@@ -265,7 +265,36 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
+  // Connected connectors are enabled by default (connecting one should make it
+  // usable in chat without a second step). We remember the ones the user has
+  // explicitly turned off so that default never re-enables them on reload.
+  function mcpDismissedKey(): string {
+    return `grengin_dismissed_mcp_servers:${getUser()?.id ?? "anon"}`;
+  }
+  function readDismissedMcpSelection(): string[] {
+    try {
+      const saved = JSON.parse(localStorage.getItem(mcpDismissedKey()) ?? "[]");
+      return Array.isArray(saved) ? saved.filter((id) => typeof id === "string") : [];
+    } catch {
+      return [];
+    }
+  }
+  function saveDismissedMcpSelection(ids: string[]): void {
+    try {
+      localStorage.setItem(mcpDismissedKey(), JSON.stringify(ids));
+    } catch {
+      /* storage unavailable — dismissals just won't survive a reload */
+    }
+  }
+
+  /** A connector the signed-in user has connected (per the /mcp-servers feed). */
+  function isServerConnected(server: MCPServer & { connected?: boolean }): boolean {
+    if (typeof server.connected === "boolean") return server.connected;
+    return server.status === "connected";
+  }
+
   let selectedMcpServers = $state<string[]>(readSavedMcpSelection());
+  let dismissedMcpServers = $state<string[]>(readDismissedMcpSelection());
   let loadingMcpServers = $state(false);
   let mcpServersError = $state<string | null>(null);
   // Project to link once a new conversation is created (chat started from a project workspace).
@@ -516,9 +545,23 @@ SPDX-License-Identifier: Apache-2.0
       // Drop remembered servers that were removed or are no longer accessible.
       const available = new Set(response.servers.map((s) => s.id));
       const kept = selectedMcpServers.filter((id) => available.has(id));
-      if (kept.length !== selectedMcpServers.length) {
-        selectedMcpServers = kept;
-        saveMcpSelection(kept);
+      // Likewise prune dismissals for connectors that are gone.
+      const prunedDismissed = dismissedMcpServers.filter((id) => available.has(id));
+      if (prunedDismissed.length !== dismissedMcpServers.length) {
+        dismissedMcpServers = prunedDismissed;
+        saveDismissedMcpSelection(prunedDismissed);
+      }
+      // Connected connectors default to ON, except ones the user turned off.
+      const autoEnabled = response.servers
+        .filter((s) => isServerConnected(s) && !prunedDismissed.includes(s.id))
+        .map((s) => s.id);
+      const nextSelection = Array.from(new Set([...kept, ...autoEnabled]));
+      if (
+        nextSelection.length !== selectedMcpServers.length ||
+        nextSelection.some((id) => !selectedMcpServers.includes(id))
+      ) {
+        selectedMcpServers = nextSelection;
+        saveMcpSelection(nextSelection);
       }
     } catch (error) {
       console.error("Failed to load connectors:", error);
@@ -578,9 +621,19 @@ SPDX-License-Identifier: Apache-2.0
 
   function toggleMcpServer(serverId: string) {
     if (selectedMcpServers.includes(serverId)) {
+      // Turning off: remember it so default-enable won't switch it back on.
       selectedMcpServers = selectedMcpServers.filter((id) => id !== serverId);
+      if (!dismissedMcpServers.includes(serverId)) {
+        dismissedMcpServers = [...dismissedMcpServers, serverId];
+        saveDismissedMcpSelection(dismissedMcpServers);
+      }
     } else {
+      // Turning on: it's an explicit choice, so clear any prior dismissal.
       selectedMcpServers = [...selectedMcpServers, serverId];
+      if (dismissedMcpServers.includes(serverId)) {
+        dismissedMcpServers = dismissedMcpServers.filter((id) => id !== serverId);
+        saveDismissedMcpSelection(dismissedMcpServers);
+      }
     }
     saveMcpSelection(selectedMcpServers);
   }
