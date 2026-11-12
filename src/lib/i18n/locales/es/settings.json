@@ -12,6 +12,18 @@
     }
   },
   "userIntegrations": {
+    "detail": {
+      "back": "Todas las integraciones",
+      "verified": "Verificado",
+      "toolsTitle": "Herramientas",
+      "toolsIntro": "Todo lo que este conector puede hacer, expuesto como herramientas individuales.",
+      "informationTitle": "Información",
+      "account": "Cuenta conectada",
+      "expires": "El acceso expira",
+      "scopes": "Permisos",
+      "tryAsking": "Prueba a preguntar",
+      "openPrompt": "Preguntar esto en un chat nuevo"
+    },
     "loading": "Cargando integraciones...",
     "failedToLoad": "Error al cargar integraciones",
     "failedToGetAuthUrl": "No se pudo obtener la URL de autorización",

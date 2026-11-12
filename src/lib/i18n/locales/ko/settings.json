@@ -12,6 +12,18 @@
     }
   },
   "userIntegrations": {
+    "detail": {
+      "back": "모든 통합",
+      "verified": "인증됨",
+      "toolsTitle": "도구",
+      "toolsIntro": "이 커넥터가 할 수 있는 모든 작업이 개별 도구로 제공됩니다.",
+      "informationTitle": "정보",
+      "account": "연결된 계정",
+      "expires": "액세스 만료",
+      "scopes": "권한",
+      "tryAsking": "이렇게 물어보세요",
+      "openPrompt": "새 채팅에서 질문하기"
+    },
     "loading": "통합 로드 중...",
     "failedToLoad": "통합을 불러오지 못했습니다",
     "failedToGetAuthUrl": "인증 URL을 가져오지 못했습니다",

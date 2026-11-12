@@ -74,6 +74,18 @@
     }
   },
   "userIntegrations": {
+    "detail": {
+      "back": "Todas as integrações",
+      "verified": "Verificado",
+      "toolsTitle": "Ferramentas",
+      "toolsIntro": "Tudo o que este conector pode fazer, exposto como ferramentas individuais.",
+      "informationTitle": "Informações",
+      "account": "Conta conectada",
+      "expires": "O acesso expira",
+      "scopes": "Permissões",
+      "tryAsking": "Experimente perguntar",
+      "openPrompt": "Perguntar isto em um novo chat"
+    },
     "loading": "A carregar integrações...",
     "failedToLoad": "Falha ao carregar integrações",
     "failedToGetAuthUrl": "Falha ao obter o URL de autorização",

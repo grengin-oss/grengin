@@ -67,6 +67,7 @@ const ALLOWED_IDENTICAL_VALUES = new Set([
   "Budget",
   "Type",
   "Date",
+  "Version",
   "Image",
   "Pause",
   "Notifications",

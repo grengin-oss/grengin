@@ -19,6 +19,7 @@
 -->
 <script lang="ts">
   import { _ } from "svelte-i18n";
+  import { navigate } from "svelte-routing";
   import ConnectorIcon from "./ConnectorIcon.svelte";
   import LoadingSpinner from "../LoadingSpinner.svelte";
   import { toast } from "../../../components/Toaster.svelte";
@@ -35,6 +36,7 @@
     McpOverviewTool,
     McpDefaultAccess,
     McpConnectionState,
+    McpAuthenticationMethod,
   } from "../../types.js";
 
   type Props = {
@@ -92,13 +94,77 @@
   });
 
   const name = $derived(displayName ?? overview?.name ?? server.name);
-  const description = $derived(overview?.description ?? server.description ?? "");
+  // Prefer the overview's description, but fall back to the server's own
+  // description when it is missing or blank, so it always shows below the name.
+  const description = $derived(
+    (overview?.description ?? "").trim() || (server.description ?? "").trim(),
+  );
   const connected = $derived(overview?.connected_user_count ?? 0);
   const totalMembers = $derived(overview?.active_user_count ?? 0);
   const notConnectedCount = $derived(Math.max(0, totalMembers - connected));
   const toolCount = $derived(overview?.tools.length ?? server.tool_count ?? 0);
 
-  const prompts = $derived(overview?.integration.suggested_prompts ?? []);
+  // Suggested prompts: prefer the overview endpoint, else read them straight
+  // from the connector plugin manifest
+  // (connection_config.connector_plugin.manifest.presentation.suggested_prompts).
+  function manifestPrompts(s: MCPServer): string[] {
+    const cfg = s.connection_config as Record<string, unknown> | undefined;
+    const plugin = cfg?.connector_plugin as Record<string, unknown> | undefined;
+    const manifest = plugin?.manifest as Record<string, unknown> | undefined;
+    const presentation = manifest?.presentation as Record<string, unknown> | undefined;
+    const list = presentation?.suggested_prompts;
+    return Array.isArray(list)
+      ? list.filter((p): p is string => typeof p === "string" && p.trim().length > 0)
+      : [];
+  }
+
+  const prompts = $derived(
+    overview?.integration.suggested_prompts?.length
+      ? overview.integration.suggested_prompts
+      : manifestPrompts(server),
+  );
+
+  // Reference-style metadata (real contract fields only).
+  const toolList = $derived(overview?.tools ?? []);
+  const connectorUrl = $derived(server.url ?? "");
+  const version = $derived(overview?.integration.plugin_version ?? "");
+  const authMethod = $derived<McpAuthenticationMethod | null>(
+    overview?.integration.authentication ?? null,
+  );
+  const perUserCreds = $derived(overview?.integration.per_user_credentials ?? false);
+  const isVerified = $derived(Boolean(server.icon));
+  const addedLabel = $derived(fmtMonth(server.created_at));
+  const syncedLabel = $derived(fmtDate(server.last_synced_at));
+
+  function fmtMonth(iso: string | null | undefined): string {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return new Intl.DateTimeFormat(undefined, {
+      month: "long",
+      year: "numeric",
+    }).format(d);
+  }
+  function fmtDate(iso: string | null | undefined): string {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(d);
+  }
+  function authLabel(m: McpAuthenticationMethod | null): string {
+    switch (m) {
+      case "oauth2":
+        return $_("admin.connectorOverview.authOauth2");
+      case "api_token":
+        return $_("admin.connectorOverview.authApiToken");
+      case "grengin_broker":
+        return $_("admin.connectorOverview.authBroker");
+      case "server_managed":
+        return $_("admin.connectorOverview.authServer");
+      default:
+        return $_("admin.connectorOverview.authUnavailable");
+    }
+  }
 
   const toolById = $derived(
     new Map((overview?.tools ?? []).map((t) => [t.id, t] as const)),
@@ -185,13 +251,10 @@
     }
   }
 
-  async function copyPrompt(prompt: string) {
-    try {
-      await navigator.clipboard.writeText(prompt);
-      toast.success($_("admin.connectorOverview.promptCopied"));
-    } catch {
-      /* clipboard unavailable — ignore */
-    }
+  // Clicking a suggested prompt leaves admin, opens a new chat and sends it
+  // (Chat.svelte reads the "message" query param and sends it on load).
+  function openPromptInChat(prompt: string) {
+    navigate(`/?message=${encodeURIComponent(prompt)}`);
   }
 
   function stateLabel(stateValue: McpConnectionState): string {
@@ -242,6 +305,27 @@
         <div class="co-identity">
           <div class="co-title-row">
             <h2 class="co-name">{name}</h2>
+            {#if isVerified}
+              <span
+                class="co-verified"
+                title={$_("admin.connectorOverview.verified")}
+                aria-label={$_("admin.connectorOverview.verified")}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path
+                    d="M8 1.6 9.7 3l2.2-.25.6 2.15 1.9 1.1-1 2 1 2-1.9 1.1-.6 2.15L9.7 13 8 14.4 6.3 13l-2.2.25-.6-2.15L1.6 10l1-2-1-2 1.9-1.1.6-2.15L6.3 3 8 1.6Z"
+                    fill="var(--gx-tx-accent, #427ac6)"
+                  />
+                  <path
+                    d="m5.6 8 1.6 1.6L10.4 6.4"
+                    stroke="#fff"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+            {/if}
             <span class="co-pill">
               {$_("admin.connectorOverview.connectedBy", {
                 values: { connected, total: totalMembers },
@@ -254,6 +338,8 @@
         </div>
       </div>
       <div class="co-head-actions">
+        <!-- Hidden: the turn-on/off-for-everyone toggle. -->
+        {#if false}
         <button
           class="co-btn co-btn--ghost"
           type="button"
@@ -268,6 +354,7 @@
             {$_("admin.connectorOverview.turnOnForEveryone")}
           {/if}
         </button>
+        {/if}
         <button class="co-btn co-btn--primary" type="button" onclick={onConnect}>
           {$_("admin.connectorOverview.connectMyAccount")}
         </button>
@@ -278,22 +365,36 @@
       <!-- Left column -->
       <div class="co-col co-col--main">
         {#if prompts.length}
-          <section class="co-card">
+          <section class="co-card co-card--prompts">
             <h3 class="co-card__title">{$_("admin.connectorOverview.tryAsking")}</h3>
             <div class="co-prompts">
               {#each prompts as prompt (prompt)}
                 <button
                   class="co-prompt"
                   type="button"
-                  onclick={() => copyPrompt(prompt)}
+                  onclick={() => openPromptInChat(prompt)}
+                  title={$_("admin.connectorOverview.openPrompt")}
                 >
-                  {prompt}
+                  <span class="co-prompt__text">{prompt}</span>
+                  <span class="co-prompt__arrow" aria-hidden="true">
+                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                      <path
+                        d="M5.6 3.2 9.9 7.5 5.6 11.8"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </span>
                 </button>
               {/each}
             </div>
           </section>
         {/if}
 
+        <!-- Hidden for now: capabilities ("What Grengin can do with it"). -->
+        {#if false}
         <section class="co-card">
           <h3 class="co-card__title">{$_("admin.connectorOverview.capabilitiesTitle")}</h3>
           <p class="co-card__intro">{$_("admin.connectorOverview.capabilitiesIntro")}</p>
@@ -342,7 +443,10 @@
             {/if}
           </ul>
         </section>
+        {/if}
 
+        <!-- Hidden: who-can-use ("Who can use it") access section. -->
+        {#if false}
         <section class="co-card">
           <h3 class="co-card__title">{$_("admin.connectorOverview.whoCanUse")}</h3>
           <p class="co-card__intro">{$_("admin.connectorOverview.whoCanUseIntro")}</p>
@@ -406,6 +510,24 @@
             </button>
           </div>
         </section>
+        {/if}
+
+        {#if toolList.length}
+          <section class="co-card">
+            <div class="co-tools-head">
+              <h3 class="co-card__title">{$_("admin.connectorOverview.toolsTitle")}</h3>
+              <span class="co-tools-count">{toolList.length}</span>
+            </div>
+            <p class="co-card__intro">{$_("admin.connectorOverview.toolsIntro")}</p>
+            <div class="co-tools">
+              {#each toolList as tool (tool.id)}
+                <span class="co-tool" title={tool.description || tool.name}>
+                  {tool.name}
+                </span>
+              {/each}
+            </div>
+          </section>
+        {/if}
 
         <button class="co-advanced" type="button" onclick={onAdvanced}>
           <span class="co-advanced__text">
@@ -457,6 +579,52 @@
               },
             })}
           </p>
+        </section>
+
+        <!-- Information -->
+        <section class="co-card co-info">
+          <h3 class="co-card__title">{$_("admin.connectorOverview.informationTitle")}</h3>
+          <dl class="co-info__grid">
+            {#if connectorUrl}
+              <div class="co-info__row">
+                <dt>{$_("admin.connectorOverview.infoConnectorUrl")}</dt>
+                <dd class="co-info__mono">{connectorUrl}</dd>
+              </div>
+            {/if}
+            {#if authMethod}
+              <div class="co-info__row">
+                <dt>{$_("admin.connectorOverview.infoSignIn")}</dt>
+                <dd>
+                  {authLabel(authMethod)}{#if perUserCreds}
+                    <span class="co-info__sub"
+                      >{$_("admin.connectorOverview.infoPerUser")}</span
+                    >{/if}
+                </dd>
+              </div>
+            {/if}
+            <div class="co-info__row">
+              <dt>{$_("admin.connectorOverview.infoTools")}</dt>
+              <dd>{toolCount}</dd>
+            </div>
+            {#if version}
+              <div class="co-info__row">
+                <dt>{$_("admin.connectorOverview.infoVersion")}</dt>
+                <dd class="co-info__mono">{version}</dd>
+              </div>
+            {/if}
+            {#if addedLabel}
+              <div class="co-info__row">
+                <dt>{$_("admin.connectorOverview.infoAdded")}</dt>
+                <dd>{addedLabel}</dd>
+              </div>
+            {/if}
+            {#if syncedLabel}
+              <div class="co-info__row">
+                <dt>{$_("admin.connectorOverview.infoLastSynced")}</dt>
+                <dd>{syncedLabel}</dd>
+              </div>
+            {/if}
+          </dl>
         </section>
       </div>
     </div>
@@ -638,26 +806,149 @@
     opacity: 0.55;
   }
 
-  /* Try asking */
+  /* Verified badge */
+  .co-verified {
+    display: inline-flex;
+    align-items: center;
+    line-height: 0;
+  }
+
+  /* Try asking — chat-bubble prompt cards */
+  .co-card--prompts {
+    background: linear-gradient(
+      135deg,
+      var(--gx-nav-active-bg, #eef2fc) 0%,
+      var(--gx-org-primary-tint, #eef7f1) 100%
+    );
+    border-color: transparent;
+  }
   .co-prompts {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 10px;
     margin-top: 14px;
   }
   .co-prompt {
-    padding: 9px 14px;
-    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 13px 15px;
+    border-radius: 12px;
     border: 1px solid var(--gx-hair, #dee1e6);
     background: var(--gx-surface, #fff);
-    font: 500 13px/1.3 inherit;
+    font: 500 13.5px/1.4 inherit;
     color: var(--gx-org-ink, #1b1e24);
     text-align: left;
     cursor: pointer;
-    transition: background-color 120ms ease;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    transition:
+      transform 120ms ease,
+      box-shadow 120ms ease;
   }
   .co-prompt:hover {
-    background: var(--gx-org-row-hover, #f7f8fa);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 24, 40, 0.08);
+  }
+  .co-prompt__text {
+    min-width: 0;
+  }
+  .co-prompt__arrow {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--gx-org-row-hover, #f2f4f7);
+    color: var(--gx-an-sub, #868c99);
+    transition:
+      background-color 120ms ease,
+      color 120ms ease,
+      transform 120ms ease;
+  }
+  .co-prompt:hover .co-prompt__arrow {
+    background: var(--gx-tx-accent, #427ac6);
+    color: #fff;
+    transform: translateX(2px);
+  }
+
+  /* Tools chips */
+  .co-tools-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .co-tools-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 20px;
+    padding: 0 7px;
+    border-radius: 10px;
+    background: var(--gx-org-row-hover, #f2f4f7);
+    color: var(--gx-an-sub, #868c99);
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .co-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .co-tool {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid var(--gx-hair, #dee1e6);
+    background: var(--gx-surface, #fff);
+    font: 500 12.5px/1 inherit;
+    color: var(--gx-an-sub, #4e5561);
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Information metadata grid */
+  .co-info__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    margin: 18px 0 0;
+  }
+  .co-info__row {
+    min-width: 0;
+  }
+  .co-info__row dt {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--gx-an-sub, #868c99);
+  }
+  .co-info__row dd {
+    margin: 6px 0 0;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--gx-org-ink, #1b1e24);
+    word-break: break-word;
+  }
+  .co-info__mono {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px;
+  }
+  .co-info__sub {
+    display: block;
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--gx-an-sub, #868c99);
   }
 
   /* Capabilities */
