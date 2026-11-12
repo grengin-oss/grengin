@@ -365,7 +365,7 @@
       <!-- Left column -->
       <div class="co-col co-col--main">
         {#if prompts.length}
-          <section class="co-card co-card--prompts">
+          <section class="co-card">
             <h3 class="co-card__title">{$_("admin.connectorOverview.tryAsking")}</h3>
             <div class="co-prompts">
               {#each prompts as prompt (prompt)}
@@ -375,18 +375,7 @@
                   onclick={() => openPromptInChat(prompt)}
                   title={$_("admin.connectorOverview.openPrompt")}
                 >
-                  <span class="co-prompt__text">{prompt}</span>
-                  <span class="co-prompt__arrow" aria-hidden="true">
-                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                      <path
-                        d="M5.6 3.2 9.9 7.5 5.6 11.8"
-                        stroke="currentColor"
-                        stroke-width="1.6"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </span>
+                  {prompt}
                 </button>
               {/each}
             </div>
@@ -813,66 +802,36 @@
     line-height: 0;
   }
 
-  /* Try asking — chat-bubble prompt cards */
-  .co-card--prompts {
-    background: linear-gradient(
-      135deg,
-      var(--gx-nav-active-bg, #eef2fc) 0%,
-      var(--gx-org-primary-tint, #eef7f1) 100%
-    );
-    border-color: transparent;
-  }
+  /* Try asking — suggested prompts as inline, wrapping pills. */
   .co-prompts {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 10px;
     margin-top: 14px;
   }
   .co-prompt {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    padding: 13px 15px;
-    border-radius: 12px;
+    max-width: 100%;
+    padding: 9px 14px;
+    border-radius: 10px;
     border: 1px solid var(--gx-hair, #dee1e6);
     background: var(--gx-surface, #fff);
-    font: 500 13.5px/1.4 inherit;
+    font: 500 13.5px/1.35 inherit;
     color: var(--gx-org-ink, #1b1e24);
     text-align: left;
     cursor: pointer;
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
-    transition:
-      transform 120ms ease,
-      box-shadow 120ms ease;
-  }
-  .co-prompt:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(16, 24, 40, 0.08);
-  }
-  .co-prompt__text {
-    min-width: 0;
-  }
-  .co-prompt__arrow {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: var(--gx-org-row-hover, #f2f4f7);
-    color: var(--gx-an-sub, #868c99);
     transition:
       background-color 120ms ease,
-      color 120ms ease,
-      transform 120ms ease;
+      border-color 120ms ease;
   }
-  .co-prompt:hover .co-prompt__arrow {
-    background: var(--gx-tx-accent, #427ac6);
-    color: #fff;
-    transform: translateX(2px);
+  .co-prompt:hover {
+    background: var(--gx-org-row-hover, #f2f4f7);
+    border-color: var(--gx-hair-strong, #cfd4dc);
+  }
+  .co-prompt:focus-visible {
+    outline: 2px solid var(--gx-org-primary-500);
+    outline-offset: 2px;
   }
 
   /* Tools chips */

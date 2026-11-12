@@ -180,6 +180,22 @@ router.post('/auth/password/change', requireAuth, (req, res) => {
   res.json({ message: 'Password changed successfully' })
 })
 
+/**
+ * Public provider discovery — mirrors the real `GET /auth/providers`. Returns
+ * every configured sign-in provider with presentation + enabled state only (no
+ * secrets). Registered before `/auth/:provider` so the literal path wins.
+ * azure is intentionally disabled here to exercise the enabled-only filtering.
+ */
+router.get('/auth/providers', (_req, res) => {
+  res.json({
+    providers: [
+      { name: 'Google', slug: 'google', login_path: '/auth/google', enabled: true, auto_redirect: false },
+      { name: 'Microsoft Entra ID', slug: 'azure', login_path: '/auth/azure', enabled: false, auto_redirect: false },
+      { name: 'Keycloak', slug: 'keycloak', login_path: '/auth/keycloak', enabled: true, auto_redirect: false },
+    ],
+  })
+})
+
 router.get('/auth/:provider', (req, res) => {
   const { provider } = req.params
 

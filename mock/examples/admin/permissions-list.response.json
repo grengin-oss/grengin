@@ -1,22 +1,144 @@
 {
   "permissions": [
-    { "id": "p-ai-manage", "domain": "ai_platform", "action": "manage", "is_scopeable": false, "description_key": "admin.permissionDescriptions.ai_platform.manage" },
-    { "id": "p-ai-view", "domain": "ai_platform", "action": "view", "is_scopeable": false, "description_key": "admin.permissionDescriptions.ai_platform.view" },
-    { "id": "p-analytics-view", "domain": "analytics", "action": "view", "is_scopeable": true, "description_key": "admin.permissionDescriptions.analytics.view" },
-    { "id": "p-audit-view", "domain": "audit_logs", "action": "view", "is_scopeable": false, "description_key": "admin.permissionDescriptions.audit_logs.view" },
-    { "id": "p-budget-view", "domain": "budget", "action": "view", "is_scopeable": true, "description_key": "admin.permissionDescriptions.budget.view" },
-    { "id": "p-budget-allocate", "domain": "budget", "action": "allocate", "is_scopeable": true, "description_key": "admin.permissionDescriptions.budget.allocate" },
-    { "id": "p-dept-view", "domain": "departments", "action": "view", "is_scopeable": true, "description_key": "admin.permissionDescriptions.departments.view" },
-    { "id": "p-dept-manage", "domain": "departments", "action": "manage", "is_scopeable": true, "description_key": "admin.permissionDescriptions.departments.manage" },
-    { "id": "p-mcp-manage", "domain": "mcp_servers", "action": "manage", "is_scopeable": false, "description_key": "admin.permissionDescriptions.mcp_servers.manage" },
-    { "id": "p-mcp-admin", "domain": "mcp_servers", "action": "admin", "is_scopeable": false, "description_key": "admin.permissionDescriptions.mcp_servers.admin" },
-    { "id": "p-mcp-delegate", "domain": "mcp_servers", "action": "delegate", "is_scopeable": true, "description_key": "admin.permissionDescriptions.mcp_servers.delegate" },
-    { "id": "p-roles-view", "domain": "roles", "action": "view", "is_scopeable": false, "description_key": "admin.permissionDescriptions.roles.view" },
-    { "id": "p-roles-manage", "domain": "roles", "action": "manage", "is_scopeable": false, "description_key": "admin.permissionDescriptions.roles.manage" },
-    { "id": "p-roles-assign", "domain": "roles", "action": "assign", "is_scopeable": true, "description_key": "admin.permissionDescriptions.roles.assign" },
-    { "id": "p-skills-view", "domain": "skills", "action": "view", "is_scopeable": false, "description_key": "admin.permissionDescriptions.skills.view" },
-    { "id": "p-sso-view", "domain": "sso_providers", "action": "view", "is_scopeable": false, "description_key": "admin.permissionDescriptions.sso_providers.view" },
-    { "id": "p-users-view", "domain": "users", "action": "view", "is_scopeable": true, "description_key": "admin.permissionDescriptions.users.view" },
-    { "id": "p-users-manage", "domain": "users", "action": "manage", "is_scopeable": true, "description_key": "admin.permissionDescriptions.users.manage" }
+    {
+      "id": "p-ai-manage",
+      "domain": "ai_platform",
+      "action": "manage",
+      "is_scopeable": false,
+      "description_key": "permissions.ai_platform.manage.description"
+    },
+    {
+      "id": "p-ai-view",
+      "domain": "ai_platform",
+      "action": "view",
+      "is_scopeable": false,
+      "description_key": "permissions.ai_platform.view.description"
+    },
+    {
+      "id": "p-analytics-view",
+      "domain": "analytics",
+      "action": "view",
+      "is_scopeable": true,
+      "description_key": "permissions.analytics.view.description"
+    },
+    {
+      "id": "p-audit-view",
+      "domain": "audit_logs",
+      "action": "view",
+      "is_scopeable": false,
+      "description_key": "permissions.audit_logs.view.description"
+    },
+    {
+      "id": "p-budget-allocate",
+      "domain": "budget",
+      "action": "allocate",
+      "is_scopeable": true,
+      "description_key": "permissions.budget.allocate.description"
+    },
+    {
+      "id": "p-budget-view",
+      "domain": "budget",
+      "action": "view",
+      "is_scopeable": true,
+      "description_key": "permissions.budget.view.description"
+    },
+    {
+      "id": "p-chats-share",
+      "domain": "chats",
+      "action": "share",
+      "is_scopeable": false,
+      "description_key": "permissions.chats.share.description"
+    },
+    {
+      "id": "p-dept-manage",
+      "domain": "departments",
+      "action": "manage",
+      "is_scopeable": true,
+      "description_key": "permissions.departments.manage.description"
+    },
+    {
+      "id": "p-dept-view",
+      "domain": "departments",
+      "action": "view",
+      "is_scopeable": true,
+      "description_key": "permissions.departments.view.description"
+    },
+    {
+      "id": "p-mcp-admin",
+      "domain": "mcp_servers",
+      "action": "admin",
+      "is_scopeable": false,
+      "description_key": "permissions.mcp_servers.admin.description"
+    },
+    {
+      "id": "p-mcp-delegate",
+      "domain": "mcp_servers",
+      "action": "delegate",
+      "is_scopeable": true,
+      "description_key": "permissions.mcp_servers.delegate.description"
+    },
+    {
+      "id": "p-mcp-manage",
+      "domain": "mcp_servers",
+      "action": "manage",
+      "is_scopeable": false,
+      "description_key": "permissions.mcp_servers.manage.description"
+    },
+    {
+      "id": "p-roles-assign",
+      "domain": "roles",
+      "action": "assign",
+      "is_scopeable": true,
+      "description_key": "permissions.roles.assign.description"
+    },
+    {
+      "id": "p-roles-manage",
+      "domain": "roles",
+      "action": "manage",
+      "is_scopeable": false,
+      "description_key": "permissions.roles.manage.description"
+    },
+    {
+      "id": "p-roles-view",
+      "domain": "roles",
+      "action": "view",
+      "is_scopeable": false,
+      "description_key": "permissions.roles.view.description"
+    },
+    {
+      "id": "p-skills-manage",
+      "domain": "skills",
+      "action": "manage",
+      "is_scopeable": false,
+      "description_key": "permissions.skills.manage.description"
+    },
+    {
+      "id": "p-skills-view",
+      "domain": "skills",
+      "action": "view",
+      "is_scopeable": false,
+      "description_key": "permissions.skills.view.description"
+    },
+    {
+      "id": "p-sso-view",
+      "domain": "sso_providers",
+      "action": "view",
+      "is_scopeable": false,
+      "description_key": "permissions.sso_providers.view.description"
+    },
+    {
+      "id": "p-users-manage",
+      "domain": "users",
+      "action": "manage",
+      "is_scopeable": true,
+      "description_key": "permissions.users.manage.description"
+    },
+    {
+      "id": "p-users-view",
+      "domain": "users",
+      "action": "view",
+      "is_scopeable": true,
+      "description_key": "permissions.users.view.description"
+    }
   ]
 }

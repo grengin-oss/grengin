@@ -1479,7 +1479,12 @@ SPDX-License-Identifier: Apache-2.0
                 class="col-tools"
                 class:col-tools--dim={server.tool_count === 0}
               >
-                {server.tool_count}
+                <span class="col-tools__count">{server.tool_count}</span>
+                <span class="col-tools__unit">
+                  {server.tool_count === 1
+                    ? $_("admin.viewMode.tool")
+                    : $_("admin.viewMode.tools")}
+                </span>
               </div>
               <div class="col-actions">
                 <button
@@ -2480,25 +2485,34 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--gx-mcp-title);
   }
 
+  /* The column header already reads "TOOLS", so the table layout shows the bare
+     count; the unit is revealed only in the stacked (narrow) layout below. */
+  .col-tools__unit {
+    display: none;
+  }
+
   .col-tools--dim {
     font-weight: 500;
     color: var(--gx-an-sub);
   }
 
-  /* The Details pill plus an optional Edit icon. Fixed, not growing: a
-     growing cell would be as wide as its own row's content, so the header and
-     any row carrying a Connect pill would sit on different column edges. */
+  /* The Details pill plus an optional Edit icon. Fixed, not growing: a growing
+     cell would be as wide as its own row's content, so the elastic name column
+     would shrink by a different amount per row and every column between them
+     (status, the tool count…) would land on a different edge. The basis must
+     therefore reserve the widest content any row can hold. */
   .col-actions {
-    flex: 0 0 72px;
+    flex: 0 0 120px;
     display: flex;
     gap: 6px;
     justify-content: flex-end;
     align-items: center;
   }
 
-  /* Room for the Connect pill on every row of a table where some server can connect. */
+  /* Room for the Details pill + Connect pill + Edit icon on every row of a table
+     where some server can connect, so a connectable row doesn't shift the grid. */
   .list-card--connectable .col-actions {
-    flex-basis: 128px;
+    flex-basis: 212px;
   }
 
   /* A longer translation of "Connect" narrows the pill rather than the row. */
@@ -3921,6 +3935,23 @@ SPDX-License-Identifier: Apache-2.0
     .col-conn,
     .col-tools {
       width: auto;
+    }
+
+    /* The bare count floats after the variable-width status label and reads as a
+       stray number. In the stack, present it as a labeled "N tools" token,
+       aligned to the right of the metadata line like a trailing meta chip. */
+    .col-tools {
+      margin-inline-start: auto;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      font-size: 13px;
+    }
+
+    .col-tools__unit {
+      display: inline;
+      font-weight: 500;
+      color: var(--gx-an-sub);
     }
 
     .col-actions,

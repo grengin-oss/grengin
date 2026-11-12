@@ -18,9 +18,14 @@ SPDX-License-Identifier: Apache-2.0
   import { ApiError } from "../../api/client.js";
   import { _ } from "svelte-i18n";
   import { Link } from "svelte-routing";
-  import { getAuthState } from "../../features/auth/index.js";
+  import { getAuthState, permissionsStore } from "../../features/auth/index.js";
   import { setPageTitle } from "../../utils/pageTitle";
   import { PROMPTS_FEATURE_ENABLED } from "../../config/features.js";
+
+  // The System quick link opens /admin/system-metrics, whose API needs
+  // `system:maintain`. Gate the card on the same permission so Finance Admin /
+  // Observer don't land on a "Failed to fetch system metrics" page.
+  let canMaintainSystem = $derived(permissionsStore.canMaintainSystem());
 
   $effect(() => {
     setPageTitle($_("sidebar.adminPanel"));
@@ -141,12 +146,14 @@ SPDX-License-Identifier: Apache-2.0
           description: $_("adminOverview.configureSettings"),
           icon: "settings",
         },
-        {
-          href: "/admin/system-metrics",
-          title: $_("sidebar.systemMetrics"),
-          description: $_("adminOverview.viewSystemMetrics"),
-          icon: "system",
-        },
+        canMaintainSystem
+          ? {
+              href: "/admin/system-metrics",
+              title: $_("sidebar.systemMetrics"),
+              description: $_("adminOverview.viewSystemMetrics"),
+              icon: "system" as const,
+            }
+          : null,
       ] as (QuickLink | null)[]
     ).filter((link): link is QuickLink => link !== null),
   );

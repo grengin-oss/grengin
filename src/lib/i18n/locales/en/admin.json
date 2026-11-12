@@ -1644,6 +1644,9 @@
       },
       "delegate": {
         "description": "Delegate MCP server access to departments"
+      },
+      "manage": {
+        "description": "Create, edit, and delete MCP server configurations"
       }
     },
     "departments": {
@@ -1684,6 +1687,24 @@
     "system": {
       "maintain": {
         "description": "Reconfigure the host system (domain, TLS, and application updates)"
+      }
+    },
+    "audit_logs": {
+      "view": {
+        "description": "View the audit log of security and administrative events"
+      }
+    },
+    "chats": {
+      "share": {
+        "description": "Share chats with other people in the organization"
+      }
+    },
+    "skills": {
+      "view": {
+        "description": "View skills available in the organization"
+      },
+      "manage": {
+        "description": "Create, edit, and delete skills"
       }
     }
   },

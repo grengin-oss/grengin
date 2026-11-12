@@ -239,9 +239,16 @@ SPDX-License-Identifier: Apache-2.0
     generation.messageId = messageId;
     if (generation.stopRequested) requestServerCancel(generation);
   }
-  let selectedModel = $state("gpt-5.2");
-  let selectedProvider = $state("openai");
+  // Empty until the model registry loads and applyDefaultModel() resolves the
+  // real default (last-used → latest available). Never hard-code a model here:
+  // a literal would be shown in the composer and, worse, sent as the model for a
+  // `/?message=` prompt that auto-sends before the registry arrives.
+  let selectedModel = $state("");
+  let selectedProvider = $state("");
   let selectedModelInfo = $state<ProviderInfo | undefined>(undefined);
+  // A `/?message=` prompt that arrives before the model registry is held here
+  // and flushed once a real model is selected (see flushPendingInitialMessage).
+  let pendingInitialMessage = $state<string | null>(null);
   let webSearchEnabled = $state(false);
   let mcpServers = $state<MCPServer[]>([]);
   // The Tools dropdown selection is remembered per user in this browser, so it
@@ -516,6 +523,9 @@ SPDX-License-Identifier: Apache-2.0
       if (!params.get("chatId") && !params.get("model")) {
         applyDefaultModel();
       }
+      // The composer now has a real model — release any queued `/?message=`
+      // prompt that was waiting for the registry.
+      flushPendingInitialMessage();
     } catch (error) {
       console.error("Failed to load models:", error);
       modelsError = $_("chat.errors.failedToLoadModels");
@@ -533,6 +543,17 @@ SPDX-License-Identifier: Apache-2.0
       selectedProvider = resolved.provider.key;
       selectedModel = resolved.model.key;
       selectedModelInfo = resolved.provider;
+    }
+  }
+
+  // Send a queued `/?message=` prompt, but only once a real model is selected,
+  // so the prompt is never sent under a placeholder/empty model. Safe to call
+  // repeatedly — it is a no-op until both a pending message and a model exist.
+  function flushPendingInitialMessage() {
+    if (pendingInitialMessage && selectedModel) {
+      const message = pendingInitialMessage;
+      pendingInitialMessage = null;
+      tick().then(() => handleSendMessage(message));
     }
   }
 
@@ -822,6 +843,14 @@ SPDX-License-Identifier: Apache-2.0
     webSearch?: boolean,
   ) {
     if (isLoading) return;
+
+    // The model registry hasn't resolved a model yet (brand-new chat opened
+    // before /models loaded). Queue the text and send it once the default
+    // model is applied, rather than sending under an empty/placeholder model.
+    if (!selectedModel) {
+      pendingInitialMessage = content;
+      return;
+    }
 
     error = null;
     streamRetryCount = 0; // a fresh send starts a new auto-reconnect budget
@@ -2306,10 +2335,12 @@ SPDX-License-Identifier: Apache-2.0
         url.searchParams.delete("mcpServers");
         window.history.replaceState({}, "", url.toString());
 
-        // Send the message after a microtask tick
-        tick().then(() => {
-          handleSendMessage(initialMessage);
-        });
+        // Queue the prompt and send it once a real model is resolved. If the
+        // registry is already loaded (e.g. an in-app navigation) applyDefaultModel
+        // above has set selectedModel, so this flushes immediately; otherwise
+        // loadModels() flushes it when the models arrive.
+        pendingInitialMessage = initialMessage;
+        flushPendingInitialMessage();
       }
     }
   }
@@ -2457,9 +2488,11 @@ SPDX-License-Identifier: Apache-2.0
           onStop={handleStopGeneration}
           placeholder={selectedIsImageModel
             ? $_("chat.messageInput.placeholderImage")
-            : $_("chat.messageInput.placeholderWithModel", {
-                values: { model: selectedModel },
-              })}
+            : selectedModel
+              ? $_("chat.messageInput.placeholderWithModel", {
+                  values: { model: selectedModel },
+                })
+              : $_("chat.messageInput.placeholder")}
           imageModelSelected={selectedIsImageModel}
           {selectedModel}
           {selectedProvider}
@@ -2778,9 +2811,11 @@ SPDX-License-Identifier: Apache-2.0
           onStop={handleStopGeneration}
           placeholder={selectedIsImageModel
             ? $_("chat.messageInput.placeholderImage")
-            : $_("chat.messageInput.placeholderWithModel", {
-                values: { model: selectedModel },
-              })}
+            : selectedModel
+              ? $_("chat.messageInput.placeholderWithModel", {
+                  values: { model: selectedModel },
+                })
+              : $_("chat.messageInput.placeholder")}
           imageModelSelected={selectedIsImageModel}
           {selectedModel}
           {selectedProvider}

@@ -1552,6 +1552,9 @@
       },
       "delegate": {
         "description": "Déléguer l'accès aux serveurs MCP aux départements"
+      },
+      "manage": {
+        "description": "Créer, modifier et supprimer des configurations de serveurs MCP"
       }
     },
     "departments": {
@@ -1592,6 +1595,24 @@
     "system": {
       "maintain": {
         "description": "Reconfigurer le système hôte (domaine, TLS et mises à jour de l'application)"
+      }
+    },
+    "audit_logs": {
+      "view": {
+        "description": "Consulter le journal d'audit des événements de sécurité et d'administration"
+      }
+    },
+    "chats": {
+      "share": {
+        "description": "Partager des conversations avec d'autres personnes de l'organisation"
+      }
+    },
+    "skills": {
+      "view": {
+        "description": "Consulter les compétences disponibles dans l'organisation"
+      },
+      "manage": {
+        "description": "Créer, modifier et supprimer des compétences"
       }
     }
   },

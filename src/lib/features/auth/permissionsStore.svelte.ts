@@ -160,8 +160,17 @@ function createPermissionsStore() {
     if (canViewRoles()) {
       return '/admin/access-control';
     }
+    if (hasPermission(PERMISSIONS.skills.manage)) {
+      return '/admin/skills';
+    }
     if (canViewSsoProviders()) {
       return '/admin/settings';
+    }
+    if (hasPermission(PERMISSIONS.auditLogs.view)) {
+      return '/admin/audit-logs';
+    }
+    if (canMaintainSystem()) {
+      return '/admin/system-metrics';
     }
     return '/forbidden';
   }
