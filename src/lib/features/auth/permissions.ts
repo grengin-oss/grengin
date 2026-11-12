@@ -40,6 +40,13 @@ export const PERMISSIONS = {
   system: {
     maintain: "system:maintain",
   },
+  skills: {
+    view: "skills:view",
+    manage: "skills:manage",
+  },
+  chats: {
+    share: "chats:share",
+  },
 } as const;
 
 export type PermissionKey =
@@ -52,4 +59,6 @@ export type PermissionKey =
   | (typeof PERMISSIONS.budget)[keyof typeof PERMISSIONS.budget]
   | (typeof PERMISSIONS.mcpServers)[keyof typeof PERMISSIONS.mcpServers]
   | (typeof PERMISSIONS.auditLogs)[keyof typeof PERMISSIONS.auditLogs]
-  | (typeof PERMISSIONS.system)[keyof typeof PERMISSIONS.system];
+  | (typeof PERMISSIONS.system)[keyof typeof PERMISSIONS.system]
+  | (typeof PERMISSIONS.skills)[keyof typeof PERMISSIONS.skills]
+  | (typeof PERMISSIONS.chats)[keyof typeof PERMISSIONS.chats];

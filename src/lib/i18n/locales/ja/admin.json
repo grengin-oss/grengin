@@ -1552,6 +1552,9 @@
       },
       "delegate": {
         "description": "部門へのMCPサーバーアクセス委譲"
+      },
+      "manage": {
+        "description": "MCP サーバー構成の作成、編集、削除"
       }
     },
     "departments": {
@@ -1592,6 +1595,24 @@
     "system": {
       "maintain": {
         "description": "ホストシステムを再構成する（ドメイン、TLS、アプリケーションの更新）"
+      }
+    },
+    "audit_logs": {
+      "view": {
+        "description": "セキュリティおよび管理イベントの監査ログを表示"
+      }
+    },
+    "chats": {
+      "share": {
+        "description": "組織内の他のメンバーとチャットを共有"
+      }
+    },
+    "skills": {
+      "view": {
+        "description": "組織で利用可能なスキルを表示"
+      },
+      "manage": {
+        "description": "スキルの作成、編集、削除"
       }
     }
   },

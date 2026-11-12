@@ -375,7 +375,7 @@ SPDX-License-Identifier: Apache-2.0
       <!-- Left column: prompts + tools -->
       <div class="mc-col mc-col--main">
     {#if server.suggested_prompts.length}
-      <section class="mc-card mc-card--prompts">
+      <section class="mc-card">
         <h3 class="mc-card__title">{$_("userIntegrations.detail.tryAsking")}</h3>
         <div class="mc-prompts">
           {#each server.suggested_prompts as prompt (prompt)}
@@ -385,18 +385,7 @@ SPDX-License-Identifier: Apache-2.0
               onclick={() => openPromptInChat(prompt)}
               title={$_("userIntegrations.detail.openPrompt")}
             >
-              <span class="mc-prompt__text">{prompt}</span>
-              <span class="mc-prompt__arrow" aria-hidden="true">
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                  <path
-                    d="M5.6 3.2 9.9 7.5 5.6 11.8"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </span>
+              {prompt}
             </button>
           {/each}
         </div>
@@ -1091,66 +1080,39 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--us-muted);
   }
 
-  /* ---- "Try asking" prompt cards (member detail) ---- */
-  .mc-card--prompts {
-    background: linear-gradient(135deg, var(--us-tint) 0%, var(--us-mint) 100%);
-    box-shadow: inset 0 0 0 1px var(--us-border);
-  }
+  /* ---- "Try asking" — suggested prompts as inline, wrapping pills ---- */
   .mc-prompts {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 10px;
     margin-top: 14px;
   }
   .mc-prompt {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    padding: 13px 15px;
-    border-radius: 12px;
+    max-width: 100%;
+    padding: 9px 14px;
+    border-radius: 10px;
     background: var(--us-surface);
     box-shadow: inset 0 0 0 1px var(--us-border);
     font-size: 13.5px;
     font-weight: 500;
-    line-height: 1.4;
+    line-height: 1.35;
     color: var(--us-title);
     text-align: start;
     white-space: normal;
     cursor: pointer;
     transition:
-      transform 120ms ease,
+      background-color 120ms ease,
       box-shadow 120ms ease;
   }
   .mc-prompt:hover {
-    transform: translateY(-1px);
-    box-shadow:
-      inset 0 0 0 1px var(--us-border),
-      var(--us-card-shadow);
+    background: var(--us-hover);
+    box-shadow: inset 0 0 0 1px var(--us-border-strong, var(--us-border));
   }
-  .mc-prompt__text {
-    min-width: 0;
-  }
-  .mc-prompt__arrow {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: var(--us-track);
-    color: var(--us-muted);
-    transition:
-      background-color 120ms ease,
-      color 120ms ease,
-      transform 120ms ease;
-  }
-  .mc-prompt:hover .mc-prompt__arrow {
-    background: var(--us-accent);
-    color: #fff;
-    transform: translateX(2px);
+  .mc-prompt:focus-visible {
+    outline: 2px solid var(--us-cta);
+    outline-offset: 2px;
   }
 
   .mc-tools {
@@ -1394,8 +1356,11 @@ SPDX-License-Identifier: Apache-2.0
     justify-content: flex-end;
     align-items: center;
   }
+  /* Reserve room for the Details pill + Connect pill on every row, so a
+     connectable row doesn't widen its own actions cell, shrink the elastic name
+     column and shift the columns after it (the Tools count) out of line. */
   .list-card--connectable .col-actions {
-    flex-basis: 150px;
+    flex-basis: 184px;
   }
   .list-head .col-actions {
     display: block;

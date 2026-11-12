@@ -64,11 +64,10 @@ export interface SSOProviderDetails {
   /** Fixed OIDC scopes the provider is asked for; the API defaults these. */
   scopes?: string[];
   /**
-   * JIT account creation on first sign-in. The detail payload spells it
-   * `allow_self_provisioning`; the update payload takes it as
-   * `jit_provisioning`. Declared here so reading it back needs no cast.
+   * JIT account creation on first sign-in. Both the detail and update payloads
+   * use `jit_provisioning`. Declared here so reading it back needs no cast.
    */
-  allow_self_provisioning?: boolean;
+  jit_provisioning?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -97,13 +96,16 @@ export interface AIEngine {
 
 /**
  * Payload for creating a custom, OpenAI-compatible engine
- * (ai-engines.html "Add Custom Engine"). `plugin_config` is the parsed Plugin
- * JSON from the form — provider config, model list and routing rules.
+ * (ai-engines.html "Add Custom Engine"). The API takes the parsed Plugin JSON as
+ * `plugin_config.manifest` and the serving endpoint as `plugin_config.baseUrlOverride`;
+ * it rejects a top-level `base_url`.
  */
 export interface CustomAIEngineCreate {
   display_name: string;
-  base_url: string;
-  plugin_config: Record<string, unknown>;
+  plugin_config: {
+    manifest: Record<string, unknown>;
+    baseUrlOverride: string;
+  };
   api_key?: string;
 }
 

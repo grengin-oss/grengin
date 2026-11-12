@@ -257,29 +257,21 @@ SPDX-License-Identifier: Apache-2.0
     return byDomain;
   }
 
-  function isSuperAdmin(role: Role): boolean {
-    return role.name === "Super Admin";
-  }
-
   /**
-   * A system role IS editable: RoleFormModal already has dedicated branches for
-   * one — it locks the name input and shows the systemRoleNameLocked hint — which
-   * only makes sense if such a role can be opened there. Its permissions are the
-   * editable part. Super Admin stays excluded: stripping permissions from it can
-   * lock every administrator out of this page.
+   * Built-in (system) roles cannot be edited: the API refuses the change, so
+   * showing an Edit control that always fails is misleading. Only custom roles
+   * are editable. (Super Admin is itself a system role, so it stays excluded.)
    */
   function canEditRole(role: Role): boolean {
-    return !isSuperAdmin(role);
+    return !role.is_system;
   }
 
   /**
-   * Delete is offered on system roles too. Super Admin remains the one exception:
-   * it is the only role granting roles:manage, so removing it locks every
-   * administrator out of this page for good. If the backend refuses a particular
-   * deletion, handleDeleteRole surfaces the server's own message.
+   * Built-in (system) roles cannot be deleted: the API refuses it. Hide Delete
+   * on every system role (Super Admin included) and keep it on custom roles.
    */
   function canDeleteRole(role: Role): boolean {
-    return !isSuperAdmin(role);
+    return !role.is_system;
   }
 
   function openEditRole(role: Role) {

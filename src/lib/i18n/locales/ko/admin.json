@@ -1552,6 +1552,9 @@
       },
       "delegate": {
         "description": "부서에 MCP 서버 액세스 위임"
+      },
+      "manage": {
+        "description": "MCP 서버 구성 생성, 편집 및 삭제"
       }
     },
     "departments": {
@@ -1592,6 +1595,24 @@
     "system": {
       "maintain": {
         "description": "호스트 시스템 재구성(도메인, TLS 및 애플리케이션 업데이트)"
+      }
+    },
+    "audit_logs": {
+      "view": {
+        "description": "보안 및 관리 이벤트의 감사 로그 보기"
+      }
+    },
+    "chats": {
+      "share": {
+        "description": "조직의 다른 사람과 채팅 공유"
+      }
+    },
+    "skills": {
+      "view": {
+        "description": "조직에서 사용할 수 있는 스킬 보기"
+      },
+      "manage": {
+        "description": "스킬 생성, 편집 및 삭제"
       }
     }
   },
