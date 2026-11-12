@@ -20,7 +20,9 @@
       "informationTitle": "정보",
       "account": "연결된 계정",
       "expires": "액세스 만료",
-      "scopes": "권한"
+      "scopes": "권한",
+      "tryAsking": "이렇게 물어보세요",
+      "openPrompt": "새 채팅에서 질문하기"
     },
     "loading": "통합 로드 중...",
     "failedToLoad": "통합을 불러오지 못했습니다",

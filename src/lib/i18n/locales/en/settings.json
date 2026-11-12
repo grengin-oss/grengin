@@ -220,7 +220,9 @@
       "informationTitle": "Information",
       "account": "Connected account",
       "expires": "Access expires",
-      "scopes": "Permissions"
+      "scopes": "Permissions",
+      "tryAsking": "Try asking",
+      "openPrompt": "Ask this in a new chat"
     },
     "loading": "Loading integrations...",
     "failedToLoad": "Failed to load integrations",

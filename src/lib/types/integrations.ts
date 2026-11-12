@@ -7,12 +7,26 @@ export interface McpServerTool {
   name: string;
 }
 
+// The `integration` object the member catalog returns alongside each server.
+// Only `suggested_prompts` is consumed here; other fields are kept for shape
+// fidelity with the real /mcp-servers contract.
+export interface McpServerIntegration {
+  suggested_prompts?: string[];
+  plugin_id?: string;
+  plugin_version?: string;
+  authentication?: string;
+  supported_authentication?: string[];
+  per_user_credentials?: boolean;
+}
+
 export interface McpServer {
   connected: boolean;
   description: string;
-  icon: string;
+  icon: string | null;
   id: string;
   name: string;
+  integration?: McpServerIntegration;
+  connection_state?: string;
   tools: McpServerTool[];
   transport_type: string;
 }

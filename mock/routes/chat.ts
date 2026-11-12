@@ -126,6 +126,13 @@ router.get('/mcp-servers', requireAuth, (_req, res) => {
           { name: 'web_search', description: 'Search the internet for up-to-date information' },
           { name: 'fetch_url', description: 'Fetch and extract content from a specific URL' },
         ],
+        integration: {
+          suggested_prompts: [
+            'Search the web for the latest AI research news.',
+            'Find the official documentation for Svelte 5 runes.',
+            'Summarize the top headlines about renewable energy today.',
+          ],
+        },
       },
       {
         id: 'srv-002',
@@ -139,6 +146,13 @@ router.get('/mcp-servers', requireAuth, (_req, res) => {
           { name: 'install_package', description: 'Install a Python package from PyPI' },
           { name: 'plot_chart', description: 'Generate charts and data visualizations' },
         ],
+        integration: {
+          suggested_prompts: [
+            'Plot a bar chart of monthly revenue from this data.',
+            'Clean and summarize the CSV I just uploaded.',
+            'Run a quick statistical analysis on these numbers.',
+          ],
+        },
       },
       {
         id: 'srv-003',
@@ -192,6 +206,13 @@ router.get('/mcp-servers', requireAuth, (_req, res) => {
           { name: 'create_issue', description: 'Create a new issue in a repository' },
           { name: 'read_file', description: 'Read a file from a GitHub repository' },
         ],
+        integration: {
+          suggested_prompts: [
+            'List the open issues in my main repository.',
+            'Summarize the most recent pull requests.',
+            'Create an issue to track the login bug.',
+          ],
+        },
       },
     ],
   })

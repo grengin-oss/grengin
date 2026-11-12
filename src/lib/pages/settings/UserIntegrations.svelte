@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
   import { onMount } from "svelte";
   import { _ } from "svelte-i18n";
+  import { navigate } from "svelte-routing";
   import LoadingSpinner from "../../admin/components/LoadingSpinner.svelte";
   import ConnectorIcon from "../../admin/components/connectors/ConnectorIcon.svelte";
   import GridIcon from "../../components/icons/GridIcon.svelte";
@@ -35,6 +36,7 @@ SPDX-License-Identifier: Apache-2.0
     account_email: string | null;
     scopes: string[];
     tools: { name: string; description: string }[];
+    suggested_prompts: string[];
   }
 
   function computeStatus(
@@ -116,7 +118,7 @@ SPDX-License-Identifier: Apache-2.0
           id: s.id,
           name: s.name,
           description: s.description,
-          icon: s.icon,
+          icon: s.icon ?? "",
           transport_type: s.transport_type,
           connected: status === "connected",
           status,
@@ -125,6 +127,11 @@ SPDX-License-Identifier: Apache-2.0
           account_email: conn?.account_email ?? null,
           scopes: conn?.scopes ?? [],
           tools: s.tools ?? [],
+          suggested_prompts: Array.isArray(s.integration?.suggested_prompts)
+            ? s.integration.suggested_prompts.filter(
+                (p): p is string => typeof p === "string" && p.trim().length > 0,
+              )
+            : [],
         };
       });
     } catch (error) {
@@ -197,6 +204,11 @@ SPDX-License-Identifier: Apache-2.0
     } finally {
       disconnectingId = null;
     }
+  }
+
+  /** Open a new chat with the prompt prefilled; Chat.svelte auto-sends it. */
+  function openPromptInChat(prompt: string) {
+    navigate(`/?message=${encodeURIComponent(prompt)}`);
   }
 
   function formatDate(dateStr: string | null): string {
@@ -359,6 +371,38 @@ SPDX-License-Identifier: Apache-2.0
       </div>
     {/if}
 
+    <div class="mc-grid">
+      <!-- Left column: prompts + tools -->
+      <div class="mc-col mc-col--main">
+    {#if server.suggested_prompts.length}
+      <section class="mc-card mc-card--prompts">
+        <h3 class="mc-card__title">{$_("userIntegrations.detail.tryAsking")}</h3>
+        <div class="mc-prompts">
+          {#each server.suggested_prompts as prompt (prompt)}
+            <button
+              class="mc-prompt"
+              type="button"
+              onclick={() => openPromptInChat(prompt)}
+              title={$_("userIntegrations.detail.openPrompt")}
+            >
+              <span class="mc-prompt__text">{prompt}</span>
+              <span class="mc-prompt__arrow" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                  <path
+                    d="M5.6 3.2 9.9 7.5 5.6 11.8"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+            </button>
+          {/each}
+        </div>
+      </section>
+    {/if}
+
     {#if server.tools.length}
       <section class="mc-card">
         <div class="mc-card__head">
@@ -373,7 +417,10 @@ SPDX-License-Identifier: Apache-2.0
         </div>
       </section>
     {/if}
+      </div>
 
+      <!-- Right column: Information -->
+      <div class="mc-col mc-col--side">
     <section class="mc-card">
       <h3 class="mc-card__title">{$_("userIntegrations.detail.informationTitle")}</h3>
       <dl class="mc-info__grid">
@@ -419,6 +466,8 @@ SPDX-License-Identifier: Apache-2.0
         </div>
       {/if}
     </section>
+      </div>
+    </div>
   </div>
 {/snippet}
 
@@ -983,6 +1032,25 @@ SPDX-License-Identifier: Apache-2.0
     align-items: center;
   }
 
+  /* Two-column body: main content left, Information on the right. */
+  .mc-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 24px;
+    align-items: start;
+  }
+  .mc-col {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+  }
+  @media (max-width: 860px) {
+    .mc-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
   .mc-card {
     border-radius: 12px;
     background: var(--us-surface);
@@ -1023,6 +1091,68 @@ SPDX-License-Identifier: Apache-2.0
     color: var(--us-muted);
   }
 
+  /* ---- "Try asking" prompt cards (member detail) ---- */
+  .mc-card--prompts {
+    background: linear-gradient(135deg, var(--us-tint) 0%, var(--us-mint) 100%);
+    box-shadow: inset 0 0 0 1px var(--us-border);
+  }
+  .mc-prompts {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .mc-prompt {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 13px 15px;
+    border-radius: 12px;
+    background: var(--us-surface);
+    box-shadow: inset 0 0 0 1px var(--us-border);
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--us-title);
+    text-align: start;
+    white-space: normal;
+    cursor: pointer;
+    transition:
+      transform 120ms ease,
+      box-shadow 120ms ease;
+  }
+  .mc-prompt:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 0 0 1px var(--us-border),
+      var(--us-card-shadow);
+  }
+  .mc-prompt__text {
+    min-width: 0;
+  }
+  .mc-prompt__arrow {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--us-track);
+    color: var(--us-muted);
+    transition:
+      background-color 120ms ease,
+      color 120ms ease,
+      transform 120ms ease;
+  }
+  .mc-prompt:hover .mc-prompt__arrow {
+    background: var(--us-accent);
+    color: #fff;
+    transform: translateX(2px);
+  }
+
   .mc-tools {
     display: flex;
     flex-wrap: wrap;
@@ -1050,8 +1180,8 @@ SPDX-License-Identifier: Apache-2.0
 
   .mc-info__grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px 40px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
     margin: 18px 0 0;
   }
   .mc-info__row {
