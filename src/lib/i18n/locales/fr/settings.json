@@ -20,7 +20,9 @@
       "informationTitle": "Informations",
       "account": "Compte connecté",
       "expires": "Expiration de l'accès",
-      "scopes": "Autorisations"
+      "scopes": "Autorisations",
+      "tryAsking": "Essayez de demander",
+      "openPrompt": "Poser cette question dans une nouvelle conversation"
     },
     "loading": "Chargement des intégrations...",
     "failedToLoad": "Échec du chargement des intégrations",

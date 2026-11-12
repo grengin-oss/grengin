@@ -82,7 +82,9 @@
       "informationTitle": "Informações",
       "account": "Conta conectada",
       "expires": "O acesso expira",
-      "scopes": "Permissões"
+      "scopes": "Permissões",
+      "tryAsking": "Experimente perguntar",
+      "openPrompt": "Perguntar isto em um novo chat"
     },
     "loading": "A carregar integrações...",
     "failedToLoad": "Falha ao carregar integrações",

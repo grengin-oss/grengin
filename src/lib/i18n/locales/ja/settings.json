@@ -20,7 +20,9 @@
       "informationTitle": "情報",
       "account": "接続中のアカウント",
       "expires": "アクセスの有効期限",
-      "scopes": "権限"
+      "scopes": "権限",
+      "tryAsking": "質問してみましょう",
+      "openPrompt": "新しいチャットで質問する"
     },
     "loading": "連携を読み込み中...",
     "failedToLoad": "連携の読み込みに失敗しました",
