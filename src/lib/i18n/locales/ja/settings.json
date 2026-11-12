@@ -12,6 +12,16 @@
     }
   },
   "userIntegrations": {
+    "detail": {
+      "back": "すべての連携",
+      "verified": "確認済み",
+      "toolsTitle": "ツール",
+      "toolsIntro": "このコネクタでできることすべてを、個別のツールとして公開します。",
+      "informationTitle": "情報",
+      "account": "接続中のアカウント",
+      "expires": "アクセスの有効期限",
+      "scopes": "権限"
+    },
     "loading": "連携を読み込み中...",
     "failedToLoad": "連携の読み込みに失敗しました",
     "failedToGetAuthUrl": "認証URLの取得に失敗しました",

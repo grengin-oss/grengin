@@ -107,16 +107,20 @@ SPDX-License-Identifier: Apache-2.0
 
 <style>
   .not-found {
+    box-sizing: border-box;
+    width: 100%;
     min-height: calc(100vh - 120px);
     min-height: calc(100dvh - 120px);
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 48px 24px;
     font-family: var(--gx-font);
   }
 
   .panel {
     width: min(520px, 100%);
+    margin-inline: auto;
     display: flex;
     flex-direction: column;
     align-items: center;

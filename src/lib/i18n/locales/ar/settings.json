@@ -74,6 +74,16 @@
     }
   },
   "userIntegrations": {
+    "detail": {
+      "back": "كل عمليات الدمج",
+      "verified": "موثّق",
+      "toolsTitle": "الأدوات",
+      "toolsIntro": "كل ما يمكن لهذا الموصّل فعله، معروضًا كأدوات منفصلة.",
+      "informationTitle": "معلومات",
+      "account": "الحساب المتصل",
+      "expires": "تنتهي صلاحية الوصول",
+      "scopes": "الأذونات"
+    },
     "loading": "جارٍ تحميل التكاملات...",
     "failedToLoad": "تعذر تحميل التكاملات",
     "failedToGetAuthUrl": "تعذر الحصول على رابط التفويض",

@@ -212,6 +212,16 @@
     }
   },
   "userIntegrations": {
+    "detail": {
+      "back": "All integrations",
+      "verified": "Verified",
+      "toolsTitle": "Tools",
+      "toolsIntro": "Everything this connector can do, exposed as individual tools.",
+      "informationTitle": "Information",
+      "account": "Connected account",
+      "expires": "Access expires",
+      "scopes": "Permissions"
+    },
     "loading": "Loading integrations...",
     "failedToLoad": "Failed to load integrations",
     "failedToGetAuthUrl": "Failed to get authorization URL",
