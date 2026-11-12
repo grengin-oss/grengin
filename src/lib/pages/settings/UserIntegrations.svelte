@@ -145,11 +145,11 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
-  async function handleConnect(server: MergedServer) {
+  async function handleConnect(server: MergedServer, reconnect = false) {
     if (connectingId) return;
     connectingId = server.id;
     try {
-      const authorization = await startMcpAuthorization(server.id);
+      const authorization = await startMcpAuthorization(server.id, { reconnect });
       if (authorization?.connected) {
         toast.success($_("admin.mcpServers.connected"));
         connectingId = null;
@@ -299,7 +299,7 @@ SPDX-License-Identifier: Apache-2.0
             {$_("userIntegrations.actions.connecting")}
           </span>
         {:else if server.status === "connected"}
-          <button class="int-btn int-btn--ghost" type="button" onclick={() => handleConnect(server)}>
+          <button class="int-btn int-btn--ghost" type="button" onclick={() => handleConnect(server, true)}>
             {$_("userIntegrations.actions.reconnect")}
           </button>
           {#if disconnectConfirmId === server.id}
@@ -337,7 +337,7 @@ SPDX-License-Identifier: Apache-2.0
             </button>
           {/if}
         {:else if server.status === "expired" || server.status === "error"}
-          <button class="int-btn int-btn--connect" type="button" onclick={() => handleConnect(server)}>
+          <button class="int-btn int-btn--connect" type="button" onclick={() => handleConnect(server, true)}>
             {$_("userIntegrations.actions.reconnect")}
           </button>
         {:else}

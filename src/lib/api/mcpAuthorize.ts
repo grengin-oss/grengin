@@ -22,10 +22,19 @@ export type McpAuthorization =
  * Call before navigating or opening the popup: window.open copies this tab's
  * sessionStorage into the new window.
  *
+ * `reconnect` is the user asking to sign in again: a live broker connection is
+ * replaced by a fresh one, because the broker only shows its approval page and
+ * the provider login for a new connection. Without it, a live connection
+ * simply reports `connected`.
+ *
  * Returns null when the server gave no way to continue.
  */
-export async function startMcpAuthorization(serverId: string): Promise<McpAuthorization | null> {
+export async function startMcpAuthorization(
+  serverId: string,
+  options: { reconnect?: boolean } = {},
+): Promise<McpAuthorization | null> {
   let reply = await authorizeOrRestart(serverId);
+  if (reply?.status === 'connected' && reply.broker_connection_id && options.reconnect) reply = null;
   if (!reply) {
     await disconnectMcpConnection(serverId);
     reply = await authorizeMcpConnection(serverId);

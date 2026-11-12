@@ -806,7 +806,7 @@ SPDX-License-Identifier: Apache-2.0
     oauthPopup = null;
   }
 
-  async function handleConnect(server: MCPServer) {
+  async function handleConnect(server: MCPServer, reconnect = false) {
     if (connectingServerId) return;
     const redirectUrl = `${window.location.origin}/mcp/oauth/callback`;
     const existingConfig = server.connection_config ?? {};
@@ -827,7 +827,7 @@ SPDX-License-Identifier: Apache-2.0
       if (!brokered) {
         await updateMcpServer(server.id, { connection_config: updatedConfig });
       }
-      const authorization = await startMcpAuthorization(server.id);
+      const authorization = await startMcpAuthorization(server.id, { reconnect });
       if (authorization?.connected) {
         toast.success($_("admin.mcpServers.connected"));
         connectingServerId = null;
@@ -1134,7 +1134,7 @@ SPDX-License-Identifier: Apache-2.0
       iconSrc={serverIcon(selectedServer)}
       onBack={closeServerDetail}
       onAdvanced={() => (detailView = "advanced")}
-      onConnect={() => handleConnect(selectedServer!)}
+      onConnect={() => handleConnect(selectedServer!, true)}
       onToggleEnabled={() => toggleServerEnabled(selectedServer!)}
     />
   {:else if selectedServer}
