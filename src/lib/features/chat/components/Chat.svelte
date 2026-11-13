@@ -42,8 +42,11 @@ SPDX-License-Identifier: Apache-2.0
   } from "../../shortcuts/shortcuts.svelte.js";
   import {
     persistLastUsedModel,
+    readLastUsedModel,
     resolveDefaultModel,
+    type StoredModelPreference,
   } from "../modelPreferences";
+  import { toast } from "../../../components/Toaster.svelte";
   import type { MCPServer } from "../../../admin/types.js";
   import { getMcpServers } from "../../../api/admin/mcpServers.js";
   import { setPageTitle } from "../../../utils/pageTitle";
@@ -239,12 +242,29 @@ SPDX-License-Identifier: Apache-2.0
     generation.messageId = messageId;
     if (generation.stopRequested) requestServerCancel(generation);
   }
-  // Empty until the model registry loads and applyDefaultModel() resolves the
-  // real default (last-used → latest available). Never hard-code a model here:
-  // a literal would be shown in the composer and, worse, sent as the model for a
-  // `/?message=` prompt that auto-sends before the registry arrives.
-  let selectedModel = $state("");
-  let selectedProvider = $state("");
+  // The model to open a brand-new chat on, read synchronously from this device's
+  // localStorage so the composer can show it before the /models registry loads.
+  // Only a new chat with no explicit `?model=` uses it; an existing chat (chatId)
+  // or a `?model=` param sets the model from the conversation / URL instead.
+  function optimisticInitialModel(): StoredModelPreference | null {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("chatId") || params.get("model")) return null;
+      return readLastUsedModel();
+    } catch {
+      return null;
+    }
+  }
+  // A brand-new chat opens optimistically on the last-used model so the composer
+  // shows it immediately — no placeholder flash and no hard-coded default. Once
+  // the registry loads, reconcileModelAfterLoad() keeps this choice if it is
+  // still offered, otherwise switches to the default and tells the user. Never
+  // hard-code a model key here: a literal could be shown in the composer and,
+  // worse, sent as the model for a `/?message=` prompt that auto-sends before the
+  // registry arrives.
+  const initialModel = optimisticInitialModel();
+  let selectedModel = $state(initialModel?.model ?? "");
+  let selectedProvider = $state(initialModel?.provider ?? "");
   let selectedModelInfo = $state<ProviderInfo | undefined>(undefined);
   // A `/?message=` prompt that arrives before the model registry is held here
   // and flushed once a real model is selected (see flushPendingInitialMessage).
@@ -473,6 +493,11 @@ SPDX-License-Identifier: Apache-2.0
   let providers = $state<ProviderInfo[]>([]);
   let loadingModels = $state(true);
   let modelsError = $state<string | null>(null);
+  // A valid model is confirmed once the registry has finished loading and a
+  // model is selected. Until then — while a new chat is still optimistically
+  // showing the last-used model, or showing a loading chip — sending is blocked
+  // so a prompt is never sent under an unconfirmed or empty model.
+  let modelReady = $derived(selectedModel !== "" && !loadingModels);
 
   // Whether the currently selected model generates images (vs. text). Drives the
   // "generating image" progress state and the composer hint. Loaded from the
@@ -515,13 +540,14 @@ SPDX-License-Identifier: Apache-2.0
       providers = response.providers;
 
       // A brand-new chat may have mounted before the registry finished loading,
-      // leaving the composer on the compile-time placeholder. Now that the real
-      // models are known, resolve its default (last used → latest available).
+      // showing the optimistic last-used model (or a loading chip, if none was
+      // saved). Now that the real models are known, reconcile that choice: keep
+      // it if still offered, otherwise switch to the default and tell the user.
       // Keyed off the URL (race-free) rather than conversationId, which is set
       // asynchronously by loadConversationFromUrl().
       const params = new URLSearchParams(window.location.search);
       if (!params.get("chatId") && !params.get("model")) {
-        applyDefaultModel();
+        reconcileModelAfterLoad();
       }
       // The composer now has a real model — release any queued `/?message=`
       // prompt that was waiting for the registry.
@@ -543,6 +569,27 @@ SPDX-License-Identifier: Apache-2.0
       selectedProvider = resolved.provider.key;
       selectedModel = resolved.model.key;
       selectedModelInfo = resolved.provider;
+    }
+  }
+
+  // Reconcile the optimistic model a new chat opened on against the freshly
+  // loaded registry. resolveDefaultModel() keeps the last-used model when it is
+  // still offered, else falls back to the latest available model. If that
+  // fallback changed the model out from under the user, tell them so the switch
+  // never happens silently.
+  function reconcileModelAfterLoad() {
+    const previousModel = selectedModel;
+    applyDefaultModel();
+    if (previousModel && previousModel !== selectedModel && selectedModel) {
+      // The saved model vanished from the registry. Persist the fallback as the
+      // new last-used so this is a one-time notice, not a toast on every new
+      // chat, and so future chats open straight on the fallback.
+      persistLastUsedModel(selectedModel, selectedProvider);
+      toast(
+        $_("chat.messageInput.modelUnavailable", {
+          values: { model: selectedModel },
+        }),
+      );
     }
   }
 
@@ -2507,6 +2554,7 @@ SPDX-License-Identifier: Apache-2.0
           onModelSelect={selectModel}
           {providers}
           {loadingModels}
+          {modelReady}
           {modelsError}
           {conversationId}
           bind:pendingSkillIds
@@ -2830,6 +2878,7 @@ SPDX-License-Identifier: Apache-2.0
           onModelSelect={selectModel}
           {providers}
           {loadingModels}
+          {modelReady}
           {modelsError}
           {conversationId}
           bind:pendingSkillIds

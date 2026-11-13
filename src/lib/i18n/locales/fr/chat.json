@@ -71,6 +71,7 @@
       "selectModel": "Sélectionner un modèle",
       "selectModelFallback": "Sélectionner un modèle",
       "loadingModels": "Chargement des modèles...",
+      "modelUnavailable": "Votre dernier modèle n'est plus disponible. Basculé vers {model}.",
       "selectConnectors": "Sélectionner les connecteurs",
       "loadingConnectors": "Chargement des connecteurs...",
       "noConnectors": "Aucun connecteur disponible",
