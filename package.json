@@ -1,7 +1,7 @@
 {
   "name": "@grengin/community",
   "private": true,
-  "version": "0.9.6",
+  "version": "0.9.8",
   "license": "Apache-2.0",
   "edition": "community",
   "type": "module",
