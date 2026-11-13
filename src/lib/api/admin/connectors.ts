@@ -253,6 +253,23 @@ export function openBlankConsentPopup(): Window | null {
 }
 
 /**
+ * Record the attempt that /mcp/oauth/callback will accept for this broker
+ * connection. Must run in the tab (or before opening the popup) that will land
+ * on the return page, since sessionStorage is per browsing context.
+ */
+export function rememberConnectorTransaction(connectionId: string, authorizationUrl: string): string {
+  const txn: ConnectorTransaction = {
+    connection_id: connectionId,
+    state: new URL(authorizationUrl).searchParams.get('state') ?? '',
+    user_id: getUser()?.id ?? '',
+    expires_at: Date.now() + TXN_TTL_MS,
+  };
+  const raw = JSON.stringify(txn);
+  sessionStorage.setItem(TXN_KEY, raw);
+  return raw;
+}
+
+/**
  * Send the popup to the vendor consent page. The transaction is copied into the
  * popup's own sessionStorage first; the return page loads in that popup and
  * reads it from there.
@@ -262,14 +279,7 @@ function openConsentPopup(
   authorizationUrl: string,
   popup: Window | null,
 ): void {
-  const txn: ConnectorTransaction = {
-    connection_id: conn.id,
-    state: new URL(authorizationUrl).searchParams.get('state') ?? '',
-    user_id: getUser()?.id ?? '',
-    expires_at: Date.now() + TXN_TTL_MS,
-  };
-  const raw = JSON.stringify(txn);
-  sessionStorage.setItem(TXN_KEY, raw);
+  const raw = rememberConnectorTransaction(conn.id, authorizationUrl);
   if (!popup || popup.closed) {
     throw new Error(t('errors.popupBlocked'));
   }

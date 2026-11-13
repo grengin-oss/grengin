@@ -24,11 +24,7 @@ import type {
   McpPaginationParams,
 } from '../../admin/types.js';
 
-export type McpAuthorizeConnectionResponse = {
-  success: boolean;
-  authorization_url: string;
-  message?: string;
-};
+export type McpAuthorizeConnectionResponse = import('../../types/integrations.js').McpAuthorizeResponse;
 
 export async function getMcpServers(): Promise<MCPServerListResponse> {
   return request<MCPServerListResponse>('/admin/mcp-servers', {
