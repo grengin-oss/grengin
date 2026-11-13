@@ -71,6 +71,7 @@
       "selectModel": "모델 선택",
       "selectModelFallback": "모델 선택",
       "loadingModels": "모델 로딩 중...",
+      "modelUnavailable": "마지막으로 사용한 모델을 더 이상 사용할 수 없습니다. {model}(으)로 전환했습니다.",
       "selectConnectors": "커넥터 선택",
       "loadingConnectors": "커넥터 불러오는 중...",
       "noConnectors": "사용 가능한 커넥터가 없습니다",
