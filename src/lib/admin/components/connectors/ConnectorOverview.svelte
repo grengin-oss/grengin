@@ -348,7 +348,7 @@
         >
           {#if savingEnabled}
             {$_("admin.connectorOverview.saving")}
-          {:else if overview.enabled}
+          {:else if overview?.enabled}
             {$_("admin.connectorOverview.turnOffForEveryone")}
           {:else}
             {$_("admin.connectorOverview.turnOnForEveryone")}
@@ -439,12 +439,12 @@
         <section class="co-card">
           <h3 class="co-card__title">{$_("admin.connectorOverview.whoCanUse")}</h3>
           <p class="co-card__intro">{$_("admin.connectorOverview.whoCanUseIntro")}</p>
-          {#if !overview.enabled}
+          {#if !overview?.enabled}
             <p class="co-card__note">{$_("admin.connectorOverview.whoCanUseOffNote")}</p>
           {/if}
           <div
             class="co-choices"
-            class:co-choices--off={!overview.enabled}
+            class:co-choices--off={!overview?.enabled}
             role="radiogroup"
             aria-label={$_("admin.connectorOverview.whoCanUse")}
           >
@@ -454,7 +454,7 @@
               type="button"
               role="radio"
               aria-checked={accessChoice === "everyone"}
-              disabled={savingAccess || !overview.enabled}
+              disabled={savingAccess || !overview?.enabled}
               onclick={() => setAccess("everyone")}
             >
               <span class="co-radio" aria-hidden="true"></span>
@@ -473,7 +473,7 @@
               type="button"
               role="radio"
               aria-checked={accessChoice === "teams"}
-              disabled={savingAccess || !overview.enabled}
+              disabled={savingAccess || !overview?.enabled}
               onclick={() => setAccess("teams")}
             >
               <span class="co-radio" aria-hidden="true"></span>
@@ -488,7 +488,7 @@
               type="button"
               role="radio"
               aria-checked={accessChoice === "admins"}
-              disabled={savingAccess || !overview.enabled}
+              disabled={savingAccess || !overview?.enabled}
               onclick={() => setAccess("admins")}
             >
               <span class="co-radio" aria-hidden="true"></span>
