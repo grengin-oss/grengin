@@ -9,10 +9,10 @@ SPDX-License-Identifier: Apache-2.0
   import { toast } from '../../../components/Toaster.svelte';
   import type { MCPServer, McpOrgConnection } from '../../types.js';
   import {
-    authorizeMcpConnection,
     disconnectOrgConnection,
     getOrgConnection,
   } from '../../../api/admin/mcpServers.js';
+  import { startMcpAuthorization } from '../../../api/mcpAuthorize.js';
 
   interface Props {
     server: MCPServer;
@@ -86,8 +86,18 @@ SPDX-License-Identifier: Apache-2.0
     connecting = true;
 
     try {
-      const response = await authorizeMcpConnection(server.id);
-      if (!response?.authorization_url) {
+      // Route through the shared helper so broker connectors work: it handles the
+      // broker response shapes (status / broker_connection_id), records the
+      // connector transaction before the popup opens, and recovers a stranded or
+      // 409'd attempt. window.open copies this tab's sessionStorage, so the stored
+      // transaction reaches the popup for the callback to complete.
+      const authorization = await startMcpAuthorization(server.id);
+      if (authorization?.connected) {
+        connecting = false;
+        await refreshConnection();
+        return;
+      }
+      if (!authorization) {
         throw new Error($_('admin.mcpOAuth.orgConnection.failedToGetUrl'));
       }
 
@@ -97,7 +107,7 @@ SPDX-License-Identifier: Apache-2.0
       const top = window.screenY + (window.outerHeight - height) / 2;
 
       popupWindow = window.open(
-        response.authorization_url,
+        authorization.authorizationUrl,
         `mcp_org_oauth_${server.id}`,
         `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
       );

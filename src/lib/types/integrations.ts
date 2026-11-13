@@ -54,9 +54,13 @@ export interface McpConnectionListResponse {
 
 // POST /mcp/connections/{id}/authorize
 export interface McpAuthorizeResponse {
-  authorization_url: string;
-  message: string;
+  /** Absent when a broker connection is already connected or awaiting confirmation. */
+  authorization_url?: string | null;
+  message?: string;
   success: boolean;
+  /** Set for native plugin servers whose OAuth runs through the Grengin broker. */
+  broker_connection_id?: string | null;
+  status?: 'pending' | 'awaiting_confirmation' | 'connected' | 'expired' | 'revoked' | 'failed' | null;
 }
 
 // POST /mcp/connections/{id}/disconnect

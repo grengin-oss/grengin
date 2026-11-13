@@ -5,7 +5,8 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import type { McpAuthRequest } from '../../../types/chat';
-  import { authorizeMcpConnection, getMcpConnections } from '../../../api/integrations.js';
+  import { getMcpConnections } from '../../../api/integrations.js';
+  import { startMcpAuthorization } from '../../../api/mcpAuthorize.js';
   import { _ } from 'svelte-i18n';
 
   interface Props {
@@ -32,15 +33,16 @@ SPDX-License-Identifier: Apache-2.0
     onStatusChange(authRequest.server_id, 'connecting');
 
     try {
-      let authUrl = authRequest.authorization_url;
-
-      if (!authUrl) {
-        const response = await authorizeMcpConnection(authRequest.server_id);
-        if (!response?.authorization_url) {
-          throw new Error($_('chat.mcpAuth.failedToGetAuthUrl'));
-        }
-        authUrl = response.authorization_url;
+      // Always ask again: the streamed URL carries no broker transaction, which the callback page requires.
+      const authorization = await startMcpAuthorization(authRequest.server_id);
+      if (authorization?.connected) {
+        onConnected(authRequest.server_id);
+        return;
       }
+      if (!authorization) {
+        throw new Error($_('chat.mcpAuth.failedToGetAuthUrl'));
+      }
+      const authUrl = authorization.authorizationUrl;
 
       const width = 600;
       const height = 700;
