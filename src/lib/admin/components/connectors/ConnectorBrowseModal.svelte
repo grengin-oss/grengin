@@ -94,13 +94,17 @@ the full catalog is shown (from the MCP Servers page).
   /** Suites (one sign-in for several apps of one provider) are shown first. */
   const suites = $derived(filtered.filter((c) => c.members?.length));
 
+  // An app a suite already covers is added through that suite; searching for it still finds the suite.
+  const suiteMembers = $derived(new Set(entries.flatMap((c) => c.members ?? [])));
+  const visibleCount = $derived(entries.filter((c) => !suiteMembers.has(c.key)).length);
+
   /** Category tabs, in catalog order (connectors.html `.cat-row`: always all of them). */
   const tabs = $derived(categories.map((c) => c.id));
 
   /** Matching entries grouped by category, in catalog order. */
   const groups = $derived.by(() => {
     const buckets = new Map<string, ConnectorCatalogEntry[]>();
-    for (const c of filtered.filter((entry) => !entry.members?.length)) {
+    for (const c of filtered.filter((entry) => !entry.members?.length && !suiteMembers.has(entry.key))) {
       const arr = buckets.get(c.category) ?? [];
       arr.push(c);
       buckets.set(c.category, arr);
@@ -120,7 +124,7 @@ the full catalog is shown (from the MCP Servers page).
   bind:isOpen
   variant="ai-browse"
   title={$_("admin.connectors.browse")}
-  subtitle={$_("admin.connectors.count", { values: { count: entries.length } })}
+  subtitle={$_("admin.connectors.count", { values: { count: visibleCount } })}
   onclose={() => (isOpen = false)}
 >
   {#snippet headerIcon()}
