@@ -304,7 +304,7 @@ SPDX-License-Identifier: Apache-2.0
             ? data.tenant_id
             : (data.tenant_id?.value ?? ""),
         is_enabled: data.is_enabled,
-        allow_self_provisioning: data.allow_self_provisioning ?? false,
+        allow_self_provisioning: data.jit_provisioning ?? false,
         allowed_domains: data.allowed_domains || [],
       };
       tick().then(() => {
@@ -565,7 +565,7 @@ SPDX-License-Identifier: Apache-2.0
         client_id: source.client_id.value,
         allowed_domains: domains.map((domain) => domain.trim()),
         is_enabled: source.is_enabled,
-        jit_provisioning: source.allow_self_provisioning ?? false,
+        jit_provisioning: source.jit_provisioning ?? false,
       };
 
       const tenantId = source.tenant_id?.value;

@@ -84,7 +84,12 @@ SPDX-License-Identifier: Apache-2.0
   // Detect if we're in admin view
   let currentPath = $state(window.location.pathname);
   let isAdminView = $derived(currentPath.startsWith("/admin"));
-  let hasAdminPermissions = $derived(permissionsStore.hasAnyPermissions());
+  // Control Hub is shown only when the user actually has an admin page to land
+  // on. `hasAnyPermissions()` would also count member grants like `chats:share`,
+  // which would open the admin area straight onto the "forbidden" page.
+  let hasAdminPermissions = $derived(
+    permissionsStore.getAdminLandingPath() !== "/forbidden",
+  );
   let canViewAnalytics = $derived(
     permissionsStore.hasPermission(PERMISSIONS.analytics.view),
   );
@@ -105,6 +110,9 @@ SPDX-License-Identifier: Apache-2.0
   );
   let canViewAuditLogs = $derived(
     permissionsStore.hasPermission(PERMISSIONS.auditLogs.view),
+  );
+  let canManageSkills = $derived(
+    permissionsStore.hasPermission(PERMISSIONS.skills.manage),
   );
 
   // Update currentPath on navigation
@@ -262,14 +270,14 @@ SPDX-License-Identifier: Apache-2.0
       canViewAnalytics && PROMPTS_FEATURE_ENABLED
         ? promptEffectivenessMenuItem
         : null,
-      canViewAuditLogs || hasAdminPermissions ? auditLogsMenuItem : null,
+      canViewAuditLogs ? auditLogsMenuItem : null,
     ].filter(isMenuItem),
   );
 
   let configureItems = $derived<AdminMenuItem[]>(
     [
       canViewRoles ? accessControlMenuItem : null,
-      canViewRoles ? skillsMenuItem : null,
+      canManageSkills ? skillsMenuItem : null,
       canViewRoles && PROMPTS_FEATURE_ENABLED ? promptLibraryMenuItem : null,
       canViewSettings ? authenticationMenuItem : null,
     ].filter(isMenuItem),

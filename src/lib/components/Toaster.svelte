@@ -291,6 +291,11 @@ SPDX-License-Identifier: Apache-2.0
     margin-bottom: 0.5rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    /* The base .pill sets white-space: nowrap, which makes a long message
+       overflow past the toast's edge. Let toast text wrap within max-width
+       instead (rich/stream variants already set their own wrapping). */
+    white-space: normal;
+    overflow-wrap: break-word;
   }
 
   /* Stream alerts: wider cap + shrink-to-fit; message/description ellipsis if still too long. */

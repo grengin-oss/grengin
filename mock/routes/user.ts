@@ -92,9 +92,19 @@ router.get('/me/permissions', requireAuth, (req, res) => {
     'mcp_servers:manage',
     'audit_logs:view',
     'system:maintain',
+    'skills:view',
+    'skills:manage',
+    'chats:share',
   ]
+  // Dev aid: `?perms=a,b` returns only those permissions so the Control Hub
+  // access gating (ENGG-525) can be exercised for limited roles.
+  const override = (req.query.perms as string | undefined)
+    ?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  const list = override && override.length ? override : ALL_PERMISSIONS
   const permissions: Record<string, '*'> = {}
-  for (const p of ALL_PERMISSIONS) permissions[p] = '*'
+  for (const p of list) permissions[p] = '*'
   res.json({ permissions, mcp_access: {}, administered_departments: [] })
 })
 

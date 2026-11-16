@@ -728,23 +728,28 @@ SPDX-License-Identifier: Apache-2.0
       return;
     }
 
-    let pluginConfig: Record<string, unknown>;
+    let manifest: Record<string, unknown>;
     try {
       const parsed = JSON.parse(pluginJson);
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
         throw new Error("not an object");
       }
-      pluginConfig = parsed as Record<string, unknown>;
+      manifest = parsed as Record<string, unknown>;
     } catch {
       customError = $_("aiEngines.custom.errors.pluginInvalid");
       return;
     }
 
     try {
+      // The API expects the plugin JSON as `plugin_config.manifest` and the
+      // endpoint as `plugin_config.baseUrlOverride`; a top-level `base_url` is
+      // rejected as an unknown field.
       await store.createEngine({
         display_name: displayName,
-        base_url: baseUrl,
-        plugin_config: pluginConfig,
+        plugin_config: {
+          manifest,
+          baseUrlOverride: baseUrl,
+        },
         ...(apiKey ? { api_key: apiKey } : {}),
       });
       toast.success(

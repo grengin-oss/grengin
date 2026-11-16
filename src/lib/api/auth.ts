@@ -20,6 +20,49 @@ interface AuthInitResponse {
   state: string;
 }
 
+/**
+ * A sign-in provider as advertised by the public `GET /auth/providers`
+ * discovery endpoint. It carries only presentation + enabled state — never
+ * client IDs, secrets, issuers, or domains. Clients must present only enabled
+ * providers as available login methods.
+ */
+export interface AuthProvider {
+  /** Human-readable label, e.g. "Google" or "Acme SSO". */
+  name: string;
+  /** Validated provider slug, e.g. "google", "azure", "keycloak". */
+  slug: string;
+  /** Path that starts login for this provider (defaults to `/auth/{slug}`). */
+  login_path?: string;
+  /** Whether this provider is configured and enabled for sign-in. */
+  enabled: boolean;
+  /** Whether the installation prefers auto-redirecting to this provider. */
+  auto_redirect?: boolean;
+}
+
+export interface AuthProvidersResponse {
+  providers: AuthProvider[];
+}
+
+/**
+ * Public provider discovery — which login methods are enabled on this
+ * installation. Unauthenticated (runs on the login screen before any token),
+ * so it uses a bare fetch rather than the authenticated `request` helper.
+ */
+export async function getAuthProviders(): Promise<AuthProvidersResponse> {
+  const response = await fetch(`${API_BASE}/auth/providers`, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const detail = parseErrorDetail(body);
+    throw new ApiError(response.status, detail);
+  }
+
+  return response.json();
+}
+
 export async function login(email: string, password: string): Promise<LoginResponse> {
   const response = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',

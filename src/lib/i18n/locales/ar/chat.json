@@ -71,6 +71,7 @@
       "selectModel": "اختر نموذجًا",
       "selectModelFallback": "اختر نموذجًا",
       "loadingModels": "جارٍ تحميل النماذج...",
+      "modelUnavailable": "النموذج الأخير لم يعد متاحًا. تم التبديل إلى {model}.",
       "selectConnectors": "اختر الموصلات",
       "loadingConnectors": "جارٍ تحميل الموصلات...",
       "noConnectors": "لا توجد موصلات متاحة",

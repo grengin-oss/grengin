@@ -82,7 +82,7 @@ SPDX-License-Identifier: Apache-2.0
   </PermissionGuard>
 </Route>
 <Route path="/admin/skills">
-  <PermissionGuard permission={PERMISSIONS.roles.view}>
+  <PermissionGuard permission={PERMISSIONS.skills.manage}>
     {#snippet children()}
       <AdminSkills />
     {/snippet}
@@ -114,10 +114,14 @@ SPDX-License-Identifier: Apache-2.0
   {/if}
 </Route>
 <Route path="/admin/audit-logs">
-  <AuditLogs />
+  <PermissionGuard permission={PERMISSIONS.auditLogs.view}>
+    {#snippet children()}
+      <AuditLogs />
+    {/snippet}
+  </PermissionGuard>
 </Route>
 <Route path="/admin/system-metrics">
-  <PermissionGuard permission={PERMISSIONS.analytics.view} requireGlobal={true}>
+  <PermissionGuard permission={PERMISSIONS.system.maintain}>
     {#snippet children()}
       <SystemMetrics />
     {/snippet}

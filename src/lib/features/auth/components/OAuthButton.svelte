@@ -9,11 +9,13 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from 'svelte-i18n';
   import { getLocalizedError } from '../../../utils/errorLocalization';
 
-  type OAuthProvider = 'google' | 'azure' | 'keycloak';
   type ButtonSize = 'small' | 'medium' | 'large';
 
   interface Props {
-    provider: OAuthProvider;
+    /** Provider slug, e.g. "google", "azure", "keycloak", or any custom slug. */
+    provider: string;
+    /** Display label; falls back to the capitalized slug when omitted. */
+    name?: string;
     redirectUri?: string;
     size?: ButtonSize;
     disabled?: boolean;
@@ -25,6 +27,7 @@ SPDX-License-Identifier: Apache-2.0
 
   let {
     provider,
+    name,
     redirectUri,
     size = 'medium',
     disabled = false,
@@ -40,10 +43,15 @@ SPDX-License-Identifier: Apache-2.0
   );
 
   let isLoading = $state(false);
+  // Unknown provider slugs have no bundled icon; fall back to a generic glyph
+  // instead of a broken image.
+  let iconError = $state(false);
 
-  // Capitalize provider name
-  const providerName = $derived(provider.charAt(0).toUpperCase() + provider.slice(1));
-  
+  // Display label — the server-provided name, else the capitalized slug.
+  const providerName = $derived(
+    name?.trim() || provider.charAt(0).toUpperCase() + provider.slice(1),
+  );
+
   // Icon path
   const iconPath = $derived(`/${provider}.svg`);
 
@@ -84,7 +92,19 @@ SPDX-License-Identifier: Apache-2.0
     <span class="spinner" aria-hidden="true"></span>
     <span>{$_('auth.connectingTo', { values: { provider: providerName } })}</span>
   {:else}
-    <img src={iconPath} alt="{providerName} logo" class="icon" aria-hidden="true" />
+    {#if iconError}
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+      </svg>
+    {:else}
+      <img
+        src={iconPath}
+        alt="{providerName} logo"
+        class="icon"
+        aria-hidden="true"
+        onerror={() => (iconError = true)}
+      />
+    {/if}
     <span>{$_('auth.signInWith', { values: { provider: providerName } })}</span>
   {/if}
 </button>

@@ -995,7 +995,25 @@ router.get('/admin/sso-providers/:providerId', requireAuth, (req, res) => {
   if (!provider) {
     return res.status(404).json({ detail: 'SSO provider not found' })
   }
-  res.json(provider)
+  // Shape the stored (list-shaped) provider into the SSOProviderDetails the edit
+  // modal expects: string fields wrapped as { editable, value }, plus the real
+  // `jit_provisioning` flag the API returns (ENGG-525 item 7).
+  const field = (value: unknown, editable = true) => ({ editable, value: String(value ?? '') })
+  const p = provider as Record<string, unknown>
+  res.json({
+    id: p.id,
+    provider: field(p.provider_type ?? p.type ?? 'google', false),
+    name: field(p.name),
+    client_id: field(p.client_id),
+    client_secret_preview: field('••••••••', false),
+    issuer_url: field(p.issuer_url ?? 'https://accounts.google.com'),
+    redirect_url: field(p.redirect_url ?? 'https://chat.example.com/auth/google/callback', false),
+    allowed_domains: (p.allowed_domains as string[]) ?? [],
+    is_enabled: p.is_enabled ?? true,
+    jit_provisioning: (p.jit_provisioning as boolean | undefined) ?? true,
+    created_at: p.created_at ?? new Date().toISOString(),
+    updated_at: p.updated_at ?? new Date().toISOString(),
+  })
 })
 
 router.put('/admin/sso-providers/:providerId', requireAuth, (req, res) => {

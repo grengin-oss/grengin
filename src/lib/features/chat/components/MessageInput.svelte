@@ -50,6 +50,8 @@ SPDX-License-Identifier: Apache-2.0
     onRemoveModel?: () => void;
     providers?: ProviderInfo[];
     loadingModels?: boolean;
+    /** True once the registry has loaded and a valid model is confirmed; gates send. */
+    modelReady?: boolean;
     modelsError?: string | null;
     /** Connectors from GET /mcp-servers. `connected` is the per-user OAuth state. */
     mcpServers?: (MCPServer & { connected?: boolean })[];
@@ -80,6 +82,7 @@ SPDX-License-Identifier: Apache-2.0
     onRemoveModel,
     providers = [],
     loadingModels = false,
+    modelReady = true,
     modelsError = null,
     mcpServers = [],
     selectedMcpServers = [],
@@ -1838,9 +1841,12 @@ SPDX-License-Identifier: Apache-2.0
               title={$_("chat.messageInput.selectModel")}
               aria-label={$_("chat.messageInput.selectModel")}
               aria-expanded={openMenu === "model"}
+              aria-busy={loadingModels && !selectedModel}
             >
               <span class="chip__icon">
-                {#if selectedProvider}
+                {#if loadingModels && !selectedModel}
+                  <span class="chip__spinner" aria-hidden="true"></span>
+                {:else if selectedProvider}
                   {@const providerIcon = getIconForTheme(
                     providers.find((p) => p.key === selectedProvider),
                   )}
@@ -1881,10 +1887,15 @@ SPDX-License-Identifier: Apache-2.0
                   </svg>
                 {/if}
               </span>
-              <span class="chip__label"
-                >{selectedModel ||
-                  $_("chat.messageInput.selectModelFallback")}</span
-              >
+              <span class="chip__label">
+                {#if selectedModel}
+                  {selectedModel}
+                {:else if loadingModels}
+                  {$_("chat.messageInput.loadingModels")}
+                {:else}
+                  {$_("chat.messageInput.selectModelFallback")}
+                {/if}
+              </span>
               {@render chevron(openMenu === "model")}
             </button>
 
@@ -2392,6 +2403,7 @@ SPDX-License-Identifier: Apache-2.0
             onclick={handleSend}
             disabled={disabled ||
               isUploading ||
+              !modelReady ||
               (!message.trim() && attachedFiles.length === 0)}
             aria-label={isUploading
               ? $_("chat.messageInput.uploading")
@@ -3853,6 +3865,17 @@ SPDX-License-Identifier: Apache-2.0
   .loading-spinner {
     width: 1rem;
     height: 1rem;
+    border: 2px solid var(--glass-stroke-dark);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  /* Loading indicator inside the model chip while the registry resolves. */
+  .chip__spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
     border: 2px solid var(--glass-stroke-dark);
     border-top-color: var(--brand);
     border-radius: 50%;

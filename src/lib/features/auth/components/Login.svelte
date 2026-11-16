@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { login, ApiError } from '../index.js';
+  import { login, ApiError, getAuthProviders } from '../index.js';
   import { setAuth } from '../index.js';
   import { toast } from '../../../components/Toaster.svelte';
   import { getLocalizedError } from '../../../utils/errorLocalization';
@@ -13,7 +13,6 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from 'svelte-i18n';
   import { loadNamespaces } from '$lib/i18n/index.js';
 
-  // TODO: This should come from the server (API update)
   type AuthMode = 'google' | 'azure' | 'keycloak' | 'admin';
 
   interface Props {
@@ -23,10 +22,22 @@ SPDX-License-Identifier: Apache-2.0
 
   let { modes = ['google', 'azure'], onLoginSuccess }: Props = $props();
 
-  // Determine if OAuth providers are enabled
-  const hasOAuthProviders = $derived(modes.some(m => ['google', 'azure', 'keycloak'].includes(m)));
   const hasAdminLogin = $derived(modes.includes('admin'));
-  const oauthProviders = $derived(modes.filter(m => ['google', 'azure', 'keycloak'].includes(m)) as ('google' | 'azure' | 'keycloak')[]);
+
+  // Sign-in providers to offer. They come from the public `GET /auth/providers`
+  // discovery endpoint so the screen reflects exactly what is enabled on this
+  // installation (any provider, not just Google/Azure). Until that resolves — or
+  // if it fails — fall back to the providers named in `modes` so login never
+  // breaks.
+  type LoginProvider = { slug: string; name?: string };
+  const fallbackProviders = $derived<LoginProvider[]>(
+    (modes.filter(m => ['google', 'azure', 'keycloak'].includes(m)) as string[]).map(
+      slug => ({ slug }),
+    ),
+  );
+  let fetchedProviders = $state<LoginProvider[] | null>(null);
+  const oauthProviders = $derived<LoginProvider[]>(fetchedProviders ?? fallbackProviders);
+  const hasOAuthProviders = $derived(oauthProviders.length > 0);
 
   let email = $state('');
   let password = $state('');
@@ -74,6 +85,20 @@ SPDX-License-Identifier: Apache-2.0
   onMount(() => {
     // Ensure auth namespace is loaded for translations
     loadNamespaces(['auth']);
+
+    // The admin login screen is email/password only; everywhere else, discover
+    // the enabled sign-in providers from the server.
+    if (hasAdminLogin) return;
+    getAuthProviders()
+      .then((res) => {
+        fetchedProviders = res.providers
+          .filter((p) => p.enabled)
+          .map((p) => ({ slug: p.slug, name: p.name }));
+      })
+      .catch(() => {
+        // Discovery failed — keep the fallback provider list.
+        fetchedProviders = null;
+      });
   });
 </script>
 
@@ -155,9 +180,10 @@ SPDX-License-Identifier: Apache-2.0
       {#if hasOAuthProviders}
         <section class="oauth-section" aria-label={$_('auth.socialLogin') || 'Social login'}>
           <div class="oauth-buttons">
-            {#each oauthProviders as provider}
-              <OAuthButton 
-                {provider}
+            {#each oauthProviders as provider (provider.slug)}
+              <OAuthButton
+                provider={provider.slug}
+                name={provider.name}
                 size="medium"
                 disabled={isOAuthLoading}
                 onStart={handleOAuthStart}

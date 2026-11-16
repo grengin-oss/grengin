@@ -81,6 +81,7 @@
       "selectModel": "Select model",
       "selectModelFallback": "Select Model",
       "loadingModels": "Loading models...",
+      "modelUnavailable": "Your last model is no longer available. Switched to {model}.",
       "selectConnectors": "Select connectors",
       "loadingConnectors": "Loading connectors...",
       "noConnectors": "No connectors available",
