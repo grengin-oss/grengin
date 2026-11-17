@@ -215,7 +215,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   async function addGlobalScope() {
-    if (!role || !user || hasGlobalScopeAssignment || rolesApi.requiresDepartment(role)) return;
+    if (!role || !user || hasGlobalScopeAssignment) return;
     globalScopeLoading = true;
     try {
       await rolesApi.addRoleToUser(user.id, {
@@ -404,7 +404,7 @@ SPDX-License-Identifier: Apache-2.0
               oninput={handleDepartmentSearchInput}
             />
           </div>
-          {#if !assignmentsLoading && !departmentSearching && !hasGlobalScopeAssignment && !(role && rolesApi.requiresDepartment(role))}
+          {#if !assignmentsLoading && !departmentSearching && !hasGlobalScopeAssignment}
             <div class="department-global-option">
               <div class="department-global-details">
                 <span class="department-search-name">
