@@ -12,6 +12,11 @@ export interface Role {
   user_count?: number;
 }
 
+/** The built-in Department Admin role is only ever granted for a department. */
+export function requiresDepartment(role: Pick<Role, 'name' | 'is_system'>): boolean {
+  return role.is_system && role.name === 'Department Admin';
+}
+
 export interface RolesResponse {
   roles: Role[];
 }

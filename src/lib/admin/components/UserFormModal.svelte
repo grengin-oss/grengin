@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
   import Modal from "./Modal.svelte";
   import LoadingSpinner from "./LoadingSpinner.svelte";
-  import type { Role } from "../../api/admin/roles.js";
+  import { requiresDepartment, type Role } from "../../api/admin/roles.js";
   import { getDepartments } from "../../api/admin/departments.js";
   import { ApiError } from "../../api/client.js";
   import type { Department, RoleUserAssignment } from "../types.js";
@@ -463,6 +463,7 @@ SPDX-License-Identifier: Apache-2.0
                         {role.name}
                       </div>
                       <div class="role-actions" role="group" aria-labelledby={`role-option-${mode}-${role.id}`}>
+                        {#if !requiresDepartment(role) && !roleAssignments.some((assignment) => assignment.role_id === role.id && !assignment.scope_department_id)}
                         <button
                           type="button"
                           class="btn-role-add"
@@ -476,6 +477,7 @@ SPDX-License-Identifier: Apache-2.0
                           ? $_("admin.common.adding")
                           : $_("admin.users.addRoleGlobal")}
                         </button>
+                        {/if}
                         <button
                           type="button"
                           class="btn-role-scope"

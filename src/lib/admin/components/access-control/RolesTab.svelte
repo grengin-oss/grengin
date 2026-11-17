@@ -386,6 +386,12 @@ SPDX-License-Identifier: Apache-2.0
     if (!canAssignRoles) return;
     const roleId = showAddUserSearch;
     if (!roleId) return;
+    const role = roles.find((candidate) => candidate.id === roleId);
+    if (role && rolesApi.requiresDepartment(role)) {
+      resetAddUserSearch();
+      openDepartmentModal(role, user);
+      return;
+    }
 
     addingUserId = user.id;
     try {
