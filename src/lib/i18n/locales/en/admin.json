@@ -1557,6 +1557,7 @@
       },
       "suites": "Suites",
       "suitesSub": "One sign-in covers every app in a suite. You can still add single apps below.",
+      "region": "Region",
       "oneSignIn": "One sign-in · {count} apps"
     },
     "connectorOverview": {

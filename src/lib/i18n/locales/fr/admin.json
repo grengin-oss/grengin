@@ -1465,6 +1465,7 @@
       },
       "suites": "Suites d'applications",
       "suitesSub": "Une seule connexion couvre toutes les applications d'une suite. Vous pouvez toujours ajouter des applications individuelles ci-dessous.",
+      "region": "Région",
       "oneSignIn": "Une connexion · {count} applications"
     },
     "connectorOverview": {

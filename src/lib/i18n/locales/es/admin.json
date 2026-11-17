@@ -1465,6 +1465,7 @@
       },
       "suites": "Paquetes",
       "suitesSub": "Un solo inicio de sesión cubre todas las apps de un paquete. También puedes añadir apps sueltas más abajo.",
+      "region": "Región",
       "oneSignIn": "Un inicio de sesión · {count} apps"
     },
     "connectorOverview": {

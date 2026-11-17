@@ -1465,6 +1465,7 @@
       },
       "suites": "Pacotes",
       "suitesSub": "Um único login cobre todos os apps de um pacote. Você ainda pode adicionar apps individuais abaixo.",
+      "region": "Região",
       "oneSignIn": "Um login · {count} apps"
     },
     "connectorOverview": {

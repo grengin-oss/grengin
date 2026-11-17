@@ -96,7 +96,29 @@ the full catalog is shown (from the MCP Servers page).
 
   // An app a suite already covers is added through that suite; searching for it still finds the suite.
   const suiteMembers = $derived(new Set(entries.flatMap((c) => c.members ?? [])));
-  const visibleCount = $derived(entries.filter((c) => !suiteMembers.has(c.key)).length);
+
+  // Region builds of one suite (same apps, another data centre) show as one card with a region choice.
+  const suiteGroups = $derived.by(() => {
+    const byApps = new Map<string, ConnectorCatalogEntry[]>();
+    for (const s of suites) {
+      const id = [...(s.members ?? [])].sort().join(",");
+      byApps.set(id, [...(byApps.get(id) ?? []), s]);
+    }
+    return [...byApps.entries()].map(([id, variants]) => ({ id, variants }));
+  });
+  let regionChoice = $state<Record<string, string>>({});
+  const regionLabel = (c: ConnectorCatalogEntry) => c.display_name.match(/\(([^)]+)\)\s*$/)?.[1] ?? c.display_name;
+  const baseName = (c: ConnectorCatalogEntry) => c.display_name.replace(/\s*\([^)]+\)\s*$/, "");
+  function chosenVariant(group: { id: string; variants: ConnectorCatalogEntry[] }): ConnectorCatalogEntry {
+    const inUse = group.variants.find((v) => connectedKeys.has(v.key) || addedKeys?.has(v.key));
+    const key = regionChoice[group.id] ?? inUse?.key;
+    return group.variants.find((v) => v.key === key) ?? group.variants[0];
+  }
+  const regionDuplicates = $derived(
+    entries.filter((c) => c.members?.length).length -
+      new Set(entries.filter((c) => c.members?.length).map((c) => [...(c.members ?? [])].sort().join(","))).size,
+  );
+  const visibleCount = $derived(entries.filter((c) => !suiteMembers.has(c.key)).length - regionDuplicates);
 
   /** Category tabs, in catalog order (connectors.html `.cat-row`: always all of them). */
   const tabs = $derived(categories.map((c) => c.id));
@@ -193,23 +215,40 @@ the full catalog is shown (from the MCP Servers page).
             <div class="bp-group">
               <div class="bp-group-heading">
                 <span class="bp-category">{$_("admin.connectors.suites")}</span>
-                <span class="bp-count">{suites.length}</span>
+                <span class="bp-count">{suiteGroups.length}</span>
               </div>
               <p class="bp-suites-sub">{$_("admin.connectors.suitesSub")}</p>
               <div class="bp-cards">
-                {#each suites as c (c.key)}
-                  <ConnectorCard
-                    entry={c}
-                    connected={connectedKeys.has(c.key)}
-                    connecting={connectingKey === c.key}
-                    added={addedKeys ? addedKeys.has(c.key) : true}
-                    adding={addingKey === c.key}
-                    categoryLabel={categoryLabel(c.category)}
-                    members={membersOf(c).map((m) => ({ key: m.key, name: m.display_name, icon: m.icon }))}
-                    onOpen={() => onOpen?.(c.key)}
-                    onConnect={() => onConnect(c.key)}
-                    onAdd={() => onAdd?.(c.key)}
-                  />
+                {#each suiteGroups as group (group.id)}
+                  {@const c = chosenVariant(group)}
+                  {@const regional = group.variants.length > 1}
+                  <div class="bp-suite">
+                    <ConnectorCard
+                      entry={regional ? { ...c, display_name: baseName(c) } : c}
+                      connected={connectedKeys.has(c.key)}
+                      connecting={connectingKey === c.key}
+                      added={addedKeys ? addedKeys.has(c.key) : true}
+                      adding={addingKey === c.key}
+                      categoryLabel={categoryLabel(c.category)}
+                      members={membersOf(c).map((m) => ({ key: m.key, name: m.display_name, icon: m.icon }))}
+                      onOpen={() => onOpen?.(c.key)}
+                      onConnect={() => onConnect(c.key)}
+                      onAdd={() => onAdd?.(c.key)}
+                    />
+                    {#if regional}
+                      <label class="bp-region">
+                        <span>{$_("admin.connectors.region")}</span>
+                        <select
+                          value={c.key}
+                          onchange={(e) => (regionChoice = { ...regionChoice, [group.id]: e.currentTarget.value })}
+                        >
+                          {#each group.variants as v (v.key)}
+                            <option value={v.key}>{regionLabel(v)}</option>
+                          {/each}
+                        </select>
+                      </label>
+                    {/if}
+                  </div>
                 {/each}
               </div>
             </div>
@@ -273,6 +312,26 @@ the full catalog is shown (from the MCP Servers page).
 </Modal>
 
 <style>
+  .bp-suite {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .bp-region {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary, inherit);
+  }
+  .bp-region select {
+    font: inherit;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, currentColor);
+    background: transparent;
+    color: inherit;
+  }
   .bp-suites-sub {
     margin: -4px 0 12px;
     font-size: 13px;
