@@ -71,8 +71,8 @@ test('CSP allows the CDNs used for Mermaid, charts and Tailwind', () => {
   }
 });
 
-test('allowlist mirrors Claude\'s documented hosts and nothing else', () => {
-  // Exhaustive list from Anthropic's artifact docs: 5 script CDNs, jsDelivr on /npm/.
+test('safe list is exactly these hosts and nothing else', () => {
+  // Curated safe list: 5 script CDNs, jsDelivr on /npm/.
   assert.deepEqual([...ARTIFACT_CDN_HOSTS].sort(), [
     'https://cdn.jsdelivr.net/npm/',
     'https://cdn.tailwindcss.com',
@@ -80,7 +80,7 @@ test('allowlist mirrors Claude\'s documented hosts and nothing else', () => {
     'https://code.jquery.com',
     'https://unpkg.com',
   ].sort());
-  // Hosts that are NOT on Claude's list must not appear anywhere in the CSP.
+  // Hosts that are NOT on the safe list must not appear anywhere in the CSP.
   for (const host of ['esm.sh', 'cdn.plot.ly', 'd3js.org']) {
     assert.equal(ARTIFACT_CSP.includes(host), false, `${host} must not be allowed`);
   }

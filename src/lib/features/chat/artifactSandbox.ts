@@ -16,13 +16,11 @@
 export const ARTIFACT_SANDBOX = 'allow-scripts';
 
 /**
- * Script/style CDNs an artifact may load from. This mirrors the exhaustive host
- * list Anthropic documents for Claude's own artifact sandbox
- * (https://code.claude.com/docs/en/artifacts): five script CDNs, jsDelivr
- * restricted to `/npm/`, plus Google Fonts (handled separately below). Grengin's
- * API is deliberately absent, so any request to it is blocked by the CSP. Fixed
- * in code on purpose: this is a trust boundary and widening it must go through
- * code review — never derive it from artifact content.
+ * Safe list of script/style CDNs an artifact may load from: five script CDNs,
+ * with jsDelivr restricted to `/npm/`, plus Google Fonts (handled separately
+ * below). Grengin's API is deliberately absent, so any request to it is blocked
+ * by the CSP. Fixed in code on purpose: this is a trust boundary and widening it
+ * must go through code review — never derive it from artifact content.
  */
 export const ARTIFACT_CDN_HOSTS: readonly string[] = [
   'https://cdnjs.cloudflare.com',
