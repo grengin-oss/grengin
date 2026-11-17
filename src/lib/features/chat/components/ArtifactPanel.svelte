@@ -12,6 +12,7 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from "svelte-i18n";
   import SaveToProjectModal from "./SaveToProjectModal.svelte";
   import { classifyArtifact, type ArtifactItem } from "../artifacts";
+  import { ARTIFACT_SANDBOX, buildArtifactDocument } from "../artifactSandbox";
 
   interface Props {
     /** All artifacts to show. More than one renders a tab bar to switch between
@@ -45,6 +46,8 @@ SPDX-License-Identifier: Apache-2.0
   let isLoadingContent = $state(false);
   // Effective content: in-memory (streaming) if present, else the fetched copy.
   let code = $derived(current.code || (current.id ? contentById[current.id] ?? "" : ""));
+  // What the preview iframe runs: the artifact behind a CSP and storage shim (ENGG-462).
+  let sandboxedDocument = $derived(type === "html" ? buildArtifactDocument(code) : "");
 
   $effect(() => {
     const id = current.id;
@@ -273,7 +276,7 @@ SPDX-License-Identifier: Apache-2.0
       ? markdownDocument(renderMarkdown(code), pageTitle)
       : isCode
         ? codeDocument(code, pageTitle)
-        : code;
+        : buildArtifactDocument(code);
     const sandbox = isMarkdown || isCode
       ? "allow-popups allow-popups-to-escape-sandbox"
       : "allow-scripts allow-popups allow-forms allow-modals";
@@ -524,8 +527,8 @@ SPDX-License-Identifier: Apache-2.0
         <iframe
           title="Artifact Preview"
           class="preview-iframe"
-          srcdoc={code}
-          sandbox="allow-same-origin allow-scripts"
+          srcdoc={sandboxedDocument}
+          sandbox={ARTIFACT_SANDBOX}
         ></iframe>
       {/key}
     {/if}
