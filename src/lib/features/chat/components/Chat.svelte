@@ -47,6 +47,14 @@ SPDX-License-Identifier: Apache-2.0
     type StoredModelPreference,
   } from "../modelPreferences";
   import { toast } from "../../../components/Toaster.svelte";
+  import {
+    ChatGeneration,
+    chatGenerations,
+    createGeneration,
+    removeGeneration,
+    findGeneration,
+    makeDraftKey,
+  } from "../chatStreams.svelte";
   import type { MCPServer } from "../../../admin/types.js";
   import { getMcpServers } from "../../../api/admin/mcpServers.js";
   import { setPageTitle } from "../../../utils/pageTitle";
@@ -111,21 +119,104 @@ SPDX-License-Identifier: Apache-2.0
     })),
   );
 
+  // The transcript of the conversation ON SCREEN (history loaded from the
+  // server). A still-streaming turn is NOT kept here — it lives in its
+  // per-conversation generation entry and is overlaid via `visibleMessages`, so
+  // a reply streaming in a background chat can never paint into this one.
   let messages = $state<ChatMessageType[]>([]);
-  let isLoading = $state(false);
-  let isTyping = $state(false);
-  let error = $state<ApiError | null>(null);
+  // A failure from LOADING a conversation (not from a stream). Stream failures
+  // live on the generation entry; `error` below merges the two for the view.
+  let loadError = $state<ApiError | null>(null);
+  // Identifies the brand-new chat currently on screen before it has a server id,
+  // so a reply that finishes after the user starts another new chat is matched
+  // to the chat it was sent from — not whatever new chat is now on screen.
+  let currentDraftKey = $state<string>(makeDraftKey());
   // Mid-stream connection drops auto-reconnect once before falling back to a
-  // manual Retry. `streamRetryCount` resets on every fresh user send; the flag
-  // marks that the current turn died from a transport interruption (not a server
-  // error or a user cancel), which is the only case we auto-retry.
+  // manual Retry. The per-turn budget and the "this turn died from a transport
+  // interruption" flag live on each generation entry (see chatStreams), so a
+  // background chat reconnects its OWN turn, not whatever chat is on screen.
   const MAX_STREAM_AUTO_RETRIES = 1;
-  let streamRetryCount = 0;
-  let turnInterrupted = false;
-  let autoReconnecting = $state(false);
   let conversationId = $state<string | null>(null);
   // Title of the open conversation — mirrored into the browser tab title.
   let conversationTitle = $state<string | null>(null);
+
+  // The streaming turn (if any) for the conversation on screen. Everything the
+  // view shows about "is a reply happening here" is derived from this one entry,
+  // so other chats' replies — which have their own entries — never leak in.
+  let activeEntry = $derived(findGeneration(conversationId, currentDraftKey));
+  // Composer/Stop/typing/error for the CURRENT chat only. A reply streaming in a
+  // different chat leaves these false/null here, so its composer stays usable.
+  let isLoading = $derived(activeEntry?.isLoading ?? false);
+  let isTyping = $derived(activeEntry?.isTyping ?? false);
+  let autoReconnecting = $derived(activeEntry?.autoReconnecting ?? false);
+  let isStopping = $derived(activeEntry?.isStopping ?? false);
+  let currentStreamingMessage = $derived(activeEntry?.streamingMessage ?? null);
+  // A load failure wins (it tore the view down); otherwise show this chat's own
+  // stream error. A stream error on a background chat never surfaces here.
+  let error = $derived(loadError ?? activeEntry?.error ?? null);
+  // The Stop button belongs to the chat whose reply is streaming, so it is
+  // offered whenever this chat has a live generation.
+  let canStopGeneration = $derived(
+    !!activeEntry && activeEntry.isLoading && !activeEntry.stopRequested,
+  );
+
+  // What the transcript renders: this chat's loaded history with its live
+  // streaming turn (user + assistant bubbles) overlaid. For a background chat
+  // `activeEntry` is undefined here, so nothing is overlaid.
+  let visibleMessages = $derived.by<ChatMessageType[]>(() => {
+    const entry = activeEntry;
+    if (!entry) return messages;
+    let list = messages;
+    // The user's message shows as soon as the turn starts; the assistant bubble
+    // appears once it has something to show (`visible`).
+    const user = entry.userMessage;
+    if (user && !list.some((m) => m.id === user.id)) list = [...list, user];
+    if (entry.visible && entry.streamingMessage) {
+      const assistant = entry.streamingMessage;
+      const idx = list.findIndex((m) => m.id === assistant.id);
+      list =
+        idx >= 0
+          ? list.map((m) => (m.id === assistant.id ? assistant : m))
+          : [...list, assistant];
+    }
+    return list;
+  });
+
+  // Dismiss the error banner for the chat on screen (a load failure or this
+  // chat's own stream error).
+  function dismissError() {
+    loadError = null;
+    if (activeEntry) {
+      activeEntry.error = null;
+      // Drop a finished/errored entry so it stops driving this chat's view.
+      if (!activeEntry.isLoading) removeGeneration(activeEntry);
+    }
+  }
+
+  // True when `generation` is the turn for the conversation on screen — the only
+  // case in which a stream may touch the visible transcript, scroll or totals.
+  function isCurrentGeneration(generation: ChatGeneration): boolean {
+    return generation.conversationId
+      ? generation.conversationId === conversationId
+      : generation.key === currentDraftKey && conversationId === null;
+  }
+
+  // Fold a finished turn into the visible transcript, but only for the chat on
+  // screen — a background chat isn't loaded here, and the server already has the
+  // persisted turn for when the user navigates back to it.
+  function commitGeneration(generation: ChatGeneration): void {
+    if (!isCurrentGeneration(generation)) return;
+    const assistant = generation.streamingMessage;
+    if (!assistant) return;
+    let list = messages;
+    const user = generation.userMessage;
+    if (user && !list.some((m) => m.id === user.id)) list = [...list, user];
+    const idx = list.findIndex((m) => m.id === assistant.id);
+    messages =
+      idx >= 0
+        ? list.map((m) => (m.id === assistant.id ? assistant : m))
+        : [...list, assistant];
+  }
 
   // Live usage meter: this conversation's running cost/tokens, refreshed after
   // each turn. There is no per-user budget API, so the meter shows spend plus
@@ -149,7 +240,6 @@ SPDX-License-Identifier: Apache-2.0
   let isSwitchingVersion = $state(false);
   let messagesContainer = $state<HTMLDivElement | undefined>(undefined);
   let messageInput = $state<MessageInput | undefined>(undefined);
-  let currentStreamingMessage = $state<ChatMessageType | null>(null);
   let autoScrollEnabled = true;
 
   // The most recent assistant turn in the transcript (ENGG-510). Its action row
@@ -157,7 +247,7 @@ SPDX-License-Identifier: Apache-2.0
   // row moves to it. Streaming turns still count — the row stays hidden while
   // streaming, so pinning the id early costs nothing.
   const lastAssistantId = $derived(
-    messages.reduce<string | null>(
+    visibleMessages.reduce<string | null>(
       (last, m) => (m.role === "assistant" ? m.id : last),
       null,
     ),
@@ -173,50 +263,41 @@ SPDX-License-Identifier: Apache-2.0
   let stopPinToBottom: (() => void) | null = null;
 
   /*
-   * The generation the Stop button acts on. The server cancels by assistant
-   * message id, which only exists once `message_start` arrives, so a stop
-   * pressed earlier is remembered and sent from there. The server then emits
-   * `cancelled` + `done` and closes the stream; if it has not closed within
-   * STOP_ABORT_FALLBACK_MS the request is aborted locally instead.
+   * The Stop button acts on the current chat's generation entry. The server
+   * cancels by assistant message id, which only exists once `message_start`
+   * arrives, so a stop pressed earlier is remembered and sent from there. The
+   * server then emits `cancelled` + `done` and closes the stream; if it has not
+   * closed within STOP_ABORT_FALLBACK_MS the request is aborted locally. Each
+   * chat has its own entry, so every streaming chat keeps a working Stop button.
    */
-  interface ActiveGeneration {
-    conversationId: string | null;
-    messageId: string | null;
-    controller: AbortController;
-    stopRequested: boolean;
-    abortTimer?: ReturnType<typeof setTimeout>;
-  }
   const STOP_ABORT_FALLBACK_MS = 5000;
-  let activeGeneration = $state.raw<ActiveGeneration | null>(null);
-  let isStopping = $state(false);
-  // Only offered on the conversation the generation belongs to.
-  const canStopGeneration = $derived(
-    isLoading &&
-      activeGeneration !== null &&
-      activeGeneration.conversationId === conversationId,
-  );
 
-  function beginGeneration(): ActiveGeneration {
-    const generation: ActiveGeneration = {
-      conversationId,
-      messageId: null,
-      controller: new AbortController(),
-      stopRequested: false,
-    };
-    activeGeneration = generation;
-    isStopping = false;
-    return generation;
-  }
-
-  function endGeneration(generation: ActiveGeneration) {
-    clearTimeout(generation.abortTimer);
-    if (activeGeneration === generation) {
-      activeGeneration = null;
-      isStopping = false;
+  // Register a generation under `key`, bound to the conversation it belongs to
+  // (null for a brand-new chat until the `conversation` event names it). Any
+  // prior finished/errored entry for the same key or conversation is dropped
+  // first, so there is only ever one generation per chat.
+  function beginGeneration(
+    key: string,
+    conversationIdForGeneration: string | null,
+  ): ChatGeneration {
+    if (conversationIdForGeneration) {
+      for (const existing of chatGenerations.values()) {
+        if (existing.conversationId === conversationIdForGeneration) {
+          removeGeneration(existing);
+        }
+      }
     }
+    const existingForKey = chatGenerations.get(key);
+    if (existingForKey) removeGeneration(existingForKey);
+    return createGeneration(key, conversationIdForGeneration);
   }
 
-  function requestServerCancel(generation: ActiveGeneration) {
+  function endGeneration(generation: ChatGeneration) {
+    clearTimeout(generation.abortTimer);
+    removeGeneration(generation);
+  }
+
+  function requestServerCancel(generation: ChatGeneration) {
     if (!generation.messageId) return;
     cancelMessageStream(generation.messageId).catch(() =>
       generation.controller.abort(),
@@ -224,10 +305,11 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   function handleStopGeneration() {
-    const generation = activeGeneration;
+    // Stop the reply of the chat on screen; other chats keep streaming.
+    const generation = activeEntry;
     if (!generation || generation.stopRequested) return;
     generation.stopRequested = true;
-    isStopping = true;
+    generation.isStopping = true;
     requestServerCancel(generation);
     generation.abortTimer = setTimeout(
       () => generation.controller.abort(),
@@ -236,7 +318,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   function markGenerationStarted(
-    generation: ActiveGeneration,
+    generation: ChatGeneration,
     messageId: string,
   ) {
     generation.messageId = messageId;
@@ -390,14 +472,25 @@ SPDX-License-Identifier: Apache-2.0
     return stream.conversationId === chatId;
   }
 
-  // Start a generation's artifact stream and reset the per-generation panel
-  // state. Called at the start of every send/regenerate so it starts clean.
-  function startArtifactStream(): ArtifactStream {
-    panelArtifacts = [];
-    panelActiveIndex = 0;
-    viewedArtifactIds = new Set();
-    autoShownArtifact = false;
-    const stream: ArtifactStream = { conversationId, artifacts: new Map() };
+  // Start a generation's artifact stream. The panel is reset only when the
+  // stream belongs to the chat on screen, so a reply streaming in a background
+  // chat never clears the panel of the chat the user is looking at.
+  function startArtifactStream(
+    streamConversationId: string | null = conversationId,
+  ): ArtifactStream {
+    const stream: ArtifactStream = {
+      conversationId: streamConversationId,
+      artifacts: new Map(),
+    };
+    const viewing =
+      streamConversationId ===
+      new URLSearchParams(window.location.search).get("chatId");
+    if (viewing) {
+      panelArtifacts = [];
+      panelActiveIndex = 0;
+      viewedArtifactIds = new Set();
+      autoShownArtifact = false;
+    }
     liveArtifactStreams.add(stream);
     return stream;
   }
@@ -706,7 +799,10 @@ SPDX-License-Identifier: Apache-2.0
     saveMcpSelection(selectedMcpServers);
   }
 
-  function handleBudgetWarning(data: BudgetWarningMessage) {
+  function handleBudgetWarning(
+    data: BudgetWarningMessage,
+    generation: ChatGeneration,
+  ) {
     let budgetAvailable = parseInt(data.budget_available, 10);
     let description_key = "";
     let solution_key = "";
@@ -720,7 +816,7 @@ SPDX-License-Identifier: Apache-2.0
       description_key = "chat.errors.budgetExhaustedWarn";
     }
 
-    error = new ApiError(200, {
+    generation.error = new ApiError(200, {
       type: "rich",
       code: 200,
       description: data.message,
@@ -856,7 +952,9 @@ SPDX-License-Identifier: Apache-2.0
 
     if (!messagesContainer || !autoScrollEnabled) return;
 
-    const messageIndex = messages.findIndex((m) => m.id === streamingMessageId);
+    const messageIndex = visibleMessages.findIndex(
+      (m) => m.id === streamingMessageId,
+    );
     const messageElement =
       messagesContainer.querySelectorAll(".message")[messageIndex];
 
@@ -889,6 +987,8 @@ SPDX-License-Identifier: Apache-2.0
     uploadedFiles?: UploadedFile[],
     webSearch?: boolean,
   ) {
+    // Already streaming IN THIS CHAT — ignore. Another chat streaming leaves
+    // `isLoading` false here, so its reply never blocks this composer.
     if (isLoading) return;
 
     // The model registry hasn't resolved a model yet (brand-new chat opened
@@ -899,12 +999,11 @@ SPDX-License-Identifier: Apache-2.0
       return;
     }
 
-    error = null;
-    streamRetryCount = 0; // a fresh send starts a new auto-reconnect budget
-    isLoading = true;
     autoScrollEnabled = true; // Reset auto-scroll when starting new message
 
-    // Add user message
+    // The optimistic user bubble. It is overlaid onto the transcript by the
+    // generation entry (see `visibleMessages`) rather than pushed into `messages`,
+    // so it only ever shows in the chat it was sent from.
     const userMessage: ChatMessageType = {
       id: crypto.randomUUID(),
       role: "user",
@@ -918,27 +1017,67 @@ SPDX-License-Identifier: Apache-2.0
           type: file.type,
         })) || [],
     };
-    messages = [...messages, userMessage];
-
-    const userTempId = userMessage.id;
 
     // Disables switching conversation while initializing new conversation
     window.dispatchEvent(new CustomEvent("initializingConversation"));
 
+    await sendTurn(conversationId, content, uploadedFiles, webSearch, userMessage);
+  }
+
+  /**
+   * Stream one send against a specific conversation (null for a brand-new chat).
+   * Factored out of `handleSendMessage` so auto-reconnect can re-send to the SAME
+   * conversation — even one the user is no longer looking at — instead of the
+   * chat currently on screen (ENGG-530).
+   */
+  async function sendTurn(
+    targetConversationId: string | null,
+    content: string,
+    uploadedFiles: UploadedFile[] | undefined,
+    webSearch: boolean | undefined,
+    userMessage: ChatMessageType,
+    retryBudget = 0,
+  ) {
+    const key = targetConversationId ?? currentDraftKey;
     await runAssistantStream({
+      key,
+      conversationIdForGeneration: targetConversationId,
       promptText: content,
-      // Swap the temporary user id for the server's id once it streams back on
-      // message_start, so the message can be edited right away (ENGG-459).
-      onUserMessageId: (realId) => {
-        if (!realId || realId === userTempId) return;
-        messages = messages.map((m) =>
-          m.id === userTempId ? { ...m, id: realId } : m,
-        );
+      userMessage,
+      retryBudget,
+      // A dropped connection re-runs this turn on its own conversation (which by
+      // now has an id), carrying the spent budget forward. Once the user message
+      // was persisted (its server id is known) we regenerate that turn rather
+      // than send a duplicate; if it dropped before then, we re-send it.
+      resend: ({ conversationId, userMessageId, retryBudget }) => {
+        if (userMessageId) {
+          void regenerateTurn(
+            conversationId,
+            userMessageId,
+            content,
+            uploadedFiles,
+            webSearch,
+            retryBudget,
+          );
+        } else {
+          void sendTurn(
+            conversationId,
+            content,
+            uploadedFiles,
+            webSearch,
+            {
+              ...userMessage,
+              id: crypto.randomUUID(),
+              timestamp: new Date().toISOString(),
+            },
+            retryBudget,
+          );
+        }
       },
       invoke: (callbacks) =>
         sendMessage({
           message: content,
-          conversationId: conversationId || undefined,
+          conversationId: targetConversationId || undefined,
           provider: selectedProvider,
           modelName: selectedModel,
           uploadedFiles,
@@ -958,13 +1097,30 @@ SPDX-License-Identifier: Apache-2.0
    * and any downstream changes are reflected.
    */
   async function runAssistantStream(params: {
+    key: string;
+    conversationIdForGeneration: string | null;
     promptText: string;
+    userMessage?: ChatMessageType | null;
     invoke: (callbacks: ChatStreamCallbacks) => Promise<void>;
-    onUserMessageId?: (userMessageId: string) => void;
     reloadOnDone?: boolean;
+    retryBudget?: number;
+    // Re-run this turn against its own conversation after a transport drop. The
+    // context is taken from the generation at reconnect time (its id is known by
+    // then), so the retry lands in the right chat — never the one on screen.
+    resend?: (ctx: {
+      conversationId: string;
+      userMessageId: string | null;
+      retryBudget: number;
+    }) => void;
   }) {
-    // Prepare streaming message
-    let pendingStreamingMessage: ChatMessageType | null = {
+    const gen = beginGeneration(params.key, params.conversationIdForGeneration);
+    gen.userMessage = params.userMessage ?? null;
+    gen.retryCount = params.retryBudget ?? 0;
+
+    // The live assistant bubble for THIS turn. It is held on the generation
+    // entry and overlaid onto its own chat's transcript, so it can never paint
+    // into another chat the user may switch to while it streams.
+    let pending: ChatMessageType = {
       id: crypto.randomUUID(),
       role: "assistant",
       content: "",
@@ -976,393 +1132,273 @@ SPDX-License-Identifier: Apache-2.0
       mergedWebSearch: null as MergedToolResult | null,
     };
 
-    let messageAddedToArray = $state(false);
-    let pendingConversationId = conversationId;
     // How many generated images have arrived for this assistant message (an
     // image model may return more than one — cap is a model property).
     let generatedImageIndex = 0;
-    const artifactStream = startArtifactStream();
-    const generation = beginGeneration();
-    turnInterrupted = false;
-    isTyping = true;
-    scrollToBottom();
+    const artifactStream = startArtifactStream(params.conversationIdForGeneration);
+    gen.isTyping = true;
+    if (isCurrentGeneration(gen)) {
+      autoScrollEnabled = true;
+      scrollToBottom();
+    }
 
-    // Update ui with a copy of the pending streaming message
-    currentStreamingMessage = { ...pendingStreamingMessage };
+    // Push `pending` to the entry and, when this is the chat on screen, keep its
+    // scroll pinned to the streaming bubble. A background turn only updates the
+    // entry — it touches neither the transcript nor the scroll of the open chat.
+    const paint = () => {
+      gen.streamingMessage = pending;
+      if (isCurrentGeneration(gen)) scrollToStreamingMessageTop(pending.id);
+    };
 
+    let didReload = false;
     try {
       await params.invoke({
-        signal: generation.controller.signal,
+        signal: gen.controller.signal,
 
         onConversationInitialized: ({ newConversationId }) => {
-          if (newConversationId) generation.conversationId = newConversationId;
-          // Update conversation ID and URL
-          if (newConversationId && newConversationId !== conversationId) {
+          if (!newConversationId) return;
+          gen.conversationId = newConversationId;
+          artifactStream.conversationId = newConversationId;
+          void linkPendingProject(newConversationId);
+          void linkPendingSkills(newConversationId);
+          window.dispatchEvent(new CustomEvent("refreshChatHistory"));
+
+          // Navigate to the new conversation ONLY if the user is still on the
+          // new chat that started it. If they've since opened another chat or
+          // started a fresh one, leave them there — this reply keeps streaming
+          // in the background (ENGG-530, row 5).
+          if (conversationId === null && currentDraftKey === gen.key) {
             conversationId = newConversationId;
-            pendingConversationId = newConversationId;
             updateUrlWithConversationId(newConversationId);
           }
-          if (newConversationId) artifactStream.conversationId = newConversationId;
-          if (newConversationId) void linkPendingProject(newConversationId);
-          if (newConversationId) void linkPendingSkills(newConversationId);
-
-          // Update loading and typing states
-          isLoading = true;
-          isTyping = true;
-
-          // Refresh chats list
-          window.dispatchEvent(new CustomEvent("refreshChatHistory"));
         },
         onStreamingStart: (messageId, userMessageId) => {
-          markGenerationStarted(generation, messageId);
-          if (userMessageId) params.onUserMessageId?.(userMessageId);
-          if (pendingStreamingMessage) {
-            messageAddedToArray = true;
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              id: messageId,
-            };
-            currentStreamingMessage = { ...pendingStreamingMessage };
-            messages = [
-              ...messages,
-              currentStreamingMessage as ChatMessageType,
-            ];
-
-            /*
-             * The assistant bubble is empty at `message_start`, but it now
-             * carries its own progress row (ChatMessage's .thinking-row, which
-             * runs off `isStreaming`), so the standalone dots hand over here.
-             * Image models keep them: that turn produces no text and no
-             * reasoning, so its bubble has nothing to show until
-             * image_generated lands.
-             */
-            isTyping = selectedIsImageModel;
-            isLoading = true;
-
-            scrollToStreamingMessageTop(pendingStreamingMessage.id);
+          markGenerationStarted(gen, messageId);
+          // Swap the temporary user id for the server's id so the message can be
+          // edited right away (ENGG-459), in the overlay and in the transcript.
+          if (
+            userMessageId &&
+            gen.userMessage &&
+            gen.userMessage.id !== userMessageId
+          ) {
+            const tempId = gen.userMessage.id;
+            gen.userMessage = { ...gen.userMessage, id: userMessageId };
+            if (isCurrentGeneration(gen)) {
+              messages = messages.map((m) =>
+                m.id === tempId ? { ...m, id: userMessageId } : m,
+              );
+            }
           }
+          pending = { ...pending, id: messageId };
+          gen.visible = true;
+          /*
+           * The assistant bubble is empty at `message_start`, but it carries its
+           * own progress row (ChatMessage's .thinking-row, which runs off
+           * `isStreaming`), so the standalone dots hand over here. Image models
+           * keep them: that turn produces no text and no reasoning, so its bubble
+           * has nothing to show until image_generated lands.
+           */
+          gen.isTyping = selectedIsImageModel;
+          paint();
         },
         /*
          * Reasoning text arrives before the answer does. Showing it as soon as
          * it lands is the point — it is the only sign of life on a model that
-         * thinks for a while — so the placeholder joins the array here too,
-         * exactly as a first visible token would do below.
+         * thinks for a while — so the bubble is revealed here too, exactly as a
+         * first visible token would do below.
          */
         onThinkingDelta: (token) => {
-          if (pendingStreamingMessage) {
-            if (!messageAddedToArray) {
-              messages = [...messages, pendingStreamingMessage];
-              messageAddedToArray = true;
-            }
-            // The thinking chip is now the progress indicator; drop the dots.
-            isTyping = false;
-
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              thinking: (pendingStreamingMessage.thinking ?? "") + token,
-            };
-            currentStreamingMessage = { ...pendingStreamingMessage };
-
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (currentStreamingMessage as ChatMessageType)
-                : m,
-            );
-
-            isLoading = true;
-            scrollToStreamingMessageTop(pendingStreamingMessage.id);
-          }
+          gen.visible = true;
+          gen.isTyping = false;
+          pending = {
+            ...pending,
+            thinking: (pending.thinking ?? "") + token,
+          };
+          paint();
         },
         onResponseDelta: (token) => {
-          if (pendingStreamingMessage) {
-            // Add message to array on first token if not already added
-            if (!messageAddedToArray && token.trim()) {
-              messages = [...messages, pendingStreamingMessage];
-              messageAddedToArray = true;
-            }
-            if (token.trim()) isTyping = false;
-
-            // Create a new message object with updated content
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              content: pendingStreamingMessage.content + token,
-            };
-
-            // Update the current streaming message
-            currentStreamingMessage = { ...pendingStreamingMessage };
-
-            // Update the message in the array
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (currentStreamingMessage as ChatMessageType)
-                : m,
-            );
-
-            isLoading = true;
-            scrollToStreamingMessageTop(pendingStreamingMessage.id);
+          if (token.trim()) {
+            gen.visible = true;
+            gen.isTyping = false;
           }
+          pending = { ...pending, content: pending.content + token };
+          paint();
         },
         onBudgetWarning: (data) => {
-          if (pendingStreamingMessage) {
-            handleBudgetWarning(data);
-            isLoading = true;
-          }
+          handleBudgetWarning(data, gen);
         },
         onToolCall: (toolCall) => {
-          if (pendingStreamingMessage) {
-            // Some providers (e.g. Gemini) skip message_start and emit tool_call
-            // directly. Ensure the assistant placeholder is in the array so the
-            // tool call UI (and any subsequent OAuth prompt) becomes visible.
-            if (!messageAddedToArray) {
-              messages = [...messages, pendingStreamingMessage];
-              messageAddedToArray = true;
-            }
-            // Merge by tool_id: update existing entry or add new one
-            const existingCalls = pendingStreamingMessage.toolCalls || [];
-            const existingIndex = existingCalls.findIndex(
-              (tc) => tc.tool_id === toolCall.tool_id,
-            );
-            let updatedToolCalls;
-            if (existingIndex >= 0) {
-              updatedToolCalls = [...existingCalls];
-              updatedToolCalls[existingIndex] = toolCall;
-            } else {
-              updatedToolCalls = [...existingCalls, toolCall];
-            }
-            const mergedWebSearch = mergeWebSearchResults(
-              updatedToolCalls,
-              pendingStreamingMessage.toolsResults || [],
-              "running",
-            );
-
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              toolCalls: updatedToolCalls,
-              mergedWebSearch: mergedWebSearch,
-            };
-
-            currentStreamingMessage = { ...pendingStreamingMessage };
-
-            // Update the message in the array
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (currentStreamingMessage as ChatMessageType)
-                : m,
-            );
-
-            isLoading = true;
-            scrollToStreamingMessageTop(pendingStreamingMessage.id);
+          // Some providers (e.g. Gemini) skip message_start and emit tool_call
+          // directly; reveal the bubble so the tool-call UI (and any OAuth
+          // prompt) shows.
+          gen.visible = true;
+          const existingCalls = pending.toolCalls || [];
+          const existingIndex = existingCalls.findIndex(
+            (tc) => tc.tool_id === toolCall.tool_id,
+          );
+          let updatedToolCalls;
+          if (existingIndex >= 0) {
+            updatedToolCalls = [...existingCalls];
+            updatedToolCalls[existingIndex] = toolCall;
+          } else {
+            updatedToolCalls = [...existingCalls, toolCall];
           }
+          const mergedWebSearch = mergeWebSearchResults(
+            updatedToolCalls,
+            pending.toolsResults || [],
+            "running",
+          );
+
+          pending = {
+            ...pending,
+            toolCalls: updatedToolCalls,
+            mergedWebSearch: mergedWebSearch,
+          };
+          paint();
         },
         onToolResult: (toolResult) => {
-          if (pendingStreamingMessage) {
-            // Update tool result
-            const updatedToolResults = [
-              ...(pendingStreamingMessage.toolsResults || []),
-              toolResult,
-            ];
+          const updatedToolResults = [
+            ...(pending.toolsResults || []),
+            toolResult,
+          ];
 
-            // Mark corresponding tool call as completed/error
-            const updatedToolCalls = (
-              pendingStreamingMessage.toolCalls || []
-            ).map((tc) =>
-              tc.tool_id === toolResult.tool_id
-                ? {
-                    ...tc,
-                    status: (toolResult.status === "error"
-                      ? "error"
-                      : "completed") as import("../../../types/toolCall").ToolCallStatus,
-                  }
-                : tc,
-            );
+          // Mark corresponding tool call as completed/error
+          const updatedToolCalls = (pending.toolCalls || []).map((tc) =>
+            tc.tool_id === toolResult.tool_id
+              ? {
+                  ...tc,
+                  status: (toolResult.status === "error"
+                    ? "error"
+                    : "completed") as import("../../../types/toolCall").ToolCallStatus,
+                }
+              : tc,
+          );
 
-            const mergedWebSearch = mergeWebSearchResults(
-              updatedToolCalls,
-              updatedToolResults || [],
-              "running",
-            );
+          const mergedWebSearch = mergeWebSearchResults(
+            updatedToolCalls,
+            updatedToolResults || [],
+            "running",
+          );
 
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              toolCalls: updatedToolCalls,
-              toolsResults: updatedToolResults,
-              mergedWebSearch,
-            };
-
-            currentStreamingMessage = { ...pendingStreamingMessage };
-
-            // Update the message in the array
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (currentStreamingMessage as ChatMessageType)
-                : m,
-            );
-
-            isLoading = true;
-            scrollToStreamingMessageTop(pendingStreamingMessage.id);
-          }
+          pending = {
+            ...pending,
+            toolCalls: updatedToolCalls,
+            toolsResults: updatedToolResults,
+            mergedWebSearch,
+          };
+          paint();
         },
         onArtifact: (artifact) => {
           applyStreamingArtifact(artifactStream, artifact);
         },
         onImageGenerated: (image) => {
-          if (pendingStreamingMessage) {
-            // Ensure the assistant placeholder is in the array (image models may
-            // emit no text deltas before the image arrives).
-            if (!messageAddedToArray) {
-              messages = [...messages, pendingStreamingMessage];
-              messageAddedToArray = true;
-            }
+          gen.visible = true;
+          // Append the generated image as a regular file so it renders inline
+          // via the existing file rendering. A new image never replaces a
+          // previous one — each result is appended.
+          const generatedFile = {
+            id: image.file_id,
+            name: generatedImageName(params.promptText, generatedImageIndex),
+            type: image.content_type || "image/png",
+            size: 0,
+          };
+          generatedImageIndex += 1;
 
-            // Append the generated image as a regular file so it renders inline
-            // via the existing file rendering. A new image never replaces a
-            // previous one — each result is appended.
-            const generatedFile = {
-              id: image.file_id,
-              name: generatedImageName(params.promptText, generatedImageIndex),
-              type: image.content_type || "image/png",
-              size: 0,
-            };
-            generatedImageIndex += 1;
-
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              files: [...(pendingStreamingMessage.files || []), generatedFile],
-            };
-
-            currentStreamingMessage = { ...pendingStreamingMessage };
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (currentStreamingMessage as ChatMessageType)
-                : m,
-            );
-
-            // Image has arrived — stop the "generating" typing indicator.
-            isTyping = false;
-            isLoading = true;
-            scrollToStreamingMessageTop(pendingStreamingMessage.id);
-          }
+          pending = {
+            ...pending,
+            files: [...(pending.files || []), generatedFile],
+          };
+          // Image has arrived — stop the "generating" typing indicator.
+          gen.isTyping = false;
+          paint();
         },
         onMcpAuthRequired: (authRequest: McpAuthRequest) => {
-          if (pendingStreamingMessage) {
-            // Some providers (e.g. Gemini) skip message_start and may emit
-            // mcp_oauth_required without any prior delta. Ensure the assistant
-            // placeholder is in the array so the OAuth connect prompt renders.
-            if (!messageAddedToArray) {
-              messages = [...messages, pendingStreamingMessage];
-              messageAddedToArray = true;
-            }
-            const existingRequests =
-              pendingStreamingMessage.mcpAuthRequests || [];
-            const alreadyExists = existingRequests.some(
-              (r) => r.server_id === authRequest.server_id,
-            );
-            if (!alreadyExists) {
-              pendingStreamingMessage = {
-                ...pendingStreamingMessage,
-                mcpAuthRequests: [...existingRequests, authRequest],
-              };
-
-              currentStreamingMessage = { ...pendingStreamingMessage };
-
-              messages = messages.map((m) =>
-                m.id === pendingStreamingMessage?.id
-                  ? (currentStreamingMessage as ChatMessageType)
-                  : m,
-              );
-
-              isLoading = true;
-              scrollToStreamingMessageTop(pendingStreamingMessage.id);
-            }
+          gen.visible = true;
+          const existingRequests = pending.mcpAuthRequests || [];
+          const alreadyExists = existingRequests.some(
+            (r) => r.server_id === authRequest.server_id,
+          );
+          if (!alreadyExists) {
+            pending = {
+              ...pending,
+              mcpAuthRequests: [...existingRequests, authRequest],
+            };
+            paint();
           }
         },
         onCancelled: () => {
-          if (pendingStreamingMessage) {
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              cancelled: true,
-            };
-          }
+          pending = { ...pending, cancelled: true };
+          paint();
         },
         onResponseStopped: (stopReason) => {
-          if (pendingStreamingMessage) {
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              stopReason,
-              cancelled:
-                stopReason === "user_cancelled" ||
-                pendingStreamingMessage.cancelled,
-            };
-          }
+          pending = {
+            ...pending,
+            stopReason,
+            cancelled: stopReason === "user_cancelled" || pending.cancelled,
+          };
+          paint();
         },
         onDone: async (data) => {
           // Live usage meter: fold this turn's spend into the running total so
-          // the meter updates without waiting for a reload.
-          const u = data as
-            | { cost?: number; total_tokens?: number; usage?: { total_tokens?: number } }
-            | undefined;
-          const turnCost = u?.cost;
-          const turnTokens = u?.usage?.total_tokens ?? u?.total_tokens;
-          if (typeof turnCost === "number") conversationCost += turnCost;
-          if (typeof turnTokens === "number") conversationTokens += turnTokens;
-          if (pendingStreamingMessage) {
-            let updatedMergedWebSearch = null;
-            if (pendingStreamingMessage.mergedWebSearch) {
-              updatedMergedWebSearch = {
-                ...pendingStreamingMessage.mergedWebSearch,
-                status: "completed",
-              };
-            }
-
-            // Finalize any tool call that never received a tool_result so the
-            // in-progress loader stops spinning after the stream ends.
-            const resultIds = new Set(
-              (pendingStreamingMessage.toolsResults || []).map(
-                (tr) => tr.tool_id,
-              ),
-            );
-            const finalizedToolCalls = (
-              pendingStreamingMessage.toolCalls || []
-            ).map((tc) =>
-              tc.status === "completed" ||
-              tc.status === "error" ||
-              resultIds.has(tc.tool_id)
-                ? tc
-                : {
-                    ...tc,
-                    status:
-                      "error" as import("../../../types/toolCall").ToolCallStatus,
-                  },
-            );
-
-            // Mark all tool calls as completed when the stream ends. Artifacts are
-            // NOT inlined/parsed into the message text (ENGG-387). We attach the
-            // streamed artifacts as structured metadata so the message renders a
-            // card afterwards, mirroring how the backend returns parts.artifacts
-            // on reload; the content is fetched by id when opened.
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              isStreaming: false,
-              toolCalls: finalizedToolCalls,
-              mergedWebSearch: updatedMergedWebSearch as MergedToolResult,
-              artifacts: [...artifactStream.artifacts.values()].map((a) => ({
-                id: a.id,
-                title: a.title,
-                content_type: a.contentType,
-              })),
-            };
-
-            currentStreamingMessage = { ...pendingStreamingMessage };
-
-            // Update the message in the array
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (currentStreamingMessage as ChatMessageType)
-                : m,
-            );
-
-            finishArtifactStream(artifactStream);
+          // the meter updates without waiting for a reload — but only for the
+          // chat on screen, so a background turn can't move this meter.
+          if (isCurrentGeneration(gen)) {
+            const u = data as
+              | {
+                  cost?: number;
+                  total_tokens?: number;
+                  usage?: { total_tokens?: number };
+                }
+              | undefined;
+            const turnCost = u?.cost;
+            const turnTokens = u?.usage?.total_tokens ?? u?.total_tokens;
+            if (typeof turnCost === "number") conversationCost += turnCost;
+            if (typeof turnTokens === "number") conversationTokens += turnTokens;
           }
+
+          let updatedMergedWebSearch = null;
+          if (pending.mergedWebSearch) {
+            updatedMergedWebSearch = {
+              ...pending.mergedWebSearch,
+              status: "completed",
+            };
+          }
+
+          // Finalize any tool call that never received a tool_result so the
+          // in-progress loader stops spinning after the stream ends.
+          const resultIds = new Set(
+            (pending.toolsResults || []).map((tr) => tr.tool_id),
+          );
+          const finalizedToolCalls = (pending.toolCalls || []).map((tc) =>
+            tc.status === "completed" ||
+            tc.status === "error" ||
+            resultIds.has(tc.tool_id)
+              ? tc
+              : {
+                  ...tc,
+                  status:
+                    "error" as import("../../../types/toolCall").ToolCallStatus,
+                },
+          );
+
+          // Mark all tool calls as completed when the stream ends. Artifacts are
+          // NOT inlined/parsed into the message text (ENGG-387). We attach the
+          // streamed artifacts as structured metadata so the message renders a
+          // card afterwards, mirroring how the backend returns parts.artifacts
+          // on reload; the content is fetched by id when opened.
+          pending = {
+            ...pending,
+            isStreaming: false,
+            toolCalls: finalizedToolCalls,
+            mergedWebSearch: updatedMergedWebSearch as MergedToolResult,
+            artifacts: [...artifactStream.artifacts.values()].map((a) => ({
+              id: a.id,
+              title: a.title,
+              content_type: a.contentType,
+            })),
+          };
+          gen.streamingMessage = pending;
+          finishArtifactStream(artifactStream);
         },
         onError: (errorMessage) => {
           // Store the error - it should be an ApiError instance
@@ -1377,51 +1413,42 @@ SPDX-License-Identifier: Apache-2.0
                 );
 
           // A transport interruption (tagged in chatApi) is recoverable — mark
-          // it so the finally block can auto-reconnect once.
+          // it so the finally block can auto-reconnect this chat's turn once.
           if (apiError.externalCode === "stream_interrupted") {
-            turnInterrupted = true;
+            gen.turnInterrupted = true;
           }
 
-          error = apiError;
-          if (pendingStreamingMessage) {
-            // Update the error in the message
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              error:
-                getLocalizedError(apiError, "description", $_) ||
-                apiError.description,
-              isStreaming: false,
-            };
-
-            // Update the message in the array
-            currentStreamingMessage = { ...pendingStreamingMessage };
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (currentStreamingMessage as ChatMessageType)
-                : m,
-            );
-
-            isLoading = true;
-            scrollToStreamingMessageTop(pendingStreamingMessage.id);
-          }
+          gen.error = apiError;
+          gen.visible = true;
+          pending = {
+            ...pending,
+            error:
+              getLocalizedError(apiError, "description", $_) ||
+              apiError.description,
+            isStreaming: false,
+          };
+          paint();
         },
       });
 
       // After an edit or regenerate, re-fetch the conversation so the new
       // version metadata (and anything downstream) is reflected (ENGG-459).
       // Skipped when the turn errored or was stopped — the server adds no new
-      // version in those cases, so a reload would only churn the view.
+      // version in those cases — and when this chat is no longer on screen, so a
+      // background turn never overwrites the transcript the user is reading.
       if (
         params.reloadOnDone &&
-        !error &&
-        !generation.controller.signal.aborted &&
-        conversationId
+        !gen.error &&
+        !gen.controller.signal.aborted &&
+        gen.conversationId &&
+        isCurrentGeneration(gen)
       ) {
-        await reloadConversation(conversationId);
+        await reloadConversation(gen.conversationId);
+        didReload = true;
       }
     } catch (err) {
       // Convert all errors to ApiError for consistent handling
-      const apiError =
+      gen.error =
         err instanceof ApiError
           ? err
           : new ApiError(
@@ -1430,40 +1457,100 @@ SPDX-License-Identifier: Apache-2.0
                 ? err.message
                 : $_("chat.errors.failedToSendMessage"),
             );
-
-      error = apiError;
     } finally {
       finishArtifactStream(artifactStream);
-      endGeneration(generation);
-
-      // Reset states
-      isTyping = false;
-      isLoading = false;
-      currentStreamingMessage = null;
-      pendingStreamingMessage = null;
+      gen.isLoading = false;
+      gen.isTyping = false;
 
       // A dropped connection auto-reconnects once; after that the error banner's
-      // Retry is the manual fallback. Deferred so this turn's cleanup settles
-      // first (and never fires for a user-cancelled stream).
-      if (
-        turnInterrupted &&
-        streamRetryCount < MAX_STREAM_AUTO_RETRIES &&
-        !generation.controller.signal.aborted &&
-        conversationId
-      ) {
-        streamRetryCount++;
-        turnInterrupted = false;
-        autoReconnecting = true;
+      // Retry is the manual fallback. It re-runs THIS chat's turn against its own
+      // conversation, so it never re-sends into whatever chat is now on screen
+      // (ENGG-530, row 3). The spent budget is carried on the next generation.
+      const canAutoReconnect =
+        gen.turnInterrupted &&
+        gen.retryCount < MAX_STREAM_AUTO_RETRIES &&
+        !gen.controller.signal.aborted &&
+        !!gen.conversationId &&
+        !!params.resend;
+
+      if (canAutoReconnect) {
+        // Keep this entry alive (showing "reconnecting…") until the retry starts,
+        // but drop its failed partial so the retry streams a clean answer.
+        gen.autoReconnecting = true;
+        const reconnectId = gen.conversationId!;
+        const userMessageId = gen.userMessage?.id ?? null;
+        const nextBudget = gen.retryCount + 1;
         setTimeout(() => {
-          autoReconnecting = false;
-          if (!isLoading) void handleRetryLastTurn();
+          removeGeneration(gen);
+          params.resend!({
+            conversationId: reconnectId,
+            userMessageId,
+            retryBudget: nextBudget,
+          });
         }, 800);
+      } else {
+        // Commit the finished turn into the visible transcript (current chat
+        // only); a reload already refreshed it when `didReload` is set.
+        if (!didReload) commitGeneration(gen);
+        if (gen.error && !gen.controller.signal.aborted) {
+          // A failed turn keeps its entry so this chat still shows the error
+          // banner and its manual Retry. The errored bubble is already committed
+          // (with its inline error), so drop the live one and let the banner
+          // show. Cleared on retry, dismiss, a new send, or leaving the chat.
+          gen.streamingMessage = null;
+          gen.isLoading = false;
+          gen.autoReconnecting = false;
+        } else {
+          endGeneration(gen);
+        }
       }
 
-      // Refocus input after exception
+      // Refocus the composer of the chat on screen.
       await tick();
-      messageInput?.focus();
+      if (isCurrentGeneration(gen)) messageInput?.focus();
     }
+  }
+
+  /**
+   * Regenerate the answer to a user turn, streaming through the regenerate
+   * endpoint against a specific conversation. Factored out so auto-reconnect can
+   * re-run a dropped turn on its OWN conversation — never the chat on screen
+   * (ENGG-530).
+   */
+  async function regenerateTurn(
+    targetConversationId: string,
+    userMessageId: string,
+    content: string,
+    uploadedFiles: UploadedFile[] | undefined,
+    webSearch: boolean | undefined,
+    retryBudget = 0,
+  ) {
+    await runAssistantStream({
+      key: targetConversationId,
+      conversationIdForGeneration: targetConversationId,
+      promptText: content,
+      reloadOnDone: true,
+      retryBudget,
+      resend: ({ conversationId, retryBudget }) =>
+        regenerateTurn(
+          conversationId,
+          userMessageId,
+          content,
+          uploadedFiles,
+          webSearch,
+          retryBudget,
+        ),
+      invoke: (callbacks) =>
+        regenerateMessageStream(targetConversationId, userMessageId, {
+          message: content,
+          provider: selectedProvider,
+          modelName: selectedModel,
+          uploadedFiles,
+          webSearch,
+          selectedMcpServers,
+          ...callbacks,
+        }),
+    });
   }
 
   /**
@@ -1477,9 +1564,9 @@ SPDX-License-Identifier: Apache-2.0
     const index = messages.findIndex((m) => m.id === id);
     if (index < 0 || messages[index].role !== "user") return;
 
-    error = null;
-    isLoading = true;
+    loadError = null;
     autoScrollEnabled = true;
+    const editConversationId = conversationId;
 
     // Optimistically apply the edit and truncate everything after it; the new
     // answer streams into a fresh assistant bubble below.
@@ -1487,10 +1574,12 @@ SPDX-License-Identifier: Apache-2.0
     messages = [...messages.slice(0, index), edited];
 
     await runAssistantStream({
+      key: editConversationId,
+      conversationIdForGeneration: editConversationId,
       promptText: newContent,
       reloadOnDone: true,
       invoke: (callbacks) =>
-        editMessageStream(conversationId!, id, {
+        editMessageStream(editConversationId, id, {
           message: newContent,
           provider: selectedProvider,
           modelName: selectedModel,
@@ -1543,28 +1632,20 @@ SPDX-License-Identifier: Apache-2.0
    */
   async function regenerateUserTurn(userIndex: number) {
     const userMessage = messages[userIndex];
-    if (!userMessage) return;
+    if (!userMessage || !conversationId) return;
 
-    error = null;
-    isLoading = true;
+    loadError = null;
     autoScrollEnabled = true;
 
     messages = messages.slice(0, userIndex + 1);
 
-    await runAssistantStream({
-      promptText: userMessage.content,
-      reloadOnDone: true,
-      invoke: (callbacks) =>
-        regenerateMessageStream(conversationId!, userMessage.id, {
-          message: userMessage.content,
-          provider: selectedProvider,
-          modelName: selectedModel,
-          uploadedFiles: (userMessage.files as UploadedFile[] | undefined) ?? [],
-          webSearch: webSearchEnabled,
-          selectedMcpServers,
-          ...callbacks,
-        }),
-    });
+    await regenerateTurn(
+      conversationId,
+      userMessage.id,
+      userMessage.content,
+      (userMessage.files as UploadedFile[] | undefined) ?? [],
+      webSearchEnabled,
+    );
   }
 
   /**
@@ -1580,26 +1661,18 @@ SPDX-License-Identifier: Apache-2.0
     if (i < 0) return;
     const userMessage = messages[i];
 
-    error = null;
+    loadError = null;
     if (conversationId) {
-      isLoading = true;
       autoScrollEnabled = true;
       // Drop the failed answer (and anything after the user turn) before retrying.
       messages = messages.slice(0, i + 1);
-      await runAssistantStream({
-        promptText: userMessage.content,
-        reloadOnDone: true,
-        invoke: (callbacks) =>
-          regenerateMessageStream(conversationId!, userMessage.id, {
-            message: userMessage.content,
-            provider: selectedProvider,
-            modelName: selectedModel,
-            uploadedFiles: (userMessage.files as UploadedFile[] | undefined) ?? [],
-            webSearch: webSearchEnabled,
-            selectedMcpServers,
-            ...callbacks,
-          }),
-      });
+      await regenerateTurn(
+        conversationId,
+        userMessage.id,
+        userMessage.content,
+        (userMessage.files as UploadedFile[] | undefined) ?? [],
+        webSearchEnabled,
+      );
     } else {
       // The turn never reached conversation creation — re-send it.
       messages = messages.slice(0, i);
@@ -1625,7 +1698,7 @@ SPDX-License-Identifier: Apache-2.0
       // full-page flash. A switch only needs to swap `messages` in place; the
       // keyed {#each} then reuses the DOM for unchanged turns.
       isSwitchingVersion = true;
-      error = null;
+      loadError = null;
       const conversation = await switchBranch(conversationId, messageId);
       conversationTitle = conversation.title || null;
       messages = mapServerMessages(conversation);
@@ -1635,7 +1708,7 @@ SPDX-License-Identifier: Apache-2.0
       showArtifactPanel = false;
       restoreArtifactStream(conversationId);
     } catch (err) {
-      error =
+      loadError =
         err instanceof ApiError
           ? err
           : new ApiError(500, $_("chat.errors.failedToLoadConversation"));
@@ -1716,362 +1789,49 @@ SPDX-License-Identifier: Apache-2.0
     });
   }
 
+  // Resume a turn that paused for an MCP OAuth connect (the user has now
+  // connected the connector). The paused answer is replaced by a fresh run of
+  // the same user turn, streamed through the shared per-conversation machinery
+  // so it stays isolated to this chat like any other reply (ENGG-530).
   async function continueProcessingRequest(assistantMessageId: string) {
-    // Find the user message that preceded this assistant message
     const msgIndex = messages.findIndex((m) => m.id === assistantMessageId);
-    if (msgIndex <= 0) return;
+    if (msgIndex <= 0 || !conversationId) return;
 
-    // Walk back to the user turn this answer replied to — it is not always the
+    // Walk back to the user turn this answer replied to — not always the
     // immediately preceding entry once edits/versions are in play (ENGG-459).
     let userIndex = msgIndex - 1;
     while (userIndex >= 0 && messages[userIndex].role !== "user") userIndex--;
     if (userIndex < 0) return;
     const userMessage = messages[userIndex];
+    const continueConversationId = conversationId;
 
-    let generatedImageIndex = 0;
-
-    // Set up pending streaming message for the existing assistant message
-    let pendingStreamingMessage: ChatMessageType | null = {
-      id: assistantMessageId,
-      role: "assistant",
-      content: "",
-      timestamp: new Date().toISOString(),
-      isStreaming: true,
-      model: selectedModel,
-      toolCalls: [] as ToolCall[],
-      toolsResults: [] as ToolResult[],
-      mergedWebSearch: null as MergedToolResult | null,
-    };
-
-    // Update the assistant message to show processing state
-    messages = messages.map((msg) => {
-      if (msg.id === assistantMessageId) {
-        return { ...pendingStreamingMessage! };
-      }
-      return msg;
-    });
-
-    // Process the original request without creating a new message
-    const artifactStream = startArtifactStream();
-    const generation = beginGeneration();
-    isLoading = true;
-    isTyping = true;
+    loadError = null;
     autoScrollEnabled = true;
+    // Drop the paused answer (its OAuth prompt is now resolved); the continued
+    // run streams a fresh answer in its place.
+    messages = messages.filter((m) => m.id !== assistantMessageId);
 
-    try {
-      await sendMessage({
-        message: userMessage.content,
-        conversationId: conversationId || undefined,
-        provider: selectedProvider,
-        modelName: selectedModel,
-        uploadedFiles: userMessage.files?.map((f) => ({
-          id: f.id,
-          name: f.name || "",
-          size: f.size || 0,
-          type: f.type || "",
-        })),
-        webSearch: webSearchEnabled,
-        selectedMcpServers,
-        signal: generation.controller.signal,
-
-        onConversationInitialized: ({ newConversationId }) => {
-          if (newConversationId) generation.conversationId = newConversationId;
-          if (newConversationId && newConversationId !== conversationId) {
-            conversationId = newConversationId;
-            updateUrlWithConversationId(newConversationId);
-          }
-          if (newConversationId) artifactStream.conversationId = newConversationId;
-          if (newConversationId) void linkPendingProject(newConversationId);
-          if (newConversationId) void linkPendingSkills(newConversationId);
-          window.dispatchEvent(new CustomEvent("refreshChatHistory"));
-        },
-        onStreamingStart: (messageId) => {
-          markGenerationStarted(generation, messageId);
-          if (pendingStreamingMessage) {
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              id: messageId,
-            };
-
-            // Update the existing assistant message with the real message ID
-            messages = messages.map((msg) => {
-              if (msg.id === assistantMessageId) {
-                return pendingStreamingMessage as ChatMessageType;
-              }
-              return msg;
-            });
-          }
-          // Handed over to the message's own progress row — see the other site.
-          isTyping = false;
-          isLoading = true;
-        },
-        onThinkingDelta: (token) => {
-          if (pendingStreamingMessage) {
-            isTyping = false;
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              thinking: (pendingStreamingMessage.thinking ?? "") + token,
-            };
-
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (pendingStreamingMessage as ChatMessageType)
-                : m,
-            );
-          }
-        },
-        onResponseDelta: (token) => {
-          if (pendingStreamingMessage) {
-            if (token.trim()) isTyping = false;
-            // Update the pending streaming message content
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              content: pendingStreamingMessage.content + token,
-            };
-
-            // Update the message in the array
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (pendingStreamingMessage as ChatMessageType)
-                : m,
-            );
-          }
-        },
-        onToolCall: (toolCall) => {
-          if (pendingStreamingMessage) {
-            // Merge by tool_id: update existing entry or add new one
-            const existingCalls = pendingStreamingMessage.toolCalls || [];
-            const existingIndex = existingCalls.findIndex(
-              (tc) => tc.tool_id === toolCall.tool_id,
-            );
-            let updatedToolCalls;
-            if (existingIndex >= 0) {
-              updatedToolCalls = [...existingCalls];
-              updatedToolCalls[existingIndex] = toolCall;
-            } else {
-              updatedToolCalls = [...existingCalls, toolCall];
-            }
-            const mergedWebSearch = mergeWebSearchResults(
-              updatedToolCalls,
-              pendingStreamingMessage.toolsResults || [],
-              "running",
-            );
-
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              toolCalls: updatedToolCalls,
-              mergedWebSearch: mergedWebSearch,
-            };
-
-            // Update the message in the array
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (pendingStreamingMessage as ChatMessageType)
-                : m,
-            );
-          }
-        },
-        onToolResult: (toolResult) => {
-          if (pendingStreamingMessage) {
-            const updatedToolResults = [
-              ...(pendingStreamingMessage.toolsResults || []),
-              toolResult,
-            ];
-
-            // Mark corresponding tool call as completed/error
-            const updatedToolCalls = (
-              pendingStreamingMessage.toolCalls || []
-            ).map((tc) =>
-              tc.tool_id === toolResult.tool_id
-                ? {
-                    ...tc,
-                    status: (toolResult.status === "error"
-                      ? "error"
-                      : "completed") as import("../../../types/toolCall").ToolCallStatus,
-                  }
-                : tc,
-            );
-
-            const mergedWebSearch = mergeWebSearchResults(
-              updatedToolCalls,
-              updatedToolResults || [],
-              "running",
-            );
-
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              toolCalls: updatedToolCalls,
-              toolsResults: updatedToolResults,
-              mergedWebSearch,
-            };
-
-            // Update the message in the array
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (pendingStreamingMessage as ChatMessageType)
-                : m,
-            );
-          }
-        },
-        onArtifact: (artifact) => {
-          applyStreamingArtifact(artifactStream, artifact);
-        },
-        onImageGenerated: (image) => {
-          if (pendingStreamingMessage) {
-            const generatedFile = {
-              id: image.file_id,
-              name: generatedImageName(
-                userMessage.content,
-                generatedImageIndex,
-              ),
-              type: image.content_type || "image/png",
-              size: 0,
-            };
-            generatedImageIndex += 1;
-
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              files: [...(pendingStreamingMessage.files || []), generatedFile],
-            };
-
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (pendingStreamingMessage as ChatMessageType)
-                : m,
-            );
-            isTyping = false;
-            isLoading = true;
-          }
-        },
-        onCancelled: () => {
-          if (pendingStreamingMessage) {
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              cancelled: true,
-            };
-          }
-        },
-        onResponseStopped: (stopReason) => {
-          if (pendingStreamingMessage) {
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              stopReason,
-              cancelled:
-                stopReason === "user_cancelled" ||
-                pendingStreamingMessage.cancelled,
-            };
-          }
-        },
-        onDone: async (data) => {
-          // Live usage meter: fold this turn's spend into the running total so
-          // the meter updates without waiting for a reload.
-          const u = data as
-            | { cost?: number; total_tokens?: number; usage?: { total_tokens?: number } }
-            | undefined;
-          const turnCost = u?.cost;
-          const turnTokens = u?.usage?.total_tokens ?? u?.total_tokens;
-          if (typeof turnCost === "number") conversationCost += turnCost;
-          if (typeof turnTokens === "number") conversationTokens += turnTokens;
-          if (pendingStreamingMessage) {
-            let updatedMergedWebSearch = null;
-            if (pendingStreamingMessage.mergedWebSearch) {
-              updatedMergedWebSearch = {
-                ...pendingStreamingMessage.mergedWebSearch,
-                status: "completed",
-              };
-            }
-
-            // Finalize any tool call that never received a tool_result so the
-            // in-progress loader stops spinning after the stream ends.
-            const resultIds = new Set(
-              (pendingStreamingMessage.toolsResults || []).map(
-                (tr) => tr.tool_id,
-              ),
-            );
-            const finalizedToolCalls = (
-              pendingStreamingMessage.toolCalls || []
-            ).map((tc) =>
-              tc.status === "completed" ||
-              tc.status === "error" ||
-              resultIds.has(tc.tool_id)
-                ? tc
-                : {
-                    ...tc,
-                    status:
-                      "error" as import("../../../types/toolCall").ToolCallStatus,
-                  },
-            );
-
-            // Mark all tool calls as completed when the stream ends. Artifacts are
-            // NOT inlined into the message text (ENGG-387) — see the send() path.
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              isStreaming: false,
-              toolCalls: finalizedToolCalls,
-              mergedWebSearch: updatedMergedWebSearch as MergedToolResult,
-              artifacts: [...artifactStream.artifacts.values()].map((a) => ({
-                id: a.id,
-                title: a.title,
-                content_type: a.contentType,
-              })),
-            };
-
-            // Update the message in the array
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (pendingStreamingMessage as ChatMessageType)
-                : m,
-            );
-
-            finishArtifactStream(artifactStream);
-          }
-          isLoading = false;
-          isTyping = false;
-        },
-        onError: (err) => {
-          if (err instanceof ApiError) {
-            error = err;
-          } else {
-            error = new ApiError(500, err.message);
-          }
-          if (pendingStreamingMessage) {
-            const errorMessage =
-              getLocalizedError(error, "description", $_) ||
-              (typeof error.detail === "string"
-                ? error.detail
-                : error.detail?.description || "Unknown error");
-            pendingStreamingMessage = {
-              ...pendingStreamingMessage,
-              error: errorMessage,
-              isStreaming: false,
-            };
-
-            // Update the message in the array
-            messages = messages.map((m) =>
-              m.id === pendingStreamingMessage?.id
-                ? (pendingStreamingMessage as ChatMessageType)
-                : m,
-            );
-          }
-          isLoading = false;
-          isTyping = false;
-        },
-      });
-    } catch (err) {
-      if (err instanceof ApiError) {
-        error = err;
-      } else {
-        error = new ApiError(
-          500,
-          err instanceof Error ? err.message : "Failed to process request",
-        );
-      }
-      isLoading = false;
-      isTyping = false;
-    } finally {
-      finishArtifactStream(artifactStream);
-      endGeneration(generation);
-    }
+    await runAssistantStream({
+      key: continueConversationId,
+      conversationIdForGeneration: continueConversationId,
+      promptText: userMessage.content,
+      invoke: (callbacks) =>
+        sendMessage({
+          message: userMessage.content,
+          conversationId: continueConversationId,
+          provider: selectedProvider,
+          modelName: selectedModel,
+          uploadedFiles: userMessage.files?.map((f) => ({
+            id: f.id,
+            name: f.name || "",
+            size: f.size || 0,
+            type: f.type || "",
+          })),
+          webSearch: webSearchEnabled,
+          selectedMcpServers,
+          ...callbacks,
+        }),
+    });
   }
 
   function filterLatestById<T extends { tool_id: string }>(
@@ -2250,8 +2010,7 @@ SPDX-License-Identifier: Apache-2.0
     if (chatId) {
       try {
         isLoadingConversation = true;
-        isLoading = true;
-        error = null;
+        loadError = null;
         showArtifactPanel = false;
 
         const conversation = await getConversation(chatId);
@@ -2307,11 +2066,10 @@ SPDX-License-Identifier: Apache-2.0
                   : $_("chat.errors.failedToLoadConversation"),
               );
 
-        error = apiError;
+        loadError = apiError;
         console.error("Failed to load conversation:", err);
         messages = []; // Clear messages on error
       } finally {
-        isLoading = false;
         isLoadingConversation = false;
 
         // Wait for Svelte to finish updating the DOM with the new messages.
@@ -2328,13 +2086,16 @@ SPDX-License-Identifier: Apache-2.0
         messageInput?.focus();
       }
     } else {
-      // No chatId in URL, clear everything
+      // No chatId in URL, clear everything. A fresh draft key detaches any
+      // reply still streaming in the chat we just left, so this new chat starts
+      // clean and that reply keeps running in the background (ENGG-530).
       conversationId = null;
+      currentDraftKey = makeDraftKey();
       conversationTitle = null;
       messages = [];
       conversationCost = 0;
       conversationTokens = 0;
-      error = null;
+      loadError = null;
       isLoadingConversation = false;
       showArtifactPanel = false;
 
@@ -2392,8 +2153,16 @@ SPDX-License-Identifier: Apache-2.0
     }
   }
 
-  // Focus the chat input when requested (e.g., when "New Chat" is clicked)
+  // Focus the chat input when requested (e.g., when "New Chat" is clicked).
+  // "New Chat" navigates to "/", but if a brand-new chat is still streaming its
+  // first reply the URL is already "/" (we don't navigate while it streams), so
+  // the route doesn't change and loadConversationFromUrl won't run. Detach that
+  // reply with a fresh draft key here too, so the composer clears and the reply
+  // keeps streaming in the background rather than bouncing the user back to it.
   function handleFocusChatInput() {
+    if (conversationId === null && activeEntry) {
+      currentDraftKey = makeDraftKey();
+    }
     messageInput?.focus();
   }
 
@@ -2494,7 +2263,7 @@ SPDX-License-Identifier: Apache-2.0
     aria-label={$_("chat.messageInput.loadingModels")}
     aria-busy="true"
   ></div>
-{:else if messages.length === 0}
+{:else if visibleMessages.length === 0}
   <!-- Empty state — Figma "chat/empty-state" (159:15193, round 2) -->
   <div class="chat-container chat-container--empty">
     <div class="chat-scroll-area">
@@ -2643,7 +2412,7 @@ SPDX-License-Identifier: Apache-2.0
         </div>
         <button
           class="dismiss-btn"
-          onclick={() => (error = null)}
+          onclick={dismissError}
           aria-label={$_("chat.errors.dismissError")}
           title={$_("chat.errors.dismissError")}
         >
@@ -2676,7 +2445,7 @@ SPDX-License-Identifier: Apache-2.0
         aria-label={$_("chat.messageInput.messageInput")}
       >
         <div class="messages-inner">
-          {#each messages as message, index (message.id)}
+          {#each visibleMessages as message, index (message.id)}
             <!-- Chat message -->
             <ChatMessage
               {message}
@@ -2798,7 +2567,7 @@ SPDX-License-Identifier: Apache-2.0
               {/if}
               <button
                 class="dismiss-btn"
-                onclick={() => (error = null)}
+                onclick={dismissError}
                 aria-label={$_("chat.errors.dismissError")}
                 title={$_("chat.errors.dismissError")}
               >

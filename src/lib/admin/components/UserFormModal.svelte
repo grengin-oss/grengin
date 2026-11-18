@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0
   import { getDepartments } from "../../api/admin/departments.js";
   import { ApiError } from "../../api/client.js";
   import type { Department, RoleUserAssignment } from "../types.js";
+  import { canAddGlobalRole } from "../roleAssignments.js";
   import { toast } from "../../components/Toaster.svelte";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
   import { tick } from "svelte";
@@ -146,6 +147,8 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   async function handleAddRoleAndClose(roleId: string): Promise<void> {
+    const role = roles.find((role) => role.id === roleId);
+    if (!role || roleAssignmentsLoading || addingRoleId || !canAddGlobalRole(role, roleAssignments)) return;
     addingRoleId = roleId;
     try {
       await handleAddRoleGlobal(roleId);
@@ -463,19 +466,21 @@ SPDX-License-Identifier: Apache-2.0
                         {role.name}
                       </div>
                       <div class="role-actions" role="group" aria-labelledby={`role-option-${mode}-${role.id}`}>
-                        <button
-                          type="button"
-                          class="btn-role-add"
-                          onclick={() => handleAddRoleAndClose(role.id)}
-                          disabled={addingRoleId === role.id}
-                          aria-label={$_("admin.users.addRoleGlobalAria", {
-                            values: { role: role.name },
-                          })}
-                        >
-                        {addingRoleId === role.id
-                          ? $_("admin.common.adding")
-                          : $_("admin.users.addRoleGlobal")}
-                        </button>
+                        {#if canAddGlobalRole(role, roleAssignments)}
+                          <button
+                            type="button"
+                            class="btn-role-add"
+                            onclick={() => handleAddRoleAndClose(role.id)}
+                            disabled={roleAssignmentsLoading || addingRoleId !== null}
+                            aria-label={$_("admin.users.addRoleGlobalAria", {
+                              values: { role: role.name },
+                            })}
+                          >
+                            {addingRoleId === role.id
+                              ? $_("admin.common.adding")
+                              : $_("admin.users.addRoleGlobal")}
+                          </button>
+                        {/if}
                         <button
                           type="button"
                           class="btn-role-scope"

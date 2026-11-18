@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
   import type { Role } from "../../../api/admin/roles.js";
   import type { Permission } from "../../../api/admin/permissions.js";
   import type { User } from "../../types.js";
+  import { requiresDepartmentScope } from "../../roleAssignments.js";
   import LoadingSpinner from "../LoadingSpinner.svelte";
   import AdminPanelCard from "../AdminPanelCard.svelte";
   import AdminEmptyState from "../AdminEmptyState.svelte";
@@ -386,6 +387,14 @@ SPDX-License-Identifier: Apache-2.0
     if (!canAssignRoles) return;
     const roleId = showAddUserSearch;
     if (!roleId) return;
+
+    const role = roles.find((role) => role.id === roleId);
+    if (!role) return;
+    if (requiresDepartmentScope(role)) {
+      resetAddUserSearch();
+      openDepartmentModal(role, user);
+      return;
+    }
 
     addingUserId = user.id;
     try {
