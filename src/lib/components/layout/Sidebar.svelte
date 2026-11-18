@@ -19,6 +19,10 @@ SPDX-License-Identifier: Apache-2.0
     APP_EVENTS,
   } from "../../features/shortcuts/shortcuts.svelte.js";
   import SidebarSearchModal from "./SidebarSearchModal.svelte";
+  import {
+    listProjects,
+    PROJECTS_CHANGED_EVENT,
+  } from "../../api/projectsApi";
 
   interface Props {
     isCollapsed?: boolean;
@@ -84,6 +88,34 @@ SPDX-License-Identifier: Apache-2.0
   // Detect if we're in admin view
   let currentPath = $state(window.location.pathname);
   let isAdminView = $derived(currentPath.startsWith("/admin"));
+
+  // Count shown on the sidebar's "Projects" row; hidden when there are none.
+  let projectCount = $state<number | null>(null);
+  let projectCountLabel = $derived(
+    projectCount ? String(projectCount) : "",
+  );
+
+  async function refreshProjectCount() {
+    try {
+      const { projects } = await listProjects();
+      projectCount = projects.length;
+    } catch {
+      // Keep the last known count; the row still works without it.
+    }
+  }
+
+  $effect(() => {
+    if (isAdminView) return;
+    refreshProjectCount();
+    window.addEventListener(PROJECTS_CHANGED_EVENT, refreshProjectCount);
+    return () =>
+      window.removeEventListener(PROJECTS_CHANGED_EVENT, refreshProjectCount);
+  });
+
+  function goToProjects() {
+    navigate("/projects");
+    collapseSidebarOnMobile();
+  }
   // Control Hub is shown only when the user actually has an admin page to land
   // on. `hasAnyPermissions()` would also count member grants like `chats:share`,
   // which would open the admin area straight onto the "forbidden" page.
@@ -827,28 +859,62 @@ SPDX-License-Identifier: Apache-2.0
             </button>
           </div>
         </div>
-        <button
-          class="new-chat"
-          onclick={startNewChat}
-          title={$_("sidebar.newChat")}
-        >
-          <span class="new-chat__left">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M7 12H17M12 7V17" />
-            </svg>
-            <span class="new-chat__label">{$_("sidebar.newChat")}</span>
-          </span>
-        </button>
+        <!-- New chat + Projects share one soft-blue card, split by a rule -->
+        <div class="nav-card">
+          <button
+            class="nav-card__row"
+            onclick={startNewChat}
+            title={$_("sidebar.newChat")}
+          >
+            <span class="nav-card__left">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12H19M12 5V19" />
+              </svg>
+              <span class="nav-card__label">{$_("sidebar.newChat")}</span>
+            </span>
+          </button>
+          <button
+            class="nav-card__row"
+            class:nav-card__row--active={currentPath === "/projects"}
+            onclick={goToProjects}
+            title={$_("sidebar.allProjects")}
+            aria-current={currentPath === "/projects" ? "page" : undefined}
+          >
+            <span class="nav-card__left">
+              <svg
+                width="16"
+                height="16"
+                viewBox="5 6 14 12"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="6" y="9" width="12" height="8" rx="2" />
+                <path
+                  d="M9 9C9 7.89543 9.89543 7 11 7H13C14.1046 7 15 7.89543 15 9H9Z"
+                />
+                <path d="M6 13H18" />
+              </svg>
+              <span class="nav-card__label">{$_("sidebar.projects")}</span>
+            </span>
+            {#if projectCountLabel}
+              <span class="nav-card__count">{projectCountLabel}</span>
+            {/if}
+          </button>
+        </div>
       {:else}
         <Link to="/" class="rail-logo-link" onclick={startNewChat}>
           <img src="/grengin-icon.svg" alt="Grengin" class="logo-mark" />
@@ -897,11 +963,15 @@ SPDX-License-Identifier: Apache-2.0
         {:then mod}
           {@const SidebarChatSection = mod.SidebarChatSection}
           {@const SidebarProjectsSection = mod.SidebarProjectsSection}
-          <SidebarProjectsSection
-            {isCollapsed}
-            {currentPath}
-            onCollapseSidebar={collapseSidebarOnMobile}
-          />
+          <!-- Expanded sidebar reaches projects through the card's Projects
+               row; the collapsed rail still lists project shortcuts. -->
+          {#if isCollapsed}
+            <SidebarProjectsSection
+              {isCollapsed}
+              {currentPath}
+              onCollapseSidebar={collapseSidebarOnMobile}
+            />
+          {/if}
           <SidebarChatSection
             {isCollapsed}
             {currentPath}
@@ -1819,48 +1889,71 @@ SPDX-License-Identifier: Apache-2.0
     text-overflow: ellipsis;
   }
 
-  /* ===== "New chat" (Figma: 40px, 8px radius, soft fill) ===== */
-  .new-chat {
+  /* ===== New chat + Projects card (soft fill, hairline border, 8px radius) ===== */
+  .nav-card {
     display: flex;
-    height: 40px;
-    padding: 10px 12px;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     align-self: stretch;
     flex-shrink: 0;
-    border: none;
+    border: 1px solid var(--gx-line);
     border-radius: 8px;
     background: var(--gx-module-bg);
+    overflow: hidden;
+  }
+
+  .nav-card__row {
+    display: flex;
+    height: 40px;
+    padding: 0 14px;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: var(--gx-nav-accent);
     cursor: pointer;
     box-shadow: none;
     backdrop-filter: none;
     transition: background-color 120ms ease;
   }
 
-  .new-chat:hover {
-    background: var(--gx-module-bg);
+  .nav-card__row + .nav-card__row {
+    border-top: 1px solid var(--gx-line);
+  }
+
+  .nav-card__row:hover,
+  .nav-card__row--active {
+    background: var(--gx-module-bg-hover);
     transform: none;
     box-shadow: none;
   }
 
-  .new-chat:focus-visible {
+  .nav-card__row:focus-visible {
     outline: 2px solid var(--gx-blue);
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 
-  .new-chat__left {
+  .nav-card__left {
     display: flex;
-    gap: 2px;
+    gap: 8px;
     align-items: center;
-    color: var(--gx-nav-accent);
+    min-width: 0;
   }
 
-  .new-chat__label {
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 20px;
-    color: var(--gx-nav-accent);
+  .nav-card__label,
+  .nav-card__count {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 14px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
     white-space: nowrap;
+    color: currentcolor;
+  }
+
+  .nav-card__count {
+    color: var(--gx-dim);
   }
 
   /* ===== Collapsed rail icon buttons (Figma: 40px, 8px radius) ===== */
@@ -2149,7 +2242,7 @@ SPDX-License-Identifier: Apache-2.0
 
     .action-btn,
     .rail-btn,
-    .new-chat,
+    .nav-card__row,
     .ch-action-btn,
     .ch-back-sm,
     .ch-module,

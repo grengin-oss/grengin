@@ -28,6 +28,14 @@ import type {
  * `camelizeKeys` handles both shapes, so the mock keeps working unchanged.
  */
 
+/** Fired on `window` after a project is created or deleted, so views that
+ *  show the project count (the sidebar's Projects row) can refresh it. */
+export const PROJECTS_CHANGED_EVENT = 'grengin:projects-changed';
+
+function notifyProjectsChanged() {
+  window.dispatchEvent(new CustomEvent(PROJECTS_CHANGED_EVENT));
+}
+
 export async function listProjects(): Promise<ProjectListResponse> {
   return camelizeKeys<ProjectListResponse>(await request('/projects'));
 }
@@ -37,12 +45,14 @@ export async function getProject(id: string): Promise<Project> {
 }
 
 export async function createProject(payload: CreateProjectPayload): Promise<Project> {
-  return camelizeKeys<Project>(
+  const project = camelizeKeys<Project>(
     await request('/projects', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
   );
+  notifyProjectsChanged();
+  return project;
 }
 
 export async function updateProject(id: string, payload: UpdateProjectPayload): Promise<Project> {
@@ -55,9 +65,10 @@ export async function updateProject(id: string, payload: UpdateProjectPayload): 
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  return request<void>(`/projects/${id}`, {
+  await request<void>(`/projects/${id}`, {
     method: 'DELETE',
   });
+  notifyProjectsChanged();
 }
 
 export async function shareProject(id: string): Promise<{ shareUrl: string }> {
