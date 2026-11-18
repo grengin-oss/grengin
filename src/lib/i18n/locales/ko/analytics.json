@@ -160,7 +160,7 @@
       "title": "성능 추세",
       "multiMetric": {
         "title": "다중 메트릭 추세",
-        "subtitle": "요청 • 토큰 • 지연시간",
+        "subtitle": "요청 • 토큰",
         "requests": "요청",
         "tokens": "토큰",
         "latency": "지연시간",
