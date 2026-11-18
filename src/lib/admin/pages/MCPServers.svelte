@@ -827,7 +827,10 @@ SPDX-License-Identifier: Apache-2.0
       if (!brokered) {
         await updateMcpServer(server.id, { connection_config: updatedConfig });
       }
-      const authorization = await startMcpAuthorization(server.id, { reconnect });
+      const authorization = await startMcpAuthorization(server.id, {
+        reconnect,
+        connectorKey: connectorKeyOf(server),
+      });
       if (authorization?.connected) {
         toast.success($_("admin.mcpServers.connected"));
         connectingServerId = null;

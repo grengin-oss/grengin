@@ -125,6 +125,7 @@
       "manifestMismatch": "O conector publicado não corresponde ao catálogo.",
       "unknown": "Conector desconhecido",
       "notAdded": "Um administrador precisa adicionar este conector antes que você possa se conectar.",
+      "connectedElsewhere": "Sua conta já está conectada a este conector por outra instalação. Desconecte-a lá primeiro: é permitida uma conexão por conector.",
       "revocationPending": "A conexão anterior ainda está sendo removida. Tente novamente em instantes.",
       "noConnection": "Nenhuma conexão para desconectar",
       "connectFailed": "Não foi possível conectar. Tente novamente.",

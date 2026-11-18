@@ -125,6 +125,7 @@
       "manifestMismatch": "The published connector does not match the catalog.",
       "unknown": "Unknown connector",
       "notAdded": "An admin needs to add this connector before you can connect.",
+      "connectedElsewhere": "Your account is already connected to this connector through another installation. Disconnect it there first: one connection per connector is supported.",
       "revocationPending": "The previous connection is still being cleaned up. Try again in a moment.",
       "noConnection": "No connection to disconnect",
       "connectFailed": "Could not connect. Try again.",

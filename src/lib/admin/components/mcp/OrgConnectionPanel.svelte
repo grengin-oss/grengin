@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0
     getOrgConnection,
   } from '../../../api/admin/mcpServers.js';
   import { startMcpAuthorization } from '../../../api/mcpAuthorize.js';
+  import { connectorKeyOf } from '../../../api/admin/connectors.js';
 
   interface Props {
     server: MCPServer;
@@ -91,7 +92,7 @@ SPDX-License-Identifier: Apache-2.0
       // connector transaction before the popup opens, and recovers a stranded or
       // 409'd attempt. window.open copies this tab's sessionStorage, so the stored
       // transaction reaches the popup for the callback to complete.
-      const authorization = await startMcpAuthorization(server.id);
+      const authorization = await startMcpAuthorization(server.id, { connectorKey: connectorKeyOf(server) });
       if (authorization?.connected) {
         connecting = false;
         await refreshConnection();

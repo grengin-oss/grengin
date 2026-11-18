@@ -566,7 +566,7 @@ export async function connectConnector(key: string): Promise<ConnectorConnection
     if (!entry) throw new Error(t('errors.unknown'));
     const serverId = await connectorServerId(entry);
     if (!serverId) throw new Error(t('errors.notAdded'));
-    const authorization = await startMcpAuthorization(serverId);
+    const authorization = await startMcpAuthorization(serverId, { connectorKey: key });
     if (!authorization) throw new Error(t('errors.connectFailed'));
     if (authorization.connected) {
       popup?.close();
