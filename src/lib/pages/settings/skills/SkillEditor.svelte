@@ -824,7 +824,7 @@ SPDX-License-Identifier: Apache-2.0
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(2px);
-    z-index: 900;
+    z-index: 1100;
     animation: fade 0.18s ease;
   }
 
@@ -841,7 +841,7 @@ SPDX-License-Identifier: Apache-2.0
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-lg);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
-    z-index: 901;
+    z-index: 1101;
     animation: pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 

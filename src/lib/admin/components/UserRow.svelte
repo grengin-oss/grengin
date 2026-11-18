@@ -71,20 +71,21 @@ SPDX-License-Identifier: Apache-2.0
     <span class="user-cell user-cell--email" role="cell" title={user.email}>{user.email}</span>
 
     <div class="user-cell user-cell--role" role="cell">
-        {#if roleLabels.length === 0}
-            <span class="role-badge role-badge--none">{$_('admin.common.noRole')}</span>
-        {:else if canManageUsers}
+        {#if canManageUsers}
             <button
                 type="button"
                 class="role-badge"
+                class:role-badge--none={roleLabels.length === 0}
                 onclick={() => openEditModal(user)}
                 title={$_('admin.users.editUserTitle')}
             >
-                <span>{primaryRole}</span>
+                <span>{primaryRole || $_('admin.common.noRole')}</span>
                 {#if extraRoleCount > 0}
                     <span class="role-badge__extra">+{extraRoleCount}</span>
                 {/if}
             </button>
+        {:else if roleLabels.length === 0}
+            <span class="role-badge role-badge--none">{$_('admin.common.noRole')}</span>
         {:else}
             <span class="role-badge" title={roleTitle}>
                 <span>{primaryRole}</span>

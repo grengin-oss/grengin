@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
   import type { Role } from "../../../api/admin/roles.js";
   import type { Department, RoleUserAssignment, User } from "../../types.js";
+  import { canAddGlobalRole, requiresDepartmentScope } from "../../roleAssignments.js";
   import LoadingSpinner from "../LoadingSpinner.svelte";
   import Modal from "../Modal.svelte";
   import { toast } from "../../../components/Toaster.svelte";
@@ -41,10 +42,8 @@ SPDX-License-Identifier: Apache-2.0
         ),
     ),
   );
-  const hasGlobalScopeAssignment = $derived(
-    departmentModalAssignments.some(
-      (assignment) => !assignment.scope_department_id,
-    ),
+  const canAddGlobalScope = $derived(
+    !!role && canAddGlobalRole(role, departmentModalAssignments),
   );
 
   let departmentSearching = $state(false);
@@ -130,6 +129,7 @@ SPDX-License-Identifier: Apache-2.0
   $effect(() => {
     if (isOpen && role && user) {
       resetSearchState();
+      searchSectionExpanded = requiresDepartmentScope(role);
       loadAssignments();
       tick().then(() => departmentSearchInputRef?.focus());
     } else if (!isOpen) {
@@ -215,7 +215,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   async function addGlobalScope() {
-    if (!role || !user || hasGlobalScopeAssignment) return;
+    if (!role || !user || !canAddGlobalScope || assignmentsLoading || globalScopeLoading) return;
     globalScopeLoading = true;
     try {
       await rolesApi.addRoleToUser(user.id, {
@@ -404,7 +404,7 @@ SPDX-License-Identifier: Apache-2.0
               oninput={handleDepartmentSearchInput}
             />
           </div>
-          {#if !assignmentsLoading && !departmentSearching && !hasGlobalScopeAssignment}
+          {#if !assignmentsLoading && !departmentSearching && canAddGlobalScope}
             <div class="department-global-option">
               <div class="department-global-details">
                 <span class="department-search-name">
@@ -417,7 +417,7 @@ SPDX-License-Identifier: Apache-2.0
               <button
                 class="btn-edit-departments"
                 onclick={addGlobalScope}
-                disabled={hasGlobalScopeAssignment || globalScopeLoading}
+                disabled={globalScopeLoading}
               >
                 {#if globalScopeLoading}
                   <LoadingSpinner size="sm" />
