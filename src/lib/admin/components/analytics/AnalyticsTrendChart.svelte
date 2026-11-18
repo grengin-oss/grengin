@@ -116,6 +116,18 @@ SPDX-License-Identifier: Apache-2.0
     rightSeries.length > 0 ? ticks(rightMax, rightSeries[0]?.format) : [],
   );
 
+  /**
+   * Colour each y-axis with its metric's colour (the same one the legend shows)
+   * so it reads clearly which axis is which. Only when the axis carries a single
+   * metric — a shared scale (e.g. Success + Errors) stays the neutral axis grey.
+   */
+  const leftAxisColor = $derived(
+    leftSeries.length === 1 ? leftSeries[0].color : "var(--gx-an-axis)",
+  );
+  const rightAxisColor = $derived(
+    rightSeries.length === 1 ? rightSeries[0].color : "var(--gx-an-axis)",
+  );
+
   function xFor(index: number): number {
     if (pointCount <= 1) return VIEW_W / 2;
     return (index / (pointCount - 1)) * VIEW_W;
@@ -281,7 +293,7 @@ SPDX-License-Identifier: Apache-2.0
 </script>
 
 <div class="chart-area">
-  <div class="y-axis" aria-hidden="true">
+  <div class="y-axis" aria-hidden="true" style="--axis-color: {leftAxisColor}">
     {#each leftTicks as tick, index (index)}
       <span>{tick}</span>
     {/each}
@@ -400,7 +412,11 @@ SPDX-License-Identifier: Apache-2.0
   </div>
 
   {#if rightTicks.length > 0}
-    <div class="y-axis y-axis--right" aria-hidden="true">
+    <div
+      class="y-axis y-axis--right"
+      aria-hidden="true"
+      style="--axis-color: {rightAxisColor}"
+    >
       {#each rightTicks as tick, index (index)}
         <span>{tick}</span>
       {/each}
@@ -433,11 +449,12 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .y-axis span {
-    font-weight: 400;
+    font-weight: 500;
     font-size: 11px;
     line-height: 100%;
     text-align: end;
-    color: var(--gx-an-axis);
+    /* Tinted with the axis' metric colour (set per-axis), neutral grey otherwise. */
+    color: var(--axis-color, var(--gx-an-axis));
   }
 
   .y-axis--right span {

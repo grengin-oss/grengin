@@ -87,9 +87,6 @@ SPDX-License-Identifier: Apache-2.0
     cost: sum(points.map((point) => point.total_cost)),
     success: sum(points.map((point) => point.success_count)),
     errors: sum(points.map((point) => point.error_count)),
-    avgLatency: points.length
-      ? sum(points.map((point) => point.average_latency)) / points.length
-      : 0,
     peakCost: points.length
       ? Math.max(...points.map((point) => point.total_cost))
       : 0,
@@ -118,10 +115,6 @@ SPDX-License-Identifier: Apache-2.0
   function formatPercentage(num: number): string {
     const sign = num >= 0 ? "+" : "";
     return sign + (num * 100).toFixed(1) + "%";
-  }
-
-  function formatMs(num: number): string {
-    return Math.round(num) + "ms";
   }
 
   /** Granularity decides whether a tick reads as a day or an hour. */
@@ -234,16 +227,9 @@ SPDX-License-Identifier: Apache-2.0
           axis: "right",
           format: formatNumber,
         },
-        {
-          // Latency stays off the legend and off the plot: it only surfaces in
-          // the tooltip for the hovered point (ENGG-423).
-          key: "latency",
-          label: $_("analytics.charts.multiMetric.latency"),
-          color: "var(--gx-danger)",
-          values: points.map((point) => point.average_latency),
-          tooltipOnly: true,
-          format: formatMs,
-        },
+        // Latency is intentionally not shown here: the figure is dominated by the
+        // upstream LLM provider's response time, so surfacing it on our dashboard
+        // misattributes the provider's latency to Grengin (ENGG-423).
       ],
       columns: [
         {
@@ -265,13 +251,6 @@ SPDX-License-Identifier: Apache-2.0
           numeric: (row) => row.total_tokens,
           color: "var(--gx-an-area)",
         },
-        {
-          id: "latency",
-          label: $_("analytics.charts.multiMetric.latencyMs"),
-          value: (row) => row.average_latency.toFixed(2),
-          numeric: (row) => row.average_latency,
-          color: "var(--gx-danger)",
-        },
       ],
       stats: [
         {
@@ -285,10 +264,6 @@ SPDX-License-Identifier: Apache-2.0
             values: { metric: $_("analytics.charts.multiMetric.tokens") },
           }),
           value: formatNumber(totals.tokens),
-        },
-        {
-          label: $_("analytics.charts.dataTable.stats.avgLatency"),
-          value: formatMs(totals.avgLatency),
         },
       ],
       peakColumnId: "requests",

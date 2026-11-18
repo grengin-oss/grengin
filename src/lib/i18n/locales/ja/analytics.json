@@ -160,7 +160,7 @@
       "title": "パフォーマンストレンド",
       "multiMetric": {
         "title": "マルチメトリックトレンド",
-        "subtitle": "リクエスト • トークン • レイテンシ",
+        "subtitle": "リクエスト • トークン",
         "requests": "リクエスト",
         "tokens": "トークン",
         "latency": "レイテンシ",

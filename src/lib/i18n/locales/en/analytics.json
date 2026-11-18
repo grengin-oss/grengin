@@ -160,7 +160,7 @@
       "title": "Performance Trends",
       "multiMetric": {
         "title": "Multi-Metric Trends",
-        "subtitle": "Requests • Tokens • Latency",
+        "subtitle": "Requests • Tokens",
         "requests": "Requests",
         "tokens": "Tokens",
         "latency": "Latency",
