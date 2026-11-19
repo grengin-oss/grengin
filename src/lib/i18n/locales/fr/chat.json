@@ -52,6 +52,8 @@
       "failedToLoadModels": "Échec du chargement des modèles",
       "failedToLoadConnectors": "Échec du chargement des connecteurs",
       "failedToLoadConversation": "Échec du chargement de la conversation",
+      "networkError": "Pas de connexion Internet",
+      "networkErrorSolution": "Vérifiez votre connexion et réessayez.",
       "failedToSendMessage": "Échec de l'envoi du message",
       "budgetAboutToExhaust": "Le budget du département est sur le point d'être épuisé.",
       "budgetExhaustedWarn": "Le budget du département est épuisé pour la période en cours. Le chat continuera, mais l'utilisation risque de dépasser le budget.",

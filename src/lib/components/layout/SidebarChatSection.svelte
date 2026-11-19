@@ -99,6 +99,9 @@ SPDX-License-Identifier: Apache-2.0
   });
 
   function goToRecent() {
+    // Query-only navigation to "/", so clear the highlight directly (see the
+    // `focusChatInput` handler for why the URL effects don't catch this).
+    selectedChatId = null;
     navigate('/');
     onCollapseSidebar();
   }
@@ -428,17 +431,28 @@ SPDX-License-Identifier: Apache-2.0
       updateSelectedChatFromUrl();
     };
 
+    // "New chat" navigates to "/" — a query-only change (drops ?chatId) that
+    // leaves the pathname "/" untouched, so neither the `currentPath` effect nor
+    // popstate fires and the previously opened chat would stay highlighted in
+    // Recent. Every New-chat entry point dispatches `focusChatInput`, so clear
+    // the selection here.
+    const handleNewChat = () => {
+      selectedChatId = null;
+    };
+
     function handleInitializingConversation() {
       initializingConversation = true;
     }
 
     window.addEventListener('refreshChatHistory', handleRefreshChatHistory);
     window.addEventListener('popstate', handlePopState);
+    window.addEventListener('focusChatInput', handleNewChat);
     window.addEventListener('initializingConversation', handleInitializingConversation);
 
     return () => {
       window.removeEventListener('refreshChatHistory', handleRefreshChatHistory);
       window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('focusChatInput', handleNewChat);
       window.removeEventListener('initializingConversation', handleInitializingConversation);
     };
   });

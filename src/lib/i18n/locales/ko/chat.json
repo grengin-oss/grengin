@@ -52,6 +52,8 @@
       "failedToLoadModels": "모델 로드 실패",
       "failedToLoadConnectors": "커넥터를 불러오지 못했습니다",
       "failedToLoadConversation": "대화 로드 실패",
+      "networkError": "인터넷 연결 없음",
+      "networkErrorSolution": "연결을 확인하고 다시 시도하세요.",
       "failedToSendMessage": "메시지 전송 실패",
       "budgetAboutToExhaust": "부서 예산이 곧 고갈됩니다.",
       "budgetExhaustedWarn": "이번 기간의 부서 예산이 고갈되었습니다. 채팅은 계속되지만 사용량이 예산을 초과할 수 있습니다.",

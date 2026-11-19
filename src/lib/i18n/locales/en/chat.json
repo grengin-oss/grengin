@@ -62,6 +62,8 @@
       "failedToLoadModels": "Failed to load models",
       "failedToLoadConnectors": "Failed to load connectors",
       "failedToLoadConversation": "Failed to load conversation",
+      "networkError": "No internet connection",
+      "networkErrorSolution": "Check your connection and try again.",
       "failedToSendMessage": "Failed to send message",
       "budgetAboutToExhaust": "Department budget is about to exhaust.",
       "budgetExhaustedWarn": "Department budget is exhausted for the current period. The chat will proceed, but usage may exceed the budget.",
