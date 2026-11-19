@@ -1161,7 +1161,6 @@ SPDX-License-Identifier: Apache-2.0
           artifactStream.conversationId = newConversationId;
           void linkPendingProject(newConversationId);
           void linkPendingSkills(newConversationId);
-          window.dispatchEvent(new CustomEvent("refreshChatHistory"));
 
           // Navigate to the new conversation ONLY if the user is still on the
           // new chat that started it. If they've since opened another chat or
@@ -1171,6 +1170,11 @@ SPDX-License-Identifier: Apache-2.0
             conversationId = newConversationId;
             updateUrlWithConversationId(newConversationId);
           }
+
+          // Refresh the sidebar AFTER the URL carries the new id: the sidebar
+          // derives its highlighted chat from the URL, so refreshing first left
+          // the freshly created chat listed in Recent but not selected.
+          window.dispatchEvent(new CustomEvent("refreshChatHistory"));
         },
         onStreamingStart: (messageId, userMessageId) => {
           markGenerationStarted(gen, messageId);
@@ -2013,8 +2017,17 @@ SPDX-License-Identifier: Apache-2.0
         loadError = null;
         showArtifactPanel = false;
 
-        const conversation = await getConversation(chatId);
+        // Switch the on-screen identity to the target chat *before* the fetch.
+        // A reply still streaming in the chat we just left keeps its own
+        // generation (keyed by its conversation id) and runs in the background;
+        // pointing the view at the new chat now means a slow or failed load
+        // (e.g. offline) shows this chat's loading/error state instead of the
+        // previous chat's streaming bubble — which, via `!currentStreamingMessage`,
+        // also suppressed the error banner entirely (ENGG-530).
         conversationId = chatId;
+        messages = [];
+
+        const conversation = await getConversation(chatId);
         // Reflect the conversation's title in the browser tab.
         conversationTitle = conversation.title || null;
 
@@ -2055,16 +2068,32 @@ SPDX-License-Identifier: Apache-2.0
           }
         }
       } catch (err) {
-        // Convert all errors to ApiError for consistent handling
+        // A fetch that never reached the server (offline / dropped connection)
+        // throws a TypeError rather than an ApiError. Surface it as a clear
+        // network error with a retry hint instead of a raw "Failed to fetch".
+        const isNetworkError =
+          (typeof navigator !== "undefined" && navigator.onLine === false) ||
+          err instanceof TypeError;
         const apiError =
           err instanceof ApiError
             ? err
-            : new ApiError(
-                500,
-                err instanceof Error
-                  ? err.message
-                  : $_("chat.errors.failedToLoadConversation"),
-              );
+            : isNetworkError
+              ? new ApiError(0, {
+                  type: "rich",
+                  code: 0,
+                  description: $_("chat.errors.networkError"),
+                  solution: $_("chat.errors.networkErrorSolution"),
+                  description_key: "chat.errors.networkError",
+                  solution_key: "chat.errors.networkErrorSolution",
+                  params: {},
+                  external_code: null,
+                })
+              : new ApiError(
+                  500,
+                  err instanceof Error
+                    ? err.message
+                    : $_("chat.errors.failedToLoadConversation"),
+                );
 
         loadError = apiError;
         console.error("Failed to load conversation:", err);

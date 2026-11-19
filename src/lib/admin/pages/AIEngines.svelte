@@ -874,10 +874,10 @@ SPDX-License-Identifier: Apache-2.0
 
 <!-- ".new-stat-icon" glyphs. The design repeats one check mark across all
      three tiles; these are the distinct marks the page carried before —
-     a check for the connected count, a stack for the whitelist, a circled
-     cross for usage. They paint their own near-white ink rather than
-     currentColor, so each stays legible on its saturated tile in both
-     schemes. -->
+     a check for the connected count, a stack for the whitelist, and a chip
+     for the most-used model/engine. They paint their own near-white ink
+     rather than currentColor, so each stays legible on its saturated tile in
+     both schemes. -->
 {#snippet statIconConnected()}
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -919,16 +919,24 @@ SPDX-License-Identifier: Apache-2.0
     xmlns="http://www.w3.org/2000/svg"
     width="22"
     height="22"
-    viewBox="0 0 22 22"
+    viewBox="0 0 24 24"
     fill="none"
+    stroke="#EFF4FC"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     aria-hidden="true"
   >
-    <path
-      d="M13.7497 8.24976L8.24921 13.7502M8.24921 8.24976L13.7497 13.7502M20.1668 11C20.1668 16.063 16.0624 20.1674 10.9994 20.1674C5.93642 20.1674 1.83203 16.063 1.83203 11C1.83203 5.93697 5.93642 1.83258 10.9994 1.83258C16.0624 1.83258 20.1668 5.93697 20.1668 11Z"
-      stroke="#EFF4FC"
-      stroke-width="2"
-      stroke-linecap="round"
-    />
+    <rect x="4" y="4" width="16" height="16" rx="2" />
+    <rect x="9" y="9" width="6" height="6" />
+    <path d="M15 2v2" />
+    <path d="M15 20v2" />
+    <path d="M2 15h2" />
+    <path d="M2 9h2" />
+    <path d="M20 15h2" />
+    <path d="M20 9h2" />
+    <path d="M9 2v2" />
+    <path d="M9 20v2" />
   </svg>
 {/snippet}
 
@@ -1178,8 +1186,19 @@ SPDX-License-Identifier: Apache-2.0
         </div>
       </div>
       <div class="new-stat-card">
-        <span class="new-stat-icon" aria-hidden="true">
-          {@render statIconUsage()}
+        <span
+          class="new-stat-icon"
+          class:new-stat-icon--brand={mostUsed}
+          aria-hidden="true"
+        >
+          <!-- The most-used tile carries that engine's own brand mark (e.g. the
+               DeepSeek whale); fall back to the generic chip when nothing has
+               been used yet. -->
+          {#if mostUsed}
+            {@render markContent(mostUsed.engine)}
+          {:else}
+            {@render statIconUsage()}
+          {/if}
         </span>
         <div class="new-stat-info">
           <span class="new-stat-value">
@@ -2835,6 +2854,18 @@ SPDX-License-Identifier: Apache-2.0
 
   .new-stat-icon svg {
     display: block;
+  }
+
+  /* The most-used tile shows the engine's own brand mark instead of a glyph.
+     Brand marks are dark/full-colour (hardcoded fills or logo images), so on the
+     saturated blue tile they rendered near-black. Flatten them to the same
+     near-white ink as the other two glyphs with a filter — this works for both
+     inline SVGs and <img> logos — so the blue tile stays. Sized to match. */
+  .new-stat-icon--brand :global(svg),
+  .new-stat-icon--brand :global(.mark-img) {
+    width: 24px;
+    height: 24px;
+    filter: brightness(0) invert(1);
   }
 
   .new-stat-info {

@@ -52,6 +52,8 @@
       "failedToLoadModels": "تعذر تحميل النماذج",
       "failedToLoadConnectors": "تعذر تحميل الموصلات",
       "failedToLoadConversation": "تعذر تحميل المحادثة",
+      "networkError": "لا يوجد اتصال بالإنترنت",
+      "networkErrorSolution": "تحقق من اتصالك وحاول مرة أخرى.",
       "failedToSendMessage": "تعذر إرسال الرسالة",
       "budgetAboutToExhaust": "ميزانية القسم على وشك النفاد.",
       "budgetExhaustedWarn": "ميزانية القسم مستهلكة للفترة الحالية. ستستمر المحادثة، لكن الاستخدام قد يتجاوز الميزانية.",

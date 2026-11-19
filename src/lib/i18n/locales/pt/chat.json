@@ -52,6 +52,8 @@
       "failedToLoadModels": "Falha ao carregar modelos",
       "failedToLoadConnectors": "Falha ao carregar conectores",
       "failedToLoadConversation": "Falha ao carregar conversa",
+      "networkError": "Sem conexão com a internet",
+      "networkErrorSolution": "Verifique sua conexão e tente novamente.",
       "failedToSendMessage": "Falha ao enviar mensagem",
       "budgetAboutToExhaust": "O orçamento do departamento está prestes a se esgotar.",
       "budgetExhaustedWarn": "O orçamento do departamento está esgotado para o período atual. O chat continuará, mas o uso pode ultrapassar o orçamento.",

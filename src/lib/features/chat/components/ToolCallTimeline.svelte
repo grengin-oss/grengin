@@ -75,21 +75,37 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   // Extract a human-readable tool name from the full MCP tool name
+  // Detect a raw id token (uuid, or an 8+ char hex fragment) that shouldn't be shown
+  function isIdToken(token: string): boolean {
+    return (
+      /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(token) || // full uuid
+      /^[0-9a-f]{8,}$/i.test(token) // bare hex fragment, e.g. 1219446a
+    );
+  }
+
+  // Strip a trailing uuid/hex id from a snake_case tool name
+  function stripIdSuffix(raw: string): string {
+    const tokens = raw.split('_');
+    while (tokens.length > 1 && isIdToken(tokens[tokens.length - 1])) {
+      tokens.pop();
+    }
+    return tokens.join('_');
+  }
+
   function formatToolName(name: string): string {
     // Pattern: mcp__{server_id}__{tool_name} → tool_name
     const parts = name.split('__');
-    if (parts.length >= 3) {
-      return parts.slice(2).join('__').replace(/_/g, ' ');
-    }
-    return name.replace(/_/g, ' ');
+    const toolPart = parts.length >= 3 ? parts.slice(2).join('__') : name;
+    return stripIdSuffix(toolPart).replace(/_/g, ' ');
   }
 
-  // Extract server name from full tool name
+  // Extract server name from full tool name (hidden when it's just a raw id)
   function formatServerName(name: string): string {
     const parts = name.split('__');
     if (parts.length >= 3) {
-      // Truncate server ID to first 8 chars for readability
       const serverId = parts[1];
+      // Don't surface uuid/hex server ids — they're meaningless to the user
+      if (isIdToken(serverId)) return '';
       return serverId.length > 12 ? serverId.slice(0, 12) + '...' : serverId;
     }
     return '';
@@ -243,11 +259,146 @@ SPDX-License-Identifier: Apache-2.0
       }, 2000);
     }
   }
+
+  // ─── Many-to-one group abstraction (ENGG-531) ────────────────────
+  // Instead of a stack of standalone tool cards, every tool call in a turn is
+  // folded into ONE collapsible group — a single summary line ("Running …" /
+  // "Ran N tools") that opens into the compact step list below. This mirrors
+  // the Antigravity tool-calling UX referenced in the ticket.
+
+  type StepStatus = 'pending' | 'running' | 'completed' | 'error';
+
+  const steps = $derived(
+    mcpToolCalls.map((tc) => {
+      const result = resultMap.get(tc.tool_id);
+      const status: StepStatus = result
+        ? result.status === 'error' || result.output?.isError
+          ? 'error'
+          : 'completed'
+        : ((tc.status as StepStatus) || 'pending');
+      return { toolCall: tc, result, status };
+    }),
+  );
+
+  // Any step still working drives the live spinner + elapsed timer and keeps
+  // the group auto-expanded.
+  const anyActive = $derived(
+    steps.some((s) => s.status === 'pending' || s.status === 'running'),
+  );
+  const errorCount = $derived(steps.filter((s) => s.status === 'error').length);
+  const totalDurationMs = $derived(
+    steps.reduce((sum, s) => sum + (s.result?.duration_ms || 0), 0),
+  );
+
+  // The step named in the summary line: the one currently running (last active),
+  // else the final step once everything is done.
+  const currentStep = $derived(
+    anyActive
+      ? [...steps].reverse().find((s) => s.status === 'pending' || s.status === 'running')
+      : steps[steps.length - 1],
+  );
+
+  const summaryLabel = $derived.by(() => {
+    if (steps.length === 0) return '';
+    if (anyActive) {
+      const name = currentStep ? formatToolName(currentStep.toolCall.tool_name) : '';
+      return name ? `Running ${name}` : 'Working';
+    }
+    const n = steps.length;
+    if (n === 1) return `Ran ${formatToolName(steps[0].toolCall.tool_name)}`;
+    return errorCount > 0 ? `Ran ${n} tools · ${errorCount} failed` : `Ran ${n} tools`;
+  });
+
+  // Group open/closed. Auto-open while working, auto-collapse to the summary
+  // once done — but a manual toggle latches and takes over from then on.
+  let groupOpen = $state(false);
+  let groupUserControlled = false;
+
+  $effect(() => {
+    if (groupUserControlled) return;
+    groupOpen = anyActive;
+  });
+
+  function toggleGroup() {
+    groupUserControlled = true;
+    groupOpen = !groupOpen;
+  }
+
+  // Live elapsed timer while the group is working; a flat total once it's done.
+  let groupStartMs = 0;
+  let groupElapsedMs = $state(0);
+
+  $effect(() => {
+    if (!anyActive) return;
+    if (!groupStartMs) groupStartMs = Date.now();
+    const id = setInterval(() => {
+      groupElapsedMs = Date.now() - groupStartMs;
+    }, 200);
+    return () => clearInterval(id);
+  });
+
+  const groupDurationLabel = $derived.by(() => {
+    if (anyActive) return groupElapsedMs > 0 ? formatDuration(groupElapsedMs) : '';
+    return totalDurationMs > 0 ? formatDuration(totalDurationMs) : '';
+  });
 </script>
 
 {#if mcpToolCalls.length > 0}
-  <div class="tool-timeline" role="list" aria-label={$_('chat.toolExecution.timeline')}>
-    {#each mcpToolCalls as toolCall (toolCall.tool_id)}
+  <div
+    class="tool-group"
+    class:tool-group--open={groupOpen}
+    class:tool-group--active={anyActive}
+    class:tool-group--error={errorCount > 0}
+  >
+    <!-- Group summary header — the "many to one" line (ENGG-531) -->
+    <button
+      class="tool-group__header"
+      onclick={toggleGroup}
+      aria-expanded={groupOpen}
+      aria-label={summaryLabel}
+    >
+      <div class="status-indicator">
+        {#if anyActive}
+          <div class="spinner-small"></div>
+        {:else if errorCount > 0}
+          <svg class="status-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" fill="var(--brand-red)" stroke="var(--brand-red)"></circle>
+            <line x1="15" y1="9" x2="9" y2="15" stroke="white" stroke-width="2"></line>
+            <line x1="9" y1="9" x2="15" y2="15" stroke="white" stroke-width="2"></line>
+          </svg>
+        {:else}
+          <svg class="status-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10" fill="var(--brand-green)" stroke="var(--brand-green)"></circle>
+            <polyline points="8 12 11 15 16 9" stroke="white"></polyline>
+          </svg>
+        {/if}
+      </div>
+
+      <span class="tool-group__label">{summaryLabel}</span>
+
+      {#if groupDurationLabel}
+        <span class="tool-group__time">{groupDurationLabel}</span>
+      {/if}
+
+      <span class="tool-group__count">{mcpToolCalls.length}</span>
+
+      <svg
+        class="chevron tool-group__chevron"
+        class:rotated={groupOpen}
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <polyline points="6,9 12,15 18,9"></polyline>
+      </svg>
+    </button>
+
+    {#if groupOpen}
+      <div class="tool-timeline" role="list" aria-label={$_('chat.toolExecution.timeline')}>
+        {#each mcpToolCalls as toolCall (toolCall.tool_id)}
       {@const result = resultMap.get(toolCall.tool_id)}
       {@const isExpanded = expandedIds.has(toolCall.tool_id)}
       {@const showRaw = rawJsonIds.has(toolCall.tool_id)}
@@ -636,23 +787,103 @@ SPDX-License-Identifier: Apache-2.0
           </div>
         {/if}
       </div>
-    {/each}
+        {/each}
+      </div>
+    {/if}
   </div>
 {/if}
 
 <style>
-  .tool-timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
-  }
+  /* ─── Group container (many-to-one, ENGG-531) ─── */
 
-  .tool-call-item {
+  .tool-group {
     border: 1px solid var(--glass-stroke-light);
     border-radius: 0.75rem;
     background: var(--surface-elevated);
     overflow: hidden;
     animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .tool-group--error {
+    border-color: color-mix(in oklab, var(--brand-red) 25%, var(--glass-stroke-light));
+  }
+
+  .tool-group__header {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s ease;
+  }
+
+  .tool-group__header:hover {
+    background: var(--surface-subtle);
+  }
+
+  .tool-group__label {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tool-group--active .tool-group__label {
+    color: var(--text-secondary);
+  }
+
+  .tool-group__time {
+    font-size: 0.6875rem;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  .tool-group__count {
+    flex-shrink: 0;
+    min-width: 1.125rem;
+    height: 1.125rem;
+    padding: 0 0.3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.625rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-tertiary);
+    background: rgba(var(--glass-tint), 0.08);
+    border-radius: 999px;
+  }
+
+  .tool-group__chevron {
+    color: var(--text-tertiary);
+  }
+
+  /* ─── Step list (inside the open group) ─── */
+
+  .tool-timeline {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--glass-stroke-light);
+    animation: slideDown 0.2s ease;
+  }
+
+  .tool-call-item {
+    border-bottom: 1px solid color-mix(in oklab, var(--glass-stroke-light) 55%, transparent);
+    background: transparent;
+    overflow: hidden;
+  }
+
+  .tool-call-item:last-child {
+    border-bottom: none;
   }
 
   @keyframes fadeInUp {
@@ -675,7 +906,7 @@ SPDX-License-Identifier: Apache-2.0
     align-items: center;
     gap: 0.625rem;
     width: 100%;
-    padding: 0.625rem 0.875rem;
+    padding: 0.5rem 0.875rem 0.5rem 1rem;
     background: transparent;
     border: none;
     color: var(--text-secondary);
@@ -736,12 +967,16 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .tool-name {
-    font-weight: 600;
-    color: var(--text-primary);
+    font-weight: 500;
+    color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     text-transform: capitalize;
+  }
+
+  .tool-call-item--completed .tool-name {
+    color: var(--text-primary);
   }
 
   .tool-server {

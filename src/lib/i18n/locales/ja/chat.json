@@ -52,6 +52,8 @@
       "failedToLoadModels": "モデルの読み込みに失敗しました",
       "failedToLoadConnectors": "コネクタの読み込みに失敗しました",
       "failedToLoadConversation": "会話の読み込みに失敗しました",
+      "networkError": "インターネット接続がありません",
+      "networkErrorSolution": "接続を確認してもう一度お試しください。",
       "failedToSendMessage": "メッセージの送信に失敗しました",
       "budgetAboutToExhaust": "部署の予算がもうすぐ不足します。",
       "budgetExhaustedWarn": "今期間の部署の予算は使い果たされました。チャットは続行されますが、利用が予算を超える可能性があります。",
