@@ -398,6 +398,83 @@ router.post(['/chat/stream', '/chat/stream/:conversationId'], requireAuth, async
   // edited straight away (ENGG-459).
   res.write(`event: message_start\ndata: ${JSON.stringify({ message_id: assistantMsgId, user_message_id: userMsgId })}\n\n`)
 
+  // ── Tool-calling demo (ENGG-531) ──────────────────────────────────────
+  // Type "tools demo" to stream a realistic many-tools turn so the tool
+  // timeline UI can be exercised without a real MCP backend. Each tool goes
+  // pending → running (with input) → result, covering a table, a key-value
+  // object, a markdown blob and an error.
+  if (/tools?\s*demo/i.test(userMessageContent)) {
+    const emitCall = (tc: Record<string, unknown>) =>
+      res.write(`event: tool_call\ndata: ${JSON.stringify({ tool_call: tc })}\n\n`)
+    const emitResult = (tr: Record<string, unknown>) =>
+      res.write(`event: tool_result\ndata: ${JSON.stringify({ tool_result: tr })}\n\n`)
+    const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+    const demoTools: Array<{
+      tool_name: string
+      input: Record<string, unknown>
+      output: string
+      duration_ms: number
+      isError?: boolean
+    }> = [
+      {
+        tool_name: 'mcp__jira__searchJiraIssuesUsingJql',
+        input: { jql: 'project = ENGG AND status = "To Do"', maxResults: 5 },
+        output: JSON.stringify([
+          { key: 'ENGG-531', summary: 'Improve tool-calling UI', status: 'To Do', assignee: 'Manoj Kumar' },
+          { key: 'ENGG-528', summary: 'Connector overview polish', status: 'To Do', assignee: 'Anurag Singh' },
+          { key: 'ENGG-524', summary: 'Streaming retry logic', status: 'In Progress', assignee: 'Manoj Kumar' },
+        ]),
+        duration_ms: 820,
+      },
+      {
+        tool_name: 'mcp__confluence__getConfluencePage',
+        input: { pageId: '884736', expand: 'body.storage' },
+        output: JSON.stringify({
+          id: '884736',
+          title: 'Tool Calling UX Spec',
+          version: 7,
+          author: 'Anurag Singh',
+          updated: '2026-11-17T09:30:00Z',
+          url: 'https://grengin.atlassian.net/wiki/spaces/ENGG/pages/884736',
+        }),
+        duration_ms: 540,
+      },
+      {
+        tool_name: 'mcp__github__get_pull_request',
+        input: { owner: 'grengin', repo: 'webapp', pull_number: 106 },
+        output:
+          '## PR #106 — Hide latency metric\n\n**State:** merged\n**Files changed:** 4\n**Additions:** +38 / **Deletions:** −72\n\nRemoved the latency column from analytics and simplified the trend chart.',
+        duration_ms: 610,
+      },
+      {
+        tool_name: 'mcp__slack__post_message',
+        input: { channel: '#engineering', text: 'Deploying ENGG-531 UI changes to staging.' },
+        output: 'channel_not_found: the bot is not a member of #engineering',
+        duration_ms: 300,
+        isError: true,
+      },
+    ]
+
+    for (const t of demoTools) {
+      if (cancelledStreams.has(assistantMsgId)) break
+      const toolId = faker.string.uuid()
+      emitCall({ tool_name: t.tool_name, tool_id: toolId, kind: 'mcp', input_text: '', status: 'pending' })
+      await wait(500)
+      emitCall({ tool_name: t.tool_name, tool_id: toolId, kind: 'mcp', input: { type: 'json', value: t.input }, status: 'running' })
+      await wait(650)
+      emitResult({
+        tool_name: t.tool_name,
+        tool_id: toolId,
+        kind: 'mcp',
+        status: t.isError ? 'error' : 'success',
+        output: { content: [{ type: 'text', text: t.output }], isError: !!t.isError },
+        duration_ms: t.duration_ms,
+      })
+      await wait(250)
+    }
+  }
+
   let sentText = ''
   const isCancelled = () => cancelledStreams.has(assistantMsgId)
   const writeDelta = (text: string) => {

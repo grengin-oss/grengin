@@ -16,103 +16,165 @@ SPDX-License-Identifier: Apache-2.0
 
   let { toolCalls, toolResults }: Props = $props();
 
-  // Map tool results by tool_id for quick lookup
   const resultMap = $derived(
     new Map(toolResults.map(tr => [tr.tool_id, tr]))
   );
 
-  // Filter to only MCP tool calls (non-web-search) and deduplicate by tool_id
   const mcpToolCalls = $derived(
     [...new Map(
       toolCalls.filter(tc => tc.kind !== 'web_search').map(tc => [tc.tool_id, tc])
     ).values()]
   );
 
-  // Track expanded state per tool_id
-  let expandedIds = $state<Set<string>>(new Set());
-
-  // Track raw JSON view toggle per tool_id
   let rawJsonIds = $state<Set<string>>(new Set());
-
-  // Track collapsed nested sections
   let collapsedNested = $state<Set<string>>(new Set());
-
-  function toggleExpanded(toolId: string) {
-    const next = new Set(expandedIds);
-    if (next.has(toolId)) {
-      next.delete(toolId);
-    } else {
-      next.add(toolId);
-    }
-    expandedIds = next;
-  }
+  let expandedBlocks = $state<Set<string>>(new Set());
+  let expandedGroups = $state<Set<string>>(new Set());
+  let tableSearchQueries = $state<Record<string, string>>({});
 
   function toggleRawJson(toolId: string) {
     const next = new Set(rawJsonIds);
-    if (next.has(toolId)) {
-      next.delete(toolId);
-    } else {
-      next.add(toolId);
-    }
+    if (next.has(toolId)) next.delete(toolId); else next.add(toolId);
     rawJsonIds = next;
   }
 
   function toggleNested(key: string) {
     const next = new Set(collapsedNested);
-    if (next.has(key)) {
-      next.delete(key);
-    } else {
-      next.add(key);
-    }
+    if (next.has(key)) next.delete(key); else next.add(key);
     collapsedNested = next;
   }
 
-  function handleKeyDown(e: KeyboardEvent, toolId: string) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      toggleExpanded(toolId);
-    }
+  function toggleBlock(toolId: string) {
+    const next = new Set(expandedBlocks);
+    if (next.has(toolId)) next.delete(toolId); else next.add(toolId);
+    expandedBlocks = next;
   }
 
-  // Extract a human-readable tool name from the full MCP tool name
-  // Detect a raw id token (uuid, or an 8+ char hex fragment) that shouldn't be shown
+  function toggleGroup(groupKey: string) {
+    const next = new Set(expandedGroups);
+    if (next.has(groupKey)) next.delete(groupKey); else next.add(groupKey);
+    expandedGroups = next;
+  }
+
+  // ─── ID & Name Cleaners ───
   function isIdToken(token: string): boolean {
     return (
-      /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(token) || // full uuid
-      /^[0-9a-f]{8,}$/i.test(token) // bare hex fragment, e.g. 1219446a
+      /^[0-9a-f]{6,}(-[0-9a-f]{4}){0,3}(-[0-9a-f]{12})?$/i.test(token) ||
+      /^[0-9a-f]{8,}$/i.test(token)
     );
   }
 
-  // Strip a trailing uuid/hex id from a snake_case tool name
-  function stripIdSuffix(raw: string): string {
-    const tokens = raw.split('_');
-    while (tokens.length > 1 && isIdToken(tokens[tokens.length - 1])) {
-      tokens.pop();
-    }
-    return tokens.join('_');
+  function cleanToolName(name: string): string {
+    const parts = name.split('__');
+    const nonIdParts = parts.filter(p => p !== 'mcp' && !isIdToken(p));
+    if (nonIdParts.length === 0) return name;
+    const tool = nonIdParts[nonIdParts.length - 1];
+    return tool.replace(/^[_\s]+|[_\s]+$/g, '');
   }
 
   function formatToolName(name: string): string {
-    // Pattern: mcp__{server_id}__{tool_name} → tool_name
-    const parts = name.split('__');
-    const toolPart = parts.length >= 3 ? parts.slice(2).join('__') : name;
-    return stripIdSuffix(toolPart).replace(/_/g, ' ');
+    const cleaned = cleanToolName(name);
+    return cleaned
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/_/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
-  // Extract server name from full tool name (hidden when it's just a raw id)
-  function formatServerName(name: string): string {
+  type ToolCategory = 'search' | 'file' | 'database' | 'message' | 'edit' | 'web' | 'code' | 'tool';
+
+  function toolCategory(name: string): ToolCategory {
+    const n = (cleanToolName(name) + ' ' + formatToolName(name)).toLowerCase();
+    if (/\b(search|find|query|lookup|list|browse|get[_\s-]?issue|jql)\b/.test(n)) return 'search';
+    if (/\b(sql|database|db|table|record|rows?|dataset|bigquery|postgres)\b/.test(n)) return 'database';
+    if (/\b(file|read|page|doc|document|content|confluence|fetch)\b/.test(n)) return 'file';
+    if (/\b(mail|email|message|send|slack|comment|notify|post|thread)\b/.test(n)) return 'message';
+    if (/\b(create|add|new|update|edit|delete|remove|set|transition|assign)\b/.test(n)) return 'edit';
+    if (/\b(http|url|web|request|api|navigate)\b/.test(n)) return 'web';
+    if (/\b(code|git|pr|commit|repo|branch|diff|patch)\b/.test(n)) return 'code';
+    return 'tool';
+  }
+
+  const SERVICE_NAMES: Record<string, string> = {
+    jira: 'Jira', confluence: 'Confluence', slack: 'Slack', github: 'GitHub',
+    gitlab: 'GitLab', notion: 'Notion', linear: 'Linear', figma: 'Figma',
+    salesforce: 'Salesforce', hubspot: 'HubSpot', zendesk: 'Zendesk',
+    gmail: 'Gmail', google: 'Google', drive: 'Drive', calendar: 'Calendar',
+    bigquery: 'BigQuery', snowflake: 'Snowflake', postgres: 'Postgres',
+    stripe: 'Stripe', asana: 'Asana', trello: 'Trello', outlook: 'Outlook',
+  };
+
+  function serviceLabel(name: string): string {
     const parts = name.split('__');
-    if (parts.length >= 3) {
-      const serverId = parts[1];
-      // Don't surface uuid/hex server ids — they're meaningless to the user
-      if (isIdToken(serverId)) return '';
-      return serverId.length > 12 ? serverId.slice(0, 12) + '...' : serverId;
+    for (const p of parts) {
+      if (isIdToken(p) || p === 'mcp') continue;
+      const key = p.toLowerCase();
+      if (SERVICE_NAMES[key]) return SERVICE_NAMES[key];
     }
+    const tool = cleanToolName(name).toLowerCase();
+    if (/\b(slack|channel|user)\b/.test(tool)) return 'Slack';
+    if (/\b(thread|message|mail|inbox|gmail|draft|label)\b/.test(tool)) return 'Gmail';
+    if (/\b(jira|jql|issue|sprint|epic)\b/.test(tool)) return 'Jira';
+    if (/\b(confluence|page|space|wiki)\b/.test(tool)) return 'Confluence';
+    if (/\b(git|github|pr|pull_request|repo|commit)\b/.test(tool)) return 'GitHub';
+    if (/\b(notion|block)\b/.test(tool)) return 'Notion';
+    if (/\b(linear|ticket)\b/.test(tool)) return 'Linear';
+    if (/\b(calendar|event)\b/.test(tool)) return 'Calendar';
+    if (/\b(drive|file|folder)\b/.test(tool)) return 'Drive';
     return '';
   }
 
-  // ─── Smart Type Detection ────────────────────────────────────────
+  const VERBS: { re: RegExp; past: string; ing: string }[] = [
+    { re: /^(search|find|query|jql|lookup)$/, past: 'Searched', ing: 'Searching' },
+    { re: /^list$/, past: 'Listed', ing: 'Listing' },
+    { re: /^(get|read|fetch|view|retrieve|show|describe)$/, past: 'Read', ing: 'Reading' },
+    { re: /^(create|add|new|insert)$/, past: 'Created', ing: 'Creating' },
+    { re: /^(update|edit|set|modify|transition|assign|move|rename)$/, past: 'Updated', ing: 'Updating' },
+    { re: /^(delete|remove|archive)$/, past: 'Deleted', ing: 'Deleting' },
+    { re: /^(post|send|comment|notify|message|share|reply|email)$/, past: 'Sent', ing: 'Sending' },
+    { re: /^upload$/, past: 'Uploaded', ing: 'Uploading' },
+    { re: /^(run|execute|exec|call)$/, past: 'Ran', ing: 'Running' },
+  ];
 
+  const FILLER = new Set([
+    'using', 'the', 'a', 'an', 'by', 'via', 'with', 'and', 'or', 'of', 'to',
+    'in', 'for', 'on', 'from', 'my', 'your', 'this', 'that', 'id', 'ids', 'all',
+  ]);
+
+  function describeStep(name: string, tense: 'past' | 'present'): string {
+    const service = serviceLabel(name);
+    const words = formatToolName(name).toLowerCase().split(' ').filter(Boolean);
+    let verb = tense === 'past' ? 'Used' : 'Running';
+    let verbWord = '';
+    for (const v of VERBS) {
+      const w = words.find((x) => v.re.test(x));
+      if (w) { verb = tense === 'past' ? v.past : v.ing; verbWord = w; break; }
+    }
+    const objWords: string[] = [];
+    for (const w of words) {
+      if (w === verbWord) continue;
+      if (w === 'using') break;
+      if (FILLER.has(w)) continue;
+      objWords.push(w);
+    }
+    const obj = objWords.join(' ').trim();
+    if (service) {
+      if (verb === 'Searched' || verb === 'Searching') return obj ? `${verb} ${service} for ${obj}` : `${verb} ${service}`;
+      return obj ? `${verb} ${service} ${obj}` : `${verb} ${service}`;
+    }
+    if (obj) return `${verb} ${obj}`;
+    return formatToolName(name);
+  }
+
+  function humanJoin(items: string[]): string {
+    const u = [...new Set(items)].filter(Boolean);
+    if (u.length === 0) return '';
+    if (u.length === 1) return u[0];
+    if (u.length === 2) return `${u[0]} & ${u[1]}`;
+    return `${u.slice(0, -1).join(', ')} & ${u[u.length - 1]}`;
+  }
+
+  // ─── Type Detection ───
   type ValueType = 'url' | 'email' | 'date' | 'boolean' | 'number' | 'null' | 'array' | 'object' | 'string';
 
   function detectValueType(value: any): ValueType {
@@ -132,7 +194,6 @@ SPDX-License-Identifier: Apache-2.0
     return 'string';
   }
 
-  // Try to parse text content as JSON (any valid JSON)
   type ParsedJson =
     | { type: 'array-objects'; data: any[] }
     | { type: 'array-primitives'; data: any[] }
@@ -142,35 +203,27 @@ SPDX-License-Identifier: Apache-2.0
   function tryParseJson(text: string): ParsedJson {
     try {
       const parsed = JSON.parse(text);
-      if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object' && parsed[0] !== null) {
-        return { type: 'array-objects', data: parsed };
-      }
-      if (Array.isArray(parsed)) {
-        return { type: 'array-primitives', data: parsed };
-      }
-      if (typeof parsed === 'object' && parsed !== null) {
-        return { type: 'object', data: parsed };
-      }
-    } catch {
-      // Not JSON
-    }
+      if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object' && parsed[0] !== null) return { type: 'array-objects', data: parsed };
+      if (Array.isArray(parsed)) return { type: 'array-primitives', data: parsed };
+      if (typeof parsed === 'object' && parsed !== null) return { type: 'object', data: parsed };
+    } catch { /* Not JSON */ }
     return null;
   }
 
-  // Get column headers from a JSON array of objects — union of all keys
   function getTableHeaders(data: any[]): string[] {
     if (!data.length) return [];
     const keys = new Set<string>();
-    for (const row of data) {
-      for (const key of Object.keys(row)) {
-        keys.add(key);
-      }
-    }
+    for (const row of data) { if (row && typeof row === 'object') for (const key of Object.keys(row)) keys.add(key); }
     return [...keys];
   }
 
-  // ─── Formatting Helpers ──────────────────────────────────────────
+  function filterTableRows(data: any[], query?: string): any[] {
+    if (!query || !query.trim()) return data;
+    const q = query.toLowerCase().trim();
+    return data.filter((row) => Object.values(row).some((val) => String(val).toLowerCase().includes(q)));
+  }
 
+  // ─── Formatters ───
   function formatValue(value: any): string {
     if (value === null || value === undefined) return '—';
     if (typeof value === 'boolean') return value ? 'Yes' : 'No';
@@ -180,12 +233,8 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   function formatNumber(n: number): string {
-    if (Number.isInteger(n) && Math.abs(n) >= 1000) {
-      return n.toLocaleString();
-    }
-    if (!Number.isInteger(n)) {
-      return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
-    }
+    if (Number.isInteger(n) && Math.abs(n) >= 1000) return n.toLocaleString();
+    if (!Number.isInteger(n)) return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
     return String(n);
   }
 
@@ -195,27 +244,18 @@ SPDX-License-Identifier: Apache-2.0
       const now = new Date();
       const diffMs = now.getTime() - d.getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
       const dateStr = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
       const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-
       let relative = '';
       if (diffDays === 0) relative = 'today';
       else if (diffDays === 1) relative = 'yesterday';
       else if (diffDays > 1 && diffDays < 30) relative = `${diffDays}d ago`;
-
       return relative ? `${dateStr}, ${timeStr} (${relative})` : `${dateStr}, ${timeStr}`;
-    } catch {
-      return value;
-    }
+    } catch { return value; }
   }
 
-  // Format a key label (snake_case / camelCase → Title Case)
   function formatKeyLabel(key: string): string {
-    return key
-      .replace(/([a-z])([A-Z])/g, '$1 $2')  // camelCase
-      .replace(/[_-]/g, ' ')                 // snake_case / kebab-case
-      .replace(/\b\w/g, c => c.toUpperCase()); // Capitalize
+    return key.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
   function formatDuration(ms?: number): string {
@@ -224,74 +264,112 @@ SPDX-License-Identifier: Apache-2.0
     return `${(ms / 1000).toFixed(1)}s`;
   }
 
-  // Truncate URL for display
-  function truncateUrl(url: string, maxLen = 60): string {
+  function truncateUrl(url: string, maxLen = 42): string {
     if (url.length <= maxLen) return url;
     try {
       const u = new URL(url);
-      const path = u.pathname.length > 30 ? u.pathname.slice(0, 27) + '...' : u.pathname;
+      const path = u.pathname.length > 20 ? u.pathname.slice(0, 18) + '…' : u.pathname;
       return u.host + path;
-    } catch {
-      return url.slice(0, maxLen) + '...';
+    } catch { return url.slice(0, maxLen) + '…'; }
+  }
+
+  function formatArgValue(val: any): string {
+    if (typeof val === 'string') {
+      if (isIdToken(val) && val.length > 12) {
+        return `"${val.slice(0, 8)}…"`;
+      }
+      return val.length > 20 ? `"${val.slice(0, 18)}…"` : `"${val}"`;
     }
+    if (typeof val === 'object' && val !== null) {
+      return Array.isArray(val) ? `[${val.length}]` : '{…}';
+    }
+    return String(val);
   }
 
-  // Count the flattened fields in an object
-  function countFields(obj: Record<string, any>): number {
-    return Object.keys(obj).length;
-  }
+  function countFields(obj: Record<string, any>): number { return Object.keys(obj).length; }
+  function hasMarkdown(text: string): boolean { return /(\*\*|__|##|```|- |\d+\. |\[.*\]\(.*\))/.test(text); }
 
-  // Check if text looks like it has markdown formatting
-  function hasMarkdown(text: string): boolean {
-    return /(\*\*|__|##|```|- |\d+\. |\[.*\]\(.*\))/.test(text);
-  }
-
-  // ─── Clipboard ───────────────────────────────────────────────────
-
+  // ─── Clipboard ───
   let copyStates = $state<Map<string, boolean>>(new Map());
 
-  async function handleCopy(toolId: string, text: string) {
+  async function handleCopy(key: string, text: string) {
     const success = await copyToClipboard(text);
     if (success) {
-      copyStates = new Map(copyStates).set(toolId, true);
-      setTimeout(() => {
-        copyStates = new Map(copyStates).set(toolId, false);
-      }, 2000);
+      copyStates = new Map(copyStates).set(key, true);
+      setTimeout(() => { copyStates = new Map(copyStates).set(key, false); }, 2000);
     }
   }
 
-  // ─── Many-to-one group abstraction (ENGG-531) ────────────────────
-  // Instead of a stack of standalone tool cards, every tool call in a turn is
-  // folded into ONE collapsible group — a single summary line ("Running …" /
-  // "Ran N tools") that opens into the compact step list below. This mirrors
-  // the Antigravity tool-calling UX referenced in the ticket.
-
+  // ─── Step Derivations ───
   type StepStatus = 'pending' | 'running' | 'completed' | 'error';
 
+  interface StepItem {
+    toolCall: ToolCall;
+    result: ToolResult | undefined;
+    status: StepStatus;
+    index: number;
+    cleanName: string;
+    service: string;
+  }
+
   const steps = $derived(
-    mcpToolCalls.map((tc) => {
+    mcpToolCalls.map((tc, index): StepItem => {
       const result = resultMap.get(tc.tool_id);
       const status: StepStatus = result
-        ? result.status === 'error' || result.output?.isError
-          ? 'error'
-          : 'completed'
+        ? result.status === 'error' || result.output?.isError ? 'error' : 'completed'
         : ((tc.status as StepStatus) || 'pending');
-      return { toolCall: tc, result, status };
+      return {
+        toolCall: tc,
+        result,
+        status,
+        index,
+        cleanName: cleanToolName(tc.tool_name),
+        service: serviceLabel(tc.tool_name),
+      };
     }),
   );
 
-  // Any step still working drives the live spinner + elapsed timer and keeps
-  // the group auto-expanded.
-  const anyActive = $derived(
-    steps.some((s) => s.status === 'pending' || s.status === 'running'),
-  );
-  const errorCount = $derived(steps.filter((s) => s.status === 'error').length);
-  const totalDurationMs = $derived(
-    steps.reduce((sum, s) => sum + (s.result?.duration_ms || 0), 0),
-  );
+  // Group consecutive identical tool calls
+  interface StepGroup {
+    key: string;
+    cleanName: string;
+    service: string;
+    category: ToolCategory;
+    items: StepItem[];
+    hasError: boolean;
+    isActive: boolean;
+    totalDuration: number;
+  }
 
-  // The step named in the summary line: the one currently running (last active),
-  // else the final step once everything is done.
+  const stepGroups = $derived.by((): StepGroup[] => {
+    const groups: StepGroup[] = [];
+    for (const step of steps) {
+      const lastGroup = groups[groups.length - 1];
+      if (lastGroup && lastGroup.cleanName === step.cleanName && lastGroup.service === step.service) {
+        lastGroup.items.push(step);
+        if (step.status === 'error') lastGroup.hasError = true;
+        if (step.status === 'pending' || step.status === 'running') lastGroup.isActive = true;
+        lastGroup.totalDuration += step.result?.duration_ms || 0;
+      } else {
+        groups.push({
+          key: `${step.cleanName}_${step.index}`,
+          cleanName: step.cleanName,
+          service: step.service,
+          category: toolCategory(step.toolCall.tool_name),
+          items: [step],
+          hasError: step.status === 'error',
+          isActive: step.status === 'pending' || step.status === 'running',
+          totalDuration: step.result?.duration_ms || 0,
+        });
+      }
+    }
+    return groups;
+  });
+
+  const anyActive = $derived(steps.some((s) => s.status === 'pending' || s.status === 'running'));
+  const errorCount = $derived(steps.filter((s) => s.status === 'error').length);
+  const totalDurationMs = $derived(steps.reduce((sum, s) => sum + (s.result?.duration_ms || 0), 0));
+
   const currentStep = $derived(
     anyActive
       ? [...steps].reverse().find((s) => s.status === 'pending' || s.status === 'running')
@@ -300,1379 +378,1044 @@ SPDX-License-Identifier: Apache-2.0
 
   const summaryLabel = $derived.by(() => {
     if (steps.length === 0) return '';
-    if (anyActive) {
-      const name = currentStep ? formatToolName(currentStep.toolCall.tool_name) : '';
-      return name ? `Running ${name}` : 'Working';
-    }
+    if (anyActive) return currentStep ? `${describeStep(currentStep.toolCall.tool_name, 'present')}…` : 'Executing tools…';
     const n = steps.length;
-    if (n === 1) return `Ran ${formatToolName(steps[0].toolCall.tool_name)}`;
-    return errorCount > 0 ? `Ran ${n} tools · ${errorCount} failed` : `Ran ${n} tools`;
+    const services = steps.map((s) => s.service).filter(Boolean);
+    const joinedServices = humanJoin(services);
+    let base: string;
+    if (n === 1) {
+      base = describeStep(steps[0].toolCall.tool_name, 'past');
+    } else if (joinedServices) {
+      base = `Used ${joinedServices} · ${n} ${n === 1 ? 'action' : 'actions'}`;
+    } else {
+      base = `Completed ${n} ${n === 1 ? 'action' : 'actions'}`;
+    }
+    return errorCount > 0 ? `${base} · ${errorCount} failed` : base;
   });
 
-  // Group open/closed. Auto-open while working, auto-collapse to the summary
-  // once done — but a manual toggle latches and takes over from then on.
-  let groupOpen = $state(false);
-  let groupUserControlled = false;
+  let deckOpen = $state(false);
+  let userManuallyToggled = false;
 
-  $effect(() => {
-    if (groupUserControlled) return;
-    groupOpen = anyActive;
-  });
+  $effect(() => { if (userManuallyToggled) return; deckOpen = anyActive; });
 
-  function toggleGroup() {
-    groupUserControlled = true;
-    groupOpen = !groupOpen;
-  }
+  function toggleDeck() { userManuallyToggled = true; deckOpen = !deckOpen; }
 
-  // Live elapsed timer while the group is working; a flat total once it's done.
   let groupStartMs = 0;
   let groupElapsedMs = $state(0);
 
   $effect(() => {
     if (!anyActive) return;
     if (!groupStartMs) groupStartMs = Date.now();
-    const id = setInterval(() => {
-      groupElapsedMs = Date.now() - groupStartMs;
-    }, 200);
+    const id = setInterval(() => { groupElapsedMs = Date.now() - groupStartMs; }, 150);
     return () => clearInterval(id);
   });
 
-  const groupDurationLabel = $derived.by(() => {
+  const durationDisplay = $derived.by(() => {
     if (anyActive) return groupElapsedMs > 0 ? formatDuration(groupElapsedMs) : '';
     return totalDurationMs > 0 ? formatDuration(totalDurationMs) : '';
   });
 </script>
 
+{#snippet serviceGlyph(service: string)}
+  {#if service === 'Slack'}
+    <svg class="service-ico" viewBox="0 0 24 24" fill="none">
+      <path d="M6 15a2 2 0 1 1-2-2h2v2zm1 0a2 2 0 1 1 4 0v5a2 2 0 1 1-4 0v-5zm2-8a2 2 0 1 1 2 2H9V7zm0 1a2 2 0 1 1 0 4H4a2 2 0 1 1 0-4h5zm8 2a2 2 0 1 1 2 2h-2v-2zm-1 0a2 2 0 1 1-4 0V5a2 2 0 1 1 4 0v5zm-2 8a2 2 0 1 1-2-2h2v2zm0-1a2 2 0 1 1 0-4h5a2 2 0 1 1 0 4h-5z" fill="#4A154B"/>
+    </svg>
+  {:else if service === 'Gmail'}
+    <svg class="service-ico" viewBox="0 0 24 24" fill="none">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" fill="#ea4335" opacity="0.15"/>
+      <path d="M22 6l-10 7L2 6" stroke="#ea4335" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="2" y="4" width="20" height="16" rx="2" stroke="#ea4335" stroke-width="2"/>
+    </svg>
+  {:else if service === 'GitHub'}
+    <svg class="service-ico" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+    </svg>
+  {:else if service === 'Jira'}
+    <svg class="service-ico" viewBox="0 0 24 24" fill="#0052cc">
+      <path d="M11.53 2c0 2.4 1.97 4.35 4.39 4.35h1.78v1.74c0 2.4 1.97 4.35 4.39 4.35V2h-10.56zm-4.4 4.4c0 2.4 1.97 4.35 4.39 4.35h1.78v1.74c0 2.4 1.97 4.35 4.39 4.35V6.4H7.13zm-4.4 4.4c0 2.4 1.97 4.35 4.39 4.35h1.78v1.74c0 2.4 1.97 4.35 4.39 4.35V10.8H2.73z"/>
+    </svg>
+  {:else}
+    <svg class="service-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline>
+    </svg>
+  {/if}
+{/snippet}
+
 {#if mcpToolCalls.length > 0}
-  <div
-    class="tool-group"
-    class:tool-group--open={groupOpen}
-    class:tool-group--active={anyActive}
-    class:tool-group--error={errorCount > 0}
-  >
-    <!-- Group summary header — the "many to one" line (ENGG-531) -->
+  <div class="action-pill-wrapper">
+    <!-- ═══ COMPACT ACTION PILL (Auto-width, sits naturally in message flow) ═══ -->
     <button
-      class="tool-group__header"
-      onclick={toggleGroup}
-      aria-expanded={groupOpen}
+      type="button"
+      class="action-pill"
+      class:action-pill--active={anyActive}
+      class:action-pill--open={deckOpen}
+      onclick={toggleDeck}
+      aria-expanded={deckOpen}
       aria-label={summaryLabel}
     >
-      <div class="status-indicator">
+      <!-- Status Icon -->
+      <span class="pill-beacon">
         {#if anyActive}
-          <div class="spinner-small"></div>
+          <span class="pulse-beacon"></span>
         {:else if errorCount > 0}
-          <svg class="status-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" fill="var(--brand-red)" stroke="var(--brand-red)"></circle>
-            <line x1="15" y1="9" x2="9" y2="15" stroke="white" stroke-width="2"></line>
-            <line x1="9" y1="9" x2="15" y2="15" stroke="white" stroke-width="2"></line>
-          </svg>
+          <span class="dot-beacon dot-beacon--err">✕</span>
         {:else}
-          <svg class="status-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="12" cy="12" r="10" fill="var(--brand-green)" stroke="var(--brand-green)"></circle>
-            <polyline points="8 12 11 15 16 9" stroke="white"></polyline>
-          </svg>
+          <span class="dot-beacon dot-beacon--ok">✓</span>
         {/if}
-      </div>
+      </span>
 
-      <span class="tool-group__label">{summaryLabel}</span>
+      <!-- Narrative Text -->
+      <span class="pill-text">{summaryLabel}</span>
 
-      {#if groupDurationLabel}
-        <span class="tool-group__time">{groupDurationLabel}</span>
+      <!-- Telemetry and Disclosure -->
+      {#if durationDisplay}
+        <span class="pill-time">{durationDisplay}</span>
       {/if}
 
-      <span class="tool-group__count">{mcpToolCalls.length}</span>
-
-      <svg
-        class="chevron tool-group__chevron"
-        class:rotated={groupOpen}
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <polyline points="6,9 12,15 18,9"></polyline>
+      <svg class="pill-chevron" class:pill-chevron--open={deckOpen} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="6 9 12 15 18 9"></polyline>
       </svg>
     </button>
 
-    {#if groupOpen}
-      <div class="tool-timeline" role="list" aria-label={$_('chat.toolExecution.timeline')}>
-        {#each mcpToolCalls as toolCall (toolCall.tool_id)}
-      {@const result = resultMap.get(toolCall.tool_id)}
-      {@const isExpanded = expandedIds.has(toolCall.tool_id)}
-      {@const showRaw = rawJsonIds.has(toolCall.tool_id)}
-      {@const status = result ? (result.status === 'error' || result.output?.isError ? 'error' : 'completed') : (toolCall.status || 'pending')}
-      {@const hasResult = !!result}
+    <!-- ═══ EXPANDED ACTION DRAWER (Tucked underneath with indentation) ═══ -->
+    {#if deckOpen}
+      <div class="action-drawer">
+        <div class="drawer-rail">
+          {#each stepGroups as group (group.key)}
+            {@const isBatch = group.items.length > 1}
+            {@const isGroupExpanded = expandedGroups.has(group.key)}
 
-      <div
-        class="tool-call-item"
-        class:tool-call-item--pending={status === 'pending'}
-        class:tool-call-item--running={status === 'running'}
-        class:tool-call-item--completed={status === 'completed'}
-        class:tool-call-item--error={status === 'error'}
-        role="listitem"
-      >
-        <!-- Header / Toggle -->
-        <button
-          class="tool-call-header"
-          class:clickable={hasResult}
-          onclick={() => hasResult && toggleExpanded(toolCall.tool_id)}
-          onkeydown={(e) => handleKeyDown(e, toolCall.tool_id)}
-          disabled={!hasResult}
-          aria-expanded={isExpanded}
-          aria-label={formatToolName(toolCall.tool_name)}
-        >
-          <!-- Status indicator -->
-          <div class="status-indicator">
-            {#if status === 'completed'}
-              <svg class="status-icon status-icon--success" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10" fill="var(--brand-green)" stroke="var(--brand-green)"></circle>
-                <polyline points="8 12 11 15 16 9" stroke="white"></polyline>
-              </svg>
-            {:else if status === 'error'}
-              <svg class="status-icon status-icon--error" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10" fill="var(--brand-red)" stroke="var(--brand-red)"></circle>
-                <line x1="15" y1="9" x2="9" y2="15" stroke="white" stroke-width="2"></line>
-                <line x1="9" y1="9" x2="15" y2="15" stroke="white" stroke-width="2"></line>
-              </svg>
-            {:else}
-              <div class="spinner-small"></div>
-            {/if}
-          </div>
+            {#if isBatch}
+              <!-- Batch Group -->
+              <div class="stepper-node">
+                <button
+                  type="button"
+                  class="node-header"
+                  onclick={() => toggleGroup(group.key)}
+                  aria-expanded={isGroupExpanded}
+                >
+                  <span class="node-bullet"></span>
 
-          <!-- Tool info -->
-          <div class="tool-info">
-            <span class="tool-name">{formatToolName(toolCall.tool_name)}</span>
-            {#if formatServerName(toolCall.tool_name)}
-              <span class="tool-server">{formatServerName(toolCall.tool_name)}</span>
-            {/if}
-          </div>
-
-          <!-- Duration badge -->
-          {#if result?.duration_ms}
-            <span class="duration-badge">{formatDuration(result.duration_ms)}</span>
-          {/if}
-
-          <!-- Chevron (only when has result) -->
-          {#if hasResult}
-            <svg
-              class="chevron"
-              class:rotated={isExpanded}
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="6,9 12,15 18,9"></polyline>
-            </svg>
-          {/if}
-        </button>
-
-        <!-- Streaming input preview (while pending/running) -->
-        {#if (status === 'pending' || status === 'running') && toolCall.input_text}
-          <div class="tool-input-preview">
-            <code class="input-text">{toolCall.input_text}</code>
-          </div>
-        {/if}
-
-        <!-- Expanded result content -->
-        {#if isExpanded && result}
-          <div class="tool-result-content">
-
-            <!-- Toolbar row: Raw JSON toggle + Copy -->
-            <div class="result-toolbar">
-              <button
-                class="toolbar-btn"
-                class:toolbar-btn--active={showRaw}
-                onclick={() => toggleRawJson(toolCall.tool_id)}
-                title="Toggle raw JSON view"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="16 18 22 12 16 6"></polyline>
-                  <polyline points="8 6 2 12 8 18"></polyline>
-                </svg>
-                <span>{showRaw ? 'Formatted' : 'Raw'}</span>
-              </button>
-
-              <button
-                class="toolbar-btn"
-                onclick={() => handleCopy(toolCall.tool_id + '_all', JSON.stringify({ input: toolCall.input?.value, output: result.output }, null, 2))}
-                title={$_('chat.message.copy')}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  {#if copyStates.get(toolCall.tool_id + '_all')}
-                    <polyline points="20,6 9,17 4,12"></polyline>
-                  {:else}
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  {#if group.service}
+                    <span class="svc-tag">
+                      {@render serviceGlyph(group.service)}
+                      <span>{group.service}</span>
+                    </span>
                   {/if}
-                </svg>
-                <span>{copyStates.get(toolCall.tool_id + '_all') ? $_('chat.message.copied') : $_('chat.message.copy')}</span>
-              </button>
-            </div>
 
-            {#if showRaw}
-              <!-- ────── RAW JSON VIEW ────── -->
-              {#if toolCall.input?.value}
-                <div class="result-section">
-                  <div class="section-label">{$_('chat.toolExecution.input')}</div>
-                  <div class="code-block-wrapper">
-                    <pre class="result-code"><code>{JSON.stringify(toolCall.input.value, null, 2)}</code></pre>
-                  </div>
-                </div>
-              {/if}
-              {#if result.output?.content}
-                <div class="result-section">
-                  <div class="section-label">{$_('chat.toolExecution.output')}</div>
-                  {#each result.output.content as content}
-                    {#if content.type === 'text' && content.text}
-                      <div class="code-block-wrapper">
-                        <pre class="result-code"><code>{content.text}</code></pre>
-                      </div>
+                  <span class="node-title">{group.cleanName}</span>
+                  <span class="count-tag">{group.items.length} calls</span>
+
+                  <div class="node-end">
+                    {#if group.totalDuration > 0}
+                      <span class="node-time">{formatDuration(group.totalDuration)}</span>
                     {/if}
-                  {/each}
-                </div>
-              {/if}
-
-            {:else}
-              <!-- ────── FORMATTED VIEW ────── -->
-
-              <!-- Input parameters: compact inline tags -->
-              {#if toolCall.input?.value && Object.keys(toolCall.input.value).length > 0}
-                <div class="result-section">
-                  <div class="section-label">{$_('chat.toolExecution.input')}</div>
-                  <div class="input-tags">
-                    {#each Object.entries(toolCall.input.value) as [key, val]}
-                      {@const vtype = detectValueType(val)}
-                      <div class="input-tag" title={`${key}: ${formatValue(val)}`}>
-                        <span class="input-tag__key">{formatKeyLabel(key)}</span>
-                        <span class="input-tag__value" class:input-tag__value--url={vtype === 'url'}>
-                          {#if vtype === 'url'}
-                            {truncateUrl(String(val))}
-                          {:else if vtype === 'boolean'}
-                            {val ? '✓' : '✗'}
-                          {:else if vtype === 'object' || vtype === 'array'}
-                            {Array.isArray(val) ? `[${val.length}]` : `{${countFields(val as Record<string, any>)}`}
-                          {:else}
-                            {formatValue(val)}
-                          {/if}
-                        </span>
-                      </div>
-                    {/each}
+                    <svg class="node-chevron" class:node-chevron--open={isGroupExpanded} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
                   </div>
-                </div>
-              {/if}
+                </button>
 
-              <!-- Output content -->
-              {#if result.output?.content}
-                <div class="result-section">
-                  <div class="section-label">{$_('chat.toolExecution.output')}</div>
-                  {#each result.output.content as content, contentIdx}
-                    {#if content.type === 'text' && content.text}
-                      {@const parsed = tryParseJson(content.text)}
+                {#if isGroupExpanded}
+                  <div class="sub-stepper">
+                    {#each group.items as item, itemIdx (item.toolCall.tool_id)}
+                      {@const isItemExpanded = expandedBlocks.has(item.toolCall.tool_id)}
+                      {@const showRaw = rawJsonIds.has(item.toolCall.tool_id)}
 
-                      {#if parsed?.type === 'array-objects'}
-                        <!-- ═══ TABLE: array of objects ═══ -->
-                        <div class="result-table-wrapper">
-                          <table class="result-table">
-                            <thead>
-                              <tr>
-                                <th class="row-num-header">#</th>
-                                {#each getTableHeaders(parsed.data) as header}
-                                  <th>{formatKeyLabel(header)}</th>
-                                {/each}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {#each parsed.data as row, rowIdx}
-                                <tr>
-                                  <td class="row-num">{rowIdx + 1}</td>
-                                  {#each getTableHeaders(parsed.data) as header}
-                                    {@const cellType = detectValueType(row[header])}
-                                    <td title={formatValue(row[header])} class:td--number={cellType === 'number'}>
-                                      {#if cellType === 'url'}
-                                        <a href={String(row[header])} target="_blank" rel="noopener noreferrer" class="cell-link">
-                                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                                          {truncateUrl(String(row[header]), 40)}
-                                        </a>
-                                      {:else if cellType === 'email'}
-                                        <a href={`mailto:${row[header]}`} class="cell-link">{row[header]}</a>
-                                      {:else if cellType === 'boolean'}
-                                        <span class="badge" class:badge--true={row[header]} class:badge--false={!row[header]}>{row[header] ? 'Yes' : 'No'}</span>
-                                      {:else if cellType === 'null'}
-                                        <span class="null-value">—</span>
-                                      {:else if cellType === 'date'}
-                                        <span class="date-value" title={String(row[header])}>{formatDate(String(row[header]))}</span>
-                                      {:else if cellType === 'object' || cellType === 'array'}
-                                        <code class="inline-json">{JSON.stringify(row[header])}</code>
-                                      {:else}
-                                        {formatValue(row[header])}
-                                      {/if}
-                                    </td>
-                                  {/each}
-                                </tr>
+                      <div class="sub-node">
+                        <button
+                          type="button"
+                          class="sub-node-row"
+                          onclick={() => toggleBlock(item.toolCall.tool_id)}
+                          aria-expanded={isItemExpanded}
+                        >
+                          <span class="sub-branch">↳</span>
+                          <span class="sub-idx">#{itemIdx + 1}</span>
+
+                          {#if item.toolCall.input?.value}
+                            {@const entries = Object.entries(item.toolCall.input.value)}
+                            <div class="arg-row">
+                              {#each entries.slice(0, 2) as [k, v]}
+                                <span class="arg-pill">
+                                  <span class="arg-pill__k">{k}:</span>
+                                  <span class="arg-pill__v">{formatArgValue(v)}</span>
+                                </span>
                               {/each}
-                            </tbody>
-                          </table>
-                        </div>
-                        <div class="table-footer">
-                          <span class="row-count">{parsed.data.length} {parsed.data.length === 1 ? $_('chat.toolExecution.row') : $_('chat.toolExecution.rows')}</span>
-                        </div>
+                              {#if entries.length > 2}
+                                <span class="arg-more">+{entries.length - 2}</span>
+                              {/if}
+                            </div>
+                          {/if}
 
-                      {:else if parsed?.type === 'object'}
-                        <!-- ═══ KEY-VALUE CARD: single object ═══ -->
-                        <div class="kv-card">
-                          {#each Object.entries(parsed.data) as [key, val]}
-                            {@const vtype = detectValueType(val)}
-                            {@const nestedKey = `${toolCall.tool_id}_${contentIdx}_${key}`}
-                            {@const isCollapsed = collapsedNested.has(nestedKey)}
+                          {#if item.result?.duration_ms}
+                            <span class="node-time node-time--sub">{formatDuration(item.result.duration_ms)}</span>
+                          {/if}
+                        </button>
 
-                            <div class="kv-row">
-                              <span class="kv-key">
-                                <span class="kv-type-dot kv-type-dot--{vtype}"></span>
-                                {formatKeyLabel(key)}
-                              </span>
-                              <span class="kv-value">
-                                {#if vtype === 'url'}
-                                  <a href={String(val)} target="_blank" rel="noopener noreferrer" class="cell-link">
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                                    {truncateUrl(String(val))}
-                                  </a>
-                                {:else if vtype === 'email'}
-                                  <a href={`mailto:${val}`} class="cell-link">{val}</a>
-                                {:else if vtype === 'boolean'}
-                                  <span class="badge" class:badge--true={val} class:badge--false={!val}>{val ? 'Yes' : 'No'}</span>
-                                {:else if vtype === 'null'}
-                                  <span class="null-value">—</span>
-                                {:else if vtype === 'date'}
-                                  <span class="date-value">{formatDate(String(val))}</span>
-                                {:else if vtype === 'number'}
-                                  <span class="number-value">{formatNumber(val as number)}</span>
-                                {:else if vtype === 'array' && Array.isArray(val)}
-                                  {#if val.length === 0}
-                                    <span class="null-value">Empty list</span>
-                                  {:else if val.length > 0 && typeof val[0] === 'object' && val[0] !== null}
-                                    <!-- Nested table (collapsible) -->
-                                    <button class="nested-toggle" onclick={() => toggleNested(nestedKey)}>
-                                      <svg class="nested-chevron" class:rotated={!isCollapsed} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"></polyline></svg>
-                                      {val.length} {val.length === 1 ? 'item' : 'items'}
-                                    </button>
-                                    {#if !isCollapsed}
-                                      <div class="kv-nested-table">
-                                        <table class="result-table result-table--nested">
-                                          <thead>
-                                            <tr>
-                                              {#each getTableHeaders(val) as h}
-                                                <th>{formatKeyLabel(h)}</th>
-                                              {/each}
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            {#each val as nestedRow}
-                                              <tr>
-                                                {#each getTableHeaders(val) as h}
-                                                  <td>{formatValue(nestedRow[h])}</td>
-                                                {/each}
-                                              </tr>
-                                            {/each}
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                    {/if}
-                                  {:else}
-                                    <!-- Primitive array as chips -->
-                                    <div class="chip-list">
-                                      {#each val as item}
-                                        <span class="chip">{formatValue(item)}</span>
-                                      {/each}
-                                    </div>
-                                  {/if}
-                                {:else if vtype === 'object'}
-                                  <!-- Nested object (collapsible) -->
-                                  <button class="nested-toggle" onclick={() => toggleNested(nestedKey)}>
-                                    <svg class="nested-chevron" class:rotated={!isCollapsed} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"></polyline></svg>
-                                    {countFields(val as Record<string, any>)} fields
-                                  </button>
-                                  {#if !isCollapsed}
-                                    <div class="nested-kv">
-                                      {#each Object.entries(val as Record<string, any>) as [nk, nv]}
-                                        <div class="nested-kv-row">
-                                          <span class="nested-kv-key">{formatKeyLabel(nk)}</span>
-                                          <span class="nested-kv-val">
-                                            {#if detectValueType(nv) === 'url'}
-                                              <a href={String(nv)} target="_blank" rel="noopener noreferrer" class="cell-link">{truncateUrl(String(nv))}</a>
-                                            {:else if detectValueType(nv) === 'boolean'}
-                                              <span class="badge" class:badge--true={nv} class:badge--false={!nv}>{nv ? 'Yes' : 'No'}</span>
-                                            {:else}
-                                              {formatValue(nv)}
-                                            {/if}
-                                          </span>
+                        <!-- Sub-item Output Drawer -->
+                        {#if isItemExpanded && item.result}
+                          <div class="inspector-tray">
+                            <div class="tray-toolbar">
+                              <span class="tray-title">{item.cleanName}</span>
+                              <div class="tray-actions">
+                                <button type="button" class="mini-btn" class:mini-btn--on={showRaw} onclick={() => toggleRawJson(item.toolCall.tool_id)}>
+                                  JSON
+                                </button>
+                                <button type="button" class="mini-btn" onclick={() => handleCopy(item.toolCall.tool_id, JSON.stringify({ input: item.toolCall.input?.value, output: item.result?.output }, null, 2))}>
+                                  {#if copyStates.get(item.toolCall.tool_id)}✓ Copied{:else}Copy{/if}
+                                </button>
+                              </div>
+                            </div>
+
+                            {#if showRaw}
+                              <pre class="code-box"><code>{JSON.stringify({ input: item.toolCall.input?.value, output: item.result.output }, null, 2)}</code></pre>
+                            {:else if item.result.output?.content}
+                              {#each item.result.output.content as content}
+                                {#if content.type === 'text' && content.text}
+                                  {@const parsed = tryParseJson(content.text)}
+                                  {#if parsed?.type === 'object'}
+                                    <div class="sheet">
+                                      {#each Object.entries(parsed.data) as [k, val]}
+                                        <div class="sheet-row">
+                                          <span class="sheet-k">{k}</span>
+                                          <span class="sheet-v">{formatValue(val)}</span>
                                         </div>
                                       {/each}
                                     </div>
+                                  {:else}
+                                    <pre class="code-box">{content.text}</pre>
                                   {/if}
-                                {:else}
-                                  {formatValue(val)}
                                 {/if}
-                              </span>
+                              {/each}
+                            {/if}
+                          </div>
+                        {/if}
+                      </div>
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+
+            {:else}
+              <!-- Single Item -->
+              {@const step = group.items[0]}
+              {@const isExpanded = expandedBlocks.has(step.toolCall.tool_id)}
+              {@const showRaw = rawJsonIds.has(step.toolCall.tool_id)}
+              {@const searchQuery = tableSearchQueries[step.toolCall.tool_id] || ''}
+
+              <div class="stepper-node">
+                <button
+                  type="button"
+                  class="node-header"
+                  onclick={() => toggleBlock(step.toolCall.tool_id)}
+                  aria-expanded={isExpanded}
+                >
+                  <span class="node-bullet" class:node-bullet--run={step.status === 'pending' || step.status === 'running'} class:node-bullet--err={step.status === 'error'}></span>
+
+                  {#if step.service}
+                    <span class="svc-tag">
+                      {@render serviceGlyph(step.service)}
+                      <span>{step.service}</span>
+                    </span>
+                  {/if}
+
+                  <span class="node-title">{step.cleanName}</span>
+
+                  {#if step.toolCall.input?.value}
+                    {@const entries = Object.entries(step.toolCall.input.value)}
+                    <div class="arg-row">
+                      {#each entries.slice(0, 3) as [k, v]}
+                        <span class="arg-pill">
+                          <span class="arg-pill__k">{k}:</span>
+                          <span class="arg-pill__v">{formatArgValue(v)}</span>
+                        </span>
+                      {/each}
+                      {#if entries.length > 3}
+                        <span class="arg-more">+{entries.length - 3}</span>
+                      {/if}
+                    </div>
+                  {/if}
+
+                  <div class="node-end">
+                    {#if step.result?.duration_ms}
+                      <span class="node-time">{formatDuration(step.result.duration_ms)}</span>
+                    {/if}
+                    <svg class="node-chevron" class:node-chevron--open={isExpanded} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
+                </button>
+
+                <!-- Streaming text -->
+                {#if (step.status === 'pending' || step.status === 'running') && step.toolCall.input_text}
+                  <div class="streaming-row">
+                    <span class="streaming-dot"></span>
+                    <code>{step.toolCall.input_text}</code>
+                  </div>
+                {/if}
+
+                <!-- Output Inspector Drawer -->
+                {#if isExpanded && step.result}
+                  <div class="inspector-tray">
+                    <div class="tray-toolbar">
+                      <span class="tray-title">{step.cleanName}</span>
+                      <div class="tray-actions">
+                        <button type="button" class="mini-btn" class:mini-btn--on={showRaw} onclick={() => toggleRawJson(step.toolCall.tool_id)}>
+                          JSON
+                        </button>
+                        <button type="button" class="mini-btn" onclick={() => handleCopy(step.toolCall.tool_id, JSON.stringify({ input: step.toolCall.input?.value, output: step.result?.output }, null, 2))}>
+                          {#if copyStates.get(step.toolCall.tool_id)}✓ Copied{:else}Copy{/if}
+                        </button>
+                      </div>
+                    </div>
+
+                    {#if showRaw}
+                      <pre class="code-box"><code>{JSON.stringify({ input: step.toolCall.input?.value, output: step.result.output }, null, 2)}</code></pre>
+                    {:else}
+                      <!-- Parameters -->
+                      {#if step.toolCall.input?.value && Object.keys(step.toolCall.input.value).length > 0}
+                        <div class="sheet">
+                          <div class="sheet-title">PARAMETERS</div>
+                          {#each Object.entries(step.toolCall.input.value) as [k, val]}
+                            <div class="sheet-row">
+                              <span class="sheet-k">{k}</span>
+                              <span class="sheet-v">{formatValue(val)}</span>
                             </div>
                           {/each}
                         </div>
-                        <div class="table-footer">
-                          <span class="row-count">{countFields(parsed.data)} {countFields(parsed.data) === 1 ? 'field' : 'fields'}</span>
-                        </div>
-
-                      {:else if parsed?.type === 'array-primitives'}
-                        <!-- ═══ CHIPS: array of primitives ═══ -->
-                        <div class="chip-list">
-                          {#each parsed.data as item}
-                            <span class="chip">{formatValue(item)}</span>
-                          {/each}
-                        </div>
-                        <div class="table-footer">
-                          <span class="row-count">{parsed.data.length} {parsed.data.length === 1 ? 'item' : 'items'}</span>
-                        </div>
-
-                      {:else}
-                        <!-- ═══ PLAIN TEXT (with markdown support) ═══ -->
-                        {#if hasMarkdown(content.text)}
-                          <div class="markdown-block">
-                            {@html renderMarkdown(content.text)}
-                          </div>
-                        {:else}
-                          <div class="plain-text-block">
-                            <p class="plain-text">{content.text}</p>
-                          </div>
-                        {/if}
                       {/if}
 
-                    {:else if content.type === 'image' && content.data}
-                      <div class="result-image-wrapper">
-                        <img
-                          src={`data:${content.mimeType || 'image/png'};base64,${content.data}`}
-                          alt={content.name || $_('chat.toolExecution.imageResult')}
-                          class="result-image"
-                        />
-                      </div>
-                    {:else if content.type === 'resource'}
-                      <div class="result-resource">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                          <polyline points="14 2 14 8 20 8"></polyline>
-                        </svg>
-                        <span>{content.name || content.uri || $_('chat.toolExecution.resource')}</span>
-                      </div>
-                    {/if}
-                  {/each}
-                </div>
-              {/if}
-            {/if}
+                      <!-- Output Results -->
+                      {#if step.result.output?.content}
+                        {#each step.result.output.content as content}
+                          {#if content.type === 'text' && content.text}
+                            {@const parsed = tryParseJson(content.text)}
 
-            <!-- Error output -->
-            {#if result.output?.isError}
-              <div class="result-error">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-                <span>
-                  {result.output.content?.[0]?.text || $_('chat.toolExecution.unknownError')}
-                </span>
+                            {#if parsed?.type === 'array-objects'}
+                              {@const filteredData = filterTableRows(parsed.data, searchQuery)}
+                              {@const headers = getTableHeaders(parsed.data)}
+
+                              <div class="table-container">
+                                <div class="table-head-bar">
+                                  <span class="table-count">{filteredData.length} records</span>
+                                  {#if parsed.data.length > 2}
+                                    <input
+                                      type="text"
+                                      placeholder="Filter records…"
+                                      value={searchQuery}
+                                      oninput={(e) => { tableSearchQueries = { ...tableSearchQueries, [step.toolCall.tool_id]: (e.target as HTMLInputElement).value }; }}
+                                      class="filter-inp"
+                                    />
+                                  {/if}
+                                </div>
+                                <div class="table-scroll">
+                                  <table class="data-tbl">
+                                    <thead>
+                                      <tr>
+                                        <th class="tbl-idx">#</th>
+                                        {#each headers as h}<th>{formatKeyLabel(h)}</th>{/each}
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {#each filteredData as row, rIdx}
+                                        <tr>
+                                          <td class="tbl-idx">{rIdx + 1}</td>
+                                          {#each headers as h}
+                                            {@const cellType = detectValueType(row[h])}
+                                            <td title={formatValue(row[h])} class:num-cell={cellType === 'number'}>
+                                              {#if cellType === 'url'}
+                                                <a href={String(row[h])} target="_blank" rel="noopener noreferrer" class="tbl-link">
+                                                  {truncateUrl(String(row[h]), 32)} ↗
+                                                </a>
+                                              {:else if cellType === 'email'}
+                                                <a href={`mailto:${row[h]}`} class="tbl-link">{row[h]}</a>
+                                              {:else if cellType === 'boolean'}
+                                                <span class="tbl-tag" class:tbl-tag--yes={row[h]}>{row[h] ? 'Yes' : 'No'}</span>
+                                              {:else if cellType === 'null'}
+                                                <span class="tbl-null">—</span>
+                                              {:else if cellType === 'date'}
+                                                <span class="tbl-date">{formatDate(String(row[h]))}</span>
+                                              {:else}
+                                                {formatValue(row[h])}
+                                              {/if}
+                                            </td>
+                                          {/each}
+                                        </tr>
+                                      {/each}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+
+                            {:else if parsed?.type === 'object'}
+                              <div class="sheet">
+                                <div class="sheet-title">RESULT</div>
+                                {#each Object.entries(parsed.data) as [k, val]}
+                                  {@const vtype = detectValueType(val)}
+                                  <div class="sheet-row">
+                                    <span class="sheet-k">{k}</span>
+                                    <span class="sheet-v">
+                                      {#if vtype === 'url'}
+                                        <a href={String(val)} target="_blank" rel="noopener noreferrer" class="tbl-link">{truncateUrl(String(val))} ↗</a>
+                                      {:else if vtype === 'email'}
+                                        <a href={`mailto:${val}`} class="tbl-link">{val}</a>
+                                      {:else if vtype === 'boolean'}
+                                        <span class="tbl-tag" class:tbl-tag--yes={val}>{val ? 'true' : 'false'}</span>
+                                      {:else if vtype === 'null'}
+                                        <span class="tbl-null">null</span>
+                                      {:else}
+                                        {formatValue(val)}
+                                      {/if}
+                                    </span>
+                                  </div>
+                                {/each}
+                              </div>
+
+                            {:else}
+                              {#if hasMarkdown(content.text)}
+                                <div class="prose-wrap">{@html renderMarkdown(content.text)}</div>
+                              {:else}
+                                <pre class="code-box">{content.text}</pre>
+                              {/if}
+                            {/if}
+
+                          {:else if content.type === 'image' && content.data}
+                            <div class="img-wrap">
+                              <img src={`data:${content.mimeType || 'image/png'};base64,${content.data}`} alt="Result" />
+                            </div>
+                          {/if}
+                        {/each}
+                      {/if}
+
+                      <!-- Error -->
+                      {#if step.result.output?.isError}
+                        <div class="error-strip">
+                          <span class="error-strip__badge">FAILED</span>
+                          <span class="error-strip__msg">{step.result.output.content?.[0]?.text || 'Execution error'}</span>
+                        </div>
+                      {/if}
+                    {/if}
+                  </div>
+                {/if}
               </div>
             {/if}
-          </div>
-        {/if}
-      </div>
-        {/each}
+          {/each}
+        </div>
       </div>
     {/if}
   </div>
 {/if}
 
 <style>
-  /* ─── Group container (many-to-one, ENGG-531) ─── */
+  /* ══════════════════════════════════════════════════════
+     INNOVATIVE ACTION PILL (NO FULL-WIDTH ROW, NO AWKWARD BOX CARDS)
+     Hugs content neatly like a floating badge.
+     Seamlessly integrated into chat flow.
+     ══════════════════════════════════════════════════════ */
 
-  .tool-group {
-    border: 1px solid var(--glass-stroke-light);
-    border-radius: 0.75rem;
-    background: var(--surface-elevated);
-    overflow: hidden;
-    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  .action-pill-wrapper {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 100%;
+    margin: 0.125rem 0 0.5rem;
   }
 
-  .tool-group--error {
-    border-color: color-mix(in oklab, var(--brand-red) 25%, var(--glass-stroke-light));
-  }
-
-  .tool-group__header {
-    display: flex;
+  /* ─── The Pill (Auto-width, sits like a chic badge) ─── */
+  .action-pill {
+    display: inline-flex;
     align-items: center;
-    gap: 0.625rem;
-    width: 100%;
-    padding: 0.625rem 0.875rem;
-    background: transparent;
+    gap: 0.4375rem;
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.3125rem 0.6875rem;
+    border-radius: 9999px;
     border: none;
-    color: var(--text-primary);
-    font-size: 0.8125rem;
-    font-weight: 600;
+    background: rgba(0, 0, 0, 0.04);
+    color: #334155;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.2;
     cursor: pointer;
-    text-align: left;
-    transition: background 0.2s ease;
+    user-select: none;
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .tool-group__header:hover {
-    background: var(--surface-subtle);
+  .action-pill:hover {
+    background: rgba(0, 0, 0, 0.07);
+    color: #0f172a;
+    transform: translateY(-0.5px);
   }
 
-  .tool-group__label {
-    flex: 1;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .action-pill--active {
+    background: rgba(37, 99, 235, 0.08);
+    color: #1d4ed8;
   }
 
-  .tool-group--active .tool-group__label {
-    color: var(--text-secondary);
+  .action-pill--open {
+    background: rgba(0, 0, 0, 0.08);
+    color: #0f172a;
   }
 
-  .tool-group__time {
-    font-size: 0.6875rem;
-    color: var(--text-tertiary);
-    font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
+  /* Dark mode */
+  @media (prefers-color-scheme: dark) {
+    .action-pill {
+      background: rgba(255, 255, 255, 0.06);
+      color: #94a3b8;
+    }
+    .action-pill:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #f8fafc;
+    }
+    .action-pill--active {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+    }
+    .action-pill--open {
+      background: rgba(255, 255, 255, 0.12);
+      color: #f8fafc;
+    }
   }
 
-  .tool-group__count {
-    flex-shrink: 0;
-    min-width: 1.125rem;
-    height: 1.125rem;
-    padding: 0 0.3rem;
+  :root[data-theme='dark'] .action-pill {
+    background: rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+  }
+  :root[data-theme='dark'] .action-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+  }
+
+  /* Beacon icon */
+  .pill-beacon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.625rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    color: var(--text-tertiary);
-    background: rgba(var(--glass-tint), 0.08);
-    border-radius: 999px;
-  }
-
-  .tool-group__chevron {
-    color: var(--text-tertiary);
-  }
-
-  /* ─── Step list (inside the open group) ─── */
-
-  .tool-timeline {
-    display: flex;
-    flex-direction: column;
-    border-top: 1px solid var(--glass-stroke-light);
-    animation: slideDown 0.2s ease;
-  }
-
-  .tool-call-item {
-    border-bottom: 1px solid color-mix(in oklab, var(--glass-stroke-light) 55%, transparent);
-    background: transparent;
-    overflow: hidden;
-  }
-
-  .tool-call-item:last-child {
-    border-bottom: none;
-  }
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .tool-call-item--error {
-    border-color: color-mix(in oklab, var(--brand-red) 25%, var(--glass-stroke-light));
-  }
-
-  .tool-call-header {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    width: 100%;
-    padding: 0.5rem 0.875rem 0.5rem 1rem;
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    cursor: default;
-    transition: all 0.2s ease;
-    text-align: left;
-  }
-
-  .tool-call-header.clickable {
-    cursor: pointer;
-  }
-
-  .tool-call-header.clickable:hover {
-    background: var(--surface-subtle);
-  }
-
-  .tool-call-item--completed .tool-call-header {
-    color: var(--text-primary);
-  }
-
-  .status-indicator {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-  }
-
-  .status-icon {
     flex-shrink: 0;
   }
 
-  .spinner-small {
-    width: 16px;
-    height: 16px;
-    border: 2px solid var(--glass-stroke-light);
-    border-top-color: var(--brand);
+  .dot-beacon {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .dot-beacon--ok { color: #10b981; }
+  .dot-beacon--err { color: #ef4444; }
+
+  .pulse-beacon {
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    flex-shrink: 0;
+    background: #3b82f6;
+    animation: beaconPulse 1.4s ease-in-out infinite;
   }
 
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
+  @keyframes beaconPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
   }
 
-  .tool-info {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .tool-name {
-    font-weight: 500;
-    color: var(--text-secondary);
+  .pill-text {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-transform: capitalize;
+    letter-spacing: -0.01em;
   }
 
-  .tool-call-item--completed .tool-name {
-    color: var(--text-primary);
-  }
-
-  .tool-server {
+  .pill-time {
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
     font-size: 0.6875rem;
-    color: var(--text-tertiary);
-    background: rgba(var(--glass-tint), 0.06);
-    padding: 0.125rem 0.375rem;
-    border-radius: 0.25rem;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .duration-badge {
-    font-size: 0.6875rem;
-    color: var(--text-tertiary);
+    opacity: 0.6;
     font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
   }
 
-  .chevron {
+  .pill-chevron {
     flex-shrink: 0;
-    transition: transform 0.2s ease;
-    color: var(--text-tertiary);
+    opacity: 0.5;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .chevron.rotated {
+  .pill-chevron--open {
     transform: rotate(180deg);
   }
 
-  /* Streaming input preview */
-  .tool-input-preview {
-    padding: 0 0.875rem 0.5rem;
-    overflow: hidden;
-  }
-
-  .input-text {
-    display: block;
-    font-family: 'SF Mono', Monaco, Menlo, 'Ubuntu Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    opacity: 0.7;
-  }
-
-  /* ─── Result Content ─── */
-
-  .tool-result-content {
-    padding: 0 0.875rem 0.875rem;
-    border-top: 1px solid var(--glass-stroke-light);
-    animation: slideDown 0.2s ease;
+  /* ═══ EXPANDED ACTION DRAWER ═══ */
+  .action-drawer {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    width: 100%;
+    max-width: 620px;
+    margin-top: 0.375rem;
+    animation: expandFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  @keyframes slideDown {
-    from { opacity: 0; max-height: 0; }
-    to { opacity: 1; max-height: 2000px; }
+  @keyframes expandFade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ─── Toolbar ─── */
-
-  .result-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.375rem;
-    padding-top: 0.5rem;
-  }
-
-  .toolbar-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.25rem 0.5rem;
-    background: transparent;
-    border: 1px solid var(--glass-stroke-light);
-    border-radius: 0.375rem;
-    color: var(--text-tertiary);
-    font-size: 0.6875rem;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-
-  .toolbar-btn:hover {
-    background: var(--surface-subtle);
-    color: var(--text-primary);
-  }
-
-  .toolbar-btn--active {
-    background: rgba(var(--glass-tint), 0.1);
-    color: var(--brand);
-    border-color: var(--brand);
-  }
-
-  /* ─── Sections ─── */
-
-  .result-section {
+  .drawer-rail {
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
-    margin-top: 0.25rem;
+    padding-left: 0.75rem;
+    margin-left: 0.5rem;
+    border-left: 1.5px solid rgba(0, 0, 0, 0.08);
+    gap: 0.25rem;
   }
 
-  .section-label {
-    font-size: 0.6875rem;
-    font-weight: 600;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  /* ─── Input Tags ─── */
-
-  .input-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.375rem;
-  }
-
-  .input-tag {
-    display: inline-flex;
-    align-items: center;
-    border: 1px solid var(--glass-stroke-light);
-    border-radius: 0.375rem;
-    overflow: hidden;
-    font-size: 0.75rem;
-    line-height: 1;
-    max-width: 100%;
-  }
-
-  .input-tag__key {
-    padding: 0.3rem 0.5rem;
-    background: rgba(var(--glass-tint), 0.06);
-    color: var(--text-tertiary);
-    font-weight: 600;
-    font-size: 0.6875rem;
-    white-space: nowrap;
-    border-right: 1px solid var(--glass-stroke-light);
-  }
-
-  .input-tag__value {
-    padding: 0.3rem 0.5rem;
-    color: var(--text-primary);
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .input-tag__value--url {
-    color: var(--brand);
-  }
-
-  /* ─── Code Block (Raw JSON) ─── */
-
-  .code-block-wrapper {
-    position: relative;
-  }
-
-  .result-code {
-    margin: 0;
-    padding: 0.625rem 0.75rem;
-    background: color-mix(in oklab, var(--glass-bg-dark) 30%, var(--btn-tertiary));
-    border-radius: 0.5rem;
-    overflow-x: auto;
-    max-height: 300px;
-    overflow-y: auto;
-  }
-
-  @media (prefers-color-scheme: light) {
-    .result-code {
-      background: #f1f5f9;
+  @media (prefers-color-scheme: dark) {
+    .drawer-rail {
+      border-left-color: rgba(255, 255, 255, 0.08);
     }
   }
 
-  .result-code code {
-    font-family: 'SF Mono', Monaco, Menlo, 'Ubuntu Mono', monospace;
-    font-size: 0.75rem;
-    line-height: 1.5;
-    color: var(--text-primary);
-    white-space: pre-wrap;
-    word-wrap: break-word;
-  }
-
-  /* ─── Key-Value Card ─── */
-
-  .kv-card {
-    border: 1px solid var(--glass-stroke-light);
-    border-radius: 0.5rem;
-    overflow: hidden;
-  }
-
-  .kv-row {
+  /* ─── Stepper Nodes ─── */
+  .stepper-node {
     display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid color-mix(in oklab, var(--glass-stroke-light) 50%, transparent);
-    font-size: 0.8125rem;
-    line-height: 1.5;
-    transition: background 0.1s ease;
+    flex-direction: column;
   }
 
-  .kv-row:last-child {
-    border-bottom: none;
-  }
-
-  .kv-row:nth-child(even) {
-    background: rgba(var(--glass-tint), 0.02);
-  }
-
-  .kv-row:hover {
-    background: var(--surface-subtle);
-  }
-
-  .kv-key {
-    flex-shrink: 0;
-    min-width: 90px;
-    max-width: 160px;
+  .node-header {
     display: flex;
     align-items: center;
-    gap: 0.375rem;
-    font-weight: 600;
-    color: var(--text-tertiary);
-    font-size: 0.75rem;
-    padding-top: 1px;
+    gap: 0.4375rem;
+    width: 100%;
+    padding: 0.3125rem 0.5rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s ease;
   }
 
-  /* Type indicator dot */
-  .kv-type-dot {
-    width: 6px;
-    height: 6px;
+  .node-header:hover {
+    background: rgba(0, 0, 0, 0.035);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .node-header:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+  }
+
+  .node-bullet {
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
+    background: #10b981;
     flex-shrink: 0;
   }
-  .kv-type-dot--string { background: #8b8bf5; }
-  .kv-type-dot--number { background: #f59e0b; }
-  .kv-type-dot--boolean { background: #10b981; }
-  .kv-type-dot--url { background: #3b82f6; }
-  .kv-type-dot--email { background: #6366f1; }
-  .kv-type-dot--date { background: #ec4899; }
-  .kv-type-dot--null { background: #6b7280; }
-  .kv-type-dot--array { background: #f97316; }
-  .kv-type-dot--object { background: #14b8a6; }
 
-  .kv-value {
-    flex: 1;
-    min-width: 0;
-    color: var(--text-primary);
-    word-break: break-word;
-  }
+  .node-bullet--run { background: #3b82f6; }
+  .node-bullet--err { background: #ef4444; }
 
-  /* ─── Smart Value Renderers ─── */
-
-  .cell-link {
-    color: var(--brand);
-    text-decoration: none;
+  /* Service Glyph */
+  .svc-tag {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    word-break: break-all;
-  }
-
-  .cell-link:hover {
-    text-decoration: underline;
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.125rem 0.5rem;
-    border-radius: 1rem;
-    font-size: 0.6875rem;
+    padding: 0.0625rem 0.3125rem;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.05);
+    font-size: 0.625rem;
     font-weight: 600;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #475569;
+    flex-shrink: 0;
   }
 
-  .badge--true {
-    background: color-mix(in oklab, var(--brand-green) 15%, transparent);
-    color: var(--brand-green);
+  @media (prefers-color-scheme: dark) {
+    .svc-tag {
+      background: rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+    }
   }
 
-  .badge--false {
-    background: rgba(var(--glass-tint), 0.08);
-    color: var(--text-tertiary);
+  .service-ico {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
   }
 
-  .null-value {
-    color: var(--text-tertiary);
-    font-style: italic;
-  }
-
-  .date-value {
-    font-variant-numeric: tabular-nums;
-    color: var(--text-secondary);
+  .node-title {
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #0f172a;
     white-space: nowrap;
+    flex-shrink: 0;
   }
 
-  .number-value {
-    font-variant-numeric: tabular-nums;
+  @media (prefers-color-scheme: dark) {
+    .node-title {
+      color: #f8fafc;
+    }
+  }
+
+  .count-tag {
+    font-size: 0.625rem;
     font-weight: 500;
+    color: #64748b;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 0.0625rem 0.25rem;
+    border-radius: 3px;
   }
 
-  .inline-json {
-    font-family: 'SF Mono', Monaco, Menlo, 'Ubuntu Mono', monospace;
-    font-size: 0.6875rem;
-    background: rgba(var(--glass-tint), 0.06);
-    padding: 0.125rem 0.3rem;
-    border-radius: 0.25rem;
-    color: var(--text-secondary);
-    max-width: 200px;
-    display: inline-block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: middle;
-  }
-
-  /* ─── Nested Collapsible ─── */
-
-  .nested-toggle {
+  .arg-row {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    padding: 0.125rem 0.375rem;
-    background: rgba(var(--glass-tint), 0.06);
-    border: 1px solid var(--glass-stroke-light);
-    border-radius: 0.25rem;
-    color: var(--text-secondary);
+    gap: 0.25rem;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .arg-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
     font-size: 0.6875rem;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    margin-bottom: 0.25rem;
+    background: rgba(0, 0, 0, 0.035);
+    padding: 0.0625rem 0.25rem;
+    border-radius: 3px;
+    white-space: nowrap;
   }
 
-  .nested-toggle:hover {
-    background: rgba(var(--glass-tint), 0.12);
-    color: var(--text-primary);
+  @media (prefers-color-scheme: dark) {
+    .arg-pill {
+      background: rgba(255, 255, 255, 0.05);
+    }
   }
 
-  .nested-chevron {
-    transition: transform 0.2s ease;
+  .arg-pill__k { color: #0284c7; }
+  .arg-pill__v { color: #b45309; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+
+  @media (prefers-color-scheme: dark) {
+    .arg-pill__k { color: #38bdf8; }
+    .arg-pill__v { color: #fbbf24; }
   }
 
-  .nested-chevron.rotated {
+  .arg-more {
+    font-size: 0.625rem;
+    color: #94a3b8;
+  }
+
+  .node-end {
+    display: flex;
+    align-items: center;
+    gap: 0.3125rem;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .node-time {
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+    font-size: 0.6875rem;
+    color: #94a3b8;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .node-time--sub {
+    margin-left: auto;
+  }
+
+  .node-chevron {
+    color: #94a3b8;
+    transition: transform 0.15s ease;
+  }
+
+  .node-chevron--open {
     transform: rotate(180deg);
   }
 
-  .kv-nested-table {
-    margin-top: 0.25rem;
-    border-radius: 0.375rem;
-    overflow: auto;
-    border: 1px solid var(--glass-stroke-light);
-  }
-
-  .nested-kv {
-    margin-top: 0.25rem;
-    border: 1px solid var(--glass-stroke-light);
-    border-radius: 0.375rem;
-    overflow: hidden;
-  }
-
-  .nested-kv-row {
+  /* Sub Stepper (for grouped batch calls) */
+  .sub-stepper {
     display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    padding: 0.3rem 0.5rem;
-    border-bottom: 1px solid color-mix(in oklab, var(--glass-stroke-light) 50%, transparent);
-    font-size: 0.75rem;
+    flex-direction: column;
+    margin-left: 0.75rem;
+    gap: 1px;
   }
 
-  .nested-kv-row:last-child {
-    border-bottom: none;
-  }
-
-  .nested-kv-key {
-    flex-shrink: 0;
-    min-width: 70px;
-    max-width: 120px;
-    font-weight: 600;
-    color: var(--text-tertiary);
-    font-size: 0.6875rem;
-  }
-
-  .nested-kv-val {
-    flex: 1;
-    min-width: 0;
-    color: var(--text-secondary);
-    word-break: break-word;
-  }
-
-  /* ─── Chip List ─── */
-
-  .chip-list {
+  .sub-node-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.375rem;
-    padding: 0.25rem 0;
-  }
-
-  .chip {
-    display: inline-flex;
     align-items: center;
-    padding: 0.25rem 0.625rem;
-    background: rgba(var(--glass-tint), 0.06);
-    border: 1px solid var(--glass-stroke-light);
-    border-radius: 1rem;
+    gap: 0.3125rem;
+    width: 100%;
+    padding: 0.1875rem 0.375rem;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.1s ease;
+  }
+
+  .sub-node-row:hover {
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  .sub-branch {
+    color: #94a3b8;
     font-size: 0.75rem;
-    color: var(--text-secondary);
-    transition: background 0.15s ease;
+    flex-shrink: 0;
   }
 
-  .chip:hover {
-    background: rgba(var(--glass-tint), 0.12);
+  .sub-idx {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.625rem;
+    color: #94a3b8;
+    flex-shrink: 0;
   }
 
-  /* ─── Plain Text / Markdown Block ─── */
-
-  .plain-text-block {
-    position: relative;
-    padding: 0.625rem 0.75rem;
-    background: color-mix(in oklab, var(--glass-bg-dark) 30%, var(--btn-tertiary));
-    border-radius: 0.5rem;
-    max-height: 300px;
-    overflow-y: auto;
+  /* ─── Inspector Tray ─── */
+  .inspector-tray {
+    display: flex;
+    flex-direction: column;
+    margin: 0.25rem 0 0.375rem 1rem;
+    padding: 0.4375rem 0.5rem;
+    background: rgba(0, 0, 0, 0.025);
+    border-radius: 6px;
+    gap: 0.3125rem;
+    animation: expandFade 0.15s ease;
   }
 
-  @media (prefers-color-scheme: light) {
-    .plain-text-block {
-      background: #f1f5f9;
+  @media (prefers-color-scheme: dark) {
+    .inspector-tray {
+      background: rgba(255, 255, 255, 0.035);
     }
   }
 
-  .plain-text {
-    margin: 0;
-    font-size: 0.8125rem;
-    line-height: 1.6;
-    color: var(--text-primary);
-    white-space: pre-wrap;
-    word-wrap: break-word;
+  .tray-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.1875rem;
   }
 
-  .markdown-block {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8125rem;
-    line-height: 1.6;
-    color: var(--text-primary);
-    max-height: 400px;
-    overflow-y: auto;
-    border: 1px solid var(--glass-stroke-light);
-    border-radius: 0.5rem;
-  }
-
-  .markdown-block :global(h1),
-  .markdown-block :global(h2),
-  .markdown-block :global(h3) {
-    margin: 0.5em 0 0.25em;
-    font-size: 1em;
-    font-weight: 700;
-    color: var(--text-primary);
-  }
-
-  .markdown-block :global(p) {
-    margin: 0.375em 0;
-  }
-
-  .markdown-block :global(ul),
-  .markdown-block :global(ol) {
-    padding-inline-start: 1.25rem;
-    margin: 0.375em 0;
-  }
-
-  /* ".markdown-block" scrolls (overflow-y), so it clips markers that overflow
-     its inline-start edge. Numbered markers need room for their digits or the
-     leading one is cut off — see ENGG-431. */
-  .markdown-block :global(ol) {
-    padding-inline-start: 2.5em;
-  }
-
-  .markdown-block :global(code) {
-    font-family: 'SF Mono', Monaco, Menlo, 'Ubuntu Mono', monospace;
-    font-size: 0.7rem;
-    background: rgba(var(--glass-tint), 0.08);
-    padding: 0.125rem 0.3rem;
-    border-radius: 0.25rem;
-  }
-
-  .markdown-block :global(pre) {
-    background: color-mix(in oklab, var(--glass-bg-dark) 30%, var(--btn-tertiary));
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.375rem;
-    overflow-x: auto;
-    margin: 0.5em 0;
-  }
-
-  .markdown-block :global(pre code) {
-    background: none;
-    padding: 0;
-  }
-
-  .markdown-block :global(a) {
-    color: var(--brand);
-  }
-
-  .markdown-block :global(table) {
-    border-collapse: collapse;
-    width: 100%;
-    font-size: 0.75rem;
-    margin: 0.5em 0;
-  }
-
-  .markdown-block :global(th),
-  .markdown-block :global(td) {
-    padding: 0.25rem 0.5rem;
-    border: 1px solid var(--glass-stroke-light);
-    text-align: left;
-  }
-
-  .markdown-block :global(th) {
+  .tray-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6875rem;
     font-weight: 600;
-    background: rgba(var(--glass-tint), 0.04);
+    color: #64748b;
   }
 
-  /* ─── Table Rendering ─── */
+  .tray-actions {
+    display: flex;
+    gap: 0.25rem;
+  }
 
-  .result-table-wrapper {
+  .mini-btn {
+    padding: 0.0625rem 0.375rem;
+    border-radius: 3px;
+    border: none;
+    background: rgba(0, 0, 0, 0.05);
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.1s ease;
+  }
+
+  .mini-btn:hover {
+    color: #0f172a;
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .mini-btn--on {
+    color: #2563eb;
+    background: rgba(37, 99, 235, 0.12);
+  }
+
+  /* Property Sheet */
+  .sheet {
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 4px;
+    padding: 0.25rem 0.375rem;
+    gap: 1px;
+  }
+
+  .sheet-title {
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    margin-bottom: 0.125rem;
+  }
+
+  .sheet-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    padding: 0.0625rem 0;
+  }
+
+  .sheet-k {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6875rem;
+    color: #0284c7;
+    min-width: 70px;
+    flex-shrink: 0;
+  }
+
+  .sheet-v {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: #0f172a;
+    word-break: break-word;
+    flex: 1;
+    min-width: 0;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .sheet-k { color: #38bdf8; }
+    .sheet-v { color: #f8fafc; }
+  }
+
+  /* Data Table */
+  .table-container {
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .table-head-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.1875rem 0.25rem;
+  }
+
+  .table-count {
+    font-size: 0.625rem;
+    color: #94a3b8;
+  }
+
+  .filter-inp {
+    border: none;
+    background: rgba(0, 0, 0, 0.05);
+    font-size: 0.625rem;
+    padding: 0.0625rem 0.3125rem;
+    border-radius: 3px;
+    outline: none;
+    width: 90px;
+    color: inherit;
+  }
+
+  .table-scroll {
     overflow-x: auto;
-    border-radius: 0.5rem;
-    border: 1px solid var(--glass-stroke-light);
+    max-height: 240px;
   }
 
-  .result-table {
+  .data-tbl {
     border-collapse: collapse;
     width: 100%;
-    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6875rem;
+    text-align: left;
   }
 
-  .result-table th,
-  .result-table td {
-    padding: 0.375rem 0.625rem;
-    border: 1px solid color-mix(in oklab, var(--glass-stroke-light) 60%, transparent);
-    text-align: left;
+  .data-tbl th, .data-tbl td {
+    padding: 0.25rem 0.375rem;
     white-space: nowrap;
-    max-width: 280px;
+    max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .result-table th {
-    background: color-mix(in oklab, var(--glass-bg-dark) 40%, var(--btn-secondary));
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 0.6875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+  .data-tbl th {
     position: sticky;
     top: 0;
+    background: rgba(0, 0, 0, 0.04);
+    font-size: 0.5625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
   }
 
-  .result-table td {
-    color: var(--text-secondary);
+  .data-tbl td { color: #0f172a; }
+  .data-tbl tbody tr:hover { background: rgba(0, 0, 0, 0.03); }
+
+  @media (prefers-color-scheme: dark) {
+    .data-tbl th { background: rgba(255, 255, 255, 0.06); color: #94a3b8; }
+    .data-tbl td { color: #f8fafc; }
+    .data-tbl tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
   }
 
-  .td--number {
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-  }
+  .tbl-idx { width: 1.5rem; text-align: center; color: #94a3b8; }
+  .num-cell { text-align: right; font-variant-numeric: tabular-nums; }
+  .tbl-link { color: #2563eb; text-decoration: none; }
+  .tbl-link:hover { text-decoration: underline; }
+  .tbl-tag { font-size: 0.5625rem; padding: 0 0.1875rem; border-radius: 2px; background: rgba(0,0,0,0.05); }
+  .tbl-tag--yes { color: #059669; }
+  .tbl-null { color: #94a3b8; font-style: italic; }
+  .tbl-date { color: #64748b; }
 
-  .result-table tbody tr:nth-child(even) {
-    background: rgba(var(--glass-tint), 0.02);
-  }
-
-  .result-table tbody tr:hover {
-    background: var(--surface-subtle);
-  }
-
-  .result-table--nested {
+  /* Code box */
+  .code-box {
+    margin: 0;
+    padding: 0.375rem;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 0.6875rem;
+    line-height: 1.45;
+    color: inherit;
+    max-height: 220px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 
-  .result-table--nested th,
-  .result-table--nested td {
-    padding: 0.25rem 0.5rem;
+  @media (prefers-color-scheme: dark) {
+    .code-box { background: rgba(255, 255, 255, 0.04); }
   }
 
-  .row-num-header,
-  .row-num {
-    text-align: center;
-    color: var(--text-tertiary);
-    font-size: 0.625rem;
-    width: 2rem;
-    padding: 0.375rem 0.25rem;
-  }
-
-  .table-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 0.375rem;
-  }
-
-  .row-count {
-    font-size: 0.6875rem;
-    color: var(--text-tertiary);
-  }
-
-  /* ─── Image result ─── */
-
-  .result-image-wrapper {
-    border-radius: 0.5rem;
-    overflow: hidden;
-    border: 1px solid var(--glass-stroke-light);
-  }
-
-  .result-image {
-    max-width: 100%;
-    max-height: 400px;
-    display: block;
-    object-fit: contain;
-  }
-
-  /* ─── Resource result ─── */
-
-  .result-resource {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    background: var(--surface-subtle);
-    border-radius: 0.5rem;
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-  }
-
-  /* ─── Error display ─── */
-
-  .result-error {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    padding: 0.625rem 0.75rem;
-    background: color-mix(in oklab, var(--brand-red) 5%, var(--surface-elevated));
-    border: 1px solid color-mix(in oklab, var(--brand-red) 20%, transparent);
-    border-radius: 0.5rem;
-    color: var(--brand-red);
-    font-size: 0.8125rem;
+  .prose-wrap {
+    padding: 0.375rem;
+    font-size: 0.75rem;
     line-height: 1.5;
-    margin-top: 0.5rem;
   }
 
-  .result-error svg {
-    flex-shrink: 0;
-    margin-top: 0.125rem;
+  .img-wrap img {
+    max-width: 100%;
+    max-height: 280px;
+    border-radius: 4px;
   }
 
-  /* ─── Responsive ─── */
-
-  @media (max-width: 768px) {
-    .tool-call-header {
-      padding: 0.5rem 0.75rem;
-      font-size: 0.75rem;
-    }
-
-    .tool-result-content {
-      padding: 0 0.75rem 0.75rem;
-    }
-
-    .tool-server {
-      display: none;
-    }
-
-    .result-table th,
-    .result-table td {
-      padding: 0.25rem 0.5rem;
-      font-size: 0.6875rem;
-    }
-
-    .kv-row {
-      flex-direction: column;
-      gap: 0.125rem;
-    }
-
-    .kv-key {
-      max-width: 100%;
-    }
-
-    .input-tag {
-      max-width: 100%;
-    }
-
-    .input-tag__value {
-      max-width: 180px;
-    }
+  .streaming-row {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.1875rem 0.5rem 0.1875rem 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6875rem;
+    color: #64748b;
   }
+
+  .streaming-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #3b82f6;
+    animation: beaconPulse 0.9s infinite;
+  }
+
+  .error-strip {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.375rem;
+    border-radius: 4px;
+    background: rgba(239, 68, 68, 0.08);
+    font-size: 0.6875rem;
+  }
+
+  .error-strip__badge { font-weight: 700; color: #ef4444; }
+  .error-strip__msg { color: #64748b; }
 </style>
