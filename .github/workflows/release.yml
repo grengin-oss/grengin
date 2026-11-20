@@ -84,12 +84,13 @@ jobs:
           trap 'docker rm -f "${CONTAINER_ID}" >/dev/null 2>&1 || true' EXIT
           docker cp "${CONTAINER_ID}:/usr/local/bin/app" \
             "${RUNNER_TEMP}/rootfs/usr/local/bin/grengin-api"
-          docker cp "${CONTAINER_ID}:/usr/local/bin/sqlx-mcp" \
-            "${RUNNER_TEMP}/rootfs/usr/local/bin/sqlx-mcp"
-          chmod 0755 \
-            "${RUNNER_TEMP}/rootfs/usr/local/bin/grengin-api" \
-            "${RUNNER_TEMP}/rootfs/usr/local/bin/sqlx-mcp"
-          "${RUNNER_TEMP}/rootfs/usr/local/bin/sqlx-mcp" --help >/dev/null
+          chmod 0755 "${RUNNER_TEMP}/rootfs/usr/local/bin/grengin-api"
+          # sqlx-mcp is retired; only backends released before its removal still ship it.
+          if docker cp "${CONTAINER_ID}:/usr/local/bin/sqlx-mcp" \
+            "${RUNNER_TEMP}/rootfs/usr/local/bin/sqlx-mcp" 2>/dev/null; then
+            chmod 0755 "${RUNNER_TEMP}/rootfs/usr/local/bin/sqlx-mcp"
+            "${RUNNER_TEMP}/rootfs/usr/local/bin/sqlx-mcp" --help >/dev/null
+          fi
           tar -C "${RUNNER_TEMP}/rootfs" -czf \
             "${RUNNER_TEMP}/grengin-backend-${{ matrix.architecture }}.tar.gz" .
 
