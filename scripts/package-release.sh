@@ -40,7 +40,7 @@ if [[ ! "${BACKEND_COMMIT}" =~ ^[0-9a-f]{40}$ ]]; then
   exit 1
 fi
 
-if [[ ! -d "${BACKEND_SOURCE_DIR}/.git" ]]; then
+if ! git -C "${BACKEND_SOURCE_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo "Backend checkout not found at ${BACKEND_SOURCE_DIR}." >&2
   exit 1
 fi
@@ -71,7 +71,7 @@ done
 
 for rootfs in "${BACKEND_AMD64_ROOTFS}" "${BACKEND_ARM64_ROOTFS}"; do
   if [[ ! -x "${rootfs}/usr/local/bin/grengin-api" ]]; then
-    echo "Static backend binary not found in ${rootfs}/usr/local/bin." >&2
+    echo "Backend binary not found in ${rootfs}/usr/local/bin." >&2
     exit 1
   fi
 done
@@ -148,6 +148,11 @@ create_linux_bundle() {
     install -m 0755 "${rootfs}/usr/local/bin/sqlx-mcp" "${bundle_root}/bin/sqlx-mcp"
     sqlx_mcp_manifest=$',\n    "sqlx_mcp_path": "bin/sqlx-mcp"'
   fi
+  local migration_manifest=""
+  if [[ -x "${rootfs}/usr/local/bin/grengin-migrate" ]]; then
+    install -m 0755 "${rootfs}/usr/local/bin/grengin-migrate" "${bundle_root}/bin/grengin-migrate"
+    migration_manifest=$',\n    "migration_path": "bin/grengin-migrate"'
+  fi
   cp -R "${REPOSITORY_ROOT}/dist/." "${bundle_root}/webapp/"
   cp "${REPOSITORY_ROOT}/LICENSE" "${bundle_root}/licenses/frontend-LICENSE"
   cp "${REPOSITORY_ROOT}/NOTICE" "${bundle_root}/licenses/frontend-NOTICE"
@@ -173,7 +178,7 @@ create_linux_bundle() {
     "version": "${BACKEND_VERSION}",
     "image": "${BACKEND_IMAGE}",
     "commit": "${BACKEND_COMMIT}",
-    "api_path": "bin/grengin-api"${sqlx_mcp_manifest}
+    "api_path": "bin/grengin-api"${sqlx_mcp_manifest}${migration_manifest}
   }
 }
 EOF
