@@ -68,7 +68,8 @@ printf 'ghcr.io/grengin-oss/grengin-api@%s\n' "$digest" > release/backend-image.
 if [[ ! -f "release/notes/$tag.md" ]]; then
   {
     printf '## Grengin %s\n\n' "$tag"
-    printf 'Complete frontend and backend source archives, plus static Linux AMD64 and ARM64 bundles.\n'
+    printf 'Complete frontend and backend source archives, plus Linux AMD64 and ARM64 bundles.\n'
+    printf 'For 0.9.13 and newer, native bundles require glibc 2.36 or newer and libgcc_s.so.1; use the container on incompatible systems.\n'
     printf 'The backend is Grengin API %s, pinned to commit `%s` and its published image digest.\n\n' "$tag" "$revision"
     printf 'Install the latest stable Linux release:\n\n```bash\n'
     printf "curl --proto '=https' --tlsv1.2 -sSf https://meta.grengin.com/install.sh | sh\n"

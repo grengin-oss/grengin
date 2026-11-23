@@ -80,8 +80,8 @@ Grengin uses one public product version across its release assets:
 |---|---|
 | `grengin-<version>-source.tar.gz` | Frontend source/build and pinned backend source |
 | `grengin-<version>-source.zip` | Same complete source bundle in ZIP format |
-| `grengin-<version>-linux-amd64.tar.gz` | Frontend build plus static amd64 `grengin-api` and `sqlx-mcp` binaries |
-| `grengin-<version>-linux-arm64.tar.gz` | Frontend build plus static arm64 `grengin-api` and `sqlx-mcp` binaries |
+| `grengin-<version>-linux-amd64.tar.gz` | Frontend build plus the amd64 backend and migration CLI, when present in the pinned image |
+| `grengin-<version>-linux-arm64.tar.gz` | Frontend build plus the arm64 backend and migration CLI, when present in the pinned image |
 | `grengin-<version>-SHA256SUMS.txt` | SHA-256 checksums for every custom release asset |
 
 Each archive contains a `RELEASE-MANIFEST.json` with the exact repositories,
@@ -89,6 +89,12 @@ component versions, commit SHAs, platform, and architecture. The backend commit
 is pinned in [`release/backend-commit.txt`](release/backend-commit.txt), so a
 release never depends on a moving branch. Source and Linux archives also carry
 the applicable Apache 2.0 license and attribution notices.
+
+Starting with 0.9.13, native binaries use glibc rather than static musl. They
+require glibc 2.36 or newer, `libgcc_s.so.1` and a CA certificate store (for
+example, Debian 12). Alpine/musl is not supported by these native bundles; use
+the backend container on incompatible hosts. Older backend images that contain
+the retired `sqlx-mcp` binary still include it in their bundles.
 
 The **Release from backend** workflow checks GHCR hourly. When a new stable
 backend version appears, it reads the version from that image's exact Cargo
