@@ -80,8 +80,8 @@ Grengin uses one public product version across its release assets:
 |---|---|
 | `grengin-<version>-source.tar.gz` | Frontend source/build and pinned backend source |
 | `grengin-<version>-source.zip` | Same complete source bundle in ZIP format |
-| `grengin-<version>-linux-amd64.tar.gz` | Frontend build plus static amd64 `grengin-api` and `sqlx-mcp` binaries |
-| `grengin-<version>-linux-arm64.tar.gz` | Frontend build plus static arm64 `grengin-api` and `sqlx-mcp` binaries |
+| `grengin-<version>-linux-amd64.tar.gz` | Frontend build plus the static amd64 `grengin-api` binary (and the retired `sqlx-mcp` for backends released before its removal) |
+| `grengin-<version>-linux-arm64.tar.gz` | Frontend build plus the static arm64 `grengin-api` binary (and the retired `sqlx-mcp` for backends released before its removal) |
 | `grengin-<version>-SHA256SUMS.txt` | SHA-256 checksums for every custom release asset |
 
 Each archive contains a `RELEASE-MANIFEST.json` with the exact repositories,
