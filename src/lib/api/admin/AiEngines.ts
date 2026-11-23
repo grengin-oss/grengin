@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { request } from '../client.js';
+import type { ProviderCategoryDef } from '../../admin/providerCategories.js';
 import type {
   AIEngine,
   AIEngineModels,
@@ -15,11 +16,13 @@ export async function getAIEngines(): Promise<AIEngine[]> {
   return response;
 }
 
-export async function getAIProviderSuggestions(): Promise<AIEngine[]> {
+export async function getAIProviderSuggestions(): Promise<{ providers: (AIEngine & { category?: string })[]; categories: ProviderCategoryDef[] }> {
   const response = await request<{
-    providers: Array<{ id: string; name: string; icon?: string | null; icon_dark?: string | null }>;
+    providers: Array<{ id: string; name: string; icon?: string | null; icon_dark?: string | null; category?: string }>;
+    categories?: ProviderCategoryDef[];
   }>('/discovery/ai-providers', { method: 'GET' });
-  return response.providers.map((provider) => ({
+  return { categories: response.categories ?? [], providers: response.providers.map((provider) => ({
+    category: provider.category,
     engine_key: provider.id,
     display_name: provider.name,
     icon: provider.icon ?? undefined,
@@ -27,7 +30,7 @@ export async function getAIProviderSuggestions(): Promise<AIEngine[]> {
     is_enabled: false,
     api_key_configured: false,
     api_key_status: 'not_configured',
-  }));
+  })) };
 }
 
 export async function saveAIEngineKey(

@@ -17,6 +17,7 @@ SPDX-License-Identifier: Apache-2.0
     getMcpConnections,
     disconnectMcpConnection,
   } from "../../api/integrations.js";
+  import { disconnectConnectorInstallation, listConnections } from "../../api/admin/connectors.js";
   import { startMcpAuthorization } from "../../api/mcpAuthorize.js";
   import { ApiError } from "../../api/client.js";
   import { toast } from "../../components/Toaster.svelte";
@@ -24,6 +25,8 @@ SPDX-License-Identifier: Apache-2.0
   type ConnectionStatus = "connected" | "expired" | "error" | "disconnected";
 
   interface MergedServer {
+    plugin_id?: string;
+    cleanup_pending?: boolean;
     id: string;
     name: string;
     description: string;
@@ -106,6 +109,8 @@ SPDX-License-Identifier: Apache-2.0
         getMcpConnections(),
       ]);
 
+      const nativeConnections = serversRes.servers.some((server) => server.integration?.plugin_id)
+        ? await listConnections() : [];
       const connectionMap = new Map<string, McpConnection>();
       for (const conn of connectionsRes.connections) {
         connectionMap.set(conn.server_id, conn);
@@ -116,6 +121,8 @@ SPDX-License-Identifier: Apache-2.0
         const status = computeStatus(conn);
         return {
           id: s.id,
+          plugin_id: s.integration?.plugin_id,
+          cleanup_pending: nativeConnections.some((connection) => connection.server_id === s.id && connection.revocation_pending),
           name: s.name,
           description: s.description,
           icon: s.icon ?? "",
@@ -149,7 +156,7 @@ SPDX-License-Identifier: Apache-2.0
     if (connectingId) return;
     connectingId = server.id;
     try {
-      const authorization = await startMcpAuthorization(server.id, { reconnect });
+      const authorization = await startMcpAuthorization(server.id, { reconnect, connectorKey: server.plugin_id });
       if (authorization?.connected) {
         toast.success($_("admin.mcpServers.connected"));
         connectingId = null;
@@ -170,7 +177,7 @@ SPDX-License-Identifier: Apache-2.0
         error instanceof ApiError
           ? error.description ||
             $_("userIntegrations.failedToConnect", { values: { name: server.name } })
-          : $_("userIntegrations.failedToConnect", { values: { name: server.name } });
+          : error instanceof Error ? error.message : $_("userIntegrations.failedToConnect", { values: { name: server.name } });
       toast.error(message);
       connectingId = null;
     }
@@ -181,13 +188,17 @@ SPDX-License-Identifier: Apache-2.0
     disconnectingId = server.id;
     disconnectConfirmId = null;
     try {
-      const response = await disconnectMcpConnection(server.id);
+      const native = server.plugin_id ? await disconnectConnectorInstallation(server.id) : null;
+      const response = native
+        ? { success: true, revocation_pending: native.revocation_pending }
+        : await disconnectMcpConnection(server.id);
       if (response.success) {
         servers = servers.map((s) =>
           s.id === server.id
             ? {
                 ...s,
                 connected: false,
+                cleanup_pending: response.revocation_pending,
                 status: "disconnected" as ConnectionStatus,
                 connected_at: null,
                 expires_at: null,
@@ -196,7 +207,8 @@ SPDX-License-Identifier: Apache-2.0
               }
             : s,
         );
-        toast.success($_("userIntegrations.disconnected", { values: { name: server.name } }));
+        if (response.revocation_pending) toast($_("connectors.cleanupPending"));
+        else toast.success($_("userIntegrations.disconnected", { values: { name: server.name } }));
       }
     } catch (error) {
       const message =
@@ -283,7 +295,7 @@ SPDX-License-Identifier: Apache-2.0
               </span>
             {/if}
             <span class="status-tag status-tag--{server.status}">
-              {$_(`userIntegrations.status.${server.status}`)}
+              {server.cleanup_pending ? $_("connectors.cleanupPending") : $_(`userIntegrations.status.${server.status}`)}
             </span>
           </div>
           {#if server.description}
@@ -298,6 +310,10 @@ SPDX-License-Identifier: Apache-2.0
             {@render spinner()}
             {$_("userIntegrations.actions.connecting")}
           </span>
+        {:else if server.cleanup_pending}
+          <button class="btn-connect" type="button" onclick={() => handleDisconnect(server)} disabled={disconnectingId === server.id}>
+            {$_("connectors.cleanupPending")}
+          </button>
         {:else if server.status === "connected"}
           <button class="int-btn int-btn--ghost" type="button" onclick={() => handleConnect(server, true)}>
             {$_("userIntegrations.actions.reconnect")}
@@ -427,7 +443,7 @@ SPDX-License-Identifier: Apache-2.0
         </div>
         <div class="mc-info__row">
           <dt>{$_("userIntegrations.columns.status")}</dt>
-          <dd>{$_(`userIntegrations.status.${server.status}`)}</dd>
+          <dd>{server.cleanup_pending ? $_("connectors.cleanupPending") : $_(`userIntegrations.status.${server.status}`)}</dd>
         </div>
         {#if server.account_email}
           <div class="mc-info__row">
@@ -566,7 +582,7 @@ SPDX-License-Identifier: Apache-2.0
             <div class="col-conn">
               <span class="status-dot status-dot--{server.status}"></span>
               <span class="conn-label conn-label--{server.status}">
-                {$_(`userIntegrations.status.${server.status}`)}
+                {server.cleanup_pending ? $_("connectors.cleanupPending") : $_(`userIntegrations.status.${server.status}`)}
               </span>
             </div>
             <div class="col-tools" class:col-tools--dim={server.tools.length === 0}>
@@ -655,7 +671,7 @@ SPDX-License-Identifier: Apache-2.0
               <div class="mcp-status-line">
                 <span class="status-dot status-dot--{server.status}"></span>
                 <span class="conn-label conn-label--{server.status}">
-                  {$_(`userIntegrations.status.${server.status}`)}
+                  {server.cleanup_pending ? $_("connectors.cleanupPending") : $_(`userIntegrations.status.${server.status}`)}
                 </span>
               </div>
               {#if server.description}

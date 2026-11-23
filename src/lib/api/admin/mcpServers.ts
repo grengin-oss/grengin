@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Perter Technology Solutions Private Limited
 // SPDX-License-Identifier: Apache-2.0
 
-import { request } from '../client.js';
+import { request, ApiError } from '../client.js';
 import type {
   MCPServer,
   MCPServerListResponse,
@@ -149,8 +149,8 @@ export async function getOrgConnection(
 
 export async function disconnectOrgConnection(
   serverId: string
-): Promise<{ success: boolean }> {
-  return request<{ success: boolean }>(
+): Promise<{ success: boolean; revocation_pending?: boolean }> {
+  return request<{ success: boolean; revocation_pending?: boolean }>(
     `/admin/mcp-servers/${serverId}/connection/disconnect`,
     { method: 'POST' }
   );
@@ -206,14 +206,25 @@ export async function getServerToolsAccess(serverId: string): Promise<McpToolAcc
   });
 }
 
+export class ToolListChangedError extends ApiError {
+  constructor() { super(404, 'The tool list changed; review and save again.'); }
+}
+
 export async function updateServerToolsAccess(
   serverId: string,
   payload: McpBulkToolAccessUpdatePayload
 ): Promise<McpBulkToolAccessResponse> {
-  return request<McpBulkToolAccessResponse>(`/admin/mcp-servers/${serverId}/tools/access`, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  });
+  // One entry per tool. Never interpret an error response as partial success.
+  const tools = [...new Map(payload.tools.map((tool) => [tool.tool_id, tool])).values()];
+  try {
+    return await request<McpBulkToolAccessResponse>(`/admin/mcp-servers/${serverId}/tools/access`, {
+      method: 'PUT',
+      body: JSON.stringify({ ...payload, tools }),
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) throw new ToolListChangedError();
+    throw error;
+  }
 }
 
 /**

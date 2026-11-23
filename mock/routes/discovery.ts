@@ -19,16 +19,44 @@ router.get('/discovery/ai-providers', (_req, res) => {
     name: p.name,
     icon: p.icon ?? null,
     icon_dark: p.iconDark ?? null,
+    category: (categoriesJson.providers as Record<string, string>)[p.id],
   }))
-  res.json({ providers })
+  res.json({ providers, categories: categoriesJson.categories })
 })
 
-/**
- * Distribution metadata, a local mirror of meta.grengin.com. The real host
- * serves these static files without CORS headers, so the Browse dialog cannot
- * fetch them cross-origin; pointing VITE_META_BASE at this mock server (see
- * .env.mock) lets the category grouping work end-to-end in development.
- */
+// Native discovery fixtures. Public metadata routes below remain for older clients.
+const icon = (key: string) => `https://meta.grengin.com/connectors/icons/${key}.svg`
+const plugin = (id: string, name: string, category: string, members?: string[]) => ({
+  id, name, description: `${name} (mock).`, status: 'preview', icon: icon(id), icon_dark: icon(id), category,
+  ...(members ? { members } : {}),
+  selected_version: '1.0.0', latest_version: '1.0.0',
+  available_versions: [{ version: '1.0.0', schema_version: '1.0', contract_version: '1.0', sha256: '0'.repeat(64) }],
+})
+
+const nativePlugins = [
+  plugin('gmail', 'Gmail', 'email-calendar'),
+  plugin('google-calendar', 'Google Calendar', 'email-calendar'),
+  plugin('google-basic', 'Google Basic Apps', 'email-calendar', ['gmail', 'google-calendar']),
+  plugin('slack', 'Slack', 'chat'),
+  plugin('atlassian', 'Atlassian', 'developer', ['jira', 'confluence']),
+  plugin('zoho', 'Zoho (US)', 'customers', ['zoho-crm', 'zoho-mail']),
+  plugin('zoho-india', 'Zoho (India)', 'customers', ['zoho-crm', 'zoho-mail']),
+]
+router.get('/discovery/connector-plugins', (_req, res) => {
+  res.json({ distribution_version: '0.9.13', catalog_type: 'connector', catalog_version: '1.0.0', providers: nativePlugins })
+})
+router.get('/discovery/connector-plugins/:id', (req, res) => {
+  const entry = nativePlugins.find((item) => item.id === req.params.id)
+  if (!entry) return res.status(404).json({ detail: 'Unknown connector plugin' })
+  return res.json({
+    id: entry.id, version: entry.latest_version,
+    plugin: { id: entry.id, name: entry.name, auth: 'oauth2', base_url: `https://example.invalid/${entry.id}`, tools: [] },
+    installation: entry.id === 'atlassian' ? { configuration_schema: {
+      required: ['cloud_id'], properties: { cloud_id: { pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' } },
+    } } : null,
+  })
+})
+
 router.get('/distributions/grengin-api/:version/index.json', (_req, res) => {
   res.json(indexJson)
 })

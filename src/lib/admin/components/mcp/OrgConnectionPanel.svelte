@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0
     getOrgConnection,
   } from '../../../api/admin/mcpServers.js';
   import { startMcpAuthorization } from '../../../api/mcpAuthorize.js';
+  import { connectorKeyOf, disconnectConnectorInstallation } from '../../../api/admin/connectors.js';
 
   interface Props {
     server: MCPServer;
@@ -91,7 +92,7 @@ SPDX-License-Identifier: Apache-2.0
       // connector transaction before the popup opens, and recovers a stranded or
       // 409'd attempt. window.open copies this tab's sessionStorage, so the stored
       // transaction reaches the popup for the callback to complete.
-      const authorization = await startMcpAuthorization(server.id);
+      const authorization = await startMcpAuthorization(server.id, { connectorKey: connectorKeyOf(server) });
       if (authorization?.connected) {
         connecting = false;
         await refreshConnection();
@@ -127,9 +128,11 @@ SPDX-License-Identifier: Apache-2.0
     if (disconnecting) return;
     disconnecting = true;
     try {
-      await disconnectOrgConnection(server.id);
+      const native = connectorKeyOf(server) ? await disconnectConnectorInstallation(server.id) : null;
+      const result = native ?? await disconnectOrgConnection(server.id);
       connection = { connected: false, connected_as: null, connected_at: null, token_expires_at: null, scopes: [] };
-      toast.success($_('admin.mcpOAuth.orgConnection.disconnected'));
+      if (result.revocation_pending) toast($_('connectors.cleanupPending'));
+      else toast.success($_('admin.mcpOAuth.orgConnection.disconnected'));
     } catch (err: any) {
       toast.error(err?.message || $_('admin.mcpOAuth.orgConnection.disconnectFailed'));
     } finally {

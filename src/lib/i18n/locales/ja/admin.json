@@ -732,7 +732,8 @@
         },
         "elseText": "リストにないツールや、開発者が作ったサーバーがありますか？MCPに対応していれば何でも動きます。",
         "elseBtn": "独自のサーバーを追加"
-      }
+      },
+      "stdioAllowlist": "運用担当者がコマンドを許可リストに登録する必要があります。"
     },
     "mcpOAuth": {
       "authentication": "認証",
@@ -882,7 +883,8 @@
       "toolAccessSaved": "ツールアクセスを保存しました",
       "failedToSaveToolAccess": "ツールアクセスの保存に失敗しました",
       "save": "保存",
-      "saving": "保存中..."
+      "saving": "保存中...",
+      "toolListChanged": "ツール一覧が変更されました。確認して再度保存してください。"
     },
     "viewMode": {
       "grid": "グリッド表示",
@@ -1459,8 +1461,14 @@
         "money": "お金",
         "marketing": "マーケティング",
         "website": "ウェブサイト",
-        "developer": "開発者"
-      }
+        "developer": "開発者",
+        "productivity": "生産性",
+        "support": "サポート"
+      },
+      "suites": "スイート",
+      "suitesSub": "1 回のサインインでスイート内のすべてのアプリを利用できます。個別のアプリも下から追加できます。",
+      "region": "リージョン",
+      "oneSignIn": "1 回のサインイン · {count} 個のアプリ"
     },
     "connectorOverview": {
       "openPrompt": "新しいチャットで質問する",

@@ -123,7 +123,9 @@
       "imageGenTitle": "画像生成",
       "imageGenSubtitle": "画像の生成や編集に使うモデルを選択してください",
       "imageModeBanner": "画像モードが有効",
-      "exitImageMode": "画像モードを終了"
+      "exitImageMode": "画像モードを終了",
+      "webSearchUnsupported": "このモデルはウェブ検索に対応していません",
+      "retiredModel": "モデル {old} は提供が終了したため、{model} に切り替えました。"
     },
     "message": {
       "copy": "コピー",

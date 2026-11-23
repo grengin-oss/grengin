@@ -824,7 +824,8 @@
         },
         "elseText": "Have a tool that is not in the list, or a server your developer built? Anything that speaks MCP works.",
         "elseBtn": "Add your own server"
-      }
+      },
+      "stdioAllowlist": "Requires the command to be allowlisted by your operator."
     },
     "mcpOAuth": {
       "authentication": "Authentication",
@@ -974,7 +975,8 @@
       "toolAccessSaved": "Tool access saved",
       "failedToSaveToolAccess": "Failed to save tool access",
       "save": "Save",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "toolListChanged": "The tool list changed; review and save again."
     },
     "viewMode": {
       "grid": "Grid view",
@@ -1551,8 +1553,14 @@
         "money": "Money",
         "marketing": "Marketing",
         "website": "Website",
-        "developer": "Developer"
-      }
+        "developer": "Developer",
+        "productivity": "Productivity",
+        "support": "Support"
+      },
+      "suites": "Suites",
+      "suitesSub": "One sign-in covers every app in a suite. You can still add single apps below.",
+      "region": "Region",
+      "oneSignIn": "One sign-in · {count} apps"
     },
     "connectorOverview": {
       "openPrompt": "Ask this in a new chat",

@@ -177,6 +177,7 @@ SPDX-License-Identifier: Apache-2.0
 
 {#if selectedToolId}
   <ToolAccessModal
+    serverId={server.id}
     toolId={selectedToolId}
     toolName={selectedToolName}
     isOpen={toolModalOpen}

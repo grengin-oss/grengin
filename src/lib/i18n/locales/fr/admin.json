@@ -732,7 +732,8 @@
         },
         "elseText": "Vous avez un outil qui n’est pas dans la liste, ou un serveur créé par votre développeur ? Tout ce qui parle MCP fonctionne.",
         "elseBtn": "Ajouter votre propre serveur"
-      }
+      },
+      "stdioAllowlist": "La commande doit être autorisée par votre opérateur."
     },
     "mcpOAuth": {
       "authentication": "Authentification",
@@ -882,7 +883,8 @@
       "toolAccessSaved": "Accès aux outils enregistré",
       "failedToSaveToolAccess": "Échec de l'enregistrement de l'accès aux outils",
       "save": "Enregistrer",
-      "saving": "Enregistrement..."
+      "saving": "Enregistrement...",
+      "toolListChanged": "La liste des outils a changé ; vérifiez-la et enregistrez à nouveau."
     },
     "viewMode": {
       "grid": "Vue grille",
@@ -1459,8 +1461,14 @@
         "money": "Finances",
         "marketing": "Marketing",
         "website": "Site web",
-        "developer": "Développeurs"
-      }
+        "developer": "Développeurs",
+        "productivity": "Productivité",
+        "support": "Assistance"
+      },
+      "suites": "Suites d'applications",
+      "suitesSub": "Une seule connexion couvre toutes les applications d'une suite. Vous pouvez toujours ajouter des applications individuelles ci-dessous.",
+      "region": "Région",
+      "oneSignIn": "Une connexion · {count} applications"
     },
     "connectorOverview": {
       "openPrompt": "Poser cette question dans un nouveau chat",

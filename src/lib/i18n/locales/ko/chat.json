@@ -123,7 +123,9 @@
       "imageGenTitle": "이미지 생성",
       "imageGenSubtitle": "이미지를 생성하거나 편집할 모델을 선택하세요",
       "imageModeBanner": "이미지 모드 활성",
-      "exitImageMode": "이미지 모드 종료"
+      "exitImageMode": "이미지 모드 종료",
+      "webSearchUnsupported": "이 모델은 웹 검색을 지원하지 않습니다",
+      "retiredModel": "모델 {old}의 제공이 종료되어 {model}(으)로 전환했습니다."
     },
     "message": {
       "copy": "복사",

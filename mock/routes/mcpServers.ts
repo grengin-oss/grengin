@@ -295,6 +295,28 @@ router.get('/admin/mcp-servers/:id/tools/access', requireAuth, (req, res) => {
   res.json(toolAccess[req.params.id] ?? [])
 })
 
+// Validate the entire batch before changing any tool (0.9.13 atomic contract).
+router.put('/admin/mcp-servers/:id/tools/access', requireAuth, (req, res) => {
+  const changes = req.body?.tools
+  if (!Array.isArray(changes) || changes.some((tool) => !tool?.tool_id) || new Set(changes.map((tool) => tool.tool_id)).size !== changes.length) {
+    return res.status(400).json({ detail: 'tools must contain each tool_id once' })
+  }
+  const current = (toolAccess[req.params.id] ?? []) as Array<{ tool_id: string } & Record<string, unknown>>
+  if (changes.some((change) => !current.some((tool) => tool.tool_id === change.tool_id))) {
+    return res.status(404).json({ detail: 'Unknown tool; nothing was saved' })
+  }
+  const updated = current.map((tool) => {
+    const change = changes.find((item) => item.tool_id === tool.tool_id)
+    return change ? { ...tool, inherit_from_server: change.inherit_from_server, rules: change.rules } : tool
+  })
+  toolAccess[req.params.id] = updated
+  return res.json({ tools: updated, updated_count: changes.length })
+})
+router.get('/admin/mcp-tools/:id/access', requireAuth, (req, res) => {
+  const tool = (Object.values(toolAccess).flat() as Array<{ tool_id: string }>).find((tool) => tool.tool_id === req.params.id)
+  return tool ? res.json(tool) : res.status(404).json({ detail: 'Unknown tool' })
+})
+
 router.get('/admin/mcp-servers/:id/connection', requireAuth, (req, res) => {
   const server = findServer(req.params.id)
   if (!server) return res.status(404).json({ detail: 'Not Found' })

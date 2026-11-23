@@ -554,8 +554,8 @@ export async function switchBranch(chatId: string, messageId: string): Promise<C
 /**
  * Fetch conversation history
  */
-export async function getConversation(conversationId: string): Promise<ConversationDetail> {
-  return request<ConversationDetail>(`/chat/${conversationId}`);
+export async function getConversation(conversationId: string, signal?: AbortSignal): Promise<ConversationDetail> {
+  return request<ConversationDetail>(`/chat/${conversationId}`, { signal });
 }
 
 /**

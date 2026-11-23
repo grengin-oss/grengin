@@ -305,6 +305,8 @@ export interface components {
             size?: number;
         };
         Message: {
+            generating: boolean;
+            stop_reason?: string | null;
             /** Format: uuid */
             id: string;
             /** Format: uuid */

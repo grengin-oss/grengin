@@ -19,9 +19,7 @@ import {
   createCustomAIEngine,
 } from '../../api/admin/AiEngines.js';
 import { getBranding, updateBranding } from '../../api/admin/branding.js';
-import { getHealthStatus } from '../../api/admin/systemMetrics.js';
 import {
-  fetchProviderCategories,
   type ProviderCategoriesData,
 } from '../providerCategories.js';
 import { _ } from 'svelte-i18n';
@@ -36,10 +34,7 @@ function createAIEnginesStore() {
   let engines = $state<AIEngine[]>([]);
   let providerSuggestions = $state<AIEngine[]>([]);
   let catalogError = $state<string | null>(null);
-  // Provider grouping for the "Browse Providers" dialog, published per
-  // distribution version at meta.grengin.com and loaded at runtime. `null`
-  // until it loads, or when the fetch fails — the UI then shows a single
-  // ungrouped "Other" bucket.
+  // Grouping from the same discovery response as provider suggestions.
   let providerCategoriesData = $state<ProviderCategoriesData | null>(null);
   let isLoading = $state(false);
   let error = $state<any | null>(null);
@@ -92,27 +87,10 @@ function createAIEnginesStore() {
     return t('aiEngines.apiKey.notConfigured');
   }
 
-  /**
-   * Load the provider grouping for the Browse dialog. Best-effort: the version
-   * comes from the backend health check, and any failure (offline, 404 on a
-   * version with no published file, bad JSON) leaves the data `null`, which the
-   * UI renders as a single "Other" group.
-   */
-  async function loadProviderCategories() {
-    try {
-      const health = await getHealthStatus();
-      providerCategoriesData = await fetchProviderCategories(health.version);
-    } catch {
-      providerCategoriesData = null;
-    }
-  }
-
   async function fetch() {
     isLoading = true;
     error = null;
     catalogError = null;
-    // Load grouping in parallel; it never blocks or fails the engine list.
-    void loadProviderCategories();
 
     try {
       // Fetch engines and branding settings in parallel
@@ -121,14 +99,20 @@ function createAIEnginesStore() {
         getBranding(),
         getAIProviderSuggestions().catch((err: unknown) => {
           catalogError = err instanceof Error ? err.message : String(err);
-          return [];
+          return { providers: [], categories: [] };
         }),
       ]);
 
       // Store default engine key from branding settings
       defaultEngineKey = branding.settings?.default_engine;
       engines = enginesData;
-      providerSuggestions = suggestions;
+      providerSuggestions = suggestions.providers;
+      providerCategoriesData = {
+        categories: suggestions.categories,
+        providers: Object.fromEntries(suggestions.providers
+          .filter((provider) => provider.category)
+          .map((provider) => [provider.engine_key.toLowerCase(), provider.category!])),
+      };
     } catch (err: any) {
       error = err;
       throw err;

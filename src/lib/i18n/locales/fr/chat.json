@@ -123,7 +123,9 @@
       "imageGenTitle": "Génération d'images",
       "imageGenSubtitle": "Choisissez un modèle pour générer ou modifier des images",
       "imageModeBanner": "Mode image activé",
-      "exitImageMode": "Quitter le mode image"
+      "exitImageMode": "Quitter le mode image",
+      "webSearchUnsupported": "Ce modèle ne peut pas effectuer de recherche sur le Web",
+      "retiredModel": "Le modèle {old} n’est plus proposé ; passage à {model}."
     },
     "message": {
       "copy": "Copier",
