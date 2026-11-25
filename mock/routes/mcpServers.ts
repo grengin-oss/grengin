@@ -3,6 +3,8 @@
 
 import { Router } from 'express'
 import { requireAuth } from '../lib/middleware.js'
+import { nativeConnectorFixtures, nativeConnectorDetail, nativeConnectorInstallations } from '../lib/nativeConnectorFixtures.js'
+import { connectMockNativeConnector } from './connectors.js'
 
 const router = Router()
 
@@ -128,6 +130,25 @@ const servers: MockMcpServer[] = [
     connected_users_count: null,
   },
 ]
+
+// Native installs show up both on the main grid and as Connect/Connected cards in Browse.
+for (const installed of nativeConnectorInstallations) {
+  const entry = nativeConnectorFixtures.find((item) => item.id === installed.key)!
+  const detail = nativeConnectorDetail(installed.key)!
+  servers.push({
+    id: installed.serverId, name: entry.name, description: entry.description, icon: entry.icon,
+    transport_type: 'http', url: detail.plugin.base_url,
+    connection_config: { connector_plugin: { manifest: detail.plugin, configuration: {} }, oauth_broker: {} },
+    client_id: null, client_secret_configured: false, client_secret_preview: '',
+    enabled: true, status: installed.connected ? 'connected' : 'disconnected', status_message: null,
+    tool_count: installed.toolCount, default_access: 'admin_only',
+    last_connected_at: installed.connected ? minutesAgo(5) : null,
+    last_synced_at: minutesAgo(10), created_at: now, updated_at: now,
+    auth_type: 'oauth2', auth_mode: 'per_user', oauth_provider: null,
+    scopes: [], auth_url: null, token_url: null, org_connection: null,
+    connected_users_count: installed.connected ? 1 : 0,
+  })
+}
 
 const accessRules: Record<string, unknown[]> = {
   'srv-001': [
@@ -565,6 +586,17 @@ router.get('/mcp/tools', requireAuth, (req, res) => {
 })
 
 router.post('/mcp/connections/:id/authorize', requireAuth, (req, res) => {
+  const server = findServer(req.params.id)
+  const plugin = server?.connection_config.connector_plugin as { manifest?: { id?: string } } | undefined
+  if (server && plugin?.manifest?.id) {
+    // Native fixtures complete locally, without opening a real provider.
+    const connection = connectMockNativeConnector(plugin.manifest.id, server.id)
+    if (!connection) return res.status(409).json({ detail: 'Connected through another installation' })
+    server.status = 'connected'
+    server.last_connected_at = connection.connected_at
+    server.connected_users_count = 1
+    return res.json({ success: true, status: 'connected', broker_connection_id: connection.id })
+  }
   res.json({
     success: true,
     message: 'Authorization URL generated',

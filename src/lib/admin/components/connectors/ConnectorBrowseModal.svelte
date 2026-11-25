@@ -222,33 +222,20 @@ the full catalog is shown (from the MCP Servers page).
                 {#each suiteGroups as group (group.id)}
                   {@const c = chosenVariant(group)}
                   {@const regional = group.variants.length > 1}
-                  <div class="bp-suite">
-                    <ConnectorCard
-                      entry={regional ? { ...c, display_name: baseName(c) } : c}
-                      connected={connectedKeys.has(c.key)}
-                      connecting={connectingKey === c.key}
-                      added={addedKeys ? addedKeys.has(c.key) : true}
-                      adding={addingKey === c.key}
-                      categoryLabel={categoryLabel(c.category)}
-                      members={membersOf(c).map((m) => ({ key: m.key, name: m.display_name, icon: m.icon }))}
-                      onOpen={() => onOpen?.(c.key)}
-                      onConnect={() => onConnect(c.key)}
-                      onAdd={() => onAdd?.(c.key)}
-                    />
-                    {#if regional}
-                      <label class="bp-region">
-                        <span>{$_("admin.connectors.region")}</span>
-                        <select
-                          value={c.key}
-                          onchange={(e) => (regionChoice = { ...regionChoice, [group.id]: e.currentTarget.value })}
-                        >
-                          {#each group.variants as v (v.key)}
-                            <option value={v.key}>{regionLabel(v)}</option>
-                          {/each}
-                        </select>
-                      </label>
-                    {/if}
-                  </div>
+                  <ConnectorCard
+                    entry={regional ? { ...c, display_name: baseName(c) } : c}
+                    connected={connectedKeys.has(c.key)}
+                    connecting={connectingKey === c.key}
+                    added={addedKeys ? addedKeys.has(c.key) : true}
+                    adding={addingKey === c.key}
+                    categoryLabel={categoryLabel(c.category)}
+                    members={membersOf(c).map((m) => ({ key: m.key, name: m.display_name, icon: m.icon }))}
+                    regions={regional ? group.variants.map((variant) => ({ key: variant.key, label: regionLabel(variant) })) : []}
+                    onRegionChange={(key) => (regionChoice = { ...regionChoice, [group.id]: key })}
+                    onOpen={() => onOpen?.(c.key)}
+                    onConnect={() => onConnect(c.key)}
+                    onAdd={() => onAdd?.(c.key)}
+                  />
                 {/each}
               </div>
             </div>
@@ -312,30 +299,11 @@ the full catalog is shown (from the MCP Servers page).
 </Modal>
 
 <style>
-  .bp-suite {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .bp-region {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--text-secondary, inherit);
-  }
-  .bp-region select {
-    font: inherit;
-    padding: 2px 6px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color, currentColor);
-    background: transparent;
-    color: inherit;
-  }
   .bp-suites-sub {
-    margin: -4px 0 12px;
+    margin: 8px 0 0;
     font-size: 13px;
-    color: var(--gx-muted);
+    line-height: 20px;
+    color: var(--gx-an-sub);
   }
   .bp-icon {
     width: 40px;
@@ -395,19 +363,19 @@ the full catalog is shown (from the MCP Servers page).
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
-    background: #fff;
-    border: 1px solid rgb(222, 225, 230);
+    background: var(--gx-surface);
+    border: 1px solid var(--gx-hair);
     box-shadow: none;
     font-family: var(--gx-font);
     font-weight: 500;
     font-size: 13px;
     line-height: 100%;
-    color: rgb(27, 30, 36);
+    color: var(--gx-slate-900);
     white-space: nowrap;
     cursor: pointer;
     transition: background-color 120ms ease;
   }
-  .bp-tab:hover { background: rgb(247, 248, 250); }
+  .bp-tab:hover { background: var(--gx-fill-soft); transform: none; box-shadow: none; }
   .bp-tab[aria-pressed='true'] {
     background: rgb(27, 30, 36);
     border-color: rgb(27, 30, 36);
@@ -419,7 +387,7 @@ the full catalog is shown (from the MCP Servers page).
   .bp-results-count { font-weight: 400; font-size: 12px; line-height: 100%; color: var(--gx-an-sub); }
   .bp-empty { margin: 0; font-size: 13px; line-height: 1.5; color: var(--gx-an-sub); }
 
-  .bp-groups { display: flex; flex-direction: column; gap: 22px; }
+  .bp-groups { display: flex; flex-direction: column; gap: 20px; }
   .bp-group-heading { display: flex; gap: 7px; align-items: center; }
   .bp-category {
     font-weight: 700;
@@ -434,8 +402,9 @@ the full catalog is shown (from the MCP Servers page).
   .bp-cards {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    gap: 12px;
     margin-top: 10px;
+    align-items: stretch;
   }
   .bp-show-more {
     display: block;
@@ -512,8 +481,10 @@ the full catalog is shown (from the MCP Servers page).
   @media (max-width: 1000px) {
     .bp-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
-  @media (max-width: 768px) {
+  @media (max-width: 600px) {
     .bp-cards { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 768px) {
     .bp-else { flex-direction: column; align-items: flex-start; }
   }
 </style>

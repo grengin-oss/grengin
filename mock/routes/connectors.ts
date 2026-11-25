@@ -20,6 +20,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import crypto from 'crypto'
 import { requireAuth } from '../lib/middleware.js'
+import { nativeConnectorInstallations } from '../lib/nativeConnectorFixtures.js'
 
 const router = Router()
 
@@ -183,6 +184,23 @@ function makeConnection(
 // Seed the caller as connected to a few connectors.
 for (const key of ['gmail', 'slack']) {
   connections.push(makeConnection(key, 'connected'))
+}
+
+for (const installed of nativeConnectorInstallations.filter((item) => item.connected)) {
+  connections.push({ ...makeConnection(installed.key, 'connected'), server_id: installed.serverId })
+}
+
+/** Simulate native OAuth locally without opening a real provider or broker. */
+export function connectMockNativeConnector(key: string, serverId: string): ConnectorConnection | null {
+  const existing = connections.find((item) => item.connector_key === key && item.status !== 'revoked')
+  if (existing?.server_id && existing.server_id !== serverId) return null
+  const connection = existing ?? makeConnection(key, 'connected')
+  connection.server_id = serverId
+  connection.status = 'connected'
+  connection.connected_at = new Date().toISOString()
+  connection.revocation_pending = false
+  if (!existing) connections.push(connection)
+  return connection
 }
 
 /** GET /connectors — the caller's stored connections. */

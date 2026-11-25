@@ -1650,9 +1650,7 @@ SPDX-License-Identifier: Apache-2.0
                     <span class="tested">{testedLabel(server)}</span>
                   {/if}
                 </div>
-                {#if server.description}
-                  <p class="mcp-card-desc">{server.description}</p>
-                {/if}
+                <p class="mcp-card-desc" title={server.description ?? undefined}>{server.description ?? ""}</p>
                 <div class="scope-block">
                   <svg
                     width="14"
@@ -2908,12 +2906,14 @@ SPDX-License-Identifier: Apache-2.0
      card metrics wrap instead of shrinking past legibility. */
   .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
     gap: 16px;
     align-self: stretch;
   }
 
   .mcp-card {
+    /* Fill the LazyRender grid cell, including rows with longer descriptions. */
+    flex: 1;
     min-width: 0;
     border-radius: 12px;
     background: var(--gx-card);
@@ -2931,6 +2931,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .mcp-card-body {
+    flex: 1;
     padding: 16px;
     display: flex;
     flex-direction: column;
@@ -2955,7 +2956,11 @@ SPDX-License-Identifier: Apache-2.0
     font-weight: 700;
     font-size: 15px;
     color: var(--gx-mcp-title);
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow-wrap: anywhere;
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
@@ -3027,6 +3032,8 @@ SPDX-License-Identifier: Apache-2.0
     font-weight: 400;
     font-size: 13px;
     line-height: 1.45;
+    min-height: 2.9em;
+    overflow-wrap: anywhere;
     color: var(--gx-an-sub);
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -3037,6 +3044,7 @@ SPDX-License-Identifier: Apache-2.0
 
   /* ".scope-block" */
   .scope-block {
+    margin-top: auto;
     border-radius: 8px;
     background: var(--gx-an-field-bg);
     display: flex;
