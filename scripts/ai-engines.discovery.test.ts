@@ -21,7 +21,7 @@ try {
       { id: 'openai', name: 'OpenAI', icon_dark: 'https://example.invalid/icon.svg' },
     ] });
   };
-  const suggestions = await getAIProviderSuggestions();
+  const { providers: suggestions } = await getAIProviderSuggestions();
   assert.equal(calls[0]?.url, '/api/discovery/ai-providers');
   assert.equal(calls[0]?.options?.method, 'GET');
   assert.equal(calls.length, 1, 'loading suggestions must not create engines');

@@ -65,6 +65,7 @@ export interface McpAuthorizeResponse {
 
 // POST /mcp/connections/{id}/disconnect
 export interface McpDisconnectResponse {
+  revocation_pending?: boolean;
   message: string;
   success: boolean;
 }

@@ -24,8 +24,9 @@ SPDX-License-Identifier: Apache-2.0
   import CreateProjectModal from "./CreateProjectModal.svelte";
   import AddMemberModal from "./AddMemberModal.svelte";
   import { getChatMcpServers } from "../../api/chatApi";
+  import { resolveDefaultModel } from "../../features/chat/modelPreferences";
   import MessageInput from "../../features/chat/components/MessageInput.svelte";
-  import { getModels } from "../../api/models";
+  import { getModels, findModel } from "../../api/models";
   import type { ProviderInfo, ModelInfo } from "../../api/models";
   import type { MCPServer } from "../../admin/types";
   import type {
@@ -161,8 +162,10 @@ SPDX-License-Identifier: Apache-2.0
   let providers = $state<ProviderInfo[]>([]);
   let loadingModels = $state(true);
   let modelsError = $state<string | null>(null);
-  let selectedModel = $state("gpt-5.2");
-  let selectedProvider = $state("openai");
+  let selectedModel = $state("");
+  let selectedProvider = $state("");
+  const webSearchSupported = $derived(findModel(providers, selectedModel)?.model.supports_web_search !== false);
+  $effect(() => { if (!webSearchSupported) webSearchEnabled = false; });
 
   async function loadModels() {
     loadingModels = true;
@@ -170,6 +173,8 @@ SPDX-License-Identifier: Apache-2.0
     try {
       const response = await getModels();
       providers = response.providers;
+      const model = resolveDefaultModel(providers);
+      if (model) selectModel(model.provider, model.model);
     } catch (error) {
       console.error("Failed to load models:", error);
       modelsError = $_("chat.errors.failedToLoadModels");
@@ -852,7 +857,7 @@ SPDX-License-Identifier: Apache-2.0
               ? `&mcpServers=${encodeURIComponent(selectedMcpServers.join(","))}`
               : "";
           navigate(
-            `/?projectId=${id}&message=${encodeURIComponent(message)}&model=${encodeURIComponent(selectedModel)}&provider=${encodeURIComponent(selectedProvider)}&webSearch=${webSearchEnabled}${mcpParam}`,
+            `/?projectId=${id}&message=${encodeURIComponent(message)}&model=${encodeURIComponent(selectedModel)}&provider=${encodeURIComponent(selectedProvider)}&webSearch=${webSearchSupported && webSearchEnabled}${mcpParam}`,
           );
         }}
         placeholder={$_("chat.messageInput.placeholderWithModel", {
@@ -864,7 +869,7 @@ SPDX-License-Identifier: Apache-2.0
         {selectedMcpServers}
         loadingMcpServers={loadingTools}
         {webSearchEnabled}
-        onWebSearchToggle={() => (webSearchEnabled = !webSearchEnabled)}
+        onWebSearchToggle={() => { if (webSearchSupported) webSearchEnabled = !webSearchEnabled; }}
         onMcpToggle={toggleMcpServer}
         onRemoveModel={handleRemoveModel}
         onModelSelect={selectModel}

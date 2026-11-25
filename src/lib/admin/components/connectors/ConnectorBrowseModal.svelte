@@ -77,12 +77,48 @@ the full catalog is shown (from the MCP Servers page).
     );
   }
 
+  const byKey = $derived(new Map(entries.map((c) => [c.key, c])));
+
+  function membersOf(c: ConnectorCatalogEntry): ConnectorCatalogEntry[] {
+    return (c.members ?? []).map((key) => byKey.get(key)).filter((m): m is ConnectorCatalogEntry => !!m);
+  }
+
+  /** A suite matches when it, or any app it combines, matches the search and category. */
   const filtered = $derived.by(() => {
     const q = query.trim();
-    return entries.filter(
-      (c) => matches(c, q) && (category === 'all' || c.category === category),
+    return entries.filter((c) =>
+      [c, ...membersOf(c)].some((e) => matches(e, q) && (category === 'all' || e.category === category)),
     );
   });
+
+  /** Suites (one sign-in for several apps of one provider) are shown first. */
+  const suites = $derived(filtered.filter((c) => c.members?.length));
+
+  // An app a suite already covers is added through that suite; searching for it still finds the suite.
+  const suiteMembers = $derived(new Set(entries.flatMap((c) => c.members ?? [])));
+
+  // Region builds of one suite (same apps, another data centre) show as one card with a region choice.
+  const suiteGroups = $derived.by(() => {
+    const byApps = new Map<string, ConnectorCatalogEntry[]>();
+    for (const s of suites) {
+      const id = [...(s.members ?? [])].sort().join(",");
+      byApps.set(id, [...(byApps.get(id) ?? []), s]);
+    }
+    return [...byApps.entries()].map(([id, variants]) => ({ id, variants }));
+  });
+  let regionChoice = $state<Record<string, string>>({});
+  const regionLabel = (c: ConnectorCatalogEntry) => c.display_name.match(/\(([^)]+)\)\s*$/)?.[1] ?? c.display_name;
+  const baseName = (c: ConnectorCatalogEntry) => c.display_name.replace(/\s*\([^)]+\)\s*$/, "");
+  function chosenVariant(group: { id: string; variants: ConnectorCatalogEntry[] }): ConnectorCatalogEntry {
+    const inUse = group.variants.find((v) => connectedKeys.has(v.key) || addedKeys?.has(v.key));
+    const key = regionChoice[group.id] ?? inUse?.key;
+    return group.variants.find((v) => v.key === key) ?? group.variants[0];
+  }
+  const regionDuplicates = $derived(
+    entries.filter((c) => c.members?.length).length -
+      new Set(entries.filter((c) => c.members?.length).map((c) => [...(c.members ?? [])].sort().join(","))).size,
+  );
+  const visibleCount = $derived(entries.filter((c) => !suiteMembers.has(c.key)).length - regionDuplicates);
 
   /** Category tabs, in catalog order (connectors.html `.cat-row`: always all of them). */
   const tabs = $derived(categories.map((c) => c.id));
@@ -90,7 +126,7 @@ the full catalog is shown (from the MCP Servers page).
   /** Matching entries grouped by category, in catalog order. */
   const groups = $derived.by(() => {
     const buckets = new Map<string, ConnectorCatalogEntry[]>();
-    for (const c of filtered) {
+    for (const c of filtered.filter((entry) => !entry.members?.length && !suiteMembers.has(entry.key))) {
       const arr = buckets.get(c.category) ?? [];
       arr.push(c);
       buckets.set(c.category, arr);
@@ -110,7 +146,7 @@ the full catalog is shown (from the MCP Servers page).
   bind:isOpen
   variant="ai-browse"
   title={$_("admin.connectors.browse")}
-  subtitle={$_("admin.connectors.count", { values: { count: entries.length } })}
+  subtitle={$_("admin.connectors.count", { values: { count: visibleCount } })}
   onclose={() => (isOpen = false)}
 >
   {#snippet headerIcon()}
@@ -168,13 +204,42 @@ the full catalog is shown (from the MCP Servers page).
       </div>
 
       <span class="bp-results-count">
-        {$_("admin.connectors.showing", { values: { shown: filtered.length, total: entries.length } })}
+        {$_("admin.connectors.showing", { values: { shown: suiteGroups.length + groups.reduce((sum, group) => sum + group.entries.length, 0), total: visibleCount } })}
       </span>
 
       {#if filtered.length === 0}
         <p class="bp-empty">{$_("admin.connectors.noMatch", { values: { query: query.trim() } })}</p>
       {:else}
         <div class="bp-groups">
+          {#if suites.length}
+            <div class="bp-group">
+              <div class="bp-group-heading">
+                <span class="bp-category">{$_("admin.connectors.suites")}</span>
+                <span class="bp-count">{suiteGroups.length}</span>
+              </div>
+              <p class="bp-suites-sub">{$_("admin.connectors.suitesSub")}</p>
+              <div class="bp-cards">
+                {#each suiteGroups as group (group.id)}
+                  {@const c = chosenVariant(group)}
+                  {@const regional = group.variants.length > 1}
+                  <ConnectorCard
+                    entry={regional ? { ...c, display_name: baseName(c) } : c}
+                    connected={connectedKeys.has(c.key)}
+                    connecting={connectingKey === c.key}
+                    added={addedKeys ? addedKeys.has(c.key) : true}
+                    adding={addingKey === c.key}
+                    categoryLabel={categoryLabel(c.category)}
+                    members={membersOf(c).map((m) => ({ key: m.key, name: m.display_name, icon: m.icon }))}
+                    regions={regional ? group.variants.map((variant) => ({ key: variant.key, label: regionLabel(variant) })) : []}
+                    onRegionChange={(key) => (regionChoice = { ...regionChoice, [group.id]: key })}
+                    onOpen={() => onOpen?.(c.key)}
+                    onConnect={() => onConnect(c.key)}
+                    onAdd={() => onAdd?.(c.key)}
+                  />
+                {/each}
+              </div>
+            </div>
+          {/if}
           {#each groups as group (group.key)}
             {@const isOpen2 = !!expanded[group.key]}
             {@const shown = isOpen2 ? group.entries : group.entries.slice(0, PREVIEW)}
@@ -234,6 +299,12 @@ the full catalog is shown (from the MCP Servers page).
 </Modal>
 
 <style>
+  .bp-suites-sub {
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--gx-an-sub);
+  }
   .bp-icon {
     width: 40px;
     height: 40px;
@@ -292,19 +363,19 @@ the full catalog is shown (from the MCP Servers page).
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
-    background: #fff;
-    border: 1px solid rgb(222, 225, 230);
+    background: var(--gx-surface);
+    border: 1px solid var(--gx-hair);
     box-shadow: none;
     font-family: var(--gx-font);
     font-weight: 500;
     font-size: 13px;
     line-height: 100%;
-    color: rgb(27, 30, 36);
+    color: var(--gx-slate-900);
     white-space: nowrap;
     cursor: pointer;
     transition: background-color 120ms ease;
   }
-  .bp-tab:hover { background: rgb(247, 248, 250); }
+  .bp-tab:hover { background: var(--gx-fill-soft); transform: none; box-shadow: none; }
   .bp-tab[aria-pressed='true'] {
     background: rgb(27, 30, 36);
     border-color: rgb(27, 30, 36);
@@ -316,7 +387,7 @@ the full catalog is shown (from the MCP Servers page).
   .bp-results-count { font-weight: 400; font-size: 12px; line-height: 100%; color: var(--gx-an-sub); }
   .bp-empty { margin: 0; font-size: 13px; line-height: 1.5; color: var(--gx-an-sub); }
 
-  .bp-groups { display: flex; flex-direction: column; gap: 22px; }
+  .bp-groups { display: flex; flex-direction: column; gap: 20px; }
   .bp-group-heading { display: flex; gap: 7px; align-items: center; }
   .bp-category {
     font-weight: 700;
@@ -331,8 +402,9 @@ the full catalog is shown (from the MCP Servers page).
   .bp-cards {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    gap: 12px;
     margin-top: 10px;
+    align-items: stretch;
   }
   .bp-show-more {
     display: block;
@@ -409,8 +481,10 @@ the full catalog is shown (from the MCP Servers page).
   @media (max-width: 1000px) {
     .bp-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
-  @media (max-width: 768px) {
+  @media (max-width: 600px) {
     .bp-cards { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 768px) {
     .bp-else { flex-direction: column; align-items: flex-start; }
   }
 </style>

@@ -64,6 +64,7 @@ export interface ChatMessage {
   files?: FileAttachment[];
   timestamp: string;
   isStreaming?: boolean;
+  generating?: boolean;
   error?: string;
   isEditing?: boolean;
   model?: string | null;

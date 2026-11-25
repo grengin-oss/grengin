@@ -99,6 +99,9 @@ SPDX-License-Identifier: Apache-2.0
     onStop,
   }: MessageInputProps = $props();
 
+  const webSearchSupported = $derived(findModel(providers, selectedModel)?.model.supports_web_search !== false);
+  const effectiveWebSearch = $derived(webSearchEnabled && webSearchSupported);
+
   // Split a provider's models into selectable text and image groups (embedding
   // models are never selectable in chat). Loaded from the registry — not hardcoded.
   function splitModels(models: ModelInfo[]) {
@@ -484,7 +487,7 @@ SPDX-License-Identifier: Apache-2.0
       id: "action:web-search",
       title: $_("chat.messageInput.webSearch"),
       icon: "🌐",
-      selected: webSearchEnabled,
+      selected: effectiveWebSearch,
     },
     {
       id: "action:attach",
@@ -547,7 +550,7 @@ SPDX-License-Identifier: Apache-2.0
     } else if (item.id.startsWith("mcp:")) {
       onMcpToggle?.(item.id.slice("mcp:".length));
     } else if (item.id === "action:web-search") {
-      onWebSearchToggle?.();
+      if (webSearchSupported) onWebSearchToggle?.();
     } else if (item.id === "action:attach") {
       fileInput?.click();
     }
@@ -771,7 +774,7 @@ SPDX-License-Identifier: Apache-2.0
       onSend(
         trimmed,
         uploadedFiles.length > 0 ? uploadedFiles : undefined,
-        webSearchEnabled,
+        effectiveWebSearch,
       );
       message = "";
       clearDraft(conversationId);
@@ -2308,16 +2311,17 @@ SPDX-License-Identifier: Apache-2.0
           <!-- ===== Web search ===== -->
           <button
             class="circle-btn"
-            class:circle-btn--active={webSearchEnabled}
+            class:circle-btn--active={effectiveWebSearch}
             type="button"
             onclick={onWebSearchToggle}
-            title={webSearchEnabled
+            disabled={!webSearchSupported}
+            title={!webSearchSupported ? $_("chat.messageInput.webSearchUnsupported") : effectiveWebSearch
               ? $_("chat.messageInput.disableWebSearch")
               : $_("chat.messageInput.enableWebSearch")}
-            aria-label={webSearchEnabled
+            aria-label={!webSearchSupported ? $_("chat.messageInput.webSearchUnsupported") : effectiveWebSearch
               ? $_("chat.messageInput.disableWebSearch")
               : $_("chat.messageInput.enableWebSearch")}
-            aria-pressed={webSearchEnabled}
+            aria-pressed={effectiveWebSearch}
           >
             <svg
               width="15"

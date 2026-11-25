@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Router } from 'express'
+import { nativeConnectorFixtures, nativeConnectorDetail } from '../lib/nativeConnectorFixtures.js'
 import indexJson from '../examples/discovery/index.json' with { type: 'json' }
 import categoriesJson from '../examples/discovery/categories.json' with { type: 'json' }
 
@@ -19,16 +20,20 @@ router.get('/discovery/ai-providers', (_req, res) => {
     name: p.name,
     icon: p.icon ?? null,
     icon_dark: p.iconDark ?? null,
+    category: (categoriesJson.providers as Record<string, string>)[p.id],
   }))
-  res.json({ providers })
+  res.json({ providers, categories: categoriesJson.categories })
 })
 
-/**
- * Distribution metadata, a local mirror of meta.grengin.com. The real host
- * serves these static files without CORS headers, so the Browse dialog cannot
- * fetch them cross-origin; pointing VITE_META_BASE at this mock server (see
- * .env.mock) lets the category grouping work end-to-end in development.
- */
+// Complete native catalog for layout testing, with all suite members present.
+router.get('/discovery/connector-plugins', (_req, res) => {
+  res.json({ distribution_version: '0.9.13', catalog_type: 'connector', catalog_version: '1.0.0', providers: nativeConnectorFixtures })
+})
+router.get('/discovery/connector-plugins/:id', (req, res) => {
+  const detail = nativeConnectorDetail(req.params.id)
+  return detail ? res.json(detail) : res.status(404).json({ detail: 'Unknown connector plugin' })
+})
+
 router.get('/distributions/grengin-api/:version/index.json', (_req, res) => {
   res.json(indexJson)
 })

@@ -133,7 +133,9 @@
       "imageGenTitle": "Image Generation",
       "imageGenSubtitle": "Pick a model to generate or edit images",
       "imageModeBanner": "Image mode active",
-      "exitImageMode": "Exit image mode"
+      "exitImageMode": "Exit image mode",
+      "webSearchUnsupported": "This model can't search the web",
+      "retiredModel": "Model {old} is no longer offered; switched to {model}."
     },
     "message": {
       "copy": "Copy",

@@ -12,7 +12,8 @@ SPDX-License-Identifier: Apache-2.0
   } from '../../types.js';
   import {
     getToolAccess,
-    updateToolAccess,
+    updateServerToolsAccess,
+    ToolListChangedError,
   } from '../../../api/admin/mcpServers.js';
   import AccessRuleCard from './AccessRuleCard.svelte';
   import AddAccessRuleModal from './AddAccessRuleModal.svelte';
@@ -24,6 +25,7 @@ SPDX-License-Identifier: Apache-2.0
   import { _ } from 'svelte-i18n';
 
   interface Props {
+    serverId: string;
     toolId: string;
     toolName: string;
     isOpen: boolean;
@@ -31,7 +33,7 @@ SPDX-License-Identifier: Apache-2.0
     onSaved: () => void;
   }
 
-  let { toolId, toolName, isOpen = $bindable(), onClose, onSaved }: Props = $props();
+  let { serverId, toolId, toolName, isOpen = $bindable(), onClose, onSaved }: Props = $props();
 
   let toolAccess = $state<McpToolAccess | null>(null);
   let isLoading = $state(false);
@@ -99,13 +101,19 @@ SPDX-License-Identifier: Apache-2.0
           inherit_departments: r.inherit_departments,
         })),
       };
-      await updateToolAccess(toolId, payload);
+      await updateServerToolsAccess(serverId, { tools: [{ tool_id: toolId, ...payload }] });
       toast.success($_('admin.mcpAccess.toolAccessSaved'));
       onSaved();
       onClose();
     } catch (err: any) {
       const msg = err instanceof ApiError ? getLocalizedError(err, 'description', $_) : err.message;
-      toast.error(msg || $_('admin.mcpAccess.failedToSaveToolAccess'));
+      if (err instanceof ToolListChangedError) {
+        onSaved(); // Reload the entire server tool list before another review/save.
+        onClose();
+        toast.error($_('admin.mcpAccess.toolListChanged'));
+      } else {
+        toast.error(msg || $_('admin.mcpAccess.failedToSaveToolAccess'));
+      }
     } finally {
       isSaving = false;
     }

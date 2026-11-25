@@ -732,7 +732,8 @@
         },
         "elseText": "Tem uma ferramenta que não está na lista ou um servidor que seu desenvolvedor criou? Qualquer coisa que fale MCP funciona.",
         "elseBtn": "Adicionar seu próprio servidor"
-      }
+      },
+      "stdioAllowlist": "O operador deve incluir o comando na lista de permissões."
     },
     "mcpOAuth": {
       "authentication": "Autenticação",
@@ -882,7 +883,8 @@
       "toolAccessSaved": "Acesso às ferramentas guardado",
       "failedToSaveToolAccess": "Falha ao guardar o acesso às ferramentas",
       "save": "Guardar",
-      "saving": "A guardar..."
+      "saving": "A guardar...",
+      "toolListChanged": "A lista de ferramentas mudou; revise e salve novamente."
     },
     "viewMode": {
       "grid": "Vista em grelha",
@@ -1459,8 +1461,14 @@
         "money": "Finanças",
         "marketing": "Marketing",
         "website": "Site",
-        "developer": "Desenvolvedores"
-      }
+        "developer": "Desenvolvedores",
+        "productivity": "Produtividade",
+        "support": "Suporte"
+      },
+      "suites": "Pacotes",
+      "suitesSub": "Um único login cobre todos os apps de um pacote. Você ainda pode adicionar apps individuais abaixo.",
+      "region": "Região",
+      "oneSignIn": "Um login · {count} apps"
     },
     "connectorOverview": {
       "openPrompt": "Perguntar isto em um novo chat",

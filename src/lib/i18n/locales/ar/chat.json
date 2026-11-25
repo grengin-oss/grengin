@@ -123,7 +123,9 @@
       "imageGenTitle": "توليد الصور",
       "imageGenSubtitle": "اختر نموذجًا لتوليد الصور أو تعديلها",
       "imageModeBanner": "وضع الصور مُفعّل",
-      "exitImageMode": "إنهاء وضع الصور"
+      "exitImageMode": "إنهاء وضع الصور",
+      "webSearchUnsupported": "هذا النموذج لا يدعم البحث في الويب",
+      "retiredModel": "لم يعد النموذج {old} متاحًا؛ تم التبديل إلى {model}."
     },
     "message": {
       "copy": "نسخ",

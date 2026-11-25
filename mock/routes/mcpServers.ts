@@ -3,6 +3,8 @@
 
 import { Router } from 'express'
 import { requireAuth } from '../lib/middleware.js'
+import { nativeConnectorFixtures, nativeConnectorDetail, nativeConnectorInstallations } from '../lib/nativeConnectorFixtures.js'
+import { connectMockNativeConnector } from './connectors.js'
 
 const router = Router()
 
@@ -128,6 +130,25 @@ const servers: MockMcpServer[] = [
     connected_users_count: null,
   },
 ]
+
+// Native installs show up both on the main grid and as Connect/Connected cards in Browse.
+for (const installed of nativeConnectorInstallations) {
+  const entry = nativeConnectorFixtures.find((item) => item.id === installed.key)!
+  const detail = nativeConnectorDetail(installed.key)!
+  servers.push({
+    id: installed.serverId, name: entry.name, description: entry.description, icon: entry.icon,
+    transport_type: 'http', url: detail.plugin.base_url,
+    connection_config: { connector_plugin: { manifest: detail.plugin, configuration: {} }, oauth_broker: {} },
+    client_id: null, client_secret_configured: false, client_secret_preview: '',
+    enabled: true, status: installed.connected ? 'connected' : 'disconnected', status_message: null,
+    tool_count: installed.toolCount, default_access: 'admin_only',
+    last_connected_at: installed.connected ? minutesAgo(5) : null,
+    last_synced_at: minutesAgo(10), created_at: now, updated_at: now,
+    auth_type: 'oauth2', auth_mode: 'per_user', oauth_provider: null,
+    scopes: [], auth_url: null, token_url: null, org_connection: null,
+    connected_users_count: installed.connected ? 1 : 0,
+  })
+}
 
 const accessRules: Record<string, unknown[]> = {
   'srv-001': [
@@ -293,6 +314,28 @@ router.put('/admin/mcp-servers/:id/access/default', requireAuth, (req, res) => {
 
 router.get('/admin/mcp-servers/:id/tools/access', requireAuth, (req, res) => {
   res.json(toolAccess[req.params.id] ?? [])
+})
+
+// Validate the entire batch before changing any tool (0.9.13 atomic contract).
+router.put('/admin/mcp-servers/:id/tools/access', requireAuth, (req, res) => {
+  const changes = req.body?.tools
+  if (!Array.isArray(changes) || changes.some((tool) => !tool?.tool_id) || new Set(changes.map((tool) => tool.tool_id)).size !== changes.length) {
+    return res.status(400).json({ detail: 'tools must contain each tool_id once' })
+  }
+  const current = (toolAccess[req.params.id] ?? []) as Array<{ tool_id: string } & Record<string, unknown>>
+  if (changes.some((change) => !current.some((tool) => tool.tool_id === change.tool_id))) {
+    return res.status(404).json({ detail: 'Unknown tool; nothing was saved' })
+  }
+  const updated = current.map((tool) => {
+    const change = changes.find((item) => item.tool_id === tool.tool_id)
+    return change ? { ...tool, inherit_from_server: change.inherit_from_server, rules: change.rules } : tool
+  })
+  toolAccess[req.params.id] = updated
+  return res.json({ tools: updated, updated_count: changes.length })
+})
+router.get('/admin/mcp-tools/:id/access', requireAuth, (req, res) => {
+  const tool = (Object.values(toolAccess).flat() as Array<{ tool_id: string }>).find((tool) => tool.tool_id === req.params.id)
+  return tool ? res.json(tool) : res.status(404).json({ detail: 'Unknown tool' })
 })
 
 router.get('/admin/mcp-servers/:id/connection', requireAuth, (req, res) => {
@@ -543,6 +586,17 @@ router.get('/mcp/tools', requireAuth, (req, res) => {
 })
 
 router.post('/mcp/connections/:id/authorize', requireAuth, (req, res) => {
+  const server = findServer(req.params.id)
+  const plugin = server?.connection_config.connector_plugin as { manifest?: { id?: string } } | undefined
+  if (server && plugin?.manifest?.id) {
+    // Native fixtures complete locally, without opening a real provider.
+    const connection = connectMockNativeConnector(plugin.manifest.id, server.id)
+    if (!connection) return res.status(409).json({ detail: 'Connected through another installation' })
+    server.status = 'connected'
+    server.last_connected_at = connection.connected_at
+    server.connected_users_count = 1
+    return res.json({ success: true, status: 'connected', broker_connection_id: connection.id })
+  }
   res.json({
     success: true,
     message: 'Authorization URL generated',

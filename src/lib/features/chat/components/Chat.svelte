@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 <script lang="ts">
   import { onMount, tick } from "svelte";
+  import { pollConversation } from "../conversationPolling";
   import ChatMessage from "./ChatMessage.svelte";
   import MessageInput from "./MessageInput.svelte";
   import TypingIndicator from "./TypingIndicator.svelte";
@@ -146,10 +147,35 @@ SPDX-License-Identifier: Apache-2.0
   let activeEntry = $derived(findGeneration(conversationId, currentDraftKey));
   // Composer/Stop/typing/error for the CURRENT chat only. A reply streaming in a
   // different chat leaves these false/null here, so its composer stays usable.
-  let isLoading = $derived(activeEntry?.isLoading ?? false);
-  let isTyping = $derived(activeEntry?.isTyping ?? false);
+  const serverAssistant = $derived([...messages].reverse().find((message) => message.role === "assistant"));
+  const pollingMessageId = $derived(!activeEntry?.isLoading && serverAssistant?.generating ? serverAssistant.id : null);
+  let pollingStopId = $state<string | null>(null);
+  let conversationLoadVersion = 0;
+  let disposed = false;
+  $effect(() => {
+    const id = conversationId;
+    const messageId = pollingMessageId;
+    if (!id || !messageId) return;
+    return pollConversation({
+      fetch: (signal) => getConversation(id, signal),
+      apply: (conversation) => {
+        if (disposed || conversationId !== id || activeEntry?.isLoading) return false;
+        messages = mapServerMessages(conversation);
+        applyConversationTotals(conversation);
+        if (autoScrollEnabled) void scrollToBottom(false);
+        const latest = [...messages].reverse().find((message) => message.role === "assistant");
+        if (!latest?.generating) {
+          pollingStopId = null;
+          restoreArtifactStream(id);
+        }
+        return !!latest?.generating;
+      },
+    });
+  });
+  let isLoading = $derived((activeEntry?.isLoading ?? false) || !!pollingMessageId);
+  let isTyping = $derived((activeEntry?.isTyping ?? false) || (!!pollingMessageId && !serverAssistant?.content && !serverAssistant?.artifacts?.length && !serverAssistant?.toolCalls?.length));
   let autoReconnecting = $derived(activeEntry?.autoReconnecting ?? false);
-  let isStopping = $derived(activeEntry?.isStopping ?? false);
+  let isStopping = $derived((activeEntry?.isStopping ?? false) || (!!pollingMessageId && pollingStopId === pollingMessageId));
   let currentStreamingMessage = $derived(activeEntry?.streamingMessage ?? null);
   // A load failure wins (it tore the view down); otherwise show this chat's own
   // stream error. A stream error on a background chat never surfaces here.
@@ -157,7 +183,7 @@ SPDX-License-Identifier: Apache-2.0
   // The Stop button belongs to the chat whose reply is streaming, so it is
   // offered whenever this chat has a live generation.
   let canStopGeneration = $derived(
-    !!activeEntry && activeEntry.isLoading && !activeEntry.stopRequested,
+    (!!activeEntry && activeEntry.isLoading && !activeEntry.stopRequested) || (!!pollingMessageId && pollingStopId !== pollingMessageId),
   );
 
   // What the transcript renders: this chat's loaded history with its live
@@ -165,6 +191,7 @@ SPDX-License-Identifier: Apache-2.0
   // `activeEntry` is undefined here, so nothing is overlaid.
   let visibleMessages = $derived.by<ChatMessageType[]>(() => {
     const entry = activeEntry;
+    if (!entry?.isLoading && pollingMessageId) return messages.filter((m) => m.id !== pollingMessageId || m.content || m.artifacts?.length || m.toolCalls?.length || m.toolsResults?.length);
     if (!entry) return messages;
     let list = messages;
     // The user's message shows as soon as the turn starts; the assistant bubble
@@ -304,7 +331,21 @@ SPDX-License-Identifier: Apache-2.0
     );
   }
 
-  function handleStopGeneration() {
+  async function handleStopGeneration() {
+    if (pollingMessageId) {
+      const id = pollingMessageId;
+      if (pollingStopId === id) return;
+      pollingStopId = id;
+      try {
+        await cancelMessageStream(id);
+      } catch (err) {
+        if (pollingMessageId === id) {
+          pollingStopId = null;
+          toast(err instanceof Error ? err.message : $_("chat.errors.failedToLoadConversation"));
+        }
+      }
+      return;
+    }
     // Stop the reply of the chat on screen; other chats keep streaming.
     const generation = activeEntry;
     if (!generation || generation.stopRequested) return;
@@ -351,7 +392,30 @@ SPDX-License-Identifier: Apache-2.0
   // A `/?message=` prompt that arrives before the model registry is held here
   // and flushed once a real model is selected (see flushPendingInitialMessage).
   let pendingInitialMessage = $state<string | null>(null);
+  let providers = $state<ProviderInfo[]>([]);
   let webSearchEnabled = $state(false);
+  const webSearchSupported = $derived(findModel(providers, selectedModel)?.model.supports_web_search !== false);
+  $effect(() => {
+    if (!webSearchSupported) webSearchEnabled = false;
+  });
+  let pendingConversationModel: string | null = null;
+  let modelsLoaded = false;
+  function selectConversationModel(model: string | null | undefined) {
+    if (!modelsLoaded) { pendingConversationModel = model ?? ""; return; }
+    pendingConversationModel = null;
+    const found = findModel(providers, model);
+    if (found) {
+      selectedModel = found.model.key;
+      selectedProvider = found.provider.key;
+      selectedModelInfo = found.provider;
+    } else {
+      selectedModel = "";
+      selectedProvider = "";
+      selectedModelInfo = undefined;
+      applyDefaultModel();
+      if (model && selectedModel) toast($_("chat.messageInput.retiredModel", { values: { old: model, model: selectedModel } }));
+    }
+  }
   let mcpServers = $state<MCPServer[]>([]);
   // The Tools dropdown selection is remembered per user in this browser, so it
   // survives a reload. The backend does not store it on the conversation.
@@ -583,7 +647,6 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   // Models state
-  let providers = $state<ProviderInfo[]>([]);
   let loadingModels = $state(true);
   let modelsError = $state<string | null>(null);
   // A valid model is confirmed once the registry has finished loading and a
@@ -631,6 +694,9 @@ SPDX-License-Identifier: Apache-2.0
     try {
       const response = await getModels();
       providers = response.providers;
+      modelsLoaded = true;
+      const hadPendingModel = pendingConversationModel !== null;
+      if (pendingConversationModel !== null) selectConversationModel(pendingConversationModel);
 
       // A brand-new chat may have mounted before the registry finished loading,
       // showing the optimistic last-used model (or a loading chip, if none was
@@ -639,7 +705,7 @@ SPDX-License-Identifier: Apache-2.0
       // Keyed off the URL (race-free) rather than conversationId, which is set
       // asynchronously by loadConversationFromUrl().
       const params = new URLSearchParams(window.location.search);
-      if (!params.get("chatId") && !params.get("model")) {
+      if (!hadPendingModel && !params.get("chatId") && !params.get("model")) {
         reconcileModelAfterLoad();
       }
       // The composer now has a real model — release any queued `/?message=`
@@ -1021,7 +1087,7 @@ SPDX-License-Identifier: Apache-2.0
     // Disables switching conversation while initializing new conversation
     window.dispatchEvent(new CustomEvent("initializingConversation"));
 
-    await sendTurn(conversationId, content, uploadedFiles, webSearch, userMessage);
+    await sendTurn(conversationId, content, uploadedFiles, webSearchSupported && (webSearch ?? webSearchEnabled), userMessage);
   }
 
   /**
@@ -1967,6 +2033,8 @@ SPDX-License-Identifier: Apache-2.0
 
       return {
         id: msg.id,
+        generating: msg.generating === true,
+        isStreaming: msg.generating === true,
         role: msg.role,
         content: msg.parts.text || "",
         timestamp: msg.created_at || new Date().toISOString(),
@@ -2000,7 +2068,9 @@ SPDX-License-Identifier: Apache-2.0
    * the server recomputed) replace the optimistic view (ENGG-459).
    */
   async function reloadConversation(chatId: string) {
+    const version = conversationLoadVersion;
     const conversation = await getConversation(chatId);
+    if (disposed || conversationId !== chatId || version !== conversationLoadVersion) return;
     conversationTitle = conversation.title || null;
     messages = mapServerMessages(conversation);
     applyConversationTotals(conversation);
@@ -2008,6 +2078,9 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   async function loadConversationFromUrl() {
+    const loadVersion = ++conversationLoadVersion;
+    pendingConversationModel = null;
+    pollingStopId = null;
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get("chatId");
 
@@ -2028,6 +2101,7 @@ SPDX-License-Identifier: Apache-2.0
         messages = [];
 
         const conversation = await getConversation(chatId);
+        if (disposed || loadVersion !== conversationLoadVersion) return;
         // Reflect the conversation's title in the browser tab.
         conversationTitle = conversation.title || null;
 
@@ -2050,24 +2124,9 @@ SPDX-License-Identifier: Apache-2.0
           }
         }
 
-        if (modelToUse) {
-          selectedModel = modelToUse;
-          // Find the provider that contains this model
-          const providerWithModel = providers.find((p) =>
-            p.models.some((m) => m.key === modelToUse || m.name === modelToUse),
-          );
-
-          if (providerWithModel) {
-            selectedProvider = providerWithModel.key;
-            selectedModelInfo = providerWithModel;
-          } else {
-            // Fallback to default provider
-            selectedProvider = "openai";
-            selectedModelInfo =
-              providers.find((p) => p.key === "openai") || providers[0];
-          }
-        }
+        selectConversationModel(modelToUse);
       } catch (err) {
+        if (disposed || loadVersion !== conversationLoadVersion) return;
         // A fetch that never reached the server (offline / dropped connection)
         // throws a TypeError rather than an ApiError. Surface it as a clear
         // network error with a retry hint instead of a raw "Failed to fetch".
@@ -2099,6 +2158,7 @@ SPDX-License-Identifier: Apache-2.0
         console.error("Failed to load conversation:", err);
         messages = []; // Clear messages on error
       } finally {
+        if (disposed || loadVersion !== conversationLoadVersion) return;
         isLoadingConversation = false;
 
         // Wait for Svelte to finish updating the DOM with the new messages.
@@ -2134,10 +2194,7 @@ SPDX-License-Identifier: Apache-2.0
       // the registry is available (loadModels re-applies it on first mount).
       const urlModel = urlParams.get("model");
       if (urlModel) {
-        selectedModel = urlModel;
-        selectedProvider = urlParams.get("provider") || "openai";
-        selectedModelInfo =
-          providers.find((p) => p.key === selectedProvider) || providers[0];
+        selectConversationModel(urlModel);
       } else {
         applyDefaultModel();
       }
@@ -2209,7 +2266,7 @@ SPDX-License-Identifier: Apache-2.0
 
   // Command palette → flip the composer's web-search toggle.
   function handleCommandToggleWebSearch() {
-    webSearchEnabled = !webSearchEnabled;
+    if (webSearchSupported) webSearchEnabled = !webSearchEnabled;
   }
 
   // Keep the tab title fresh when the open conversation is renamed or gets its
@@ -2264,6 +2321,8 @@ SPDX-License-Identifier: Apache-2.0
     };
 
     return () => {
+      disposed = true;
+      conversationLoadVersion++;
       window.removeEventListener("popstate", handleUrlChange);
       window.removeEventListener("focusChatInput", handleFocusChatInput);
       window.removeEventListener(
@@ -2346,7 +2405,7 @@ SPDX-License-Identifier: Apache-2.0
           {loadingMcpServers}
           {mcpServersError}
           {webSearchEnabled}
-          onWebSearchToggle={() => (webSearchEnabled = !webSearchEnabled)}
+          onWebSearchToggle={handleCommandToggleWebSearch}
           onMcpToggle={toggleMcpServer}
           onRemoveModel={handleRemoveModel}
           onModelSelect={selectModel}
@@ -2670,7 +2729,7 @@ SPDX-License-Identifier: Apache-2.0
           {loadingMcpServers}
           {mcpServersError}
           {webSearchEnabled}
-          onWebSearchToggle={() => (webSearchEnabled = !webSearchEnabled)}
+          onWebSearchToggle={handleCommandToggleWebSearch}
           onMcpToggle={toggleMcpServer}
           onRemoveModel={handleRemoveModel}
           onModelSelect={selectModel}
