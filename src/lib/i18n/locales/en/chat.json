@@ -135,7 +135,10 @@
       "imageModeBanner": "Image mode active",
       "exitImageMode": "Exit image mode",
       "webSearchUnsupported": "This model can't search the web",
-      "retiredModel": "Model {old} is no longer offered; switched to {model}."
+      "retiredModel": "Model {old} is no longer offered; switched to {model}.",
+      "fileTypeNotAllowed": "{name} isn't an allowed file type",
+      "tooManyFiles": "You can attach at most {max} files",
+      "attachmentRejected": "That attachment was rejected. Check the file type and size, then try again."
     },
     "message": {
       "copy": "Copy",
@@ -175,7 +178,8 @@
       "previousVersion": "Previous version",
       "nextVersion": "Next version",
       "versionsLabel": "Message versions",
-      "versionCounter": "{current} / {total}"
+      "versionCounter": "{current} / {total}",
+      "conversationChanged": "The conversation changed, so this response stopped."
     },
     "toolCalls": {
       "searching": "Searching the web",
@@ -233,6 +237,27 @@
       "footerNote": "Read only. Only you can see your connection, and you can disconnect it any time.",
       "elseLabel": "We use something else",
       "connectedAskAgain": "Connected — ask your question again."
+    },
+    "modelSpecialty": {
+      "general": "All-rounder",
+      "frontier": "Most capable",
+      "reasoning": "Reasoning",
+      "coding": "Coding",
+      "agentic": "Agents & tools",
+      "fast-cheap": "Fast & cheap",
+      "long-context": "Long documents",
+      "multimodal": "Vision & files",
+      "research": "Web research",
+      "writing": "Writing",
+      "multilingual": "Multilingual",
+      "image-generation": "Image generation"
+    },
+    "priceTier": {
+      "free": "Free",
+      "cheap": "Cheap",
+      "moderate": "Moderate",
+      "expensive": "Expensive",
+      "premium": "Premium"
     }
   }
 }

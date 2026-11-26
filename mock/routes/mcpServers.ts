@@ -269,16 +269,29 @@ router.delete('/admin/mcp-servers/:id', requireAuth, (req, res) => {
 router.post('/admin/mcp-servers/:id/test', requireAuth, (req, res) => {
   const server = findServer(req.params.id)
   if (!server) return res.status(404).json({ detail: 'Not Found' })
+
+  // grengin-api 0.9.14 runs a real connection test and returns an `error` code
+  // on failure (plus `available_tools` on success). A disabled server reports
+  // `server_disabled`; the old DB connector keeps failing with a timeout.
+  if (server.enabled === false || server.status === 'disabled') {
+    return res.json({ success: false, error: 'server_disabled', message: 'The server is disabled.' })
+  }
   if (server.id === 'srv-002') {
     return res.json({
       success: false,
+      error: 'connection_timeout',
       message:
         'Timed out after 8s — the database may be unreachable or credentials may have expired.',
     })
   }
+
   server.last_connected_at = new Date().toISOString()
   server.status = 'connected'
-  res.json({ success: true, latency_ms: 128 })
+  const count = server.tool_count || 0
+  const available_tools = Array.from({ length: count }, (_, i) => ({
+    name: `tool_${i + 1}`,
+  }))
+  res.json({ success: true, latency_ms: 128, available_tools })
 })
 
 router.post('/admin/mcp-servers/:id/sync-tools', requireAuth, (req, res) => {

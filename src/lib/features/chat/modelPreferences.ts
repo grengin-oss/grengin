@@ -77,9 +77,34 @@ function latestAvailableModel(
 }
 
 /**
+ * The catalog's default model (grengin-api 0.9.14 `default` flag): the first
+ * provider's own model marked `default`, preferring a text model. `default` is
+ * a hint — a provider may mark none (then we fall back to registry order), and
+ * if more than one is marked the first wins.
+ */
+function catalogDefaultModel(
+  providers: ProviderInfo[],
+): { provider: ProviderInfo; model: ModelInfo } | undefined {
+  for (const provider of providers) {
+    const model = provider.models.find(
+      (m) => m.default === true && isSelectableChatModel(m) && !isImageModel(m),
+    );
+    if (model) return { provider, model };
+  }
+  for (const provider of providers) {
+    const model = provider.models.find(
+      (m) => m.default === true && isSelectableChatModel(m),
+    );
+    if (model) return { provider, model };
+  }
+  return undefined;
+}
+
+/**
  * Resolve the default model for a new chat: the last-used model when it is still
- * a selectable option, otherwise the latest available model. Returns undefined
- * only when the registry has no selectable models (or hasn't loaded yet).
+ * a selectable option, otherwise the catalog's default model (0.9.14), otherwise
+ * the latest available model. Returns undefined only when the registry has no
+ * selectable models (or hasn't loaded yet).
  */
 export function resolveDefaultModel(
   providers: ProviderInfo[],
@@ -94,5 +119,6 @@ export function resolveDefaultModel(
     if (found && isSelectableChatModel(found.model)) return found;
   }
 
-  return latestAvailableModel(providers);
+  // No valid saved choice: prefer the catalog's default, else registry order.
+  return catalogDefaultModel(providers) ?? latestAvailableModel(providers);
 }

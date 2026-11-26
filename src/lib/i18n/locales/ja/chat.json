@@ -125,7 +125,10 @@
       "imageModeBanner": "画像モードが有効",
       "exitImageMode": "画像モードを終了",
       "webSearchUnsupported": "このモデルはウェブ検索に対応していません",
-      "retiredModel": "モデル {old} は提供が終了したため、{model} に切り替えました。"
+      "retiredModel": "モデル {old} は提供が終了したため、{model} に切り替えました。",
+      "fileTypeNotAllowed": "{name} は許可されていないファイル形式です",
+      "tooManyFiles": "添付できるファイルは最大 {max} 件です",
+      "attachmentRejected": "その添付ファイルは拒否されました。ファイルの種類とサイズを確認して、もう一度お試しください。"
     },
     "message": {
       "copy": "コピー",
@@ -165,7 +168,8 @@
       "previousVersion": "前のバージョン",
       "nextVersion": "次のバージョン",
       "versionsLabel": "メッセージのバージョン",
-      "versionCounter": "{current} / {total}"
+      "versionCounter": "{current} / {total}",
+      "conversationChanged": "会話が変更されたため、この応答は停止しました。"
     },
     "toolCalls": {
       "searching": "ウェブを検索中",
@@ -233,6 +237,27 @@
       "footerNote": "読み取り専用です。接続はあなただけに表示され、いつでも切断できます。",
       "elseLabel": "別のツールを使っている",
       "connectedAskAgain": "接続しました。もう一度質問してください。"
+    },
+    "modelSpecialty": {
+      "general": "オールラウンド",
+      "frontier": "最高性能",
+      "reasoning": "推論",
+      "coding": "コーディング",
+      "agentic": "エージェントとツール",
+      "fast-cheap": "高速・低価格",
+      "long-context": "長文ドキュメント",
+      "multimodal": "画像とファイル",
+      "research": "Web検索",
+      "writing": "ライティング",
+      "multilingual": "多言語",
+      "image-generation": "画像生成"
+    },
+    "priceTier": {
+      "free": "無料",
+      "cheap": "低価格",
+      "moderate": "標準",
+      "expensive": "高価格",
+      "premium": "プレミアム"
     }
   }
 }

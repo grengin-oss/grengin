@@ -733,7 +733,13 @@
         "elseText": "Vous avez un outil qui n’est pas dans la liste, ou un serveur créé par votre développeur ? Tout ce qui parle MCP fonctionne.",
         "elseBtn": "Ajouter votre propre serveur"
       },
-      "stdioAllowlist": "La commande doit être autorisée par votre opérateur."
+      "stdioAllowlist": "La commande doit être autorisée par votre opérateur.",
+      "testSuccessWithTools": "Connecté en {latency} ms, {count} outils",
+      "testSuccessTools": "Connecté, {count} outils",
+      "testErrorServerDisabled": "Activez le serveur avant de le tester.",
+      "testErrorAuthRequired": "Connectez d’abord votre compte à ce serveur.",
+      "testErrorUnavailable": "Ce connecteur natif se teste via son flux de connexion.",
+      "testErrorInvalidConfig": "Impossible de lire la configuration ou les identifiants du serveur. Vérifiez ses paramètres."
     },
     "mcpOAuth": {
       "authentication": "Authentification",

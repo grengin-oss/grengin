@@ -507,6 +507,15 @@ SPDX-License-Identifier: Apache-2.0
       (!!message.cancelled || message.stopReason === "user_cancelled"),
   );
 
+  // A newer message in the same chat (another tab/API client) superseded this
+  // running reply (grengin-api 0.9.14 `user_edited`). Its partial text is kept;
+  // the banner says the conversation changed, not that anything was "edited".
+  const isSuperseded = $derived(
+    !message.isStreaming &&
+      !message.error &&
+      message.stopReason === "user_edited",
+  );
+
   // Open the in-place editor when the parent asks (e.g. the banner's "Edit
   // prompt"), then let it clear the one-shot signal.
   $effect(() => {
@@ -1752,11 +1761,13 @@ SPDX-License-Identifier: Apache-2.0
       </div>
     {/if}
 
-    {#if isInterrupted}
+    {#if isInterrupted || isSuperseded}
       <!--
         Claude-style "response was interrupted" banner. Shows under the (possibly
         partial) answer, with the same recovery actions: edit the prompt that
-        produced it, or try the answer again (regenerate).
+        produced it, or try the answer again (regenerate). When the turn was
+        superseded by a newer message (0.9.14), the lead says the conversation
+        changed instead.
       -->
       <div class="interrupted-banner">
         <span class="interrupted-banner__lead">
@@ -1774,7 +1785,11 @@ SPDX-License-Identifier: Apache-2.0
             <line x1="12" y1="16" x2="12" y2="12"></line>
             <line x1="12" y1="8" x2="12.01" y2="8"></line>
           </svg>
-          <span>{$_("chat.message.responseInterrupted")}</span>
+          <span
+            >{isSuperseded
+              ? $_("chat.message.conversationChanged")
+              : $_("chat.message.responseInterrupted")}</span
+          >
         </span>
         {#if onEditPrompt || onRegenerate}
           <span class="interrupted-banner__actions">

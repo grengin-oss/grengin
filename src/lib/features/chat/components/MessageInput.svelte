@@ -8,6 +8,9 @@ SPDX-License-Identifier: Apache-2.0
   import type {
     ProviderInfo,
     ModelInfo,
+    SpecialtyInfo,
+    PriceTierInfo,
+    GlobalAttachments,
     SpeechRecognition,
     SpeechRecognitionEvent,
     SpeechRecognitionErrorEvent,
@@ -16,7 +19,11 @@ SPDX-License-Identifier: Apache-2.0
     findModel,
     isImageModel,
     isSelectableChatModel,
+    validateAttachment,
+    attachmentAcceptAttribute,
+    DEFAULT_GLOBAL_ATTACHMENTS,
   } from "../../../api/models";
+  import { specialtyLabel, priceTierLabel, shouldShowSpecialtyBadge } from "../modelCatalog";
   import { uploadDocument, type UploadedFile } from "../../../api/chatApi";
   import { loadDraft, saveDraft, clearDraft } from "../../../utils/drafts";
   import type { MCPServer } from "../../../admin/types.js";
@@ -49,6 +56,12 @@ SPDX-License-Identifier: Apache-2.0
     onModelSelect?: (provider: ProviderInfo, model: ModelInfo) => void;
     onRemoveModel?: () => void;
     providers?: ProviderInfo[];
+    /** Specialty catalog from GET /models (0.9.14): codes + English labels. */
+    specialties?: SpecialtyInfo[];
+    /** Price-tier catalog from GET /models (0.9.14): codes + English labels. */
+    priceTiers?: PriceTierInfo[];
+    /** Attachment limits from GET /models → global_attachments (0.9.14). */
+    globalAttachments?: GlobalAttachments;
     loadingModels?: boolean;
     /** True once the registry has loaded and a valid model is confirmed; gates send. */
     modelReady?: boolean;
@@ -81,6 +94,9 @@ SPDX-License-Identifier: Apache-2.0
     onModelSelect,
     onRemoveModel,
     providers = [],
+    specialties = [],
+    priceTiers = [],
+    globalAttachments,
     loadingModels = false,
     modelReady = true,
     modelsError = null,
@@ -101,6 +117,12 @@ SPDX-License-Identifier: Apache-2.0
 
   const webSearchSupported = $derived(findModel(providers, selectedModel, selectedProvider)?.model.supports_web_search !== false);
   const effectiveWebSearch = $derived(webSearchEnabled && webSearchSupported);
+
+  // Attachment limits from GET /models → global_attachments (0.9.14), with safe
+  // defaults until the registry loads. Drives the file input's `accept` and the
+  // pre-send size/type/count checks the chat stream also enforces.
+  const attachLimits = $derived(globalAttachments ?? DEFAULT_GLOBAL_ATTACHMENTS);
+  const attachAccept = $derived(attachmentAcceptAttribute(attachLimits));
 
   // Split a provider's models into selectable text and image groups (embedding
   // models are never selectable in chat). Loaded from the registry — not hardcoded.
@@ -266,7 +288,14 @@ SPDX-License-Identifier: Apache-2.0
     ),
   );
 
-  /** RECOMMENDED = the model in use, then each brand's newest. Capped at 3. */
+  /**
+   * RECOMMENDED. With grengin-api 0.9.14 the catalog marks models
+   * (`recommended: true`): show exactly those. When the catalog publishes the
+   * field but recommends nothing (test-devel today), the section is empty and
+   * hidden. Only when the backend predates the field entirely (every value
+   * `undefined`) do we fall back to the old heuristic: the model in use, then
+   * each brand's newest, capped at 3.
+   */
   const recommendedModels = $derived.by<ModelEntry[]>(() => {
     const out: ModelEntry[] = [];
     const seen = new Set<string>();
@@ -275,6 +304,20 @@ SPDX-License-Identifier: Apache-2.0
       seen.add(model.key);
       out.push({ provider, model });
     };
+
+    const fieldPublished = providers.some((p) =>
+      p.models.some((m) => m.recommended !== undefined),
+    );
+    if (fieldPublished) {
+      for (const brand of textBrands) {
+        for (const model of brand.models) {
+          if (model.recommended === true) push(brand.provider, model);
+        }
+      }
+      return out;
+    }
+
+    // Pre-0.9.14 fallback heuristic.
     const current = findModel(providers, selectedModel, selectedProvider);
     if (current && !isImageModel(current.model)) {
       push(current.provider, current.model);
@@ -626,23 +669,24 @@ SPDX-License-Identifier: Apache-2.0
   let isUploading = $derived(uploadingFiles.size > 0);
 
   // ===== File validation & drag-and-drop =====
-  // Max upload size per file, enforced identically for the picker and drag & drop.
-  const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
-
   let isDraggingFiles = $state(false);
   // dragenter/dragleave also fire when moving between child elements, so we count
   // enters vs leaves to know when the pointer has truly left the drop zone.
   let dragDepth = 0;
   let fileError = $state<string | null>(null);
 
-  // Validate a file against the shared size constraint. Returns a localized error
-  // message, or null when the file is acceptable. Types are unrestricted to match
-  // the picker (no accept attribute, so photos and any file type are allowed).
+  // Validate a file against the global attachment limits (0.9.14): size first,
+  // then type against `accepted_types`. Returns a localized error, or null when
+  // the file is acceptable. These mirror the checks the chat stream enforces.
   function validateFile(file: File): string | null {
-    if (file.size > MAX_FILE_SIZE) {
+    const reason = validateAttachment(file, attachLimits);
+    if (reason === "too_big") {
       return $_("chat.messageInput.fileTooLarge", {
-        values: { name: file.name, max: formatFileSize(MAX_FILE_SIZE) },
+        values: { name: file.name, max: formatFileSize(attachLimits.max_file_size_bytes) },
       });
+    }
+    if (reason === "unsupported_type") {
+      return $_("chat.messageInput.fileTypeNotAllowed", { values: { name: file.name } });
     }
     return null;
   }
@@ -658,9 +702,19 @@ SPDX-License-Identifier: Apache-2.0
 
     const accepted: File[] = [];
     const rejected: string[] = [];
+    // Enforce the per-message file count (0.9.14): once the cap is reached, any
+    // further files are rejected before upload instead of 400-ing on send.
+    const remainingSlots = Math.max(0, attachLimits.max_files_per_message - attachedFiles.length);
     for (const file of files) {
-      if (validateFile(file)) rejected.push(file.name);
+      if (validateFile(file) || accepted.length >= remainingSlots) rejected.push(file.name);
       else accepted.push(file);
+    }
+
+    if (accepted.length === 0 && attachedFiles.length >= attachLimits.max_files_per_message) {
+      fileError = $_("chat.messageInput.tooManyFiles", {
+        values: { max: attachLimits.max_files_per_message },
+      });
+      return;
     }
 
     fileError =
@@ -1299,6 +1353,21 @@ SPDX-License-Identifier: Apache-2.0
   ".brand-badge" the brand headers use. Nested child rows deliberately omit it:
   they already sit under their brand's header.
 -->
+<!-- Catalog badges (0.9.14): a specialty chip (hidden for "general") and a price
+     tier chip. Labels are translated when known, else the API's English label. -->
+{#snippet modelMeta(model: ModelInfo)}
+  {#if shouldShowSpecialtyBadge(model.specialty)}
+    <span class="model-badge model-badge--specialty"
+      >{specialtyLabel(model.specialty, specialties, $_)}</span
+    >
+  {/if}
+  {#if model.price_tier}
+    <span class="model-badge model-badge--price"
+      >{priceTierLabel(model.price_tier, priceTiers, $_)}</span
+    >
+  {/if}
+{/snippet}
+
 {#snippet modelRow(provider: ProviderInfo, model: ModelInfo)}
   {@const selected = isModelSelected(model, provider)}
   <button
@@ -1306,10 +1375,18 @@ SPDX-License-Identifier: Apache-2.0
     class:model-row--selected={selected}
     type="button"
     onclick={() => selectModel(provider, model)}
-    title={model.comment || `${provider.name} · ${model.name}`}
+    title={model.summary || model.comment || `${provider.name} · ${model.name}`}
   >
     {@render brandBadge(provider)}
-    <span class="model-row__name">{model.name}</span>
+    <span class="model-row__text">
+      <span class="model-row__name-line">
+        <span class="model-row__name">{model.name}</span>
+        {@render modelMeta(model)}
+      </span>
+      {#if model.summary}
+        <span class="model-row__summary">{model.summary}</span>
+      {/if}
+    </span>
     {#if selected}
       {@render checkMark("model-row__check")}
     {/if}
@@ -1328,23 +1405,33 @@ SPDX-License-Identifier: Apache-2.0
     class:model-row--selected={selected}
     type="button"
     onclick={() => selectModel(provider, model)}
-    title={model.comment || model.name}
+    title={model.summary || model.comment || model.name}
   >
-    <span class="model-row__name">{model.name}</span>
-    {#if latest}
-      <span class="model-tag">{$_("chat.messageInput.latestTag")}</span>
-    {/if}
+    <span class="model-row__text">
+      <span class="model-row__name-line">
+        <span class="model-row__name">{model.name}</span>
+        {#if latest}
+          <span class="model-tag">{$_("chat.messageInput.latestTag")}</span>
+        {/if}
+        {@render modelMeta(model)}
+      </span>
+      {#if model.summary}
+        <span class="model-row__summary">{model.summary}</span>
+      {/if}
+    </span>
     {#if selected}
       {@render checkMark("model-row__check")}
     {/if}
   </button>
 {/snippet}
 
-<!-- Hidden file input: no accept so mobile can reach Photo Library and Browse -->
+<!-- Hidden file input. `accept` comes from global_attachments (0.9.14); when the
+     list is ["*/*"] it is left unset so mobile can still reach Photo Library and Browse. -->
 <input
   type="file"
   bind:this={fileInput}
   onchange={handleFileChange}
+  accept={attachAccept}
   multiple
   style="display: none"
 />
@@ -1836,9 +1923,9 @@ SPDX-License-Identifier: Apache-2.0
           </div>
 
           <!-- ===== Model ===== -->
-          <div class="dropdown-anchor" class:is-open={openMenu === "model"}>
+          <div class="dropdown-anchor dropdown-anchor--model" class:is-open={openMenu === "model"}>
             <button
-              class="chip"
+              class="chip chip--model"
               type="button"
               onclick={(e) => {
                 e.stopPropagation();
@@ -2316,6 +2403,7 @@ SPDX-License-Identifier: Apache-2.0
           <button
             class="circle-btn"
             class:circle-btn--active={effectiveWebSearch}
+            class:circle-btn--unsupported={!webSearchSupported}
             type="button"
             onclick={onWebSearchToggle}
             disabled={!webSearchSupported}
@@ -2327,21 +2415,41 @@ SPDX-License-Identifier: Apache-2.0
               : $_("chat.messageInput.enableWebSearch")}
             aria-pressed={effectiveWebSearch}
           >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M2 12h20" />
-              <path
-                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
-              />
-            </svg>
+            <span class="circle-btn__icon">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20" />
+                <path
+                  d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+                />
+              </svg>
+              {#if !webSearchSupported}
+                <!-- Disabled badge (ENGG-543): a cross in the bottom-right
+                     corner makes "this model can't search the web" obvious. -->
+                <span class="circle-btn__badge" aria-hidden="true">
+                  <svg
+                    width="8"
+                    height="8"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="4"
+                    stroke-linecap="round"
+                  >
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                  </svg>
+                </span>
+              {/if}
+            </span>
           </button>
         </div>
 
@@ -2783,8 +2891,19 @@ SPDX-License-Identifier: Apache-2.0
     display: flex;
     align-items: center;
     gap: 6px;
-    flex-shrink: 0;
     pointer-events: auto;
+  }
+
+  /* The left group may shrink so a long model name can't push the controls
+     outside the composer when the artifact panel narrows it (ENGG-543); the
+     right group (mic + send) stays fixed. */
+  .bottom-bar-left {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .bottom-bar-right {
+    flex-shrink: 0;
   }
 
   .bottom-bar-center {
@@ -2955,6 +3074,25 @@ SPDX-License-Identifier: Apache-2.0
     position: relative;
     display: flex;
     align-items: center;
+  }
+
+  /* Only the model picker shrinks (long model names); the other controls keep
+     their intrinsic width (ENGG-543). */
+  .dropdown-anchor--model {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  /* `.chip.chip--model` (not `.chip--model`) so this beats the later
+     `.chip { flex-shrink: 0 }` rule on specificity, letting the model chip
+     actually shrink instead of overflowing its collapsed anchor. */
+  .chip.chip--model {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .chip.chip--model .chip__label {
+    min-width: 0;
   }
 
   .dropdown-anchor button {
@@ -3149,6 +3287,42 @@ SPDX-License-Identifier: Apache-2.0
     background: var(--gx-ring-soft);
     color: var(--gx-org-primary-500);
     box-shadow: inset 0 0 0 1px var(--gx-org-primary-500);
+  }
+
+  .circle-btn:disabled {
+    cursor: not-allowed;
+  }
+
+  .circle-btn__icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Web search unsupported (ENGG-543): dim the globe and stamp a cross badge in
+     its bottom-right corner so the "can't search the web" state reads at a
+     glance. The badge sits in a field-coloured disc so it reads over the globe. */
+  .circle-btn--unsupported {
+    color: var(--gx-slate-400);
+  }
+
+  .circle-btn--unsupported:hover {
+    background: transparent;
+  }
+
+  .circle-btn__badge {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--gx-an-field-bg, var(--gx-card));
+    color: var(--gx-danger);
   }
 
   .cx-chev {
@@ -3381,9 +3555,26 @@ SPDX-License-Identifier: Apache-2.0
     background: var(--gx-org-primary-tint);
   }
 
-  .model-row__name {
+  /* Name + optional summary stack (0.9.14). Takes the row's free width; the
+     check mark stays pinned right via the row's space-between. */
+  .model-row__text {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .model-row__name-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .model-row__name {
+    min-width: 0;
+    flex: 0 1 auto;
     font-family: var(--gx-font);
     font-weight: 400;
     font-size: 13px;
@@ -3395,6 +3586,40 @@ SPDX-License-Identifier: Apache-2.0
 
   .model-row--selected .model-row__name {
     font-weight: 600;
+  }
+
+  /* One-line, already-localized model summary (hidden when the catalog omits it). */
+  .model-row__summary {
+    font-family: var(--gx-font);
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--gx-cx-sub);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Specialty / price-tier chips. */
+  .model-badge {
+    flex: 0 0 auto;
+    font-family: var(--gx-font);
+    font-weight: 600;
+    font-size: 10px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .model-badge--specialty {
+    color: var(--gx-org-primary-600, var(--gx-org-primary-500));
+    background: var(--gx-org-primary-tint);
+  }
+
+  .model-badge--price {
+    color: var(--gx-cx-sub);
+    background: var(--gx-hair-soft, var(--gx-hover-soft));
+    text-transform: capitalize;
   }
 
   .model-row__check {

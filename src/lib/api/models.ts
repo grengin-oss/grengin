@@ -34,6 +34,18 @@ export interface ModelInfo {
     input: number;
     output: number;
   };
+  /**
+   * Catalog metadata (grengin-api 0.9.14). `specialty` is always present on a
+   * 0.9.14 response (`general` when the catalog names none); the rest are
+   * optional and simply hidden when absent. Gateway/plugin copies borrow these
+   * from the matching catalog model; `default` applies only to a provider's own
+   * engine, never to gateway copies.
+   */
+  specialty?: string;
+  summary?: string;
+  price_tier?: string;
+  recommended?: boolean;
+  default?: boolean;
   versions?: ModelInfo[];
 }
 
@@ -46,9 +58,46 @@ export interface ProviderInfo {
   models: ModelInfo[];
 }
 
+/** A specialty code with its English label (used when the webapp can't translate the code). */
+export interface SpecialtyInfo {
+  id: string;
+  label: string;
+  description?: string;
+}
+
+/** A price-tier code with its English label. */
+export interface PriceTierInfo {
+  id: string;
+  label: string;
+}
+
+/**
+ * Attachment limits the chat stream enforces (grengin-api 0.9.14). Read from
+ * `GET /models` so the composer validates before sending.
+ */
+export interface GlobalAttachments {
+  /** HTML `accept` tokens; a lone match-anything entry means leave the input unrestricted. */
+  accepted_types: string[];
+  max_file_size_bytes: number;
+  max_files_per_message: number;
+}
+
 export interface ModelsResponse {
   providers: ProviderInfo[];
+  /** Specialty catalog (codes + English labels) for codes the webapp can't translate. */
+  specialties?: SpecialtyInfo[];
+  /** Price-tier catalog (codes + English labels). */
+  price_tiers?: PriceTierInfo[];
+  /** Attachment limits enforced by the chat stream. */
+  global_attachments?: GlobalAttachments;
 }
+
+/** Fallback attachment limits when the server doesn't send `global_attachments`. */
+export const DEFAULT_GLOBAL_ATTACHMENTS: GlobalAttachments = {
+  accepted_types: ['*/*'],
+  max_file_size_bytes: 26214400, // 25 MiB
+  max_files_per_message: 32,
+};
 
 /** True when the model generates images through the chat stream. */
 export function isImageModel(model?: ModelInfo | null): boolean {
@@ -124,9 +173,81 @@ export interface SpeechRecognitionAlternative {
   confidence: number;
 }
 
+/** The HTML `accept` value for the file input, or undefined to leave it unrestricted. */
+export function attachmentAcceptAttribute(limits: GlobalAttachments): string | undefined {
+  const types = limits.accepted_types ?? [];
+  if (types.length === 0 || types.some((t) => t === '*/*' || t === '*')) return undefined;
+  return types.join(',');
+}
+
+/** Why an attachment is rejected, or null when it is acceptable. */
+export type AttachmentRejection = 'too_big' | 'unsupported_type';
+
 /**
- * Fetch available models and providers
+ * Does a file match one of the HTML `accept` tokens? Tokens may be a MIME type
+ * (`image/png`), a subtype wildcard (`image/*`), the match-anything token, or a
+ * filename extension (`.pdf`).
  */
-export async function getModels(): Promise<ModelsResponse> {
-  return request<ModelsResponse>('/models');
+export function isAcceptedFileType(
+  file: { name: string; type: string },
+  acceptedTypes: string[],
+): boolean {
+  if (!acceptedTypes || acceptedTypes.length === 0) return true;
+  const mime = (file.type || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  return acceptedTypes.some((raw) => {
+    const token = raw.trim().toLowerCase();
+    if (!token || token === '*/*' || token === '*') return true;
+    if (token.startsWith('.')) return name.endsWith(token);
+    if (token.endsWith('/*')) return mime.startsWith(token.slice(0, -1)); // e.g. "image/"
+    return mime === token;
+  });
+}
+
+/** Validate one file against the global attachment limits (size + type). */
+export function validateAttachment(
+  file: { name: string; type: string; size: number },
+  limits: GlobalAttachments,
+): AttachmentRejection | null {
+  if (file.size > limits.max_file_size_bytes) return 'too_big';
+  if (!isAcceptedFileType(file, limits.accepted_types)) return 'unsupported_type';
+  return null;
+}
+
+/** Read `global_attachments` from a models response, falling back to defaults. */
+export function resolveGlobalAttachments(res?: Partial<ModelsResponse> | null): GlobalAttachments {
+  const g = res?.global_attachments;
+  if (!g) return { ...DEFAULT_GLOBAL_ATTACHMENTS };
+  return {
+    accepted_types:
+      Array.isArray(g.accepted_types) && g.accepted_types.length > 0
+        ? g.accepted_types
+        : DEFAULT_GLOBAL_ATTACHMENTS.accepted_types,
+    max_file_size_bytes:
+      typeof g.max_file_size_bytes === 'number' && g.max_file_size_bytes > 0
+        ? g.max_file_size_bytes
+        : DEFAULT_GLOBAL_ATTACHMENTS.max_file_size_bytes,
+    max_files_per_message:
+      typeof g.max_files_per_message === 'number' && g.max_files_per_message > 0
+        ? g.max_files_per_message
+        : DEFAULT_GLOBAL_ATTACHMENTS.max_files_per_message,
+  };
+}
+
+/**
+ * The catalog's default model for a provider (0.9.14 `default` flag), or
+ * undefined when none is marked. If more than one is marked, the first wins.
+ */
+export function defaultModelForProvider(provider: ProviderInfo): ModelInfo | undefined {
+  return provider.models.find((m) => m.default === true && isSelectableChatModel(m));
+}
+
+/**
+ * Fetch available models and providers. Pass the UI `locale` (e.g. `ja`,
+ * `fr-CA`) so the backend resolves model `summary` strings into that language
+ * (grengin-api 0.9.14); summaries fall back fr-CA → fr → en server-side.
+ */
+export async function getModels(locale?: string): Promise<ModelsResponse> {
+  const query = locale && locale.trim() ? `?locale=${encodeURIComponent(locale.trim())}` : '';
+  return request<ModelsResponse>(`/models${query}`);
 }

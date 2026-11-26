@@ -125,7 +125,10 @@
       "imageModeBanner": "Modo de imagem ativo",
       "exitImageMode": "Sair do modo de imagem",
       "webSearchUnsupported": "Este modelo não pode pesquisar na web",
-      "retiredModel": "O modelo {old} não está mais disponível; alterado para {model}."
+      "retiredModel": "O modelo {old} não está mais disponível; alterado para {model}.",
+      "fileTypeNotAllowed": "{name} não é um tipo de arquivo permitido",
+      "tooManyFiles": "Você pode anexar no máximo {max} arquivos",
+      "attachmentRejected": "Esse anexo foi rejeitado. Verifique o tipo e o tamanho do arquivo e tente novamente."
     },
     "message": {
       "copy": "Copiar",
@@ -165,7 +168,8 @@
       "previousVersion": "Versão anterior",
       "nextVersion": "Próxima versão",
       "versionsLabel": "Versões da mensagem",
-      "versionCounter": "{current} / {total}"
+      "versionCounter": "{current} / {total}",
+      "conversationChanged": "A conversa mudou, então esta resposta foi interrompida."
     },
     "toolCalls": {
       "searching": "Pesquisando na web",
@@ -233,6 +237,27 @@
       "footerNote": "Somente leitura. Só você vê sua conexão e pode desconectá-la a qualquer momento.",
       "elseLabel": "Usamos outra coisa",
       "connectedAskAgain": "Conectado. Faça sua pergunta novamente."
+    },
+    "modelSpecialty": {
+      "general": "Versátil",
+      "frontier": "Mais capaz",
+      "reasoning": "Raciocínio",
+      "coding": "Programação",
+      "agentic": "Agentes e ferramentas",
+      "fast-cheap": "Rápido e barato",
+      "long-context": "Documentos longos",
+      "multimodal": "Visão e arquivos",
+      "research": "Pesquisa na web",
+      "writing": "Redação",
+      "multilingual": "Multilíngue",
+      "image-generation": "Geração de imagens"
+    },
+    "priceTier": {
+      "free": "Grátis",
+      "cheap": "Barato",
+      "moderate": "Moderado",
+      "expensive": "Caro",
+      "premium": "Superior"
     }
   }
 }

@@ -4,7 +4,7 @@
 import { Router } from 'express'
 import { faker } from '@faker-js/faker'
 import { requireAuth } from '../lib/middleware.js'
-import { conversations, messages, files, usageState, type Conversation, type Message, type UserFile } from '../lib/store.js'
+import { conversations, messages, files, usageState, artifacts, type Conversation, type Message, type UserFile } from '../lib/store.js'
 
 const router = Router()
 
@@ -83,6 +83,9 @@ function buildConversationResponse(conversation: Conversation, conversationMessa
       versions: versionsFor(conversation.id, msg.id) || null,
       // Why the turn stopped early; drives the "response was interrupted" banner.
       stop_reason: (msg as any).stop_reason || null,
+      // Still streaming when the conversation was loaded (0.9.14): the webapp
+      // reconnects to GET /chat/stream/{id}/events, falling back to polling.
+      generating: (msg as any).generating === true,
     })),
     model: 'claude-sonnet-4-5',
     title: conversation.title,
@@ -219,13 +222,31 @@ router.get('/mcp-servers', requireAuth, (_req, res) => {
 })
 
 router.get('/chat', requireAuth, (req, res) => {
+  // Mirror the real backend: support `offset`, `limit` and `search`, and return
+  // the paginated `{ conversations, total }` shape the sidebar pages through
+  // (ENGG-543). `total` is the count across all pages so the client knows when
+  // to stop requesting more.
+  const search = (req.query.search as string | undefined)?.trim().toLowerCase()
+  const offsetRaw = Number.parseInt(req.query.offset as string, 10)
+  const limitRaw = Number.parseInt(req.query.limit as string, 10)
+  const offset = Number.isFinite(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0
+  const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? limitRaw : undefined
+
+  let all = Array.from(conversations.values())
+  if (search) {
+    all = all.filter((c) => (c.title || '').toLowerCase().includes(search))
+  }
+
   // Sort by updated_at descending (most recent first)
-  const sorted = Array.from(conversations.values()).sort((a, b) => {
+  all.sort((a, b) => {
     const aTime = new Date(a.updated_at || a.created_at).getTime()
     const bTime = new Date(b.updated_at || b.created_at).getTime()
     return bTime - aTime
   })
-  res.json(sorted)
+
+  const total = all.length
+  const page = limit === undefined ? all.slice(offset) : all.slice(offset, offset + limit)
+  res.json({ conversations: page, total })
 })
 
 // Search conversations (must come before /:chatId route)
@@ -248,6 +269,72 @@ router.get('/chat/search', requireAuth, (req, res) => {
   })
 
   res.json(allConversations)
+})
+
+// Reconnect to a reply that is still generating (grengin-api 0.9.14). Replays
+// the reply from the start as SSE with `id:` lines so a dropped client can
+// resume via Last-Event-ID / ?after=. 404 when there is nothing to reconnect to.
+router.get('/chat/stream/:messageId/events', requireAuth, (req, res) => {
+  const messageId = req.params.messageId
+
+  // Locate a still-generating assistant message by id.
+  let found: { conversationId: string; msg: any } | undefined
+  for (const [conversationId, list] of messages) {
+    const msg = list.find((m) => m.id === messageId)
+    if (msg) {
+      found = { conversationId, msg }
+      break
+    }
+  }
+  if (!found || (found.msg as any).generating !== true) {
+    return res.status(404).json({ detail: 'No in-progress reply to reconnect to' })
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.setHeader('X-Accel-Buffering', 'no')
+
+  const fullText: string = (found.msg as any).replay_text || found.msg.parts?.text || ''
+  const after = Number(req.query.after ?? req.headers['last-event-id'] ?? 0) || 0
+
+  // Build the event list (1-based ids): message_start, deltas, done.
+  const events: Array<{ event: string; data: unknown }> = [
+    { event: 'message_start', data: { message_id: messageId, user_message_id: null } },
+  ]
+  const words = fullText.split(/(\s+)/).filter((w) => w.length > 0)
+  for (const w of words) events.push({ event: 'delta', data: { text: w } })
+  events.push({
+    event: 'done',
+    data: { conversation_id: found.conversationId, assistant_message_id: messageId, usage: { total_tokens: Math.max(1, Math.round(fullText.length / 4)) } },
+  })
+
+  let i = 0
+  const timer = setInterval(() => {
+    // Resume support: skip events already delivered (id <= after).
+    while (i < events.length) {
+      const id = i + 1
+      const e = events[i]
+      i++
+      if (id <= after) continue
+      res.write(`id: ${id}\n`)
+      res.write(`event: ${e.event}\n`)
+      res.write(`data: ${JSON.stringify(e.data)}\n\n`)
+      if (e.event === 'done') {
+        // The reply is now complete: persist it and clear the generating flag so
+        // a reload shows the finished message.
+        clearInterval(timer)
+        ;(found!.msg as any).generating = false
+        found!.msg.parts = { ...found!.msg.parts, text: fullText }
+        res.end()
+      }
+      return
+    }
+    clearInterval(timer)
+    res.end()
+  }, 25)
+
+  req.on('close', () => clearInterval(timer))
 })
 
 router.get('/chat/:chatId', requireAuth, (req, res) => {
@@ -482,21 +569,46 @@ router.post(['/chat/stream', '/chat/stream/:conversationId'], requireAuth, async
     res.write(`event: delta\ndata: ${JSON.stringify({ text })}\n\n`)
   }
 
-  // Send delta events — stream code blocks line-by-line for a live-coding effect
+  // Send delta events. A fenced html/markdown block is streamed as a real
+  // artifact — artifact_start → artifact_delta* → artifact_end → artifact_saved —
+  // so the preview panel opens and renders it live as it streams (ENGG-543),
+  // while the surrounding prose streams as ordinary text deltas. The persisted
+  // artifact is registered so the card survives reload and download works.
+  const artifactMetas: Array<{ id: string; file_id: string; title: string; content_type: string }> = []
   const hasCodeBlock = responseText.includes('```html') || responseText.includes('```markdown') || responseText.includes('```md')
   if (hasCodeBlock) {
-    const parts = responseText.split(/(```(?:html|markdown|md)\s*\n[\s\S]*?```)/);
+    const parts = responseText.split(/(```(?:html|markdown|md)\s*\n[\s\S]*?```)/)
     stream: for (const part of parts) {
-      if (part.match(/^```(?:html|markdown|md)\s*\n/)) {
-        const lines = part.split('\n')
-        for (const line of lines) {
+      const fence = part.match(/^```(html|markdown|md)\s*\n([\s\S]*?)```$/)
+      if (fence) {
+        const isMarkdown = fence[1] !== 'html'
+        const body = fence[2].replace(/\n$/, '')
+        const content_type = isMarkdown ? 'text/markdown' : 'text/html'
+        const titleMatch = isMarkdown ? body.match(/^#\s+(.+)$/m) : body.match(/<title>([^<]+)<\/title>/i)
+        const title = titleMatch?.[1]?.trim() || (isMarkdown ? 'Document' : 'HTML Artifact')
+        const id = faker.string.uuid()
+        const file_id = faker.string.uuid()
+
+        res.write(`event: artifact_start\ndata: ${JSON.stringify({ id, title, content_type })}\n\n`)
+        await new Promise(resolve => setTimeout(resolve, 60))
+
+        for (const line of body.split('\n')) {
           if (isCancelled()) break stream
-          writeDelta(line + '\n')
-          await new Promise(resolve => setTimeout(resolve, 18))
+          res.write(`event: artifact_delta\ndata: ${JSON.stringify({ id, chunk: line + '\n' })}\n\n`)
+          await new Promise(resolve => setTimeout(resolve, 20))
         }
-      } else {
-        const words = part.split(' ')
-        for (const word of words) {
+
+        res.write(`event: artifact_end\ndata: ${JSON.stringify({ id })}\n\n`)
+        const nowTs = new Date().toISOString()
+        artifacts.set(id, {
+          id, title, content_type, content: body,
+          conversation_id: conversationId, message_id: assistantMsgId, file_id,
+          created_at: nowTs, updated_at: nowTs,
+        })
+        res.write(`event: artifact_saved\ndata: ${JSON.stringify({ id, file_id, title, content_type })}\n\n`)
+        artifactMetas.push({ id, file_id, title, content_type })
+      } else if (part) {
+        for (const word of part.split(' ')) {
           if (isCancelled()) break stream
           writeDelta(word + ' ')
           await new Promise(resolve => setTimeout(resolve, 25))
@@ -510,6 +622,12 @@ router.post(['/chat/stream', '/chat/stream/:conversationId'], requireAuth, async
       writeDelta(chunk + ' ')
       await new Promise(resolve => setTimeout(resolve, 30))
     }
+  }
+
+  // Persist the artifact metadata on the message so the card is restored on
+  // reload; the panel fetches the content by id from the artifacts store.
+  if (artifactMetas.length > 0 && !isCancelled()) {
+    assistantMsg.parts = { text: sentText.trim(), artifacts: artifactMetas } as any
   }
 
   if (isCancelled()) {

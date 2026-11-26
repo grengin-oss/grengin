@@ -130,11 +130,20 @@ export async function cancelMessageStream(messageId: string): Promise<void> {
  * copying the SSE parser"). It keeps the raw `fetch()` + one-shot 401 retry
  * (the CLAUDE.md streaming exception), since `request()` cannot stream.
  */
+/** Transport-level extras for a streamed request (0.9.14 reconnect support). */
+interface StreamHttpExtras {
+  /** Extra request headers, e.g. `Last-Event-ID` for a reconnect. */
+  headers?: Record<string, string>;
+  /** Called with each SSE `id:` so a caller can resume from the last one. */
+  onLastEventId?: (id: string) => void;
+}
+
 async function streamChat(
   url: string,
   method: string,
   body: unknown,
   options: ChatStreamCallbacks,
+  httpExtras?: StreamHttpExtras,
 ): Promise<void> {
   const { onResponseDelta, onBudgetWarning, onThinkingDelta, onStreamingStart, onConversationInitialized, onToolCall, onToolResult, onArtifact, onImageGenerated, onMcpAuthRequired, onCancelled, onResponseStopped, onDone, onError, signal } = options;
 
@@ -153,14 +162,18 @@ async function streamChat(
       });
     }
 
-    const requestBody = JSON.stringify(body);
+    // A GET reconnect (0.9.14 `/events`) carries no body; everything else posts JSON.
+    const hasBody = body !== undefined && method !== 'GET';
+    const requestBody = hasBody ? JSON.stringify(body) : undefined;
+    const buildHeaders = (bearer: string): Record<string, string> => ({
+      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+      Authorization: `Bearer ${bearer}`,
+      ...httpExtras?.headers,
+    });
 
     let response = await fetch(url, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: buildHeaders(token),
       body: requestBody,
       signal,
     });
@@ -185,10 +198,7 @@ async function streamChat(
       // Retry the streaming request with new token
       response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${newToken}`,
-        },
+        headers: buildHeaders(newToken),
         body: requestBody,
         signal,
       });
@@ -235,6 +245,11 @@ async function streamChat(
 
       for (const line of lines) {
         if (!line.trim()) continue;
+
+        // SSE `id:` (0.9.14 replay): remember the last one so a dropped reconnect
+        // can resume with `Last-Event-ID` / `?after=`.
+        const idMatch = line.match(/^id: (.+)$/m);
+        if (idMatch) httpExtras?.onLastEventId?.(idMatch[1].trim());
 
         const eventMatch = line.match(/^event: (.+)$/m);
         const dataMatch = line.match(/^data: (.+)$/m);
@@ -480,6 +495,94 @@ export async function sendMessage(options: SendMessageOptions): Promise<void> {
     ? `${API_BASE}/chat/stream/${options.conversationId}`
     : `${API_BASE}/chat/stream`;
   return streamChat(url, 'POST', buildChatInput(options), options);
+}
+
+/** Thrown by {@link reconnectReplyStream} when `/events` returns 404 — there is
+ *  nothing to reconnect to, so the caller should fall back to polling. */
+export class ReplayUnavailableError extends Error {
+  constructor() {
+    super('No in-progress reply to reconnect to');
+    this.name = 'ReplayUnavailableError';
+  }
+}
+
+/**
+ * Reconnect to a reply that is still generating after a page refresh
+ * (grengin-api 0.9.14). Opens `GET /chat/stream/{message_id}/events`, which
+ * replays the reply from the start, and feeds it through the same SSE parser as
+ * a live send. On a dropped connection (or a body that ends without `done`) it
+ * reconnects with `Last-Event-ID` / `?after=`. A 404 on the first attempt throws
+ * {@link ReplayUnavailableError} so the caller can fall back to polling; a 404
+ * is never retried.
+ *
+ * The replayed `conversation` event is ignored — the conversation is already
+ * loaded. The caller rebuilds the reply from the delta events, replacing the
+ * saved `parts.text`.
+ */
+export async function reconnectReplyStream(
+  messageId: string,
+  options: ChatStreamCallbacks,
+): Promise<void> {
+  const MAX_RECONNECTS = 6;
+  const baseUrl = `${API_BASE}/chat/stream/${encodeURIComponent(messageId)}/events`;
+  let lastId: string | undefined;
+  let attempt = 0;
+
+  for (;;) {
+    let sawDone = false;
+    let unavailable = false;
+    let interrupted = false;
+    let hardError: ApiError | undefined;
+
+    const headers: Record<string, string> = {};
+    if (lastId) headers['Last-Event-ID'] = lastId;
+    const url = lastId ? `${baseUrl}?after=${encodeURIComponent(lastId)}` : baseUrl;
+
+    await streamChat(
+      url,
+      'GET',
+      undefined,
+      {
+        ...options,
+        // §1.2: the conversation is already loaded — ignore its replayed event.
+        onConversationInitialized: undefined,
+        onDone: (data) => {
+          sawDone = true;
+          options.onDone?.(data);
+        },
+        onError: (err) => {
+          if (err instanceof ApiError && err.status === 404) {
+            unavailable = true;
+            return;
+          }
+          if (err instanceof ApiError && err.externalCode === 'stream_interrupted') {
+            interrupted = true;
+            return;
+          }
+          hardError = err instanceof ApiError ? err : new ApiError(500, String(err));
+        },
+      },
+      { headers, onLastEventId: (id) => { lastId = id; } },
+    );
+
+    if (options.signal?.aborted) return;
+    if (sawDone) return;
+    if (unavailable) {
+      // Nothing left to resume. If we had already replayed part of the reply the
+      // server considers it finished — let the caller's reload finalize it. With
+      // no progress at all there was never a stream: fall back to polling.
+      if (lastId) return;
+      throw new ReplayUnavailableError();
+    }
+    if (hardError) throw hardError;
+
+    // Ended without `done` (transport drop or a 5 s reader timeout): reconnect
+    // from the last event id, with a short backoff and a bounded budget.
+    attempt += 1;
+    if (attempt >= MAX_RECONNECTS) return;
+    await new Promise((resolve) => setTimeout(resolve, Math.min(500 * attempt, 3000)));
+    if (options.signal?.aborted) return;
+  }
 }
 
 /**

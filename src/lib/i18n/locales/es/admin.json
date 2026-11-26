@@ -733,7 +733,13 @@
         "elseText": "¿Tienes una herramienta que no está en la lista o un servidor que creó tu desarrollador? Funciona cualquier cosa que hable MCP.",
         "elseBtn": "Añadir tu propio servidor"
       },
-      "stdioAllowlist": "El operador debe incluir el comando en la lista de permitidos."
+      "stdioAllowlist": "El operador debe incluir el comando en la lista de permitidos.",
+      "testSuccessWithTools": "Conectado en {latency} ms, {count} herramientas",
+      "testSuccessTools": "Conectado, {count} herramientas",
+      "testErrorServerDisabled": "Activa el servidor antes de probarlo.",
+      "testErrorAuthRequired": "Primero conecta tu cuenta a este servidor.",
+      "testErrorUnavailable": "Este conector nativo se prueba a través de su flujo de inicio de sesión.",
+      "testErrorInvalidConfig": "No se puede leer la configuración o las credenciales del servidor. Revisa sus ajustes."
     },
     "mcpOAuth": {
       "authentication": "Autenticación",

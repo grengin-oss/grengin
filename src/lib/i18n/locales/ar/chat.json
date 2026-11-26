@@ -125,7 +125,10 @@
       "imageModeBanner": "وضع الصور مُفعّل",
       "exitImageMode": "إنهاء وضع الصور",
       "webSearchUnsupported": "هذا النموذج لا يدعم البحث في الويب",
-      "retiredModel": "لم يعد النموذج {old} متاحًا؛ تم التبديل إلى {model}."
+      "retiredModel": "لم يعد النموذج {old} متاحًا؛ تم التبديل إلى {model}.",
+      "fileTypeNotAllowed": "{name} ليس نوع ملف مسموحًا به",
+      "tooManyFiles": "يمكنك إرفاق {max} ملفات كحد أقصى",
+      "attachmentRejected": "تم رفض هذا المرفق. تحقق من نوع الملف وحجمه ثم حاول مرة أخرى."
     },
     "message": {
       "copy": "نسخ",
@@ -165,7 +168,8 @@
       "previousVersion": "النسخة السابقة",
       "nextVersion": "النسخة التالية",
       "versionsLabel": "نسخ الرسالة",
-      "versionCounter": "{current} / {total}"
+      "versionCounter": "{current} / {total}",
+      "conversationChanged": "تغيّرت المحادثة، لذا توقّفت هذه الاستجابة."
     },
     "toolCalls": {
       "searching": "جارٍ البحث على الويب",
@@ -233,6 +237,27 @@
       "footerNote": "للقراءة فقط. أنت وحدك من يرى اتصالك، ويمكنك قطعه في أي وقت.",
       "elseLabel": "نستخدم شيئًا آخر",
       "connectedAskAgain": "تم الاتصال. اطرح سؤالك مرة أخرى."
+    },
+    "modelSpecialty": {
+      "general": "متعدد الاستخدامات",
+      "frontier": "الأكثر قدرة",
+      "reasoning": "الاستدلال",
+      "coding": "البرمجة",
+      "agentic": "الوكلاء والأدوات",
+      "fast-cheap": "سريع واقتصادي",
+      "long-context": "المستندات الطويلة",
+      "multimodal": "الرؤية والملفات",
+      "research": "بحث الويب",
+      "writing": "الكتابة",
+      "multilingual": "متعدد اللغات",
+      "image-generation": "توليد الصور"
+    },
+    "priceTier": {
+      "free": "مجاني",
+      "cheap": "اقتصادي",
+      "moderate": "متوسط",
+      "expensive": "مكلف",
+      "premium": "مميّز"
     }
   }
 }

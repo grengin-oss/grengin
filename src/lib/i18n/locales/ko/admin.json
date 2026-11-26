@@ -733,7 +733,13 @@
         "elseText": "목록에 없는 도구나 개발자가 만든 서버가 있나요? MCP를 지원하는 것이라면 무엇이든 작동합니다.",
         "elseBtn": "직접 서버 추가"
       },
-      "stdioAllowlist": "운영자가 명령을 허용 목록에 등록해야 합니다."
+      "stdioAllowlist": "운영자가 명령을 허용 목록에 등록해야 합니다.",
+      "testSuccessWithTools": "{latency}ms 만에 연결됨, 도구 {count}개",
+      "testSuccessTools": "연결됨, 도구 {count}개",
+      "testErrorServerDisabled": "테스트하기 전에 서버를 활성화하세요.",
+      "testErrorAuthRequired": "먼저 이 서버에 계정을 연결하세요.",
+      "testErrorUnavailable": "이 기본 커넥터는 로그인 과정을 통해 테스트됩니다.",
+      "testErrorInvalidConfig": "서버의 구성 또는 자격 증명을 읽을 수 없습니다. 설정을 확인하세요."
     },
     "mcpOAuth": {
       "authentication": "인증",

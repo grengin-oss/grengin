@@ -99,10 +99,27 @@ export async function syncMcpServerTools(serverId: string): Promise<void> {
   });
 }
 
+/**
+ * Failure codes from `POST /admin/mcp-servers/{id}/test` (grengin-api 0.9.14,
+ * which now runs a real connection test). Unknown codes fall back to `message`.
+ */
+export type McpTestErrorCode =
+  | 'server_disabled'
+  | 'authentication_required'
+  | 'connection_test_unavailable'
+  | 'invalid_configuration'
+  | 'connection_failed'
+  | 'connection_timeout';
+
 export type McpTestConnectionResponse = {
   success: boolean;
+  /** Human-readable English message (shown as-is for codes without specific UI). */
   message?: string;
   latency_ms?: number;
+  /** Tools discovered on a successful connection test (0.9.14). */
+  available_tools?: Array<{ name: string; description?: string }> | string[];
+  /** A failure code (0.9.14); absent on success. */
+  error?: McpTestErrorCode | string;
 };
 
 export async function testMcpConnection(

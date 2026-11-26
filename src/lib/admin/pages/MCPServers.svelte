@@ -422,22 +422,47 @@ SPDX-License-Identifier: Apache-2.0
     testErrors = rest;
   }
 
+  // Map a 0.9.14 test-connection failure code to a localized, actionable
+  // message. Unknown codes fall back to the server's English `message`.
+  function testFailureMessage(result: {
+    error?: string;
+    message?: string;
+  }): string {
+    switch (result.error) {
+      case "server_disabled":
+        return $_("admin.mcpServers.testErrorServerDisabled");
+      case "authentication_required":
+        return $_("admin.mcpServers.testErrorAuthRequired");
+      case "connection_test_unavailable":
+        return $_("admin.mcpServers.testErrorUnavailable");
+      case "invalid_configuration":
+        return $_("admin.mcpServers.testErrorInvalidConfig");
+      default:
+        return result.message || $_("admin.mcpServers.testFailed");
+    }
+  }
+
   async function handleTestConnection(server: MCPServer) {
     if (testingServerId) return;
     testingServerId = server.id;
     try {
       const result = await testMcpConnection(server.id);
       if (result.success) {
+        // 0.9.14 runs a real test and returns the discovered tools; surface the
+        // latency and tool count ("Connected in 420 ms, 12 tools").
+        const toolCount = result.available_tools?.length ?? 0;
         const msg =
           result.latency_ms != null
-            ? $_("admin.mcpServers.testSuccessWithLatency", {
-                values: { latency: result.latency_ms },
+            ? $_("admin.mcpServers.testSuccessWithTools", {
+                values: { latency: result.latency_ms, count: toolCount },
               })
-            : $_("admin.mcpServers.testSuccess");
+            : $_("admin.mcpServers.testSuccessTools", {
+                values: { count: toolCount },
+              });
         toast.success(msg);
         clearTestError(server.id);
       } else {
-        const message = result.message || $_("admin.mcpServers.testFailed");
+        const message = testFailureMessage(result);
         toast.error(message);
         testErrors = { ...testErrors, [server.id]: message };
       }

@@ -32,10 +32,18 @@ SPDX-License-Identifier: Apache-2.0
     cancelMessageStream,
     getConversation,
     getChatMcpServers,
+    reconnectReplyStream,
+    ReplayUnavailableError,
     type UploadedFile,
     type ChatStreamCallbacks,
   } from "../../../api/chatApi";
-  import type { ProviderInfo, ModelInfo } from "../../../api/models";
+  import type {
+    ProviderInfo,
+    ModelInfo,
+    SpecialtyInfo,
+    PriceTierInfo,
+    GlobalAttachments,
+  } from "../../../api/models";
   import { getModels, isImageModel, isSelectableChatModel, findModel } from "../../../api/models";
   import {
     APP_EVENTS,
@@ -64,7 +72,8 @@ SPDX-License-Identifier: Apache-2.0
     getProjectDetail,
   } from "../../../api/projectsApi";
   import { linkSkill } from "../../../api/skills.js";
-  import { _ } from "svelte-i18n";
+  import { _, locale } from "svelte-i18n";
+  import { get } from "svelte/store";
   import { ApiError } from "../../../api/client";
   import { getUser } from "../../auth/state.svelte.js";
   import { getLocalizedError } from "../../../utils/errorLocalization";
@@ -172,6 +181,22 @@ SPDX-License-Identifier: Apache-2.0
       },
     });
   });
+
+  // Reconnect to a reply that was still generating when the conversation loaded
+  // (ENGG-544 §1): replay it live via GET /chat/stream/{id}/events through the
+  // shared streaming machinery, rather than only polling. Runs once per
+  // assistant message id; a 404 ends it cleanly and the polling effect above
+  // takes over. Skipped while a live turn (a send) already owns this chat.
+  const reconnectedReplies = new Set<string>();
+  $effect(() => {
+    const id = conversationId;
+    const assistant = serverAssistant;
+    if (!id || !assistant?.generating || activeEntry) return;
+    if (reconnectedReplies.has(assistant.id)) return;
+    reconnectedReplies.add(assistant.id);
+    void reconnectToGeneratingReply(id, assistant.id);
+  });
+
   let isLoading = $derived((activeEntry?.isLoading ?? false) || !!pollingMessageId);
   let isTyping = $derived((activeEntry?.isTyping ?? false) || (!!pollingMessageId && !serverAssistant?.content && !serverAssistant?.artifacts?.length && !serverAssistant?.toolCalls?.length));
   let autoReconnecting = $derived(activeEntry?.autoReconnecting ?? false);
@@ -393,10 +418,30 @@ SPDX-License-Identifier: Apache-2.0
   // and flushed once a real model is selected (see flushPendingInitialMessage).
   let pendingInitialMessage = $state<string | null>(null);
   let providers = $state<ProviderInfo[]>([]);
+  // Catalog metadata + attachment limits from GET /models (0.9.14).
+  let specialties = $state<SpecialtyInfo[]>([]);
+  let priceTiers = $state<PriceTierInfo[]>([]);
+  let globalAttachments = $state<GlobalAttachments | undefined>(undefined);
   let webSearchEnabled = $state(false);
   const webSearchSupported = $derived(findModel(providers, selectedModel, selectedProvider)?.model.supports_web_search !== false);
   $effect(() => {
     if (!webSearchSupported) webSearchEnabled = false;
+  });
+
+  // Re-fetch model metadata when the UI language changes so summaries come back
+  // in the new language (0.9.14). The initial value is covered by onMount's
+  // loadModels(), so only a genuine change triggers a re-fetch.
+  let loadedModelsLocale: string | undefined;
+  $effect(() => {
+    const current = $locale ?? undefined;
+    if (loadedModelsLocale === undefined) {
+      loadedModelsLocale = current;
+      return;
+    }
+    if (current !== loadedModelsLocale) {
+      loadedModelsLocale = current;
+      loadModels();
+    }
   });
   let pendingConversationModel: { model: string; provider?: string | null } | null = null;
   let modelsLoaded = false;
@@ -703,8 +748,13 @@ SPDX-License-Identifier: Apache-2.0
     loadingModels = true;
     modelsError = null;
     try {
-      const response = await getModels();
+      // Pass the UI locale so model summaries come back already localized
+      // (0.9.14). The backend handles fr-CA → fr → en fallback itself.
+      const response = await getModels(get(locale) ?? undefined);
       providers = response.providers;
+      specialties = response.specialties ?? [];
+      priceTiers = response.price_tiers ?? [];
+      globalAttachments = response.global_attachments;
       modelsLoaded = true;
       const hadPendingModel = pendingConversationModel !== null;
       if (pendingConversationModel !== null) selectConversationModel(pendingConversationModel.model, pendingConversationModel.provider);
@@ -1071,6 +1121,10 @@ SPDX-License-Identifier: Apache-2.0
     // `isLoading` false here, so its reply never blocks this composer.
     if (isLoading) return;
 
+    // Never send an empty turn (0.9.14 rejects `messages: []` with a 400). A
+    // message carrying only an attachment is fine; text-and-files both empty is not.
+    if (!content.trim() && (!uploadedFiles || uploadedFiles.length === 0)) return;
+
     // A saved model label is optimistic until the registry resolves its provider.
     // URL prompts are queued separately by flushPendingInitialMessage().
     if (!modelReady) return;
@@ -1227,6 +1281,10 @@ SPDX-License-Identifier: Apache-2.0
     };
 
     let didReload = false;
+    // A reconnect whose `/events` returned 404 (nothing to replay) ends cleanly
+    // and hands the turn back to the polling fallback — no error banner, and the
+    // saved message in `messages` is left untouched (ENGG-544 §1).
+    let streamUnavailable = false;
     try {
       await params.invoke({
         signal: gen.controller.signal,
@@ -1500,11 +1558,17 @@ SPDX-License-Identifier: Apache-2.0
 
           gen.error = apiError;
           gen.visible = true;
+          // An attachment rejected by the chat stream (0.9.14: 400, code 2003,
+          // field "files") gets a clear "attachment rejected" message instead of
+          // the generic validation text.
+          const isAttachmentRejected =
+            apiError.code === 2003 && apiError.params?.field === "files";
           pending = {
             ...pending,
-            error:
-              getLocalizedError(apiError, "description", $_) ||
-              apiError.description,
+            error: isAttachmentRejected
+              ? $_("chat.messageInput.attachmentRejected")
+              : getLocalizedError(apiError, "description", $_) ||
+                apiError.description,
             isStreaming: false,
           };
           paint();
@@ -1527,16 +1591,21 @@ SPDX-License-Identifier: Apache-2.0
         didReload = true;
       }
     } catch (err) {
-      // Convert all errors to ApiError for consistent handling
-      gen.error =
-        err instanceof ApiError
-          ? err
-          : new ApiError(
-              500,
-              err instanceof Error
-                ? err.message
-                : $_("chat.errors.failedToSendMessage"),
-            );
+      if (err instanceof ReplayUnavailableError) {
+        // Not a failure — the reply simply can't be replayed. Fall back to polling.
+        streamUnavailable = true;
+      } else {
+        // Convert all errors to ApiError for consistent handling
+        gen.error =
+          err instanceof ApiError
+            ? err
+            : new ApiError(
+                500,
+                err instanceof Error
+                  ? err.message
+                  : $_("chat.errors.failedToSendMessage"),
+              );
+      }
     } finally {
       finishArtifactStream(artifactStream);
       gen.isLoading = false;
@@ -1570,8 +1639,9 @@ SPDX-License-Identifier: Apache-2.0
         }, 800);
       } else {
         // Commit the finished turn into the visible transcript (current chat
-        // only); a reload already refreshed it when `didReload` is set.
-        if (!didReload) commitGeneration(gen);
+        // only); a reload already refreshed it when `didReload` is set. A 404
+        // reconnect commits nothing — the saved reply stays and polling resumes.
+        if (!didReload && !streamUnavailable) commitGeneration(gen);
         if (gen.error && !gen.controller.signal.aborted) {
           // A failed turn keeps its entry so this chat still shows the error
           // banner and its manual Retry. The errored bubble is already committed
@@ -1589,6 +1659,24 @@ SPDX-License-Identifier: Apache-2.0
       await tick();
       if (isCurrentGeneration(gen)) messageInput?.focus();
     }
+  }
+
+  /**
+   * Reconnect to a reply that is still generating (ENGG-544 §1). Drives the
+   * replay stream through {@link runAssistantStream} so it renders live, adopts
+   * the saved message id, and finalizes with a reload (picking up `versions` for
+   * a reply to an edited message). A 404 ends cleanly and the polling fallback
+   * resumes. No `resend` — `reconnectReplyStream` handles its own reconnects.
+   */
+  async function reconnectToGeneratingReply(convId: string, messageId: string) {
+    await runAssistantStream({
+      key: convId,
+      conversationIdForGeneration: convId,
+      promptText: "",
+      userMessage: null,
+      reloadOnDone: true,
+      invoke: (callbacks) => reconnectReplyStream(messageId, callbacks),
+    });
   }
 
   /**
@@ -2420,6 +2508,9 @@ SPDX-License-Identifier: Apache-2.0
           onRemoveModel={handleRemoveModel}
           onModelSelect={selectModel}
           {providers}
+          {specialties}
+          {priceTiers}
+          {globalAttachments}
           {loadingModels}
           {modelReady}
           {modelsError}
@@ -2744,6 +2835,9 @@ SPDX-License-Identifier: Apache-2.0
           onRemoveModel={handleRemoveModel}
           onModelSelect={selectModel}
           {providers}
+          {specialties}
+          {priceTiers}
+          {globalAttachments}
           {loadingModels}
           {modelReady}
           {modelsError}

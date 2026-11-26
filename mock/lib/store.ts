@@ -192,6 +192,47 @@ function seedArtifactShowcase() {
   ])
 }
 
+// A conversation whose last reply was still generating when it loaded, so the
+// webapp reconnects to GET /chat/stream/{id}/events (0.9.14). `replay_text` is
+// the full reply the events endpoint streams; `parts.text` is the partial so
+// far. Re-seeded by resetStore so it can be demoed again.
+const RESUME_CHAT_ID = 'a1b2c3d4-0000-4000-8000-0000000res00'
+const RESUME_ASSISTANT_ID = 'a1b2c3d4-0000-4000-8000-0000000res0a'
+function seedResumeShowcase() {
+  const now = new Date().toISOString()
+  const userId = 'a1b2c3d4-0000-4000-8000-0000000res0u'
+  const replayText =
+    'Reconnecting lets a reply keep streaming across a page refresh. When the ' +
+    'conversation loads and its last assistant message is still generating, the ' +
+    'app opens GET /chat/stream/{message_id}/events, which replays the reply from ' +
+    'the start. Each event carries a 1-based id, so a dropped connection resumes ' +
+    'with Last-Event-ID. If there is nothing to replay the endpoint returns 404 ' +
+    'and the app falls back to polling the conversation until it finishes.'
+
+  conversations.set(RESUME_CHAT_ID, {
+    id: RESUME_CHAT_ID,
+    title: 'Resumed reply (0.9.14)',
+    archived: false,
+    created_at: now,
+    updated_at: now,
+  } as Conversation)
+
+  messages.set(RESUME_CHAT_ID, [
+    {
+      id: userId, conversation_id: RESUME_CHAT_ID, role: 'user', model: 'claude-sonnet-4-5',
+      parts: { text: 'Explain how reconnecting to a streaming reply works.', files: [] },
+      created_at: now, updated_at: now, usage: { input_tokens: 10, output_tokens: 0 },
+    } as Message,
+    {
+      id: RESUME_ASSISTANT_ID, conversation_id: RESUME_CHAT_ID, role: 'assistant', model: 'claude-sonnet-4-5',
+      parts: { text: 'Reconnecting lets a reply keep streaming', files: [] },
+      created_at: now, updated_at: now, usage: { input_tokens: 10, output_tokens: 40 },
+      generating: true,
+      replay_text: replayText,
+    } as unknown as Message,
+  ])
+}
+
 export const seedData = () => {
   // Seed conversations
   chatListExample.conversations.forEach((conv) => {
@@ -204,7 +245,48 @@ export const seedData = () => {
     }
   })
 
+  // Seed a larger backlog so the sidebar's paginated list (20 per page, load
+  // more on scroll) can be exercised end-to-end in the dev preview (ENGG-543).
+  // Timestamps are spread across ~13 days so the Today / Yesterday / This Week /
+  // Earlier buckets all get populated.
+  const backlogBases = [
+    'Product roadmap sync',
+    'Bug triage notes',
+    'API design review',
+    'Onboarding flow copy',
+    'Pricing page experiment',
+    'Customer feedback digest',
+    'Release checklist',
+    'Incident postmortem',
+    'Data pipeline refactor',
+    'Design system audit',
+    'Hiring loop debrief',
+    'Quarterly OKR planning',
+    'Support macro cleanup',
+    'Performance budget review',
+    'Security review follow-ups',
+  ]
+  const backlogNow = Date.now()
+  Array.from({ length: 45 }).forEach((_, i) => {
+    const id = `seeded-conv-${String(i + 1).padStart(3, '0')}`
+    if (conversations.has(id)) return
+    const ts = new Date(backlogNow - i * 7 * 3_600_000).toISOString()
+    conversations.set(id, {
+      id,
+      title: `${backlogBases[i % backlogBases.length]} ${Math.floor(i / backlogBases.length) + 1}`,
+      archived: false,
+      pinned: false,
+      archived_at: null,
+      created_at: ts,
+      updated_at: ts,
+    } as Conversation)
+    if (!messages.has(id)) {
+      messages.set(id, [])
+    }
+  })
+
   seedArtifactShowcase()
+  seedResumeShowcase()
 
   // Seed file data
   const file1Id = faker.string.uuid()

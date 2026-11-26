@@ -101,7 +101,16 @@ router.get('/admin/users', requireAuth, (req, res) => {
     })
   }
 
-  res.json(result)
+  // grengin-api 0.9.14: `limit` is clamped to 1–100 (0 → default 30). A client
+  // asking for more than 100 at once gets 100 and must page with `offset`.
+  const rawLimit = Number(limit ?? 0)
+  const pageSize = !Number.isFinite(rawLimit) || rawLimit === 0 ? 30 : Math.min(Math.max(Math.trunc(rawLimit), 1), 100)
+  const start = Math.max(0, Number(offset ?? 0) || 0)
+  res.json({
+    ...result,
+    users: result.users.slice(start, start + pageSize),
+    total: result.total,
+  })
 })
 
 router.post('/admin/users', requireAuth, (req, res) => {
