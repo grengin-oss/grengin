@@ -36,7 +36,7 @@ SPDX-License-Identifier: Apache-2.0
     type ChatStreamCallbacks,
   } from "../../../api/chatApi";
   import type { ProviderInfo, ModelInfo } from "../../../api/models";
-  import { getModels, isImageModel, findModel } from "../../../api/models";
+  import { getModels, isImageModel, isSelectableChatModel, findModel } from "../../../api/models";
   import {
     APP_EVENTS,
     type SelectModelDetail,
@@ -85,7 +85,7 @@ SPDX-License-Identifier: Apache-2.0
       approvedModel: loadingModels
         ? null
         : providers.length > 0
-          ? !!findModel(providers, selectedModel)
+          ? !!findModel(providers, selectedModel, selectedProvider)
           : null,
       visibility: chatVisibility,
     });
@@ -394,17 +394,25 @@ SPDX-License-Identifier: Apache-2.0
   let pendingInitialMessage = $state<string | null>(null);
   let providers = $state<ProviderInfo[]>([]);
   let webSearchEnabled = $state(false);
-  const webSearchSupported = $derived(findModel(providers, selectedModel)?.model.supports_web_search !== false);
+  const webSearchSupported = $derived(findModel(providers, selectedModel, selectedProvider)?.model.supports_web_search !== false);
   $effect(() => {
     if (!webSearchSupported) webSearchEnabled = false;
   });
-  let pendingConversationModel: string | null = null;
+  let pendingConversationModel: { model: string; provider?: string | null } | null = null;
   let modelsLoaded = false;
-  function selectConversationModel(model: string | null | undefined) {
-    if (!modelsLoaded) { pendingConversationModel = model ?? ""; return; }
+  function selectConversationModel(model: string | null | undefined, provider?: string | null) {
+    if (!modelsLoaded) { pendingConversationModel = { model: model ?? "", provider }; return; }
     pendingConversationModel = null;
-    const found = findModel(providers, model);
-    if (found) {
+    // Older conversation responses store only the model. Preserve the saved
+    // provider for that model when it is still offered by the registry.
+    const saved = readLastUsedModel();
+    const savedMatch = saved && saved.model === model
+      ? findModel(providers, model, saved.provider)
+      : undefined;
+    const found = provider
+      ? findModel(providers, model, provider)
+      : savedMatch ?? findModel(providers, model);
+    if (found && isSelectableChatModel(found.model)) {
       selectedModel = found.model.key;
       selectedProvider = found.provider.key;
       selectedModelInfo = found.provider;
@@ -653,20 +661,23 @@ SPDX-License-Identifier: Apache-2.0
   // model is selected. Until then — while a new chat is still optimistically
   // showing the last-used model, or showing a loading chip — sending is blocked
   // so a prompt is never sent under an unconfirmed or empty model.
-  let modelReady = $derived(selectedModel !== "" && !loadingModels);
+  let modelReady = $derived(
+    !loadingModels && !isLoadingConversation && !!selectedProvider &&
+    isSelectableChatModel(findModel(providers, selectedModel, selectedProvider)?.model),
+  );
 
   // Whether the currently selected model generates images (vs. text). Drives the
   // "generating image" progress state and the composer hint. Loaded from the
   // registry — never hardcoded.
   let selectedIsImageModel = $derived(
-    isImageModel(findModel(providers, selectedModel)?.model),
+    isImageModel(findModel(providers, selectedModel, selectedProvider)?.model),
   );
 
   // Context window of the selected model, from the registry. Lets the usage meter
   // show a real progress bar (this chat's tokens vs. the window) without a budget
   // API — the backend doesn't implement /me/budget, so this is the always-on bar.
   let contextWindow = $derived(
-    findModel(providers, selectedModel)?.model?.context_window ?? 0,
+    findModel(providers, selectedModel, selectedProvider)?.model?.context_window ?? 0,
   );
 
   // Browser-tab title. Reflects the open conversation's title, falling back to
@@ -696,7 +707,7 @@ SPDX-License-Identifier: Apache-2.0
       providers = response.providers;
       modelsLoaded = true;
       const hadPendingModel = pendingConversationModel !== null;
-      if (pendingConversationModel !== null) selectConversationModel(pendingConversationModel);
+      if (pendingConversationModel !== null) selectConversationModel(pendingConversationModel.model, pendingConversationModel.provider);
 
       // A brand-new chat may have mounted before the registry finished loading,
       // showing the optimistic last-used model (or a loading chip, if none was
@@ -708,14 +719,13 @@ SPDX-License-Identifier: Apache-2.0
       if (!hadPendingModel && !params.get("chatId") && !params.get("model")) {
         reconcileModelAfterLoad();
       }
-      // The composer now has a real model — release any queued `/?message=`
-      // prompt that was waiting for the registry.
-      flushPendingInitialMessage();
     } catch (error) {
       console.error("Failed to load models:", error);
       modelsError = $_("chat.errors.failedToLoadModels");
     } finally {
       loadingModels = false;
+      // Release queued URL prompts only after the model/provider pair is ready.
+      flushPendingInitialMessage();
     }
   }
 
@@ -728,6 +738,10 @@ SPDX-License-Identifier: Apache-2.0
       selectedProvider = resolved.provider.key;
       selectedModel = resolved.model.key;
       selectedModelInfo = resolved.provider;
+    } else if (modelsLoaded) {
+      selectedProvider = "";
+      selectedModel = "";
+      selectedModelInfo = undefined;
     }
   }
 
@@ -756,7 +770,7 @@ SPDX-License-Identifier: Apache-2.0
   // so the prompt is never sent under a placeholder/empty model. Safe to call
   // repeatedly — it is a no-op until both a pending message and a model exist.
   function flushPendingInitialMessage() {
-    if (pendingInitialMessage && selectedModel) {
+    if (pendingInitialMessage && modelReady) {
       const message = pendingInitialMessage;
       pendingInitialMessage = null;
       tick().then(() => handleSendMessage(message));
@@ -1057,13 +1071,9 @@ SPDX-License-Identifier: Apache-2.0
     // `isLoading` false here, so its reply never blocks this composer.
     if (isLoading) return;
 
-    // The model registry hasn't resolved a model yet (brand-new chat opened
-    // before /models loaded). Queue the text and send it once the default
-    // model is applied, rather than sending under an empty/placeholder model.
-    if (!selectedModel) {
-      pendingInitialMessage = content;
-      return;
-    }
+    // A saved model label is optimistic until the registry resolves its provider.
+    // URL prompts are queued separately by flushPendingInitialMessage().
+    if (!modelReady) return;
 
     autoScrollEnabled = true; // Reset auto-scroll when starting new message
 
@@ -1630,7 +1640,7 @@ SPDX-License-Identifier: Apache-2.0
    * version metadata back in once the answer finishes.
    */
   async function handleEditMessage(id: string, newContent: string) {
-    if (isLoading || !conversationId) return;
+    if (isLoading || !conversationId || !modelReady) return;
     const index = messages.findIndex((m) => m.id === id);
     if (index < 0 || messages[index].role !== "user") return;
 
@@ -1668,7 +1678,7 @@ SPDX-License-Identifier: Apache-2.0
    * using the currently selected model.
    */
   async function handleRegenerate(assistantId: string) {
-    if (isLoading || !conversationId) return;
+    if (isLoading || !conversationId || !modelReady) return;
     const index = messages.findIndex((m) => m.id === assistantId);
     if (index < 0) return;
 
@@ -1688,7 +1698,7 @@ SPDX-License-Identifier: Apache-2.0
    * Regenerate.
    */
   async function handleRegenerateFromUser(userId: string) {
-    if (isLoading || !conversationId) return;
+    if (isLoading || !conversationId || !modelReady) return;
     const index = messages.findIndex((m) => m.id === userId);
     if (index < 0 || messages[index].role !== "user") return;
     await regenerateUserTurn(index);
@@ -1725,7 +1735,7 @@ SPDX-License-Identifier: Apache-2.0
    * created is re-sent from scratch.
    */
   async function handleRetryLastTurn() {
-    if (isLoading) return;
+    if (isLoading || !modelReady) return;
     let i = messages.length - 1;
     while (i >= 0 && messages[i].role !== "user") i--;
     if (i < 0) return;
@@ -1865,7 +1875,7 @@ SPDX-License-Identifier: Apache-2.0
   // so it stays isolated to this chat like any other reply (ENGG-530).
   async function continueProcessingRequest(assistantMessageId: string) {
     const msgIndex = messages.findIndex((m) => m.id === assistantMessageId);
-    if (msgIndex <= 0 || !conversationId) return;
+    if (msgIndex <= 0 || !conversationId || !modelReady) return;
 
     // Walk back to the user turn this answer replied to — not always the
     // immediately preceding entry once edits/versions are in play (ENGG-459).
@@ -2194,7 +2204,7 @@ SPDX-License-Identifier: Apache-2.0
       // the registry is available (loadModels re-applies it on first mount).
       const urlModel = urlParams.get("model");
       if (urlModel) {
-        selectConversationModel(urlModel);
+        selectConversationModel(urlModel, urlParams.get("provider"));
       } else {
         applyDefaultModel();
       }
@@ -2748,7 +2758,7 @@ SPDX-License-Identifier: Apache-2.0
               {conversationCost}
               {conversationTokens}
               {contextWindow}
-              modelName={findModel(providers, selectedModel)?.model?.name ?? selectedModel}
+              modelName={findModel(providers, selectedModel, selectedProvider)?.model?.name ?? selectedModel}
             />
           </div>
         </div>

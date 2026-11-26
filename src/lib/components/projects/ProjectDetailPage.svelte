@@ -164,7 +164,7 @@ SPDX-License-Identifier: Apache-2.0
   let modelsError = $state<string | null>(null);
   let selectedModel = $state("");
   let selectedProvider = $state("");
-  const webSearchSupported = $derived(findModel(providers, selectedModel)?.model.supports_web_search !== false);
+  const webSearchSupported = $derived(findModel(providers, selectedModel, selectedProvider)?.model.supports_web_search !== false);
   $effect(() => { if (!webSearchSupported) webSearchEnabled = false; });
 
   async function loadModels() {

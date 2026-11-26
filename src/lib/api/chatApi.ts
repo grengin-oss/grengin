@@ -4,7 +4,9 @@
 import type { StreamEvent, ConversationDetail, ConversationList, BudgetWarningMessage, McpAuthRequest } from '../types/chat';
 
 import { API_BASE, request, ApiError, parseErrorDetail, handleUnauthorized } from './client';
-import { getAccessToken } from '../features/auth';
+import { getAccessToken } from '../features/auth/state.svelte';
+import { buildChatInput, requireChatProvider, type ChatStreamInput } from './chatInput';
+export type { ChatStreamInput } from './chatInput';
 
 /**
  * The callbacks and abort signal shared by every streaming chat request —
@@ -48,16 +50,6 @@ export interface ChatStreamCallbacks {
   signal?: AbortSignal;
 }
 
-/** The parts of a `ChatInput` body the UI supplies for a send/edit/regenerate. */
-export interface ChatStreamInput {
-  message: string;
-  provider?: string;
-  modelName?: string;
-  uploadedFiles?: UploadedFile[];
-  webSearch?: boolean;
-  selectedMcpServers?: string[];
-}
-
 export interface SendMessageOptions extends ChatStreamCallbacks, ChatStreamInput {
   conversationId?: string;
 }
@@ -86,7 +78,7 @@ export interface ImageGeneratedEvent {
 
 export interface UploadDocumentOptions {
   file: File;
-  provider?: string;
+  provider: string;
 }
 
 export async function getChatMcpServers(): Promise<{servers: any[]}> {
@@ -94,7 +86,8 @@ export async function getChatMcpServers(): Promise<{servers: any[]}> {
 }
 
 export async function uploadDocument(options: UploadDocumentOptions): Promise<UploadedFile> {
-  const { file, provider = 'openai' } = options;
+  const { file } = options;
+  const provider = requireChatProvider(options.provider);
   
   const base64 = await fileToBase64(file);
   
@@ -127,26 +120,6 @@ export async function cancelMessageStream(messageId: string): Promise<void> {
   await request<void>(`/chat/stream/${encodeURIComponent(messageId)}/cancel`, {
     method: 'POST',
   });
-}
-
-/**
- * Shape a `ChatInput` request body from the UI's send/edit options. Send,
- * edit and regenerate all post this same body — only the URL and method differ.
- */
-function buildChatInput(input: ChatStreamInput) {
-  return {
-    provider: input.provider || 'openai',
-    model_name: input.modelName || 'gpt-5.2',
-    config: {},
-    web_search: input.webSearch || false,
-    selected_tools: [] as string[],
-    selected_mcp_servers: input.selectedMcpServers || [],
-    messages: [{
-      role: 'user',
-      content: input.message,
-      files: input.uploadedFiles || [],
-    }],
-  };
 }
 
 /**
