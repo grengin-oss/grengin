@@ -88,7 +88,7 @@ export function resolveDefaultModel(
 
   const last = readLastUsedModel();
   if (last) {
-    const found = findModel(providers, last.model);
+    const found = findModel(providers, last.model, last.provider);
     // Honor the last choice only if it is still offered and selectable
     // (guards against unavailable/deprecated models).
     if (found && isSelectableChatModel(found.model)) return found;

@@ -99,7 +99,7 @@ SPDX-License-Identifier: Apache-2.0
     onStop,
   }: MessageInputProps = $props();
 
-  const webSearchSupported = $derived(findModel(providers, selectedModel)?.model.supports_web_search !== false);
+  const webSearchSupported = $derived(findModel(providers, selectedModel, selectedProvider)?.model.supports_web_search !== false);
   const effectiveWebSearch = $derived(webSearchEnabled && webSearchSupported);
 
   // Split a provider's models into selectable text and image groups (embedding
@@ -275,7 +275,7 @@ SPDX-License-Identifier: Apache-2.0
       seen.add(model.key);
       out.push({ provider, model });
     };
-    const current = findModel(providers, selectedModel);
+    const current = findModel(providers, selectedModel, selectedProvider);
     if (current && !isImageModel(current.model)) {
       push(current.provider, current.model);
     }
@@ -311,8 +311,8 @@ SPDX-License-Identifier: Apache-2.0
     return out;
   });
 
-  function isModelSelected(model: ModelInfo): boolean {
-    return selectedModel === model.key || selectedModel === model.name;
+  function isModelSelected(model: ModelInfo, provider: ProviderInfo): boolean {
+    return selectedProvider === provider.key && (selectedModel === model.key || selectedModel === model.name);
   }
 
   // ---- brand folds ----
@@ -322,7 +322,7 @@ SPDX-License-Identifier: Apache-2.0
   // Open the brand that owns the current model the first time the registry lands.
   $effect(() => {
     if (brandsInitialised || textBrands.length === 0) return;
-    const current = findModel(providers, selectedModel);
+    const current = findModel(providers, selectedModel, selectedProvider);
     const key =
       current && !isImageModel(current.model)
         ? current.provider.key
@@ -651,6 +651,10 @@ SPDX-License-Identifier: Apache-2.0
   // validates, reports rejected files, and uploads/previews the accepted ones.
   function addFiles(files: File[]) {
     if (files.length === 0) return;
+    if (loadingModels || !selectedProvider || !findModel(providers, selectedModel, selectedProvider)) {
+      fileError = $_("chat.errors.failedToLoadModels");
+      return;
+    }
 
     const accepted: File[] = [];
     const rejected: string[] = [];
@@ -742,7 +746,7 @@ SPDX-License-Identifier: Apache-2.0
     try {
       const uploaded = await uploadDocument({
         file,
-        provider: selectedProvider || "openai",
+        provider: selectedProvider ?? "",
       });
       uploadedFileResults.set(file.name, uploaded);
       uploadedFileResults = new Map(uploadedFileResults);
@@ -1296,7 +1300,7 @@ SPDX-License-Identifier: Apache-2.0
   they already sit under their brand's header.
 -->
 {#snippet modelRow(provider: ProviderInfo, model: ModelInfo)}
-  {@const selected = isModelSelected(model)}
+  {@const selected = isModelSelected(model, provider)}
   <button
     class="model-row"
     class:model-row--selected={selected}
@@ -1318,7 +1322,7 @@ SPDX-License-Identifier: Apache-2.0
   model: ModelInfo,
   latest: boolean,
 )}
-  {@const selected = isModelSelected(model)}
+  {@const selected = isModelSelected(model, provider)}
   <button
     class="model-row model-row--child"
     class:model-row--selected={selected}
@@ -2286,7 +2290,7 @@ SPDX-License-Identifier: Apache-2.0
                   </div>
 
                   {#each imageEntries as entry (entry.provider.key + "/" + entry.model.key)}
-                    {@const selected = isModelSelected(entry.model)}
+                    {@const selected = isModelSelected(entry.model, entry.provider)}
                     <button
                       class="image-model-row"
                       class:image-model-row--selected={selected}

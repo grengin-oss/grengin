@@ -63,14 +63,17 @@ export function isSelectableChatModel(model?: ModelInfo | null): boolean {
 /**
  * Look up a model across all providers by its key (or display name), returning
  * the model together with its provider. Used to resolve capabilities (e.g. is
- * the currently-selected model an image generator?) from just a model key.
+ * the currently-selected model an image generator?). A supplied provider key
+ * scopes the lookup so shared model names cannot switch providers on refresh.
  */
 export function findModel(
   providers: ProviderInfo[],
   modelKeyOrName?: string | null,
+  providerKey?: string | null,
 ): { provider: ProviderInfo; model: ModelInfo } | undefined {
   if (!modelKeyOrName) return undefined;
   for (const provider of providers) {
+    if (providerKey && provider.key !== providerKey) continue;
     const model = provider.models.find(
       (m) => m.key === modelKeyOrName || m.name === modelKeyOrName,
     );
