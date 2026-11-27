@@ -197,6 +197,7 @@ SPDX-License-Identifier: Apache-2.0
   // One menu at a time, exactly like the design: opening a chip closes the rest.
   type ComposerMenu = "attach" | "model" | "tools" | "image";
   let openMenu = $state<ComposerMenu | null>(null);
+  let menuOpensDown = $state(false);
 
   let composerRoot = $state<HTMLDivElement | null>(null);
 
@@ -208,24 +209,47 @@ SPDX-License-Identifier: Apache-2.0
    * above the chip while the panel still asked for 440px, putting the search
    * field out of reach.
    */
-  const PANEL_GUTTER = 16;
+  const PANEL_GUTTER = 24;
   const PANEL_MIN_H = 180;
+  const PANEL_PREFERRED_H = 400;
 
   function syncPanelMaxHeight() {
+    composerRoot?.querySelectorAll(".dropdown-anchor.opens-down").forEach((el) => {
+      el.classList.remove("opens-down");
+    });
     const anchor = composerRoot?.querySelector<HTMLElement>(
       ".dropdown-anchor.is-open",
     );
     if (!anchor) return;
-    const available = anchor.getBoundingClientRect().top - PANEL_GUTTER;
-    anchor.style.setProperty(
-      "--dropdown-max-h",
-      `${Math.max(PANEL_MIN_H, Math.floor(available))}px`,
-    );
+    const rect = anchor.getBoundingClientRect();
+    const availableAbove = rect.top - PANEL_GUTTER;
+    const availableBelow = window.innerHeight - rect.bottom - PANEL_GUTTER;
+
+    // When space above is tight and there is more room below (e.g. empty chat state),
+    // flip to open downwards so the menu never clips or compresses.
+    const openDown =
+      availableAbove < PANEL_PREFERRED_H && availableBelow > availableAbove;
+    menuOpensDown = openDown;
+    anchor.classList.toggle("opens-down", openDown);
+
+    const available = openDown ? availableBelow : availableAbove;
+    const maxH = `${Math.max(PANEL_MIN_H, Math.floor(available))}px`;
+    anchor.style.setProperty("--dropdown-max-h", maxH);
+    composerRoot?.style.setProperty("--dropdown-max-h", maxH);
   }
 
   $effect(() => {
     if (!openMenu) return;
     tick().then(syncPanelMaxHeight);
+
+    const onReposition = () => syncPanelMaxHeight();
+    window.addEventListener("resize", onReposition);
+    window.addEventListener("scroll", onReposition, true);
+
+    return () => {
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("scroll", onReposition, true);
+    };
   });
 
   function toggleMenu(menu: ComposerMenu) {
@@ -234,6 +258,10 @@ SPDX-License-Identifier: Apache-2.0
 
   function closeMenus() {
     openMenu = null;
+    menuOpensDown = false;
+    composerRoot?.querySelectorAll(".dropdown-anchor.opens-down").forEach((el) => {
+      el.classList.remove("opens-down");
+    });
   }
 
   // ===== Registry-derived model groupings =====
@@ -1978,7 +2006,7 @@ SPDX-License-Identifier: Apache-2.0
         <!-- Left: attach, model, tools, image generation, web search -->
         <div class="bottom-bar-left">
           <!-- ===== Attach ===== -->
-          <div class="dropdown-anchor" class:is-open={openMenu === "attach"}>
+          <div class="dropdown-anchor" class:is-open={openMenu === "attach"} class:opens-down={openMenu === "attach" && menuOpensDown}>
             <button
               class="attach-btn"
               type="button"
@@ -2046,7 +2074,7 @@ SPDX-License-Identifier: Apache-2.0
           </div>
 
           <!-- ===== Model ===== -->
-          <div class="dropdown-anchor dropdown-anchor--model" class:is-open={openMenu === "model"}>
+          <div class="dropdown-anchor dropdown-anchor--model" class:is-open={openMenu === "model"} class:opens-down={openMenu === "model" && menuOpensDown}>
             <button
               class="chip chip--model"
               type="button"
@@ -2277,7 +2305,7 @@ SPDX-License-Identifier: Apache-2.0
           </div>
 
           <!-- ===== Tools: skills + connectors ===== -->
-          <div class="dropdown-anchor" class:is-open={openMenu === "tools"}>
+          <div class="dropdown-anchor" class:is-open={openMenu === "tools"} class:opens-down={openMenu === "tools" && menuOpensDown}>
             <button
               class="chip"
               type="button"
@@ -2437,7 +2465,7 @@ SPDX-License-Identifier: Apache-2.0
 
           <!-- ===== Image generation ===== -->
           {#if imageEntries.length > 0}
-            <div class="dropdown-anchor" class:is-open={openMenu === "image"}>
+            <div class="dropdown-anchor" class:is-open={openMenu === "image"} class:opens-down={openMenu === "image" && menuOpensDown}>
               <button
                 class="image-pill"
                 class:image-pill--locked={imageModelSelected}
@@ -3501,6 +3529,11 @@ SPDX-License-Identifier: Apache-2.0
     overscroll-behavior: contain;
   }
 
+  .dropdown-anchor.opens-down .dropdown-panel {
+    bottom: auto;
+    top: calc(100% + 8px);
+  }
+
   .cx-state {
     font-family: var(--gx-font);
     font-size: 12px;
@@ -3888,7 +3921,9 @@ SPDX-License-Identifier: Apache-2.0
      of scrolling out of the panel. */
   .tools-menu {
     width: 300px;
-    max-height: min(560px, calc(100vh - 140px));
+    max-height: min(560px, var(--dropdown-max-h, calc(100vh - 140px)));
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .tools-menu__head {
@@ -3896,6 +3931,7 @@ SPDX-License-Identifier: Apache-2.0
     flex-direction: column;
     gap: 2px;
     padding-bottom: 4px;
+    flex-shrink: 0;
   }
 
   .tools-menu__title {
@@ -3921,6 +3957,7 @@ SPDX-License-Identifier: Apache-2.0
     flex-direction: column;
     gap: 6px;
     padding: 6px 8px;
+    flex-shrink: 0;
   }
 
   .tools-section-label {
@@ -3930,6 +3967,7 @@ SPDX-License-Identifier: Apache-2.0
     letter-spacing: 1px;
     color: var(--gx-cx-sub);
     text-transform: uppercase;
+    flex-shrink: 0;
   }
 
   .tools-connectors {
@@ -3940,6 +3978,7 @@ SPDX-License-Identifier: Apache-2.0
     max-height: 190px;
     overflow-y: auto;
     overscroll-behavior: contain;
+    flex-shrink: 0;
   }
 
   .connector-row {
@@ -4734,7 +4773,8 @@ SPDX-License-Identifier: Apache-2.0
       display: none;
     }
 
-    .dropdown-panel {
+    .dropdown-panel,
+    .tools-menu {
       max-height: min(360px, var(--dropdown-max-h, calc(100vh - 200px)));
     }
 
