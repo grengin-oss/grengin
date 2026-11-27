@@ -733,7 +733,13 @@
         "elseText": "هل لديك أداة غير مدرجة في القائمة، أو خادم أنشأه مطوّرك؟ أي شيء يدعم MCP يعمل.",
         "elseBtn": "أضف خادمك الخاص"
       },
-      "stdioAllowlist": "يجب أن يضيف المشغّل الأمر إلى قائمة الأوامر المسموح بها."
+      "stdioAllowlist": "يجب أن يضيف المشغّل الأمر إلى قائمة الأوامر المسموح بها.",
+      "testSuccessWithTools": "تم الاتصال في {latency} مللي ثانية، {count} أدوات",
+      "testSuccessTools": "تم الاتصال، {count} أدوات",
+      "testErrorServerDisabled": "فعّل الخادم قبل اختباره.",
+      "testErrorAuthRequired": "اربط حسابك بهذا الخادم أولاً.",
+      "testErrorUnavailable": "يتم اختبار هذا الموصل الأصلي من خلال عملية تسجيل الدخول الخاصة به.",
+      "testErrorInvalidConfig": "تعذّرت قراءة إعدادات الخادم أو بيانات اعتماده. تحقق من إعداداته."
     },
     "mcpOAuth": {
       "authentication": "المصادقة",

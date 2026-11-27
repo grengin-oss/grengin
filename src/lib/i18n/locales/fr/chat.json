@@ -125,7 +125,10 @@
       "imageModeBanner": "Mode image activé",
       "exitImageMode": "Quitter le mode image",
       "webSearchUnsupported": "Ce modèle ne peut pas effectuer de recherche sur le Web",
-      "retiredModel": "Le modèle {old} n’est plus proposé ; passage à {model}."
+      "retiredModel": "Le modèle {old} n’est plus proposé ; passage à {model}.",
+      "fileTypeNotAllowed": "{name} n’est pas un type de fichier autorisé",
+      "tooManyFiles": "Vous pouvez joindre au maximum {max} fichiers",
+      "attachmentRejected": "Cette pièce jointe a été refusée. Vérifiez le type et la taille du fichier, puis réessayez."
     },
     "message": {
       "copy": "Copier",
@@ -165,7 +168,8 @@
       "previousVersion": "Version précédente",
       "nextVersion": "Version suivante",
       "versionsLabel": "Versions du message",
-      "versionCounter": "{current} / {total}"
+      "versionCounter": "{current} / {total}",
+      "conversationChanged": "La conversation a changé, cette réponse a donc été arrêtée."
     },
     "toolCalls": {
       "searching": "Recherche sur le web",
@@ -233,6 +237,27 @@
       "footerNote": "Lecture seule. Vous seul voyez votre connexion, et vous pouvez la déconnecter à tout moment.",
       "elseLabel": "Nous utilisons autre chose",
       "connectedAskAgain": "Connecté. Posez à nouveau votre question."
+    },
+    "modelSpecialty": {
+      "general": "Polyvalent",
+      "frontier": "Le plus performant",
+      "reasoning": "Raisonnement",
+      "coding": "Programmation",
+      "agentic": "Agents et outils",
+      "fast-cheap": "Rapide et économique",
+      "long-context": "Documents longs",
+      "multimodal": "Vision et fichiers",
+      "research": "Recherche web",
+      "writing": "Rédaction",
+      "multilingual": "Multilingue",
+      "image-generation": "Génération d’images"
+    },
+    "priceTier": {
+      "free": "Gratuit",
+      "cheap": "Économique",
+      "moderate": "Modéré",
+      "expensive": "Coûteux",
+      "premium": "Supérieur"
     }
   }
 }

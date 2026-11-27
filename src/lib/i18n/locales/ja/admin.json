@@ -733,7 +733,13 @@
         "elseText": "リストにないツールや、開発者が作ったサーバーがありますか？MCPに対応していれば何でも動きます。",
         "elseBtn": "独自のサーバーを追加"
       },
-      "stdioAllowlist": "運用担当者がコマンドを許可リストに登録する必要があります。"
+      "stdioAllowlist": "運用担当者がコマンドを許可リストに登録する必要があります。",
+      "testSuccessWithTools": "{latency} ms で接続、ツール {count} 件",
+      "testSuccessTools": "接続しました。ツール {count} 件",
+      "testErrorServerDisabled": "テストする前にサーバーを有効にしてください。",
+      "testErrorAuthRequired": "先にこのサーバーにアカウントを接続してください。",
+      "testErrorUnavailable": "このネイティブコネクタはサインインフローで確認します。",
+      "testErrorInvalidConfig": "サーバーの構成または認証情報を読み取れません。設定を確認してください。"
     },
     "mcpOAuth": {
       "authentication": "認証",

@@ -825,7 +825,13 @@
         "elseText": "Have a tool that is not in the list, or a server your developer built? Anything that speaks MCP works.",
         "elseBtn": "Add your own server"
       },
-      "stdioAllowlist": "Requires the command to be allowlisted by your operator."
+      "stdioAllowlist": "Requires the command to be allowlisted by your operator.",
+      "testSuccessWithTools": "Connected in {latency} ms, {count} tools",
+      "testSuccessTools": "Connected, {count} tools",
+      "testErrorServerDisabled": "Enable the server before testing it.",
+      "testErrorAuthRequired": "Connect your account to this server first.",
+      "testErrorUnavailable": "This native connector is tested through its sign-in flow.",
+      "testErrorInvalidConfig": "The server's configuration or credentials can't be read. Check its settings."
     },
     "mcpOAuth": {
       "authentication": "Authentication",

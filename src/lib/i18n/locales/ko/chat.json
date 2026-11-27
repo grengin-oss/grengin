@@ -125,7 +125,10 @@
       "imageModeBanner": "이미지 모드 활성",
       "exitImageMode": "이미지 모드 종료",
       "webSearchUnsupported": "이 모델은 웹 검색을 지원하지 않습니다",
-      "retiredModel": "모델 {old}의 제공이 종료되어 {model}(으)로 전환했습니다."
+      "retiredModel": "모델 {old}의 제공이 종료되어 {model}(으)로 전환했습니다.",
+      "fileTypeNotAllowed": "{name}은(는) 허용되지 않는 파일 형식입니다",
+      "tooManyFiles": "최대 {max}개의 파일을 첨부할 수 있습니다",
+      "attachmentRejected": "해당 첨부 파일이 거부되었습니다. 파일 형식과 크기를 확인한 후 다시 시도하세요."
     },
     "message": {
       "copy": "복사",
@@ -165,7 +168,8 @@
       "previousVersion": "이전 버전",
       "nextVersion": "다음 버전",
       "versionsLabel": "메시지 버전",
-      "versionCounter": "{current} / {total}"
+      "versionCounter": "{current} / {total}",
+      "conversationChanged": "대화가 변경되어 이 응답이 중지되었습니다."
     },
     "toolCalls": {
       "searching": "웹 검색 중",
@@ -233,6 +237,27 @@
       "footerNote": "읽기 전용입니다. 연결은 본인만 볼 수 있으며 언제든지 해제할 수 있습니다.",
       "elseLabel": "다른 도구를 사용합니다",
       "connectedAskAgain": "연결되었습니다. 질문을 다시 입력하세요."
+    },
+    "modelSpecialty": {
+      "general": "올라운더",
+      "frontier": "최고 성능",
+      "reasoning": "추론",
+      "coding": "코딩",
+      "agentic": "에이전트 및 도구",
+      "fast-cheap": "빠르고 저렴함",
+      "long-context": "긴 문서",
+      "multimodal": "비전 및 파일",
+      "research": "웹 검색",
+      "writing": "작문",
+      "multilingual": "다국어",
+      "image-generation": "이미지 생성"
+    },
+    "priceTier": {
+      "free": "무료",
+      "cheap": "저렴함",
+      "moderate": "보통",
+      "expensive": "비쌈",
+      "premium": "프리미엄"
     }
   }
 }

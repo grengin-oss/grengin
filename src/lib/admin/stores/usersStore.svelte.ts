@@ -18,14 +18,46 @@ interface UsersFilters {
 type SortField = 'name' | 'email' | 'created_at' | null;
 
 /**
- * Upper bound for the client-side unassigned-users derivation.
- *
- * The users API has no "no department" filter (see ENGG-388 open question 2),
- * so the Organization page derives the unassigned population by fetching a
- * single large page and filtering client-side. If an installation ever exceeds
- * this, a dedicated count/list endpoint should replace this derivation.
+ * grengin-api 0.9.14 clamps list `limit` to 1–100, so any "fetch everything"
+ * scan (the client-side unassigned derivation and the filtered export) pages
+ * through at this size instead of asking for one huge page.
  */
-const UNASSIGNED_FETCH_LIMIT = 1000;
+const ADMIN_LIST_PAGE_SIZE = 100;
+
+/**
+ * Upper bound on the rows a client-side scan will pull. The users API has no
+ * "no department" filter (see ENGG-388 open question 2), so the Organization
+ * page derives the unassigned population by scanning and filtering client-side.
+ * If an installation exceeds this, a dedicated count/list endpoint should
+ * replace the derivation.
+ */
+const MAX_SCAN_ROWS = 2000;
+
+/**
+ * Pull every user matching `baseParams` by paging at the 0.9.14 limit cap,
+ * stopping at a short page, the reported total, or {@link MAX_SCAN_ROWS}.
+ */
+async function scanAllUsers(baseParams: GetUsersParams): Promise<{ users: User[]; total: number }> {
+  const useScopedEndpoint = permissionsStore.hasScopedUsersView();
+  const all: User[] = [];
+  let offset = 0;
+  let total = 0;
+  for (;;) {
+    const params: GetUsersParams = { ...baseParams, limit: ADMIN_LIST_PAGE_SIZE, offset };
+    const data = useScopedEndpoint ? await getScopedUsers(params) : await getUsers(params);
+    all.push(...data.users);
+    total = typeof data.total === 'number' ? data.total : all.length;
+    offset += data.users.length;
+    if (
+      data.users.length < ADMIN_LIST_PAGE_SIZE ||
+      offset >= total ||
+      all.length >= MAX_SCAN_ROWS
+    ) {
+      break;
+    }
+  }
+  return { users: all, total };
+}
 
 function createUsersStore() {
   let users = $state<User[]>([]);
@@ -103,12 +135,10 @@ function createUsersStore() {
   async function fetchUnassignedUsers() {
     isUnassignedLoading = true;
     try {
-      const params: GetUsersParams = { limit: UNASSIGNED_FETCH_LIMIT, offset: 0 };
-      const useScopedEndpoint = permissionsStore.hasScopedUsersView();
-      const data = useScopedEndpoint ? await getScopedUsers(params) : await getUsers(params);
+      const data = await scanAllUsers({});
       unassignedUsers = data.users.filter((user) => !user.department_id);
-      // Same request already carries the unfiltered head-count the Teams KPIs
-      // need, so read it here instead of issuing a second list call.
+      // The scan reports the unfiltered head-count the Teams KPIs need, so read
+      // it here instead of issuing a second list call.
       peopleTotal = data.total;
     } catch (err: any) {
       error = err;
@@ -141,7 +171,7 @@ function createUsersStore() {
      * unassigned scan.
      */
     async fetchAllFiltered(): Promise<User[]> {
-      const params: GetUsersParams = { limit: UNASSIGNED_FETCH_LIMIT, offset: 0 };
+      const params: GetUsersParams = {};
       if (filters.search) params.search = filters.search;
       if (filters.role_id) params.role_id = filters.role_id;
       if (filters.status) params.status = filters.status;
@@ -149,8 +179,7 @@ function createUsersStore() {
       params.sort = sort ?? 'created_at';
       params.ascending = sort ? ascending : false;
 
-      const useScopedEndpoint = permissionsStore.hasScopedUsersView();
-      const data = useScopedEndpoint ? await getScopedUsers(params) : await getUsers(params);
+      const data = await scanAllUsers(params);
       return data.users;
     },
 

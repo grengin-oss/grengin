@@ -51,8 +51,11 @@ SPDX-License-Identifier: Apache-2.0
 
   $effect(() => {
     const id = current.id;
-    // Fetch once per id when we have no in-memory content yet.
-    if (id && current.code.length === 0 && contentById[id] === undefined && !isLoadingContent) {
+    // Fetch once per id when we have no in-memory content yet. Never fetch while
+    // the artifact is still streaming (ENGG-543): at artifact_start the content
+    // is empty and the backend hasn't persisted it yet, so a fetch-by-id would
+    // 404 and poison the content cache — the content arrives via the stream.
+    if (id && current.code.length === 0 && contentById[id] === undefined && !isLoadingContent && !isStreaming) {
       isLoadingContent = true;
       getArtifact(id)
         .then((a) => { contentById = { ...contentById, [id]: a.content ?? "" }; })
@@ -80,8 +83,14 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   $effect(() => {
-    if (type === "markdown" && !isStreaming && code.length > 0) {
+    // Render the markdown preview live as the artifact streams in (ENGG-543) —
+    // the same way chat messages render incrementally. Dropping the "finished"
+    // guard means half-written markdown is shown as it arrives; renderMarkdown
+    // sanitizes and tolerates incomplete syntax so the layout stays intact.
+    if (type === "markdown" && code.length > 0) {
       renderedMarkdown = renderMarkdown(code);
+    } else if (type !== "markdown") {
+      renderedMarkdown = "";
     }
   });
 
@@ -100,15 +109,33 @@ SPDX-License-Identifier: Apache-2.0
   });
 
   let activeView = $state<"code" | "preview">("code");
+  // Once the viewer manually picks a view for the current artifact, stop auto-
+  // switching so the live markdown stream doesn't yank them back on every chunk.
+  let viewLocked = $state(false);
   let codeContainer: HTMLPreElement | undefined = $state(undefined);
   let iframeKey = $state(0);
 
+  // Reset the manual-view lock whenever the active artifact changes.
   $effect(() => {
-    // A code artifact has no live preview — it only shows its highlighted source,
-    // so keep it on the code view. HTML/markdown jump to their rendered preview
-    // once they finish streaming.
+    clampedIndex;
+    viewLocked = false;
+  });
+
+  function pickView(view: "code" | "preview") {
+    activeView = view;
+    viewLocked = true;
+  }
+
+  $effect(() => {
+    if (viewLocked) return;
+    // A code artifact has no live preview — it only shows its highlighted source.
+    // Markdown shows its rendered preview immediately and streams into it
+    // (ENGG-543). HTML jumps to its preview once it finishes streaming — a
+    // partial document can't be run safely in the sandboxed iframe.
     if (type === "code") {
       activeView = "code";
+    } else if (type === "markdown") {
+      activeView = "preview";
     } else if (!isStreaming && code.length > 0) {
       activeView = "preview";
     }
@@ -132,8 +159,12 @@ SPDX-License-Identifier: Apache-2.0
       type === "markdown" &&
       activeView === "preview" &&
       markdownPreviewEl &&
-      renderedMarkdown.length > 0
+      renderedMarkdown.length > 0 &&
+      !isStreaming
     ) {
+      // Only upgrade mermaid fences once the artifact has finished streaming:
+      // a half-written ```mermaid block can't be parsed, and re-running the
+      // renderer on every chunk would flicker (ENGG-543).
       const el = markdownPreviewEl;
       tick().then(() => renderMermaidDiagrams(el, isDarkTheme()));
     }
@@ -145,6 +176,18 @@ SPDX-License-Identifier: Apache-2.0
         if (codeContainer) {
           codeContainer.scrollTop = codeContainer.scrollHeight;
         }
+      });
+    }
+  });
+
+  $effect(() => {
+    // Keep the streaming markdown preview pinned to the bottom, mirroring the
+    // code view, so freshly streamed content stays in sight (ENGG-543).
+    if (activeView === "preview" && type === "markdown" && isStreaming && markdownPreviewEl) {
+      renderedMarkdown; // re-run as content grows
+      const el = markdownPreviewEl;
+      tick().then(() => {
+        el.scrollTop = el.scrollHeight;
       });
     }
   });
@@ -304,8 +347,8 @@ SPDX-License-Identifier: Apache-2.0
         <button
           class="toggle-btn"
           class:active={activeView === "preview"}
-          onclick={() => (activeView = "preview")}
-          disabled={isStreaming || type === "code"}
+          onclick={() => pickView("preview")}
+          disabled={type === "code" || (isStreaming && type !== "markdown")}
           title={type === "code" ? "Code artifacts have no preview" : "Preview"}
         >
           <svg
@@ -325,7 +368,7 @@ SPDX-License-Identifier: Apache-2.0
         <button
           class="toggle-btn"
           class:active={activeView === "code"}
-          onclick={() => (activeView = "code")}
+          onclick={() => pickView("code")}
           title="Code"
         >
           <svg
