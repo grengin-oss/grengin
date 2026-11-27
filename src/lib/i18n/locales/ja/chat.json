@@ -128,7 +128,16 @@
       "retiredModel": "モデル {old} は提供が終了したため、{model} に切り替えました。",
       "fileTypeNotAllowed": "{name} は許可されていないファイル形式です",
       "tooManyFiles": "添付できるファイルは最大 {max} 件です",
-      "attachmentRejected": "その添付ファイルは拒否されました。ファイルの種類とサイズを確認して、もう一度お試しください。"
+      "attachmentRejected": "その添付ファイルは拒否されました。ファイルの種類とサイズを確認して、もう一度お試しください。",
+      "imageNotSupported": "このモデルは画像に対応していません。",
+      "pdfNotSupported": "このモデルは PDF ファイルに対応していません。",
+      "filesNotSupported": "このモデルはそれらのファイルに対応していません。",
+      "singleImageOnly": "このモデルは 1 メッセージにつき画像 1 枚のみ対応しています。",
+      "removedUnsupportedImages": "添付画像を削除しました — このモデルは画像に対応していません。",
+      "removedUnsupportedPdfs": "添付 PDF を削除しました — このモデルは PDF に対応していません。",
+      "removedUnsupportedFiles": "添付ファイルを削除しました — このモデルはそれらのファイルに対応していません。",
+      "removedExtraImages": "余分な画像を削除しました — このモデルは 1 メッセージにつき画像 1 枚のみ対応しています。",
+      "earlierFilesUnsupported": "以前のメッセージのファイルは、このモデルでは読み取れない場合があります。"
     },
     "message": {
       "copy": "コピー",

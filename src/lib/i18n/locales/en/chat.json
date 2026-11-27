@@ -138,7 +138,16 @@
       "retiredModel": "Model {old} is no longer offered; switched to {model}.",
       "fileTypeNotAllowed": "{name} isn't an allowed file type",
       "tooManyFiles": "You can attach at most {max} files",
-      "attachmentRejected": "That attachment was rejected. Check the file type and size, then try again."
+      "attachmentRejected": "That attachment was rejected. Check the file type and size, then try again.",
+      "imageNotSupported": "This model doesn't support images.",
+      "pdfNotSupported": "This model doesn't support PDF files.",
+      "filesNotSupported": "This model doesn't support those files.",
+      "singleImageOnly": "This model supports only one image per message.",
+      "removedUnsupportedImages": "Removed attached images — this model doesn't support images.",
+      "removedUnsupportedPdfs": "Removed attached PDFs — this model doesn't support PDFs.",
+      "removedUnsupportedFiles": "Removed attached files — this model doesn't support those files.",
+      "removedExtraImages": "Removed extra images — this model supports only one image per message.",
+      "earlierFilesUnsupported": "Files from earlier messages may not be readable by this model."
     },
     "message": {
       "copy": "Copy",
