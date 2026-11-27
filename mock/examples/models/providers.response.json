@@ -39,7 +39,8 @@
           "supports_streaming": true,
           "supports_tools": true,
           "supports_vision": true,
-          "supports_pdf_native": true,
+          "supports_multiple_images": false,
+          "supports_pdf_native": false,
           "supports_web_search": false,
           "max_images": 50
         },

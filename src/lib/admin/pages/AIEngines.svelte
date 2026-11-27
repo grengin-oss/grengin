@@ -17,6 +17,12 @@ SPDX-License-Identifier: Apache-2.0
   import { ApiError } from "../../api/client.js";
   import { getAnalyticsOverview } from "../../api/admin/analytics.js";
   import { getModels } from "../../api/models.js";
+  import type { SpecialtyInfo, PriceTierInfo } from "../../api/models.js";
+  import {
+    specialtyLabel,
+    priceTierLabel,
+    shouldShowSpecialtyBadge,
+  } from "../../features/chat/modelCatalog.js";
   import { getLocalizedError } from "../../utils/errorLocalization.js";
   import {
     providerIconSvg,
@@ -105,6 +111,70 @@ SPDX-License-Identifier: Apache-2.0
    * contributes nothing to the catalog, so it falls back to the whitelist.
    */
   let providerModelCounts = $state<Record<string, number>>({});
+
+  /**
+   * Per-model catalog metadata from GET /models (specialty + price tier), keyed
+   * by `<providerKeyOrName>::<modelId>` (both lower-cased). Lets the admin
+   * Configure screen show the same "fast / cheap" badges — with descriptions —
+   * that end users see, by joining the public catalog to the engine's models.
+   * The admin models endpoint itself doesn't carry these fields.
+   */
+  let modelCatalogMeta = $state<
+    Record<string, { specialty?: string; price_tier?: string }>
+  >({});
+  /** Specialty catalog (codes → English label + description) from GET /models. */
+  let catalogSpecialties = $state<SpecialtyInfo[]>([]);
+  /** Price-tier catalog (codes → English label) from GET /models. */
+  let catalogPriceTiers = $state<PriceTierInfo[]>([]);
+
+  /** Catalog metadata for one engine model, or undefined when the catalog omits it. */
+  function catalogMetaFor(
+    engineKey: string | undefined,
+    modelId: string | undefined,
+  ): { specialty?: string; price_tier?: string } | undefined {
+    if (!engineKey || !modelId) return undefined;
+    return modelCatalogMeta[`${engineKey.toLowerCase()}::${modelId.toLowerCase()}`];
+  }
+
+  /** The human description for a specialty code, from the catalog (for tooltips). */
+  function specialtyDescription(code: string | undefined): string | undefined {
+    if (!code) return undefined;
+    return catalogSpecialties.find((s) => s.id === code)?.description;
+  }
+
+  // A distinct hue per specialty / price tier so each tag is its own colour.
+  // The pill CSS turns the hue into a light-tint (light mode) or soft-dark
+  // (dark mode) fill, so all tags stay legible without hand-tuning each one.
+  // An unknown code falls back to a neutral slate hue.
+  const SPECIALTY_HUE: Record<string, number> = {
+    general: 220,
+    frontier: 270,
+    reasoning: 238,
+    coding: 212,
+    agentic: 184,
+    'fast-cheap': 146,
+    'long-context': 46,
+    multimodal: 322,
+    research: 200,
+    writing: 344,
+    multilingual: 24,
+    'image-generation': 292,
+  };
+  const PRICE_HUE: Record<string, number> = {
+    free: 150,
+    cheap: 176,
+    moderate: 44,
+    expensive: 26,
+    premium: 348,
+  };
+  const NEUTRAL_HUE = 220;
+
+  function specialtyHue(code: string | undefined): number {
+    return (code ? SPECIALTY_HUE[code] : undefined) ?? NEUTRAL_HUE;
+  }
+  function priceHue(code: string | undefined): number {
+    return (code ? PRICE_HUE[code] : undefined) ?? NEUTRAL_HUE;
+  }
 
   // Whether a whitelist model generates images (vs. text). Prefer the registry
   // `model_type` when the backend provides it; otherwise fall back to a
@@ -351,9 +421,19 @@ SPDX-License-Identifier: Apache-2.0
 
   async function fetchProviderIcons() {
     try {
-      const { providers } = await getModels();
+      const catalog = await getModels();
+      const providers = catalog.providers;
       const map: Record<string, { icon?: string; icon_dark?: string }> = {};
       const counts: Record<string, number> = {};
+      const meta: Record<string, { specialty?: string; price_tier?: string }> = {};
+      const recordMeta = (brandKey: string | undefined, model: { key?: string; name?: string; specialty?: string; price_tier?: string }) => {
+        if (!brandKey) return;
+        const entry = { specialty: model.specialty, price_tier: model.price_tier };
+        if (model.key) meta[`${brandKey.toLowerCase()}::${model.key.toLowerCase()}`] = entry;
+        // Also key by display name: the admin endpoint's model_id usually matches
+        // the catalog key, but some engines surface the name instead.
+        if (model.name) meta[`${brandKey.toLowerCase()}::${model.name.toLowerCase()}`] = entry;
+      };
       for (const provider of providers ?? []) {
         const mark = { icon: provider.icon, icon_dark: provider.icon_dark };
         const total = provider.models?.length ?? 0;
@@ -365,13 +445,24 @@ SPDX-License-Identifier: Apache-2.0
           map[provider.name.toLowerCase()] = mark;
           counts[provider.name.toLowerCase()] = total;
         }
+        for (const model of provider.models ?? []) {
+          recordMeta(provider.key, model);
+          recordMeta(provider.name, model);
+        }
       }
       providerIcons = map;
       providerModelCounts = counts;
+      modelCatalogMeta = meta;
+      catalogSpecialties = catalog.specialties ?? [];
+      catalogPriceTiers = catalog.price_tiers ?? [];
     } catch {
-      // Logos are decoration — fall back to the initial-letter tile.
+      // Logos/metadata are decoration — fall back to the initial-letter tile and
+      // no badges.
       providerIcons = {};
       providerModelCounts = {};
+      modelCatalogMeta = {};
+      catalogSpecialties = [];
+      catalogPriceTiers = [];
     }
   }
 
@@ -1786,6 +1877,11 @@ SPDX-License-Identifier: Apache-2.0
                 {@const isDefaultModel =
                   model.model_id === store.formData.default_model}
                 {@const modelLabelId = `model-name-${model.model_id}`}
+                {@const catalogMeta = catalogMetaFor(
+                  store.selectedEngine?.engine_key,
+                  model.model_id,
+                )}
+                {@const specialtyDesc = specialtyDescription(catalogMeta?.specialty)}
                 <div class="model-row" class:model-row--dim={!checked}>
                   <button
                     class="model-check"
@@ -1823,12 +1919,33 @@ SPDX-License-Identifier: Apache-2.0
                     <span class="sr-only">{modelTypeLabel(model)}</span>
                   </span>
                   <div class="model-details">
-                    <span class="model-name" id={modelLabelId}>
-                      {model.display_name}
+                    <span class="model-name-row">
+                      <span class="model-name" id={modelLabelId}>
+                        {model.display_name}
+                      </span>
                       {#if isDefaultModel}
                         <span class="default-model-badge">
                           {$_("aiEngines.modelWhitelist.defaultBadge")}
                         </span>
+                      {/if}
+                      {#if catalogMeta}
+                        {#if shouldShowSpecialtyBadge(catalogMeta.specialty)}
+                          <span
+                            class="catalog-badge catalog-badge--specialty"
+                            style="--pill-h: {specialtyHue(catalogMeta.specialty)}"
+                            title={specialtyDesc ?? undefined}
+                          >
+                            {specialtyLabel(catalogMeta.specialty, catalogSpecialties, $_)}
+                          </span>
+                        {/if}
+                        {#if catalogMeta.price_tier}
+                          <span
+                            class="catalog-badge catalog-badge--price"
+                            style="--pill-h: {priceHue(catalogMeta.price_tier)}"
+                          >
+                            {priceTierLabel(catalogMeta.price_tier, catalogPriceTiers, $_)}
+                          </span>
+                        {/if}
                       {/if}
                     </span>
                     <span class="model-id">{model.model_id}</span>
@@ -3738,7 +3855,7 @@ SPDX-License-Identifier: Apache-2.0
   }
 
   .models-list {
-    max-height: 210px;
+    max-height: 280px;
     overflow-y: auto;
     border-radius: 8px;
     box-shadow: inset 0 0 0 1px var(--gx-ae-hair);
@@ -3749,12 +3866,23 @@ SPDX-License-Identifier: Apache-2.0
 
   .model-row {
     min-height: 53px;
+    /* Never let the flex column (with its max-height) squeeze a row below its
+       content — that compression is what made the catalog badges overlap the
+       next row. Rows keep their natural height; the list scrolls instead. */
+    flex-shrink: 0;
     background: var(--gx-card);
     border-top: 1px solid var(--gx-ae-chip);
     display: flex;
     gap: 12px;
     padding: 10px 12px;
-    align-items: center;
+    align-items: flex-start;
+  }
+
+  /* Keep the checkbox and type glyph lined up with the model name (first line)
+     rather than floating to the vertical centre of a taller, badged row. */
+  .model-row > .model-check,
+  .model-row > .type-badge {
+    margin-top: 1px;
   }
 
   .model-row:first-child {
@@ -3822,20 +3950,30 @@ SPDX-License-Identifier: Apache-2.0
   .model-details {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
     flex-grow: 1;
     min-width: 0;
   }
 
-  .model-name {
+  /* Name + inline tags (default, specialty, price) on one wrapping line, so a
+     model's identity and its capability signals read together at a glance. */
+  .model-name-row {
     display: flex;
-    gap: 6px;
+    flex-wrap: wrap;
     align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .model-name {
     font-weight: 600;
     font-size: 13px;
-    line-height: 100%;
+    line-height: 1.25;
     color: var(--gx-ae-ink);
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .default-model-badge {
@@ -3857,6 +3995,51 @@ SPDX-License-Identifier: Apache-2.0
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  /* Catalog tags (specialty + price tier) joined from GET /models, so admins see
+     the same "fast / cheap" signals end users get. The specialty's full
+     description is on the tag's tooltip. Sit inline after the model name. */
+  .catalog-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-weight: 600;
+    font-size: 10.5px;
+    line-height: 1.6;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Each tag is tinted by its own hue (--pill-h, set per model). Specialty is a
+     soft-filled pill (a category); price is an outlined pill (metadata) — so the
+     two kinds still read differently while every value gets its own colour. */
+  .catalog-badge--specialty {
+    background: hsl(var(--pill-h) 72% 93%);
+    color: hsl(var(--pill-h) 46% 32%);
+    box-shadow: inset 0 0 0 1px hsl(var(--pill-h) 55% 85%);
+  }
+
+  .catalog-badge--price {
+    background: hsl(var(--pill-h) 60% 96%);
+    color: hsl(var(--pill-h) 42% 36%);
+    box-shadow: inset 0 0 0 1px hsl(var(--pill-h) 48% 80%);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .catalog-badge--specialty {
+      background: hsl(var(--pill-h) 42% 22%);
+      color: hsl(var(--pill-h) 72% 80%);
+      box-shadow: inset 0 0 0 1px hsl(var(--pill-h) 40% 34%);
+    }
+
+    .catalog-badge--price {
+      background: hsl(var(--pill-h) 30% 20% / 0.6);
+      color: hsl(var(--pill-h) 60% 76%);
+      box-shadow: inset 0 0 0 1px hsl(var(--pill-h) 34% 38%);
+    }
   }
 
   .dropdown {

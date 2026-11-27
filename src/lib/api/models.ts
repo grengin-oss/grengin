@@ -24,6 +24,12 @@ export interface ModelInfo {
   supports_streaming?: boolean;
   supports_tools?: boolean;
   supports_vision?: boolean;
+  /**
+   * Whether the model can take more than one image in a single message. Absent
+   * on older/gateway responses → treated as "no limit" (today's behaviour); only
+   * an explicit `false` caps a message at one image. (grengin-api /models.)
+   */
+  supports_multiple_images?: boolean;
   supports_pdf_native?: boolean;
   supports_web_search?: boolean;
   /** Max images an image model may return per request. A model property, not a user control. */
@@ -202,6 +208,94 @@ export function isAcceptedFileType(
     if (token.endsWith('/*')) return mime.startsWith(token.slice(0, -1)); // e.g. "image/"
     return mime === token;
   });
+}
+
+/** Image MIME types the composer recognises as attachable images. */
+const IMAGE_MIME_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  'image/bmp',
+  'image/tiff',
+  'image/heic',
+  'image/heif',
+  'image/avif',
+];
+
+/** Image filename extensions the composer recognises as attachable images. */
+const IMAGE_EXTENSIONS = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.webp',
+  '.svg',
+  '.bmp',
+  '.tiff',
+  '.tif',
+  '.heic',
+  '.heif',
+  '.avif',
+];
+
+/** Does the file look like an image (by MIME type or extension)? */
+export function isImageAttachment(file: { name: string; type: string }): boolean {
+  const type = (file.type || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  return IMAGE_MIME_TYPES.includes(type) || IMAGE_EXTENSIONS.some((ext) => name.endsWith(ext));
+}
+
+/** Does the file look like a PDF (by MIME type or `.pdf` extension)? */
+export function isPdfAttachment(file: { name: string; type: string }): boolean {
+  const type = (file.type || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  return type === 'application/pdf' || name.endsWith('.pdf');
+}
+
+/**
+ * Why the selected model can't accept a file, or null when it can. Only an
+ * explicit `false` on the model's capability field blocks the file; absent
+ * fields keep today's behaviour (the attachment is allowed). `no_images` covers
+ * a model that can't see images at all (`supports_vision: false`); `no_pdf`
+ * covers a model that can't read PDFs (`supports_pdf_native: false`). The
+ * one-image-per-message cap (`supports_multiple_images: false`) is a count
+ * constraint handled separately — see {@link modelAllowsMultipleImages}.
+ */
+export type ModelAttachmentBlock = 'no_images' | 'no_pdf';
+
+export function modelAttachmentBlock(
+  model: ModelInfo | undefined | null,
+  file: { name: string; type: string },
+): ModelAttachmentBlock | null {
+  if (!model) return null;
+  if (model.supports_vision === false && isImageAttachment(file)) return 'no_images';
+  if (model.supports_pdf_native === false && isPdfAttachment(file)) return 'no_pdf';
+  return null;
+}
+
+/**
+ * Whether the model may hold more than one image in a single message. True
+ * unless the model explicitly sets `supports_multiple_images: false`, so models
+ * that don't send the field keep today's behaviour.
+ */
+export function modelAllowsMultipleImages(model: ModelInfo | undefined | null): boolean {
+  return !(model != null && model.supports_multiple_images === false);
+}
+
+/**
+ * Given the files already carried by earlier messages in a conversation, does
+ * the model fail to support any of them? Used to warn (a soft toast) when the
+ * user switches to a model that can't read images/PDFs already in the thread.
+ */
+export function modelMissesEarlierFiles(
+  model: ModelInfo | undefined | null,
+  files: Array<{ name: string; type: string }>,
+): boolean {
+  if (!model) return false;
+  return files.some((file) => modelAttachmentBlock(model, file) !== null);
 }
 
 /** Validate one file against the global attachment limits (size + type). */

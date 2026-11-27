@@ -21,6 +21,10 @@ SPDX-License-Identifier: Apache-2.0
     isSelectableChatModel,
     validateAttachment,
     attachmentAcceptAttribute,
+    isImageAttachment,
+    isPdfAttachment,
+    modelAttachmentBlock,
+    modelAllowsMultipleImages,
     DEFAULT_GLOBAL_ATTACHMENTS,
   } from "../../../api/models";
   import { specialtyLabel, priceTierLabel, shouldShowSpecialtyBadge } from "../modelCatalog";
@@ -115,7 +119,14 @@ SPDX-License-Identifier: Apache-2.0
     onStop,
   }: MessageInputProps = $props();
 
-  const webSearchSupported = $derived(findModel(providers, selectedModel, selectedProvider)?.model.supports_web_search !== false);
+  // The model that is actually selected, resolved from the registry. Drives the
+  // per-model attachment rules (ENGG-534): which files can be attached, and
+  // whether a single message may carry more than one image.
+  const activeModel = $derived(
+    findModel(providers, selectedModel, selectedProvider)?.model,
+  );
+
+  const webSearchSupported = $derived(activeModel?.supports_web_search !== false);
   const effectiveWebSearch = $derived(webSearchEnabled && webSearchSupported);
 
   // Attachment limits from GET /models → global_attachments (0.9.14), with safe
@@ -702,27 +713,68 @@ SPDX-License-Identifier: Apache-2.0
 
     const accepted: File[] = [];
     const rejected: string[] = [];
+    // Per-model attachment gates (ENGG-534). Only an explicit `false` on the
+    // model blocks a file; models that don't send these fields keep today's
+    // behaviour. Images that the model can see still count toward the one-image
+    // cap below.
+    const model = activeModel;
+    const singleImageOnly = !modelAllowsMultipleImages(model);
+    let imageCount = attachedFiles.filter(isImageFile).length;
+    let blockedImages = false;
+    let blockedPdfs = false;
+    let blockedExtraImage = false;
+
     // Enforce the per-message file count (0.9.14): once the cap is reached, any
     // further files are rejected before upload instead of 400-ing on send.
     const remainingSlots = Math.max(0, attachLimits.max_files_per_message - attachedFiles.length);
     for (const file of files) {
-      if (validateFile(file) || accepted.length >= remainingSlots) rejected.push(file.name);
-      else accepted.push(file);
+      const block = modelAttachmentBlock(model, file);
+      if (block === "no_images") {
+        blockedImages = true;
+        continue;
+      }
+      if (block === "no_pdf") {
+        blockedPdfs = true;
+        continue;
+      }
+      // Vision is supported but the model takes only one image per message.
+      if (singleImageOnly && isImageFile(file) && imageCount >= 1) {
+        blockedExtraImage = true;
+        continue;
+      }
+      if (validateFile(file) || accepted.length >= remainingSlots) {
+        rejected.push(file.name);
+        continue;
+      }
+      accepted.push(file);
+      if (isImageFile(file)) imageCount++;
     }
 
-    if (accepted.length === 0 && attachedFiles.length >= attachLimits.max_files_per_message) {
+    // Capability blocks take priority over the generic rejection notice: they
+    // tell the user exactly what this model can't take.
+    const capabilityError = attachmentCapabilityError(
+      blockedImages,
+      blockedPdfs,
+      blockedExtraImage,
+    );
+    if (capabilityError) {
+      fileError = capabilityError;
+    } else if (
+      accepted.length === 0 &&
+      attachedFiles.length >= attachLimits.max_files_per_message
+    ) {
       fileError = $_("chat.messageInput.tooManyFiles", {
         values: { max: attachLimits.max_files_per_message },
       });
       return;
+    } else {
+      fileError =
+        rejected.length > 0
+          ? $_("chat.messageInput.filesRejected", {
+              values: { names: rejected.join(", ") },
+            })
+          : null;
     }
-
-    fileError =
-      rejected.length > 0
-        ? $_("chat.messageInput.filesRejected", {
-            values: { names: rejected.join(", ") },
-          })
-        : null;
 
     if (accepted.length === 0) return;
 
@@ -755,6 +807,91 @@ SPDX-License-Identifier: Apache-2.0
       }
     }
   }
+
+  // The short, specific notice for an attachment the model can't take
+  // (ENGG-534). When more than one kind is blocked at once we fall back to the
+  // generic "those files" line rather than stacking messages.
+  function attachmentCapabilityError(
+    blockedImages: boolean,
+    blockedPdfs: boolean,
+    blockedExtraImage: boolean,
+  ): string | null {
+    if (blockedImages && blockedPdfs)
+      return $_("chat.messageInput.filesNotSupported");
+    if (blockedPdfs) return $_("chat.messageInput.pdfNotSupported");
+    if (blockedImages) return $_("chat.messageInput.imageNotSupported");
+    if (blockedExtraImage) return $_("chat.messageInput.singleImageOnly");
+    return null;
+  }
+
+  // When the user switches to a model that can't take files they've attached but
+  // not yet sent, drop the unsupported ones and say why (ENGG-534). Images and
+  // PDFs the new model can't read go entirely; when the model only caps images
+  // at one per message, every image past the first is trimmed.
+  function pruneAttachmentsForModel(model: typeof activeModel) {
+    const noImages = model?.supports_vision === false;
+    const noPdf = model?.supports_pdf_native === false;
+    const singleImageOnly = !modelAllowsMultipleImages(model);
+    if (!noImages && !noPdf && !singleImageOnly) return;
+
+    let removedImages = false;
+    let removedPdfs = false;
+    let trimmedExtraImages = false;
+    let keptImage = false;
+
+    const kept: File[] = [];
+    for (const file of attachedFiles) {
+      if (noImages && isImageFile(file)) {
+        removedImages = true;
+        continue;
+      }
+      if (noPdf && isPdfFile(file)) {
+        removedPdfs = true;
+        continue;
+      }
+      if (!noImages && singleImageOnly && isImageFile(file)) {
+        if (keptImage) {
+          trimmedExtraImages = true;
+          continue;
+        }
+        keptImage = true;
+      }
+      kept.push(file);
+    }
+
+    if (kept.length === attachedFiles.length) return;
+
+    for (const file of attachedFiles) {
+      if (!kept.includes(file)) forgetFileState(file);
+    }
+    attachedFiles = kept;
+
+    if (removedImages && removedPdfs) {
+      fileError = $_("chat.messageInput.removedUnsupportedFiles");
+    } else if (removedPdfs) {
+      fileError = $_("chat.messageInput.removedUnsupportedPdfs");
+    } else if (removedImages) {
+      fileError = $_("chat.messageInput.removedUnsupportedImages");
+    } else if (trimmedExtraImages) {
+      fileError = $_("chat.messageInput.removedExtraImages");
+    }
+  }
+
+  // Run the prune once the selected model actually changes — never on the first
+  // resolve (there are no pending attachments yet), so a fresh chat is untouched.
+  let lastCapabilityModelKey: string | undefined;
+  $effect(() => {
+    const model = activeModel;
+    const key = model ? `${selectedProvider ?? ""}:${model.key}` : "";
+    // Read length so the effect stays subscribed, but the early return on an
+    // unchanged key keeps adding files from re-triggering a prune.
+    void attachedFiles.length;
+    if (key === lastCapabilityModelKey) return;
+    const isFirstResolve = lastCapabilityModelKey === undefined;
+    lastCapabilityModelKey = key;
+    if (isFirstResolve || !model || attachedFiles.length === 0) return;
+    pruneAttachmentsForModel(model);
+  });
 
   // True when the drag payload contains OS files (vs. text/element drags).
   function dragHasFiles(e: DragEvent): boolean {
@@ -989,32 +1126,45 @@ SPDX-License-Identifier: Apache-2.0
     target.value = "";
   }
 
-  function removeFile(index: number) {
-    const file = attachedFiles[index];
-    attachedFiles = attachedFiles.filter((_, i) => i !== index);
+  // Drop every trace of a file: its upload result/status and any preview, poster
+  // or open preview panel. Shared by the remove button and the model-switch
+  // prune so both clean up the same way.
+  function forgetFileState(file: File) {
+    uploadedFileResults.delete(file.name);
+    uploadedFileResults = new Map(uploadedFileResults);
+    failedUploads.delete(file.name);
+    failedUploads = new Set(failedUploads);
+    uploadingFiles.delete(file.name);
+    uploadingFiles = new Set(uploadingFiles);
 
-    if (file) {
-      uploadedFileResults.delete(file.name);
-      uploadedFileResults = new Map(uploadedFileResults);
-      failedUploads.delete(file.name);
-      failedUploads = new Set(failedUploads);
-    }
-
-    if (file && filePreviews[file.name]) {
+    if (filePreviews[file.name]) {
       delete filePreviews[file.name];
+      filePreviews = { ...filePreviews };
       if (currentPreviewFile?.name === file.name) {
         showFilePreview = false;
         currentPreviewFile = null;
       }
     }
-    if (file && imageThumbnails[file.name]) {
+    if (imageThumbnails[file.name]) {
       delete imageThumbnails[file.name];
+      imageThumbnails = { ...imageThumbnails };
       if (currentPreviewImage?.file.name === file.name) {
         showImagePreview = false;
         currentPreviewImage = null;
       }
     }
-    if (file) releaseVideoPoster(file.name);
+    releaseVideoPoster(file.name);
+  }
+
+  function removeFile(index: number) {
+    const file = attachedFiles[index];
+    attachedFiles = attachedFiles.filter((_, i) => i !== index);
+    if (file) forgetFileState(file);
+  }
+
+  /** Does the file look like a PDF? Gates PDF attachments per model (ENGG-534). */
+  function isPdfFile(file: File): boolean {
+    return isPdfAttachment(file);
   }
 
   function isTextFile(file: File): boolean {
@@ -1096,38 +1246,11 @@ SPDX-License-Identifier: Apache-2.0
     delete videoDurations[name];
   }
 
+  // Shares one definition with the attachment-capability checks (models.ts) so
+  // the composer's preview and the per-model gating never disagree on what's an
+  // image.
   function isImageFile(file: File): boolean {
-    const imageTypes = [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-      "image/svg+xml",
-      "image/bmp",
-      "image/tiff",
-      "image/heic",
-      "image/heif",
-      "image/avif",
-    ];
-    const imageExtensions = [
-      ".jpg",
-      ".jpeg",
-      ".png",
-      ".gif",
-      ".webp",
-      ".svg",
-      ".bmp",
-      ".tiff",
-      ".tif",
-      ".heic",
-      ".heif",
-      ".avif",
-    ];
-    return (
-      imageTypes.includes(file.type) ||
-      imageExtensions.some((ext) => file.name.toLowerCase().endsWith(ext))
-    );
+    return isImageAttachment(file);
   }
 
   function readFileContent(file: File): Promise<string> {

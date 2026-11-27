@@ -128,7 +128,16 @@
       "retiredModel": "모델 {old}의 제공이 종료되어 {model}(으)로 전환했습니다.",
       "fileTypeNotAllowed": "{name}은(는) 허용되지 않는 파일 형식입니다",
       "tooManyFiles": "최대 {max}개의 파일을 첨부할 수 있습니다",
-      "attachmentRejected": "해당 첨부 파일이 거부되었습니다. 파일 형식과 크기를 확인한 후 다시 시도하세요."
+      "attachmentRejected": "해당 첨부 파일이 거부되었습니다. 파일 형식과 크기를 확인한 후 다시 시도하세요.",
+      "imageNotSupported": "이 모델은 이미지를 지원하지 않습니다.",
+      "pdfNotSupported": "이 모델은 PDF 파일을 지원하지 않습니다.",
+      "filesNotSupported": "이 모델은 해당 파일을 지원하지 않습니다.",
+      "singleImageOnly": "이 모델은 메시지당 이미지 한 개만 지원합니다.",
+      "removedUnsupportedImages": "첨부된 이미지를 제거했습니다 — 이 모델은 이미지를 지원하지 않습니다.",
+      "removedUnsupportedPdfs": "첨부된 PDF를 제거했습니다 — 이 모델은 PDF를 지원하지 않습니다.",
+      "removedUnsupportedFiles": "첨부된 파일을 제거했습니다 — 이 모델은 해당 파일을 지원하지 않습니다.",
+      "removedExtraImages": "추가 이미지를 제거했습니다 — 이 모델은 메시지당 이미지 한 개만 지원합니다.",
+      "earlierFilesUnsupported": "이전 메시지의 파일은 이 모델에서 읽지 못할 수 있습니다."
     },
     "message": {
       "copy": "복사",

@@ -44,7 +44,7 @@ SPDX-License-Identifier: Apache-2.0
     PriceTierInfo,
     GlobalAttachments,
   } from "../../../api/models";
-  import { getModels, isImageModel, isSelectableChatModel, findModel } from "../../../api/models";
+  import { getModels, isImageModel, isSelectableChatModel, findModel, modelMissesEarlierFiles } from "../../../api/models";
   import {
     APP_EVENTS,
     type SelectModelDetail,
@@ -897,11 +897,22 @@ SPDX-License-Identifier: Apache-2.0
 
   // Handle model selection
   function selectModel(provider: ProviderInfo, model: ModelInfo) {
+    const changed = selectedModel !== model.key || selectedProvider !== provider.key;
     selectedProvider = provider.key;
     selectedModel = model.key;
     selectedModelInfo = provider;
     // Remember the choice so future new chats default to it.
     persistLastUsedModel(model.key, provider.key);
+
+    // If earlier messages in this conversation already carry files the new model
+    // can't read, warn softly (ENGG-534). The composer handles unsent
+    // attachments itself; this covers files that are already in the thread.
+    if (changed) {
+      const earlierFiles = messages.flatMap((m) => m.files ?? []);
+      if (modelMissesEarlierFiles(model, earlierFiles)) {
+        toast($_("chat.messageInput.earlierFilesUnsupported"));
+      }
+    }
   }
 
   // Handle model removal

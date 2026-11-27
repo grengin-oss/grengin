@@ -128,7 +128,16 @@
       "retiredModel": "لم يعد النموذج {old} متاحًا؛ تم التبديل إلى {model}.",
       "fileTypeNotAllowed": "{name} ليس نوع ملف مسموحًا به",
       "tooManyFiles": "يمكنك إرفاق {max} ملفات كحد أقصى",
-      "attachmentRejected": "تم رفض هذا المرفق. تحقق من نوع الملف وحجمه ثم حاول مرة أخرى."
+      "attachmentRejected": "تم رفض هذا المرفق. تحقق من نوع الملف وحجمه ثم حاول مرة أخرى.",
+      "imageNotSupported": "لا يدعم هذا النموذج الصور.",
+      "pdfNotSupported": "لا يدعم هذا النموذج ملفات PDF.",
+      "filesNotSupported": "لا يدعم هذا النموذج تلك الملفات.",
+      "singleImageOnly": "يدعم هذا النموذج صورة واحدة فقط لكل رسالة.",
+      "removedUnsupportedImages": "تمت إزالة الصور المرفقة — لا يدعم هذا النموذج الصور.",
+      "removedUnsupportedPdfs": "تمت إزالة ملفات PDF المرفقة — لا يدعم هذا النموذج ملفات PDF.",
+      "removedUnsupportedFiles": "تمت إزالة الملفات المرفقة — لا يدعم هذا النموذج تلك الملفات.",
+      "removedExtraImages": "تمت إزالة الصور الإضافية — يدعم هذا النموذج صورة واحدة فقط لكل رسالة.",
+      "earlierFilesUnsupported": "قد لا يتمكن هذا النموذج من قراءة ملفات الرسائل السابقة."
     },
     "message": {
       "copy": "نسخ",

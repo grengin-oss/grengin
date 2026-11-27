@@ -128,7 +128,16 @@
       "retiredModel": "O modelo {old} não está mais disponível; alterado para {model}.",
       "fileTypeNotAllowed": "{name} não é um tipo de arquivo permitido",
       "tooManyFiles": "Você pode anexar no máximo {max} arquivos",
-      "attachmentRejected": "Esse anexo foi rejeitado. Verifique o tipo e o tamanho do arquivo e tente novamente."
+      "attachmentRejected": "Esse anexo foi rejeitado. Verifique o tipo e o tamanho do arquivo e tente novamente.",
+      "imageNotSupported": "Este modelo não oferece suporte a imagens.",
+      "pdfNotSupported": "Este modelo não oferece suporte a arquivos PDF.",
+      "filesNotSupported": "Este modelo não oferece suporte a esses arquivos.",
+      "singleImageOnly": "Este modelo oferece suporte a apenas uma imagem por mensagem.",
+      "removedUnsupportedImages": "Imagens anexadas removidas — este modelo não oferece suporte a imagens.",
+      "removedUnsupportedPdfs": "PDFs anexados removidos — este modelo não oferece suporte a PDFs.",
+      "removedUnsupportedFiles": "Arquivos anexados removidos — este modelo não oferece suporte a esses arquivos.",
+      "removedExtraImages": "Imagens extras removidas — este modelo oferece suporte a apenas uma imagem por mensagem.",
+      "earlierFilesUnsupported": "Os arquivos de mensagens anteriores podem não ser legíveis por este modelo."
     },
     "message": {
       "copy": "Copiar",
