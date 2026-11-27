@@ -901,12 +901,12 @@ router.get('/admin/ai-engines/:engineKey/models', requireAuth, (req, res) => {
 
   const modelsByEngine: Record<string, AIEngineModelsResponse['models']> = {
     openai: [
-      { model_id: 'gpt-4o', display_name: 'GPT-4o', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
-      { model_id: 'gpt-4.1', display_name: 'GPT-4.1', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
-      { model_id: 'gpt-4.1-mini', display_name: 'GPT-4.1 Mini', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
+      { model_id: 'gpt-5', display_name: 'GPT 5', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
+      { model_id: 'gpt-5-mini', display_name: 'GPT 5 Mini', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
+      { model_id: 'gpt-4.1', display_name: 'GPT 4.1', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
+      { model_id: 'gpt-4o-mini-search-preview', display_name: 'GPT 4o with Web Search', is_whitelisted: false, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
       { model_id: 'o3', display_name: 'O3', is_whitelisted: false, model_type: 'text_generator', capabilities: { vision: false, function_calling: true, streaming: true } },
       { model_id: 'gpt-image-2', display_name: 'GPT Image 2', is_whitelisted: true, model_type: 'image_generator', capabilities: { vision: false, function_calling: false, streaming: false } },
-      { model_id: 'gpt-image-1', display_name: 'GPT Image 1', is_whitelisted: false, model_type: 'image_generator', capabilities: { vision: false, function_calling: false, streaming: false } },
     ],
     anthropic: [
       { model_id: 'claude-sonnet-4-20250514', display_name: 'Claude Sonnet 4', is_whitelisted: true, model_type: 'text_generator', capabilities: { vision: true, function_calling: true, streaming: true } },
