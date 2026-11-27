@@ -1,10 +1,10 @@
 {
   "userSettings": {
     "title": "Definições",
-    "subtitle": "Gerir as suas preferências pessoais e integrações ligadas.",
+    "subtitle": "Gerir as suas preferências pessoais e conectores.",
     "tabs": {
-      "integrations": "Integrações",
-      "integrationsAria": "Integrações ligadas",
+      "integrations": "Conectores",
+      "integrationsAria": "Gerir os seus conectores",
       "promptSettings": "Definições de Prompt",
       "promptSettingsAria": "Gerir as suas preferências de prompt",
       "skills": "Habilidades",
@@ -75,7 +75,7 @@
   },
   "userIntegrations": {
     "detail": {
-      "back": "Todas as integrações",
+      "back": "Todos os conectores",
       "verified": "Verificado",
       "toolsTitle": "Ferramentas",
       "toolsIntro": "Tudo o que este conector pode fazer, exposto como ferramentas individuais.",
@@ -86,8 +86,8 @@
       "tryAsking": "Experimente perguntar",
       "openPrompt": "Perguntar isto em um novo chat"
     },
-    "loading": "A carregar integrações...",
-    "failedToLoad": "Falha ao carregar integrações",
+    "loading": "A carregar conectores...",
+    "failedToLoad": "Falha ao carregar conectores",
     "failedToGetAuthUrl": "Falha ao obter o URL de autorização",
     "failedToConnect": "Falha ao ligar a {name}",
     "failedToDisconnect": "Falha ao desligar {name}",
@@ -101,14 +101,14 @@
       "all": "Todas",
       "connected": "Ligadas",
       "available": "Disponíveis",
-      "filterAria": "Filtrar integrações"
+      "filterAria": "Filtrar conectores"
     },
     "empty": {
-      "title": "Nenhuma integração encontrada",
-      "noConnected": "Ainda não ligou nenhuma integração.",
-      "noAvailable": "Não há integrações disponíveis para ligar de momento.",
-      "noConfigured": "A sua organização não configurou integrações.",
-      "viewAll": "Ver todas as integrações"
+      "title": "Nenhum conector encontrado",
+      "noConnected": "Ainda não ligou nenhum conector.",
+      "noAvailable": "Não há conectores disponíveis para ligar de momento.",
+      "noConfigured": "A sua organização não configurou conectores.",
+      "viewAll": "Ver todos os conectores"
     },
     "columns": {
       "name": "Nome",
@@ -142,7 +142,7 @@
       "loading": "Carregando ferramentas...",
       "empty": "Nenhuma ferramenta disponível para este servidor."
     },
-    "searchPlaceholder": "Filtrar integrações..."
+    "searchPlaceholder": "Filtrar conectores..."
   },
   "userSkills": {
     "loading": "Carregando habilidades…",
@@ -197,7 +197,7 @@
       "toolGrantsHint": "Selecione os servidores MCP que esta habilidade pode usar.",
       "toolCount": "{count} ferramentas",
       "loadingServers": "Carregando servidores disponíveis…",
-      "noServers": "Nenhum servidor MCP disponível. Conecte um em Integrações.",
+      "noServers": "Nenhum servidor MCP disponível. Conecte um em Conectores.",
       "cancel": "Cancelar",
       "save": "Salvar alterações",
       "create": "Criar habilidade",

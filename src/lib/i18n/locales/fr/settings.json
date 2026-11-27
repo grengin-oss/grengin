@@ -1,10 +1,10 @@
 {
   "userSettings": {
     "title": "Paramètres",
-    "subtitle": "Gérez vos préférences personnelles et les intégrations connectées.",
+    "subtitle": "Gérez vos préférences personnelles et vos connecteurs.",
     "tabs": {
-      "integrations": "Intégrations",
-      "integrationsAria": "Intégrations connectées",
+      "integrations": "Connecteurs",
+      "integrationsAria": "Gérez vos connecteurs",
       "promptSettings": "Paramètres des Instructions",
       "promptSettingsAria": "Gérer vos préférences d'instructions",
       "skills": "Compétences",
@@ -13,7 +13,7 @@
   },
   "userIntegrations": {
     "detail": {
-      "back": "Toutes les intégrations",
+      "back": "Tous les connecteurs",
       "verified": "Vérifié",
       "toolsTitle": "Outils",
       "toolsIntro": "Tout ce que ce connecteur peut faire, exposé sous forme d'outils individuels.",
@@ -24,8 +24,8 @@
       "tryAsking": "Essayez de demander",
       "openPrompt": "Poser cette question dans une nouvelle conversation"
     },
-    "loading": "Chargement des intégrations...",
-    "failedToLoad": "Échec du chargement des intégrations",
+    "loading": "Chargement des connecteurs...",
+    "failedToLoad": "Échec du chargement des connecteurs",
     "failedToGetAuthUrl": "Échec de l'obtention de l'URL d'autorisation",
     "failedToConnect": "Échec de la connexion à {name}",
     "failedToDisconnect": "Échec de la déconnexion de {name}",
@@ -39,14 +39,14 @@
       "all": "Toutes",
       "connected": "Connectées",
       "available": "Disponibles",
-      "filterAria": "Filtrer les intégrations"
+      "filterAria": "Filtrer les connecteurs"
     },
     "empty": {
-      "title": "Aucune intégration trouvée",
-      "noConnected": "Vous n'avez pas encore connecté d'intégrations.",
-      "noAvailable": "Aucune intégration n'est disponible pour le moment.",
-      "noConfigured": "Votre organisation n'a configuré aucune intégration.",
-      "viewAll": "Voir toutes les intégrations"
+      "title": "Aucun connecteur trouvé",
+      "noConnected": "Vous n'avez pas encore connecté de connecteurs.",
+      "noAvailable": "Aucun connecteur n'est disponible pour le moment.",
+      "noConfigured": "Votre organisation n'a configuré aucun connecteur.",
+      "viewAll": "Voir tous les connecteurs"
     },
     "columns": {
       "name": "Nom",
@@ -80,7 +80,7 @@
       "loading": "Chargement des outils...",
       "empty": "Aucun outil disponible pour ce serveur."
     },
-    "searchPlaceholder": "Filtrer les intégrations..."
+    "searchPlaceholder": "Filtrer les connecteurs..."
   },
   "userPromptSettings": {
     "loading": "Chargement des paramètres d'instructions...",
@@ -197,7 +197,7 @@
       "toolGrantsHint": "Sélectionnez les serveurs MCP que cette compétence peut utiliser.",
       "toolCount": "{count} outils",
       "loadingServers": "Chargement des serveurs disponibles…",
-      "noServers": "Aucun serveur MCP disponible. Connectez-en un depuis Intégrations.",
+      "noServers": "Aucun serveur MCP disponible. Connectez-en un depuis Connecteurs.",
       "cancel": "Annuler",
       "save": "Enregistrer les modifications",
       "create": "Créer la compétence",

@@ -1,10 +1,10 @@
 {
   "userSettings": {
     "title": "Ajustes",
-    "subtitle": "Administre sus preferencias personales e integraciones conectadas.",
+    "subtitle": "Administre sus preferencias personales y conectores.",
     "tabs": {
-      "integrations": "Integraciones",
-      "integrationsAria": "Integraciones conectadas",
+      "integrations": "Conectores",
+      "integrationsAria": "Gestione sus conectores",
       "promptSettings": "Configuración de Indicaciones",
       "promptSettingsAria": "Gestionar sus preferencias de indicaciones",
       "skills": "Habilidades",
@@ -13,7 +13,7 @@
   },
   "userIntegrations": {
     "detail": {
-      "back": "Todas las integraciones",
+      "back": "Todos los conectores",
       "verified": "Verificado",
       "toolsTitle": "Herramientas",
       "toolsIntro": "Todo lo que este conector puede hacer, expuesto como herramientas individuales.",
@@ -24,8 +24,8 @@
       "tryAsking": "Prueba a preguntar",
       "openPrompt": "Preguntar esto en un chat nuevo"
     },
-    "loading": "Cargando integraciones...",
-    "failedToLoad": "Error al cargar integraciones",
+    "loading": "Cargando conectores...",
+    "failedToLoad": "Error al cargar conectores",
     "failedToGetAuthUrl": "No se pudo obtener la URL de autorización",
     "failedToConnect": "Error al conectar {name}",
     "failedToDisconnect": "Error al desconectar {name}",
@@ -39,14 +39,14 @@
       "all": "Todas",
       "connected": "Conectadas",
       "available": "Disponibles",
-      "filterAria": "Filtrar integraciones"
+      "filterAria": "Filtrar conectores"
     },
     "empty": {
-      "title": "No se encontraron integraciones",
-      "noConnected": "Aún no ha conectado ninguna integración.",
-      "noAvailable": "No hay integraciones disponibles para conectar en este momento.",
-      "noConfigured": "Su organización no ha configurado integraciones.",
-      "viewAll": "Ver todas las integraciones"
+      "title": "No se encontraron conectores",
+      "noConnected": "Aún no ha conectado ningún conector.",
+      "noAvailable": "No hay conectores disponibles para conectar en este momento.",
+      "noConfigured": "Su organización no ha configurado conectores.",
+      "viewAll": "Ver todos los conectores"
     },
     "columns": {
       "name": "Nombre",
@@ -80,7 +80,7 @@
       "loading": "Cargando herramientas...",
       "empty": "No hay herramientas disponibles para este servidor."
     },
-    "searchPlaceholder": "Filtrar integraciones..."
+    "searchPlaceholder": "Filtrar conectores..."
   },
   "userPromptSettings": {
     "loading": "Cargando configuración de indicaciones...",
@@ -197,7 +197,7 @@
       "toolGrantsHint": "Selecciona los servidores MCP que esta habilidad puede usar.",
       "toolCount": "{count} herramientas",
       "loadingServers": "Cargando servidores disponibles…",
-      "noServers": "No hay servidores MCP disponibles. Conecta uno desde Integraciones.",
+      "noServers": "No hay servidores MCP disponibles. Conecta uno desde Conectores.",
       "cancel": "Cancelar",
       "save": "Guardar cambios",
       "create": "Crear habilidad",

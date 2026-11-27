@@ -1,12 +1,12 @@
 {
   "userSettings": {
     "title": "Settings",
-    "subtitle": "Manage your personal preferences and connected integrations.",
+    "subtitle": "Manage your personal preferences and connectors.",
     "tabs": {
       "skills": "Skills",
       "skillsAria": "Manage your skills",
-      "integrations": "Integrations",
-      "integrationsAria": "Connected integrations",
+      "integrations": "Connectors",
+      "integrationsAria": "Manage your connectors",
       "promptSettings": "Prompt Settings",
       "promptSettingsAria": "Manage your prompt preferences"
     }
@@ -64,7 +64,7 @@
       "toolGrantsHint": "Select the MCP servers this skill is allowed to use.",
       "toolCount": "{count} tools",
       "loadingServers": "Loading available servers…",
-      "noServers": "No MCP servers available. Connect one from Integrations.",
+      "noServers": "No MCP servers available. Connect one from Connectors.",
       "cancel": "Cancel",
       "save": "Save changes",
       "create": "Create skill",
@@ -213,7 +213,7 @@
   },
   "userIntegrations": {
     "detail": {
-      "back": "All integrations",
+      "back": "All connectors",
       "verified": "Verified",
       "toolsTitle": "Tools",
       "toolsIntro": "Everything this connector can do, exposed as individual tools.",
@@ -224,8 +224,8 @@
       "tryAsking": "Try asking",
       "openPrompt": "Ask this in a new chat"
     },
-    "loading": "Loading integrations...",
-    "failedToLoad": "Failed to load integrations",
+    "loading": "Loading connectors...",
+    "failedToLoad": "Failed to load connectors",
     "failedToGetAuthUrl": "Failed to get authorization URL",
     "failedToConnect": "Failed to connect {name}",
     "failedToDisconnect": "Failed to disconnect {name}",
@@ -239,14 +239,14 @@
       "all": "All",
       "connected": "Connected",
       "available": "Available",
-      "filterAria": "Filter integrations"
+      "filterAria": "Filter connectors"
     },
     "empty": {
-      "title": "No integrations found",
-      "noConnected": "You haven't connected any integrations yet.",
-      "noAvailable": "There are no integrations available to connect at the moment.",
-      "noConfigured": "No integrations have been configured by your organization.",
-      "viewAll": "View all integrations"
+      "title": "No connectors found",
+      "noConnected": "You haven't connected any connectors yet.",
+      "noAvailable": "There are no connectors available to connect at the moment.",
+      "noConfigured": "No connectors have been configured by your organization.",
+      "viewAll": "View all connectors"
     },
     "columns": {
       "name": "Name",
@@ -280,6 +280,6 @@
       "loading": "Loading tools...",
       "empty": "No tools available for this server."
     },
-    "searchPlaceholder": "Filter integrations..."
+    "searchPlaceholder": "Filter connectors..."
   }
 }
