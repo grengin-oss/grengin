@@ -47,11 +47,8 @@ SPDX-License-Identifier: Apache-2.0
   ): ConnectionStatus {
     if (!conn) return "disconnected";
     if (conn.status === "error") return "error";
+    // expires_at is the access token's expiry, refreshed on use; only the API decides a connection expired.
     if (conn.status === "expired") return "expired";
-    if (conn.expires_at) {
-      const expiresAt = new Date(conn.expires_at);
-      if (expiresAt.getTime() < Date.now()) return "expired";
-    }
     return conn.connected ? "connected" : "disconnected";
   }
 
